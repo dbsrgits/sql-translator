@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# vim:set ft=perl:
 
 $| = 1;
 

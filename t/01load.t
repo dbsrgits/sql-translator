@@ -25,11 +25,10 @@ while (<MANIFH>) {
 
 close MANIFH;
 
-@perlmods = sort { length $a <=> length $b } @perlmods; # aesthetics
+@perlmods = sort @perlmods; # aesthetics
 plan tests => scalar @perlmods;
 
 for my $mod (@perlmods) {
-    SQL::Translator::load($mod);
-    ok(!$@, "use $mod");
+    use_ok($mod);
 }
 

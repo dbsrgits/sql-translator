@@ -2,25 +2,42 @@
 # vim: set ft=perl:
 #
 
-BEGIN { print "1..1\n"; }
-
 use strict;
-use Data::Dumper;
+
+use File::Spec::Functions qw(catfile tmpdir);
+use File::Temp qw(tempfile);
+use FindBin qw($Bin);
 use SQL::Translator;
-use SQL::Translator::Parser::MySQL;
-use SQL::Translator::Producer::XML;
+use Test::More tests => 2;
 
-$SQL::Translator::DEBUG = 0;
+my @data = qw(data mysql BGEP-RE-create.sql);
+my $test_data = (-d "t")
+    ? catfile($Bin, @data)
+    : catfile($Bin, "t", @data);
 
-my $tr = SQL::Translator->new(parser => "MySQL", producer => "XML");
+my $tr = SQL::Translator->new(parser => "MySQL",
+                              producer => "XML",
+                              filename => $test_data);
+my $data = $tr->translate;
 
-my $datafile = "t/data/mysql/BGEP-RE-create.sql";
-my $data;
-open FH, $datafile or die "Can't open $datafile: $!";
-read(FH, $data, -s $datafile);
-close FH;
+ok($data, "MySQL->XML");
 
+SKIP: {
+    eval {
+        require XML::Parser;
+    };
+    if ($@) {
+        skip "Can't load XML::Parser" => 1;        
+    }
 
-print $tr->translate(\$data);
-print "ok 1\n";
+    # Can't get XML::Parser::parsestring to do Useful Things
+    my ($fh, $fname) = tempfile('sqlfXXXX',
+                                UNLINK => 1,
+                                SUFFIX => '.xml',
+                                DIR => tmpdir);
+    print $fh $data;
+    $fh->close;
 
+    ok(XML::Parser->new->parsefile($fname),
+        "Successfully parsed output");
+}
