@@ -39,4 +39,5 @@ if ($@ && $@ =~ /locate GD.pm in /) {
     eval { system(@cmd); };
     ok(!$@ && ($? == 0));
     ok(-e $tmp); 
+    eval { unlink $tmp; };
 }
