@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.25 2003-06-11 03:59:49 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.26 2003-07-18 22:56:12 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -235,11 +235,16 @@ create_definition : constraint
     | field
     | <error>
 
-comment : /^\s*(?:#|-{2}).*\n/
+comment : /^\s*(?:#|-{2}).*\n/ { 
+    my $comment =  $item[1];
+    $comment    =~ s/^\s*(#|-{2})//;
+    $comment    =~ s/\s*$//;
+    $return     = $comment;
+}
 
 blank : /\s*/
 
-field : field_name data_type field_qualifier(s?) reference_definition(?)
+field : comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) comment(s?)
     { 
         my %qualifiers = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         my $null = defined $item{'not_null'} ? $item{'not_null'} : 1;
@@ -247,6 +252,8 @@ field : field_name data_type field_qualifier(s?) reference_definition(?)
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
             $qualifiers{ $_ } = 1 for @type_quals;
         }
+
+        my @comments = ( @{ $item[1] }, @{ $item[6] } );
 
         $return = { 
             supertype   => 'field',
@@ -256,6 +263,7 @@ field : field_name data_type field_qualifier(s?) reference_definition(?)
             list        => $item{'data_type'}{'list'},
             null        => $null,
             constraints => $item{'reference_definition(?)'},
+            comments    => [ @comments ],
             %qualifiers,
         } 
     }
@@ -557,6 +565,7 @@ sub parse {
                 default_value     => $fdata->{'default'},
                 is_auto_increment => $fdata->{'is_auto_inc'},
                 is_nullable       => $fdata->{'null'},
+                comments          => $fdata->{'comments'},
             ) or die $table->error;
 
             $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
