@@ -22,7 +22,7 @@ use SQL::Translator::Schema::Constants;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(321,
+    maybe_plan(335,
         'SQL::Translator::Parser::XML::XMI::SQLFairy',
         'SQL::Translator::Producer::MySQL');
 }

@@ -5,7 +5,7 @@ Created on Fri Aug 15 15:08:18 2003
 
  -->
 <schema xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-
+    
   <tables>
       <table order="1" name="Basic">
         <fields>
@@ -37,21 +37,28 @@ Created on Fri Aug 15 15:08:18 2003
         </fields>
 
         <indices>
-          <index name="titleindex" fields="title" type="NORMAL" />
+          <index name="titleindex" fields="title" type="NORMAL">
+            <extra foo="bar" hello="world" bar="baz" />
+          </index>
         </indices>
 
         <constraints>
           <constraint name="" type="PRIMARY KEY" fields="id"
               reference_table="" options="" deferrable="1" match_type=""
-              expression="" on_update="" on_delete="" />
+              expression="" on_update="" on_delete="">
+              <extra foo="bar" hello="world" bar="baz" />
+          </constraint>
           <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
         </constraints>
+        
+        <extra foo="bar" hello="world" bar="baz" />
       </table>
   </tables>
 
   <views>
       <view name="email_list" fields="email" order="1">
           <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
+          <extra foo="bar" hello="world" bar="baz" />
       </view>
   </views>
 
@@ -59,6 +66,7 @@ Created on Fri Aug 15 15:08:18 2003
       <trigger name="foo_trigger" database_event="insert" on_table="foo"
           perform_action_when="after" order="1">
           <action>update modified=timestamp();</action>
+          <extra foo="bar" hello="world" bar="baz" />
       </trigger>
   </triggers>
 
@@ -66,6 +74,7 @@ Created on Fri Aug 15 15:08:18 2003
       <procedure name="foo_proc" order="1" owner="Nomar" parameters="foo,bar">
           <sql>select foo from bar</sql>
           <comments>Go Sox!</comments>
+          <extra foo="bar" hello="world" bar="baz" />
       </procedure>
   </procedures>
 

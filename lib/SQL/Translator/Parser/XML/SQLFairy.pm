@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.11 2004-08-20 11:01:48 grommit Exp $
+# $Id: SQLFairy.pm,v 1.12 2004-11-05 15:03:09 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -100,7 +100,7 @@ To convert your old format files simply pass them through the translator :)
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -137,7 +137,7 @@ sub parse {
         debug "Adding table:".$xp->findvalue('sqlf:name',$tblnode);
 
         my $table = $schema->add_table(
-            get_tagfields($xp, $tblnode, "sqlf:" => qw/name order/)
+            get_tagfields($xp, $tblnode, "sqlf:" => qw/name order extra/)
         ) or die $schema->error;
 
         #
@@ -186,7 +186,7 @@ sub parse {
         foreach (@nodes) {
             my %data = get_tagfields($xp, $_, "sqlf:",
                 qw/name type table fields reference_fields reference_table
-                match_type on_delete_do on_update_do/
+                match_type on_delete_do on_update_do extra/
             );
             $table->add_constraint( %data ) or die $table->error;
         }
@@ -197,7 +197,7 @@ sub parse {
         @nodes = $xp->findnodes('sqlf:indices/sqlf:index',$tblnode);
         foreach (@nodes) {
             my %data = get_tagfields($xp, $_, "sqlf:",
-                qw/name type fields options/);
+                qw/name type fields options extra/);
             $table->add_index( %data ) or die $table->error;
         }
 
@@ -211,7 +211,7 @@ sub parse {
     );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:",
-            qw/name sql fields order/
+            qw/name sql fields order extra/
         );
         $schema->add_view( %data ) or die $schema->error;
     }
@@ -223,9 +223,10 @@ sub parse {
         '/sqlf:schema/sqlf:trigger|/sqlf:schema/sqlf:triggers/sqlf:trigger'
     );
     foreach (@nodes) {
-        my %data = get_tagfields($xp, $_, "sqlf:",
-        qw/name perform_action_when database_event fields on_table action order/
-        );
+        my %data = get_tagfields($xp, $_, "sqlf:", qw/
+            name perform_action_when database_event fields on_table action order
+            extra
+        /);
         $schema->add_trigger( %data ) or die $schema->error;
     }
 
@@ -237,7 +238,7 @@ sub parse {
     );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:",
-        qw/name sql parameters owner comments order/
+        qw/name sql parameters owner comments order extra/
         );
         $schema->add_procedure( %data ) or die $schema->error;
     }

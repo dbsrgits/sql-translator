@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Object;
 
 # ----------------------------------------------------------------------
-# $Id: Object.pm,v 1.2 2004-11-05 13:19:31 grommit Exp $
+# $Id: Object.pm,v 1.3 2004-11-05 15:03:10 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -42,7 +42,7 @@ use base 'Class::Base';
 
 use vars qw[ $VERSION ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 
 =head1 Construction
@@ -83,7 +83,9 @@ API for the Schema objects.
 
 
 __PACKAGE__->mk_classdata("__attributes");
-__PACKAGE__->__attributes([]); 
+
+# Define any global attributes here
+__PACKAGE__->__attributes([qw/extra/]); 
 
 # Set the classes attribute names. Multiple calls are cumulative.
 # We need to be careful to create a new ref so that all classes don't end up
@@ -106,6 +108,35 @@ sub init {
     return $self;
 }
 
+# ----------------------------------------------------------------------
+sub extra {
+
+=pod
+
+=head1 Global Attributes
+
+The following attributes are defined here, therefore all schema objects will
+have them.
+
+=head2 extra
+
+Get or set the objects "extra" attibutes (e.g., "ZEROFILL" for MySQL fields).
+Accepts a hash(ref) of name/value pairs to store;  returns a hash.
+
+  $field->extra( qualifier => 'ZEROFILL' );
+  my %extra = $field->extra;
+
+=cut
+
+    my $self = shift;
+    my $args = ref $_[0] eq 'HASH' ? shift : { @_ };
+
+    while ( my ( $key, $value ) = each %$args ) {
+        $self->{'extra'}{ $key } = $value;
+    }
+
+    return %{ $self->{'extra'} || {} };
+}
 
 #=============================================================================
 

@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.6 2004-07-08 17:29:56 grommit Exp $
+# $Id: Translator.pm,v 1.7 2004-11-05 15:03:10 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,7 +34,7 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 @EXPORT = qw(
     schema_ok
     table_ok
@@ -81,6 +81,7 @@ $ATTRIBUTES{constraint} = {
     on_update => '',
     reference_fields => [],
     reference_table => '',
+    extra => {},
 };
 $ATTRIBUTES{'index'} = {
     fields => [],
@@ -88,12 +89,14 @@ $ATTRIBUTES{'index'} = {
     name => "",
     options => [],
     type => NORMAL,
+    extra => {},
 };
 $ATTRIBUTES{'view'} = {
     name => "",
     sql => "",
     fields => [],
     is_valid  => 1,
+    extra => {},
 };
 $ATTRIBUTES{'trigger'} = {
     name                => '',
@@ -102,6 +105,7 @@ $ATTRIBUTES{'trigger'} = {
     on_table            => undef,
     action              => undef,
     is_valid            => 1,
+    extra => {},
 };
 $ATTRIBUTES{'procedure'} = {
     name       => '',
@@ -109,6 +113,7 @@ $ATTRIBUTES{'procedure'} = {
     parameters => [],
     owner      => '',
     comments   => '',
+    extra => {},
 };
 $ATTRIBUTES{table} = {
     comments   => undef,
@@ -120,6 +125,7 @@ $ATTRIBUTES{table} = {
     constraints => undef,
     indices     => undef,
     is_valid    => 1,
+    extra       => {},
 };
 $ATTRIBUTES{schema} = {
     name       => '',
@@ -129,6 +135,7 @@ $ATTRIBUTES{schema} = {
     triggers   => undef, # [] when set
     views      => undef, # [] when set
     is_valid   => 1,
+    extra => {},
 };
 
 
@@ -243,6 +250,8 @@ sub constraint_ok {
 
     is_deeply( [$obj->options], $test->{options},
     "$t_name    options are '".join(",",@{$test->{options}})."'" );
+    
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
 sub index_ok {
@@ -262,6 +271,8 @@ sub index_ok {
 
     is_deeply( [$obj->options], $test->{options},
     "$t_name    options are '".join(",",@{$test->{options}})."'" );
+    
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
 sub trigger_ok {
@@ -284,6 +295,8 @@ sub trigger_ok {
         "$t_name    on_table is '$test->{on_table}'" );
 
     is( $obj->action, $test->{action}, "$t_name    action is '$test->{action}'" );
+    
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
 sub view_ok {
@@ -302,6 +315,8 @@ sub view_ok {
 
     is_deeply( [$obj->fields], $test->{fields},
     "$t_name    fields are '".join(",",@{$test->{fields}})."'" );
+    
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
 sub procedure_ok {
@@ -322,6 +337,8 @@ sub procedure_ok {
         "$t_name    comments is '$test->{comments}'" );
 
     is( $obj->owner, $test->{owner}, "$t_name    owner is '$test->{owner}'" );
+    
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
 sub table_ok {
@@ -335,6 +352,8 @@ sub table_ok {
 
     is_deeply( [$obj->options], $test->{options},
     "$t_name    options are '".join(",",@{$test->{options}})."'" );
+
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 
     # Fields
     if ( $arg{fields} ) {
@@ -396,6 +415,8 @@ sub schema_ok {
 
     is( $obj->database, $test->{database},
         "$t_name    database is '$test->{database}'" );
+    
+    is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 
     is( $obj->is_valid, $test->{is_valid},
     "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );

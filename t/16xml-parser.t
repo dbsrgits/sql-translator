@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(142, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(150, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -57,6 +57,11 @@ schema_ok( $scma, {
     tables => [
         {
             name => "Basic",
+            extra => {
+                foo => "bar",
+                hello => "world",
+                bar => "baz",
+            },
             fields => [
                 {
                     name => "id",
@@ -118,6 +123,11 @@ schema_ok( $scma, {
                 {
                     type => PRIMARY_KEY,
                     fields => ["id"],
+                    extra => {
+                        foo => "bar",
+                        hello => "world",
+                        bar => "baz",
+                    },
                 },
                 {
                     name => 'emailuniqueindex',
@@ -129,6 +139,11 @@ schema_ok( $scma, {
                 {
                     name => "titleindex",
                     fields => ["title"],
+                    extra => {
+                        foo => "bar",
+                        hello => "world",
+                        bar => "baz",
+                    },
                 },
             ],
         } # end table Basic
@@ -139,6 +154,11 @@ schema_ok( $scma, {
             name => 'email_list',
             sql => "SELECT email FROM Basic WHERE email IS NOT NULL",
             fields => ['email'],
+            extra => {
+                foo => "bar",
+                hello => "world",
+                bar => "baz",
+            },
         },
     ],
 
@@ -149,6 +169,11 @@ schema_ok( $scma, {
             database_event      => 'insert',
             on_table            => 'foo',
             action              => 'update modified=timestamp();',
+            extra => {
+                foo => "bar",
+                hello => "world",
+                bar => "baz",
+            },
         },
     ],
 
@@ -159,6 +184,11 @@ schema_ok( $scma, {
             parameters => ['foo', 'bar'],
             owner      => 'Nomar',
             comments   => 'Go Sox!',
+            extra => {
+                foo => "bar",
+                hello => "world",
+                bar => "baz",
+            },
         },
     ],
 

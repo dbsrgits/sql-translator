@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.28 2004-11-05 13:19:31 grommit Exp $
+# $Id: Table.pm,v 1.29 2004-11-05 15:03:10 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -113,7 +113,7 @@ C<SQL::Translator::Schema::Constraint> object.
         my %args = @_;
         $args{'table'} = $self;
         $constraint = $constraint_class->new( \%args ) or 
-            return $self->error( $constraint_class->error );
+           return $self->error( $constraint_class->error );
     }
 
     #
@@ -124,6 +124,9 @@ C<SQL::Translator::Schema::Constraint> object.
     my $pk = $self->primary_key;
     if ( $pk && $constraint->type eq PRIMARY_KEY ) {
         $self->primary_key( $constraint->fields );
+        $pk->name($constraint->name) if $constraint->name;
+        my %extra = $constraint->extra; 
+        $pk->extra(%extra) if keys %extra;
         $constraint = $pk;
         $ok         = 0;
     }
