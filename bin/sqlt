@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.16 2004-11-25 23:15:23 grommit Exp $
+# $Id: sqlt,v 1.17 2004-11-26 00:34:09 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -89,8 +89,9 @@ To translate a schema:
 
   TTSchema Producer Options:
 
-    --template         The path to the template
-    --tt-var var=value Pass extra variables to the template
+    --template             The path to the template
+    --tt-var var=value     Pass extra variables to the template
+    --tt-conf option=value Pass extra config options to Template
 
   XML-SQLFairy Producer Options:
 
@@ -124,7 +125,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database
@@ -146,6 +147,7 @@ my $imap_url;         # URL to use in making image map
 my $pretty;           # use CGI::Pretty instead of CGI (HTML producer)
 my $template;         # template to pass to TTSchema producer
 my %tt_vars;          # additional template vars to pass the TTSchema producer
+my %tt_conf;          # additional template conf to pass the TTSchema producer
 my $title;            # title for HTML/POD producer
 my $add_prefix;       # Use explicit namespace prefix (XML producer)
 my $prefix;           # Set explicit namespace prefix (XML producer)
@@ -180,6 +182,7 @@ GetOptions(
     'show-warnings'    => \$show_warnings,
     'template:s'       => \$template,
     'tt-var=s'         => \%tt_vars,
+    'tt-conf=s'        => \%tt_conf,
     'title:s'          => \$title,
     'trace'            => \$trace,
     'v|validate'       => \$validate,
@@ -238,6 +241,7 @@ my $translator           =  SQL::Translator->new(
         pretty           => $pretty,
         ttfile           => $template,
         tt_vars          => \%tt_vars,
+        tt_conf          => \%tt_conf,
         title            => $title,
         dsn              => $dumper_dsn,
         db_user          => $dumper_db_user,
