@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.14 2004-03-10 22:52:17 kycl4rk Exp $
+# $Id: HTML.pm,v 1.15 2005-02-07 22:09:32 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -24,7 +24,7 @@ use strict;
 use Data::Dumper;
 use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $NAME = join ', ', __PACKAGE__, $VERSION;
 $NOWRAP = 0 unless defined $NOWRAP;
 $NOLINKTABLE = 0 unless defined $NOLINKTABLE;
@@ -150,6 +150,7 @@ sub produce {
                     ) 
                 );
 
+        my $i = 0;
         for my $field ( @fields ) {
             my $name      = $field->name      || '';
                $name      = qq[<a name="$table_name-$name">$name</a>];
@@ -173,8 +174,10 @@ sub produce {
             push @other, 'UNIQUE'      if $field->is_unique;
             push @other, 'NOT NULL'    unless $field->is_nullable;
             push @other, $comment      if $comment;
+            my $class = $i++ % 2 ? 'even' : 'odd';
             push @html,
                 $q->Tr(
+                    { -class => "tr-$class" },
                     $q->td({ -class => "FieldCellName" }, $name),
                     $q->td({ -class => "FieldCellType" }, $data_type),
                     $q->td({ -class => "FieldCellSize" }, $size),
