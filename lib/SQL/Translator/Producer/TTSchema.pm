@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.5 2004-10-15 03:52:50 allenday Exp $
+# $Id: TTSchema.pm,v 1.6 2004-10-26 00:00:41 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -93,7 +93,7 @@ limitless!
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -120,8 +120,11 @@ sub produce {
         %$args,        # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
 
-    $tt->process( $file, { schema => $scma , %{ $args->{ttargs} } }, \$out ) 
-        or die "Error processing template '$file': ".$tt->error;
+    $tt->process( 
+        $file, 
+        { schema => $scma , %{ $args->{'ttargs'} || {} } }, 
+        \$out 
+    ) or die "Error processing template '$file': ".$tt->error;
 
     return $out;
 };
