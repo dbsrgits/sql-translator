@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.22 2003-04-17 23:16:28 allenday Exp $
+# $Id: Translator.pm,v 1.23 2003-04-19 23:32:34 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -338,6 +338,9 @@ sub filename {
         if (-d $filename) {
             my $msg = "Cannot use directory '$filename' as input source";
             return $self->error($msg);
+	} elsif (ref($filename) eq 'ARRAY') {
+	    $self->{'filename'} = $filename;
+	    $self->debug("Got array of files: ".join(', ',@$filename)."\n");
         } elsif (-f _ && -r _) {
             $self->{'filename'} = $filename;
             $self->debug("Got filename: '$self->{'filename'}'\n");
@@ -390,16 +393,21 @@ sub data {
         local $/;
         my $data;
 
-        unless (open FH, $filename) {
-            return $self->error("Can't read file '$filename': $!");
-        }
+	my @files = ref($filename) eq 'ARRAY' ? @$filename : ($filename);
 
-        $data = <FH>;
-        $self->{'data'} = \$data;
+	foreach my $file (@files) {
+	        unless (open FH, $file) {
+	            return $self->error("Can't read file '$file': $!");
+	        }
 
-        unless (close FH) {
-            return $self->error("Can't close file '$filename': $!");
-        }
+	        $data .= <FH>;
+
+	        unless (close FH) {
+	            return $self->error("Can't close file '$file': $!");
+	        }
+	}
+
+	$self->{'data'} = \$data;
     }
 
     return $self->{'data'};
@@ -733,7 +741,7 @@ SQL::Translator - convert schema from one database to another
   my $output     = $translator->translate(
       from       => "MySQL",
       to         => "Oracle",
-      filename   => $file,
+      filename   => $file, #or an arrayref of filenames, ie [$file1,$file2,$file3]
   ) or die $translator->error;
 
   print $output;
