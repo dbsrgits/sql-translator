@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.18 2003-03-04 21:20:17 kycl4rk Exp $
+# $Id: Translator.pm,v 1.19 2003-03-12 14:19:52 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -558,7 +558,7 @@ sub translate {
 #
 # ----------------------------------------------------------------------
 sub list_parsers {
-    return _list("parsers");
+    return shift->_list("parser");
 }
 
 # ----------------------------------------------------------------------
@@ -568,7 +568,7 @@ sub list_parsers {
 # list_producers as well.
 # ----------------------------------------------------------------------
 sub list_producers {
-    return _list("producers");
+    return shift->_list("producer");
 }
 
 
@@ -611,14 +611,26 @@ sub _args {
 # _list($type)
 # ----------------------------------------------------------------------
 sub _list {
-    my $type = ucfirst lc $_[0] || return ();
+    my $self = shift;
+    my $type = shift || return ();
+    my $uctype = ucfirst lc $type;
+    my %found;
 
-    load("SQL::Translator::$type");
-    my $path = catfile(dirname($INC{'SQL/Translator/$type.pm'}), $type);
-    my $dh = IO::Dir->new($path);
+    load("SQL::Translator::$uctype") or return ();
+    my $path = catfile "SQL", "Translator", $uctype;
+    for (@INC) {
+        my $dir = catfile $_, $path;
+        $self->debug("_list_${type}s searching $dir");
+        next unless -d $dir;
 
-    return map { join "::", "SQL::Translator::$type", $_ }
-                 grep /\.pm$/, $dh->read;
+        my $dh = IO::Dir->new($dir);
+        for (grep /\.pm$/, $dh->read) {
+            s/\.pm$//;
+            $found{ join "::", "SQL::Translator::$uctype", $_ } = 1;
+        }
+    }
+
+    return keys %found;
 }
 
 # ----------------------------------------------------------------------
@@ -629,10 +641,10 @@ sub _list {
 sub load {
     my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
     return 1 if $INC{$module};
-    
+
     eval { require $module };
-    
-    return if ($@);
+
+    return __PACKAGE__->error($@) if ($@);
     return 1;
 }
 
