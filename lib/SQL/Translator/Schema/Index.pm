@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Index;
 
 # ----------------------------------------------------------------------
-# $Id: Index.pm,v 1.2 2003-05-05 04:32:39 kycl4rk Exp $
+# $Id: Index.pm,v 1.3 2003-05-09 17:09:43 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -47,6 +47,8 @@ Primary keys will be considered table constraints, not indices.
 
 use strict;
 use Class::Base;
+use SQL::Translator::Schema::Constants;
+use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
@@ -54,9 +56,9 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 $VERSION = 1.00;
 
 use constant VALID_TYPE => {
-    unique      => 1,
-    normal      => 1,
-    full_text   => 1, # MySQL only (?)
+    UNIQUE,    1,
+    NORMAL,    1,
+    FULL_TEXT, 1, # MySQL only (?)
 };
 
 # ----------------------------------------------------------------------
@@ -73,10 +75,12 @@ Object constructor.
 =cut
 
     my ( $self, $config ) = @_;
-    for my $arg ( qw[ name type fields ] ) {
+
+    for my $arg ( qw[ name type fields table ] ) {
         next unless $config->{ $arg };
         $self->$arg( $config->{ $arg } ) or return;
     }
+
     return $self;
 }
 
@@ -87,18 +91,32 @@ sub fields {
 
 =head2 fields
 
-Gets and set the fields the index is on.  Accepts a list or arrayref, 
-return both, too.
+Gets and set the fields the constraint is on.  Accepts a string, list or
+arrayref; returns an array or array reference.  Will unique the field
+names and keep them in order by the first occurrence of a field name.
 
-  my @fields = $index->fields( 'id' );
+  $constraint->fields('id');
+  $constraint->fields('id', 'name');
+  $constraint->fields( 'id, name' );
+  $constraint->fields( [ 'id', 'name' ] );
+  $constraint->fields( qw[ id name ] );
+
+  my @fields = $constraint->fields;
 
 =cut
 
     my $self   = shift;
-    my $fields = ref $_[0] eq 'ARRAY' ? shift : [ @_ ];
+    my $fields = parse_list_arg( @_ );
 
     if ( @$fields ) {
-        $self->{'fields'} = $fields;
+        my ( %unique, @unique );
+        for my $f ( @$fields ) {
+            next if $unique{ $f };
+            $unique{ $f } = 1;
+            push @unique, $f;
+        }
+
+        $self->{'fields'} = \@unique;
     }
 
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
@@ -120,6 +138,33 @@ Get or set the index's name.
     my $self = shift;
     $self->{'name'} = shift if @_;
     return $self->{'name'} || '';
+}
+
+# ----------------------------------------------------------------------
+sub options {
+
+=pod
+
+=head2 options
+
+Get or set the index's options (e.g., "using" or "where" for PG).  Returns
+an array or array reference.
+
+  my @options = $index->options;
+
+=cut
+
+    my $self    = shift;
+    my $options = parse_list_arg( @_ );
+
+    push @{ $self->{'options'} }, @$options;
+
+    if ( ref $self->{'options'} ) {
+        return wantarray ? @{ $self->{'options'} || [] } : $self->{'options'};
+    }
+    else {
+        return wantarray ? () : [];
+    }
 }
 
 # ----------------------------------------------------------------------
@@ -166,7 +211,7 @@ Get or set the index's type.
         $self->{'type'} = $type;
     }
 
-    return $self->{'type'} || '';
+    return $self->{'type'} || NORMAL;
 }
 
 
@@ -183,8 +228,23 @@ Determine whether the index is valid or not.
 
 =cut
 
+    my $self   = shift;
+    my $table  = $self->table  or return $self->error('No table');
+    my @fields = $self->fields or return $self->error('No fields');
+
+    for my $field ( @fields ) {
+        return $self->error(
+            "Field '$field' does not exist in table '", $table->name, "'"
+        ) unless $table->get_field( $field );
+    }
+
+    return 1;
+}
+
+# ----------------------------------------------------------------------
+sub DESTROY {
     my $self = shift;
-    return ( $self->name && $self->{'type'} && @{ $self->fields } ) ? 1 : 0;
+    undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
