@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.23 2003-08-21 18:09:50 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.24 2003-08-27 02:28:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -86,6 +86,13 @@ my %translate  = (
     macaddr             => 'varchar2',
     bit                 => 'number',
     'bit varying'       => 'number',
+
+    #
+    # Oracle types
+    #
+    number              => 'number',
+    varchar2            => 'varchar2',
+    long                => 'clob',
 );
 
 #
@@ -226,7 +233,11 @@ sub produce {
                 # then sub "1/0," otherwise just test the truthity of the
                 # argument and use that (naive?).
                 #
-                if ( $data_type =~ /^number$/i && $default !~ /^\d+$/ ) {
+                if ( 
+                    $data_type =~ /^number$/i && 
+                    $default   !~ /^\d+$/     &&
+                    $default   !~ m/null/i
+                ) {
                     if ( $default =~ /^true$/i ) {
                         $default = "'1'";
                     }
@@ -376,12 +387,12 @@ sub produce {
             next unless @fields;
 
             if ( $index_type eq PRIMARY_KEY ) {
-                $index_name = mk_name( $table_name, 'pk' );
+                $index_name ||= mk_name( $table_name, 'pk' );
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $index_type eq NORMAL ) {
-                $index_name = mk_name( $table_name, $index_name || 'i' );
+                $index_name ||= mk_name( $table_name, $index_name || 'i' );
                 push @index_defs, 
                     "CREATE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
