@@ -7,6 +7,7 @@ Modules to be written/finished
     SQL::Translator::Validator
     SQL::Translator::Parser::xSV
     SQL::Translator::Producer::MySQL
+    SQL::Translator::Parser::Xls
 
 Should the parsers return an instance instead of a data structure?  It
 would make traversing the data structure easier.
