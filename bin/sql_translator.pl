@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.8 2003-05-09 16:49:41 kycl4rk Exp $
+# $Id: sql_translator.pl,v 1.9 2003-05-12 14:48:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -42,8 +42,8 @@ my $xlate;            # user overrides for field translation
 my $debug;            # whether to print debug info
 my $trace;            # whether to print parser trace
 my $list;             # list all parsers and producers
-my $trim_fields;      # trim whitespace on xSV fields
-my $scan_fields;      # scan xSV fields for data types and sizes
+my $no_trim;          # don't trim whitespace on xSV fields
+my $no_scan;          # don't scan xSV fields for data types and sizes
 my $field_separator;  # for xSV files
 my $record_separator; # for xSV files
 
@@ -60,8 +60,8 @@ GetOptions(
     'no-comments'     => \$no_comments,
     'show-warnings'   => \$show_warnings,
     'add-drop-table'  => \$add_drop_table,
-    'trim-fields'     => \$trim_fields,
-    'scan-fields'     => \$scan_fields,
+    'no-trim'         => \$no_trim,
+    'no-scan'         => \$no_scan,
     'fs:s'            => \$field_separator,
     'rs:s'            => \$record_separator,
 ) or pod2usage(2);
@@ -90,8 +90,8 @@ my $translator      =  SQL::Translator->new(
     show_warnings   => $show_warnings  ||  0,
     add_drop_table  => $add_drop_table ||  0,
     parser_args     => {
-        trim_fields      => $trim_fields,
-        scan_fields      => $scan_fields,
+        trim_fields      => $no_trim ? 0 : 1,
+        scan_fields      => $no_scan ? 0 : 1,
         field_separator  => $field_separator,
         record_separator => $record_separator,
     }
@@ -163,10 +163,9 @@ To translate a schema:
 
     --fs                  The field separator
     --rs                  The record separator
-    --trim-fields         Trim whitespace on fields 
-                          (true by default)
-    --scan-fields         Scan fields for data types and sizes 
-                          (true by default)
+    --no-trim             Don't trim whitespace on fields 
+    --no-scan             Don't scan fields for data types and sizes 
+
 =head1 DESCRIPTION
 
 This script is part of the SQL Fairy project
