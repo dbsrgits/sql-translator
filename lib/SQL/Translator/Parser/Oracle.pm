@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.4 2003-06-11 03:59:49 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.5 2003-08-12 22:02:33 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -282,7 +282,7 @@ column_constraint : constraint_name(?) column_constraint_type
             name             => $item{'constraint_name(?)'}[0] || '',
             type             => $type,
             expression       => $type eq 'check' ? $expression : '',
-            deferreable      => $item{'deferrable'},
+            deferrable       => $item{'deferrable'},
             deferred         => $item{'deferred'},
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
@@ -385,7 +385,7 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
             constraint_type  => $type,
             fields           => $type ne 'check' ? $fields : [],
             expression       => $type eq 'check' ? $expression : '',
-            deferreable      => $item{'deferrable(?)'},
+            deferrable       => $item{'deferrable(?)'},
             deferred         => $item{'deferred(?)'},
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
