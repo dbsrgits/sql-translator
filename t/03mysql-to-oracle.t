@@ -14,6 +14,8 @@ CREATE TABLE random (
 use SQL::Translator;
 use Data::Dumper;
 
+$SQL::Translator::DEBUG = 0;
+
 my $tr = SQL::Translator->new(parser   => "MySQL",
                               producer => "Oracle"
                               #producer => "SQL::Translator::Producer::Oracle::translate"
