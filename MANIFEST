@@ -16,7 +16,6 @@ lib/SQL/Translator/Parser/Excel.pm
 lib/SQL/Translator/Parser/MySQL.pm
 lib/SQL/Translator/Parser/Oracle.pm
 lib/SQL/Translator/Parser/PostgreSQL.pm
-lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/ClassDBI.pm
