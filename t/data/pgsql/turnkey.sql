@@ -1,3 +1,4 @@
+-- 1 single FK import, data table
 create table a (
 	a_id serial not null,
 	primary key (a_id),
@@ -6,12 +7,14 @@ create table a (
 	name text
 );
 
+-- standalone, data table
 create table b (
 	b_id serial not null,
 	primary key (b_id),
 	name text
 );
 
+-- 1 single FK import, link table between 'a' and 'b'
 create table a_b (
 	a_b_id serial not null,
 	primary key (a_b_id),
@@ -21,6 +24,7 @@ create table a_b (
 	foreign key (b_id) references b (b_id)
 );
 
+-- 1 single FK import, data table
 create table c (
 	c_id serial not null,
 	primary key (c_id),
@@ -29,6 +33,7 @@ create table c (
 	name text
 );
 
+-- 1 single FK import, data table
 create table d (
 	d_id serial not null,
 	primary key (d_id),
@@ -37,12 +42,14 @@ create table d (
 	name text
 );
 
+-- standalone, data table
 create table e (
 	e_id serial not null,
 	primary key (e_id),
 	name text
 );
 
+-- 2 single FK import, link table between 'c' and 'e'
 create table c_e (
 	c_e_id serial not null,
 	primary key (c_e_id),
@@ -52,17 +59,19 @@ create table c_e (
 	foreign key (e_id) references e (e_id)
 );
 
+-- 1 triple FK import, link table between 'e', 'e', and 'e'
 create table f (
 	f_id serial not null,
 	primary key (f_id),
-	el_id int not null,
-	foreign key (el_id) references e (e_id),
-	em_id int not null,
-	foreign key (em_id) references e (e_id),
-	en_id int not null,
-	foreign key (en_id) references e (e_id)
+	e1_id int not null,
+	foreign key (e1_id) references e (e_id),
+	e2_id int not null,
+	foreign key (e2_id) references e (e_id),
+	e3_id int not null,
+	foreign key (e3_id) references e (e_id)
 );
 
+-- 1 single FK import, 1 double FK import, link table between 'a', 'e', and 'e'
 create table g (
 	g_id serial not null,
 	primary key (g_id),
@@ -74,6 +83,7 @@ create table g (
 	foreign key (e2_id) references e (e_id)
 );
 
+-- 1 double FK import, 1 triple FK import, link table between 'a', 'a', 'g', 'g', and 'g'
 create table h (
 	h_id serial not null,
 	primary key (h_id),
