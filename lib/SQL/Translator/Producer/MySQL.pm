@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.9 2003-03-12 14:17:11 dlc Exp $
+# $Id: MySQL.pm,v 1.10 2003-04-07 16:31:55 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,19 +24,15 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
-$DEBUG   = 1 unless defined $DEBUG;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Translator::Utils qw(debug);
 
-sub import {
-    warn "loading " . __PACKAGE__ . "...\n";
-}
-
 sub produce {
     my ($translator, $data) = @_;
-    $DEBUG                  = $translator->debug;
+    local $DEBUG            = $translator->debug;
     my $no_comments         = $translator->no_comments;
     my $add_drop_table      = $translator->add_drop_table;
 
