@@ -54,12 +54,5 @@ my $data = {
     }
 };
 
-use SQL::Translator;
-
-my $tr = SQL::Translator->new(parser => "MySQL");
-
-#$data = $tr->translate("t/data/mysql/BGEP-RE-create.sql");
-
 my @r = validate($data);
-
 printf "%s%s", $r[1], $r[0]? "" : "\n";
