@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.11 2003-12-31 11:17:58 boconnor Exp $
+# $Id: Turnkey.pm,v 1.12 2003-12-31 23:40:01 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -538,9 +538,11 @@ EOF
   <!-- end panel: [% panel.label %] -->
 [% END %]
 [% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
-  [- FOREACH node = linkable -]
+  [- FOREACH node = nodes -]
+  [- IF !node.value.is_trivial_link -]
     [% CASE '[- node.key FILTER ucfirst -]' %]
       [% render[- node.key FILTER ucfirst -]Atom(atom.render(dbobject)) %]
+  [- END -]
   [- END -]
     [% CASE DEFAULT %]
       [% renderlist(atom.render(dbobject)) %]
