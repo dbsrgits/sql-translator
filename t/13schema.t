@@ -64,7 +64,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( scalar @{ $fields || [] }, 0, 'Table "foo" has no fields' );
     like( $foo_table->error, qr/no fields/i, 'Error for no fields' );
 
-    is( $foo_table->comments, '', 'No comments' );
+    is( $foo_table->comments, undef, 'No comments' );
 
     #
     # New table with args
