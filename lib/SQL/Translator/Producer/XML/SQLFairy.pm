@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.16 2004-08-18 20:27:58 grommit Exp $
+# $Id: SQLFairy.pm,v 1.17 2004-08-19 14:09:00 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -163,7 +163,7 @@ To convert your old format files simply pass them through the translator;
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -217,85 +217,74 @@ sub produce {
     #
     # Table
     #
+    $xml->startTag( [ $Namespace => "tables" ] );
     for my $table ( $schema->get_tables ) {
         debug "Table:",$table->name;
         xml_obj($xml, $table,
-             tag => "table", methods => [qw/name order/], end_tag => 0 );
+             tag => "table",
+             methods => [qw/name order/],
+             end_tag => 0
+         );
 
         #
         # Fields
         #
-        $xml->startTag( [ $Namespace => 'fields' ] );
-        for my $field ( $table->get_fields ) {
-            debug "    Field:",$field->name;
-            xml_obj($xml, $field,
-                tag     =>"field",
-                end_tag => 1,
-                methods =>[qw/name data_type size is_nullable default_value
-                    is_auto_increment is_primary_key is_foreign_key extra comments order
-                /],
-            );
-        }
-        $xml->endTag( [ $Namespace => 'fields' ] );
+        xml_obj_children( $xml, $table,
+            tag   => 'field',
+            methods =>[qw/
+                name data_type size is_nullable default_value is_auto_increment
+                is_primary_key is_foreign_key extra comments order
+            /],
+        );
 
         #
         # Indices
         #
-        $xml->startTag( [ $Namespace => 'indices' ] );
-        for my $index ( $table->get_indices ) {
-            debug "Index:",$index->name;
-            xml_obj($xml, $index,
-                tag     => "index",
-                end_tag => 1,
-                methods =>[qw/ name type fields options/],
-            );
-        }
-        $xml->endTag( [ $Namespace => 'indices' ] );
+        xml_obj_children( $xml, $table,
+            tag   => 'index',
+            collection_tag => "indices",
+            methods => [qw/name type fields options/],
+        );
 
         #
         # Constraints
         #
-        $xml->startTag( [ $Namespace => 'constraints' ] );
-        for my $index ( $table->get_constraints ) {
-            debug "Constraint:",$index->name;
-            xml_obj($xml, $index,
-                tag     => "constraint",
-                end_tag => 1,
-                methods =>[qw/
-                    name type fields reference_table reference_fields
-                    on_delete on_update match_type expression options deferrable
-                    /],
-            );
-        }
-        $xml->endTag( [ $Namespace => 'constraints' ] );
+        xml_obj_children( $xml, $table,
+            tag   => 'constraint',
+            methods => [qw/
+                name type fields reference_table reference_fields
+                on_delete on_update match_type expression options deferrable
+            /],
+        );
 
         $xml->endTag( [ $Namespace => 'table' ] );
     }
+    $xml->endTag( [ $Namespace => 'tables' ] );
 
     #
     # Views
     #
-    for my $foo ( $schema->get_views ) {
-        xml_obj($xml, $foo, tag => "view",
-        methods => [qw/name sql fields order/], end_tag => 1 );
-    }
+    xml_obj_children( $xml, $schema,
+        tag   => 'view',
+        methods => [qw/name sql fields order/],
+    );
 
     #
     # Tiggers
     #
-    for my $foo ( $schema->get_triggers ) {
-        xml_obj($xml, $foo, tag => "trigger",
+    xml_obj_children( $xml, $schema,
+        tag    => 'trigger',
         methods => [qw/name database_event action on_table perform_action_when
-        fields order/], end_tag => 1 );
-    }
+            fields order/],
+    );
 
     #
     # Procedures
     #
-    for my $foo ( $schema->get_procedures ) {
-        xml_obj($xml, $foo, tag => "procedure",
-        methods => [qw/name sql parameters owner comments order/], end_tag=>1 );
-    }
+    xml_obj_children( $xml, $schema,
+        tag   => 'procedure',
+        methods => [qw/name sql parameters owner comments order/],
+    );
 
     $xml->endTag([ $Namespace => 'schema' ]);
     $xml->end;
@@ -303,11 +292,40 @@ sub produce {
     return $io;
 }
 
-# -------------------------------------------------------------------
+
+#
+# Takes and XML::Write object, Schema::* parent object, the tag name,
+# the collection name and a list of methods (of the children) to write as XML.
+# The collection name defaults to the name with an s on the end and is used to
+# work out the method to get the children with. eg a name of 'foo' gives a
+# collection of foos and gets the members using ->get_foos.
+#
+sub xml_obj_children {
+    my ($xml,$parent) = (shift,shift);
+    my %args = @_;
+    my ($name,$collection_name,$methods)
+        = @args{qw/tag collection_tag methods/};
+    $collection_name ||= "${name}s";
+    my $meth = "get_$collection_name";
+
+    my @kids = $parent->$meth;
+    #@kids || return;
+    $xml->startTag( [ $Namespace => $collection_name ] );
+    for my $obj ( @kids ) {
+        xml_obj($xml, $obj,
+            tag     => "$name",
+            end_tag => 1,
+            methods => $methods,
+        );
+    }
+    $xml->endTag( [ $Namespace => $collection_name ] );
+}
+
 #
 # Takes an XML::Writer, Schema::* object and list of method names
 # and writes the obect out as XML. All methods values are written as attributes
-# except for comments, sql and action which get written as child data elements.
+# except for the methods listed in @MAP_AS_ELEMENTS which get written as child
+# data elements.
 #
 # The attributes/tags are written in the same order as the method names are
 # passed.

@@ -6,59 +6,67 @@ Created on Fri Aug 15 15:08:18 2003
  -->
 <schema xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
 
-  <table order="1" name="Basic">
-    <fields>
-      <field
-          name="id"
-          is_primary_key="1" is_foreign_key="0"
-          size="10" data_type="int" is_auto_increment="1" order="1"
-          is_nullable="0">
-          <extra ZEROFILL="1" />
-      </field>
-      <field
-          name="title"
-          is_primary_key="0" is_foreign_key="0"
-          size="100" is_auto_increment="0" data_type="varchar"
-          order="2" default_value="hello" is_nullable="0" />
-      <field
-          name="description"
-          size="0" data_type="text" order="3" default_value="" />
-      <field name="email" size="255" data_type="varchar" order="4">
-          <extra foo="bar" hello="world" bar="baz" />
-      </field>
-      <field name="explicitnulldef" size="0" data_type="varchar" order="5" />
-      <field name="explicitemptystring" size="0"
-          data_type="varchar" order="6" default_value="" />
-      <field name="emptytagdef" size="0"
-          data_type="varchar" order="7" default_value="" >
-          <comments>Hello emptytagdef</comments>
-      </field>
-    </fields>
+  <tables>
+      <table order="1" name="Basic">
+        <fields>
+          <field
+              name="id"
+              is_primary_key="1" is_foreign_key="0"
+              size="10" data_type="int" is_auto_increment="1" order="1"
+              is_nullable="0">
+              <extra ZEROFILL="1" />
+          </field>
+          <field
+              name="title"
+              is_primary_key="0" is_foreign_key="0"
+              size="100" is_auto_increment="0" data_type="varchar"
+              order="2" default_value="hello" is_nullable="0" />
+          <field
+              name="description"
+              size="0" data_type="text" order="3" default_value="" />
+          <field name="email" size="255" data_type="varchar" order="4">
+              <extra foo="bar" hello="world" bar="baz" />
+          </field>
+          <field name="explicitnulldef" size="0" data_type="varchar" order="5" />
+          <field name="explicitemptystring" size="0"
+              data_type="varchar" order="6" default_value="" />
+          <field name="emptytagdef" size="0"
+              data_type="varchar" order="7" default_value="" >
+              <comments>Hello emptytagdef</comments>
+          </field>
+        </fields>
 
-    <indices>
-      <index name="titleindex" fields="title" type="NORMAL" />
-    </indices>
+        <indices>
+          <index name="titleindex" fields="title" type="NORMAL" />
+        </indices>
 
-    <constraints>
-      <constraint name="" type="PRIMARY KEY" fields="id"
-          reference_table="" options="" deferrable="1" match_type=""
-          expression="" on_update="" on_delete="" />
-      <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
-    </constraints>
-  </table>
+        <constraints>
+          <constraint name="" type="PRIMARY KEY" fields="id"
+              reference_table="" options="" deferrable="1" match_type=""
+              expression="" on_update="" on_delete="" />
+          <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
+        </constraints>
+      </table>
+  </tables>
 
-  <view name="email_list" fields="email" order="1">
-      <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
-  </view>
+  <views>
+      <view name="email_list" fields="email" order="1">
+          <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
+      </view>
+  </views>
 
-  <trigger name="foo_trigger" database_event="insert" on_table="foo"
-      perform_action_when="after" order="1">
-      <action>update modified=timestamp();</action>
-  </trigger>
+  <triggers>
+      <trigger name="foo_trigger" database_event="insert" on_table="foo"
+          perform_action_when="after" order="1">
+          <action>update modified=timestamp();</action>
+      </trigger>
+  </triggers>
 
-  <procedure name="foo_proc" order="1" owner="Nomar" parameters="foo,bar">
-      <sql>select foo from bar</sql>
-      <comments>Go Sox!</comments>
-  </procedure>
+  <procedures>
+      <procedure name="foo_proc" order="1" owner="Nomar" parameters="foo,bar">
+          <sql>select foo from bar</sql>
+          <comments>Go Sox!</comments>
+      </procedure>
+  </procedures>
 
 </schema>

@@ -30,7 +30,7 @@ local $SIG{__WARN__} = sub {
 #=============================================================================
 
 BEGIN {
-    maybe_plan(15,
+    maybe_plan(14,
         'XML::Writer',
         'Test::Differences',
         'SQL::Translator::Producer::XML::SQLFairy');
@@ -48,33 +48,38 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <table name="Basic" order="1">
-    <fields>
-      <field name="id" data_type="integer" size="10" is_nullable="0" is_auto_increment="1" is_primary_key="1" is_foreign_key="0" order="1">
-        <extra />
-        <comments>comment on id field</comments>
-      </field>
-      <field name="title" data_type="varchar" size="100" is_nullable="0" default_value="hello" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="2">
-        <extra />
-        <comments></comments>
-      </field>
-      <field name="description" data_type="text" size="65535" is_nullable="1" default_value="" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="3">
-        <extra />
-        <comments></comments>
-      </field>
-      <field name="email" data_type="varchar" size="255" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="4">
-        <extra />
-        <comments></comments>
-      </field>
-    </fields>
-    <indices>
-      <index name="titleindex" type="NORMAL" fields="title" options="" />
-    </indices>
-    <constraints>
-      <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
-      <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
-    </constraints>
-  </table>
+  <tables>
+    <table name="Basic" order="1">
+      <fields>
+        <field name="id" data_type="integer" size="10" is_nullable="0" is_auto_increment="1" is_primary_key="1" is_foreign_key="0" order="1">
+          <extra />
+          <comments>comment on id field</comments>
+        </field>
+        <field name="title" data_type="varchar" size="100" is_nullable="0" default_value="hello" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="2">
+          <extra />
+          <comments></comments>
+        </field>
+        <field name="description" data_type="text" size="65535" is_nullable="1" default_value="" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="3">
+          <extra />
+          <comments></comments>
+        </field>
+        <field name="email" data_type="varchar" size="255" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="4">
+          <extra />
+          <comments></comments>
+        </field>
+      </fields>
+      <indices>
+        <index name="titleindex" type="NORMAL" fields="title" options="" />
+      </indices>
+      <constraints>
+        <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+        <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+      </constraints>
+    </table>
+  </tables>
+  <views></views>
+  <triggers></triggers>
+  <procedures></procedures>
 </schema>
 EOXML
 
@@ -86,7 +91,7 @@ $obj = SQL::Translator->new(
     from           => "MySQL",
     to             => "XML-SQLFairy",
 );
-lives_ok {$xml = $obj->translate($file);} "Translate (attrib_values=>1) ran";
+$xml = $obj->translate($file) or die $obj->error;
 ok("$xml" ne ""                             ,"Produced something!");
 print "XML:\n$xml" if DEBUG;
 # Strip sqlf header with its variable date so we diff safely
@@ -104,9 +109,14 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <view name="foo_view" fields="name,age" order="1">
-    <sql>select name, age from person</sql>
-  </view>
+  <tables></tables>
+  <views>
+    <view name="foo_view" fields="name,age" order="1">
+      <sql>select name, age from person</sql>
+    </view>
+  </views>
+  <triggers></triggers>
+  <procedures></procedures>
 </schema>
 EOXML
 
@@ -148,9 +158,14 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <trigger name="foo_trigger" database_event="insert" on_table="foo" perform_action_when="after" order="1">
-    <action>update modified=timestamp();</action>
-  </trigger>
+  <tables></tables>
+  <views></views>
+  <triggers>
+    <trigger name="foo_trigger" database_event="insert" on_table="foo" perform_action_when="after" order="1">
+      <action>update modified=timestamp();</action>
+    </trigger>
+  </triggers>
+  <procedures></procedures>
 </schema>
 EOXML
 
@@ -195,10 +210,15 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <procedure name="foo_proc" parameters="foo,bar" owner="Nomar" order="1">
-    <sql>select foo from bar</sql>
-    <comments>Go Sox!</comments>
-  </procedure>
+  <tables></tables>
+  <views></views>
+  <triggers></triggers>
+  <procedures>
+    <procedure name="foo_proc" parameters="foo,bar" owner="Nomar" order="1">
+      <sql>select foo from bar</sql>
+      <comments>Go Sox!</comments>
+    </procedure>
+  </procedures>
 </schema>
 EOXML
 
@@ -242,16 +262,21 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <table name="Basic" order="2">
-    <fields>
-      <field name="foo" data_type="integer" size="10" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="5">
-        <extra ZEROFILL="1" />
-        <comments></comments>
-      </field>
-    </fields>
-    <indices></indices>
-    <constraints></constraints>
-  </table>
+  <tables>
+    <table name="Basic" order="2">
+      <fields>
+        <field name="foo" data_type="integer" size="10" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="5">
+          <extra ZEROFILL="1" />
+          <comments></comments>
+        </field>
+      </fields>
+      <indices></indices>
+      <constraints></constraints>
+    </table>
+  </tables>
+  <views></views>
+  <triggers></triggers>
+  <procedures></procedures>
 </schema>
 EOXML
 

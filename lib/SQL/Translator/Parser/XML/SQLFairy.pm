@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.8 2004-07-09 00:50:06 grommit Exp $
+# $Id: SQLFairy.pm,v 1.9 2004-08-19 14:08:59 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -103,7 +103,7 @@ To convert your old format files simply pass them through the translator;
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -127,7 +127,9 @@ sub parse {
     #
     # Work our way through the tables
     #
-    my @nodes = $xp->findnodes('/sqlf:schema/sqlf:table');
+    my @nodes = $xp->findnodes(
+        '/sqlf:schema/sqlf:table|/sqlf:schema/sqlf:tables/sqlf:table'
+    );
     for my $tblnode (
         sort {
             "".$xp->findvalue('sqlf:order|@order',$a)
@@ -207,7 +209,9 @@ sub parse {
     #
     # Views
     #
-    @nodes = $xp->findnodes('/sqlf:schema/sqlf:view');
+    @nodes = $xp->findnodes(
+        '/sqlf:schema/sqlf:view|/sqlf:schema/sqlf:views/sqlf:view'
+    );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:",
             qw/name sql fields order/
@@ -218,7 +222,9 @@ sub parse {
     #
     # Triggers
     #
-    @nodes = $xp->findnodes('/sqlf:schema/sqlf:trigger');
+    @nodes = $xp->findnodes(
+        '/sqlf:schema/sqlf:trigger|/sqlf:schema/sqlf:triggers/sqlf:trigger'
+    );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:",
         qw/name perform_action_when database_event fields on_table action order/
@@ -229,7 +235,9 @@ sub parse {
     #
     # Procedures
     #
-    @nodes = $xp->findnodes('/sqlf:schema/sqlf:procedure');
+    @nodes = $xp->findnodes(
+       '/sqlf:schema/sqlf:procedure|/sqlf:schema/sqlf:procedures/sqlf:procedure'
+    );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:",
         qw/name sql parameters owner comments order/
