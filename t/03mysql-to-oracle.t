@@ -22,4 +22,6 @@ my $tr = SQL::Translator->new(parser   => "MySQL",
                               #producer => sub { Dumper($_[1]) }
                              );
 
-print $tr->translate(\$create);
+print "not " unless ($tr->translate(\$create));
+print "ok 1 # pointless test -- plz fix me!\n";
+
