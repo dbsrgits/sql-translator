@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.3 2003-02-25 02:03:55 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.4 2003-02-25 03:24:56 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -42,7 +42,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -62,7 +62,7 @@ my $parser; # should we do this?  There's no programmic way to
 
 $GRAMMAR = q!
 
-{ our ( %tables, $table_order ) }
+{ our ( %tables, $table_order, $current_table ) }
 
 startrule : statement(s) { \%tables }
 
@@ -76,6 +76,7 @@ drop : /drop/i WORD(s) ';'
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
   {
    my $table_name                       = $item{'table_name'};
+   $current_table                       = $item{'table_name'};
    $tables{ $table_name }{'order'}      = ++$table_order;
    $tables{ $table_name }{'table_name'} = $table_name;
 
@@ -312,7 +313,13 @@ fulltext_index : fulltext key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')
     }
 
 name_with_opt_paren : NAME parens_value_list(s?)
-    { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
+    {
+        if($item[2][0]) {
+          "$item[1]($item[2][0][0])"
+        } else {
+          $item[1];
+        }
+    }
 
 fulltext : /fulltext/i { 1 }
 
@@ -344,6 +351,8 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { 'NULL' }
 
 !;
+
+#        $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1];
 
 # -------------------------------------------------------------------
 sub parse {
