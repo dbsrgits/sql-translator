@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.23 2003-08-04 15:20:21 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.24 2003-08-16 15:56:58 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -85,6 +85,9 @@ sub produce {
             # data type and size
             my $data_type = $field->data_type;
             my @size      = $field->size;
+            my %extra     = $field->extra;
+            my $list      = $extra{'list'} || [];
+            my $commalist = "'" . join("','", @$list) . "'"; # \todo deal with embedded quotes
 
             #
             # Oracle "number" type -- figure best MySQL type
@@ -109,12 +112,14 @@ sub produce {
             }
 
             $field_def .= " $data_type";
-            if ( defined $size[0] && $size[0] > 0 ) {
+            
+            if ( lc $data_type eq 'enum' ) {
+                $field_def .= '(' . $commalist . ')';
+			} elsif ( defined $size[0] && $size[0] > 0 ) {
                 $field_def .= '(' . join( ', ', @size ) . ')';
             }
 
             # MySQL qualifiers
-            my %extra = $field->extra;
             for my $qual ( qw[ binary unsigned zerofill ] ) {
                 my $val = $extra{ $qual || uc $qual } or next;
                 $field_def .= " $val";
@@ -144,7 +149,7 @@ sub produce {
         my @index_defs;
         for my $index ( $table->get_indices ) {
             push @index_defs, join( ' ', 
-                $index->type,
+                lc $index->type eq 'normal' ? 'INDEX' : $index->type,
                 $index->name,
                 '(' . join( ', ', $index->fields ) . ')'
             );
