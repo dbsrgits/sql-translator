@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::Rational;
 
 # -------------------------------------------------------------------
-# $Id: Rational.pm,v 1.3 2003-10-02 01:40:06 grommit Exp $
+# $Id: Rational.pm,v 1.4 2003-10-06 13:29:45 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -128,11 +128,6 @@ sub _add_fkey_refs {
 
 	# Find the association ends
 	my ($end) = grep { $_->{name} eq $op->{name} } @{$class->{associationEnds}};
-	#my $end;
-	#foreach $end ( @{$class->{associationEnds}} ) {
-	#	warn "END: $end->{name} $op->{name}\n";
-	#	last if $end->{name} eq $op->{name};
-	#}
 	return unless $end;
 	# Find the fkey op
 	my ($refop) = grep { $_->{name} eq $end->{otherEnd}{name} }
