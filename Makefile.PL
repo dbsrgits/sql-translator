@@ -24,9 +24,11 @@ check_version('Parse::RecDescent'       => 1.94 => 0);
 check_version('Pod::Usage'              => 0    => 0);
 check_version('Spreadsheet::ParseExcel' => 0    => 1);
 check_version('Test::More'              => 0    => 0);
+check_version('Test::Exception'         => 0    => 0);
 check_version('Text::ParseWords'        => 0    => 0);
 check_version('Text::RecordParser'      => 0.02 => 0);
 check_version('XML::Writer'             => 0    => 1);
+check_version('XML::XPath'              => 0    => 1);
 
 print "\n";
 
