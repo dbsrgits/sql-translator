@@ -38,9 +38,6 @@ $obj = SQL::Translator->new(
     from           => "XML-SQLFairy",
     filename       => "$Bin/data/xml/schema-basic.xml",
     to             => "Producer::BaseTest::produce",
-    producer_args  => {
-        ttfile => "$Bin/data/template/basic.tt",
-    },
 );
 my $out;
 lives_ok { $out = $obj->translate; }  "Translate ran";

@@ -9,7 +9,8 @@ use base qw/SQL::Translator::Producer::TT::Base/;
 # Make sure we use our new class as the producer
 sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
-sub tt_schema { local $/ = undef; \<DATA>; }
+# Note: we don't need to impliment tt_schema as the default will use the DATA
+# section by default.
 
 sub tt_vars { ( foo => "bar" ); }
 
