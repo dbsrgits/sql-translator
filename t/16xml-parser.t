@@ -10,7 +10,7 @@
 # Tests that;
 #
 
-use Test::More tests => 78;
+use Test::More;
 use Test::Exception;
 
 use strict;
@@ -68,6 +68,8 @@ sub test_field {
 # Testing 1,2,3,4...
 #=============================================================================
 
+plan tests => 89;
+
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
@@ -97,9 +99,9 @@ is_deeply( \@tblnames, [qw/Basic/], "tables");
 # Basic
 my $tbl = $scma->get_table("Basic");
 is $tbl->order, 1, "Basic->order";
-is_deeply( [map {$_->name} $tbl->get_fields],
-    [qw/id title description email explicitnulldef explicitemptystring/] , 
-    "Table Basic's fields");
+is_deeply( [map {$_->name} $tbl->get_fields], [qw/
+    id title description email explicitnulldef explicitemptystring singletagdef
+/] , "Table Basic's fields");
 test_field($tbl->get_field("id"),{
     name => "id",
     order => 1,
@@ -144,6 +146,13 @@ test_field($tbl->get_field("explicitnulldef"),{
 test_field($tbl->get_field("explicitemptystring"),{
     name => "explicitemptystring",
     order => 6,
+    data_type => "varchar",
+    default_value => "",
+    is_nullable => 1,
+});
+test_field($tbl->get_field("singletagdef"),{
+    name => "singletagdef",
+    order => 7,
     data_type => "varchar",
     default_value => "",
     is_nullable => 1,

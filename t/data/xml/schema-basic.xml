@@ -53,7 +53,14 @@ Created on Fri Aug  1 11:24:58 2003
         <sqlf:data_type>varchar</sqlf:data_type>
         <sqlf:is_nullable>1</sqlf:is_nullable>
         <sqlf:default_value>EMPTY_STRING</sqlf:default_value>
-        <sqlf:order>5</sqlf:order>
+        <sqlf:order>6</sqlf:order>
+      </sqlf:field>
+      <sqlf:field>
+        <sqlf:name>singletagdef</sqlf:name>
+        <sqlf:data_type>varchar</sqlf:data_type>
+        <sqlf:is_nullable>1</sqlf:is_nullable>
+        <sqlf:default_value/>
+        <sqlf:order>7</sqlf:order>
       </sqlf:field>
     </sqlf:fields>
     

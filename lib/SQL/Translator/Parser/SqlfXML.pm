@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SqlfXML;
 
 # -------------------------------------------------------------------
-# $Id: SqlfXML.pm,v 1.2 2003-08-06 22:08:16 grommit Exp $
+# $Id: SqlfXML.pm,v 1.3 2003-08-07 14:49:24 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -59,13 +59,15 @@ tags or EMPTY_STRING for a zero lenth string. NULL for an explicit null
  <sqlf:default_value>EMPTY_STRING</sqlf:default_value>   <!-- Empty string -->
  <sqlf:default_value>NULL</sqlf:default_value>           <!-- NULL -->
  
+ <sqlf:default_value/>            <!-- Empty string BUT DONT USE! See BUGS -->
+ 
 =cut
 
 use strict;
 use warnings;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -176,10 +178,19 @@ __END__
 
 =pod
 
+=head1 BUGS
+
+B<Single Tags> e.g. <sqlf:default_value/> Will be parsed as "" and hence also
+false. This is a bit counter intuative for some tags as seeing 
+<sqlf:is_nullable /> you might think that it was set when it fact it wouldn't 
+be. So for now it is safest not to use them until their handling by the parser
+is sorted out.
+
 =head1 TODO
 
  * Support sqf:options.
  * Test forign keys are parsed ok.
+ * Sort out sane handling of <foo/> vs <foo></foo> vs it not being there.
  * Control over defaulting of non-existant tags.
 
 =head1 AUTHOR

@@ -153,6 +153,21 @@ Fields
         extra:                 
         table:                 Basic
     
+    singletagdef
+        data_type:             varchar
+        size:                  0
+        is_nullable:           1
+        default_value:         
+        is_primary_key:        0
+        is_unique:             0
+        is_auto_increment:     0
+        is_foreign_key:        0
+        foreign_key_reference: 
+        is_valid:              1
+        order:                 7
+        extra:                 
+        table:                 Basic
+    
 
 Indices
     titleindex
