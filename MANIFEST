@@ -9,7 +9,6 @@ README
 TODO
 bin/sqlt
 bin/sqlt-diagram
-bin/sqlt-diff
 bin/sqlt-dumper
 bin/sqlt-graph
 bin/sqlt.cgi
