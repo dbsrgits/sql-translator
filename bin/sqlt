@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.12 2004-02-06 17:48:16 kycl4rk Exp $
+# $Id: sqlt,v 1.13 2004-03-09 19:11:30 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -72,6 +72,15 @@ To translate a schema:
     --imap-file        Filename to put image map data
     --imap-url         URL to use for image map
 
+  Dumper Producer Options:
+
+    --skip             Comma-separated list of tables to skip
+    --skiplike         Regex for tables to skip
+    --dumper-db-user   Database user for dumper script
+    --dumper-db-pass   Database password for dumper script
+    --dumper-dsn       DSN for dumper script
+    --add-truncate     Add "TRUNCATE TABLE" statements for each table
+
   HTML/POD Producer Options:
 
     --pretty           Use CGI::Pretty for the output
@@ -112,7 +121,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -139,32 +148,44 @@ my $attrib_values;    # use XML attributes instead of tags
 my $dsn;              # DBI parser 
 my $db_user;          # DBI parser 
 my $db_password;      # DBI parser 
+my $skip;             
+my $skiplike;        
+my $dumper_db_user; 
+my $dumper_db_pass;
+my $dumper_dsn;
+my $add_truncate;
 
 GetOptions(
-    'add-drop-table'  => \$add_drop_table,
-    'attrib-values'   => \$attrib_values,
-    'd|debug'         => \$debug,
-    'emit-empty-tags' => \$emit_empty_tags,
-    'f|from|parser:s' => \$from,
-    'fs:s'            => \$field_separator,
-    'h|help'          => \$help,
-    'imap-file:s'     => \$imap_file,
-    'imap-url:s'      => \$imap_url,
-    't|to|producer:s' => \$to,
-    'l|list'          => \$list,
-    'pretty!'         => \$pretty,
-    'no-comments'     => \$no_comments,
-    'no-scan'         => \$no_scan,
-    'no-trim'         => \$no_trim,
-    'rs:s'            => \$record_separator,
-    'show-warnings'   => \$show_warnings,
-    'template:s'      => \$template,
-    'title:s'         => \$title,
-    'trace'           => \$trace,
-    'v|validate'      => \$validate,
-    'dsn:s'           => \$dsn,
-    'db-user:s'       => \$db_user,
-    'db-password:s'   => \$db_password,
+    'add-drop-table'   => \$add_drop_table,
+    'attrib-values'    => \$attrib_values,
+    'd|debug'          => \$debug,
+    'emit-empty-tags'  => \$emit_empty_tags,
+    'f|from|parser:s'  => \$from,
+    'fs:s'             => \$field_separator,
+    'h|help'           => \$help,
+    'imap-file:s'      => \$imap_file,
+    'imap-url:s'       => \$imap_url,
+    't|to|producer:s'  => \$to,
+    'l|list'           => \$list,
+    'pretty!'          => \$pretty,
+    'no-comments'      => \$no_comments,
+    'no-scan'          => \$no_scan,
+    'no-trim'          => \$no_trim,
+    'rs:s'             => \$record_separator,
+    'show-warnings'    => \$show_warnings,
+    'template:s'       => \$template,
+    'title:s'          => \$title,
+    'trace'            => \$trace,
+    'v|validate'       => \$validate,
+    'dsn:s'            => \$dsn,
+    'db-user:s'        => \$db_user,
+    'db-password:s'    => \$db_password,
+    'dumper-dsn:s'     => \$dumper_dsn,
+    'dumper-db-user:s' => \$dumper_db_user,
+    'dumper-db-pass:s' => \$dumper_db_pass,
+    'skip:s'           => \$skip,
+    'skiplike:s'       => \$skiplike,
+    'add_truncate'     => \$add_truncate,
 ) or pod2usage(2);
 
 my @files = @ARGV; # source files
@@ -203,6 +224,12 @@ my $translator           =  SQL::Translator->new(
         title            => $title,
         emit_empty_tags  => $emit_empty_tags,
         attrib_values    => $attrib_values,
+        dsn              => $dumper_dsn,
+        db_user          => $dumper_db_user,
+        db_password      => $dumper_db_pass,
+        skip             => $skip,
+        skiplike         => $skiplike,
+        add_truncate     => $add_truncate,
     },
 );
 
