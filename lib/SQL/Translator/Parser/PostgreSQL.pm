@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.8 2003-02-25 21:58:46 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.9 2003-02-26 05:17:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -84,11 +84,30 @@ Index:
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
       [ WHERE predicate ]
 
+Alter table:
+
+  ALTER TABLE [ ONLY ] table [ * ]
+      ADD [ COLUMN ] column type [ column_constraint [ ... ] ]
+  ALTER TABLE [ ONLY ] table [ * ]
+      ALTER [ COLUMN ] column { SET DEFAULT value | DROP DEFAULT }
+  ALTER TABLE [ ONLY ] table [ * ]
+      ALTER [ COLUMN ] column SET STATISTICS integer
+  ALTER TABLE [ ONLY ] table [ * ]
+      RENAME [ COLUMN ] column TO newcolumn
+  ALTER TABLE table
+      RENAME TO new_table
+  ALTER TABLE table
+      ADD table_constraint_definition
+  ALTER TABLE [ ONLY ] table 
+          DROP CONSTRAINT constraint { RESTRICT | CASCADE }
+  ALTER TABLE table
+          OWNER TO new_owner 
+
 =cut
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -122,13 +141,17 @@ eofile : /^\Z/
 
 statement : create
   | comment
+  | alter
   | grant
   | revoke
   | drop
   | connect
+  | set
   | <error>
 
 connect : /^\s*\\\connect.*\n/
+
+set : /SET/ /[^;]*/ ';'
 
 revoke : /revoke/i WORD(s /,/) /on/i table_name /from/i name_with_opt_quotes(s /,/) ';'
     {
@@ -152,6 +175,9 @@ grant : /grant/i WORD(s /,/) /on/i table_name /to/i name_with_opt_quotes(s /,/) 
 
 drop : /drop/i /[^;]*/ ';'
 
+#
+# Create table.
+#
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     {
         my $table_name                       = $item{'table_name'};
@@ -196,6 +222,9 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         1;
     }
 
+#
+# Create index.
+#
 create : /create/i unique(?) /(index|key)/i index_name /on/i table_name using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
     {
         push @{ $tables{ $item{'table_name'} }{'indices'} },
@@ -207,6 +236,11 @@ create : /create/i unique(?) /(index|key)/i index_name /on/i table_name using_me
             }
         ;
     }
+
+#
+# Create anything else (e.g., domain, function, etc.)
+#
+create : /create/i WORD /[^;]+/ ';'
 
 using_method : /using/i WORD { $item[2] }
 
@@ -302,7 +336,7 @@ table_name : name_with_opt_quotes
 
 field_name : name_with_opt_quotes
 
-name_with_opt_quotes : double_quote(?) WORD double_quote(?) { $item[2] }
+name_with_opt_quotes : double_quote(?) NAME double_quote(?) { $item[2] }
 
 double_quote: /"/
 
@@ -392,8 +426,8 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
             match_type       => $desc->{'match_type'}[0],
-            on_delete_do     => $desc->{'on_delete_do'}[0],
-            on_update_do     => $desc->{'on_update_do'}[0],
+            on_delete_do     => $desc->{'on_delete_do'},
+            on_update_do     => $desc->{'on_update_do'},
             comments         => [ @comments ],
         } 
     }
@@ -446,11 +480,23 @@ match_type : /match full/i { 'match_full' }
     |
     /match partial/i { 'match_partial' }
 
-on_delete_do : /on delete/i WORD 
+on_delete_do : /on delete/i WORD(s)
     { $item[2] }
 
-on_update_do : /on update/i WORD
+on_update_do : /on update/i WORD(s)
     { $item[2] }
+
+alter : alter_table table_name /add/i table_constraint ';' 
+    { 
+        my $table_name = $item[2];
+        my $constraint = $item[4];
+        $constraint->{'type'} = $constraint->{'constraint_type'};
+        push @{ $tables{ $table_name }{'constraints'} }, $constraint;
+    }
+
+alter_table : /alter/i /table/i only(?)
+
+only : /only/i
 
 create_table : /create/i /table/i
 
@@ -465,10 +511,6 @@ default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
             value     => $val,
         }
     }
-
-auto_inc : /auto_increment/i { 1 }
-
-primary_key : /primary/i /key/i { 1 }
 
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
@@ -498,6 +540,8 @@ COMMA : ','
 NAME    : "`" /\w+/ "`"
     { $item[2] }
     | /\w+/
+    { $item[1] }
+    | /[\$\w]+/
     { $item[1] }
 
 VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
