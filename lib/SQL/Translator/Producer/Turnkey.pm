@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.20 2004-01-15 20:40:15 boconnor Exp $
+# $Id: Turnkey.pm,v 1.21 2004-01-15 20:49:30 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -59,7 +59,7 @@ sub produce {
 	my %meta          = (
 						 format_fk => $t->format_fk_name,
 						 format_package => $t->format_package_name,
-						 format_module => $t->format_module_name,
+						 format_table => $t->format_table_name,
 						 template  => $args->{'template'}      || '',
 						 baseclass => $baseclass,
 						 db_dsn    => $args->{'db_dsn'}       || '',
@@ -464,7 +464,7 @@ EOF
 <!-- Atom Classes -->
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
-  <atom class="Turnkey::Atom::[% format_module(node.key) %]"  name="[% format_module(node.key) %]" xlink:label="[% format_module(node.key) %]Atom"/>
+  <atom class="Turnkey::Atom::[% format_table(node.key) %]"  name="[% format_table(node.key) %]" xlink:label="[% format_table(node.key) %]Atom"/>
 [%- END -%]
 [% END %]
 
@@ -473,12 +473,12 @@ EOF
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
   [% FOREACH link_atom = focus_atom.value.hyperedges %]
-  <atomatombinding xlink:from="#[% format_module(focus_atom.key) %]Atom" xlink:to="#[% format_module(link_atom.thatnode.table.name) %]Atom" xlink:label="[% format_module(focus_atom.key) %]Atom2[% format_module(link_atom.thatnode.table.name) %]Atom"/>
+  <atomatombinding xlink:from="#[% format_table(focus_atom.key) %]Atom" xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom" xlink:label="[% format_table(focus_atom.key) %]Atom2[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [%- END -%]
   [% previous = "" %]
   [% FOREACH link_atom = focus_atom.value.edges %]
   [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name && link_atom.thatnode.table.name != "" %]
-  <atomatombinding xlink:from="#[% format_module(focus_atom.key) %]Atom" xlink:to="#[% format_module(link_atom.thatnode.table.name) %]Atom" xlink:label="[% format_module(focus_atom.key) %]Atom2[% format_module(link_atom.thatnode.table.name) %]Atom"/>
+  <atomatombinding xlink:from="#[% format_table(focus_atom.key) %]Atom" xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom" xlink:label="[% format_table(focus_atom.key) %]Atom2[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [% previous = link_atom.thatnode.table.name %]
   [% END %]
  [%- END %]
@@ -489,18 +489,18 @@ EOF
 <atomcontainerbindings>
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
-  <atomcontainerbindingslayout xlink:label="Turnkey::Model::[% format_module(focus_atom.key) %]">
+  <atomcontainerbindingslayout xlink:label="Turnkey::Model::[% format_table(focus_atom.key) %]">
   [% FOREACH link_atom = focus_atom.value.hyperedges %]
-    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_module(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_module(link_atom.thatnode.table.name) %]Atom"/>
+    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [%- END%]
   [% previous = "" %]
   [% FOREACH link_atom = focus_atom.value.edges %]
   [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name %]
-    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_module(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_module(link_atom.thatnode.table.name) %]Atom"/>
+    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [% previous = link_atom.thatnode.table.name %]
   [% END %]
   [%- END %]
-    <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% format_module(focus_atom.key) %]Atom"    xlink:to="#[% format_module(focus_atom.key) %]Atom"/>
+    <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% format_table(focus_atom.key) %]Atom"    xlink:to="#[% format_table(focus_atom.key) %]Atom"/>
   </atomcontainerbindingslayout>
   [%- END %]
 [% END %]
@@ -513,7 +513,7 @@ EOF
 <classbindings>
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
-   <classbinding class="Turnkey::Model::[% format_module(focus_atom.key) %]" plugin="#[% format_module(focus_atom.key) %]Atom" rank="0"/>
+   <classbinding class="Turnkey::Model::[% format_table(focus_atom.key) %]" plugin="#[% format_table(focus_atom.key) %]Atom" rank="0"/>
 [%- END -%]
 [% END %]
 </classbindings>
@@ -590,8 +590,8 @@ EOF
 [% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
-    [% CASE '[- format_module(node.key) -]' %]
-      [% render[- format_module(node.key) -]Atom(atom,dbobject) %]
+    [% CASE '[- format_table(node.key) -]' %]
+      [% render[- format_table(node.key) -]Atom(atom,dbobject) %]
   [- END -]
   [- END -]
     [% CASE DEFAULT %]
@@ -599,13 +599,13 @@ EOF
 [% END %]
 [- FOREACH node = nodes -]
 [- IF !node.value.is_trivial_link -]
-[% MACRO render[- format_module(node.key) -]Atom(atom, dbobject) BLOCK %]
+[% MACRO render[- format_table(node.key) -]Atom(atom, dbobject) BLOCK %]
   [% lstArr = atom.render(dbobject) %]
   [% rowcount = 0 %]
   [% IF atom.focus == "yes" %]
   [% FOREACH record = lstArr %]
     [% fields = record.data %]
-    [- pname = format_module(node.key) -]
+    [- pname = format_table(node.key) -]
     [- pkey = "Turnkey::Model::${pname}" -]
     [- FOREACH field = node.value.data_fields -]
     [- IF field != "1" -]
