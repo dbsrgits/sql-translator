@@ -7,3 +7,8 @@
 
 -   Add parsers and producers for Torque XML/DB schema
     (http://db.apache.org/torque/)
+
+-   Allow xSV/Excel parsers to produce INSERT statements of data in source
+    files, properly quoting strings
+
+-   Allow pass through of INSERT statements (e.g., default data)
