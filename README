@@ -1,0 +1,252 @@
+NAME
+    SQL::Translator - convert schema from one database to another
+
+SYNOPSIS
+      use SQL::Translator;
+
+      my $translator     = SQL::Translator->new(
+          xlate          => $xlate || {},    # Overrides for field translation
+          debug          => $debug,          # Print debug info
+          trace          => $trace,          # Print Parse::RecDescent trace
+          no_comments    => $no_comments,    # Don't include comments in output
+          show_warnings  => $show_warnings,  # Print name mutations, conflicts
+          add_drop_table => $add_drop_table, # Add "drop table" statements
+      );
+
+      my $output     = $translator->translate(
+          from       => "MySQL",
+          to         => "Oracle",
+          filename   => $file,
+      ) or die $translator->error;
+
+      print $output;
+
+DESCRIPTION
+    This module attempts to simplify the task of converting one database
+    create syntax to another through the use of Parsers (which understand
+    the source format) and Producers (which understand the destination
+    format). The idea is that any Parser can be used with any Producer in
+    the conversion process. So, if you wanted Postgres-to-Oracle, you would
+    use the Postgres parser and the Oracle producer.
+
+CONSTRUCTOR
+    The constructor is called new, and accepts a optional hash of options.
+    Valid options are:
+
+    parser (aka from)
+    parser_args
+    producer (aka to)
+    producer_args
+    filename (aka file)
+    data
+    debug
+    All options are, well, optional; these attributes can be set via
+    instance methods. Internally, they are; no (non-syntactical) advantage
+    is gained by passing options to the constructor.
+
+METHODS
+  add_drop_table
+
+    Toggles whether or not to add "DROP TABLE" statements just before the
+    create definitions.
+
+  custom_translate
+
+    Allows the user to override default translation of fields. For example,
+    if a MySQL "text" field would normally be converted to a "long" for
+    Oracle, the user could specify to change it to a "CLOB." Accepts a
+    hashref where keys are the "from" value and values are the "to," returns
+    the current value of the field.
+
+  no_comments
+
+    Toggles whether to print comments in the output. Accepts a true or false
+    value, returns the current value.
+
+  producer
+
+    The producer method is an accessor/mutator, used to retrieve or define
+    what subroutine is called to produce the output. A subroutine defined as
+    a producer will be invoked as a function (*not a method*) and passed 2
+    parameters: its container SQL::Translator instance and a data structure.
+    It is expected that the function transform the data structure to a
+    string. The SQL::Transformer instance is provided for informational
+    purposes; for example, the type of the parser can be retrieved using the
+    parser_type method, and the error and debug methods can be called when
+    needed.
+
+    When defining a producer, one of several things can be passed in: A
+    module name (e.g., My::Groovy::Producer), a module name relative to the
+    SQL::Translator::Producer namespace (e.g., MySQL), a module name and
+    function combination (My::Groovy::Producer::transmogrify), or a
+    reference to an anonymous subroutine. If a full module name is passed in
+    (for the purposes of this method, a string containing "::" is considered
+    to be a module name), it is treated as a package, and a function called
+    "produce" will be invoked: $modulename::produce. If $modulename cannot
+    be loaded, the final portion is stripped off and treated as a function.
+    In other words, if there is no file named
+    My/Groovy/Producer/transmogrify.pm, SQL::Translator will attempt to load
+    My/Groovy/Producer.pm and use transmogrify as the name of the function,
+    instead of the default "produce".
+
+      my $tr = SQL::Translator->new;
+
+      # This will invoke My::Groovy::Producer::produce($tr, $data)
+      $tr->producer("My::Groovy::Producer");
+
+      # This will invoke SQL::Translator::Producer::Sybase::produce($tr, $data)
+      $tr->producer("Sybase");
+
+      # This will invoke My::Groovy::Producer::transmogrify($tr, $data),
+      # assuming that My::Groovy::Producer::transmogrify is not a module
+      # on disk.
+      $tr->producer("My::Groovy::Producer::transmogrify");
+
+      # This will invoke the referenced subroutine directly, as
+      # $subref->($tr, $data);
+      $tr->producer(\&my_producer);
+
+    There is also a method named producer_type, which is a string containing
+    the classname to which the above produce function belongs. In the case
+    of anonymous subroutines, this method returns the string "CODE".
+
+    Finally, there is a method named producer_args, which is both an
+    accessor and a mutator. Arbitrary data may be stored in name => value
+    pairs for the producer subroutine to access:
+
+      sub My::Random::producer {
+          my ($tr, $data) = @_;
+          my $pr_args = $tr->producer_args();
+
+          # $pr_args is a hashref.
+
+    Extra data passed to the producer method is passed to producer_args:
+
+      $tr->producer("xSV", delimiter => ',\s*');
+
+      # In SQL::Translator::Producer::xSV:
+      my $args = $tr->producer_args;
+      my $delimiter = $args->{'delimiter'}; # value is ,\s*
+
+  parser
+
+    The parser method defines or retrieves a subroutine that will be called
+    to perform the parsing. The basic idea is the same as that of producer
+    (see above), except the default subroutine name is "parse", and will be
+    invoked as $module_name::parse($tr, $data). Also, the parser subroutine
+    will be passed a string containing the entirety of the data to be
+    parsed.
+
+      # Invokes SQL::Translator::Parser::MySQL::parse()
+      $tr->parser("MySQL");
+
+      # Invokes My::Groovy::Parser::parse()
+      $tr->parser("My::Groovy::Parser");
+
+      # Invoke an anonymous subroutine directly
+      $tr->parser(sub {
+        my $dumper = Data::Dumper->new([ $_[1] ], [ "SQL" ]);
+        $dumper->Purity(1)->Terse(1)->Deepcopy(1);
+        return $dumper->Dump;
+      });
+
+    There is also parser_type and parser_args, which perform analogously to
+    producer_type and producer_args
+
+  show_warnings
+
+    Toggles whether to print warnings of name conflicts, identifier
+    mutations, etc. Probably only generated by producers to let the user
+    know when something won't translate very smoothly (e.g., MySQL "enum"
+    fields into Oracle). Accepts a true or false value, returns the current
+    value.
+
+  translate
+
+    The translate method calls the subroutines referenced by the parser and
+    producer data members (described above). It accepts as arguments a
+    number of things, in key => value format, including (potentially) a
+    parser and a producer (they are passed directly to the parser and
+    producer methods).
+
+    Here is how the parameter list to translate is parsed:
+
+    *   1 argument means it's the data to be parsed; which could be a string
+        (filename) or a refernce to a scalar (a string stored in memory), or
+        a reference to a hash, which is parsed as being more than one
+        argument (see next section).
+
+          # Parse the file /path/to/datafile
+          my $output = $tr->translate("/path/to/datafile");
+
+          # Parse the data contained in the string $data
+          my $output = $tr->translate(\$data);
+
+    *   More than 1 argument means its a hash of things, and it might be
+        setting a parser, producer, or datasource (this key is named
+        "filename" or "file" if it's a file, or "data" for a SCALAR
+        reference.
+
+          # As above, parse /path/to/datafile, but with different producers
+          for my $prod ("MySQL", "XML", "Sybase") {
+              print $tr->translate(
+                        producer => $prod,
+                        filename => "/path/to/datafile",
+                    );
+          }
+
+          # The filename hash key could also be:
+              datasource => \$data,
+
+        You get the idea.
+
+  filename, data
+
+    Using the filename method, the filename of the data to be parsed can be
+    set. This method can be used in conjunction with the data method, below.
+    If both the filename and data methods are invoked as mutators, the data
+    set in the data method is used.
+
+        $tr->filename("/my/data/files/create.sql");
+
+    or:
+
+        my $create_script = do {
+            local $/;
+            open CREATE, "/my/data/files/create.sql" or die $!;
+            <CREATE>;
+        };
+        $tr->data(\$create_script);
+
+    filename takes a string, which is interpreted as a filename. data takes
+    a reference to a string, which is used as the data to be parsed. If a
+    filename is set, then that file is opened and read when the translate
+    method is called, as long as the data instance variable is not set.
+
+  trace
+
+    Turns on/off the tracing option of Parse::RecDescent.
+
+AUTHORS
+    Ken Y. Clark, <kclark@cpan.org>, darren chamberlain <darren@cpan.org>,
+    Chris Mungall <cjm@fruitfly.org>, Allen Day
+    <allenday@users.sourceforge.net>
+
+COPYRIGHT
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; version 2.
+
+    This program is distributed in the hope that it will be useful, but
+    WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+SEE ALSO
+    the perl manpage, the SQL::Translator::Parser manpage, the
+    SQL::Translator::Producer manpage, the Parse::RecDescent manpage
+
