@@ -31,12 +31,15 @@
 *   Expanded test suite
 
 # -----------------------------------------------------------
-# 0.03    2003-??-??
+# 0.03    2003-11-06
 # -----------------------------------------------------------
 
-*   Added parsers: XML::SQLFairy and Sybase
+*   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL, 
+    DBI-PostgreSQL, DBI-SQLite, DBI-Sybase, Storable, YAML
 
-*   Added producers: XML::SQLFairy, TTSchema
+*   Added producers: XML::SQLFairy, TTSchema, Storable, YAML
+
+*   HTML producer now uses stylesheets to allow easy customization of colors
 
 *   Many bug fixes to most every module
 
@@ -48,4 +51,4 @@
 
 *   Changes all included script names to start with "sqlt"
 
-*   Capturing and printing most table and field comments
+*   Added capturing and printing most embedded table and field comments
