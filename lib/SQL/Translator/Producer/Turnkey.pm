@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.39 2004-04-10 03:01:37 allenday Exp $
+# $Id: Turnkey.pm,v 1.40 2004-04-14 06:46:15 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -138,7 +138,7 @@ sub produce {
 			  $i++;
 			}
 		  }
-warn Dumper($hyperedge) if $hyperedge->type eq 'many2many';
+#warn Dumper($hyperedge) if $hyperedge->type eq 'many2many';
 		  $node_from->push_hyperedges($hyperedge);
 		}
 	  }
@@ -418,8 +418,8 @@ sub _render_record {
 
 	#data
 	[% FOREACH value = node.value.data_fields %]
-		[% IF value != 1 %]
-	$field_hash->{[% value %]} = $dbobject->[% value %]();
+	[% IF value != 1 %]
+	$field_hash->{[% value.key %]} = $dbobject->[% value.key %]();
 		[% END %]
 	[% END %]
 
@@ -446,7 +446,7 @@ sub _render_list {
 		#data
 	[% FOREACH value = node.value.data_fields %]
 		[% IF value != 1 %]
-		$field_hash->{[% value %]} = $object->[% value %]();
+		$field_hash->{[% value.key %]} = $object->[% value.key %]();
 		[% END %]
 	[% END %]
 
