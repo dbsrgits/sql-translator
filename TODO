@@ -3,14 +3,6 @@
     (via YAML or Storable) using the DBI-Sybase parser and then
     manipulating that as you see fit. 
 
-*   Some way to deeply check to schema objects, e.g., for testing I
-    parse a MySQL schema, translate to Oracle, then parse the created
-    Oracle schema and want to check the two schema objects.  I've
-    started a script called "sqlt-diff" to diff two schemas, but it's 
-    not included with the 0.03 release.  Submit ideas on how this
-    should work and what it should create (e.g., text reports and ALTER 
-    statements) to the list.
-
 *   Add more DBI parsers!  These have the potential to be very
     thorough and far faster than parsing text files with
     Parse::RecDescent.
@@ -30,8 +22,7 @@
 
 *   Integrate more with some standard XML schema representations,
     maybe like Torque DB (http://db.apache.org/torque/).  We've
-    started messing around with XMI, too, but that wasn't quite usable
-    for the 0.03 release.
+    started messing around with XMI, too, but it isn't quite usable.
 
 *   Possibly write a basic ANSI-92 SQL parser which could be extended
     when writing other new parsers.
