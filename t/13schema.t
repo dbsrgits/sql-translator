@@ -80,7 +80,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f1->data_type, '', 'Field data type is blank' );
     is( $f1->size, 0, 'Field size is "0"' );
     is( $f1->is_primary_key, '0', 'Field is_primary_key is false' );
-    is( $f1->nullable, 1, 'Field can be NULL' );
+    is( $f1->is_nullable, 1, 'Field can be NULL' );
     is( $f1->default_value, undef, 'Field default is undefined' );
 
     my $f2 = SQL::Translator::Schema::Field->new (name => 'f2') or 
@@ -88,9 +88,9 @@ require_ok( 'SQL::Translator::Schema' );
     $f2 = $person_table->add_field( $f2 );
     isa_ok( $f1, 'SQL::Translator::Schema::Field', 'f2' );
     is( $f2->name, 'f2', 'Add field "f2"' );
-    is( $f2->nullable(0), 0, 'Field cannot be NULL' );
-    is( $f2->nullable(''), 0, 'Field cannot be NULL' );
-    is( $f2->nullable('0'), 0, 'Field cannot be NULL' );
+    is( $f2->is_nullable(0), 0, 'Field cannot be NULL' );
+    is( $f2->is_nullable(''), 0, 'Field cannot be NULL' );
+    is( $f2->is_nullable('0'), 0, 'Field cannot be NULL' );
     is( $f1->default_value(''), '', 'Field default is empty string' );
 
     $person_table = $f2->table( $person_table );
@@ -101,8 +101,14 @@ require_ok( 'SQL::Translator::Schema' );
 
     my $redundant_field = $person_table->add_field(name => 'f2');
     is( $redundant_field, undef, qq[Didn't create another "f2" field...] );
-    like( $person_table->error, qr/can't create field/i, 
+    like( $person_table->error, qr/can't use field/i, 
         '... because it exists' );
+
+    my @fields = $person_table->get_fields;
+    is( scalar @fields, 2, 'Table "foo" has 2 fields' );
+
+    is( $fields[0]->name, 'foo', 'First field is "foo"' );
+    is( $fields[1]->name, 'f2', 'Second field is "f2"' );
 
     #
     # Field methods
@@ -127,6 +133,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $age->size(10,2), '10,2', 'Field size still "10,2"' );
     is( $age->size([10,2]), '10,2', 'Field size still "10,2"' );
     is( $age->size(qw[ 10 2 ]), '10,2', 'Field size still "10,2"' );
+    is( join(':', $age->size), '10:2', 'Field size returns array' );
 
     #
     # Index
@@ -138,6 +145,22 @@ require_ok( 'SQL::Translator::Schema' );
         or warn $person_table->error;
     isa_ok( $index1, 'SQL::Translator::Schema::Index', 'Index' );
     is( $index1->name, 'foo', 'Index name is "foo"' );
+
+    is( $index1->is_valid, undef, 'Index name is not valid...' );
+    like( $index1->error, qr/no fields/i, '...because it has no fields' );
+
+    is( join(':', $index1->fields('foo,bar')), 'foo:bar', 
+        'Index accepts fields');
+
+    is( $index1->is_valid, undef, 'Index name is not valid...' );
+    like( $index1->error, qr/does not exist in table/i, 
+        '...because it used fields not in the table' );
+
+    is( join(':', $index1->fields(qw[foo age])), 'foo:age', 
+        'Index accepts fields');
+    is( $index1->is_valid, 1, 'Index name is now valid' );
+
+    is( $index1->type, NORMAL, 'Index type is "normal"' );
 
     my $index2 = SQL::Translator::Schema::Index->new( name => "bar" ) 
         or warn SQL::Translator::Schema::Index->error;
@@ -182,6 +205,14 @@ require_ok( 'SQL::Translator::Schema' );
 
     $fields = join(',', $constraint1->fields( qw[ id name ] ) );
     is( $fields, 'id,name', 'Constraint field = "id,name"' );
+
+    is( $constraint1->match_type, '', 'Constraint match type is empty' );
+    is( $constraint1->match_type('foo'), undef, 
+        'Constraint match type rejects bad arg...' );
+    like( $constraint1->error, qr/invalid match type/i,
+        '...because it is invalid');
+    is( $constraint1->match_type('FULL'), 'full', 
+        'Constraint match type = "full"' );
 
     my $constraint2 = SQL::Translator::Schema::Constraint->new( name => 'bar' );
     $constraint2    = $person_table->add_constraint( $constraint2 );
@@ -329,9 +360,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $pet_id->name, 'pet_id', 'Added field "pet_id"' );
     
     is( $c->is_valid, 1, 'Constraint now valid' );
-
 }
-exit;
 
 #
 # $table->primary_key test
@@ -381,4 +410,24 @@ exit;
     );
 
     is( join('', $c2->reference_fields), 'id', 'FK found PK "person.id"' );
+}
+
+#
+# View
+#
+{
+    my $name   = 'foo_view';
+    my $sql    = 'select name, age from person';
+    my $fields = 'name, age';
+    my $s      = SQL::Translator::Schema->new;
+    my $v      = $s->add_view(
+        name   => $name,
+        sql    => $sql,
+        fields => $fields,
+    );
+
+    isa_ok( $v, 'SQL::Translator::Schema::View', 'View' );
+    is( $v->name, $name, qq[Name is "$name"] );
+    is( $v->sql, $sql, qq[Name is "$sql"] );
+    is( join(':', $v->fields), 'name:age', qq[Fields are "$fields"] );
 }
