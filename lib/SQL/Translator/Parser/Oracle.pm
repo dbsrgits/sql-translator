@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.7 2003-08-21 02:39:21 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.8 2003-08-26 21:38:24 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -114,7 +114,7 @@ my $parser;
 
 $GRAMMAR = q!
 
-{ my ( %tables, $table_order ) }
+{ my ( %tables, $table_order, @table_comments ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -127,19 +127,31 @@ startrule : statement(s) eofile { \%tables }
 eofile : /^\Z/
 
 statement : create
-  | comment
-  | comment_on_table
-  | comment_on_column
-  | alter
-  | <error>
+    | comment
+    | comment_on_table
+    | comment_on_column
+    | alter
+    | drop
+    | <error>
 
 alter : /alter/i WORD /[^;]+/ ';'
+    { @table_comments = () }
+
+drop : /drop/i TABLE ';'
+
+drop : /drop/i WORD(s) ';'
+    { @table_comments = () }
 
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     {
         my $table_name                       = $item{'table_name'};
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
+
+        if ( @table_comments ) {
+            $tables{ $table_name }{'comments'} = [ @table_comments ];
+            @table_comments = ();
+        }
 
         my $i = 1;
         my @constraints;
@@ -186,6 +198,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
 
 # Create anything else (e.g., domain, function, etc.)
 create : /create/i WORD /[^;]+/ ';'
+    { @table_comments = () }
 
 global_temporary: /global/i /temporary/i
 
@@ -199,6 +212,9 @@ create_definition : field
     | <error>
 
 comment : /^\s*(?:#|-{2}).*\n/
+    {
+        push @table_comments, $comment;
+    }
 
 comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
     {
@@ -441,6 +457,8 @@ on_delete_do : /on delete/i WORD(s)
 WORD : /\w+/
 
 NAME : /\w+/ { $item[1] }
+
+TABLE : /table/i
 
 VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
