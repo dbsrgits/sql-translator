@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.11 2004-02-09 23:02:15 kycl4rk Exp $
+# $Id: HTML.pm,v 1.12 2004-02-11 21:28:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -24,7 +24,7 @@ use strict;
 use Data::Dumper;
 use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $NAME = join ', ', __PACKAGE__, $VERSION;
 $NOWRAP = 0 unless defined $NOWRAP;
 $NOLINKTABLE = 0 unless defined $NOLINKTABLE;
@@ -70,7 +70,6 @@ sub produce {
                 -meta => { generator => $NAME },
             });
             $q->h1({ -class => 'SchemaDescription' }, $title),
-            $q->a({ -name => 'top' }),
             $q->hr;
     }
 
@@ -84,7 +83,8 @@ sub produce {
         # Leading table of links
         push @html, 
             $q->comment("Table listing ($count)"),
-            $q->start_table({ -width => '100%', -class => 'LinkTable' }),
+            $q->a({ -name => 'top' }),
+            $q->start_table({ -width => '100%', -class => 'LinkTable'}),
 
             # XXX This needs to be colspan="$#{$table->fields}" class="LinkTableHeader"
             $q->Tr(
@@ -113,7 +113,8 @@ sub produce {
         my $table_name = $table->name       or next;
         my @fields     = $table->get_fields or next;
         push @html,
-            $q->comment("Starting table '$table_name'");
+            $q->comment("Starting table '$table_name'"),
+            $q->a({ -name => $table_name }),
             $q->table({ -class => 'TableHeader', -width => '100%' },
                 $q->Tr({ -class => 'TableHeaderRow' },
                     $q->td({ -class => 'TableHeaderCell' }, $q->h3($table_name)),
@@ -135,7 +136,7 @@ sub produce {
         # Fields
         #
         push @html,
-            $q->start_table,
+            $q->start_table({ -border => 1 }),
                 $q->Tr(
                     $q->th({ -class => 'FieldHeader' },
                            [ 
@@ -208,13 +209,40 @@ sub produce {
             push @html, $q->end_table;
         }
 
+        #
+        # Constraints
+        #
+        my @constraints = 
+            grep { $_->type ne PRIMARY_KEY } $table->get_constraints;
+        if ( @constraints ) {
+            push @html, 
+                $q->h3('Constraints'),
+                $q->start_table({ -border => 1 }),
+                    $q->Tr({ -class => 'IndexRow' },
+                        $q->th([ 'Type', 'Fields' ]) 
+                    );
+
+            for my $c ( @constraints ) {
+                my $type   = $c->type || '';
+                my $fields = join( ', ', $c->fields ) || '';
+
+                push @html,
+                    $q->Tr({ -class => 'IndexCell' },
+                        $q->td( [ $type, $fields ] )
+                    );
+            }
+
+            push @html, $q->end_table;
+        }
+
         push @html, $q->hr;
     }
 
+    my $sqlt_version = $t->version;
     if ($wrap) {
         push @html,
             qq[Created by <a href="http://sqlfairy.sourceforge.net">],
-            qq[SQL::Translator</a>],
+            qq[SQL::Translator $sqlt_version</a>],
             $q->end_html;
     }
 
