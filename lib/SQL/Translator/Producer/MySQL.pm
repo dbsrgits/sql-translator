@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.27 2003-09-29 14:55:26 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.28 2003-10-15 18:55:11 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -22,9 +22,31 @@ package SQL::Translator::Producer::MySQL;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=head1 NAME
+
+SQL::Translator::Producer::MySQL - MySQL-specific producer for SQL::Translator
+
+=head1 SYNOPSIS
+
+Use via SQL::Translator:
+
+  use SQL::Translator;
+
+  my $t = SQL::Translator->new( parser => '...', producer => 'MySQL', '...' );
+  $t->translate;
+
+=head1 DESCRIPTION
+
+This module will produce text output of the schema suitable for MySQL.
+There are still some issues to be worked out with syntax differences 
+between MySQL versions 3 and 4 ("SET foreign_key_checks," character sets
+for fields, etc.).
+
+=cut
+
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -225,13 +247,18 @@ sub produce {
 }
 
 1;
-__END__
 
-=head1 NAME
+# -------------------------------------------------------------------
 
-SQL::Translator::Producer::MySQL - MySQL-specific producer for SQL::Translator
+=pod
+
+=head1 SEE ALSO
+
+SQL::Translator, http://www.mysql.com/.
 
 =head1 AUTHORS
 
 darren chamberlain E<lt>darren@cpan.orgE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+
+=cut
