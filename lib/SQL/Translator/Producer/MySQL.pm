@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.35 2004-08-05 18:15:12 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.36 2004-08-05 21:13:03 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -192,12 +192,14 @@ sub produce {
         # Indices
         #
         my @index_defs;
+        my %indexed_fields;
         for my $index ( $table->get_indices ) {
             push @index_defs, join( ' ', 
                 lc $index->type eq 'normal' ? 'INDEX' : $index->type,
                 $index->name,
                 '(' . join( ', ', $index->fields ) . ')'
             );
+            $indexed_fields{ $_ } = 1 for $index->fields;
         }
 
         #
@@ -218,6 +220,14 @@ sub produce {
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
                 $has_fk = 1;
+                
+                #
+                # Make sure FK field is indexed or MySQL complains.
+                #
+                unless ( $indexed_fields{ $fields[0] } ) {
+                    push @index_defs, "INDEX ($fields[0])";
+                }
+
                 my $def = join(' ', 
                     map { $_ || () } 'FOREIGN KEY', $c->name 
                 );
