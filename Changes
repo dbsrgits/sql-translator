@@ -1,3 +1,9 @@
+*   All schema objects now support the extra attribute, so can
+    have arbitary name/value data attached to them.
+
+*   Refactoring: Added SQL::Translator::Schema::Object - base 
+    class for all Schema objects.
+
 # -----------------------------------------------------------
 # 0.06    2004-05-13
 # -----------------------------------------------------------
