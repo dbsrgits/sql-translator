@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.11 2003-06-27 16:47:40 kycl4rk Exp $
+# $Id: Field.pm,v 1.12 2003-08-12 22:03:59 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -307,6 +307,14 @@ foreign keys; checks) are represented as table constraints.
 
     if ( defined $arg ) {
         $self->{'is_nullable'} = $arg ? 1 : 0;
+    }
+
+    if ( 
+        defined $self->{'is_nullable'} && 
+        $self->{'is_nullable'} == 1    &&
+        $self->is_primary_key
+    ) {
+        $self->{'is_nullable'} = 0;
     }
 
     return defined $self->{'is_nullable'} ? $self->{'is_nullable'} : 1;
