@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.17 2003-06-11 03:59:49 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.18 2003-06-17 02:12:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -149,7 +149,9 @@ statement : create
   | grant
   | revoke
   | drop
+  | insert
   | connect
+  | update
   | set
   | <error>
 
@@ -178,6 +180,10 @@ grant : /grant/i WORD(s /,/) /on/i table_name /to/i name_with_opt_quotes(s /,/) 
     }
 
 drop : /drop/i /[^;]*/ ';'
+
+insert : /insert/i /[^;]*/ ';'
+
+update : /update/i /[^;]*/ ';'
 
 #
 # Create table.
