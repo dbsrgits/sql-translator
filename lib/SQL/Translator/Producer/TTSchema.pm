@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.9 2004-11-25 23:10:58 grommit Exp $
+# $Id: TTSchema.pm,v 1.10 2004-11-26 00:28:06 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -41,6 +41,11 @@ SQL::Translator::Producer::TTSchema -
           ttargs     => {
               author => "Mr Foo",
           },
+
+          # Template config options
+          ttargs     => {
+              INCLUDE_PATH => '/foo/templates',
+          },
       },
   );
   print $translator->translate;
@@ -70,19 +75,24 @@ Here's a brief example of what the template could look like:
 See F<t/data/template/basic.tt> for a more complete example.
 
 The template will also get the set of extra variables given as a hashref via the
-C<ttvars> producer arg.
+C<tt_vars> producer arg.
 
 You can set any of the options used to initiallize the Template object by
-adding them to your producer_args. See Template Toolkit docs for details of
+adding a tt_conf producer_arg. See Template Toolkit docs for details of
 the options.
+(Note that the old style of passing this config directly in the producer args
+has been deprecated).
+
 
   $translator          = SQL::Translator->new(
       to               => 'TT',
       producer_args    => {
           ttfile       => 'foo_template.tt',
           ttargs       => {},
-          INCLUDE_PATH => '/foo/templates/tt',
-          INTERPOLATE  => 1,
+          tt_conf      = {
+            INCLUDE_PATH => '/foo/templates/tt',
+            INTERPOLATE  => 1,
+          }
       },
   );
 
@@ -101,9 +111,14 @@ limitless!
 
 The template file to generate the output with.
 
-=item ttvars
+=item tt_vars
 
 A hash ref of extra variables you want to add to the template.
+
+=item tt_conf
+
+A hash ref of configuration options to pass to the L<Template> object's
+constructor.
 
 =back
 
@@ -114,7 +129,7 @@ A hash ref of extra variables you want to add to the template.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -131,13 +146,22 @@ sub produce {
     my $scma       = $translator->schema;
     my $args       = $translator->producer_args;
     my $file       = delete $args->{'ttfile'} or die "No template file!";
+
+    my $tt_vars  = delete $args->{'tt_vars'} || {};
     if ( exists $args->{ttargs} ) {
         warn "Use of 'ttargs' producer arg is deprecated."
             ." Please use 'tt_vars' instead.\n";
-        $args->{tt_vars} = delete $args->{ttargs};
+        %$tt_vars = { %{$args->{ttargs}}, %$tt_vars };
     }
-    my $ttvars     = delete $args->{'tt_vars'} || {};
-    # Any args left here get given to the Template object.
+
+    my %tt_conf = exists $args->{tt_conf} ? %{$args->{tt_conf}} : ();
+    # sqlt passes the producer args for _all_ producers in, so we use this
+    # grep hack to test for the old usage.
+    if ( grep /^[A-Z_]+$/, keys %$args ) {
+        warn "Template config directly in the producer args is deprecated."
+            ." Please use 'tt_conf' instead.\n";
+        %tt_conf = ( %tt_conf, %$args );
+    }
 
     debug "Processing template $file\n";
     my $out;
@@ -145,12 +169,12 @@ sub produce {
         DEBUG    => $DEBUG,
         ABSOLUTE => 1, # Set so we can use from the command line sensibly
         RELATIVE => 1, # Maybe the cmd line code should set it! Security!
-        %$args,        # Allow any TT opts to be passed in the producer_args
+        %tt_conf,
     ) || die "Failed to initialize Template object: ".Template->error;
 
     $tt->process(
         $file,
-        { schema => $scma , %$ttvars },
+        { schema => $scma , %$tt_vars },
         \$out
     ) or die "Error processing template '$file': ".$tt->error;
 

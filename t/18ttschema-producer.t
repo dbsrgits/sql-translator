@@ -10,17 +10,13 @@ use Test::Exception;
 use Test::SQL::Translator qw(maybe_plan);
 
 use Data::Dumper;
-use vars '%opt';
-BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
-use constant DEBUG => (exists $opt{d} ? 1 : 0);
-
 use FindBin qw/$Bin/;
 
 # Testing 1,2,3,4...
 #=============================================================================
 
 BEGIN {
-    maybe_plan(3, 
+    maybe_plan(6, 
         'XML::XPath', 
         'SQL::Translator::Parser::XML::SQLFairy',
         'Template', 
@@ -32,31 +28,61 @@ use Test::Differences;
 use SQL::Translator;
 use SQL::Translator::Producer::TTSchema;
 
-# Parse the test XML schema
-my $obj;
-$obj = SQL::Translator->new(
-    debug          => DEBUG, #$opt{d},
-    show_warnings  => 1,
-    add_drop_table => 1,
-    from           => "XML-SQLFairy",
-    filename       => "$Bin/data/xml/schema.xml",
-    to             => "TTSchema",
-    producer_args  => {
-        ttfile  => "$Bin/data/template/basic.tt",
-        tt_vars => {
-            foo   => 'bar',
-            hello => 'world',
+# Main test. Template whole schema and test tt_vars
+{
+    my $obj;
+    $obj = SQL::Translator->new(
+        show_warnings  => 1,
+        from           => "XML-SQLFairy",
+        filename       => "$Bin/data/xml/schema.xml",
+        to             => "TTSchema",
+        producer_args  => {
+            ttfile  => "$Bin/data/template/basic.tt",
+            tt_vars => {
+                foo   => 'bar',
+                hello => 'world',
+            },
         },
-    },
-);
-my $out;
-lives_ok { $out = $obj->translate; }  "Translate ran";
-ok $out ne ""                        ,"Produced something!";
-local $/ = undef; # slurp
-eq_or_diff $out, <DATA>              ,"Output looks right";
+    );
+    my $out;
+    lives_ok { $out = $obj->translate; }  "Translate ran";
+    ok $out ne ""                        ,"Produced something!";
+    local $/ = undef; # slurp
+    eq_or_diff $out, <DATA>              ,"Output looks right";
+}
 
-print $out if DEBUG;
-#print "Debug:", Dumper($obj) if DEBUG;
+# Test passing of Template config
+{
+    my $tmpl = q{
+    [%- FOREACH table = schema.get_tables %]
+    Table: $table
+    [%- END %]};
+    my $obj;
+    $obj = SQL::Translator->new(
+        show_warnings  => 1,
+        from           => "XML-SQLFairy",
+        filename       => "$Bin/data/xml/schema.xml",
+        to             => "TTSchema",
+        producer_args  => {
+            ttfile  => \$tmpl,
+            tt_conf => {
+                INTERPOLATE => 1,
+            },
+            tt_vars => {
+                foo   => 'bar',
+                hello => 'world',
+            },
+        },
+    );
+    my $out;
+    lives_ok { $out = $obj->translate; }  "Translate ran";
+    ok $out ne ""                        ,"Produced something!";
+    local $/ = undef; # slurp
+    eq_or_diff $out, q{
+    Table: Basic}              
+    ,"Output looks right";
+}
+
 
 __DATA__
 Schema: 
