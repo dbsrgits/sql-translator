@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.15 2004-01-02 10:04:37 allenday Exp $
+# $Id: Turnkey.pm,v 1.16 2004-01-02 19:53:40 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -373,9 +373,11 @@ sub can_render {
 sub render {
 	my $self = shift;
 	my $dbobject = shift;
-    # Assumption here that if it's not rendering on it's own dbobject
-    # then it's a list. This will be updated when AtomLists are implemented -boconnor
+
+	# Assumption here that if it's not rendering on it's own dbobject
+	# then it's a list. This will be updated when AtomLists are implemented -boconnor
 	if(ref($dbobject) eq 'Turnkey::Model::[% pname %]') {
+		$self->focus('yes');
 		return(_render_record($dbobject));
 	}
 	else { return(_render_list($dbobject)); }
@@ -410,28 +412,27 @@ sub _render_list {
 	my $dbobject = shift;
 	my @output = ();
 	my @objects = $dbobject->[% node.key %]s;
-	foreach my $object (@objects)
-    {
+	foreach my $object (@objects){
 		my $row = {};
-	    my $field_hash = {};
+		my $field_hash = {};
 
-	#data
+		#data
 	[% FOREACH value = node.value.data_fields %]
 		[% IF value != 1 %]
-	$field_hash->{[% value %]} = $object->[% value %]();
+		$field_hash->{[% value %]} = $object->[% value %]();
 		[% END %]
 	[% END %]
 
-	#keys
-	[% FOREACH value = node.value.edges %]
-	[% NEXT IF value.type != 'import' %]
-	$field_hash->{[% value.thisfield.name %]} = $dbobject->[% value.thisfield.name %]();
-	[% END %]
+		#keys
+		[% FOREACH value = node.value.edges %]
+		[% NEXT IF value.type != 'import' %]
+		$field_hash->{[% value.thisfield.name %]} = $object->[% value.thisfield.name %]();
+		[% END %]
 
 		$row->{data} = $field_hash;
-	    $row->{id} = $object->id();
-	    push @output, $row;
-    }
+		$row->{id} = $object->id();
+		push @output, $row;
+	}
 	return(\@output);
 }
 
@@ -588,7 +589,7 @@ EOF
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
     [% CASE '[- node.key FILTER ucfirst -]' %]
-      [% render[- node.key FILTER ucfirst -]Atom(atom.render(dbobject)) %]
+      [% render[- node.key FILTER ucfirst -]Atom(atom,dbobject) %]
   [- END -]
   [- END -]
     [% CASE DEFAULT %]
@@ -596,7 +597,10 @@ EOF
 [% END %]
 [- FOREACH node = nodes -]
 [- IF !node.value.is_trivial_link -]
-[% MACRO render[- node.key FILTER ucfirst -]Atom(lstArr) BLOCK %]
+[% MACRO render[- node.key FILTER ucfirst -]Atom(atom, dbobject) BLOCK %]
+  [% lstArr = atom.render(dbobject) %]
+  [% rowcount = 0 %]
+  [% IF atom.focus == "yes" %]
   [% FOREACH record = lstArr %]
     [% fields = record.data %]
     [- pname = node.key FILTER ucfirst -]
@@ -611,7 +615,18 @@ EOF
       <tr><td class="dbfieldname">[- field.thisfield.name -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field.thisfield.name -]) %]</td></tr>
     [- END -]
     [% id = record.id %]
-    <tr><td><a href="?id=[% id %];class=Turnkey::Model::[- node.key FILTER ucfirst -]">Link</a><hr/></td><td></td></tr>
+    [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
+    [% rowcount = rowcount + 1 %]
+  [% END %]
+  [% ELSE %]
+    <tr><td><ul>
+  [% FOREACH record = lstArr %]
+    [% class = ref(atom) | replace('::Atom::', '::Model::') %]
+    [% id = record.id %]
+    [% PROCESS make_linked_dbobject %]
+    <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
+  [% END %]
+   </ul></td></tr>
   [% END %]
 [% END %]
 [- END -]
@@ -622,7 +637,7 @@ EOF
     [% class = ref(atom) | replace('::Atom::', '::Model::') %]
     [% id = item.id %]
     [% PROCESS make_linked_dbobject %]
-    <li style="margin-left: -20px; list-style: circle;">[% obj2link(linked_dbobject) %]</li>
+    <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
   [% END %]
    </ul></td></tr>
 [% END %]
