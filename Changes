@@ -1,8 +1,11 @@
 # -----------------------------------------------------------
 # 0.05    2004-02-27
 # -----------------------------------------------------------
-*   Various bug fixes and enhancements to Parsers (esp. PostgreSQL)
-    and Producers (esp. Oracle)
+*   Added "COMMENT ON *" syntax to PostgreSQL parser
+
+*   Some fixes to Oracle parser as reported by Gail Binkley
+
+*   Added support in PostgreSQL parser for all "ALTER TABLE" statements
 
 *   Now distributing sqlt-diff script as it's pretty usable
 
@@ -72,7 +75,6 @@
 # 0.01    2003-02-27
 # -----------------------------------------------------------
 
-<<<<<<< Changes
 *   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL, 
     DBI-PostgreSQL, DBI-SQLite, DBI-Sybase, Storable, YAML
 
@@ -91,27 +93,3 @@
 *   Changes all included script names to start with "sqlt"
 
 *   Added capturing and printing most embedded table and field comments
-
-# -----------------------------------------------------------
-# 0.04    2003-11-07
-# -----------------------------------------------------------
-
-*   Increased version of Constants module to 1.41 to avoid a problem 
-    where 0.02 has 1.4 of that file and 0.03 had 1.06 which confused
-    CPAN
-
-*   Hard-coded all the PREREQ_PM modules in Makefile.PL (rather than
-    setting them dynamically) so that automated tests would pass
-
-# -----------------------------------------------------------
-# 0.05    2003-12-17
-# -----------------------------------------------------------
-
-*   Added "COMMENT ON *" syntax to PostgreSQL parser
-
-*   Some fixes to Oracle parser as reported by Gail Binkley
-
-*   Added support in PostgreSQL parser for all "ALTER TABLE" statements
-=======
-*   Initial release.
->>>>>>> 1.10
