@@ -1,6 +1,24 @@
 package SQL::Translator::Parser::DBI::Sybase;
 
-# $Id: Sybase.pm,v 1.3 2003-10-04 00:10:00 phrrngtn Exp $
+# -------------------------------------------------------------------
+# $Id: Sybase.pm,v 1.4 2003-10-15 16:40:04 kycl4rk Exp $
+# -------------------------------------------------------------------
+# Copyright (C) 2003 Paul Harrington <harringp@deshaw.com>.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
 
 =head1 NAME
 
@@ -22,7 +40,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -291,25 +309,27 @@ $table_info->{TABLE_NAME},
                                );
 
     }
+
     ### Permissions
     ### Groups
     ### Users
     ### Aliases
     ### Logins
-return 1;
+    return 1;
 }
 
 1;
+
+# -------------------------------------------------------------------
 
 =pod
 
 =head1 AUTHOR
 
-Paul Harrington E<lt>harringp@deshaw.comE<gt>,
+Paul Harrington E<lt>harringp@deshaw.comE<gt>.
 
 =head1 SEE ALSO
 
 DBI, DBD::Sybase, SQL::Translator::Schema.
 
 =cut
-
