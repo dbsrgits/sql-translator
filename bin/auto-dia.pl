@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.2 2003-02-15 02:31:23 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.3 2003-02-15 23:38:35 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -12,12 +12,13 @@ auto-dia.pl - Automatically create a diagram from a database schema
 
   Options:
 
-    -o|--output    Output file name (default STDOUT)
-    -i|--image     Output image type (default PNG)
-    -t|--title     Title to give schema
-    -c|--cols      Number of columns
-    -n|--no-lines  Don't draw lines
-    -s|--skip      Fields to skip in natural joins
+    -o|--output     Output file name (default STDOUT)
+    -i|--image      Output image type (default PNG)
+    -t|--title      Title to give schema
+    -c|--cols       Number of columns
+    -n|--no-lines   Don't draw lines
+    -s|--skip       Fields to skip in natural joins
+    --join-pk-only  Perform natural joins from primary keys only
 
 =head1 DESCRIPTION
 
@@ -34,21 +35,22 @@ use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.2 $)[-1];
+my $VERSION = (qw$Revision: 1.3 $)[-1];
 
 #
 # Get arguments.
 #
 my ( $out_file, $image_type, $db_driver, $title, $no_columns, 
-    $no_lines, $skip_fields );
+    $no_lines, $skip_fields, $join_pk_only );
 GetOptions(
-    'd|db=s'      => \$db_driver,
-    'o|output:s'  => \$out_file,
-    'i|image:s'   => \$image_type,
-    't|title:s'   => \$title,
-    'c|columns:i' => \$no_columns,
-    'n|no-lines'  => \$no_lines,
-    's|skip:s'    => \$skip_fields,
+    'd|db=s'         => \$db_driver,
+    'o|output:s'     => \$out_file,
+    'i|image:s'      => \$image_type,
+    't|title:s'      => \$title,
+    'c|columns:i'    => \$no_columns,
+    'n|no-lines'     => \$no_lines,
+    's|skip:s'       => \$skip_fields,
+    '--join-pk-only' => \$join_pk_only,
 ) or die pod2usage;
 my $file = shift @ARGV or pod2usage( -message => 'No input file' );
 
@@ -62,6 +64,9 @@ my %skip    = map { $_, 1 } split ( /,/, $skip_fields );
 #
 my $t    = SQL::Translator->new( parser => $db_driver, producer => 'Raw' );
 my $data = $t->translate( $file ) or die $t->error;
+use Data::Dumper;
+#print Dumper( $data );
+#exit;
 
 #
 # Layout the image.
@@ -71,15 +76,17 @@ my $no_tables    = scalar keys %$data;
 $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
 my $no_per_col   = sprintf( "%.0f", $no_tables/$no_columns + .5 );
 
-my ( @shapes, $max_x, $max_y );
-my $orig_y      = 40;
-my ( $x, $y )   = ( 20, $orig_y );
-my $cur_col     = 1;
-my $no_this_col = 0;
-my $this_col_x  = $x;
-my %registry;  # for locations of fields
-my %table_x;   # for max x of each table
-my $field_no;
+my @shapes;            
+my ( $max_x, $max_y );           # the furthest x and y used
+my $orig_y      = 40;            # used to reset y for each column
+my ( $x, $y )   = (20, $orig_y); # where to start
+my $cur_col     = 1;             # the current column
+my $no_this_col = 0;             # number of tables in current column
+my $this_col_x  = $x;            # current column's x
+my $gutter      = 30;            # distance b/w columns
+my %registry;                    # for locations of fields
+my %table_x;                     # for max x of each table
+my $field_no;                    # counter to give distinct no. to each field
 
 for my $table (
     map  { $_->[1] }
@@ -102,17 +109,18 @@ for my $table (
         map  { [ $_->{'order'}, $_ ] }
         values %{ $table->{'fields'} };
 
-    my $pk;
+    my %pk;
     for my $index ( @{ $table->{'indices'} || [] } ) {
         next unless $index->{'type'} eq 'primary_key';
         my @fields = @{ $index->{'fields'} || [] } or next;
-        $pk = $fields[0];
+        $pk{ $_ } = 1 for @fields;
     }
 
     my ( @fld_desc, $max_name );
     for my $f ( @fields ) {
-        my $name = $f->{'name'} or next;
-        $name   .= ' *' if $name eq $pk;
+        my $name  = $f->{'name'} or next;
+        my $is_pk = $pk{ $name };
+        $name   .= ' *' if $is_pk;
 
         my $size = @{ $f->{'size'} || [] } 
             ? '(' . join( ',', @{ $f->{'size'} } ) . ')'
@@ -121,12 +129,12 @@ for my $table (
         
         my $nlen  = length $name;
         $max_name = $nlen if $nlen > $max_name;
-        push @fld_desc, [ $name, $desc, $f->{'name'} ];
+        push @fld_desc, [ $name, $desc, $f->{'name'}, $is_pk ];
     }
 
     $max_name += 4;
     for my $fld_desc ( @fld_desc ) {
-        my ( $name, $desc, $orig_name ) = @$fld_desc;
+        my ( $name, $desc, $orig_name, $is_pk ) = @$fld_desc;
         my $diff = $max_name - length $name;
         $name   .= ' ' x $diff;
         $desc    = $name . $desc;
@@ -143,6 +151,7 @@ for my $table (
                 right    => [ $length,         $y_link ],
                 table    => $table_name,
                 field_no => ++$field_no,
+                is_pk    => $is_pk,
             };
         }
     }
@@ -157,13 +166,13 @@ for my $table (
     $max_x = $this_max_x if $this_max_x > $max_x;
     $y    += 25;
     
-    if ( ++$no_this_col == $no_per_col ) {
-        $cur_col++;
-        $no_this_col = 0;    
-        $max_x      += 20;
-        $this_col_x  = $max_x;
-        $max_y       = $y if $y > $max_y;
-        $y           = $orig_y;
+    if ( ++$no_this_col == $no_per_col ) { # if we've filled up this column
+        $cur_col++;                        # up the column number
+        $no_this_col = 0;                  # reset the number of tables
+        $max_x      += $gutter;            # push the x over for next column
+        $this_col_x  = $max_x;             # remember the max x for this column
+        $max_y       = $y if $y > $max_y;  # note the max y
+        $y           = $orig_y;            # reset the y for next column
     }
 }
 
@@ -183,14 +192,17 @@ unless ( $no_lines ) {
             my ( $bx, $by ) = @{ $pos1->{'right'} };
             my $table1      = $pos1->{'table'};
             my $fno1        = $pos1->{'field_no'};
+            my $is_pk       = $pos1->{'is_pk'};
+            next if $join_pk_only and !$is_pk;
 
-            for my $j ( 1 .. $#positions ) {
+            for my $j ( 0 .. $#positions ) {
                 my $pos2        = $positions[ $j ];
                 my ( $cx, $cy ) = @{ $pos2->{'left'}  };
                 my ( $dx, $dy ) = @{ $pos2->{'right'} };
                 my $table2      = $pos2->{'table'};
                 my $fno2        = $pos2->{'field_no'};
                 next if $done{ $fno1 }{ $fno2 };
+                next if $fno1 == $fno2;
 
                 my @distances = ();
                 push @distances, [
@@ -218,7 +230,7 @@ unless ( $no_lines ) {
                 my ( $x1, $y1, $x2, $y2 ) = @{ $shortest->[1] };
                 my ( $side1, $side2     ) = @{ $shortest->[2] };
                 my ( $start, $end );
-                my $offset     = 10;
+                my $offset     = 9;
                 my $col1_right = $table_x{ $table1 };
                 my $col2_right = $table_x{ $table2 };
 
