@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.19 2003-05-09 17:04:39 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.20 2003-05-12 14:59:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -240,7 +240,7 @@ __END__
 
 SQL::Translator::Producer::MySQL - MySQL-specific producer for SQL::Translator
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 darren chamberlain E<lt>darren@cpan.orgE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
