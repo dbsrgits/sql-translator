@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.26 2004-02-17 08:40:18 allenday Exp $
+# $Id: Turnkey.pm,v 1.27 2004-03-09 04:16:44 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -348,6 +348,7 @@ package [% baseclass %];
 # Template used: classdbi
 
 use strict;
+no warnings 'redefine';
 use base qw(Class::DBI::Pg);
 
 [% baseclass %]->set_db('Main', '[% db_dsn  %]', '[% db_user %]', '[% db_pass %]', {AutoCommit=>1});
