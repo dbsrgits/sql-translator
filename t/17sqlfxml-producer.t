@@ -33,7 +33,7 @@ if ($@ && $@ =~ m!locate Test/Differences.pm in!) {
     plan skip_all => "You need Test::Differences for this test.";
 }
 use Test::Differences;
-plan tests => 6;
+plan tests => 9;
     
 use SQL::Translator;
 use SQL::Translator::Producer::XML::SQLFairy;
@@ -145,7 +145,7 @@ $obj = SQL::Translator->new(
     from           => 'MySQL',
     to             => 'XML-SQLFairy',
 );
-lives_ok { $xml = $obj->translate($file); }  "Translate ran";
+lives_ok {$xml = $obj->translate($file);} "Translate (emit_empty_tags=>0) ran";
 ok("$xml" ne ""                             ,"Produced something!");
 print "XML:\n$xml" if DEBUG;
 # Strip sqlf header with its variable date so we diff safely
@@ -263,23 +263,52 @@ $obj = SQL::Translator->new(
     to             => 'XML-SQLFairy',
     producer_args  => { emit_empty_tags => 1 },
 );
-lives_ok { $xml = $obj->translate($file); }  "Translate ran";
+lives_ok { $xml=$obj->translate($file); } "Translate (emit_empty_tags=>1) ran";
 ok("$xml" ne ""                             ,"Produced something!");
 print "XML emit_empty_tags=>1:\n$xml" if DEBUG;
 # Strip sqlf header with its variable date so we diff safely
 $xml =~ s/^([^\n]*\n){7}//m; 
 eq_or_diff $xml, $ans                       ,"XML looks right";
-    # This diff probably isn't a very good test! Should really check the
-    # result with XPath or something, but that would take ages to write ;-)
 
-# TODO Make this a real test of attrib_values
-# $obj = SQL::Translator->new(
-#     debug          => DEBUG,
-#     trace          => TRACE,
-#     show_warnings  => 1,
-#     add_drop_table => 1,
-#     from           => "MySQL",
-#     to             => "XML-SQLFairy",
-#     producer_args  => { attrib_values => 1 },
-# );
-# print $obj->translate($file);
+
+
+#
+# attrib_values => 1
+#
+
+$ans = <<EOXML;
+<sqlt:schema database="" name="" xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <sqlt:table order="3" name="Basic">
+    <sqlt:fields>
+      <sqlt:field is_primary_key="1" is_foreign_key="0" name="id" comments="comment on id field" size="10" data_type="integer" is_auto_increment="1" order="9" is_nullable="0" />
+      <sqlt:field is_primary_key="0" is_foreign_key="0" name="title" comments="" size="100" is_auto_increment="0" data_type="varchar" order="10" default_value="hello" is_nullable="0" />
+      <sqlt:field is_primary_key="0" is_foreign_key="0" name="description" comments="" size="65535" is_auto_increment="0" data_type="text" order="11" default_value="" is_nullable="1" />
+      <sqlt:field is_primary_key="0" is_foreign_key="0" name="email" comments="" size="255" is_auto_increment="0" data_type="varchar" order="12" is_nullable="1" />
+    </sqlt:fields>
+    <sqlt:indices>
+      <sqlt:index options="" name="titleindex" fields="title" type="NORMAL" />
+    </sqlt:indices>
+    <sqlt:constraints>
+      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="id" expression="" type="PRIMARY KEY" />
+      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="email" expression="" type="UNIQUE" />
+    </sqlt:constraints>
+  </sqlt:table>
+</sqlt:schema>
+EOXML
+
+$obj = SQL::Translator->new(
+    debug          => DEBUG,
+    trace          => TRACE,
+    show_warnings  => 1,
+    add_drop_table => 1,
+    from           => "MySQL",
+    to             => "XML-SQLFairy",
+    producer_args  => { attrib_values => 1 },
+);
+lives_ok {$xml = $obj->translate($file);} "Translate (attrib_values=>1) ran";
+ok("$xml" ne ""                             ,"Produced something!");
+print "XML attrib_values=>1:\n$xml" if DEBUG;
+# Strip sqlf header with its variable date so we diff safely
+$xml =~ s/^([^\n]*\n){7}//m; 
+eq_or_diff $xml, $ans                       ,"XML looks right";
+
