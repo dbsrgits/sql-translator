@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.11 2003-08-20 13:50:47 dlc Exp $
+# $Id: Table.pm,v 1.12 2003-08-20 16:08:13 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Schema::Index;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -263,20 +263,23 @@ all the comments joined on newlines.
 
 =cut
 
-    my $self = shift;
-    $self->{'comments'} = [ ]
-        unless (defined $self->{'comments'} &&
-                    ref($self->{'comments'}) eq 'ARRAY');
+    my $self     = shift;
+    my @comments = ref $_[0] ? @{ $_[0] } : @_;
 
-    for my $arg ( @_ ) {
+    for my $arg ( @comments ) {
         $arg = $arg->[0] if ref $arg;
-        push @{ $self->{'comments'} }, $arg
-            if defined $arg;
+        push @{ $self->{'comments'} }, $arg if defined $arg && $arg;
     }
 
-    return wantarray 
-        ? @{ $self->{'comments'} }
-        : join( "\n", @{ $self->{'comments'} } );
+    if ( @{ $self->{'comments'} || [] } ) {
+        return wantarray 
+            ? @{ $self->{'comments'} }
+            : join( "\n", @{ $self->{'comments'} } )
+        ;
+    } 
+    else {
+        return wantarray ? () : undef;
+    }
 }
 
 # ----------------------------------------------------------------------
