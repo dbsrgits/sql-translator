@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.39 2003-09-08 15:09:19 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.40 2003-09-08 18:16:04 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -443,7 +443,7 @@ not_null     : /not/i /null/i { $return = 0 }
 
 unsigned     : /unsigned/i { $return = 0 }
 
-default_val  : /default/i /(?:')?[\w\d:.-]*(?:')?/ 
+default_val  : /default/i /(?:')?[\s\w\d:.-]*(?:')?/ 
     { 
         $item[2] =~ s/'//g; 
         $return  =  $item[2];
