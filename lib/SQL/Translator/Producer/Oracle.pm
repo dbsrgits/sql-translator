@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.19 2003-08-17 07:51:33 rossta Exp $
+# $Id: Oracle.pm,v 1.20 2003-08-18 15:41:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -175,7 +175,7 @@ sub produce {
             my %extra     = $field->extra;
             my $list      = $extra{'list'} || [];
             # \todo deal with embedded quotes
-            my $commalist = "'" . (join "', '", @$list) . "'";
+            my $commalist = join( ', ', map { qq['$_'] } @$list );
 
             if ( $data_type eq 'enum' ) {
                 $check = "CHECK ($field_name_ur IN ($commalist))";
@@ -192,10 +192,15 @@ sub produce {
                               die "Unknown datatype: $data_type\n";
             }
             
-            # Fixes ORA-02329: column of datatype LOB cannot be unique or a primary key
+            #
+            # Fixes ORA-02329: column of datatype LOB cannot be 
+            # unique or a primary key
+            #
             if ( $data_type eq 'clob' && $field->is_primary_key ) {
                 $data_type = 'varchar2';
                 $size[0] = 4000;
+                warn "CLOB cannot be a primary key, changing to VARCHAR2\n"
+                    if $WARN;
             }
 
             # Fixes ORA-00907: missing right parenthesis
