@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.35 2003-08-20 15:55:00 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.36 2003-10-15 18:38:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -430,6 +430,6 @@ configuration.  See L<Class::DBI> for details on how this works.
 
 =head1 AUTHORS
 
-Allen Day E<lt>allenday@ucla.eduE<gt>
+Allen Day E<lt>allenday@ucla.eduE<gt>,
 Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
