@@ -36,7 +36,7 @@ As of version 0.03, parsers exist for the following:
         xSV          : arbitrarily delimited text files
         Excel        : Microsoft Excel spreadsheets
         XML-SQLFairy : SQLFairy's XML format
-        YAML/Storable: Serialization of schema objects
+        YAML/Storable: Serialized schema objects
 
 And the following producers exist:
 
