@@ -146,23 +146,23 @@ isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
 is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my @t1_constraints = $t1->get_constraints;
-is( scalar @t1_constraints, 4, '4 constraints on t_test1' );
+is( scalar @t1_constraints, 7, '7 constraints on t_test1' );
 
 my $c1 = $t1_constraints[0];
 is( $c1->type, PRIMARY_KEY, 'First constraint is PK' );
 is( join(',', $c1->fields), 'f_serial', 'Constraint is on field "f_serial"' );
 
-my $c2 = $t1_constraints[1];
+my $c2 = $t1_constraints[4];
 is( $c2->type, FOREIGN_KEY, 'Second constraint is foreign key' );
 is( join(',', $c2->fields), 'f_fk1', 'Constraint is on field "f_fk1"' );
 is( $c2->reference_table, 't_test2', 'Constraint is to table "t_test2"' );
 is( join(',', $c2->reference_fields), 'f_id', 'Constraint is to field "f_id"' );
 
-my $c3 = $t1_constraints[2];
+my $c3 = $t1_constraints[5];
 is( $c3->type, UNIQUE, 'Third constraint is unique' );
 is( join(',', $c3->fields), 'f_varchar', 'Constraint is on field "f_varchar"' );
 
-my $c4 = $t1_constraints[3];
+my $c4 = $t1_constraints[6];
 is( $c4->type, FOREIGN_KEY, 'Fourth constraint is foreign key' );
 is( join(',', $c4->fields), 'f_fk2', 'Constraint is on field "f_fk2"' );
 is( $c4->reference_table, 't_test2', 'Constraint is to table "t_test2"' );
