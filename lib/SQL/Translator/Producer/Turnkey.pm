@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.30 2004-03-31 03:03:59 allenday Exp $
+# $Id: Turnkey.pm,v 1.31 2004-03-31 08:36:21 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -501,7 +501,7 @@ EOF
 <atomcontainerbindings>
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
-  <atomcontainerbindingslayout xlink:label="Turnkey::Model::[% format_table(focus_atom.key) %]">
+  <layout xlink:label="Turnkey::Model::[% format_table(focus_atom.key) %]">
   [% FOREACH link_atom = focus_atom.value.hyperedges %]
     <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [%- END%]
@@ -513,7 +513,7 @@ EOF
   [% END %]
   [%- END %]
     <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% format_table(focus_atom.key) %]Atom"    xlink:to="#[% format_table(focus_atom.key) %]Atom"/>
-  </atomcontainerbindingslayout>
+  </layout>
   [%- END %]
 [% END %]
 </atomcontainerbindings>
