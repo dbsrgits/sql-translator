@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-graph,v 1.3 2004-02-11 21:32:25 kycl4rk Exp $
+# $Id: sqlt-graph,v 1.4 2004-02-20 02:41:47 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -49,6 +49,9 @@ sqlt-graph - Automatically create a graph from a database schema
                        set to "0" to undefine)
     --natural-join     Perform natural joins
     --natural-join-pk  Perform natural joins from primary keys only
+    --show_datatypes   Show datatype of each field
+    --show_col_sizes   Show column sizes for VARCHAR and CHAR fields
+    --show_constraints Show list of constraints for each field
     --show-datatypes   Show datatype of each field
     --show-sizes       Show field sizes for VARCHAR and CHAR fields
     --show-constraints Show list of constraints for each field
@@ -91,15 +94,16 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
 #
 my ( 
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
-    $natural_join, $join_pk_only, $skip_fields, $debug, $help, $height, 
-    $width, $no_fields, $show_datatypes, $show_sizes, $show_constraints
+    $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
+    $show_col_sizes, $show_constraints, $debug, $help, $height, $width,
+    $no_fields
 );
 
 GetOptions(
@@ -115,9 +119,9 @@ GetOptions(
     'natural-join'     => \$natural_join,
     'natural-join-pk'  => \$join_pk_only,
     's|skip:s'         => \$skip_fields,
-    'show-datatypes'   => \$show_datatypes,
-    'show-sizes'       => \$show_sizes,
-    'show-constraints' => \$show_constraints,
+    'show-datatypes'   => $show_datatypes,
+    'show-sizes'       => $show_sizes,
+    'show-constraints' => $show_constraints,
     'debug'            => \$debug,
     'h|help'           => \$help,
 ) or die pod2usage;

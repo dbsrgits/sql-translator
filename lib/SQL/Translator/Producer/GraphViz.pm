@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.11 2004-02-11 21:31:03 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.12 2004-02-20 02:41:47 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -20,6 +20,136 @@ package SQL::Translator::Producer::GraphViz;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=pod
+
+=head1 NAME
+
+SQL::Translator::Producer::GraphViz - GraphViz producer for SQL::Translator
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $trans = new SQL::Translator(
+      from => 'MySQL',            # or your db of choice
+      to => 'GraphViz',
+      producer_args => {
+          out_file => 'schema.png',
+          add_color => 1,
+          show_constraints => 1,
+          show_datatypes => 1,
+          show_col_sizes => 1
+      }
+  ) or die SQL::Translator->error;
+
+  $trans->translate or die $trans->error;
+
+=head1 DESCRIPTION
+
+Creates a graph of a schema using the amazing graphviz
+(see http://www.graphviz.org/) application (via
+the GraphViz module).  It's nifty--you should try it!
+
+=head1 PRODUCER ARGS
+
+=over 4
+
+=item * out_file
+
+the name of the file where the graphviz graphic is to be written
+
+=item * layout (DEFAULT: 'dot')
+
+determines which layout algorithm GraphViz will use; possible
+values are 'dot' (the default GraphViz layout for directed graph
+layouts), 'neato' (for undirected graph layouts - spring model)
+or 'twopi' (for undirected graph layouts - circular)
+
+=item * node_shape (DEFAULT: 'record')
+
+sets the node shape of each table in the graph; this can be
+one of 'record', 'plaintext', 'ellipse', 'circle', 'egg',
+'triangle', 'box', 'diamond', 'trapezium', 'parallelogram',
+'house', 'hexagon', or 'octagon'
+
+=item * output_type (DEFAULT: 'png')
+
+sets the file type of the output graphic; possible values are
+'ps', 'hpgl', 'pcl', 'mif', 'pic', 'gd', 'gd2', 'gif', 'jpeg',
+'png', 'wbmp', 'cmap', 'ismap', 'imap', 'vrml', 'vtx', 'mp',
+'fig', 'svg', 'canon', 'plain' or 'text' (see GraphViz for
+details on each of these)
+
+=item * width (DEFAULT: 8.5)
+
+width (in inches) of the output graphic
+
+=item * height (DEFAULT: 11)
+
+height (in inches) of the output grahic
+
+=item * show_fields (DEFAULT: true)
+
+if set to a true value, the names of the colums in a table will
+be displayed in each table's node
+
+=item * show_fk_only
+
+if set to a true value, only columns which are foreign keys
+will be displayed in each table's node
+
+=item * show_datatypes
+
+if set to a true value, the datatype of each column will be
+displayed next to each column's name; this option will have no
+effect if the value of show_fields is set to false
+
+=item * show_col_sizes
+
+if set to a true value, the size (in bytes) of each CHAR and
+VARCHAR column will be displayed in parentheses next to the
+column's name; this option will have no effect if the value of
+show_fields is set to false
+
+=item * show_constraints
+
+if set to a true value, a field's constraints (i.e., its
+primary-key-ness, its foreign-key-ness and/or its uniqueness)
+will appear as a comma-separated list in brackets next to the
+field's name; this option will have no effect if the value of
+show_fields is set to false
+
+=item * add_color
+
+if set to a true value, the graphic will have a background
+color of 'lightgoldenrodyellow'; otherwise the background
+color will be white
+
+=item * natural_join
+
+if set to a true value, the make_natural_join method of
+SQL::Translator::Schema will be called before generating the
+graph; a true value for join_pk_only (see below) implies a
+true value for this option
+
+=item * join_pk_only
+
+the value of this option will be passed as the value of the
+like-named argument in the make_natural_join method (see
+natural_join above) of SQL::Translator::Schema, if either the
+value of this option or the natural_join option is set to true
+
+=item * skip_fields
+
+the value of this option will be passed as the value of the
+like-named argument in the make_natural_join method (see
+natural_join above) of SQL::Translator::Schema, if either
+the natural_join or join_pk_only options has a true value
+
+=back
+
+=cut
+
 use strict;
 use GraphViz;
 use Data::Dumper;
@@ -27,7 +157,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -264,12 +394,12 @@ sub produce {
 
 =pod
 
-=head1 NAME
-
-SQL::Translator::Producer::GraphViz - GraphViz producer for SQL::Translator
-
 =head1 AUTHOR
 
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+
+=head1 SEE ALSO
+
+SQL::Translator, GraphViz
 
 =cut
