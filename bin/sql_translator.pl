@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.6 2002-11-26 03:59:57 kycl4rk Exp $
+# $Id: sql_translator.pl,v 1.7 2003-05-07 20:36:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,19 +29,23 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
-my $from;           # the original database
-my $to;             # the destination database 
-my $help;           # show POD and bail
-my $stdin;          # whether to read STDIN for create script
-my $no_comments;    # whether to put comments in out file
-my $show_warnings;  # whether to show warnings from SQL::Translator
-my $add_drop_table; # whether to show warnings from SQL::Translator
-my $xlate;          # user overrides for field translation
-my $debug;          # whether to print debug info
-my $trace;          # whether to print parser trace
-my $list;           # list all parsers and producers
+my $from;             # the original database
+my $to;               # the destination database 
+my $help;             # show POD and bail
+my $stdin;            # whether to read STDIN for create script
+my $no_comments;      # whether to put comments in out file
+my $show_warnings;    # whether to show warnings from SQL::Translator
+my $add_drop_table;   # whether to show warnings from SQL::Translator
+my $xlate;            # user overrides for field translation
+my $debug;            # whether to print debug info
+my $trace;            # whether to print parser trace
+my $list;             # list all parsers and producers
+my $trim_fields;      # trim whitespace on xSV fields
+my $scan_fields;      # scan xSV fields for data types and sizes
+my $field_separator;  # for xSV files
+my $record_separator; # for xSV files
 
 #
 # Get options, explain how to use the script if necessary.
@@ -56,7 +60,10 @@ GetOptions(
     'no-comments'     => \$no_comments,
     'show-warnings'   => \$show_warnings,
     'add-drop-table'  => \$add_drop_table,
-    'xlate=s'         => \$xlate,
+    'trim-fields'     => \$trim_fields,
+    'scan-fields'     => \$scan_fields,
+    'fs:s'            => \$field_separator,
+    'rs:s'            => \$record_separator,
 ) or pod2usage(2);
 
 my @files = @ARGV; # the create script(s) for the original db
@@ -75,13 +82,19 @@ if ( $xlate ) {
 #
 # If everything is OK, translate file(s).
 #
-my $translator     =  SQL::Translator->new( 
-    xlate          => $xlate          || {},
-    debug          => $debug          ||  0,
-    trace          => $trace          ||  0,
-    no_comments    => $no_comments    ||  0,
-    show_warnings  => $show_warnings  ||  0,
-    add_drop_table => $add_drop_table ||  0,
+my $translator      =  SQL::Translator->new( 
+    xlate           => $xlate          || {},
+    debug           => $debug          ||  0,
+    trace           => $trace          ||  0,
+    no_comments     => $no_comments    ||  0,
+    show_warnings   => $show_warnings  ||  0,
+    add_drop_table  => $add_drop_table ||  0,
+    parser_args     => {
+        trim_fields      => $trim_fields,
+        scan_fields      => $scan_fields,
+        field_separator  => $field_separator,
+        record_separator => $record_separator,
+    }
 );
 
 if ( $list ) {
@@ -140,12 +153,18 @@ To translate a schema:
 
   Options:
 
-    -d|--debug                Print debug info
-    --trace                   Print parser trace info
-    --no-comments             Don't include comments in SQL output
-    --show-warnings           Print to STDERR warnings of conflicts, etc.
-    --add-drop-table          Add 'drop table' statements before creates
-    --xlate=foo/bar,baz/blech Overrides for field translation
+    -d|--debug            Print debug info
+    --trace               Print parser trace info
+    --no-comments         Don't include comments in SQL output
+    --show-warnings       Print to STDERR warnings of conflicts, etc.
+    --add-drop-table      Add 'drop table' statements before creates
+
+  xSV Options:
+
+    --trim-fields         Trim whitespace on fields
+    --scan-fields         Scan fields for data types and sizes
+    --fs                  The field separator
+    --rs                  The record separator
 
 =head1 DESCRIPTION
 
