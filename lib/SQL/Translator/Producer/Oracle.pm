@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.21 2003-08-19 14:44:00 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.22 2003-08-20 22:53:26 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -220,17 +220,42 @@ sub produce {
             #
             my $default = $field->default_value;
             if ( defined $default ) {
-                $field_def .= sprintf(
-                    ' DEFAULT %s',
-                    $default =~ m/null/i ? 'NULL' : "'$default'"
-                );
+                #
+                # Wherein we try to catch a string being used as 
+                # a default value for a numerical field.  If "true/false,"
+                # then sub "1/0," otherwise just test the truthity of the
+                # argument and use that (naive?).
+                #
+                if ( $data_type =~ /^number$/i && $default !~ /^\d+$/ ) {
+                    if ( $default =~ /^true$/i ) {
+                        $default = "'1'";
+                    }
+                    elsif ( $default =~ /^false$/i ) {
+                        $default = "'0'";
+                    }
+                    else {
+                        $default = $default ? "'1'" : "'0'";
+                    }
+                }
+                elsif ( 
+                    $data_type =~ /date/ && $default eq 'current_timestamp' 
+                ) {
+                    $default = 'SYSDATE';
+                }
+                else {
+                    $default = $default =~ m/null/i ? 'NULL' : "'$default'"
+                } 
+
+                $field_def .= " DEFAULT $default",
             }
 
             #
             # Not null constraint
             #
             unless ( $field->is_nullable ) {
-                my $constraint_name = mk_name($field_name_ur, 'nn');
+                my $constraint_name = mk_name( 
+                    join('_', $table_name_ur, $field_name_ur ), 'nn' 
+                );
                 $field_def .= ' CONSTRAINT ' . $constraint_name . ' NOT NULL';
             }
 
@@ -284,7 +309,6 @@ sub produce {
         #
         # Table constraints
         #
-        my $constraint_name_default;
         for my $c ( $table->get_constraints ) {
             my $name    = $c->name || '';
             my @fields  = map { unreserve( $_, $table_name ) } $c->fields;
@@ -298,19 +322,21 @@ sub produce {
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq UNIQUE ) {
-                $name ||= mk_name( $table_name, ++$constraint_name_default );
+                $name ||= mk_name( $table_name, 'u' );
                 push @constraint_defs, "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                $name ||= mk_name( $table_name, ++$constraint_name_default );
+                $name ||= mk_name( $table_name, 'fk' );
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
-                    $def .= join( ', ', @fields );
+                    $def .= '(' . join( ', ', @fields ) . ')';
                 }
 
-                $def .= ' REFERENCES ' . $c->reference_table;
+                my $ref_table = unreserve($c->reference_table);
+
+                $def .= " REFERENCES $ref_table";
 
                 if ( @rfields ) {
                     $def .= ' (' . join( ', ', @rfields ) . ')';
@@ -337,7 +363,6 @@ sub produce {
         # Index Declarations
         #
         my @index_defs = ();
-        my $idx_name_default;
         for my $index ( $table->get_indices ) {
             my $index_name = $index->name || '';
             my $index_type = $index->type || NORMAL;
@@ -350,18 +375,8 @@ sub produce {
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
-            elsif ( $index_type eq UNIQUE ) {
-                $index_name = mk_name( 
-                    $table_name, $index_name || ++$idx_name_default
-                );
-                push @field_defs, 'CONSTRAINT ' . $index_name . ' UNIQUE ' .
-                    '(' . join( ', ', @fields ) . ')';
-            }
-
             elsif ( $index_type eq NORMAL ) {
-                $index_name = mk_name( 
-                    $table_name, $index_name || ++$idx_name_default
-                );
+                $index_name = mk_name( $table_name, $index_name || 'i' );
                 push @index_defs, 
                     "CREATE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
@@ -420,6 +435,7 @@ sub produce {
 sub mk_name {
     my $basename      = shift || ''; 
     my $type          = shift || ''; 
+       $type          = '' if $type =~ /^\d/;
     my $scope         = shift || ''; 
     my $critical      = shift || '';
     my $basename_orig = $basename;
