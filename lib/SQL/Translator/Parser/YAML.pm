@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.5 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: YAML.pm,v 1.6 2004-03-09 19:19:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -115,6 +115,18 @@ sub parse {
 
     for my $tdata ( @procedures ) {
         $schema->add_procedure( %$tdata ) or die $schema->error;
+    }
+
+    if ( my $tr_data = $data->{'translator'} ) {
+        $translator->add_drop_table( $tr_data->{'add_drop_table'} );
+        $translator->filename( $tr_data->{'filename'} );
+        $translator->no_comments( $tr_data->{'no_comments'} );
+        $translator->parser_args( $tr_data->{'parser_args'} );
+        $translator->producer_args( $tr_data->{'producer_args'} );
+        $translator->parser_type( $tr_data->{'parser_type'} );
+        $translator->producer_type( $tr_data->{'producer_type'} );
+        $translator->show_warnings( $tr_data->{'show_warnings'} );
+        $translator->trace( $tr_data->{'trace'} );
     }
 
     return 1;
