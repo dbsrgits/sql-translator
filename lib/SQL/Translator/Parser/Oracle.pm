@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.14 2003-10-15 18:59:53 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.15 2004-02-03 22:09:56 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -98,7 +98,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -189,7 +189,7 @@ create : prompt(?) create_table table_name '(' create_definition(s /,/) ')' tabl
         1;
     }
 
-create : /create/i /index/i WORD /on/i table_name parens_word_list ';'
+create : /create/i /index/i WORD /on/i table_name parens_word_list table_option(?) ';'
     {
         my $table_name = $item[5];
         push @{ $tables{ $table_name }{'indices'} }, {
