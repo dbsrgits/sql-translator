@@ -4,9 +4,10 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 202;
+use Test::More tests => 206;
 use SQL::Translator::Schema::Constants;
 
+require_ok( 'SQL::Translator' );
 require_ok( 'SQL::Translator::Schema' );
 
 {
@@ -339,6 +340,20 @@ require_ok( 'SQL::Translator::Schema' );
 
     my @views = $schema->get_views;
     is( scalar @views, 2, 'Found 1 view' );
+
+}
+
+#
+# Graph
+#
+{
+    my $tr = SQL::Translator->new(
+        parser   => "PostgreSQL",
+    );
+
+    ok( $tr->translate('t/data/pgsql/wiki.sql'), 'Translate PG' );
+    ok( my $schema = $tr->schema, 'Got Schema' );
+    ok( my $graph = $schema->as_graph, 'Graph made');
 }
 
 #

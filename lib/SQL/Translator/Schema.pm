@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.17 2004-10-15 02:23:30 allenday Exp $
+# $Id: Schema.pm,v 1.18 2004-10-15 03:52:50 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -55,7 +55,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -74,9 +74,14 @@ Object constructor.
 =cut
 
     my ( $self, $config ) = @_;
-    $self->params( $config, qw[ name database parser_args producer_args ] )
+    $self->params( $config, qw[ name database translator ] )
       || return undef;
     return $self;
+}
+
+sub as_graph {
+  my($self) = @_;
+  return SQL::Translator::Schema::Graph->new(translator => $self->translator);
 }
 
 # ----------------------------------------------------------------------
@@ -599,22 +604,16 @@ Get or set the schema's name.  (optional)
     return $self->{'name'} || '';
 }
 
-=head2 parser_args
+=head2 translator
+
+get the SQL::Translator instance that instatiated me
 
 =cut
 
-sub parser_args {
+sub translator {
     my $self = shift;
-    return $self->{'parser_args'};
-}
-
-=head2 producer_args
-
-=cut
-
-sub producer_args {
-    my $self = shift;
-    return $self->{'producer_args'};
+    $self->{'translator'} = shift if @_;
+    return $self->{'translator'};
 }
 
 # ----------------------------------------------------------------------

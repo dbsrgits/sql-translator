@@ -5,6 +5,8 @@ use strict;
 use Data::Dumper;
 $Data::Dumper::Maxdepth = 3;
 
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($ERROR);
 use SQL::Translator::Schema::Graph::Node;
 use SQL::Translator::Schema::Graph::Edge;
 use SQL::Translator::Schema::Graph::Port;
@@ -22,12 +24,13 @@ use Class::MakeMethods::Template::Hash (
   object => [
 			 'translator' => {class => 'SQL::Translator'},
 			],
-  'hash' => [ qw( node ) ],
+  'hash' => [ qw( node translator) ],
   'number --counter' => [ qw( order ) ],
 );
 
 sub init {
   my $self = shift;
+
   #
   # build package objects
   #
@@ -80,7 +83,7 @@ sub init {
 
 	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
 
-      #warn "\t" . $node->name . "\t" . $node->edgecount($that->name);
+          #warn "\t" . $node->name . "\t" . $node->edgecount($that->name);
 	  $node->push_edges( $edge );
 	  $that->push_edges( $edge->flip );
       }
@@ -247,6 +250,18 @@ sub init {
     }
   }
 
+}
+
+=head2 translator
+
+get the SQL::Translator instance that instatiated me
+
+=cut
+
+sub translator {
+    my $self = shift;
+    $self->{'translator'} = shift if @_;
+    return $self->{'translator'};
 }
 
 1;

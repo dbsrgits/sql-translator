@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.58 2004-10-15 02:23:29 allenday Exp $
+# $Id: Translator.pm,v 1.59 2004-10-15 03:52:50 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.58 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.59 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -73,13 +73,14 @@ sub init {
     $self->parser  ($config->{'parser'}   || $config->{'from'} || $DEFAULT_SUB);
     $self->producer($config->{'producer'} || $config->{'to'}   || $DEFAULT_SUB);
 
-        #
-        # Set up callbacks for formatting of pk,fk,table,package names in producer
-        #
-        $self->format_table_name($config->{'format_table_name'});
-        $self->format_package_name($config->{'format_package_name'});
-        $self->format_fk_name($config->{'format_fk_name'});
-        $self->format_pk_name($config->{'format_pk_name'});
+    #
+    # Set up callbacks for formatting of pk,fk,table,package names in producer
+    # MOVED TO PRODUCER ARGS
+    #
+    #$self->format_table_name($config->{'format_table_name'});
+    #$self->format_package_name($config->{'format_package_name'});
+    #$self->format_fk_name($config->{'format_fk_name'});
+    #$self->format_pk_name($config->{'format_pk_name'});
 
     #
     # Set the parser_args and producer_args
@@ -427,8 +428,7 @@ sub schema {
 
     unless ( defined $self->{'schema'} ) {
         $self->{'schema'} = SQL::Translator::Schema->new(
-            parser_args     => $self->parser_args,
-            producer_args   => $self->producer_args,
+            translator      => $self,
         );
     }
 

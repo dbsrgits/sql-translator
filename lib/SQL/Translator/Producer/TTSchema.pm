@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.4 2004-02-09 23:02:17 kycl4rk Exp $
+# $Id: TTSchema.pm,v 1.5 2004-10-15 03:52:50 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -35,6 +35,7 @@ SQL::Translator::Producer::TTSchema -
       filename       => 'foo_schema.sql',
       to             => 'TTSchema',
       producer_args  => {
+          ttargs     => {},
           ttfile     => 'foo_template.tt',
       },
   );
@@ -72,6 +73,7 @@ the options.
       to               => 'TT',
       producer_args    => {
           ttfile       => 'foo_template.tt',
+          ttargs       => {},
           INCLUDE_PATH => '/foo/templates/tt',
           INTERPOLATE  => 1,
       },
@@ -91,7 +93,7 @@ limitless!
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -118,7 +120,7 @@ sub produce {
         %$args,        # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
 
-    $tt->process( $file, { schema => $scma }, \$out ) 
+    $tt->process( $file, { schema => $scma , %{ $args->{ttargs} } }, \$out ) 
         or die "Error processing template '$file': ".$tt->error;
 
     return $out;
