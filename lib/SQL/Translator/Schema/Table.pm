@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.3 2003-05-05 04:32:39 kycl4rk Exp $
+# $Id: Table.pm,v 1.4 2003-05-07 20:42:34 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -394,11 +394,18 @@ sub primary_key {
 
 =head2 options
 
-Gets or sets the table's primary key(s).  Takes one or more field names 
-(as a string, list or arrayref) and returns an array or arrayref.
+Gets or sets the table's primary key(s).  Takes one or more field
+names (as a string, list or array[ref]) as an argument.  If the field
+names are present, it will create a new PK if none exists, or it will
+add to the fields of an existing PK (and will unique the field names).
+Returns the C<SQL::Translator::Schema::Constraint> object representing
+the primary key.
+
+These are eqivalent:
 
   $table->primary_key('id');
-  $table->primary_key(['id']);
+  $table->primary_key(['name']);
+  $table->primary_key('id','name']);
   $table->primary_key(['id','name']);
   $table->primary_key('id,name');
   $table->primary_key(qw[ id name ]);
@@ -411,6 +418,7 @@ Gets or sets the table's primary key(s).  Takes one or more field names
     my $fields = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
         ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
 
+    my $constraint;
     if ( @$fields ) {
         for my $f ( @$fields ) {
             return $self->error(qq[Invalid field "$f"]) unless 
@@ -422,19 +430,25 @@ Gets or sets the table's primary key(s).  Takes one or more field names
             if ( $c->type eq PRIMARY_KEY ) {
                 $has_pk = 1;
                 $c->fields( @{ $c->fields }, @$fields );
+                $constraint = $c;
             } 
         }
 
         unless ( $has_pk ) {
-            $self->add_constraint(
+            $constraint = $self->add_constraint(
                 type   => PRIMARY_KEY,
                 fields => $fields,
             );
         }
     }
 
-    for my $c ( $self->get_constraints ) {
-        return $c if $c->type eq PRIMARY_KEY;
+    if ( $constraint ) {
+        return $constraint;
+    }
+    else {
+        for my $c ( $self->get_constraints ) {
+            return $c if $c->type eq PRIMARY_KEY;
+        }
     }
 
     return $self->error('No primary key');
