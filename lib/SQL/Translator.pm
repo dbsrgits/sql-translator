@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.36 2003-07-09 05:59:24 allenday Exp $
+# $Id: Translator.pm,v 1.37 2003-07-31 20:49:42 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -26,8 +26,10 @@ use strict;
 use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
+require 5.004;
+
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -547,7 +549,7 @@ sub translate {
         return $self->error($msg);
     }
 
-    if ( $self->validate ) {
+    if ($self->validate) {
         my $schema = $self->schema;
         return $self->error('Invalid schema') unless $schema->is_valid;
     }
@@ -644,7 +646,7 @@ sub _list {
     my $path = catfile "SQL", "Translator", $uctype;
     for (@INC) {
         my $dir = catfile $_, $path;
-        $self->debug("_list_${type}s searching $dir");
+        $self->debug("_list_${type}s searching $dir\n");
         next unless -d $dir;
 
         my $dh = IO::Dir->new($dir);
