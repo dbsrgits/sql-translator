@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.23 2004-02-10 06:30:06 allenday Exp $
+# $Id: Turnkey.pm,v 1.24 2004-02-10 06:31:43 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -169,11 +169,9 @@ sub translateForm {
       $template->process(\$tt2, $param, \$result) || die $template->error();
       $result =~ s/^\s*(.+)\s*$/$1/s;
       next unless $result;
-warn "**********".$node->table->name;
       $result{$node->table->name} = $result;
-warn $result;
     }
-    return %result;
+    return \%result;
   } else {
     $template->process(\$tt2, $meta, \$result) || die $template->error();
   }
