@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.27 2003-05-09 19:51:28 kycl4rk Exp $
+# $Id: Translator.pm,v 1.28 2003-06-11 03:58:53 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -114,6 +114,8 @@ sub init {
     $self->show_warnings( $config->{'show_warnings'} );
 
     $self->trace( $config->{'trace'} );
+
+    $self->validate( $config->{'validate'} );
 
     return $self;
 }
@@ -557,7 +559,12 @@ sub translate {
         return $self->error($msg);
     }
 
-    eval { $producer_output = $producer->($self, $parser_output) };
+    if ( $self->validate ) {
+        my $schema = $self->schema;
+        return $self->error('Invalid schema') unless $schema->is_valid;
+    }
+
+    eval { $producer_output = $producer->($self) };
     if ($@ || ! $producer_output) {
         my $msg = sprintf "translate: Error with producer '%s': %s",
             $producer_type, ($@) ? $@ : " no results";
@@ -635,7 +642,6 @@ sub _args {
 
     $self->{$type};
 }
-
 
 # ----------------------------------------------------------------------
 # _list($type)
@@ -727,6 +733,27 @@ sub isa($$) {
     my ($ref, $type) = @_;
     return UNIVERSAL::isa($ref, $type);
 }
+
+# ----------------------------------------------------------------------
+sub validate {
+
+=pod
+
+=head2 validate
+
+Get or set whether to validate the parsed data.
+
+  my $validate = $schema->validate(1);
+
+=cut
+
+    my ( $self, $arg ) = @_;
+    if ( defined $arg ) {
+        $self->{'validate'} = $arg ? 1 : 0;
+    }
+    return $self->{'validate'} || 0;
+}
+
 
 1;
 #-----------------------------------------------------
