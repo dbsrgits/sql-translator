@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.12 2004-11-05 15:03:09 grommit Exp $
+# $Id: SQLFairy.pm,v 1.13 2004-12-21 01:29:23 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -100,7 +100,7 @@ To convert your old format files simply pass them through the translator :)
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -129,9 +129,9 @@ sub parse {
     );
     for my $tblnode (
         sort {
-            "".$xp->findvalue('sqlf:order|@order',$a)
+            ("".$xp->findvalue('sqlf:order|@order',$a) || 0)
             <=>
-            "".$xp->findvalue('sqlf:order|@order',$b)
+            ("".$xp->findvalue('sqlf:order|@order',$b) || 0)
         } @nodes
     ) {
         debug "Adding table:".$xp->findvalue('sqlf:name',$tblnode);
