@@ -40,8 +40,12 @@
 
 *   Many bug fixes to most every module
 
-*   Added "sqlt-dumper.pl" script to help create a script for dumping
+*   Added "sqlt-dumper" script to help create a script for dumping
     a database a la "mysqldump"
 
 *   Reversed the arrowheads on the graphical producers to show the 
     relationships in a more standard way
+
+*   Changes all included script names to start with "sqlt"
+
+*   Capturing and printing most table and field comments
