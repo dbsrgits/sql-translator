@@ -57,7 +57,6 @@ lib/SQL/Translator/Schema/Table.pm
 lib/SQL/Translator/Schema/Trigger.pm
 lib/SQL/Translator/Schema/View.pm
 lib/SQL/Translator/Utils.pm
-t/01load.t
 t/02mysql-parser.t
 t/03mysql-to-oracle.t
 t/04file,fh,string.t
