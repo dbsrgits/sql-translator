@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.26 2003-07-18 22:56:12 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.27 2003-07-25 21:50:49 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -302,6 +302,13 @@ field_qualifier : unsigned
         $return = { 
              is_unsigned => $item{'unsigned'},
         } 
+    }
+
+field_qualifier : /character set/i WORD
+    {
+        $return = {
+            character_set => $item[2],
+        }
     }
 
 reference_definition : /references/i table_name parens_field_list(?) match_type(?) on_delete_do(?) on_update_do(?)
