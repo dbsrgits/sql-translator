@@ -49,9 +49,10 @@ my $sql = q[
         start_position      NUMBER(11,2)    NOT NULL,
         stop_position       NUMBER(11,2)    NOT NULL,
         comments            long,
-        UNIQUE ( qtl_accession_id ),
         FOREIGN KEY ( qtl_trait_id ) REFERENCES qtl_trait
     );
+
+    CREATE UNIQUE INDEX qtl_accession ON qtl ( qtl_accession_id );
 
     CREATE TABLE qtl_trait_synonym
     (
