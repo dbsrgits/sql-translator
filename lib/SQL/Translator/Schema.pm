@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.11 2003-10-08 18:30:15 phrrngtn Exp $
+# $Id: Schema.pm,v 1.12 2003-10-08 18:35:15 phrrngtn Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -49,15 +49,12 @@ use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
-use SQL::Translator::Schema::Procedure;
-
 use SQL::Translator::Utils 'parse_list_arg';
-
 
 use base 'Class::Base';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -269,53 +266,6 @@ not be created.
 
     return $view;
 }
-
-# ----------------------------------------------------------------------
-sub add_procedure {
-
-=pod
-
-=head2 add_procedure
-
-Add a procedure object.  Returns the new
-SQL::Translator::Schema::Procedure object.  The "name" parameter is
-required.  If you try to create a procedure with the same name as an
-existing procedure, you will get an error and the procedure will not
-be created.
-
-  my $p1 = $schema->add_procedure( name => 'foo' );
-  my $p2 = SQL::Translator::Schema::Procedure->new( name => 'bar' );
-  $p2    = $schema->add_procedure( $p2 ) or die $schema->error;
-
-=cut
-
-    my $self        = shift;
-    my $procedure_class = 'SQL::Translator::Schema::Procedure';
-    my $procedure;
-
-    if ( UNIVERSAL::isa( $_[0], $procedure_class ) ) {
-        $procedure= shift;
-        $procedure->schema( $self );
-    }
-    else {
-        my %args = @_;
-        return $self->error('No procedure name') unless $args{'name'};
-        $args{'schema'} = $self;
-        $procedure = $procedure_class->new( \%args ) or return $procedure_class->error;
-    }
-
-    my $procedure_name = $procedure->name or return $self->error('No procedure name');
-
-    if ( defined $self->{'procedures'}{ $procedure_name } ) { 
-        return $self->error(qq[Can't create procedure: "$procedure_name" exists]);
-    }
-    else {
-        $self->{'procedures'}{ $procedure_name } = $procedure;
-    }
-
-    return $procedure;
-}
-
 
 # ----------------------------------------------------------------------
 sub database {
@@ -551,53 +501,6 @@ Returns all the views as an array or array reference.
     }
     else {
         $self->error('No views');
-        return wantarray ? () : undef;
-    }
-}
-
-
-
-# ----------------------------------------------------------------------
-sub get_procedure {
-
-=pod
-
-=head2 get_procedure
-
-Returns a procedure by the name provided.
-
-  my $view = $schema->get_procedure('foo');
-
-=cut
-
-    my $self      = shift;
-    my $procedure_name = shift or return $self->error('No procedure name');
-    return $self->error('Procedure "$procedure_name" does not exist') unless
-        exists $self->{'procedures'}{ $procedure_name };
-    return $self->{'procedures'}{ $procedure_name };
-}
-
-# ----------------------------------------------------------------------
-sub get_procedures {
-
-=pod
-
-=head2 get_procedures
-
-Returns all the procedures as an array or array reference.
-
-  my @procedures = $schema->get_procedures;
-
-=cut
-
-    my $self  = shift;
-    my @procedures = values %{ $self->{'procedures'} };
-
-    if ( @procedures ) {
-        return wantarray ? @procedures : \@procedures;
-    }
-    else {
-        $self->error('No procedures');
         return wantarray ? () : undef;
     }
 }
