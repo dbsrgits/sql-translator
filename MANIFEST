@@ -19,7 +19,9 @@ lib/SQL/Translator/Producer/MySQL.pm
 lib/SQL/Translator/Producer/Oracle.pm
 lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/Raw.pm
+lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/XML.pm
+lib/SQL/Translator/Utils.pm
 lib/SQL/Translator/Validator.pm
 t/01load.t
 t/02mysql-parser.t
