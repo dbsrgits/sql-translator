@@ -54,5 +54,8 @@ print $out if DEBUG;
 
 __DATA__
 Hello World
+Tables: Basic
+
 Basic
-foo:bar
+------
+Fields: id title description email explicitnulldef explicitemptystring emptytagdef
