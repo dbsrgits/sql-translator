@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.23 2003-04-19 23:32:34 allenday Exp $
+# $Id: Translator.pm,v 1.24 2003-04-24 16:15:58 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -103,7 +103,6 @@ sub init {
     # Set various other options.
     #
     $self->{'debug'} = defined $config->{'debug'} ? $config->{'debug'} : $DEBUG;
-
 
     $self->add_drop_table( $config->{'add_drop_table'} );
     
@@ -665,35 +664,39 @@ sub load {
 }
 
 sub format_table_name {
-  my $self = shift;
-  my $sub = shift;
-  $self->{_format_table_name} = $sub if ref($sub) eq 'CODE';
-  return $self->{_format_table_name}->($sub,@_) if defined($self->{_format_table_name});
-  return($sub);
+    my $self = shift;
+    my $sub  = shift;
+    $self->{'_format_table_name'} = $sub if ref $sub eq 'CODE';
+    return $self->{'_format_table_name'}->( $sub, @_ ) 
+        if defined $self->{'_format_table_name'};
+    return $sub;
 }
 
 sub format_package_name {
-  my $self = shift;
-  my $sub = shift;
-  $self->{_format_package_name} = $sub if ref($sub) eq 'CODE';
-  return $self->{_format_package_name}->($sub,@_) if defined($self->{_format_package_name});
-  return($sub);
+    my $self = shift;
+    my $sub  = shift;
+    $self->{'_format_package_name'} = $sub if ref $sub eq 'CODE';
+    return $self->{'_format_package_name'}->( $sub, @_ ) 
+        if defined $self->{'_format_package_name'};
+    return $sub;
 }
 
 sub format_fk_name {
-  my $self = shift;
-  my $sub = shift;
-  $self->{_format_fk_name} = $sub if ref($sub) eq 'CODE';
-  return $self->{_format_fk_name}->($sub,@_) if defined($self->{_format_fk_name});
-  return($sub);
+    my $self = shift;
+    my $sub  = shift;
+    $self->{'_format_fk_name'} = $sub if ref $sub eq 'CODE';
+    return $self->{'_format_fk_name'}->( $sub, @_ ) 
+        if defined $self->{'_format_fk_name'};
+    return $sub;
 }
 
 sub format_pk_name {
-  my $self = shift;
-  my $sub = shift;
-  $self->{_format_pk_name} = $sub if ref($sub) eq 'CODE';
-  return $self->{_format_pk_name}->($sub,@_) if defined($self->{_format_pk_name});
-  return($sub);
+    my $self = shift;
+    my $sub  = shift;
+    $self->{'_format_pk_name'} = $sub if ref $sub eq 'CODE';
+    return $self->{'_format_pk_name'}->( $sub, @_ ) 
+        if defined $self->{'_format_pk_name'};
+    return $sub;
 }
 
 # ----------------------------------------------------------------------
@@ -730,9 +733,10 @@ SQL::Translator - convert schema from one database to another
       show_warnings  => 0, # Print name mutations, conflicts
       add_drop_table => 1, # Add "drop table" statements
 
-      #make all table names CAPS in producers which support this option
+      # Make all table names CAPS in producers which support this option
       format_table_name => sub {my $tablename = shift; return uc($tablename)},
-      #null-op formatting, only here for documentation's sake
+
+      # Null-op formatting, only here for documentation's sake
       format_package_name => sub {return shift},
       format_fk_name      => sub {return shift},
       format_pk_name      => sub {return shift},
@@ -741,7 +745,8 @@ SQL::Translator - convert schema from one database to another
   my $output     = $translator->translate(
       from       => "MySQL",
       to         => "Oracle",
-      filename   => $file, #or an arrayref of filenames, ie [$file1,$file2,$file3]
+      # Or an arrayref of filenames, i.e. [ $file1, $file2, $file3 ]
+      filename   => $file, 
   ) or die $translator->error;
 
   print $output;
