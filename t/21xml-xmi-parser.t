@@ -119,7 +119,7 @@ print $sql if DEBUG;
 #
 my $scma = $obj->schema;
 my @tblnames = map {$_->name} $scma->get_tables;
-is_deeply( \@tblnames, [qw/Foo PrivateFoo Recording Track ProtectedFoo/]
+is_deeply( \@tblnames, [qw/Foo PrivateFoo Recording CD Track ProtectedFoo/]
     ,"tables");
 
 # 
@@ -230,13 +230,13 @@ test_table( $scma->get_table("Track"),
 
 # Classes
 my @testd = (
-    ""          => [qw/Foo PrivateFoo Recording Track ProtectedFoo/],
+    ""          => [qw/Foo PrivateFoo Recording CD Track ProtectedFoo/],
                    [qw/fooid name protectedname privatename/],
-    "public"    => [qw/Foo Recording Track/],
+    "public"    => [qw/Foo Recording CD Track/],
                    [qw/fooid name /],
-    "protected" => [qw/Foo Recording Track ProtectedFoo/],
+    "protected" => [qw/Foo Recording CD Track ProtectedFoo/],
                    [qw/fooid name protectedname/],
-    "private"   => [qw/Foo PrivateFoo Recording Track ProtectedFoo/],
+    "private"   => [qw/Foo PrivateFoo Recording CD Track ProtectedFoo/],
                    [qw/fooid name protectedname privatename/],
 );
     while ( my ($vis,$tables,$foofields) = splice @testd,0,3 ) {
