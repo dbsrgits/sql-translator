@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 72;
+use Test::More tests => 73;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::Oracle qw(parse);
@@ -19,6 +19,7 @@ my $sql = q[
     comment on column qtl_trait_category.qtl_trait_category_id 
         is 'the primary key!';
 
+    -- foo bar comment
     CREATE TABLE qtl_trait
     (
         qtl_trait_id            NUMBER(11)      NOT NULL    
@@ -117,6 +118,7 @@ is( join(',', $c2->fields), 'trait_category',
 #
 my $t2 = shift @tables;
 is( $t2->name, 'qtl_trait', 'Table "qtl_trait" exists' );
+is( $t2->comments, 'foo bar comment', 'Comment "foo bar" exists' );
 
 my @t2_fields = $t2->get_fields;
 is( scalar @t2_fields, 4, '4 fields in table' );
