@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.2 2003-06-06 22:30:44 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.3 2003-06-09 02:16:02 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -130,7 +130,10 @@ statement : create
   | comment
   | comment_on_table
   | comment_on_column
+  | alter
   | <error>
+
+alter : /alter/i WORD /[^;]+/ ';'
 
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     {
@@ -472,7 +475,7 @@ sub parse {
         my $tdata    =  $result->{ $table_name };
         my $table    =  $schema->add_table( 
             name     => $tdata->{'table_name'},
-            comments => @{ $tdata->{'comments'} },
+            comments => $tdata->{'comments'},
         ) or die $schema->error;
 
         my @fields = sort { 
@@ -490,7 +493,7 @@ sub parse {
                 default_value     => $fdata->{'default'},
                 is_auto_increment => $fdata->{'is_auto_inc'},
                 is_nullable       => $fdata->{'null'},
-                comments          => @{ $fdata->{'comments'} },
+                comments          => $fdata->{'comments'},
             ) or die $table->error;
 
             for my $cdata ( @{ $fdata->{'constraints'} } ) {
