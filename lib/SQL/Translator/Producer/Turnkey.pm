@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.48 2004-04-20 02:31:14 boconnor Exp $
+# $Id: Turnkey.pm,v 1.49 2004-04-25 00:38:40 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -302,7 +302,7 @@ sub [% cedge.via.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfi
 [% FOREACH h = hedges %]
   [% NEXT UNLESS h.type == 'one2one' %]
 [% IF seen == 0 ; seen = 1 %]########## one2one ###########[% END %]
-sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
+sub [% h.thatnode.table.name %]s { my $self = shift; return map $_->[% h.thatviafield.name %], $self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
 [% END %]
 
 [% seen = 0 %]
@@ -314,7 +314,7 @@ sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatv
   [% FOREACH thatnode = h.thatnode %]
     [% NEXT UNLESS h.thisviafield_index(i).name %]
 #[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
-sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
+sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my $self = shift; return map $_->[% h.thatviafield_index(0).name %], $self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
     [% i = i + 1 %]
   [% END %]
 [% END %]
@@ -326,7 +326,7 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).na
   [% i = 0 %]
   [% FOREACH thisnode = h.thisnode %]
 #[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
-sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
+sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my $self = shift; return map $_->[% h.thatviafield_index(0).name %], $self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
     [% i = i + 1 %]
   [% END %]
 [% END %]
@@ -340,7 +340,7 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
     [% j = 0 %]
     [% FOREACH thatnode = h.thatnode %]
 #[% thisnode.name %]::[% h.thisfield_index(i).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(j).name %] <- [% h.thatnode_index(j).name %]::[% h.thatfield_index(j).name %]
-sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(j).name) %]s { my \$self = shift; return map \$_->[% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(j).name) %]s, \$self->[% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]s }
+sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(j).name) %]s { my $self = shift; return map $_->[% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(j).name) %]s, $self->[% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]s }
       [% j = j + 1 %]
     [% END %]
     [% i = i + 1 %]
