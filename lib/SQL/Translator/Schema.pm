@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.5 2003-06-06 00:11:06 kycl4rk Exp $
+# $Id: Schema.pm,v 1.6 2003-06-09 04:18:23 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -44,6 +44,7 @@ returns the database structure.
 
 use strict;
 use Class::Base;
+use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::View;
 
@@ -301,6 +302,77 @@ Returns all the views as an array or array reference.
         $self->error('No views');
         return wantarray ? () : undef;
     }
+}
+
+# ----------------------------------------------------------------------
+sub make_natural_joins {
+
+=pod
+
+=head2 make_natural_joins
+
+Creates foriegn key relationships among like-named fields in different
+tables.  Accepts the following arguments:
+
+=over 4
+
+=item * join_pk_only 
+
+A True or False argument which determins whether or not to perform 
+the joins from primary keys to fields of the same name in other tables
+
+=item * skip_fields
+
+A list of fields to skip in the joins
+
+=back 4
+
+  $schema->make_natural_joins(
+      join_pk_only => 1,
+      skip_fields  => 'name,department_id',
+  );
+
+=cut
+
+    my $self         = shift;
+    my %args         = @_;
+    my $join_pk_only = $args{'join_pk_only'} || 0;
+    my %skip_fields  = map { $_, 1 } @{ parse_list_arg($args{'skip_fields'}) };
+
+    my ( %common_keys, %pk );
+    for my $table ( $self->get_tables ) {
+        for my $field ( $table->get_fields ) {
+            my $field_name = $field->name or next;
+            next if $skip_fields{ $field_name };
+            $pk{ $field_name } = 1 if $field->is_primary_key;
+            push @{ $common_keys{ $field_name } }, $table->name;
+        }
+    } 
+   
+    for my $field ( keys %common_keys ) {
+        next if $join_pk_only and !defined $pk{ $field };
+
+        my @table_names = @{ $common_keys{ $field } };
+        next unless scalar @table_names > 1;
+
+        for my $i ( 0 .. $#table_names ) {
+            my $table1 = $self->get_table( $table_names[ $i ] ) or next;
+
+            for my $j ( 1 .. $#table_names ) {
+                my $table2 = $self->get_table( $table_names[ $j ] ) or next;
+                next if $table1->name eq $table2->name;
+
+                $table1->add_constraint(
+                    type             => FOREIGN_KEY,
+                    fields           => $field,
+                    reference_table  => $table2->name,
+                    reference_fields => $field,
+                );
+            }               
+        }
+    } 
+
+    return 1;
 }
 
 # ----------------------------------------------------------------------
