@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::Rational;
 
 # -------------------------------------------------------------------
-# $Id: Rational.pm,v 1.2 2003-10-01 17:47:02 grommit Exp $
+# $Id: Rational.pm,v 1.3 2003-10-02 01:40:06 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -133,7 +133,6 @@ sub _add_fkey_refs {
 	#	warn "END: $end->{name} $op->{name}\n";
 	#	last if $end->{name} eq $op->{name};
 	#}
-warn "END: ",Dumper($end),"\n";
 	return unless $end;
 	# Find the fkey op
 	my ($refop) = grep { $_->{name} eq $end->{otherEnd}{name} }
