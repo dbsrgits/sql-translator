@@ -18,6 +18,7 @@ lib/SQL/Translator/Parser/PostgreSQL.pm
 lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
+lib/SQL/Translator/Producer/ClassDBI.pm
 lib/SQL/Translator/Producer/MySQL.pm
 lib/SQL/Translator/Producer/Oracle.pm
 lib/SQL/Translator/Producer/PostgreSQL.pm
@@ -26,6 +27,7 @@ lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/XML.pm
 lib/SQL/Translator/Utils.pm
 lib/SQL/Translator/Validator.pm
+t.pl
 t/01load.t
 t/02mysql-parser.t
 t/03mysql-to-oracle.t
@@ -37,6 +39,7 @@ t/08postgres-to-mysql.t
 t/09auto-dia.t
 t/10excel.t
 t/11normalize.t
+t/data/Chado-CV-PostGreSQL.sql
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
