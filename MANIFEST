@@ -27,6 +27,7 @@ lib/SQL/Translator/Producer/Oracle.pm
 lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/Raw.pm
 lib/SQL/Translator/Producer/SQLite.pm
+lib/SQL/Translator/Producer/Sybase.pm
 lib/SQL/Translator/Producer/XML.pm
 lib/SQL/Translator/Schema.pm
 lib/SQL/Translator/Schema/Constants.pm
