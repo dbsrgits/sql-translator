@@ -30,7 +30,7 @@ local $SIG{__WARN__} = sub {
 #=============================================================================
 
 BEGIN {
-    maybe_plan(12,
+    maybe_plan(15,
         'XML::Writer',
         'Test::Differences',
         'SQL::Translator::Producer::XML::SQLFairy');
@@ -51,15 +51,19 @@ $ans = <<EOXML;
   <table name="Basic" order="1">
     <fields>
       <field name="id" data_type="integer" size="10" is_nullable="0" is_auto_increment="1" is_primary_key="1" is_foreign_key="0" order="1">
+        <extra />
         <comments>comment on id field</comments>
       </field>
       <field name="title" data_type="varchar" size="100" is_nullable="0" default_value="hello" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="2">
+        <extra />
         <comments></comments>
       </field>
       <field name="description" data_type="text" size="65535" is_nullable="1" default_value="" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="3">
+        <extra />
         <comments></comments>
       </field>
       <field name="email" data_type="varchar" size="255" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="4">
+        <extra />
         <comments></comments>
       </field>
     </fields>
@@ -229,3 +233,51 @@ EOXML
     $xml =~ s/^([^\n]*\n){7}//m; 
     eq_or_diff $xml, $ans                       ,"XML looks right";
 } # end Procedure
+
+#
+# Field.extra
+#
+{
+my ($obj,$ans,$xml);
+
+$ans = <<EOXML;
+<schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <table name="Basic" order="2">
+    <fields>
+      <field name="foo" data_type="integer" size="10" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="5">
+        <extra ZEROFILL="1" />
+        <comments></comments>
+      </field>
+    </fields>
+    <indices></indices>
+    <constraints></constraints>
+  </table>
+</schema>
+EOXML
+
+    $obj = SQL::Translator->new(
+        debug          => DEBUG,
+        trace          => TRACE,
+        show_warnings  => 1,
+        add_drop_table => 1,
+        from           => "MySQL",
+        to             => "XML-SQLFairy",
+    );
+    my $s = $obj->schema;
+    my $t = $s->add_table( name => "Basic" ) or die $s->error;
+    my $f = $t->add_field(
+        name      => "foo",
+        data_type => "integer",
+        size      => "10",
+    ) or die $t->error;
+    $f->extra(ZEROFILL => "1");
+
+    # As we have created a Schema we give translate a dummy string so that
+    # it will run the produce.
+    lives_ok {$xml =$obj->translate("FOO");} "Translate (Field.extra) ran";
+    ok("$xml" ne ""                             ,"Produced something!");
+    print "XML:\n$xml" if DEBUG;
+    # Strip sqlf header with its variable date so we diff safely
+    $xml =~ s/^([^\n]*\n){7}//m;
+    eq_or_diff $xml, $ans                       ,"XML looks right";
+} # end extra

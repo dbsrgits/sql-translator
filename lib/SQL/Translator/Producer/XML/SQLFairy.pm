@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.14 2004-07-08 20:37:26 grommit Exp $
+# $Id: SQLFairy.pm,v 1.15 2004-07-08 23:39:38 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -62,6 +62,10 @@ get mapped to a comma seperated list of values in the attribute.
 Child objects, such as a tables fields, get mapped to child tags wrapped in a
 set of container tags using the plural of their contained classes name.
 
+L<SQL::Translator::Schema::Field>'s extra attribute (a hash of arbitary data) is
+mapped to a tag called extra, with the hash of data as attributes, sorted into
+alphabetical order.
+
 e.g.
 
     <schema name="" database=""
@@ -70,14 +74,16 @@ e.g.
       <table name="Story" order="1">
 
         <fields>
-          <field name="created" data_type="datetime" size="0"
-            is_nullable="1" is_auto_increment="0" is_primary_key="0"
-            is_foreign_key="0" order="1">
-            <comments></comments>
-          </field>
           <field name="id" data_type="BIGINT" size="20"
             is_nullable="0" is_auto_increment="1" is_primary_key="1"
             is_foreign_key="0" order="3">
+            <extra ZEROFILL="1" />
+            <comments></comments>
+          </field>
+          <field name="created" data_type="datetime" size="0"
+            is_nullable="1" is_auto_increment="0" is_primary_key="0"
+            is_foreign_key="0" order="1">
+            <extra />
             <comments></comments>
           </field>
           ...
@@ -127,6 +133,16 @@ e.g.
  <!-- prefix='foo' -->
  <foo:field name="foo" />
 
+=item newlines
+
+If true (the default) inserts newlines around the XML, otherwise the schema is
+written on one line.
+
+=item indent
+
+When using newlines the number of whitespace characters to use as the indent.
+Default is 2, set to 0 to turn off indenting.
+
 =back
 
 =head1 LEGACY FORMAT
@@ -147,7 +163,7 @@ To convert your old format files simply pass them through the translator;
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -209,7 +225,7 @@ sub produce {
                 tag     =>"field",
                 end_tag => 1,
                 methods =>[qw/name data_type size is_nullable default_value
-                    is_auto_increment is_primary_key is_foreign_key comments order
+                    is_auto_increment is_primary_key is_foreign_key extra comments order
                 /],
             );
         }
@@ -305,8 +321,10 @@ sub xml_obj {
     my @tags;
     my @attr;
     foreach ( grep { defined $obj->$_ } @meths ) {
-        my $what = m/^sql|comments|action$/ ? \@tags : \@attr;
-        my $val = $obj->$_;
+        my $what = m/^(sql|comments|action|extra)$/ ? \@tags : \@attr;
+        my $val = $_ eq 'extra'
+            ? { $obj->$_ }
+            : $obj->$_;
         $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
         push @$what, $_ => $val;
     };
@@ -315,7 +333,13 @@ sub xml_obj {
         ? $xml->emptyTag( [ $Namespace => $tag ], @attr )
         : $xml->startTag( [ $Namespace => $tag ], @attr );
     while ( my ($name,$val) = splice @tags,0,2 ) {
-        $xml->dataElement( [ $Namespace => $name ], $val );
+        if ( ref $val eq 'HASH' ) {
+             $xml->emptyTag( [ $Namespace => $name ],
+                 map { ($_, $val->{$_}) } sort keys %$val );
+        }
+        else {
+            $xml->dataElement( [ $Namespace => $name ], $val );
+        }
     }
     $xml->endTag( [ $Namespace => $tag ] ) if $child_tags && $end_tag;
 }
