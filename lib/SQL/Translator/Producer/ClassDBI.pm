@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.26 2003-07-09 05:59:24 allenday Exp $
+# $Id: ClassDBI.pm,v 1.27 2003-07-09 06:09:56 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -225,6 +225,8 @@ sub produce {
 			   } elsif(scalar(@lk_fields) == 1){
 				 #these will be taken care of on the other end...
 			   } else {
+				 #many many many.  need multiple iterations here, data structure revision
+				 #to handle N FK sources
 				 foreach my $rk_field (@rk_fields){
 				   push @{ $packages{ $table_pkg_name }{'has_many'} },
 					 "sub " . $linkable{$table_name}{$link}->name . "_" . $rk_field .
