@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI;
 
 # -------------------------------------------------------------------
-# $Id: XMI.pm,v 1.3 2003-09-08 17:10:07 grommit Exp $
+# $Id: XMI.pm,v 1.4 2003-09-09 01:00:44 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -82,7 +82,7 @@ translated.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -95,6 +95,9 @@ use SQL::Translator::Utils 'debug';
 use XML::XPath;
 use XML::XPath::XMLParser;
 
+# XMI XPath parsing
+#-----------------------------------------------------------------------------
+
 #
 # get_classes( XPATHOBJ, ARGS );
 #
@@ -106,67 +109,100 @@ use XML::XPath::XMLParser;
 # xpath  =>  The xpath to use for finding classes. Default is //UML:Classes
 #            which will find all the classes in the XMI.
 #
-# attribute_test => An XPath predicate (ie the bit between [] ) to test the
-#            attributes with to decide if we should parse them. ie
-#            attribute_test => '@name="foo"' would only pass out attribs
-#            with a name of foo.
+# test   =>  An XPath predicate (ie the bit between [] ) to test the
+#            classes with to decide if we should parse them. ie
+#            test => '@name' would only pass out classes with a name.
+#            Can also give it an array ref and it will and the tests.
+#            It gets tacked onto to xpath so don't put any [] on
+#            xpath if you use test as well.
 #
+# attribute_test => An XPath predicate to pass onto get_attributes.
+#
+
+# _add_xpath_tests $path, [qw/@name xmiVisible("public")/]; # and
+# _add_xpath_tests $path, [qw/@name xmiVisible("public")/], "or";
+sub _add_xpath_tests {
+    my ($path,$tests,$join) = @_;
+	return $path unless defined $tests;
+	my @tests = ref($tests) ? @$tests : $tests;
+	return $path unless @tests;
+    $join ||= "and";
+    return $path."[".join(" $join ", @tests)."]";
+}
+
+sub get_stereotype {
+    my ($xp) = @_;
+    return "".$xp->findvalue(
+        'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
+    # TODO Test for difference between it existing or being "" ?
+}
+
 sub get_classes {
 	my ($xp,%args) = @_;
-	my $classes = [];
+	my $classes;
 
 	my $xpath = $args{xpath} ||= '//UML:Class'; # Default: all classes
-	$xpath .= "[$args{class_test}]" if $args{class_test};
+    $xpath = _add_xpath_tests $xpath, $args{test};
+	debug "Searching for Classes using:$xpath";
 
 	my @nodes = $xp->findnodes($xpath);
 	return unless @nodes;
 
 	for my $classnode (@nodes) {
         my $class = {};
-
-		# <UML:Class> attributes
-		foreach (
+		
+        foreach (
 			qw/name visibility isSpecification
 			   isRoot isLeaf isAbstract isActive/
 		) {
 			$class->{$_} = $classnode->getAttribute($_);
 		}
+		$class->{stereotype} = get_stereotype($classnode);
 
-		# Stereotype
-		$class->{stereotype} = "".$classnode->find(
-            'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
-
-		#
 		# Class Attributes
-		#
 		my $xpath = 'UML:Classifier.feature/UML:Attribute';
-		$xpath .= "[$args{attribute_test}]" if $args{attribute_test};
-		foreach my $attrnode ( $classnode->findnodes($xpath) ) {
-			my $attr = {};
-			# <UML:Attributes> attributes
-			foreach (qw/name visibility isSpecification ownerScope/) {
-				$attr->{$_} = $attrnode->getAttribute($_);
-			}
-
-			$attr->{stereotype} = "".$attrnode->findvalue(
-                'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
-
-			$attr->{datatype} = "".$attrnode->find(
-                  'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name');
-            if ( my @body = $attrnode->findnodes(
-                'UML:Attribute.initialValue/UML:Expression/@body') 
-            ) {
-                $attr->{initialValue} = $body[0]->getData;
-            }
-
-			push @{$class->{attributes}}, $attr;
-		}
-
+        $class->{attributes} = get_attributes( $classnode,
+            xpath => $xpath, test => $args{attribute_test} );
+        
 		push @$classes, $class;
 	}
-
-	return $classes;
+	return wantarray ? @$classes : $classes;
 };
+
+sub get_attributes {
+    my ($xp, %args) = @_;
+
+	my $xpath = $args{xpath} ||= '//UML:Classifier.feature/UML:Attribute';
+    $xpath = _add_xpath_tests $xpath, $args{test};
+	debug "Searching for Attributes using:$xpath";
+	
+    my $attributes;
+    foreach my $node ( $xp->findnodes($xpath) ) {
+        my $attr = {};
+        
+        foreach (qw/name visibility isSpecification ownerScope/) {
+            $attr->{$_} = $node->getAttribute($_);
+        }
+        $attr->{stereotype} = get_stereotype($node);
+
+        # Get datatype name and the name body of the initial value
+        $attr->{datatype} = "".$node->find(
+              'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name');
+        if ( my @body = $node->findnodes(
+            'UML:Attribute.initialValue/UML:Expression/@body') 
+        ) {
+            $attr->{initialValue} = $body[0]->getData;
+        }
+        
+        push @$attributes, $attr;
+    }
+    return wantarray ? @$attributes : $attributes;
+}
+
+
+
+# SQLFairy Parser
+#-----------------------------------------------------------------------------
 
 sub parse {
 	eval {
@@ -188,20 +224,18 @@ sub parse {
 	#
     # Build an XPath for the classes and attributes we want...
 	#
-    my @tests = ('@xmi.id'); # Only classes with an id so we don't get any
-	                         #     refs to classes ie xmi.idref classes
-	push @tests, '@name';    # Only Classes with a name
+    # Only classes with an id (so we don't get any refs to classes ie 
+    # xmi.idref classes). They also need a name to be usefull.
+    my @tests = ('@xmi.id and @name');
 	push @tests, "xmiVisible('$pargs->{visibility}')" if $pargs->{visibility};
-	my $path = '//UML:Class['.join(' and ',@tests).']';
 
-	my $attrib_test = '@name';
+	my $attrib_test = '@name and @xmi.id';
 	$attrib_test .= " and xmiVisible('$pargs->{visibility}')"
 	    if $pargs->{visibility};
 
 	# ...and parse them out
-	debug "Searching for Classes using:$path";
 	my $classes = get_classes( $xp,
-		xpath => $path, attribute_test => $attrib_test);
+		xpath => "//UML:Class", test => [@tests], attribute_test => $attrib_test);
 
     debug "Found ".scalar(@$classes)." Classes: ".join(", ",
         map {$_->{"name"}} @$classes) if $DEBUG;
