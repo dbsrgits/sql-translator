@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.40 2004-04-14 06:46:15 boconnor Exp $
+# $Id: Turnkey.pm,v 1.41 2004-04-16 09:08:44 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -479,17 +479,17 @@ EOF
 <Turnkey>
 
 <!-- The basic layout is fixed -->
-  <container bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" height="90%" orientation="vertical" type="root" width="100%" xlink:label="RootContainer">
-	<container cellpadding="3" cellspacing="0" orientation="horizontal" type="container" height="100%" width="100%" xlink:label="MiddleContainer">
-	  <container align="center" cellpadding="2" cellspacing="0" class="leftbar" orientation="vertical" type="minor" width="0%" xlink:label="MidLeftContainer"/>
-	  <container cellpadding="0" cellspacing="0" orientation="vertical" width="100%" type="major" xlink:label="MainContainer"/>
+  <container orientation="vertical" type="Container" label="RootContainer">
+	<container orientation="horizontal" type="Container" label="MiddleContainer">
+	  <container align="center" class="leftbar" orientation="vertical" type="minor" label="MidLeftContainer"/>
+	  <container orientation="vertical" type="major" label="MainContainer"/>
 	</container>
   </container>
 
 <!-- Atom Classes -->
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
-  <atom class="[% format_table(node.key) %]" name="[% format_table(node.key) %]" xlink:label="[% format_table(node.key) %]Atom"/>
+  <atom class="[% format_table(node.key) %]" name="[% format_table(node.key) %]" label="[% format_table(node.key) %]Atom"/>
 [%- END -%]
 [% END %]
 
@@ -498,12 +498,12 @@ EOF
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
   [% FOREACH link_atom = focus_atom.value.hyperedges %]
-  <atomatombinding xlink:from="#[% format_table(focus_atom.key) %]Atom" xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom" xlink:label="[% format_table(focus_atom.key) %]Atom2[% format_table(link_atom.thatnode.table.name) %]Atom"/>
+  <atomatombinding from="#[% format_table(focus_atom.key) %]Atom" to="#[% format_table(link_atom.thatnode.table.name) %]Atom" label="[% format_table(focus_atom.key) %]Atom2[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [%- END -%]
   [% previous = "" %]
   [% FOREACH link_atom = focus_atom.value.edges %]
   [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name && link_atom.thatnode.table.name != "" %]
-  <atomatombinding xlink:from="#[% format_table(focus_atom.key) %]Atom" xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom" xlink:label="[% format_table(focus_atom.key) %]Atom2[% format_table(link_atom.thatnode.table.name) %]Atom"/>
+  <atomatombinding from="#[% format_table(focus_atom.key) %]Atom" to="#[% format_table(link_atom.thatnode.table.name) %]Atom" label="[% format_table(focus_atom.key) %]Atom2[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [% previous = link_atom.thatnode.table.name %]
   [% END %]
  [%- END %]
@@ -514,18 +514,18 @@ EOF
 <layouts>
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
-  <layout xlink:label="[% format_table(focus_atom.key) %]">
+  <layout label="[% format_table(focus_atom.key) %]">
   [% FOREACH link_atom = focus_atom.value.hyperedges %]
-    <placement xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
+    <placement from="#MidLeftContainer" label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [%- END%]
   [% previous = "" %]
   [% FOREACH link_atom = focus_atom.value.edges %]
   [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name %]
-    <placement xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
+    <placement from="#MidLeftContainer" label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom" to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [% previous = link_atom.thatnode.table.name %]
   [% END %]
   [%- END %]
-    <placement xlink:from="#MainContainer"    xlink:label="MainContainer2[% format_table(focus_atom.key) %]Atom"    xlink:to="#[% format_table(focus_atom.key) %]Atom"/>
+    <placement from="#MainContainer" label="MainContainer2[% format_table(focus_atom.key) %]Atom" to="#[% format_table(focus_atom.key) %]Atom"/>
   </layout>
   [%- END %]
 [% END %]
