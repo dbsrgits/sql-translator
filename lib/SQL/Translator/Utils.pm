@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.10 2003-10-09 16:35:55 kycl4rk Exp $
+# $Id: Utils.pm,v 1.11 2003-10-09 18:09:07 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -26,7 +26,7 @@ use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 
 use Exporter;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg $DEFAULT_COMMENT
@@ -72,7 +72,7 @@ sub debug {
 
 # ----------------------------------------------------------------------
 sub normalize_name {
-    my $name = shift || '';
+    my $name = shift or return '';
 
     # The name can only begin with a-zA-Z_; if there's anything
     # else, prefix with _
