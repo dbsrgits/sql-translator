@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.6 2003-04-01 18:08:02 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.7 2003-04-02 01:45:45 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -12,15 +12,18 @@ auto-dia.pl - Automatically create a diagram from a database schema
 
   Options:
 
-    -o|--output     Output file name (default STDOUT)
-    -i|--image      Output image type (default PNG)
-    -t|--title      Title to give schema
-    -c|--cols       Number of columns
-    -n|--no-lines   Don't draw lines
-    -s|--skip       Fields to skip in natural joins
-    -f|--font-size  "small," "medium," "large," or "huge" (default "medium")
-    --color         Add colors
-    --join-pk-only  Perform natural joins from primary keys only
+    -o|--output             Output file name (default STDOUT)
+    -i|--image              Output image type (default PNG)
+    -t|--title              Title to give schema
+    -c|--cols               Number of columns
+    -n|--no-lines           Don't draw lines
+    -f|--font-size          "small," "medium," "large," or "huge" 
+                            (default "medium")
+    --color                 Add colors
+
+    --natural-join          Perform natural joins
+    --natural-join-pk-only  Perform natural joins from primary keys only
+    -s|--skip               Fields to skip in natural joins
 
 =head1 DESCRIPTION
 
@@ -28,6 +31,19 @@ This script will create a picture of your schema.  Only the database
 driver argument (for SQL::Translator) is required.  If no output file
 name is given, then image will be printed to STDOUT, so you should
 redirect the output into a file.
+
+The default action is to assume the presence of foreign key
+relationships defined via "REFERNCES" or "FOREIGN KEY" constraints on
+the tables.  If you are parsing the schema of a file that does not
+have these, you will find the natural join options helpful.  With
+natural joins, like-named fields will be considered foreign keys.
+This can prove too permissive, however, as you probably don't want a
+field called "name" to be considered a foreign key, so you could
+include it in the "skip" option, and all fields called "name" will be
+excluded from natural joins.  A more efficient method, however, might
+be to simply deduce the foriegn keys from primary keys to other fields
+named the same in other tables.  Use the "natural-join-pk-only" option
+to acheive this.
 
 =cut
 
@@ -37,7 +53,7 @@ use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.6 $)[-1];
+my $VERSION = (qw$Revision: 1.7 $)[-1];
 
 use constant VALID_FONT_SIZE => {
     small  => 1,
@@ -49,27 +65,33 @@ use constant VALID_FONT_SIZE => {
 #
 # Get arguments.
 #
-my ( $out_file, $image_type, $db_driver, $title, $no_columns, 
-    $no_lines, $skip_fields, $font_size, $add_color, $join_pk_only );
+my ( 
+    $out_file, $image_type, $db_driver, $title, $no_columns, 
+    $no_lines, $font_size, $add_color, 
+    $natural_join, $join_pk_only, $skip_fields
+);
+
 GetOptions(
-    'd|db=s'        => \$db_driver,
-    'o|output:s'    => \$out_file,
-    'i|image:s'     => \$image_type,
-    't|title:s'     => \$title,
-    'c|columns:i'   => \$no_columns,
-    'n|no-lines'    => \$no_lines,
-    's|skip:s'      => \$skip_fields,
-    'f|font-size:s' => \$font_size,
-    'color'         => \$add_color,
-    'join-pk-only'  => \$join_pk_only,
+    'd|db=s'                => \$db_driver,
+    'o|output:s'            => \$out_file,
+    'i|image:s'             => \$image_type,
+    't|title:s'             => \$title,
+    'c|columns:i'           => \$no_columns,
+    'n|no-lines'            => \$no_lines,
+    'f|font-size:s'         => \$font_size,
+    'color'                 => \$add_color,
+    'natural-join'          => \$natural_join,
+    'natural-join-pk-only'  => \$join_pk_only,
+    's|skip:s'              => \$skip_fields,
 ) or die pod2usage;
 my $file = shift @ARGV or pod2usage( -message => 'No input file' );
 
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
-$image_type   = $image_type ? lc $image_type : 'png';
-$title      ||= $file;
-$font_size    = 'medium' unless VALID_FONT_SIZE->{ $font_size };
-my %skip      = map { $_, 1 } split ( /,/, $skip_fields );
+$image_type     = $image_type ? lc $image_type : 'png';
+$title        ||= $file;
+$font_size      = 'medium' unless VALID_FONT_SIZE->{ $font_size };
+my %skip        = map { $_, 1 } split ( /,/, $skip_fields );
+$natural_join ||= $join_pk_only;
 
 #
 # Parse file.
@@ -96,7 +118,8 @@ my $cur_col     = 1;             # the current column
 my $no_this_col = 0;             # number of tables in current column
 my $this_col_x  = $x;            # current column's x
 my $gutter      = 30;            # distance b/w columns
-my %registry;                    # for locations of fields
+my %nj_registry;                 # for locations of fields for natural joins
+my @fk_registry;                 # for locations of fields for foreign keys
 my %table_x;                     # for max x of each table
 my $field_no;                    # counter to give distinct no. to each field
 my %legend;
@@ -169,16 +192,33 @@ for my $table (
         my $length  = $this_col_x + ( $font->width * length( $desc ) );
         $this_max_x = $length if $length > $this_max_x;
 
-        unless ( $skip{ $orig_name } ) {
-            my $y_link = $y - $font->height * .75;
-            push @{ $registry{ $orig_name } }, {
-                left     => [ $this_col_x - 2, $y_link ],
-                right    => [ $length,         $y_link ],
-                table    => $table_name,
-                field_no => ++$field_no,
-                is_pk    => $is_pk,
-            };
+        my $constraints = $table->{'fields'}{ $orig_name }{'constraints'};
+
+        if ( $natural_join && !$skip{ $orig_name } ) {
+            push @{ $nj_registry{ $orig_name } }, $table_name;
         }
+        elsif ( @{ $constraints || [] } ) {
+            for my $constraint ( @$constraints ) {
+                next unless $constraint->{'type'} eq 'foreign_key';
+                for my $fk_field ( 
+                    @{ $constraint->{'reference_fields'} || [] }
+                ) {
+                    push @fk_registry, [
+                        [ $constraint->{'reference_table'}, $fk_field ],
+                        [ $table_name, $orig_name ],
+                    ];
+                }
+            }
+        }
+
+        my $y_link = $y - $font->height * .75;
+        $table->{'fields'}{ $orig_name }{'coords'} = {
+            left     => [ $this_col_x - 2, $y_link ],
+            right    => [ $length,         $y_link ],
+            table    => $table_name,
+            field_no => ++$field_no,
+            is_pk    => $is_pk,
+        };
     }
 
     $this_max_x += 5;
@@ -215,9 +255,35 @@ for my $table (
 my %horz_taken;
 my %done;
 unless ( $no_lines ) {
-    for my $field_name ( keys %registry ) {
-        my @positions = @{ $registry{ $field_name } || [] } or next;
-        next if scalar @positions == 1;
+    my @position_bunches;
+
+    if ( $natural_join ) {
+        for my $field_name ( keys %nj_registry ) {
+            my @positions;
+            my @table_names = @{ $nj_registry{ $field_name } || [] } or next;
+            next if scalar @table_names == 1;
+
+            for my $table_name ( @table_names ) {
+                push @positions,
+                    $data->{ $table_name }{'fields'}{ $field_name }{'coords'};
+            }
+
+            push @position_bunches, [ @positions ];
+        }
+    }
+    else {
+        for my $pair ( @fk_registry ) {
+            my $c1 = 
+                $data->{ $pair->[0][0] }{'fields'}{ $pair->[0][1] }{'coords'};
+            my $c2 = 
+                $data->{ $pair->[1][0] }{'fields'}{ $pair->[1][1] }{'coords'};
+            next unless %{ $c1 || {} } && %{ $c1 || {} };
+            push @position_bunches, [ $c1, $c2 ];
+        }
+    }
+
+    for my $bunch ( @position_bunches ) {
+        my @positions = @$bunch;
 
         for my $i ( 0 .. $#positions ) {
             my $pos1        = $positions[ $i ];
