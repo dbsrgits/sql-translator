@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.53 2004-06-24 00:35:36 allenday Exp $
+# $Id: Turnkey.pm,v 1.54 2004-07-21 03:02:57 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -217,7 +217,8 @@ sub template {
   if($type eq 'dbi'){
 	return <<'EOF';
 [% MACRO printPackage(node) BLOCK %]
-# --------------------------------------------
+
+########[% node.name | replace('Turnkey::Model::', '') %]########
 
 package [% node.name %];
 use base '[% node.base %]';
@@ -302,14 +303,14 @@ sub [% cedge.via.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfi
 [% seen = 0 %]
 [% FOREACH h = hedges %]
   [% NEXT UNLESS h.type == 'one2one' %]
-[% IF seen == 0 ; seen = 1 %]########## one2one ###########[% END %]
+[% IF seen == 0 ; seen = 1 %]# one2one #[% END %]
 sub [% h.thatnode.table.name %]s { my $self = shift; return map $_->[% h.thatviafield.name %], $self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
 [% END %]
 
 [% seen = 0 %]
 [% FOREACH h = hedges %]
   [% NEXT UNLESS h.type == 'one2many' %]
-[% IF seen == 0 ; seen = 1 %]########## one2many ##########[% END %]
+[% IF seen == 0 ; seen = 1 %]# one2many #[% END %]
   [% thisnode = h.thisnode_index(0) %]
   [% i = 0 %]
   [% FOREACH thatnode = h.thatnode %]
@@ -323,7 +324,7 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).na
 [% seen = 0 %]
 [% FOREACH h = hedges %]
   [% NEXT UNLESS h.type == 'many2one' %]
-[% IF seen == 0 ; seen = 1 %]########## many2one ##########[% END %]
+[% IF seen == 0 ; seen = 1 %]# many2one #[% END %]
   [% i = 0 %]
   [% FOREACH thisnode = h.thisnode %]
 #[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
@@ -335,7 +336,7 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
 [% seen = 0 %]
 [% FOREACH h = hedges %]
   [% NEXT UNLESS h.type == 'many2many' %]
-[% IF seen == 0 ; seen = 1 %]########## many2many #########[% END %]
+[% IF seen == 0 ; seen = 1 %]# many2many #[% END %]
   [% i = 0 %]
   [% FOREACH thisnode = h.thisnode %]
     [% j = 0 %]
@@ -355,8 +356,19 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
 #
 #FIXME, why aren't these being generated?
 
+1;
+
 [% END %]
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
+
+########AutoDBI########
+use Turnkey::Model::DBI;
+[% FOREACH node = nodes %]
+use [% node.value.name %];
+[% END %]
+1;
+
+########[% baseclass | replace('Turnkey::Model::', '') %]########
 package [% baseclass %];
 
 # Created by SQL::Translator::Producer::Turnkey
@@ -391,9 +403,10 @@ sub dump {
   return(Dumper($arg{'object'}));
 }
 
-[% FOREACH node = nodes %]
-    [% printPackage(node.value) %]
-[% END %]
+########soap.tt2########
+
+[% FOREACH node = nodes %][% node.value.name %], [%- END -%]
+[% FOREACH node = nodes %][% printPackage(node.value) %][% END %]
 EOF
 }
 
@@ -401,7 +414,7 @@ EOF
 elsif($type eq 'atom'){
 
   return <<'EOF';
-[% ###### DOCUMENT START ###### %]
+[% # DOCUMENT START # %]
 
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
