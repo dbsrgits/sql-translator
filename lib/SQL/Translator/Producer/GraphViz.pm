@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.10 2004-02-09 23:02:14 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.11 2004-02-11 21:31:03 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -83,27 +83,27 @@ sub produce {
     my $args       = $t->producer_args;
     local $DEBUG   = $t->debug;
 
-    my $out_file        = $args->{'out_file'}    || '';
-    my $layout          = $args->{'layout'}      || 'dot';
-    my $node_shape      = $args->{'node_shape'}  || 'record';
-    my $output_type     = $args->{'output_type'} || 'png';
-    my $width           = defined $args->{'width'} 
-                          ? $args->{'width'} : 8.5;
-    my $height          = defined $args->{'height'}
-                          ? $args->{'height'} : 11;
-    my $show_fields     = defined $args->{'show_fields'} 
-                          ? $args->{'show_fields'} : 1;
-    my $add_color       = $args->{'add_color'};
-    my $natural_join    = $args->{'natural_join'};
-    my $show_fk_only    = $args->{'show_fk_only'};
-    my $show_datatypes  = $args->{'show_datatypes'};
-    my $show_sizes      = $args->{'show_sizes'};
+    my $out_file         = $args->{'out_file'}    || '';
+    my $layout           = $args->{'layout'}      || 'dot';
+    my $node_shape       = $args->{'node_shape'}  || 'record';
+    my $output_type      = $args->{'output_type'} || 'png';
+    my $width            = defined $args->{'width'} 
+                           ? $args->{'width'} : 8.5;
+    my $height           = defined $args->{'height'}
+                           ? $args->{'height'} : 11;
+    my $show_fields      = defined $args->{'show_fields'} 
+                           ? $args->{'show_fields'} : 1;
+    my $add_color        = $args->{'add_color'};
+    my $natural_join     = $args->{'natural_join'};
+    my $show_fk_only     = $args->{'show_fk_only'};
+    my $show_datatypes   = $args->{'show_datatypes'};
+    my $show_sizes       = $args->{'show_sizes'};
     my $show_constraints = $args->{'show_constraints'};
-    my $join_pk_only    = $args->{'join_pk_only'};
-    my $skip_fields     = $args->{'skip_fields'};
-    my %skip            = map { s/^\s+|\s+$//g; $_, 1 }
-                          split ( /,/, $skip_fields );
-    $natural_join     ||= $join_pk_only;
+    my $join_pk_only     = $args->{'join_pk_only'};
+    my $skip_fields      = $args->{'skip_fields'};
+    my %skip             = map { s/^\s+|\s+$//g; $_, 1 }
+                           split ( /,/, $skip_fields );
+    $natural_join      ||= $join_pk_only;
 
     $schema->make_natural_joins(
         join_pk_only => $join_pk_only,
@@ -157,7 +157,7 @@ sub produce {
                 . $_->name
                 . ( $show_datatypes ? '\ ' . $_->data_type : '')
                 . ( $show_sizes && ! $show_datatypes ? '\ ' : '')
-                . ( $show_sizes && $_->data_type =~ /^(VARCHAR2?|CHAR)$/ ? '(' . $_->size . ')' : '')
+                . ( $show_sizes && $_->data_type =~ /^(VAR)?CHAR2?$/i ? '(' . $_->size . ')' : '')
                 . ( $show_constraints ?
                     ( $_->is_primary_key || $_->is_foreign_key || $_->is_unique ? '\ [' : '' )
                     . ( $_->is_primary_key ? 'PK' : '' )
