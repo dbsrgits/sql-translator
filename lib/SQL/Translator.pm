@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.49 2003-12-02 18:39:03 dlc Exp $
+# $Id: Translator.pm,v 1.50 2004-02-02 20:30:35 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.04';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -1110,6 +1110,8 @@ The following people have contributed to the SQLFairy project:
 =item * Mark Addison <grommit@users.sourceforge.net>
 
 =item * Sam Angiuoli <angiuoli@users.sourceforge.net>
+
+=item * Dave Cash <dave@gnofn.org>
 
 =item * Darren Chamberlain <dlc@users.sourceforge.net>
 
