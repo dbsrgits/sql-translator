@@ -30,7 +30,6 @@ lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/XML.pm
 lib/SQL/Translator/Utils.pm
 lib/SQL/Translator/Validator.pm
-t.pl
 t/01load.t
 t/02mysql-parser.t
 t/03mysql-to-oracle.t
