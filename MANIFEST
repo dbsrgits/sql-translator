@@ -7,6 +7,7 @@ README
 TODO
 bin/auto-dia.pl
 bin/auto-graph.pl
+bin/auto-viv.cgi
 bin/sql_translator.pl
 bin/validator_test.pl
 lib/SQL/Translator.pm
@@ -19,6 +20,8 @@ lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/ClassDBI.pm
+lib/SQL/Translator/Producer/Diagram.pm
+lib/SQL/Translator/Producer/GraphViz.pm
 lib/SQL/Translator/Producer/MySQL.pm
 lib/SQL/Translator/Producer/Oracle.pm
 lib/SQL/Translator/Producer/PostgreSQL.pm
