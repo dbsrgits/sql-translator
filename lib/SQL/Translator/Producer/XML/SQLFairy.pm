@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.2 2003-08-22 22:22:19 kycl4rk Exp $
+# $Id: SQLFairy.pm,v 1.3 2003-08-26 03:59:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -90,7 +90,7 @@ use XML::Writer;
 
 my $Namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 my $Name      = 'sqlt';
-my $PArgs;
+my $PArgs     = {};
 
 sub produce {
     my $translator  = shift;
