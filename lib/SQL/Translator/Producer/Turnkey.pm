@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.28 2004-03-12 19:04:34 boconnor Exp $
+# $Id: Turnkey.pm,v 1.29 2004-03-12 20:20:44 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -234,9 +234,10 @@ use Class::DBI::Pager;
 #
 # Primary key accessors
 #
+
 [% FOREACH item = array %]
-sub id { shift->[% item %] }
-sub [% name %] { shift->[% item %] }
+[% IF item != "id" %]sub id { shift->[% item %] }[% END %]
+[% IF item != name %]sub [% name %] { shift->[% item %] }[% END %]
 [% END %]
 
 [% END %]
