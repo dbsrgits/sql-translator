@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.19 2003-09-26 22:54:48 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.20 2003-10-15 19:07:13 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -26,11 +26,21 @@ package SQL::Translator::Producer::PostgreSQL;
 
 SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
+=head1 SYNOPSIS
+
+  my $t = SQL::Translator->new( parser => '...', producer => 'PostgreSQL' );
+  $t->translate;
+
+=head1 DESCRIPTION
+
+Creates a DDL suitable for PostgreSQL.  Very heavily based on the Oracle
+producer.
+
 =cut
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -517,8 +527,12 @@ sub next_unused_name {
 
 =pod
 
+=head1 SEE ALSO
+
+SQL::Translator, SQL::Translator::Producer::Oracle.
+
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.8 2003-10-08 23:00:42 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.9 2003-10-15 19:09:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -22,6 +22,23 @@ package SQL::Translator::Producer::SQLite;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=head1 NAME
+
+SQL::Translator::Producer::SQLite - SQLite producer for SQL::Translator
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $t = SQL::Translator->new( parser => '...', producer => 'SQLite' );
+  $t->translate;
+
+=head1 DESCRIPTION
+
+This module will produce text output of the schema suitable for SQLite.
+
+=cut
+
 use strict;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
@@ -29,7 +46,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -225,10 +242,16 @@ sub mk_name {
 
 1;
 
-=head1 NAME
+# -------------------------------------------------------------------
 
-SQL::Translator::Producer::SQLite - SQLite producer for SQL::Translator
+=pod
+
+=head1 SEE ALSO
+
+SQL::Translator, http://www.sqlite.org/.
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+
+=cut
