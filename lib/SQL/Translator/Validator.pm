@@ -1,7 +1,7 @@
 package SQL::Translator::Validator;
 
 # ----------------------------------------------------------------------
-# $Id: Validator.pm,v 1.2 2002-03-27 12:41:53 dlc Exp $
+# $Id: Validator.pm,v 1.3 2002-06-11 12:09:13 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Validator;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -75,13 +75,13 @@ sub validate {
                 "not defined";
         }
 
-        # Indeces: array of hashes
+        # Indices: array of hashes
         unless (defined $table_data->{"indeces"} &&
                 UNIVERSAL::isa($table_data->{"indeces"}, "ARRAY")) {
-            return by_context $wa, 0, "Indeces is missing or is not an ARRAY";
+            return by_context $wa, 0, "Indices is missing or is not an ARRAY";
         } else {
             my @indeces = @{$table_data->{"indeces"}};
-            $log .= "\n\tIndeces:";
+            $log .= "\n\tIndices:";
             if (@indeces) {
                 for my $index (@indeces) {
                     $log .= "\n\t\t" . ($index->{"name"} || "(unnamed)")
@@ -147,7 +147,7 @@ SQL::Translator::Validate - Validate that a data structure is correct
 When writing a parser module for SQL::Translator, it is helpful to
 have a tool to automatically check the return of your module, to make
 sure that it is returning the Right Thing.  While only a full Producer
-and the associated database can determine if you are producing valud
+and the associated database can determine if you are producing valid
 output, SQL::Translator::Validator can tell you if the basic format of
 the data structure is correct.  While this will not catch many errors,
 it will catch the basic ones.
@@ -185,7 +185,7 @@ Produces the following summary:
     Contains 2 tables.
     Table 1: random
             Type: not defined
-            Indeces: none defined
+            Indices: none defined
             Fields:
                     id int (11)
                             Default: 1
@@ -195,7 +195,7 @@ Produces the following summary:
                             Null: no
     Table 2: session
             Type: HEAP
-            Indeces:
+            Indices:
                     (unnamed) on id
             Fields:
                     foo char (255)

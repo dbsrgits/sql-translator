@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.6 2002-03-27 12:41:52 dlc Exp $
+# $Id: Translator.pm,v 1.7 2002-06-11 12:09:13 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -57,7 +57,7 @@ contributing their parsers or producers back to the project.
 
 use strict;
 use vars qw($VERSION $DEFAULT_SUB $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 # ----------------------------------------------------------------------
@@ -116,7 +116,7 @@ advantage is gained by passing options to the constructor.
 # ----------------------------------------------------------------------
 sub new {
     my $class = shift;
-    my $args  = isa($_[0], 'HASH') ? shift : { @_ };
+    my $args  = $_[0] && isa($_[0], 'HASH') ? shift : { @_ };
     my $self  = bless { } => $class;
 
     # ------------------------------------------------------------------
@@ -489,7 +489,7 @@ or:
     $tr->data(\$create_script);
 
 B<filename> takes a string, which is interpreted as a filename.
-B<data> takes a reference to a string, which is used as the data o be
+B<data> takes a reference to a string, which is used as the data to be
 parsed.  If a filename is set, then that file is opened and read when
 the B<translate> method is called, as long as the data instance
 variable is not set.
@@ -584,7 +584,13 @@ sub translate {
         # {{{ Passed something else entirely.
         else {
             # We're not impressed.  Take your empty string and leave.
-            return "";
+            # return "";
+
+            # Actually, if data, parser, and producer are set, then be can
+            # continue.  Too bad, because I like my comment (above)...
+            return "" unless ($self->data     &&
+                              $self->producer &&
+                              $self->parser);
         }
         # }}}
     }
@@ -620,18 +626,16 @@ sub translate {
     # ----------------------------------------------------------------
     if ($parser = ($args->{'parser'} || $args->{'from'})) {
         $self->parser($parser);
-    } else {
-        $parser = $self->parser;
     }
+    $parser = $self->parser;
 
     # ----------------------------------------------------------------
     # Local reference to the producer subroutine
     # ----------------------------------------------------------------
     if ($producer = ($args->{'producer'} || $args->{'to'})) {
         $self->producer($producer);
-    } else {
-        $producer = $self->producer;
     }
+    $producer = $self->producer;
 
     # ----------------------------------------------------------------
     # Execute the parser, then execute the producer with that output
