@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI;
 
 # -------------------------------------------------------------------
-# $Id: DBI.pm,v 1.5 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: DBI.pm,v 1.6 2004-09-24 14:06:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -29,7 +29,12 @@ SQL::Translator::Parser::DBI - "parser" for DBI handles
   use DBI;
   use SQL::Translator;
 
-  my $dbh = DBI->connect(...);
+  my $dbh = DBI->connect('dsn', 'user', 'pass', 
+      {
+          RaiseError       => 1,
+          FetchHashKeyName => 'NAME_lc',
+      }
+  );
 
   my $translator  =  SQL::Translator->new(
       parser      => 'DBI',
@@ -40,11 +45,13 @@ Or:
 
   use SQL::Translator;
 
-  my $translator  =  SQL::Translator->new(
-      parser      => 'DBI',
-      dsn         => 'dbi:mysql:FOO',
-      db_user     => 'guest',
-      db_password => 'password',
+  my $translator      =  SQL::Translator->new(
+      parser          => 'DBI',
+      parser_args     => {
+          dsn         => 'dbi:mysql:FOO',
+          db_user     => 'guest',
+          db_password => 'password',
+    }
   );
 
 =head1 DESCRIPTION
@@ -58,7 +65,9 @@ The following are acceptable arguments:
 
 =item * dbh
 
-An open DBI database handle.
+An open DBI database handle.  NB:  Be sure to create the database with the 
+"FetchHashKeyName => 'NAME_lc'" option as all the DBI parsers expect 
+lowercased column names.
 
 =item * dsn
 
@@ -112,7 +121,7 @@ query Oracle directly and skip the parsing of a text file, too.
 use strict;
 use DBI;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use constant DRIVERS => {
     mysql            => 'MySQL',
