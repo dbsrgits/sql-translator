@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.9 2003-02-26 05:17:21 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.10 2003-04-02 01:46:16 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -107,7 +107,7 @@ Alter table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -200,14 +200,26 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
                     };
                 }
 
-                for my $constraint ( @{ $definition->{'constaints'} || [] } ) {
-                    $constraint->{'fields' } = [ $field_name ];
-                    push @{$tables{ $table_name }{'constraints'}}, $constraint;
+                for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
+                    $constraint->{'fields'} = [ $field_name ];
+                    push @{ $tables{ $table_name }{'constraints'} }, 
+                        $constraint;
                 }
             }
             elsif ( $definition->{'type'} eq 'constraint' ) {
                 $definition->{'type'} = $definition->{'constraint_type'};
-                push @{ $tables{ $table_name }{'constraints'} }, $definition;
+                # group FKs at the field level
+                if ( $definition->{'type'} eq 'foreign_key' ) {
+                    for my $fld ( @{ $definition->{'fields'} || [] } ) {
+                        push @{ 
+                            $tables{$table_name}{'fields'}{$fld}{'constraints'}
+                        }, $definition;
+                    }
+                }
+                else {
+                    push @{ $tables{ $table_name }{'constraints'} }, 
+                        $definition;
+                }
             }
             else {
                 push @{ $tables{ $table_name }{'indices'} }, $definition;
@@ -320,12 +332,12 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     /check/i '(' /[^)]+/ ')' 
         { $return = { type => 'check', expression => $item[2] } }
     |
-    /references/i table_name parens_value_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+    /references/i table_name parens_word_list(?) match_type(?) on_delete_do(?) on_update_do(?)
     {
         $return              =  {
             type             => 'foreign_key',
             reference_table  => $item[2],
-            reference_fields => $item[3],
+            reference_fields => $item[3][0],
             match_type       => $item[4][0],
             on_delete_do     => $item[5][0],
             on_update_do     => $item[6][0],
