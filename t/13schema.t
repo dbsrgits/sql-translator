@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 199;
+use Test::More tests => 201;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -236,6 +236,10 @@ require_ok( 'SQL::Translator::Schema' );
     $fields = join(',', $constraint1->fields('age') );
     is( $fields, 'age', 'Constraint field = "age"' );
 
+    $fields = $constraint1->fields;
+    ok( ref $fields[0] && $fields[0]->isa("SQL::Translator::Schema::Field"),
+        'Constraint fields returns a SQL::Translator::Schema::Field' );
+
     $fields = join(',', $constraint1->fields('age,age') );
     is( $fields, 'age', 'Constraint field = "age"' );
 
@@ -253,6 +257,9 @@ require_ok( 'SQL::Translator::Schema' );
 
     $fields = join(',', $constraint1->fields( qw[ age name ] ) );
     is( $fields, 'age,name', 'Constraint field = "age,name"' );
+
+    $fields = join(',', $constraint1->field_names );
+    is( $fields, 'age,name', 'Constraint field_names = "age,name"' );
 
     is( $constraint1->match_type, '', 'Constraint match type is empty' );
     is( $constraint1->match_type('foo'), undef, 
