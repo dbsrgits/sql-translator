@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.22 2003-09-25 17:29:25 allenday Exp $
+# $Id: Table.pm,v 1.23 2003-10-04 01:22:04 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -135,25 +135,25 @@ C<SQL::Translator::Schema::Constraint> object.
     }
     #
     # See if another constraint of the same type 
-    # covers the same fields.
+    # covers the same fields.  -- This doesn't work!  ky
     #
-    elsif ( $constraint->type ne CHECK_C ) {
-        my @field_names = $constraint->fields;
-        for my $c ( 
-            grep { $_->type eq $constraint->type } 
-            $self->get_constraints 
-        ) {
-            my %fields = map { $_, 1 } $c->fields;
-            for my $field_name ( @field_names ) {
-                if ( $fields{ $field_name } ) {
-                    $constraint = $c;
-                    $ok = 0; 
-                    last;
-                }
-            }
-            last unless $ok;
-        }
-    }
+#    elsif ( $constraint->type ne CHECK_C ) {
+#        my @field_names = $constraint->fields;
+#        for my $c ( 
+#            grep { $_->type eq $constraint->type } 
+#            $self->get_constraints 
+#        ) {
+#            my %fields = map { $_, 1 } $c->fields;
+#            for my $field_name ( @field_names ) {
+#                if ( $fields{ $field_name } ) {
+#                    $constraint = $c;
+#                    $ok = 0; 
+#                    last;
+#                }
+#            }
+#            last unless $ok;
+#        }
+#    }
 
     if ( $ok ) {
         push @{ $self->{'constraints'} }, $constraint;
