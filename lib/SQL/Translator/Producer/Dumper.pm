@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.2 2004-03-09 19:35:40 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.3 2004-03-11 17:14:31 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -61,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -143,7 +143,8 @@ use DBI;
 use Getopt::Long;
 use File::Spec::Functions 'catfile';
 
-my ( $help, $add_truncate, $skip, $skiplike, $no_comments, $mysql_loadfile );
+my ( $help, $add_truncate, $skip, $skiplike, $no_comments, 
+    $takelike, $mysql_loadfile );
 GetOptions(
     'add-truncate'   => \$add_truncate,
     'h|help'         => \$help,
@@ -151,6 +152,7 @@ GetOptions(
     'mysql-loadfile' => \$mysql_loadfile,
     'skip:s'         => \$skip,
     'skiplike:s'     => \$skiplike,
+    'takelike:s'     => \$takelike,
 );
 
 if ( $help ) {
@@ -225,6 +227,7 @@ for my $table ( @tables ) {
     my $table_name = $table->{'table_name'};
     next if $skip{ $table_name };
     next if $skiplike && $table_name =~ qr/$skiplike/;
+    next if $takelike && $table_name !~ qr/$takelike/;
 
     my ( $out_fh, $outfile );
     if ( $mysql_loadfile ) {
