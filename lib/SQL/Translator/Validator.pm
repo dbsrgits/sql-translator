@@ -1,7 +1,7 @@
 package SQL::Translator::Validator;
 
 # ----------------------------------------------------------------------
-# $Id: Validator.pm,v 1.5 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: Validator.pm,v 1.6 2002-11-25 14:49:44 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Validator;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -160,9 +160,12 @@ trust:
   $tr->producer(\&paranoid_producer);
   sub paranoid_producer {
       my ($tr, $data) = @_;
-      return unless validate($data);
+      validate($data) or die "You gave me crap!" 
 
-      # continue...
+      # Load real producer, and execute it
+      $tr->producer("MySQL");
+      return $tr->produce($data);
+  }
 
 SQL::Translator::Validator can also be used as a reporting tool.  When
 B<validate> is called in a list context, the second value returned
