@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Getopt::Long;
+use SQL::Translator::Shell;
+
+my %options = (HISTFILE => glob("~/.sqltsh_history"));
+GetOptions('H=s' => \$options{HISTFILE});
+
+my $sqltsh = SQL::Translator::Shell->new(%options);
+
+$sqltsh->run();
