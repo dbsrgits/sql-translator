@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.27 2003-10-15 20:39:15 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.28 2003-11-05 22:27:55 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -41,7 +41,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -216,7 +216,8 @@ sub produce {
             else {
                 $data_type  = defined $translate{ $data_type } ?
                               $translate{ $data_type } :
-                              die "Unknown datatype: $data_type\n";
+                              $data_type;
+                $data_type ||= 'varchar2';
             }
             
             #
