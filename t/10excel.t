@@ -1,8 +1,7 @@
 #!/usr/bin/perl
 # vim: set ft=perl:
-#
 
-use Test::More 'no_plan'; # tests => 6;
+use Test::More tests => 31;
 use SQL::Translator;
 use SQL::Translator::Parser::Excel 'parse';
 use SQL::Translator::Schema::Constants;
@@ -10,11 +9,6 @@ use SQL::Translator::Schema::Constants;
 my $tr     = SQL::Translator->new(parser => "Excel");
 my $t      = $tr->translate(filename => "t/data/Excel/t.xls");
 my $schema = $tr->schema;
-
-#use Data::Dumper;
-#print Dumper($schema), "\n";
-
-#ok(scalar $tr->translate(producer => "MySQL"));
 
 my @tables = $schema->get_tables;
 is( scalar @tables, 1, 'Parsed 1 table' );
