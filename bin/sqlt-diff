@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.5 2004-02-11 21:31:45 kycl4rk Exp $
+# $Id: sqlt-diff,v 1.6 2004-02-27 18:26:38 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -97,7 +97,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
@@ -180,31 +180,35 @@ for my $t1 ( $source_schema->get_tables ) {
 
     my $t2_name = $t2->name;
     for my $t1_field ( $t1->get_fields ) {
-        my $t1_type      = $t1_field->data_type;
-        my $t1_size      = $t1_field->size;
-        my $t1_name      = $t1_field->name;
-        my $t2_field     = $t2->get_field( $t1_name );
+        my $f1_type      = $t1_field->data_type;
+        my $f1_size      = $t1_field->size;
+        my $f1_name      = $t1_field->name;
+        my $t2_field     = $t2->get_field( $f1_name );
         my $f1_full_name = "$s1_name.$t1_name.$t1_name";
         warn "FIELD '$f1_full_name'\n" if $debug;
 
-        my $f2_full_name = "$s2_name.$t2_name.$t1_name";
+        my $f2_full_name = "$s2_name.$t2_name.$f1_name";
 
         unless ( $t2_field ) {
             warn "Couldn't find field '$f2_full_name' in '$t2_name'\n" 
                 if $debug;
-            push @diffs, 
-                "ALTER TABLE $t1_name ADD $t1_name $t1_type($t1_size);";
+            push @diffs, sprintf( "ALTER TABLE %s ADD %s %s%s;",
+                $t1_name, $f1_name, $f1_type,
+                $f1_size ? "($f1_size)" : ''
+            );
             next;
         }
 
-        my $t2_type = $t2_field->data_type;
-        my $t2_size = $t2_field->size;
+        my $f2_type = $t2_field->data_type;
+        my $f2_size = $t2_field->size;
 
-        if ( lc $t1_type ne lc $t2_type ||
-           ( defined $t1_size && ( $t1_size ne $t2_size ) )
+        if ( lc $f1_type ne lc $f2_type ||
+           ( defined $f1_size && ( $f1_size ne $f2_size ) )
         ) {
-            push @diffs, 
-                "ALTER TABLE $t1_name CHANGE $t1_name $t1_type($t1_size);";
+            push @diffs, sprintf( "ALTER TABLE %s CHANGE %s %s%s;",
+                $t1_name, $f1_name, $f1_type,
+                $f1_size ? "($f1_size)" : ''
+            );
         }
     }
 
