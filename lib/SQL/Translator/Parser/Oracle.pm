@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.18 2004-04-22 19:56:28 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.19 2004-09-17 21:52:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -49,7 +49,6 @@ From http://www.ss64.com/ora/table_c.html:
 
 tbl_defs:
    column datatype [DEFAULT expr] [column_constraint(s)]
-   table_constraint
    table_ref_constraint
 
 storage_options:
@@ -98,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -350,15 +349,15 @@ column_constraint : constraint_name(?) column_constraint_type
 
 constraint_name : /constraint/i NAME { $item[2] }
 
-column_constraint_type : /not null/i { $return = { type => 'not_null' } }
+column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
     | /null/ 
         { $return = { type => 'null' } }
     | /unique/ 
         { $return = { type => 'unique' } }
-    | /primary key/i 
+    | /primary\s+key/i 
         { $return = { type => 'primary_key' } }
     | /check/i '(' /[^)]+/ ')' 
-        { $return = { type => 'check', expression => $item[2] } }
+        { $return = { type => 'check', expression => $item[3] } }
     | /references/i table_name parens_word_list(?) on_delete_do(?) 
     {
         $return              =  {
@@ -549,7 +548,9 @@ sub parse {
 
     my $result = $parser->startrule( $data );
     die "Parse failed.\n" unless defined $result;
-    warn Dumper($result) if $DEBUG;
+    if ( $DEBUG ) {
+        warn "Parser results =\n", Dumper($result), "\n";
+    }
 
     my $schema      = $translator->schema;
     my $indices     = $result->{'indices'};
@@ -587,12 +588,6 @@ sub parse {
                 is_nullable       => $fdata->{'null'},
                 comments          => $fdata->{'comments'},
             ) or die $table->error;
-
-            for my $cdata ( @{ $fdata->{'constraints'} } ) {
-                next unless $cdata->{'type'} eq 'foreign_key';
-                $cdata->{'fields'} ||= [ $field->name ];
-                push @{ $tdata->{'constraints'} }, $cdata;
-            }
         }
 
         push @{ $tdata->{'indices'} }, @{ $indices->{ $table_name } || [] };
