@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.7 2004-11-05 15:03:10 grommit Exp $
+# $Id: Translator.pm,v 1.8 2005-01-13 09:02:15 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,7 +34,7 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 @EXPORT = qw(
     schema_ok
     table_ok
@@ -280,7 +280,7 @@ sub trigger_ok {
     my $t_name = t_name($name);
     default_attribs($test,"index");
 
-    is( $obj->name, $test->{name}, "${t_name}Constraint '$test->{name}'" );
+    is( $obj->name, $test->{name}, "${t_name}Trigger '$test->{name}'" );
 
     is( $obj->is_valid, $test->{is_valid},
         "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
@@ -337,7 +337,7 @@ sub procedure_ok {
         "$t_name    comments is '$test->{comments}'" );
 
     is( $obj->owner, $test->{owner}, "$t_name    owner is '$test->{owner}'" );
-    
+   
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
