@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.8 2003-05-09 19:51:04 kycl4rk Exp $
+# $Id: xSV.pm,v 1.9 2003-06-06 00:05:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -66,7 +66,7 @@ C<SQL::Translator::Utils::normalize>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -157,22 +157,33 @@ sub parse {
         while ( my $rec = $parser->fetchrow_hashref ) {
             for my $field ( @field_names ) {
                 my $data = defined $rec->{ $field } ? $rec->{ $field } : '';
-                my $size = length $data;
+                my $size = [ length $data ];
                 my $type;
 
                 if ( $data =~ /^-?\d+$/ ) {
                     $type = 'integer';
                 }
-                elsif ( $data =~ /^-?[\d.]+$/ ) {
+                elsif ( 
+                    $data =~ /^-?[,\d]+\.[\d+]?$/ 
+                    ||
+                    $data =~ /^-?[,\d]+?\.\d+$/  
+                    ||
+                    $data =~ /^-?\.\d+$/  
+                ) {
                     $type = 'float';
+                    my ( $w, $d ) = map { s/,//g; $_ } split( /\./, $data );
+                    $size = [ length $w, length $d ];
                 }
                 else {
                     $type = 'char';
                 }
 
-                my $fsize = $field_info{ $field }{'size'} || 0;
-                if ( $size > $fsize ) {
-                    $field_info{ $field }{'size'} = $size;
+                for my $i ( 0, 1 ) {
+                    next unless defined $size->[ $i ];
+                    my $fsize = $field_info{ $field }{'size'}[ $i ] || 0;
+                    if ( $size->[ $i ] > $fsize ) {
+                        $field_info{ $field }{'size'}[ $i ] = $size->[ $i ];
+                    }
                 }
 
                 $field_info{ $field }{ $type }++;
@@ -186,7 +197,7 @@ sub parse {
                 $field_info{ $field }{'float'} ? 'float' : 'integer';
 
             $parsed->{'table1'}{'fields'}{ $field }{'size'} = 
-                [ $field_info{ $field }{'size'} ];
+                $field_info{ $field }{'size'};
 
             $parsed->{'table1'}{'fields'}{ $field }{'data_type'} = $data_type;
 
