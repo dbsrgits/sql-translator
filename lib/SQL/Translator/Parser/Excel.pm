@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Excel;
 
 # -------------------------------------------------------------------
-# $Id: Excel.pm,v 1.9 2003-10-09 21:49:53 kycl4rk Exp $
+# $Id: Excel.pm,v 1.10 2003-10-10 15:58:11 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,15 +30,13 @@ SQL::Translator::Parser::Excel - parser for Excel
 =head1 SYNOPSIS
 
   use SQL::Translator;
-  use SQL::Translator::Parser::Excel;
 
   my $translator = SQL::Translator->new;
-  $translator->parser("SQL::Translator::Parser::Excel");
+  $translator->parser('Excel');
 
 =head1 DESCRIPTION
 
-Parses an Excel spreadsheet file for SQL::Translator.  You can then
-turn the data into a database tables or graphs.
+Parses an Excel spreadsheet file using Spreadsheet::ParseExcel.
 
 =head1 OPTIONS
 
@@ -56,7 +54,7 @@ and field sizes.  True by default.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 use Spreadsheet::ParseExcel;
 use Exporter;
@@ -156,7 +154,7 @@ sub parse {
                     ) {
                         $type = 'float';
                         my ( $w, $d ) = map { s/,//g; $_ } split( /\./, $data );
-                        $size = [ length $w, length $d ];
+                        $size = [ length $w + length $d, length $d ];
                     }
                     else {
                         $type = 'char';
