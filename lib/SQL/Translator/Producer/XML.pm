@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.8 2003-05-06 12:47:27 dlc Exp $
+# $Id: XML.pm,v 1.9 2003-06-09 02:01:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::XML;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
@@ -35,83 +35,106 @@ my $sqlf_ns = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 # -------------------------------------------------------------------
 sub produce {
     my ( $translator, $data ) = @_;
-    #my $prargs = $translator->producer_args;
-    my $prargs = { };
-    my $io = IO::Scalar->new;
+    my $schema                = $translator->schema;
+    my $args                  = $translator->producer_args;
 
-    my $xml = XML::Writer->new(OUTPUT      => $io,
-                               NAMESPACES  => 1,
-                               PREFIX_MAP  => { $sqlf_ns => 'sqlf' },
-                               DATA_MODE   => 1,
-                               DATA_INDENT => 2);
+    my $io          = IO::Scalar->new;
+    my $xml         =  XML::Writer->new(
+        OUTPUT      => $io,
+        NAMESPACES  => 1,
+        PREFIX_MAP  => { $sqlf_ns => 'sqlf' },
+        DATA_MODE   => 1,
+        DATA_INDENT => 2,
+    );
 
-
-    $xml->xmlDecl("UTF-8");
+    $xml->xmlDecl('UTF-8');
     $xml->comment(header_comment('', ''));
-    $xml->startTag([ $sqlf_ns => "schema" ]);
+    $xml->startTag([ $sqlf_ns => 'schema' ]);
 
-    for my $table ( 
-        map  { $_->[1] }
-        sort { $a->[0] <=> $b->[0] }
-        map  { [ $_->{'order'}, $_ ] }
-        values %$data
-    ) {
-        $xml->startTag([ $sqlf_ns => "table" ]);
-
-        $xml->dataElement([ $sqlf_ns => "name" ], $table->{'table_name'});
-        $xml->dataElement([ $sqlf_ns => "order" ], $table->{'order'});
+    for my $table ( $schema->get_tables ) {
+        my $table_name = $table->name or next;
+        $xml->startTag   ( [ $sqlf_ns => 'table' ] );
+        $xml->dataElement( [ $sqlf_ns => 'name'  ], $table_name );
+        $xml->dataElement( [ $sqlf_ns => 'order' ], $table->order );
 
         #
         # Fields
         #
-        $xml->startTag([ $sqlf_ns => "fields" ]);
-        for my $field ( 
-            map  { $_->[1] }
-            sort { $a->[0] <=> $b->[0] }
-            map  { [ $_->{'order'}, $_ ] }
-            values %{ $table->{'fields'} }
-        ) {
-            $xml->startTag([ $sqlf_ns => "field" ]);
+        $xml->startTag( [ $sqlf_ns => 'fields' ] );
+        for my $field ( $table->get_fields ) {
+            $xml->startTag( [ $sqlf_ns => 'field' ] );
 
-            for my $key ( keys %$field ) {
-                my $val = defined $field->{ $key } ? $field->{ $key } : '';
-                   $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                $xml->dataElement([ $sqlf_ns => $key ], $val)
-                    if ($val || (!$val && $prargs->{'emit_empty_tags'}));
+            for my $method ( 
+                qw[ 
+                    name data_type default_value is_auto_increment 
+                    is_primary_key is_nullable is_foreign_key order size
+                ]
+            ) {
+                my $val = $field->$method || '';
+                $xml->dataElement( [ $sqlf_ns => $method ], $val )
+                    if ( defined $val || 
+                        ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
-            $xml->endTag([ $sqlf_ns => "field" ]);
+            $xml->endTag( [ $sqlf_ns => 'field' ] );
         }
-        $xml->endTag([ $sqlf_ns => "fields" ]);
+
+        $xml->endTag( [ $sqlf_ns => 'fields' ] );
 
         #
         # Indices
         #
-        $xml->startTag([ $sqlf_ns => "indices" ]);
-        for my $index (@{$table->{'indices'}}) {
-            $xml->startTag([ $sqlf_ns => "index" ]);
+        $xml->startTag( [ $sqlf_ns => 'indices' ] );
+        for my $index ( $table->get_indices ) {
+            $xml->startTag( [ $sqlf_ns => 'index' ] );
 
-            for my $key (keys %$index) {
-                my $val = defined $index->{ $key } ? $index->{ $key } : '';
+            for my $method ( qw[ fields name options type ] ) {
+                my $val = $index->$method || '';
                    $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                $xml->dataElement([ $sqlf_ns => $key ], $val);
+                $xml->dataElement( [ $sqlf_ns => $method ], $val )
+                    if ( defined $val || 
+                        ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
-            $xml->endTag([ $sqlf_ns => "index" ]);
+            $xml->endTag( [ $sqlf_ns => 'index' ] );
         }
-        $xml->endTag([ $sqlf_ns => "indices" ]);
+        $xml->endTag( [ $sqlf_ns => 'indices' ] );
 
-        $xml->endTag([ $sqlf_ns => "table" ]);
+        #
+        # Constraints
+        #
+        $xml->startTag( [ $sqlf_ns => 'constraints' ] );
+        for my $index ( $table->get_constraints ) {
+            $xml->startTag( [ $sqlf_ns => 'constraint' ] );
+
+            for my $method ( 
+                qw[ 
+                    deferrable expression fields match_type name 
+                    options on_delete on_update reference_fields
+                    reference_table type 
+                ] 
+            ) {
+                my $val = $index->$method || '';
+                   $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
+                $xml->dataElement( [ $sqlf_ns => $method ], $val )
+                    if ( defined $val || 
+                        ( !defined $val && $args->{'emit_empty_tags'} ) );
+            }
+
+            $xml->endTag( [ $sqlf_ns => 'constraint' ] );
+        }
+        $xml->endTag( [ $sqlf_ns => 'constraints' ] );
+
+        $xml->endTag( [ $sqlf_ns => 'table' ] );
     }
 
-    $xml->endTag([ $sqlf_ns => "schema" ]);
+    $xml->endTag([ $sqlf_ns => 'schema' ]);
     $xml->end;
 
     return $io;
 }
 
 1;
-__END__
 
 # -------------------------------------------------------------------
 # The eyes of fire, the nostrils of air,
