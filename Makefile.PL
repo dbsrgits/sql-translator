@@ -26,7 +26,7 @@ check_version('Spreadsheet::ParseExcel' => 0    => 1);
 check_version('Template'                => 2.10 => 1);
 check_version('Test::More'              => 0    => 0);
 check_version('Test::Exception'         => 0    => 0);
-check_version('Test::Differences'       => 0    => 1);
+check_version('Test::Differences'       => 0    => 0);
 check_version('Text::ParseWords'        => 0    => 0);
 check_version('Text::RecordParser'      => 0.02 => 0);
 check_version('XML::Writer'             => 0    => 1);
@@ -81,6 +81,7 @@ sub check_version {
     my ($dots, $load);
 
     if ($version) {
+        $version = sprintf "%.02f", $version;
         $load = "$module $version";
     }
     else {
@@ -107,10 +108,11 @@ sub check_version {
     }
     else {
         no strict qw(refs);
-        my $version = ${"$module\::VERSION"};
-        print "$load $dots $version";
-        print $optional ? optional($version) : required($version);
+        my $ver = sprintf "%.02f" => ${"$module\::VERSION"};
+        print "$load $dots $ver";
+        print $optional ? optional($ver) : required($ver);
         print "\n";
+        $version = $ver;
     }
 
     $PREREQ_PM{$module} = $version;
