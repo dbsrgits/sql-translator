@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.5 2003-11-19 17:04:18 grommit Exp $
+# $Id: SQLFairy.pm,v 1.6 2004-07-08 19:06:24 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Parser::XML::SQLFairy;
 
 =head1 NAME
 
-SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML
+SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML.
 
 =head1 SYNOPSIS
 
@@ -44,35 +44,35 @@ SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML
 This parser handles the flavor of XML used natively by the SQLFairy
 project (SQL::Translator).  The XML must be in the namespace
 "http://sqlfairy.sourceforge.net/sqlfairy.xml."
+See L<SQL::Translator::Producer::XML::SQLFairy> for details of this format.
 
-To see an example of the XML translate one of your schema :) e.g.
+You do not need to specify every attribute of the Schema objects as any missing
+from the XML will be set to their default values. e.g. A field could be written
+using only;
 
-  $ sqlt -f MySQL -t XML-SQLFairy schema.sql
+ <sqlf:field name="email" data_type="varchar" size="255" />
 
-=head2 attrib_values
+Instead of the full;
 
-The parser will happily parse XML produced with the attrib_values arg
-set. If it sees a value set as an attribute and a tag, the tag value
-will override that of the attribute.
+ <sqlf:field name="email" data_type="varchar" size="255" is_nullable="1"
+   is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="4">
+   <sqlf:comments></sqlf:comments>
+ </sqlf:field>
 
-e.g. For the xml below the table would get the name 'bar'.
-
-  <sqlf:table name="foo">
-    <sqlf:name>foo</name>
-  </sqlf:table>
+If you do not explicitly set the order of items using order attributes on the
+tags then the order the tags appear in the XML will be used.
 
 =head2 default_value
 
 Leave the tag out all together to use the default in Schema::Field.
-Use empty tags or EMPTY_STRING for a zero lenth string. NULL for an
+Use empty tags or 'EMPTY_STRING' for a zero lenth string. 'NULL' for an
 explicit null (currently sets default_value to undef in the
 Schema::Field obj).
 
   <sqlf:default_value></sqlf:default_value>             <!-- Empty string -->
   <sqlf:default_value>EMPTY_STRING</sqlf:default_value> <!-- Empty string -->
+  <sqlf:default_value/>                                 <!-- Empty string -->
   <sqlf:default_value>NULL</sqlf:default_value>         <!-- NULL -->
-
-  <sqlf:default_value/> <!-- Empty string BUT DON'T USE! See BUGS -->
 
 =head2 ARGS
 
@@ -85,7 +85,7 @@ Doesn't take any extra parser args at the moment.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -111,10 +111,10 @@ sub parse {
     #
     my @nodes = $xp->findnodes('/sqlf:schema/sqlf:table');
     for my $tblnode (
-        sort { 
+        sort {
             "".$xp->findvalue('sqlf:order|@order',$a)
-            <=> 
-            "".$xp->findvalue('sqlf:order|@order',$b) 
+            <=>
+            "".$xp->findvalue('sqlf:order|@order',$b)
         } @nodes
     ) {
         debug "Adding table:".$xp->findvalue('sqlf:name',$tblnode);
@@ -128,10 +128,10 @@ sub parse {
         #
         my @nodes = $xp->findnodes('sqlf:fields/sqlf:field',$tblnode);
         foreach (
-            sort { 
+            sort {
                 ("".$xp->findvalue('sqlf:order',$a) || 0)
-                <=> 
-                ("".$xp->findvalue('sqlf:order',$b) || 0) 
+                <=>
+                ("".$xp->findvalue('sqlf:order',$b) || 0)
             } @nodes
         ) {
             my %fdata = get_tagfields($xp, $_, "sqlf:",
@@ -140,7 +140,7 @@ sub parse {
             );
 
             if (
-                exists $fdata{'default_value'} and 
+                exists $fdata{'default_value'} and
                 defined $fdata{'default_value'}
             ) {
                 if ( $fdata{'default_value'} =~ /^\s*NULL\s*$/ ) {
@@ -157,7 +157,7 @@ sub parse {
 
             #
             # TODO:
-            # - We should be able to make the table obj spot this when 
+            # - We should be able to make the table obj spot this when
             #   we use add_field.
             # - Deal with $field->extra
             #
@@ -197,7 +197,7 @@ sub parse {
         );
         $schema->add_view( %data ) or die $schema->error;
     }
-    
+
     #
     # Triggers
     #
@@ -208,7 +208,7 @@ sub parse {
         );
         $schema->add_trigger( %data ) or die $schema->error;
     }
-    
+
     #
     # Procedures
     #
@@ -219,19 +219,18 @@ sub parse {
         );
         $schema->add_procedure( %data ) or die $schema->error;
     }
-    
+
     return 1;
 }
 
 # -------------------------------------------------------------------
 sub get_tagfields {
 #
-# get_tagfields XPNODE, NAMESPACE => qw/TAGNAMES/;
+# get_tagfields XP, NODE, NAMESPACE => qw/TAGNAMES/;
 # get_tagfields $node, "sqlf:" => qw/name type fields reference/;
 #
-# Returns hash of data. If a tag isn't in the file it is not in this
-# hash.
-# TODO Add handling of and explicit NULL value.
+# Returns hash of data.
+# TODO - Add handling of an explicit NULL value.
 #
 
     my ($xp, $node, @names) = @_;
@@ -240,10 +239,24 @@ sub get_tagfields {
         if ( m/:$/ ) { $ns = $_; next; }  # Set def namespace
         my $thisns = (s/(^.*?:)// ? $1 : $ns);
 
-        foreach my $path ( "\@$thisns$_", "$thisns$_" ) {
-            $data{ $_ } = "".$xp->findvalue( $path, $node ) 
-                if $xp->exists( $path, $node );
+        my $is_attrib = m/^sql|comments|action$/ ? 0 : 1;
 
+        my $attrib_path = "\@$thisns$_";
+        my $tag_path    = "$thisns$_";
+        if ( $xp->exists($attrib_path,$node) ) {
+            $data{$_} = "".$xp->findvalue($attrib_path,$node);
+            warn "Use of '$_' as an attribute is depricated."
+                ." Use a child tag instead."
+                ." To convert your file to the new version see the Docs.\n"
+                unless $is_attrib;
+            debug "Got $_=".( defined $data{ $_ } ? $data{ $_ } : 'UNDEF' );
+        }
+        elsif ( $xp->exists($tag_path,$node) ) {
+            $data{$_} = "".$xp->findvalue($tag_path,$node);
+            warn "Use of '$_' as a child tag is depricated."
+                ." Use an attribute instead."
+                ." To convert your file to the new version see the Docs.\n"
+                if $is_attrib;
             debug "Got $_=".( defined $data{ $_ } ? $data{ $_ } : 'UNDEF' );
         }
     }
@@ -259,30 +272,23 @@ sub get_tagfields {
 
 =head1 BUGS
 
-B<Empty Tags> e.g. <sqlf:default_value/> Will be parsed as "" and
-hence also false.  This is a bit counter intuative for some tags as
-seeing <sqlf:is_nullable /> you might think that it was set when it
-fact it wouldn't be.  So for now it is safest not to use them until
-their handling by the parser is defined.
+Ignores the order attribute for Constraints, Views, Indices,
+Views, Triggers and Procedures, using the tag order instead. (This is the order
+output by the SQLFairy XML producer).
 
 =head1 TODO
 
 =over 4
 
-=item * 
+=item *
 
-Support sqf:options.
+Support options and extra attributes.
 
-=item * 
+=item *
 
-Test forign keys are parsed ok.
+Test foreign keys are parsed ok.
 
-=item * 
-
-Sort out sane handling of empty tags <foo/> vs tags with no content
-<foo></foo> vs it no tag being there.
-
-=item * 
+=item *
 
 Control over defaulting of non-existant tags.
 
