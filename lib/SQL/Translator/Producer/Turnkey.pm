@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.43 2004-04-16 22:20:14 boconnor Exp $
+# $Id: Turnkey.pm,v 1.44 2004-04-16 23:10:20 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -569,16 +569,19 @@ EOF
               <div class="cleaner"></div>
             [% ELSIF p.type == 'minor' %]
              <div class="left"><div class="column-in">
+               [% FOREACH atom = p.containers %]
                <div class="left-item">
                [% IF name %]
                    [% linkname = ref(p.containers[0]) %]
-                   <div class="box-header">[% linkname | replace('Turnkey::Atom::', '') %]</div>
+                   <div class="box-header">[% atom.name | replace('Turnkey::Atom::', '') %]</div>
                [% END %]
               <!-- begin atom: [% p.label %] -->
               <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
-                [% renderatom(name,dbobject,p.containers[0]) %]
+                [% renderatom(name,dbobject,atom) %]
               </table>
-              </div></div></div>
+              </div>
+              [% END %]
+              </div></div>
             [% END %]
           [% END %]
         [% IF panel.orientation == 'vertical' %]
