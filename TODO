@@ -1,16 +1,9 @@
-Define structure of the data returned by parsers:
-  o Producers need to know what to expect
-  o For testing purposes, we need to know if parsers are returning
-    something reasonable
+-   Diagram producer could benefit from some real graphing algorithms to
+    better distribute the boxes.
 
-Modules to be written/finished
-    SQL::Translator::Validator
-    SQL::Translator::Parser::xSV
-    SQL::Translator::Producer::MySQL
-    SQL::Translator::Parser::Excel
+-   Some way to deeply check to schema objects, e.g., for testing I
+    parse a MySQL schema, translate to Oracle, then parse the created
+    Oracle schema and want to check the two schema objects.
 
-Should the parsers return an instance instead of a data structure?  It
-would make traversing the data structure easier.
-
-
-# vim: set sw=2 ts=2 tw=70 fo=trcqo:
+-   Add parsers and producers for Torque XML/DB schema
+    (http://db.apache.org/torque/)
