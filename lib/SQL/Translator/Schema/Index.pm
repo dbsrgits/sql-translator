@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Index;
 
 # ----------------------------------------------------------------------
-# $Id: Index.pm,v 1.4 2003-06-06 00:06:49 kycl4rk Exp $
+# $Id: Index.pm,v 1.5 2003-06-06 22:34:46 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -55,11 +55,11 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
 $VERSION = 1.00;
 
-use constant VALID_TYPE => {
+my %VALID_INDEX_TYPE = (
     UNIQUE,    1,
     NORMAL,    1,
     FULL_TEXT, 1, # MySQL only (?)
-};
+);
 
 # ----------------------------------------------------------------------
 sub init {
@@ -233,7 +233,7 @@ Get or set the index's type.
 
     if ( my $type = shift ) {
         return $self->error("Invalid index type: $type") 
-            unless VALID_TYPE->{ $type };
+            unless $VALID_INDEX_TYPE{ $type };
         $self->{'type'} = $type;
     }
 
