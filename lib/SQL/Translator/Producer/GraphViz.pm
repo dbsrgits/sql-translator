@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.5 2003-06-09 04:54:15 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.6 2003-08-04 18:41:45 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -214,7 +214,7 @@ sub produce {
                 my $table2 = $tables[ $j ];
                 next if $table1 eq $table2;
                 next if $done{ $table1 }{ $table2 };
-                $gv->add_edge( $table1, $table2 );
+                $gv->add_edge( $table2, $table1 );
                 $done{ $table1 }{ $table2 } = 1;
                 $done{ $table2 }{ $table1 } = 1;
             }
