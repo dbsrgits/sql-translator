@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser::V12;
 
 # -------------------------------------------------------------------
-# $Id: V12.pm,v 1.5 2003-10-06 13:28:36 grommit Exp $
+# $Id: V12.pm,v 1.6 2003-10-06 15:06:20 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -31,7 +31,7 @@ SQL::Translator::XMI::Parser::V12 - Version 1.2 parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use base qw(SQL::Translator::XMI::Parser);
 
@@ -231,7 +231,7 @@ $spec12->{association} = {
 	],
 	kids => [
         {
-            name  => "ends",
+            name  => "associationEnds",
             path  => "UML:Association.connection/UML:AssociationEnd",
             class => "AssociationEnd", 
             multiplicity => "*",
