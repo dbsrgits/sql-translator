@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.15 2004-03-23 21:26:55 grommit Exp $
+# $Id: Field.pm,v 1.16 2004-03-23 21:42:42 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -30,8 +30,8 @@ SQL::Translator::Schema::Field - SQL::Translator field object
 
   use SQL::Translator::Schema::Field;
   my $field = SQL::Translator::Schema::Field->new(
-      name => 'foo',
-      sql  => 'select * from foo',
+      name  => 'foo',
+      table => $table,
   );
 
 =head1 DESCRIPTION
@@ -50,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -70,7 +70,8 @@ sub init {
 
 Object constructor.
 
-  my $schema = SQL::Translator::Schema::Field->new;
+  my $schema = SQL::Translator::Schema::Field->new(
+  );
 
 =cut
 
@@ -231,7 +232,7 @@ sub is_auto_increment {
 
 Get or set the field's C<is_auto_increment> attribute.
 
-  my $is_pk = $field->is_auto_increment(1);
+  my $is_auto = $field->is_auto_increment(1);
 
 =cut
 
@@ -297,7 +298,7 @@ sub is_nullable {
 
 =head2 is_nullable
 
-Get or set the whether the field can be null.  If not defined, then 
+Get or set whether the field can be null.  If not defined, then 
 returns "1" (assumes the field can be null).  The argument is evaluated
 by Perl for True or False, so the following are eqivalent:
 
@@ -531,9 +532,11 @@ sub table {
 
 =head2 table
 
-Get or set the field's table object.
+Get or set the field's table object. As the table object stringifies this can
+also be used to get the table name.
 
   my $table = $field->table;
+  print "Table name: $table";
 
 =cut
 
