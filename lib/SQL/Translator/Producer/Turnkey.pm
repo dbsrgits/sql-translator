@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.57 2004-08-05 02:05:46 boconnor Exp $
+# $Id: Turnkey.pm,v 1.58 2004-09-22 23:46:53 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.57 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.58 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -218,7 +218,7 @@ sub template {
 	return <<'EOF';
 [% MACRO printPackage(node) BLOCK %]
 
-########[% node.name | replace('Turnkey::Model::', '') %].pm########
+########[% node.name | replace('Turnkey::Model::', '') %]########
 
 package [% node.name %];
 use base '[% node.base %]';
@@ -359,14 +359,14 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
 [% END %]
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
 
-########AutoDBI.pm########
+########AutoDBI########
 use Turnkey::Model::DBI;
 [% FOREACH node = nodes %]
 use [% node.value.name %];
 [% END %]
 1;
 
-########[% baseclass | replace('Turnkey::Model::', '') %].pm########
+########[% baseclass | replace('Turnkey::Model::', '') %]########
 package [% baseclass %];
 
 # Created by SQL::Translator::Producer::Turnkey
@@ -418,7 +418,7 @@ elsif($type eq 'atom'){
   return <<'EOF';
 [% # DOCUMENT START # %]
 
-########AutoAtom.pm########
+########AutoAtom########
 [% FOREACH node = nodes %]
 use [% node.value.name %];
 [% END %]
@@ -427,7 +427,7 @@ use [% node.value.name %];
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
 
-########[% node.value.name | replace('Turnkey::Model::', '') %].pm########
+########[% node.value.name | replace('Turnkey::Model::', '') %]########
 
 package Turnkey::Atom::[% node.value.name FILTER replace "Turnkey::Model::", "" %];
 
@@ -693,7 +693,7 @@ EOF
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
     [% CASE '[- format_table(node.key) -]' %]
-      [% INCLUDE [- node.key -].tt2 %]
+      [% INCLUDE [- format_table(node.key) -].tt2 %]
   [- END -]
   [- END -]
     [% CASE DEFAULT %]
