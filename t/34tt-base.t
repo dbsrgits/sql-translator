@@ -36,7 +36,7 @@ $obj = SQL::Translator->new(
     show_warnings  => 1,
     add_drop_table => 1,
     from           => "XML-SQLFairy",
-    filename       => "$Bin/data/xml/schema-basic.xml",
+    filename       => "$Bin/data/xml/schema.xml",
     to             => "Producer::BaseTest::produce",
 );
 my $out;
