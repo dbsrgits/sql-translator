@@ -18,10 +18,11 @@ delegates to DBD::DB2.
 use strict;
 use DBI;
 use Data::Dumper;
+use SQL::Translator::Parser::DB2;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+# $VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -41,9 +42,18 @@ sub parse {
         $dbh->{ChopBlanks} = 1;
     }
 
-    $sth = $dbh->table_info();
-
-    @tables   = @{$sth->fetchall_arrayref({})};
+    my $tabsth = $dbh->prepare(<<SQL);
+SELECT t.TABSCHEMA,
+       t.TABNAME,
+       t.TYPE,
+      ts.TBSPACE
+FROM SYSCAT.TABLES t
+JOIN SYSCAT.TABLESPACES ts ON t.TBSPACEID = ts.TBSPACEID
+WHERE t.TABSCHEMA NOT LIKE 'SYS%'
+ORDER BY t.TABNAME ASC
+SQL
+#    $sth = $dbh->table_info();
+#    @tables   = @{$sth->fetchall_arrayref({})};
 
     my $colsth = $dbh->prepare(<<SQL);
 SELECT c.TABSCHEMA,
@@ -57,6 +67,7 @@ SELECT c.TABSCHEMA,
 FROM SYSCAT.COLUMNS c
 WHERE c.TABSCHEMA NOT LIKE 'SYS%' AND
      c.TABNAME = ?
+ORDER BY COLNO
 SQL
 
     my $consth = $dbh->prepare(<<SQL);
@@ -90,22 +101,39 @@ WHERE i.TABSCHEMA NOT LIKE 'SYS%' AND
       i.TABNAME = ?
 SQL
 
+    my $trigsth = $dbh->prepare(<<SQL);
+SELECT t.TRIGSCHEMA,
+       t.TRIGNAME,
+       t.TABSCHEMA, 
+       t.TRIGTIME,
+       t.TRIGEVENT,
+       t.GRANULARITY,
+       t.TEXT
+FROM SYSCAT.TRIGGERS t
+WHERE t.TABSCHEMA NOT LIKE 'SYS%' AND
+      t.TABNAME = ?
+SQL
+
+    $tabsth->execute();
+    @tables = @{$tabsth->fetchall_arrayref({})};
+
     foreach my $table_info (@tables) {
         next
-            unless (defined($table_info->{TABLE_TYPE}));
+            unless (defined($table_info->{TYPE}));
 
 # Why are we not getting system tables, maybe a parameter should decide?
 
-        if ($table_info->{TABLE_TYPE} eq 'TABLE'&&
-            $table_info->{TABLE_SCHEM} !~ /^SYS/) {
+        if ($table_info->{TYPE} eq 'T'&&
+            $table_info->{TABSCHEMA} !~ /^SYS/) {
             print Dumper($table_info) if($DEBUG);
-            print  $table_info->{TABLE_NAME} if($DEBUG);
+            print  $table_info->{TABNAME} if($DEBUG);
             my $table = $schema->add_table(
-                                           name => $table_info->{TABLE_NAME},
-                                           type => $table_info->{TABLE_TYPE},
+                                           name => $table_info->{TABNAME},
+                                           type => 'TABLE',
                                           ) || die $schema->error;
+            $table->options("TABLESPACE", $table_info->{TBSPACE});
 
-            $colsth->execute($table_info->{TABLE_NAME});
+            $colsth->execute($table_info->{TABNAME});
             my $cols = $colsth->fetchall_hashref("COLNAME");
       
             foreach my $c (values %{$cols}) {
@@ -123,7 +151,7 @@ SQL
                 $f->is_nullable($c->{NULLS} eq 'Y');
             }
 
-            $consth->execute($table_info->{TABLE_NAME});
+            $consth->execute($table_info->{TABNAME});
             my $cons = $consth->fetchall_hashref("COLNAME");
             next if(!%$cons);
 
@@ -142,7 +170,7 @@ SQL
             
             $con->deferrable($c->{CHECKEXISTINGDATA} eq 'D');
             
-            $indsth->execute($table_info->{TABLE_NAME});
+            $indsth->execute($table_info->{TABNAME});
             my $inds = $indsth->fetchall_hashref("INDNAME");
             print Dumper($inds) if($DEBUG);
             next if(!%$inds);
@@ -150,7 +178,7 @@ SQL
             foreach my $ind (keys %$inds)
             {
                 print $ind if($DEBUG);
-                $indsth->execute($table_info->{TABLE_NAME});
+                $indsth->execute($table_info->{TABNAME});
                 my $indcols = $indsth->fetchall_hashref("COLNAME");
                 next if($inds->{$ind}{UNIQUERULE} eq 'P');
 
@@ -170,6 +198,33 @@ SQL
                 
             
             }
+
+            $trigsth->execute($table_info->{TABNAME});
+            my $trigs = $trigsth->fetchall_hashref("TRIGNAME");
+            print Dumper($trigs);
+            next if(!%$trigs);
+
+            foreach my $t (values %$trigs)
+            {         
+                print  $t->{TRIGNAME} if($DEBUG);
+                my $trig = $schema->add_trigger(
+                     name                  => $t->{TRIGNAME},
+ #                      fields => \@fields,
+                     perform_action_when   => $t->{TRIGTIME} eq 'A' ? 'after' :
+                                              $t->{TRIGTIME} eq 'B' ? 'before':
+                                              'instead',
+                     database_event        => $t->{TRIGEVENT} eq 'I' ? 'insert'
+                                            : $t->{TRIGEVENT} eq 'D' ? 'delete' 
+                                            : 'update',
+                     action                => $t->{TEXT},
+                     on_table              => $t->{TABNAME} 
+                                              ) || die $schema->error;
+            
+#             $trig->extra( reference => $def->{'reference'},
+#                           condition => $def->{'condition'},
+#                           granularity => $def->{'granularity'} );
+            }
+
         }
     }
 
