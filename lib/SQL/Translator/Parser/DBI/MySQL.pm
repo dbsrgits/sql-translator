@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.2 2003-10-03 19:47:19 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.3 2003-10-15 16:36:28 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
 #
@@ -26,11 +26,13 @@ SQL::Translator::Parser::DBI::MySQL - parser for DBD::mysql
 
 =head1 SYNOPSIS
 
-See SQL::Translator::Parser::DBI.
+This module will be invoked automatically by SQL::Translator::Parser::DBI,
+so there is no need to use it directly.
 
 =head1 DESCRIPTION
 
-Queries the "sqlite_master" table for schema definition.
+Uses SQL calls to query database directly for schema rather than parsing
+a create file.  Should be much faster for larger schemas.
 
 =cut
 
@@ -40,16 +42,14 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
-
-    my @table_names = @{ $dbh->selectcol_arrayref( 'show tables') };
-
-    my $schema = $tr->schema;
+    my $schema       = $tr->schema;
+    my @table_names  = @{ $dbh->selectcol_arrayref( 'show tables') };
 
     for my $table_name ( @table_names ) {
         my $table =  $schema->add_table( 
@@ -62,9 +62,9 @@ sub parse {
         );
 
         for my $col ( @$cols ) {
-            my $fname = $col->{'field'} or next;
-            my $type  = $col->{'type'}  or next;
-            my $collation = $col->{'collation'} || '';
+            my $fname       = $col->{'field'} or next;
+            my $type        = $col->{'type'}  or next;
+            my $collation   = $col->{'collation'} || '';
             my $is_nullable = uc $col->{'null'} eq 'YES' ? 1 : 0;
             my $key         = $col->{'key'};
             my $default     = $col->{'default'};
@@ -171,7 +171,7 @@ sub parse {
             sort { $constraints{ $a }{'order'} <=> $constraints{ $b }{'order'} }
             keys %constraints
         ) {
-            my $def        = $constraints{ $constraint_name };
+            my $def        =  $constraints{ $constraint_name };
             my $constraint =  $table->add_constraint(
                 name       => $constraint_name,
                 type       => $def->{'type'},
@@ -198,6 +198,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), Parse::RecDescent, SQL::Translator::Schema.
+SQL::Translator.
 
 =cut
