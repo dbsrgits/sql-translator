@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.1 2003-04-24 16:15:13 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.2 2003-04-24 20:02:31 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -26,7 +26,7 @@ use Data::Dumper;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -83,10 +83,10 @@ sub produce {
     debug("Data =\n", Dumper( $data ));
     debug("Producer args =\n", Dumper( $args ));
 
-    my $out_file        = $args->{'out_file'};
-    my $layout          = $args->{'layout'};
-    my $node_shape      = $args->{'node_shape'};
-    my $output_type     = $args->{'output_type'};
+    my $out_file        = $args->{'out_file'}    || '';
+    my $layout          = $args->{'layout'}      || 'neato';
+    my $node_shape      = $args->{'node_shape'}  || 'ellipse';
+    my $output_type     = $args->{'output_type'} || 'png';
     my $add_color       = $args->{'add_color'};
     my $natural_join    = $args->{'natural_join'};
     my $join_pk_only    = $args->{'join_pk_only'};
