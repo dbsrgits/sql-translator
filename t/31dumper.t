@@ -4,11 +4,14 @@
 
 use strict;
 use Config;
-use FindBin qw/$Bin/;
-use Test::More;
 use File::Temp 'tempfile';
+use File::Spec;
+use FindBin qw/$Bin/;
+use IPC::Open3;
 use SQL::Translator;
+use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
+use Symbol qw(gensym);
 
 BEGIN {
     maybe_plan(
@@ -44,8 +47,12 @@ print $fh $output;
 close $fh or die "Can't close file '$filename': $!";
 
 my $perl = $Config{'perlpath'};
-my $cmd  = "$perl -cw $filename";
-my $res  = `$cmd 2>&1`;
+open( NULL, ">", File::Spec->devnull );
+my $pid = open3( gensym, ">&NULL", \*PH, "$perl -cw $filename" );
+my $res;
+while( <PH> ) { $res .= $_;  }
+waitpid($pid, 0);
+
 like( $res, qr/syntax OK/, 'Generated script syntax is OK' );
 
 like( $output, qr{DBI->connect\(\s*'$dsn',\s*'$db_user',\s*'$db_pass',},
