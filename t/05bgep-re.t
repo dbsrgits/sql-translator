@@ -15,9 +15,11 @@ my $test_data = (-d "t")
     ? catfile($Bin, @data)
     : catfile($Bin, "t", @data);
 
-my $tr = SQL::Translator->new(parser => "MySQL",
-                              producer => "XML",
-                              filename => $test_data);
+my $tr       =  SQL::Translator->new(
+    parser   => 'MySQL',
+    producer => 'SqlfXML',
+    filename => $test_data
+);
 my $data = $tr->translate;
 
 ok($data, "MySQL->XML");
