@@ -30,7 +30,7 @@ check_version('Test::Differences'       => 0    => 1);
 check_version('Text::ParseWords'        => 0    => 0);
 check_version('Text::RecordParser'      => 0.02 => 0);
 check_version('XML::Writer'             => 0    => 1);
-check_version('XML::XPath'              => 0    => 1);
+check_version('XML::XPath'              => 1.13 => 1);
 
 print "\n";
 
