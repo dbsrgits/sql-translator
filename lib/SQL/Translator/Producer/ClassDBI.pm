@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.28 2003-07-09 17:48:12 allenday Exp $
+# $Id: ClassDBI.pm,v 1.29 2003-08-07 03:51:48 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -121,6 +121,8 @@ sub produce {
                 my $field          = ($constraint->fields)[0];
                 my $pk_name        = $pk_xform->($table_pkg_name, $field);
 
+				$packages{ $table_pkg_name }{'_columns_primary'} = $field;
+
                 $packages{ $table_pkg_name }{'pk_accessor'} = 
                     "#\n# Primary key accessor\n#\n".
                     "sub $pk_name {\n    shift->$field\n}\n\n"
@@ -130,7 +132,12 @@ sub produce {
 
         my $is_data = 0;
         foreach my $field ( $table->get_fields ) {
-		  $is_data++ if !$field->is_foreign_key and !$field->is_primary_key;
+		  if ( !$field->is_foreign_key and !$field->is_primary_key ) {
+			push @{ $packages{ $table_pkg_name }{'_columns_essential'} }, $field->name;
+			$is_data++;
+		  } elsif ( !$field->is_primary_key ) {
+			push @{ $packages{ $table_pkg_name }{'_columns_others'} }, $field->name;
+		  }
 		}
 
 		my %linked;
@@ -278,20 +285,47 @@ sub produce {
             "use Class::DBI::Pager;\n\n",
         );    
 
-        if ( $from ) {
-            $create .= 
-                $pkg->{'pkg_name'}."->set_up_table('".$pkg->{'table'}."');\n\n";
-        }
-        else {
-            my $table       = $schema->get_table( $pkg->{'table'} );
-            my @field_names = map { $_->name } $table->get_fields;
+#        if ( $from ) {
+#            $create .= 
+#                $pkg->{'pkg_name'}."->set_up_table('".$pkg->{'table'}."');\n\n";
+#        }
+#        else {
+#            my $table       = $schema->get_table( $pkg->{'table'} );
+#            my @field_names = map { $_->name } $table->get_fields;
+#
+#            $create .= join("\n",
+#                $pkg_name."->table('".$pkg->{'table'}."');\n",
+#                $pkg_name."->columns(All => qw/".
+#                join(' ', @field_names)."/);\n\n",
+#            );
+#        }
 
-            $create .= join("\n",
-                $pkg_name."->table('".$pkg->{'table'}."');\n",
-                $pkg_name."->columns(All => qw/".
-                join(' ', @field_names)."/);\n\n",
-            );
-        }
+
+		#the approach here is to do lazy loading on the expensive columns
+		#(expensive defined as those columns which require construction of a referenced object)
+		#fields which are strictly data (ie, not references) are treated as essential b/c they
+		#don't require much time to set up.
+
+		$create .= $pkg_name."->table('".$pkg->{'table'}."');\n";
+
+		#set up primary key field
+		if( $pkg->{'_columns_primary'} ) {
+		  $create .= $pkg_name."->columns(Primary   => qw/".              $pkg->{'_columns_primary'}      ."/);\n";
+		} else {
+		  die "Class::DBI isn't going to like that you don't have a primary key field for table ".$pkg->{'table'};
+		}
+
+		#set up non-FK fields to be populated at construction
+		if( $pkg->{'_columns_essential'} ) {
+		  $create .= $pkg_name."->columns(Essential => qw/". join(' ', @{ $pkg->{'_columns_essential'} }) ."/);\n";
+		}
+
+		#set up FK fields for lazy loading on request
+		if( $pkg->{'_columns_others'} ) {
+		  $create .= $pkg_name."->columns(Others    => qw/".    join(' ', @{ $pkg->{'_columns_others'}    }) ."/);\n";
+		}
+
+		$create .= "\n";
 
         if ( my $pk = $pkg->{'pk_accessor'} ) {
             $create .= $pk;
