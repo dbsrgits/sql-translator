@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.13 2003-05-03 04:09:50 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.14 2003-05-03 15:40:18 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -279,7 +279,6 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
             name           => $item{'field_name'}, 
             data_type      => $item{'data_type'}{'type'},
             size           => $item{'data_type'}{'size'},
-            list           => $item{'data_type'}{'list'},
             null           => $null,
             default        => $default->{'value'},
             constraints    => [ @constraints ],
@@ -366,7 +365,7 @@ data_type : pg_data_type parens_value_list(?)
         #
         # We can deduce some sizes from the data type's name.
         #
-        $data_type->{'size'} ||= $item[2][0];
+        $data_type->{'size'} ||= $item[2];
 
         $return  = $data_type;
     }
@@ -376,7 +375,7 @@ pg_data_type :
         { 
             $return = { 
                 type           => 'integer',
-                size           => 8,
+                size           => [8],
                 auto_increment => 1,
             };
         }
@@ -385,7 +384,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'integer', 
-                size => 2,
+                size => [2],
             };
         }
     |
@@ -393,7 +392,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'integer', 
-                size => 4,
+                size => [4],
             };
         }
     |
@@ -401,7 +400,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'float', 
-                size => 8,
+                size => [8],
             }; 
         }
     |
@@ -409,7 +408,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'real', 
-                size => 4,
+                size => [4],
             };
         }
     |
@@ -417,7 +416,7 @@ pg_data_type :
         { 
             $return = { 
                 type           => 'integer',
-                size           => 4, 
+                size           => [4], 
                 auto_increment => 1,
             };
         }
@@ -426,7 +425,7 @@ pg_data_type :
         { 
             $return = { 
                 type           => 'integer', 
-                size           => 8, 
+                size           => [8], 
                 auto_increment => 1,
             };
         }
