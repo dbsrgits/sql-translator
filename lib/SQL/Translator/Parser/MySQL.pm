@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.14 2003-04-07 16:27:30 dlc Exp $
+# $Id: MySQL.pm,v 1.15 2003-04-30 21:58:40 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -191,11 +191,13 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
             }
         }
 
-        for my $opt ( @{ $item{'table_option'} } ) {
+        for my $opt ( @{ $item{'table_option(s?)'} } ) {
             if ( my ( $key, $val ) = each %$opt ) {
                 $tables{ $table_name }{'table_options'}{ $key } = $val;
             }
         }
+
+        1;
     }
 
 create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
@@ -219,7 +221,7 @@ blank : /\s*/
 
 field : field_name data_type field_qualifier(s?) reference_definition(?)
     { 
-        my %qualifiers = map { %$_ } @{ $item{'field_qualifier'} || [] };
+        my %qualifiers = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         my $null = defined $item{'not_null'} ? $item{'not_null'} : 1;
         delete $qualifiers{'not_null'};
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
@@ -233,7 +235,7 @@ field : field_name data_type field_qualifier(s?) reference_definition(?)
             size           => $item{'data_type'}{'size'},
             list           => $item{'data_type'}{'list'},
             null           => $null,
-            constraints    => $item{'reference_definition'},
+            constraints    => $item{'reference_definition(?)'},
             %qualifiers,
         } 
     }
@@ -307,6 +309,7 @@ index : primary_key_index
     | unique_index
     | fulltext_index
     | normal_index
+    | <error>
 
 table_name   : WORD
 
@@ -376,16 +379,16 @@ primary_key : /primary/i /key/i { 1 }
 primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
     { 
         $return    = { 
-            name   => $item{'index_name'}[0],
+            name   => $item{'index_name(?)'}[0],
             type   => 'primary_key',
             fields => $item[4],
-        } 
+        };
     }
 
 normal_index : key index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
         $return    = { 
-            name   => $item{'index_name'}[0],
+            name   => $item{'index_name(?)'}[0],
             type   => 'normal',
             fields => $item[4],
         } 
@@ -394,7 +397,7 @@ normal_index : key index_name(?) '(' name_with_opt_paren(s /,/) ')'
 unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
         $return    = { 
-            name   => $item{'index_name'}[0],
+            name   => $item{'index_name(?)'}[0],
             type   => 'unique',
             fields => $item[5],
         } 
@@ -403,7 +406,7 @@ unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
 fulltext_index : fulltext key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
         $return    = { 
-            name   => $item{'index_name'}[0],
+            name   => $item{'index_name(?)'}[0],
             type   => 'fulltext',
             fields => $item[5],
         } 
