@@ -1,0 +1,200 @@
+#!/usr/bin/perl -w
+# vim: set ft=perl:
+
+# -------------------------------------------------------------------
+# $Id: sqlt-diff,v 1.1 2003-10-17 16:42:14 kycl4rk Exp $
+# -------------------------------------------------------------------
+# Copyright (C) 2002 The SQLFairy Authors
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
+
+=head1 NAME
+
+sqlt-diff - find the differences b/w two schemas
+
+=head1 SYNOPSIS
+
+For help:
+
+  sqlt-diff -h|--help
+
+For a list of all valid parsers:
+
+  sqlt -l|--list
+
+To diff two schemas:
+
+  sqlt-diff [options] file1=parser file2=parser
+
+Options:
+
+  -d|--debug   Show debugging info
+
+=head1 DESCRIPTION
+
+This script is part of the SQL Fairy project.  It will find the 
+differences between two schemas.
+
+=cut
+
+# -------------------------------------------------------------------
+
+use strict;
+use Pod::Usage;
+use Data::Dumper;
+use SQL::Translator;
+
+use vars qw( $VERSION );
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+
+my ( @input, $list, $help, $debug );
+for my $arg ( @ARGV ) {
+    if ( $arg =~ m/^-?-l(ist)?$/ ) {
+        $list = 1;
+    }
+    elsif ( $arg =~ m/^-?-h(elp)?$/ ) {
+        $help = 1;
+    }
+    elsif ( $arg =~ m/^-?-d(ebug)?$/ ) {
+        $debug = 1; 
+    }
+    elsif ( $arg =~ m/^([^=]+)=(.+)$/ ) {
+        push @input, { file => $1, parser => $2 };
+    }
+    else {
+        pod2usage( msg => "Unknown argument '$arg'" );
+    }
+}
+
+pod2usage(1) if $help;
+
+my $tr            = SQL::Translator->new;
+my @parsers       = $tr->list_parsers;
+my %valid_parsers = map { $_, 1 } @parsers;
+
+if ( $list ) {
+    print "\nParsers:\n", map { "\t$_\n" } sort @parsers;
+    print "\n";
+    exit(0);
+}
+
+pod2usage( msg => 'Too many file args' ) if @input > 2;
+
+my ( $schema1, $schema2 );
+my $i = 1;
+for my $in ( @input ) {
+    my $file   = $in->{'file'};
+    my $parser = $in->{'parser'};
+
+    die "Unable to read file '$file'\n" unless -r $file;
+    die "'$parser' is an invalid parser\n" unless $valid_parsers{ $parser };
+
+    my $t = SQL::Translator->new;
+    $t->debug( $debug );
+    $t->parser( $parser )            or die $tr->error;
+    $t->producer( 'YAML' )           or die $tr->error;
+    my $out = $t->translate( $file ) or die $tr->error;
+    my $schema = $t->schema;
+    unless ( $schema->name ) {
+        $schema->name( $file );
+    }
+
+    if ( $i == 1 ) {
+        $schema1 = $schema;
+    }
+    else {
+        $schema2 = $schema;
+    }
+    $i++;
+}
+
+#print "Schemas =\n", Dumper( \@schemas ), "\n" if $debug;
+
+my @matrix = ( [ $schema1, $schema2 ], [ $schema2, $schema1 ] );
+
+my @diffs;
+for my $rec ( @matrix ) {
+    my $s1      = $rec->[0];
+    my $s2      = $rec->[1];
+    my $s1_name = $s1->name;
+    my $s2_name = $s2->name;
+    print "Schema1 = '$s1_name', schema2 = '$s2_name'\n" if $debug;
+    for my $t1 ( $s1->get_tables ) {
+        my $t1_name = $t1->name;
+        my $t2      = $s2->get_table( $t1_name );
+
+        print "Checking '$s1_name' table '$t1_name'\n" if $debug;
+        unless ( $t2 ) {
+            push @diffs, "Schema '$s2_name' is missing table '$t1_name'";
+            next;
+        }
+
+        my $t2_name = $t2->name;
+        for my $t1_field ( $t1->get_fields ) {
+            my $fname        = $t1_field->name;
+            my $t2_field     = $t2->get_field( $fname );
+            my $f1_full_name = "$s1_name.$t1_name.$fname";
+            print "Checking '$f1_full_name'\n" if $debug;
+
+            unless ( $t2_field ) {
+                push @diffs, 
+                    "Table '$s2_name.$t2_name' is missing field '$fname'";
+                next;
+            }
+
+            my $f2_full_name = "$s2_name.$t2_name.$fname";
+            my $t1_type      = $t1_field->data_type;
+            my $t1_size      = $t1_field->size;
+            my $t2_type      = $t2_field->data_type;
+            my $t2_size      = $t2_field->size;
+
+            if ( $t1_type ne $t2_type ) {
+                push @diffs, "'$f1_full_name' type = '$t1_type' and ".
+                    "'$f2_full_name' type = '$t2_type'";
+            }
+
+            if ( defined $t1_size && ( $t1_size ne $t2_size ) ) {
+                push @diffs, "'$f1_full_name' size = '$t1_size' and ".
+                    "'$f2_full_name' size = '$t2_size'";
+            }
+        }
+    }
+}
+
+if ( @diffs ) {
+    print "Diffs\n-----\n";
+    print join( "\n", @diffs, '' );
+}
+else {
+    print "There were no differences.\n";
+}
+
+# -------------------------------------------------------------------
+# Bring out number weight & measure in a year of dearth.
+# William Blake
+# -------------------------------------------------------------------
+
+=pod
+
+=head1 AUTHOR
+
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+
+=head1 SEE ALSO
+
+SQL::Translator, L<http://sqlfairy.sourceforge.net>.
+
+=cut
