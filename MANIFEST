@@ -9,6 +9,7 @@ lib/SQL/Translator.pm
 lib/SQL/Translator/Parser.pm
 lib/SQL/Translator/Parser/MySQL.pm
 lib/SQL/Translator/Parser/Sybase.pm
+lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/Oracle.pm
 lib/SQL/Translator/Producer/XML.pm
@@ -17,4 +18,6 @@ t/02mysql-parser.t
 t/04file,fh,string.t
 t/03mysql-to-oracle.t
 t/05bgep-re.t
+t/06xsv.t
+t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
