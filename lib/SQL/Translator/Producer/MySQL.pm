@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.15 2003-04-18 20:43:05 allenday Exp $
+# $Id: MySQL.pm,v 1.16 2003-04-24 16:14:54 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -227,7 +227,9 @@ sub produce {
         # Footer
         #
         $create .= "\n)";
-        while ( my ( $key, $val ) = each %{ $table_data->{'table_options'} ||= { } } ) {
+        while ( 
+            my ( $key, $val ) = each %{ $table_data->{'table_options'} ||= {} }
+        ) {
             $create .= " $key=$val" 
         }
         $create .= ";\n\n";
