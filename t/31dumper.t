@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # vim: set ft=perl:
+# Test for Dumper producer
 
 use strict;
 use Config;
@@ -40,6 +41,7 @@ ok( $output, 'Got dumper script' );
 my ( $fh, $filename ) = tempfile( 'XXXXXXXX' );
 
 print $fh $output;
+close $fh or die "Can't close file '$filename': $!";
 
 my $perl = $Config{'perlpath'};
 my $cmd  = "$perl -cw $filename";
