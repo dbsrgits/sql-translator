@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.5 2003-06-03 22:37:42 kycl4rk Exp $
+# $Id: Field.pm,v 1.6 2003-06-06 00:09:25 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -70,7 +70,7 @@ Object constructor.
     for my $arg ( 
         qw[ 
             table name data_type size is_primary_key is_nullable
-            is_auto_increment
+            is_auto_increment default_value
         ] 
     ) {
         next unless defined $config->{ $arg };
@@ -119,6 +119,65 @@ assume an error like other methods.
 }
 
 # ----------------------------------------------------------------------
+sub extra {
+
+=pod
+
+=head2 extra
+
+Get or set the field's "extra" attibutes (e.g., "ZEROFILL" for MySQL).
+Accepts a hash(ref) of name/value pairs to store;  returns a hash.
+
+  $field->extra( qualifier => 'ZEROFILL' );
+  my %extra = $field->extra;
+
+=cut
+
+    my $self = shift;
+    my $args = ref $_[0] eq 'HASH' ? shift : { @_ };
+
+    while ( my ( $key, $value ) = each %$args ) {
+        $self->{'extra'}{ $key } = $value;
+    }
+
+    return %{ $self->{'extra'} || {} };
+}
+
+# ----------------------------------------------------------------------
+sub foreign_key_reference {
+
+=pod
+
+=head2 foreign_key_reference
+
+Get or set the field's foreign key reference;
+
+  my $constraint = $field->foreign_key_reference( $constraint );
+
+=cut
+
+    my $self = shift;
+
+    if ( my $arg = shift ) {
+        my $class = 'SQL::Translator::Schema::Constraint';
+        if ( UNIVERSAL::isa( $arg, $class ) ) {
+            return $self->error(
+                'Foreign key reference for ', $self->name, 'already defined'
+            ) if $self->{'foreign_key_reference'};
+
+            $self->{'foreign_key_reference'} = $arg;
+        }
+        else {
+            return $self->error(
+                "Argument to foreign_key_reference is not an $class object"
+            );
+        }
+    }
+
+    return $self->{'foreign_key_reference'};
+}
+
+# ----------------------------------------------------------------------
 sub is_auto_increment {
 
 =pod
@@ -152,6 +211,40 @@ Get or set the field's C<is_auto_increment> attribute.
 
     return $self->{'is_auto_increment'} || 0;
 }
+
+# ----------------------------------------------------------------------
+sub is_foreign_key {
+
+=pod
+
+=head2 is_foreign_key
+
+Returns whether or not the field is a foreign key.
+
+  my $is_fk = $field->is_foreign_key;
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    unless ( defined $self->{'is_foreign_key'} ) {
+        if ( my $table = $self->table ) {
+            for my $c ( $table->get_constraints ) {
+                if ( $c->type eq FOREIGN_KEY ) {
+                    my %fields = map { $_, 1 } $c->fields;
+                    if ( $fields{ $self->name } ) {
+                        $self->{'is_foreign_key'} = 1;
+                        $self->foreign_key_reference( $c );
+                        last;
+                    }
+                }
+            }
+        }
+    }
+
+    return $self->{'is_foreign_key'} || 0;
+}
+
 
 # ----------------------------------------------------------------------
 sub is_nullable {
@@ -352,8 +445,12 @@ Get or set the field's table object.
 
 # ----------------------------------------------------------------------
 sub DESTROY {
+#
+# Destroy cyclical references.
+#
     my $self = shift;
-    undef $self->{'table'}; # destroy cyclical reference
+    undef $self->{'table'};
+    undef $self->{'foreign_key_reference'};
 }
 
 1;
