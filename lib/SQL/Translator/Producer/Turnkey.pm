@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.13 2004-01-02 00:17:10 allenday Exp $
+# $Id: Turnkey.pm,v 1.14 2004-01-02 08:15:09 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -515,12 +515,12 @@ EOF
           [% ELSE %]
             <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%">
               [% IF p.name %]
-                <tr bgcolor="#4444FF" height="1">
-                  <td><font color="#FFFFFF">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</font></td>
-                  <td align="right" width="0"><!--<nobr><img src="/images/v.gif"/><img src="/images/^.gif"/>[% IF p.delible == 'yes' %]<img src="/images/x.gif"/>[% END %]</nobr>--></td>
+                <tr class="dbtabletitle" height="1">
+                  <td class="dbtabletitle">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</td>
+                  <td align="right" width="0"></td>
                 </tr>
               [% END %]
-              <tr><td colspan="2" bgcolor="#FFFFFF">
+              <tr><td colspan="2" class="dbtablerow">
               <!-- begin atom: [% p.label %] -->
               <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
                 [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
@@ -556,7 +556,7 @@ EOF
     [- pkey = "Turnkey::Model::${pname}" -]
     [- FOREACH field = node.value.data_fields -]
     [- IF field != "1" -]
-      <tr><td><b>[- field -]</b></td><td>[% fields.[- field -] %]</td></tr>
+      <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% fields.[- field -] %]</td></tr>
     [- END -]
     [- END -]
     [% id = record.id %]
