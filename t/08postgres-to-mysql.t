@@ -102,7 +102,10 @@ create table cvtermsynonym (
 
        unique(cvterm_id, termsynonym)
 );
-create index cvterm_synonym_idx1 on cvterm_synonym (cvterm_id);
+
+-- The table "cvterm_synonym" doesn't exist, so 
+-- creating an index on it screws things up!
+-- create index cvterm_synonym_idx1 on cvterm_synonym (cvterm_id);
 
 -- ================================================
 -- TABLE: cvterm_dbxref
