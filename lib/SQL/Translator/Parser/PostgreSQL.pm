@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.2 2003-02-25 01:01:29 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.3 2003-02-25 02:03:55 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -18,7 +18,7 @@ package SQL::Translator::Parser::PostgreSQL;
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
