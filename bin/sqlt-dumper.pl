@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-dumper.pl,v 1.2 2003-06-24 21:00:24 kycl4rk Exp $
+# $Id: sqlt-dumper.pl,v 1.3 2003-08-21 00:29:57 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -20,7 +20,9 @@
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
-=head1 sqlt-dumper.pl - create a dumper script from a schema
+=head1 NAME
+
+sqlt-dumper.pl - create a dumper script from a schema
 
 =head1 SYNOPSIS
 
