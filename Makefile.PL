@@ -7,15 +7,14 @@ WriteMakefile(
     'NAME'         => __PACKAGE__,
     'VERSION_FROM' => 'lib/SQL/Translator.pm',
     'EXE_FILES'    => [
-        'bin/auto-dia.pl',
-        'bin/auto-graph.pl',
-        'bin/auto-viv.cgi',
+        'bin/sqlt-diagram.pl',
+        'bin/sqlt-graph.pl',
         'bin/sql_translator.pl',
     ],
     'PREREQ_PM'    => {
         'Class::Base'             => 0,
         'File::Basename'          => 0,
-        'File::Spec'              => 0,     # Version!
+        'File::Spec'              => 0,
         'GD'                      => 0,
         'GraphViz'                => 0,
         'IO::Dir'                 => 0,
@@ -33,5 +32,3 @@ WriteMakefile(
         FILES => '$(DISTNAME)-$(VERSION).tar.gz',
     },
 );
-
-
