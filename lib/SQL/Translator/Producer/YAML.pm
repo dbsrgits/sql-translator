@@ -1,10 +1,9 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.7 2004-01-25 18:13:46 kycl4rk Exp $
+# $Id: YAML.pm,v 1.8 2004-02-09 23:02:17 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
-#   Ken Y. Clark <kclark@cpan.org>.
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -42,7 +41,7 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 

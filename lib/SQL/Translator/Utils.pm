@@ -1,9 +1,9 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.11 2003-10-09 18:09:07 kycl4rk Exp $
+# $Id: Utils.pm,v 1.12 2004-02-09 23:04:26 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 darren chamberlain <darren@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -26,7 +26,7 @@ use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 
 use Exporter;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg $DEFAULT_COMMENT

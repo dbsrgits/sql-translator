@@ -1,9 +1,9 @@
 package SQL::Translator::Producer::POD;
 
 # -------------------------------------------------------------------
-# $Id: POD.pm,v 1.4 2003-10-15 19:04:19 kycl4rk Exp $
+# $Id: POD.pm,v 1.5 2004-02-09 23:02:15 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -42,7 +42,7 @@ interesting formats using Pod::POM or Template::Toolkit's POD plugin.
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);

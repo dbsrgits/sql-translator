@@ -58,4 +58,4 @@ Discuss Schema objects, how to navigate using Template Toolkit.
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.

@@ -1,10 +1,9 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.3 2003-08-20 22:55:06 kycl4rk Exp $
+# $Id: TTSchema.pm,v 1.4 2004-02-09 23:02:17 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Mark Addison <grommit@users.sourceforge.net>,
-#                    Ken Y. Clark <kclark@cpan.org>.
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -92,7 +91,7 @@ limitless!
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
