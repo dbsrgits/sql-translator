@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.1 2003-10-03 00:21:41 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.2 2003-10-03 18:13:32 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
 #
@@ -40,28 +40,21 @@ use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
 
-    my $data = $dbh->selectall_arrayref(
-        'select * from sqlite_master', { Columns => {} }
+    my $create = join(";\n",
+        map { $_ || () }
+        @{ $dbh->selectcol_arrayref('select sql from sqlite_master') },
     );
-
-    $tr->debug( "sqlite_master =\n", Dumper( $data ) );
+    $create .= ";";
+    $tr->debug( "create =\n$create\n" );
 
     my $schema = $tr->schema;
-
-    my $create;
-    for my $rec ( @$data ) {
-        my $sql  =  $rec->{'sql'} or next;
-        $create .= "$sql;\n";
-    }
-
-    $tr->debug( "create =\n$create\n" );
 
     SQL::Translator::Parser::SQLite::parse( $tr, $create );
     return 1;
