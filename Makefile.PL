@@ -5,10 +5,11 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'         => __PACKAGE__,
-    'VERSION'      => 0.01,
+    'VERSION_FROM' => 'lib/SQL/Translator.pm',
     'EXE_FILES'    => [
         'bin/auto-dia.pl',
         'bin/auto-graph.pl',
+        'bin/auto-viv.cgi',
         'bin/sql_translator.pl',
     ],
     'PREREQ_PM'    => {
