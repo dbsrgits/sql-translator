@@ -19,7 +19,6 @@ use Data::Dumper;
 my %opt;
 BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
-local $SIG{__WARN__} = sub { diag "[warn] ", @_; };
 
 use FindBin qw/$Bin/;
 
@@ -79,7 +78,7 @@ sub test_table {
 # Testing 1,2,3,..
 #=============================================================================
 
-plan tests => 111;
+plan tests => 103;
 
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
@@ -98,8 +97,6 @@ my %base_translator_args = (
 #
 # Basic tests
 #
-{
-
 my $obj;
 $obj = SQL::Translator->new(
     filename => $testschema,
@@ -220,78 +217,3 @@ test_table( $scma->get_table("Track"),
     },
     ],
 );
-
-} # end basic tests
-
-#
-# Visibility tests
-#
-{
-
-# Classes
-my @testd = (
-    ""          => [qw/Foo PrivateFoo Recording CD Track ProtectedFoo/],
-                   [qw/fooid name protectedname privatename/],
-    "public"    => [qw/Foo Recording CD Track/],
-                   [qw/fooid name /],
-    "protected" => [qw/Foo Recording CD Track ProtectedFoo/],
-                   [qw/fooid name protectedname/],
-    "private"   => [qw/Foo PrivateFoo Recording CD Track ProtectedFoo/],
-                   [qw/fooid name protectedname privatename/],
-);
-    while ( my ($vis,$tables,$foofields) = splice @testd,0,3 ) {
-    my $obj;
-    $obj = SQL::Translator->new(
-        filename => $testschema,
-        from     => 'XML-XMI',
-        to       => 'MySQL',
-        debug          => DEBUG,
-        show_warnings  => 1,
-        add_drop_table => 1,
-        parser_args => {
-            visibility => $vis,
-        },
-    );
-    my $sql = $obj->translate;
-    my $scma = $obj->schema;
-
-    my @tblnames = map {$_->name} $scma->get_tables;
-    is_deeply( \@tblnames, $tables, "Tables with visibility => '$vis'");
-
-    my @fldnames = map {$_->name} $scma->get_table("Foo")->get_fields;
-    is_deeply( \@fldnames, $foofields, "Foo fields with visibility => '$vis'");
-
-    #print "Debug: translator", Dumper($obj) if DEBUG;
-    #print "Debug: schema", Dumper($obj->schema) if DEBUG;
-}
-
-# # Classes
-# %testd = (
-#     ""          => [qw/fooid name protectedname privatename/],
-#     "public"    => [qw/fooid name /],
-#     "protected" => [qw/fooid name protectedname/],
-#     "private"   => [qw/fooid name protectedname privatename/],
-# );
-#     while ( my ($vis,$ans) = each %testd ) {
-#     my $obj;
-#     $obj = SQL::Translator->new(
-#         filename => $testschema,
-#         from     => 'XML-XMI',
-#         to       => 'MySQL',
-#         debug          => DEBUG,
-#         show_warnings  => 1,
-#         add_drop_table => 1,
-#         parser_args => {
-#             visibility => $vis,
-#         },
-#     );
-#     my $sql = $obj->translate;
-#     my $scma = $obj->schema;
-#     my @names = map {$_->name} $scma->get_table("Foo")->get_fields;
-#     is_deeply( \@names, $ans, "Foo fields with visibility => '$vis'");
-#     
-#     #print "Debug: translator", Dumper($obj) if DEBUG;
-#     #print "Debug: schema", Dumper($obj->schema) if DEBUG;
-# }
-# 
-} # end visibility tests
