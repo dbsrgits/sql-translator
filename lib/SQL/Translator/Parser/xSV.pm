@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.14 2003-11-05 22:26:02 kycl4rk Exp $
+# $Id: xSV.pm,v 1.15 2003-11-06 16:55:30 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -68,7 +68,7 @@ C<SQL::Translator::Utils::normalize_name>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -165,11 +165,15 @@ sub parse {
         }
 
         for my $field ( keys %field_info ) {
-            my $size      = $field_info{ $field }{'size'};
+            my $size      = $field_info{ $field }{'size'} || [ 1 ];
             my $data_type = 
                 $field_info{ $field }{'char'}    ? 'char'  : 
                 $field_info{ $field }{'float'}   ? 'float' :
                 $field_info{ $field }{'integer'} ? 'integer' : 'char';
+
+            if ( $data_type eq 'char' && scalar @$size == 2 ) {
+                $size = [ $size->[0] + $size->[1] ];
+            }
 
             my $field = $table->get_field( $field );
             $field->size( $size );
