@@ -1,3 +1,9 @@
+*   Changed the native SQL Fairy XML format to a fixed mapping.
+    *NB:* You should convert your existing XML schema. See the
+    SQL::Translator::Parser::XML::SQLFairy docs.
+
+*   Added producers: TT::Base and TT::Table.
+
 # -----------------------------------------------------------
 # 0.05    2004-02-27
 # -----------------------------------------------------------
