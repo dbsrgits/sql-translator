@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.1 2003-05-01 04:24:59 kycl4rk Exp $
+# $Id: Constraint.pm,v 1.2 2003-05-05 04:32:39 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -32,7 +32,7 @@ SQL::Translator::Schema::Constraint - SQL::Translator constraint object
   my $constraint = SQL::Translator::Schema::Constraint->new(
       name   => 'foo',
       fields => [ id ],
-      type   => 'primary_key',
+      type   => PRIMARY_KEY,
   );
 
 =head1 DESCRIPTION
@@ -45,6 +45,7 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 
 use strict;
 use Class::Base;
+use SQL::Translator::Schema::Constants;
 
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
@@ -52,10 +53,10 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 $VERSION = 1.00;
 
 use constant VALID_TYPE => {
-    primary_key => 1,
-    unique      => 1,
-    check       => 1,
-    foreign_key => 1,
+    PRIMARY_KEY, 1,
+    UNIQUE,      1,
+    CHECK_C,     1,
+    FOREIGN_KEY, 1,
 };
 
 # ----------------------------------------------------------------------
@@ -68,6 +69,7 @@ sub init {
 Object constructor.
 
   my $schema           =  SQL::Translator::Schema::Constraint->new(
+      table            => $table,        # the table to which it belongs
       type             => 'foreign_key', # type of table constraint
       name             => 'fk_phone_id', # the name of the constraint
       fields           => 'phone_id',    # the field in the referring table
@@ -81,9 +83,8 @@ Object constructor.
 =cut
 
     my ( $self, $config ) = @_;
-#        reference_fields reference_table 
 #        match_type on_delete_do on_update_do
-    my @fields = qw[ name type fields ];
+    my @fields = qw[ name type fields reference_fields reference_table table ];
 
     for my $arg ( @fields ) {
         next unless $config->{ $arg };
@@ -94,24 +95,151 @@ Object constructor.
 }
 
 # ----------------------------------------------------------------------
+sub deferrable {
+
+=pod
+
+=head2 deferrable
+
+Get or set the whether the constraint is deferrable.  If not defined,
+then returns "1."  The argument is evaluated by Perl for True or
+False, so the following are eqivalent:
+
+  $deferrable = $field->deferrable(0);
+  $deferrable = $field->deferrable('');
+  $deferrable = $field->deferrable('0');
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    if ( defined $arg ) {
+        $self->{'deferrable'} = $arg ? 1 : 0;
+    }
+
+    return defined $self->{'deferrable'} ? $self->{'deferrable'} : 1;
+}
+
+# ----------------------------------------------------------------------
+sub expression {
+
+=pod
+
+=head2 expression
+
+Gets and set the expression used in a CHECK constraint.
+
+  my $expression = $constraint->expression('...');
+
+=cut
+
+    my $self = shift;
+    
+    if ( my $arg = shift ) {
+        # check arg here?
+        $self->{'expression'} = $arg;
+    }
+
+    return $self->{'expression'} || '';
+}
+
+# ----------------------------------------------------------------------
+sub is_valid {
+
+=pod
+
+=head2 is_valid
+
+Determine whether the constraint is valid or not.
+
+  my $ok = $constraint->is_valid;
+
+=cut
+
+    my $self       = shift;
+    my $type       = $self->type   or return $self->error('No type');
+    my $table      = $self->table  or return $self->error('No table');
+    my @fields     = $self->fields or return $self->error('No fields');
+    my $table_name = $table->name  or return $self->error('No table name');
+
+    for my $f ( @fields ) {
+        next if $table->get_field( $f );
+        return $self->error(
+            "Constraint references non-existent field '$f' ",
+            "in table '$table_name'"
+        );
+    }
+
+    my $schema = $table->schema or return $self->error(
+        'Table ', $table->name, ' has no schema object'
+    );
+
+    if ( $type eq FOREIGN_KEY ) {
+        return $self->error('Only one field allowed for foreign key')
+            if scalar @fields > 1;
+
+        my $ref_table_name  = $self->reference_table or 
+            return $self->error('No reference table');
+
+        my $ref_table = $schema->get_table( $ref_table_name ) or
+            return $self->error("No table named '$ref_table_name' in schema");
+
+        my @ref_fields = $self->reference_fields or return;
+
+        return $self->error('Only one field allowed for foreign key reference')
+            if scalar @ref_fields > 1;
+
+        for my $ref_field ( @ref_fields ) {
+            next if $ref_table->get_field( $ref_field );
+            return $self->error(
+                "Constraint from field(s) ", 
+                join(', ', map {qq['$table_name.$_']} @fields),
+                " to non-existent field '$ref_table_name.$ref_field'"
+            );
+        }
+    }
+    elsif ( $type eq CHECK_C ) {
+        return $self->error('No expression for CHECK') unless 
+            $self->expression;
+    }
+
+    return 1;
+}
+
+# ----------------------------------------------------------------------
 sub fields {
 
 =pod
 
 =head2 fields
 
-Gets and set the fields the constraint is on.  Accepts a list or arrayref, 
-return both, too.
+Gets and set the fields the constraint is on.  Accepts a string, list or
+arrayref; returns an array or array reference.  Will unique the field
+names and keep them in order by the first occurrence of a field name.
 
-  my @fields = $constraint->fields( 'id' );
+  $constraint->fields('id');
+  $constraint->fields('id', 'name');
+  $constraint->fields( 'id, name' );
+  $constraint->fields( [ 'id', 'name' ] );
+  $constraint->fields( qw[ id name ] );
+
+  my @fields = $constraint->fields;
 
 =cut
 
     my $self   = shift;
-    my $fields = ref $_[0] eq 'ARRAY' ? shift : [ @_ ];
+    my $fields = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
+        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
 
     if ( @$fields ) {
-        $self->{'fields'} = $fields;
+        my ( %unique, @unique );
+        for my $f ( @$fields ) {
+            next if $unique{ $f };
+            $unique{ $f } = 1;
+            push @unique, $f;
+        }
+
+        $self->{'fields'} = \@unique;
     }
 
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
@@ -136,6 +264,128 @@ Get or set the constraint's name.
 }
 
 # ----------------------------------------------------------------------
+sub on_delete {
+
+=pod
+
+=head2 on_delete
+
+Get or set the constraint's "on delete" action.
+
+  my $action = $constraint->on_delete('cascade');
+
+=cut
+
+    my $self = shift;
+    
+    if ( my $arg = shift ) {
+        # validate $arg?
+        $self->{'on_delete'} = $arg;
+    }
+
+    return $self->{'on_delete'} || '';
+}
+
+# ----------------------------------------------------------------------
+sub on_update {
+
+=pod
+
+=head2 on_update
+
+Get or set the constraint's "on update" action.
+
+  my $action = $constraint->on_update('no action');
+
+=cut
+
+    my $self = shift;
+    
+    if ( my $arg = shift ) {
+        # validate $arg?
+        $self->{'on_update'} = $arg;
+    }
+
+    return $self->{'on_update'} || '';
+}
+
+# ----------------------------------------------------------------------
+sub reference_fields {
+
+=pod
+
+=head2 reference_fields
+
+Gets and set the fields in the referred table.  Accepts a string, list or
+arrayref; returns an array or array reference.
+
+  $constraint->reference_fields('id');
+  $constraint->reference_fields('id', 'name');
+  $constraint->reference_fields( 'id, name' );
+  $constraint->reference_fields( [ 'id', 'name' ] );
+  $constraint->reference_fields( qw[ id name ] );
+
+  my @reference_fields = $constraint->reference_fields;
+
+=cut
+
+    my $self   = shift;
+    my $fields = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
+        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+
+    if ( @$fields ) {
+        $self->{'reference_fields'} = $fields;
+    }
+
+    unless ( ref $self->{'reference_fields'} ) {
+        my $table          = $self->table or return $self->error('No table');
+        my $schema         = $table->schema or return $self->error('No schema');
+        my $ref_table_name = $self->reference_table or 
+            return $self->error('No table');
+        my $ref_table      = $schema->get_table( $ref_table_name ) or
+            return $self->error("Can't find table '$ref_table_name'");
+
+        if ( my $constraint = $ref_table->primary_key ) { 
+            $self->{'reference_fields'} = [ $constraint->fields ];
+        }
+        else {
+            $self->error(
+                'No reference fields defined and cannot find primary key in ',
+                "reference table '$ref_table_name'"
+            );
+        }
+    }
+
+    if ( ref $self->{'reference_fields'} ) {
+        return wantarray 
+            ?  @{ $self->{'reference_fields'} || [] } 
+            :     $self->{'reference_fields'};
+    }
+    else {
+        return wantarray ? () : [];
+    }
+}
+
+# ----------------------------------------------------------------------
+sub reference_table {
+
+=pod
+
+=head2 reference_table
+
+Get or set the table referred to by the constraint.
+
+  my $reference_table = $constraint->reference_table('foo');
+
+=cut
+
+    my $self = shift;
+    $self->{'reference_table'} = shift if @_;
+    return $self->{'reference_table'} || '';
+}
+
+
+# ----------------------------------------------------------------------
 sub type {
 
 =pod
@@ -144,7 +394,7 @@ sub type {
 
 Get or set the constraint's type.
 
-  my $type = $constraint->type('primary_key');
+  my $type = $constraint->type( PRIMARY_KEY );
 
 =cut
 
@@ -161,20 +411,55 @@ Get or set the constraint's type.
 
 
 # ----------------------------------------------------------------------
-sub is_valid {
+sub table {
 
 =pod
 
-=head2 is_valid
+=head2 table
 
-Determine whether the constraint is valid or not.
+Get or set the field's table object.
 
-  my $ok = $constraint->is_valid;
+  my $table = $field->table;
 
 =cut
 
     my $self = shift;
-    return ( $self->name && $self->{'type'} && @{ $self->fields } ) ? 1 : 0;
+    if ( my $arg = shift ) {
+        return $self->error('Not a table object') unless
+            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema::Table' );
+        $self->{'table'} = $arg;
+    }
+
+    return $self->{'table'};
+}
+
+# ----------------------------------------------------------------------
+sub options {
+
+=pod
+
+=head2 options
+
+Gets or adds to the constraints's options (e.g., "INITIALLY IMMEDIATE").  
+Returns an array or array reference.
+
+  $constraint->options('NORELY');
+  my @options = $constraint->options;
+
+=cut
+
+    my $self    = shift;
+    my $options = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
+        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+
+    push @{ $self->{'options'} }, @$options;
+
+    if ( ref $self->{'options'} ) {
+        return wantarray ? @{ $self->{'options'} || [] } : $self->{'options'};
+    }
+    else {
+        return wantarray ? () : [];
+    }
 }
 
 1;

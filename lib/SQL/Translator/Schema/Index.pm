@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Index;
 
 # ----------------------------------------------------------------------
-# $Id: Index.pm,v 1.1 2003-05-01 04:25:00 kycl4rk Exp $
+# $Id: Index.pm,v 1.2 2003-05-05 04:32:39 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -120,6 +120,29 @@ Get or set the index's name.
     my $self = shift;
     $self->{'name'} = shift if @_;
     return $self->{'name'} || '';
+}
+
+# ----------------------------------------------------------------------
+sub table {
+
+=pod
+
+=head2 table
+
+Get or set the index's table object.
+
+  my $table = $index->table;
+
+=cut
+
+    my $self = shift;
+    if ( my $arg = shift ) {
+        return $self->error('Not a table object') unless
+            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema::Table' );
+        $self->{'table'} = $arg;
+    }
+
+    return $self->{'table'};
 }
 
 # ----------------------------------------------------------------------

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constants;
 
 # ----------------------------------------------------------------------
-# $Id: Constants.pm,v 1.1 2003-05-03 04:07:09 kycl4rk Exp $
+# $Id: Constants.pm,v 1.2 2003-05-05 04:32:39 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -43,13 +43,31 @@ use strict;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = (qw$Revision: 1.1 $)[-1];
+$VERSION = (qw$Revision: 1.2 $)[-1];
 
 @EXPORT = qw[ 
+    CHECK_C
+    FOREIGN_KEY
+    NOT_NULL
+    NULL
     PRIMARY_KEY
+    UNIQUE
 ];
 
-use constant PRIMARY_KEY => 'primary_key';
+#
+# Because "CHECK" is a Perl keyword
+#
+use constant CHECK_C => 'CHECK';
+
+use constant FOREIGN_KEY => 'FOREIGN_KEY';
+
+use constant NOT_NULL => 'NOT_NULL';
+
+use constant NULL => 'NULL';
+
+use constant PRIMARY_KEY => 'PRIMARY_KEY';
+
+use constant UNIQUE => 'UNIQUE';
 
 1;
 
