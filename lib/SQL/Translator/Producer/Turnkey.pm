@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.54 2004-07-21 03:02:57 boconnor Exp $
+# $Id: Turnkey.pm,v 1.55 2004-07-23 01:11:23 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.55 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -218,7 +218,7 @@ sub template {
 	return <<'EOF';
 [% MACRO printPackage(node) BLOCK %]
 
-########[% node.name | replace('Turnkey::Model::', '') %]########
+########[% node.name | replace('Turnkey::Model::', '') %].pm########
 
 package [% node.name %];
 use base '[% node.base %]';
@@ -348,7 +348,7 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
     [% i = i + 1 %]
   [% END %]
 [% END %]
-
+1;
 [% END %]
 [% MACRO printHasFriendly(node) BLOCK %]
 #
@@ -356,19 +356,17 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
 #
 #FIXME, why aren't these being generated?
 
-1;
-
 [% END %]
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
 
-########AutoDBI########
+########AutoDBI.pm########
 use Turnkey::Model::DBI;
 [% FOREACH node = nodes %]
 use [% node.value.name %];
 [% END %]
 1;
 
-########[% baseclass | replace('Turnkey::Model::', '') %]########
+########[% baseclass | replace('Turnkey::Model::', '') %].pm########
 package [% baseclass %];
 
 # Created by SQL::Translator::Producer::Turnkey
@@ -403,6 +401,7 @@ sub dump {
   return(Dumper($arg{'object'}));
 }
 
+1;
 ########soap.tt2########
 
 [% FOREACH node = nodes %][% node.value.name %], [%- END -%]
@@ -416,10 +415,16 @@ elsif($type eq 'atom'){
   return <<'EOF';
 [% # DOCUMENT START # %]
 
+########AutoAtom.pm########
+[% FOREACH node = nodes %]
+use [% node.value.name %];
+[% END %]
+1;
+
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
 
-##############################################
+########[% node.value.name | replace('Turnkey::Model::', '') %].pm########
 
 package Turnkey::Atom::[% node.value.name FILTER replace "Turnkey::Model::", "" %];
 
