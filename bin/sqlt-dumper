@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-dumper,v 1.3 2004-02-06 17:48:16 kycl4rk Exp $
+# $Id: sqlt-dumper,v 1.4 2004-03-08 21:03:18 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -62,7 +62,7 @@ use SQL::Translator;
 use File::Basename qw(basename);
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 my ( $help, $db, $add_truncate, $skip, $db_user, $db_pass, $dsn );
 GetOptions(
@@ -172,8 +172,13 @@ for my $table ( $schema->get_tables ) {
         "        for my \$fld ( qw[", join(' ', @field_names), "] ) {\n",
         "            my \$val = \$rec->{ \$fld };\n",
         "            if ( \$types{ \$fld } eq 'string' ) {\n",
-        "                \$val =~ s/'/\\'/g;\n",
-        "                \$val = defined \$val ? qq['\$val'] : qq[''];\n",
+        "                if ( defined \$val ) {\n",
+        "                    \$val =~ s/'/\\\\'/g;\n",
+        "                    \$val = qq['\$val']\n",
+        "                }\n",
+        "                else {\n",
+        "                    \$val = qq[''];\n",
+        "                }\n",
         "            }\n",
         "            else {\n",
         "                \$val = defined \$val ? \$val : 'NULL';\n",
