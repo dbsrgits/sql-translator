@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser::V12;
 
 # -------------------------------------------------------------------
-# $Id: V12.pm,v 1.3 2003-10-03 13:17:28 grommit Exp $
+# $Id: V12.pm,v 1.4 2003-10-03 18:07:13 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -31,7 +31,7 @@ SQL::Translator::XMI::Parser::V12 - Version 1.2 parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use base qw(SQL::Translator::XMI::Parser);
 
@@ -151,6 +151,15 @@ $spec12->{dataType} = {
             name  => "stereotype",
             path  => 'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name',
             default => "",
+        },
+    ],
+    kids => [
+        { 
+            name  => "taggedValues",
+            path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
+            class => "taggedValue", 
+            multiplicity => "*",
+			map => "name",
         },
     ],
 };
