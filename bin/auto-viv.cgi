@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: auto-viv.cgi,v 1.1 2003-04-24 19:58:39 kycl4rk Exp $
+# $Id: auto-viv.cgi,v 1.2 2003-06-05 01:43:35 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -53,6 +53,9 @@ eval {
                 font_size    => $q->param('font_size'),
                 no_columns   => $q->param('no_columns'),
                 node_shape   => $q->param('node_shape'),
+                height       => $q->param('height')      || 0,
+                width        => $q->param('width')       || 0,
+                show_fields  => $q->param('show_fields') || 0,
             },
         ) or die SQL::Translator->error;
 
@@ -230,9 +233,36 @@ sub show_form {
                             circle egg triangle box diamond trapezium 
                             parallelogram house hexagon octagon 
                         ) ],
-                        -default => 'ellipse',
+                        -default => 'record',
                         -rows    => 13,
                     ),
+                ] ),
+            ),
+            $q->Tr( 
+                $q->td( [
+                    'Show Field Names **:',
+                    $q->radio_group(
+                        -name    => 'show_fields',
+                        -values  => [ 1, 0 ],
+                        -default => 1,
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No',
+                        },
+                        -rows    => 2,
+                    ),
+                ] ),
+            ),
+            $q->Tr( 
+                $q->td( [
+                    'Height **:',
+                    $q->textfield( -name => 'height', -default => 11 ),
+                ] ),
+            ),
+            $q->Tr( 
+                $q->td( [
+                    'Width **:',
+                    $q->textfield( -name => 'width', -default => 8.5 ),
                 ] ),
             ),
             $q->Tr( 
