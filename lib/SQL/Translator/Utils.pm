@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.5 2003-05-12 14:49:39 kycl4rk Exp $
+# $Id: Utils.pm,v 1.6 2003-05-12 15:39:28 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -116,11 +116,13 @@ HEADER_COMMENT
 }
 
 # ----------------------------------------------------------------------
-sub parse_list_arg {
-    return UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift 
-        : [ map { s/^\s+|\s+$//g; $_ } map { $_ ? split /,/ : '' } @_ ]
-    ;
+sub parse_list_arg {                                                                                                
+    my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];                                                   
+                                                                                                                    
+    return [ map { s/^\s+|\s+$//g; $_ }                                                                             
+             map { split /,/ }                                                                                      
+             grep { defined } @$list                                                                                
+           ];                                                                                                       
 }
 
 1;
