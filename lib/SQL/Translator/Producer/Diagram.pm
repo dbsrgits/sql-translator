@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.5 2003-08-04 18:44:10 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.6 2003-08-21 20:27:39 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -137,7 +137,8 @@ sub produce {
                 $name .= ' *';
                 $legend{'Primary key'} = '*';
             }
-            elsif ( $f->is_unique ) {
+
+            if ( $f->is_unique ) {
                 $name .= ' [U]';
                 $legend{'Unique constraint'} = '[U]';
             }
