@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.28 2003-06-11 03:58:53 kycl4rk Exp $
+# $Id: Translator.pm,v 1.29 2003-06-11 04:34:11 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -26,8 +26,8 @@ use strict;
 use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
-$VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION  = '0.02';
+$REVISION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -107,8 +107,6 @@ sub init {
 
     $self->add_drop_table( $config->{'add_drop_table'} );
     
-    $self->custom_translate( $config->{'xlate'} );
-
     $self->no_comments( $config->{'no_comments'} );
 
     $self->show_warnings( $config->{'show_warnings'} );
@@ -129,16 +127,6 @@ sub add_drop_table {
         $self->{'add_drop_table'} = $arg ? 1 : 0;
     }
     return $self->{'add_drop_table'} || 0;
-}
-
-
-# ----------------------------------------------------------------------
-# custom_translate([$bool])
-# ----------------------------------------------------------------------
-sub custom_translate {
-    my $self = shift;
-    $self->{'custom_translate'} = shift if @_;
-    return $self->{'custom_translate'} || {};
 }
 
 # ----------------------------------------------------------------------
@@ -754,18 +742,20 @@ Get or set whether to validate the parsed data.
     return $self->{'validate'} || 0;
 }
 
-
 1;
-#-----------------------------------------------------
-# Rescue the drowning and tie your shoestrings.
-# Henry David Thoreau 
-#-----------------------------------------------------
 
-__END__
+# ----------------------------------------------------------------------
+# Who killed the pork chops?
+# What price bananas?
+# Are you my Angel?
+# Allen Ginsberg
+# ----------------------------------------------------------------------
+
+=pod
 
 =head1 NAME
 
-SQL::Translator - convert schema from one database to another
+SQL::Translator - convert schema from one database to another (and more)
 
 =head1 SYNOPSIS
 
@@ -777,6 +767,7 @@ SQL::Translator - convert schema from one database to another
       no_comments    => 0, # Don't include comments in output
       show_warnings  => 0, # Print name mutations, conflicts
       add_drop_table => 1, # Add "drop table" statements
+      validate       => 1, # Validate schema object
 
       # Make all table names CAPS in producers which support this option
       format_table_name => sub {my $tablename = shift; return uc($tablename)},
@@ -788,8 +779,8 @@ SQL::Translator - convert schema from one database to another
   );
 
   my $output     = $translator->translate(
-      from       => "MySQL",
-      to         => "Oracle",
+      from       => 'MySQL',
+      to         => 'Oracle',
       # Or an arrayref of filenames, i.e. [ $file1, $file2, $file3 ]
       filename   => $file, 
   ) or die $translator->error;
@@ -840,6 +831,22 @@ data
 
 debug
 
+=item *
+
+add_drop_table
+
+=item *
+
+no_comments
+
+=item *
+
+trace
+
+=item *
+
+validate
+
 =back
 
 All options are, well, optional; these attributes can be set via
@@ -852,14 +859,6 @@ advantage is gained by passing options to the constructor.
 
 Toggles whether or not to add "DROP TABLE" statements just before the 
 create definitions.
-
-=head2 custom_translate
-
-Allows the user to override default translation of fields.  For example,
-if a MySQL "text" field would normally be converted to a "long" for Oracle,
-the user could specify to change it to a "CLOB."  Accepts a hashref where
-keys are the "from" value and values are the "to," returns the current
-value of the field.
 
 =head2 no_comments
 
@@ -1046,6 +1045,11 @@ Returns the SQL::Translator::Schema object.
 
 Turns on/off the tracing option of Parse::RecDescent.
 
+=head2 validate
+
+Whether or not to validate the schema object after parsing and before
+producing.
+
 =pod
 
 =head1 AUTHORS
@@ -1053,7 +1057,10 @@ Turns on/off the tracing option of Parse::RecDescent.
 Ken Y. Clark, E<lt>kclark@cpan.orgE<gt>,
 darren chamberlain E<lt>darren@cpan.orgE<gt>, 
 Chris Mungall E<lt>cjm@fruitfly.orgE<gt>, 
-Allen Day E<lt>allenday@users.sourceforge.netE<gt>
+Allen Day E<lt>allenday@users.sourceforge.netE<gt>,
+Sam Angiuoli E<lt>angiuoli@users.sourceforge.netE<gt>,
+Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
+Mike Mellilo <mmelillo@users.sourceforge.net>.
 
 =head1 COPYRIGHT
 
@@ -1080,5 +1087,9 @@ Please use http://rt.cpan.org/ for reporting bugs.
 L<perl>,
 L<SQL::Translator::Parser>,
 L<SQL::Translator::Producer>,
-L<Parse::RecDescent>
-
+L<Parse::RecDescent>,
+L<GD>,
+L<GraphViz>,
+L<Text::RecordParser>,
+L<Class::DBI>
+L<XML::Writer>.
