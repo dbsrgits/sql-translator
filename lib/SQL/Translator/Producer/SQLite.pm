@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.6 2003-07-02 18:18:44 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.7 2003-10-04 01:21:36 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -48,9 +48,11 @@ sub produce {
 
     debug("PKG: Beginning production\n");
 
-    my $create = ''; 
+    my $create = '';
     $create .= header_comment unless ($no_comments);
+    $create .= "BEGIN TRANSACTION;\n\n";
 
+    my ( @index_defs, @constraint_defs, @trigger_defs );
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name;
         debug("PKG: Looking at table '$table_name'\n");
@@ -65,9 +67,15 @@ sub produce {
         $create .= "CREATE TABLE $table_name (\n";
 
         #
+        # How many fields in PK?
+        #
+        my $pk        = $table->primary_key;
+        my @pk_fields = $pk ? $pk->fields : ();
+
+        #
         # Fields
         #
-        my @field_defs;
+        my ( @field_defs, $pk_set );
         for my $field ( @fields ) {
             my $field_name = $field->name;
             debug("PKG: Looking at field '$field_name'\n");
@@ -78,13 +86,35 @@ sub produce {
             my $data_type = $field->data_type;
             $data_type    = 'varchar' if lc $data_type eq 'set';
 
+            if ( $data_type =~ /timestamp/i ) {
+                push @trigger_defs, 
+                    "CREATE TRIGGER ts_${table_name} ".
+                    "after insert on $table_name\n".
+                    "begin\n".
+                    "  update $table_name set $field_name=timestamp() ".
+                       "where id=new.id;\n".
+                    "end;\n"
+                ;
+
+            }
+
             #
             # SQLite is generally typeless, but newer versions will
             # make a field autoincrement if it is declared as (and
             # *only* as) INTEGER PRIMARY KEY
             #
-            if ( $field->is_auto_increment && $field->is_primary_key ) {
+            if ( 
+                $field->is_primary_key && 
+                scalar @pk_fields == 1 &&
+                (
+                    $data_type =~ /^int(eger)?$/i
+                    ||
+                    ( $data_type =~ /^number?$/i && $size !~ /,/ )
+                )
+            ) {
                 $data_type = 'INTEGER PRIMARY KEY';
+                $size      = undef;
+                $pk_set    = 1;
             }
 
             $field_def .= sprintf " %s%s", $data_type, 
@@ -106,10 +136,17 @@ sub produce {
             push @field_defs, $field_def;
         }
 
+        if ( 
+            scalar @pk_fields > 1 
+            || 
+            ( @pk_fields && !$pk_set ) 
+        ) {
+            push @field_defs, 'PRIMARY KEY (' . join(', ', @pk_fields ) . ')';
+        }
+
         #
         # Indices
         #
-        my @index_defs;
         my $idx_name_default = 'A';
         for my $index ( $table->get_indices ) {
             my $name   = $index->name;
@@ -119,13 +156,12 @@ sub produce {
             my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
             push @index_defs, 
                 "CREATE INDEX $name on $table_name ".
-                '(' . join( ', ', @fields ) . ')';
+                '(' . join( ', ', @fields ) . ');';
         }
 
         #
         # Constraints
         #
-        my @constraint_defs;
         my $c_name_default = 'A';
         for my $c ( $table->get_constraints ) {
             next unless $c->type eq UNIQUE; 
@@ -140,12 +176,14 @@ sub produce {
 
         $create .= join(",\n", map { "  $_" } @field_defs ) . "\n);\n";
 
-        for my $index_create ( @index_defs, @constraint_defs ) {
-            $create .= "$index_create;\n";
-        }
-
         $create .= "\n";
     }
+
+    for my $def ( @index_defs, @constraint_defs, @trigger_defs ) {
+        $create .= "$def\n";
+    }
+
+    $create .= "COMMIT;\n";
 
     return $create;
 }
