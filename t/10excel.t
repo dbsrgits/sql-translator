@@ -46,7 +46,7 @@ is( $f4->is_primary_key, 0, 'Field is not PK' );
 my $f5 = shift @fields;
 is( $f5->name, 'bitmap', 'Fifth field name is "bitmap"' );
 is( lc $f5->data_type, 'char', 'Data type is "char"' );
-is( $f5->size, 0, 'Size is "0"' );
+is( $f5->size, 1, 'Size is "1"' );
 is( $f5->is_primary_key, 0, 'Field is not PK' );
 
 my $f6 = shift @fields;
