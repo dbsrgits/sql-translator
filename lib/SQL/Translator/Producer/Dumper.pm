@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.7 2004-07-20 17:44:43 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.8 2004-07-23 15:38:20 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -61,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -166,7 +166,8 @@ Usage:
     --mysql-loadfile   Create MySQL's LOAD FILE syntax, not INSERTs
     --no-comments      Suppress comments
     --skip=t1[,t2]     Comma-separated list of tables to skip
-    --skiplike=regex   Comma-separated list of tables to skip
+    --skiplike=regex   Regular expression of table names to skip
+    --takelike=regex   Regular expression of table names to take
 
 USAGE
     exit(0);
