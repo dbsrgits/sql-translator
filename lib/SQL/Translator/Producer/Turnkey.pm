@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.5 2003-10-12 02:08:22 boconnor Exp $
+# $Id: Turnkey.pm,v 1.1.2.6 2003-10-13 19:44:33 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -451,10 +451,11 @@ use base qw(Class::DBI::Pg);
 
 Turnkey::Model::DBI->set_db('Main', '[% db_str  %]', '[% db_user %]', '[% db_pass %]');
 
+sub search_ilike { shift->_do_search(ILIKE => @_) }
+
 [% FOREACH package = packages %]
     [% printPackage(package.value) %]
 [% END %]
-EOF
 
 my $turnkey_xml_tt2 = <<EOF;
 <?xml version="1.0" encoding="UTF-8"?>
@@ -543,6 +544,11 @@ my $turnkey_template_tt2 = <<'EOF';
   </table>
   <!-- end panel: [% panel.label %] -->
 [% END %]
+[% BLOCK make_linked_dbobject %]
+  [% PERL %]
+    $stash->set(linked_dbobject => [% class %]->retrieve([% id %]));
+  [% END %]
+[% END %]
 [% MACRO obj2link(obj) SWITCH ref(obj) %]
   [% CASE '' %]
     [% obj %]
@@ -552,6 +558,12 @@ my $turnkey_template_tt2 = <<'EOF';
 [% MACRO obj2url(obj) SWITCH obj %]
   [% CASE DEFAULT %]
     /?id=[% obj %];class=[% ref(obj) %]
+[% END %]
+[% MACRO obj2desc(obj) SWITCH ref(obj) %]
+  [% CASE '' %]
+    [% obj %]
+  [% CASE DEFAULT %]
+    [% obj %]
 [% END %]
 [% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
   [- FOREACH package = linkable -]
@@ -587,11 +599,14 @@ my $turnkey_template_tt2 = <<'EOF';
     [% rowcount = rowcount + 1 %]
   [% END %]
   [% ELSE %]
-   <tr><td>
+   <tr><td><ul>
   [% FOREACH record = lstArr %]
-    <a href="?id=[% record.id %]&class=[% ref(atom) | replace('::Atom::', '::Model::') %]">[% record.id %]</a><br>
+    [% class = ref(atom) | replace('::Atom::', '::Model::') %]
+    [% id = record.id %]
+    [% PROCESS make_linked_dbobject %]
+    <li style="margin-left: -20px; list-style: circle;">[% obj2link(linked_dbobject) %]</li>
   [% END %]
-   </td></tr>
+   </ul></td></tr>
   [% END %]
 [% END %]
 [- END -]
