@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Base;
 
 # -------------------------------------------------------------------
-# $Id: Base.pm,v 1.5 2004-08-19 19:55:36 grommit Exp $
+# $Id: Base.pm,v 1.6 2004-08-20 00:58:35 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -32,7 +32,7 @@ class.
 use strict;
 
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use Template;
 use Data::Dumper;
@@ -157,7 +157,7 @@ sub tt_vars   { () };
 
 =head1 SYNOPSIS
 
-# Create a producer using a template in the __DATA__ section.
+ # Create a producer using a template in the __DATA__ section.
  package SQL::Translator::Producer::Foo;
 
  use base qw/SQL::Translator::Producer::TT::Base/;
@@ -181,12 +181,11 @@ sub tt_vars   { () };
 
 =head1 DESCRIPTION
 
-WARNING: This is currently WORK IN PROGRESS and so subject to change,
-but it does work ;-)
-
 A base class producer designed to be sub-classed to create new TT based
 producers cheaply - by simply giving the template to use and sprinkling in some
 extra template variables and config.
+
+You can find an introduction to this module in L<SQL::Translator::Manual>.
 
 The 1st thing the module does is convert the produce sub routine call we get
 from SQL::Translator into a method call on an object, which we can then

@@ -299,7 +299,7 @@ prints the name of each table and field that looks like this:
   [% END -%]
   [% END %]
 
-And the process it like so:
+And then process it like so:
 
   $ sqlt -f YAML -t TTSchema --template schema.tt foo.yaml
 
@@ -424,7 +424,7 @@ map the concepts in the data to the Schema object.
   sub parser {
       my ( $tr, $data ) = @_;
       my $schema = $tr->schema;
-  
+ 
       for my $line ( split( /\n/, $data ) ) {
           my ( $table_name, @fields ) = split( /:/, $line );
           my $table = $schema->add_table( name => $table_name )
@@ -438,29 +438,29 @@ map the concepts in the data to the Schema object.
               ) or die $table->error;
           }
       }
-  
+
       return 1;
   }
 
 And here is the output produced by this script:
 
-  -- 
+  --
   -- Created by SQL::Translator::Producer::Oracle
   -- Created on Wed Mar 31 15:43:30 2004
-  -- 
+  --
   --
   -- Table: foo
   --
-  
+
   CREATE TABLE foo (
     foo_id number(11),
     foo_name varchar2(30)
   );
-  
+
   --
   -- Table: bar
   --
-  
+
   CREATE TABLE bar (
     bar_id number(11),
     bar_value varchar2(30)
@@ -479,14 +479,14 @@ just for you! Instead of working like a normal producer it provides a base
 class so you can cheaply build new producer modules based on templates.
 
 It's simplest use is when we just want to put a single template in its own
-module. So to create a Foo producer we create a F<Custom/Foo.pm> file as 
+module. So to create a Foo producer we create a F<Custom/Foo.pm> file as
 follows, putting our template in the __DATA__ section.
 
  package Custom::Foo.pm;
  use base qw/SQL::Translator::Producer::TT::Base/;
  # Use our new class as the producer
  sub produce { return __PACKAGE__->new( translator => shift )->run; };
- 
+
  __DATA__
  [% FOREACH table IN schema.get_tables %]
  Table: [% table.name %]
@@ -499,7 +499,7 @@ follows, putting our template in the __DATA__ section.
 For that we get a producer called Custom::Foo that we can now call like a
 normal producer (as long as the directory with F<Custom/Foo.pm> is in our @INC
 path):
- 
+
  $ sqlt -f YAML -t Custom-Foo foo.yaml
 
 The template gets variables of C<schema> and C<translator> to use in building
@@ -508,13 +508,13 @@ template generation.
 
 B<tt_config> Allows you to set the config options used by the Template object.
 The Template Toolkit provides a huge number of options which allow you to do all
-sorts of magic (See L<Template::Manual::Config> for details). This method 
+sorts of magic (See L<Template::Manual::Config> for details). This method
 provides a hook into them by returning a hash of options for the Template. e.g.
 Say you want to use the INTERPOLATE option to save some typing in your template;
 
  sub tt_config { ( INTERPOLATE => 1 ); }
 
-A common use for this is to add you own filters to the template:
+Another common use for this is to add you own filters to the template:
 
  sub tt_config {(
     INTERPOLATE => 1,
@@ -526,19 +526,19 @@ with B<tt_vars>:
 
  sub tt_vars { ( foo => "bar" ); }
 
-What about using template files instead of DATA sections? You can already! if
+What about using template files instead of DATA sections? You can already - if
 you give a template on the command line your new producer will use that instead
 of reading the DATA section:
 
  $ sqlt -f YAML -t Custom-Foo --template foo.tt foo.yaml
 
-This is usefull as you can set up a producer that adds a set of filters and 
+This is usefull as you can set up a producer that adds a set of filters and
 variables that you can then use in templates given on the command line. (There
 is also a tt_schema method to over ride if you need even finer control over the
 source of your template). Note that if you leave out the DATA section all
 together then your producer will require a template file name to be given.
 
-See L<SQL::Translator::Producer::TT::Base> for more details of what you can do.
+See L<SQL::Translator::Producer::TT::Base> for more details.
 
 =head1 AUTHOR
 
