@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.20 2003-06-25 19:25:38 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.21 2003-07-11 15:22:45 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -385,7 +385,7 @@ data_type : pg_data_type parens_value_list(?)
     }
 
 pg_data_type :
-    /(bigint|int8|bigserial|serial8)/ 
+    /(bigint|int8|bigserial|serial8)/i
         { 
             $return = { 
                 type           => 'integer',
@@ -394,7 +394,7 @@ pg_data_type :
             };
         }
     |
-    /(smallint|int2)/ 
+    /(smallint|int2)/i
         { 
             $return = {
                 type => 'integer', 
@@ -402,7 +402,7 @@ pg_data_type :
             };
         }
     |
-    /int(eger)?|int4/ 
+    /int(eger)?|int4/i
         { 
             $return = {
                 type => 'integer', 
@@ -410,7 +410,7 @@ pg_data_type :
             };
         }
     |
-    /(double precision|float8?)/ 
+    /(double precision|float8?)/i
         { 
             $return = {
                 type => 'float', 
@@ -418,7 +418,7 @@ pg_data_type :
             }; 
         }
     |
-    /(real|float4)/ 
+    /(real|float4)/i
         { 
             $return = {
                 type => 'real', 
@@ -426,7 +426,7 @@ pg_data_type :
             };
         }
     |
-    /serial4?/ 
+    /serial4?/i
         { 
             $return = { 
                 type           => 'integer',
@@ -435,7 +435,7 @@ pg_data_type :
             };
         }
     |
-    /bigserial/ 
+    /bigserial/i
         { 
             $return = { 
                 type           => 'integer', 
@@ -444,37 +444,37 @@ pg_data_type :
             };
         }
     |
-    /(bit varying|varbit)/ 
+    /(bit varying|varbit)/i
         { 
             $return = { type => 'varbit' };
         }
     |
-    /character varying/ 
+    /character varying/i
         { 
             $return = { type => 'varchar' };
         }
     |
-    /char(acter)?/ 
+    /char(acter)?/i
         { 
             $return = { type => 'char' };
         }
     |
-    /bool(ean)?/ 
+    /bool(ean)?/i
         { 
             $return = { type => 'boolean' };
         }
     |
-    /bytea/ 
+    /bytea/i
         { 
             $return = { type => 'bytea' };
         }
     |
-    /timestampz?/ 
+    /timestampz?/i
         { 
             $return = { type => 'timestamp' };
         }
     |
-    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|time|varchar)/
+    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|time|varchar)/i
         { 
             $return = { type => $item[1] };
         }
