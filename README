@@ -18,14 +18,14 @@ parsed data via the built-in object model.  Presently only the
 definition parts of SQL are handled (CREATE, ALTER), not the
 manipulation of data (INSERT, UPDATE, DELETE).
 
-As of version 0.03, parsers exist for the following:
+As of version 0.05, parsers exist for the following:
 
     Databases:
         MySQL
         Oracle
         PostgreSQL
-        Sybase
         SQLite
+        Sybase
 
         DBI-MySQL
         DBI-PostgreSQL
@@ -68,11 +68,12 @@ Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
 directory, you will find:
 
-*   sqlt-diagram
-*   sqlt-graph
-*   sqlt-dumper
-*   sqlt
-*   sqlt.cgi
+*   sqlt-diagram: interface to Diagram producer
+*   sqlt-diff   : diff two schemas to generate schema mutation file 
+*   sqlt-graph  : interface to GraphViz producer
+*   sqlt-dumper : create a data dumper script from a schema
+*   sqlt        : command-line interface for text-to-text translations
+*   sqlt.cgi    : CGI interface for all SQLFairy functions
 
 All scripts not ending in ".cgi" are meant to be run from the command
 line with various switches to control the input and output of the
