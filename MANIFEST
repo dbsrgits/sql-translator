@@ -45,7 +45,7 @@ t/05bgep-re.t
 t/06xsv.t
 t/07p_args.t
 t/08postgres-to-mysql.t
-t/09auto-dia.t
+t/09sqlt-diagram.t
 t/10excel.t
 t/11normalize.t
 t/12header_comment.t
