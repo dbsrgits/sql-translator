@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.2 2003-05-03 04:07:38 kycl4rk Exp $
+# $Id: Schema.pm,v 1.3 2003-05-05 04:33:22 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -61,12 +61,15 @@ sub init {
 
 Object constructor.
 
-  my $schema = SQL::Translator->new;
+  my $schema   =  SQL::Translator->new(
+      name     => 'Foo',
+      database => 'MySQL',
+  );
 
 =cut
 
     my ( $self, $config ) = @_;
-    # empty for now
+    $self->params( $config, qw[ name database ] ) || return undef;
     return $self;
 }
 
@@ -78,19 +81,41 @@ sub add_table {
 =head2 add_table
 
 Add a table object.  Returns the new SQL::Translator::Schema::Table object.
+The "name" parameter is required.  If you try to create a table with the
+same name as an existing table, you will get an error and the table will 
+not be created.
 
-  my $table = $schema->add_table( name => 'foo' );
+  my $table_foo = $schema->add_table( name => 'foo' ) or die $schema->error;
+
+  my $table_bar = SQL::Translator::Schema::Table->new( name => 'bar' );
+  $table_bar    = $schema->add_table( $table_bar ) or die $schema->error;
 
 =cut
 
-    my $self  = shift;
-    my %args  = @_;
-    return $self->error('No table name') unless $args{'name'};
-    my $table = SQL::Translator::Schema::Table->new( \%args ) or return
-                SQL::Translator::Schema::Table->error;
+    my $self        = shift;
+    my $table_class = 'SQL::Translator::Schema::Table';
+    my $table;
 
-    $self->{'tables'}{ $table->name } = $table;
-    $self->{'tables'}{ $table->name }{'order'} = ++$TABLE_ORDER;
+    if ( UNIVERSAL::isa( $_[0], $table_class ) ) {
+        $table = shift;
+        $table->schema( $self );
+    }
+    else {
+        my %args = @_;
+        $args{'schema'} = $self;
+        $table = $table_class->new( \%args ) or return 
+            $self->error( $table_class->error );
+    }
+
+    my $table_name = $table->name or return $self->error('No table name');
+
+    if ( defined $self->{'tables'}{ $table_name } ) {
+        return $self->error(qq[Can't create table: "$table_name" exists]);
+    }
+    else {
+        $self->{'tables'}{ $table_name } = $table;
+        $self->{'tables'}{ $table_name }{'order'} = ++$TABLE_ORDER;
+    }
 
     return $table;
 }
@@ -103,21 +128,59 @@ sub add_view {
 =head2 add_view
 
 Add a view object.  Returns the new SQL::Translator::Schema::View object.
+The "name" parameter is required.  If you try to create a view with the
+same name as an existing view, you will get an error and the view will 
+not be created.
 
-  my $view = $schema->add_view( name => 'foo' );
+  my $view_foo = $schema->add_view( name => 'foo' );
+
+  my $view_bar = SQL::Translator::Schema::View->new( name => 'bar' );
+  $view_bar    = $schema->add_view( $view_bar ) or die $schema->error;
+
+=cut
+
+    my $self        = shift;
+    my $view_class = 'SQL::Translator::Schema::View';
+    my $view;
+
+    if ( UNIVERSAL::isa( $_[0], $view_class ) ) {
+        $view = shift;
+    }
+    else {
+        my %args = @_;
+        return $self->error('No view name') unless $args{'name'};
+        $view = $view_class->new( \%args ) or return $view_class->error;
+    }
+
+    my $view_name = $view->name or return $self->error('No view name');
+
+    if ( defined $self->{'views'}{ $view_name } ) { 
+        return $self->error(qq[Can't create view: "$view_name" exists]);
+    }
+    else {
+        $self->{'views'}{ $view_name } = $view;
+        $self->{'views'}{ $view_name }{'order'} = ++$VIEW_ORDER;
+    }
+
+    return $view;
+}
+
+# ----------------------------------------------------------------------
+sub database {
+
+=pod
+
+=head2 database
+
+Get or set the schema's database.  (optional)
+
+  my $database = $schema->database('PostgreSQL');
 
 =cut
 
     my $self = shift;
-    my %args = @_;
-    return $self->error('No view name') unless $args{'name'};
-    my $view = SQL::Translator::Schema::View->new( @_ ) or return
-               SQL::Translator::Schema::View->error;
-
-    $self->{'views'}{ $view->name } = $view;
-    $self->{'views'}{ $view->name }{'order'} = ++$VIEW_ORDER;
-
-    return $view;
+    $self->{'database'} = shift if @_;
+    return $self->{'database'} || '';
 }
 
 # ----------------------------------------------------------------------
@@ -159,7 +222,7 @@ Returns a table by the name provided.
 
     my $self       = shift;
     my $table_name = shift or return $self->error('No table name');
-    return $self->error('Table "$table_name" does not exist') unless
+    return $self->error( qq[Table "$table_name" does not exist] ) unless
         exists $self->{'tables'}{ $table_name };
     return $self->{'tables'}{ $table_name };
 }
@@ -178,8 +241,7 @@ Returns all the tables as an array or array reference.
 =cut
 
     my $self   = shift;
-    my @tables = 
-        sort { $a->{'order'} <=> $b->{'order'} } 
+    my @tables = sort { $a->{'order'} <=> $b->{'order'} } 
         values %{ $self->{'tables'} };
 
     if ( @tables ) {
@@ -225,8 +287,8 @@ Returns all the views as an array or array reference.
 =cut
 
     my $self  = shift;
-    my @views = 
-        sort { $a->{'order'} <=> $b->{'order'} } values %{ $self->{'views'} };
+    my @views = sort { $a->{'order'} <=> $b->{'order'} } 
+        values %{ $self->{'views'} };
 
     if ( @views ) {
         return wantarray ? @views : \@views;
@@ -235,6 +297,24 @@ Returns all the views as an array or array reference.
         $self->error('No views');
         return wantarray ? () : undef;
     }
+}
+
+# ----------------------------------------------------------------------
+sub name {
+
+=pod
+
+=head2 name
+
+Get or set the schema's name.  (optional)
+
+  my $schema_name = $schema->name('Foo Database');
+
+=cut
+
+    my $self = shift;
+    $self->{'name'} = shift if @_;
+    return $self->{'name'} || '';
 }
 
 1;
