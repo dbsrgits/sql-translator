@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.31 2003-06-16 20:58:10 kycl4rk Exp $
+# $Id: Translator.pm,v 1.32 2003-06-18 17:15:38 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -786,19 +786,18 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
 
 =head1 DESCRIPTION
 
-The SQLFairy project began with the idea of simplifying the task of
-converting one database create syntax to another through the use of
-Parsers (which understand the source format) and Producers (which
-understand the destination format).  The idea is that any Parser can
-be used with any Producer in the conversion process, so, if you
-wanted Postgres-to-Oracle, you would use the Postgres parser and the
-Oracle producer.  The project has since grown to include parsing
-structured data files like Excel spreadsheets and delimited text files
-and the production of various documentation aids, such as images,
-graphs, POD, and HTML descriptions of the schema, as well as automatic
-code generators through the use of Class::DBI.  Presently only the 
-definition parts of SQL are handled (CREATE, ALTER), not the 
-manipulation of data (INSERT, UPDATE, DELETE).
+SQL::Translator is a group of Perl modules that converts
+vendor-specific SQL table definitions into other formats, such as
+other vendor-specific SQL, ER diagrams, documentation (POD and HTML),
+XML, and Class::DBI classes.  The main focus of SQL::Translator is
+SQL, but parsers exist for other structured data formats, including
+Excel spreadsheets and arbitrarily delimited text files.  Through the
+separation of the code into parsers and producers with an object model
+in between, it's possible to combine any parser with any producer, to
+plug in custom parsers or producers, or to manipulate the parsed data
+via the built-in object model.  Presently only the definition parts of
+SQL are handled (CREATE, ALTER), not the manipulation of data (INSERT,
+UPDATE, DELETE).
 
 =head1 CONSTRUCTOR
 
