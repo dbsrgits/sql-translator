@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.5 2003-01-27 17:04:46 dlc Exp $
+# $Id: MySQL.pm,v 1.6 2003-02-25 05:02:06 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -131,6 +131,45 @@ sub produce {
         if ( @index_creates ) {
             $create .= join(",\n", '', @index_creates);
         }
+
+        #
+        # Constraints -- need to handle more than just FK. -ky
+        #
+        my @constraints;
+        for my $constraint ( @{ $table_data->{'constraints'} } ) {
+            my $name       = $constraint->{'name'} || '';
+            my $type       = $constraint->{'type'};
+            my $fields     = $constraint->{'fields'};
+            my $ref_table  = $constraint->{'reference_table'};
+            my $ref_fields = $constraint->{'reference_fields'};
+            my $match_type = $constraint->{'match_type'} || '';
+            my $on_delete  = $constraint->{'on_delete_do'};
+            my $on_update  = $constraint->{'on_update_do'};
+
+            if ( $type eq 'foreign_key' ) {
+                my $def = join(' ', map { $_ || () } '  FOREIGN KEY', $name );
+                if ( @$fields ) {
+                    $def .= ' (' . join( ', ', @$fields ) . ')';
+                }
+                $def .= " REFERENCES $ref_table";
+
+                if ( @$ref_fields ) {
+                    $def .= ' (' . join( ', ', @$ref_fields ) . ')';
+                }
+
+                if ( $match_type ) {
+                    $def .= ' MATCH ' . 
+                        ( $match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
+                }
+
+                $def .= " ON DELETE $on_delete" if $on_delete;
+                $def .= " ON UPDATE $on_update" if $on_update;
+
+                push @constraints, $def;
+            }
+        }
+
+        $create .= join(",\n", '', @constraints) if @constraints;
 
         #
         # Footer
