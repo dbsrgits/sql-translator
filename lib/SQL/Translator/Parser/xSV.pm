@@ -1,11 +1,10 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.5 2003-04-17 13:42:45 dlc Exp $
+# $Id: xSV.pm,v 1.6 2003-05-07 20:36:59 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>
+#                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -22,39 +21,99 @@ package SQL::Translator::Parser::xSV;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=head1 NAME
+
+SQL::Translator::Parser::xSV - parser for arbitrarily delimited text files
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+  use SQL::Translator::Parser::xSV;
+
+  my $translator  =  SQL::Translator->new(
+      parser      => 'xSV',
+      parser_args => { field_separator => "\t" },
+  );
+
+=head1 DESCRIPTION
+
+Parses arbitrarily delimited text files.  See the 
+Text::RecordParser manpage for arguments on how to parse the file
+(e.g., C<field_separator>, C<record_separator>).  Other arguments
+include:
+
+=over
+
+=item * scan_fields
+
+Indicates that the columns should be scanned to determine data types
+and field sizes.
+
+=item * trim_fields
+
+A shortcut to sending filters to Text::RecordParser, will create 
+callbacks that trim leading and trailing spaces from fields and headers.
+
+=back
+
+Field names will automatically be normalized by 
+C<SQL::Translator::Utils::normalize>.
+
+=cut
+
+# -------------------------------------------------------------------
+
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
+use Text::RecordParser;
+use SQL::Translator::Utils qw(debug normalize_name);
 
 use base qw(Exporter);
 @EXPORT = qw(parse);
 
+#
 # Passed a SQL::Translator instance and a string containing the data
+#
 sub parse {
     my ($tr, $data) = @_;
 
-    # Skeleton structure, mostly empty
-    my $parsed = {
-        table1 => {
-            "type" => undef,
-            "indices" => [ { } ],
-            "fields" => { },
+    my $args             = $tr->parser_args;
+    my $parser           = Text::RecordParser->new(
+        field_separator  => $args->{'field_separator'}  || ',',
+        record_separator => $args->{'record_separator'} || "\n",
+        data             => $data,
+        header_filter    => \&normalize_name,
+    );
+
+    $parser->field_filter( sub { $_ = shift; s/^\s+|\s+$//g; $_ } ) 
+        if $args->{'trim_fields'};
+
+    #
+    # Create skeleton structure, mostly empty.
+    #
+    my $parsed      =  {
+        table1      => {
+            type    => undef,
+            indices => [ { } ],
+            fields  => { },
         },
     };
 
-    # Discard all but the first line
-    $data = (split m,$/,, $data)[0];
+    #
+    # Get the field names from the first row.
+    #
+    $parser->bind_header;
+    my @field_names = $parser->field_list;
 
-    my @parsed = quotewords(',\s*', 0, $data);
-
-    for (my $i = 0; $i < @parsed; $i++) {
-        $parsed->{"table1"}->{"fields"}->{$parsed[$i]} = {
-            type           => "field",
+    for ( my $i = 0; $i < @field_names; $i++ ) {
+        $parsed->{'table1'}{'fields'}{ $field_names[$i] } = {
+            type           => 'field',
             order          => $i,
-            name           => $parsed[$i],
+            name           => $field_names[$i],
 
             # Default datatype is "char"
             data_type      => "char",
@@ -62,7 +121,7 @@ sub parse {
             # default size is 8bits; something more reasonable?
             size           => [ 255 ],
             null           => 1,
-            default        => "",
+            default        => '',
             is_auto_inc    => undef,
 
             # field field is the primary key
@@ -70,15 +129,69 @@ sub parse {
         }
     }
 
+    #
+    # If directed, look at every field's values to guess size and type.
+    #
+    if ( $args->{'scan_fields'} ) {
+        my %field_info = map { $_, {} } @field_names;
+        while ( my $rec = $parser->fetchrow_hashref ) {
+            for my $field ( @field_names ) {
+                my $data = defined $rec->{ $field } ? $rec->{ $field } : '';
+                my $size = length $data;
+                my $type;
+
+                if ( $data =~ /^-?\d+$/ ) {
+                    $type = 'integer';
+                }
+                elsif ( $data =~ /^[\d.-]+$/ ) {
+                    $type = 'float';
+                }
+                else {
+                    $type = 'char';
+                }
+
+                if ( $size > $field_info{ $field }{'size'} ) {
+                    $field_info{ $field }{'size'} = $size;
+                }
+
+                $field_info{ $field }{ $type }++;
+            }
+        }
+
+        for my $field ( keys %field_info ) {
+            $parsed->{'table1'}{'fields'}{ $field }{'size'} = 
+                [ $field_info{ $field }{'size'} ];
+
+            $parsed->{'table1'}{'fields'}{ $field }{'data_type'} = 
+                $field_info{ $field }{'char'}  ? 'char'  : 
+                $field_info{ $field }{'float'} ? 'float' : 'integer';
+        }
+    }
+
+    #
     # Field 0 is primary key, by default, so add an index
-    for ($parsed->{"table1"}->{"indices"}->[0]) {
-        $_->{"type"} = "primary_key";
-        $_->{"name"} = undef;
-        $_->{"fields"} = [ $parsed[0] ];
+    #
+    for ( $parsed->{'table1'}->{'indices'}->[0] ) {
+        $_->{'type'}   = 'primary_key';
+        $_->{'name'}   = undef;
+        $_->{'fields'} = [ $field_names[0] ];
     }
 
     return $parsed;
 }
 
 1;
-__END__
+
+# -------------------------------------------------------------------
+=pod
+
+=head1 AUTHOR
+
+Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+
+=head1 SEE ALSO
+
+Text::RecordParser.
+
+=cut
