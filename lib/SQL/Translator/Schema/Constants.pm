@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constants;
 
 # ----------------------------------------------------------------------
-# $Id: Constants.pm,v 1.3 2003-05-09 17:06:46 kycl4rk Exp $
+# $Id: Constants.pm,v 1.4 2003-06-06 22:34:00 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -43,7 +43,7 @@ use strict;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = (qw$Revision: 1.3 $)[-1];
+$VERSION = (qw$Revision: 1.4 $)[-1];
 
 @EXPORT = qw[ 
     CHECK_C
@@ -63,7 +63,7 @@ use constant CHECK_C => 'CHECK';
 
 use constant FOREIGN_KEY => 'FOREIGN KEY';
 
-use constant FULL_TEXT => 'FULL_TEXT';
+use constant FULL_TEXT => 'FULLTEXT';
 
 use constant NOT_NULL => 'NOT NULL';
 
