@@ -59,10 +59,10 @@ WriteMakefile(
     'NAME'         => __PACKAGE__,
     'VERSION_FROM' => 'lib/SQL/Translator.pm',
     'EXE_FILES'    => [
-        'bin/sqlt-diagram.pl',
-        'bin/sqlt-dumper.pl',
-        'bin/sqlt-graph.pl',
-        'bin/sql_translator.pl',
+        'bin/sqlt-diagram',
+        'bin/sqlt-dumper',
+        'bin/sqlt-graph',
+        'bin/sqlt',
     ],
     'PREREQ_PM' => \%PREREQ_PM,
     'clean' => {
