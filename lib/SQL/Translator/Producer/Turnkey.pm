@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.29 2004-03-12 20:20:44 boconnor Exp $
+# $Id: Turnkey.pm,v 1.30 2004-03-31 03:03:59 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -625,29 +625,24 @@ EOF
   return <<'EOF';
 [%- TAGS [- -] -%]
 [-- IF !node.is_trivial_link --]
-[% records = atom.render(dbobject) %]
 [% rowcount = 0 %]
 [% IF atom.focus == "yes" %]
-  [% FOREACH record = records %]
-  [% fields = record.data %]
   [- FOREACH field = node.data_fields -]
   [- IF field != "1" -]
-    <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field -]) %]</td></tr>
+    <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(dbobject.[- field -]) %]</td></tr>
   [- END -]
   [- END -]
   [- FOREACH field = node.edges -]
   [- NEXT IF field.type != 'import' -]
     <tr><td class="dbfieldname">[- field.thisfield.name -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field.thisfield.name -]) %]</td></tr>
   [- END -]
-  [% id = record.id %]
   [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
   [% rowcount = rowcount + 1 %]
-  [% END %]
 [% ELSE %]
   <tr><td><ul>
-  [% FOREACH record = records %]
+  [% FOREACH record = atom.render(dbobject) %]
     [% class = ref(atom) | replace('::Atom::', '::Model::') %]
-    [% id = record.id %]
+    [% id = record.id #needed by make_linked_dbobject macro %]
     [% PROCESS make_linked_dbobject %]
     <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
   [% END %]
