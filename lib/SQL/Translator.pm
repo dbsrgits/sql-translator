@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.59 2004-10-15 03:52:50 allenday Exp $
+# $Id: Translator.pm,v 1.60 2004-11-09 02:09:52 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.59 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.60 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -151,68 +151,12 @@ sub no_comments {
 # Get or set the producer for the current translator.
 # ----------------------------------------------------------------------
 sub producer {
-    my $self = shift;
-
-    # producer as a mutator
-    if (@_) {
-        my $producer = shift;
-
-        # Passed a module name (string containing "::")
-        if ($producer =~ /::/) {
-            my $func_name;
-
-            # Module name was passed directly
-            # We try to load the name; if it doesn't load, there's
-            # a possibility that it has a function name attached to
-            # it.
-            if (load($producer)) {
-                $func_name = "produce";
-            } 
-
-            # Module::function was passed
-            else {
-                # Passed Module::Name::function; try to recover
-                my @func_parts = split /::/, $producer;
-                $func_name = pop @func_parts;
-                $producer = join "::", @func_parts;
-
-                # If this doesn't work, then we have a legitimate
-                # problem.
-                load($producer) or die "Can't load $producer: $@";
-            }
-
-            # get code reference and assign
-            $self->{'producer'} = \&{ "$producer\::$func_name" };
-            $self->{'producer_type'} = $producer;
-            $self->debug("Got producer: $producer\::$func_name\n");
-        } 
-
-        # passed an anonymous subroutine reference
-        elsif (isa($producer, 'CODE')) {
-            $self->{'producer'} = $producer;
-            $self->{'producer_type'} = "CODE";
-            $self->debug("Got producer: code ref\n");
-        } 
-
-        # passed a string containing no "::"; relative package name
-        else {
-            $producer =~ s/-/::/g;
-            my $Pp = sprintf "SQL::Translator::Producer::$producer";
-            load($Pp) or die "Can't load $Pp: $@";
-            $self->{'producer'} = \&{ "$Pp\::produce" };
-            $self->{'producer_type'} = $Pp;
-            $self->debug("Got producer: $Pp\n");
-        }
-
-        # At this point, $self->{'producer'} contains a subroutine
-        # reference that is ready to run
-
-        # Anything left?  If so, it's producer_args
-        $self->producer_args(@_) if (@_);
-    }
-
-    return $self->{'producer'};
-};
+    shift->_tool({
+            name => 'producer', 
+            path => "SQL::Translator::Producer",
+            default_sub => "produce" 
+    }, @_);
+}
 
 # ----------------------------------------------------------------------
 # producer_type()
@@ -235,86 +179,24 @@ sub producer_type { $_[0]->{'producer_type'} }
 # is cleared; all subsequent elements are added to the hash of name,
 # value pairs stored as producer_args.
 # ----------------------------------------------------------------------
-sub producer_args {
-    my $self = shift;
-    return $self->_args("producer", @_);
-}
+sub producer_args { shift->_args("producer", @_); }
 
 # ----------------------------------------------------------------------
 # parser([$parser_spec])
 # ----------------------------------------------------------------------
 sub parser {
-    my $self = shift;
-
-    # parser as a mutator
-    if (@_) {
-        my $parser = shift;
-
-        # Passed a module name (string containing "::")
-        if ($parser =~ /::/) {
-            my $func_name;
-
-            # Module name was passed directly
-            # We try to load the name; if it doesn't load, there's
-            # a possibility that it has a function name attached to
-            # it.
-            if (load($parser)) {
-                $func_name = "parse";
-            }
-
-            # Module::function was passed
-            else {
-                # Passed Module::Name::function; try to recover
-                my @func_parts = split /::/, $parser;
-                $func_name = pop @func_parts;
-                $parser = join "::", @func_parts;
-
-                # If this doesn't work, then we have a legitimate
-                # problem.
-                load($parser) or die "Can't load $parser: $@";
-            } 
-
-            # get code reference and assign
-            $self->{'parser'} = \&{ "$parser\::$func_name" };
-            $self->{'parser_type'} = $parser;
-            $self->debug("Got parser: $parser\::$func_name\n");
-        }
-
-        # passed an anonymous subroutine reference
-        elsif ( isa( $parser, 'CODE' ) ) {
-            $self->{'parser'}      = $parser;
-            $self->{'parser_type'} = "CODE";
-            $self->debug("Got parser: code ref\n");
-        } 
-
-        # passed a string containing no "::"; relative package name
-        else {
-            $parser =~ s/-/::/g;
-            my $Pp = "SQL::Translator::Parser::$parser";
-            load( $Pp ) or die "Can't load $Pp: $@";
-            $self->{'parser'}      = \&{ "$Pp\::parse" };
-            $self->{'parser_type'} = $Pp;
-            $self->debug("Got parser: $Pp\n");
-        } 
-
-        #
-        # At this point, $self->{'parser'} contains a subroutine
-        # reference that is ready to run
-        #
-        $self->parser_args( @_ ) if (@_);
-    }
-
-    return $self->{'parser'};
+    shift->_tool({
+        name => 'parser', 
+        path => "SQL::Translator::Parser",
+        default_sub => "parse" 
+    }, @_);
 }
+
+sub parser_type { $_[0]->{'parser_type'}; }
+
+sub parser_args { shift->_args("parser", @_); }
 
 # ----------------------------------------------------------------------
-sub parser_type { $_[0]->{'parser_type'} }
-
-sub parser_args {
-    my $self = shift;
-    return $self->_args("parser", @_);
-}
-
 sub show_warnings {
     my $self = shift;
     my $arg  = shift;
@@ -651,6 +533,67 @@ sub _args {
 }
 
 # ----------------------------------------------------------------------
+# Does the get/set work for parser and producer. e.g.
+# return $self->_tool({ 
+#   name => 'producer', 
+#   path => "SQL::Translator::Producer",
+#   default_sub => "produce",
+# }, @_);
+# ----------------------------------------------------------------------
+sub _tool {
+    my ($self,$args) = (shift, shift);
+    my $name = $args->{name};
+    return $self->{$name} unless @_;
+    my $tool = shift;
+    
+    # passed an anonymous subroutine reference
+    if (isa($tool, 'CODE')) {
+        $self->{$name} = $tool;
+        $self->{"$name\_type"} = "CODE";
+        $self->debug("Got $name: code ref\n");
+    } 
+
+    # Passed a module name or module and sub name 
+    else {
+        my $func_name;
+
+        # Module name was passed directly
+        # We try to load the name; if it doesn't load, there's a
+        # possibility that it has a function name attached to it.
+        $tool =~ s/-/::/g if $tool !~ /::/;
+        if ( my $loaded = load($tool => $args->{path}) ) {
+            $tool = $loaded;
+            $func_name = $args->{default_sub};
+        } 
+
+        # Passed Module::Name::function; try to recover
+        else {
+            my @func_parts = split /::/, $tool;
+            $func_name = pop @func_parts;
+            $tool = join "::", @func_parts;
+
+            # If this doesn't work, then we have a legitimate
+            # problem.
+            load($tool) or die "Can't load $tool: $@";
+        }
+
+        # get code reference and assign
+        $self->{$name} = \&{ "$tool\::$func_name" };
+        $self->{"$name\_type"} = $tool;
+        $self->debug("Got $name: $tool\::$func_name\n");
+    } 
+
+    # At this point, $self->{$name} contains a subroutine
+    # reference that is ready to run
+
+    # Anything left?  If so, it's args
+    my $meth = "$name\_args";
+    $self->$meth(@_) if (@_);
+
+    return $self->{$name};
+}
+
+# ----------------------------------------------------------------------
 # _list($type)
 # ----------------------------------------------------------------------
 sub _list {
@@ -708,21 +651,42 @@ sub _list {
 }
 
 # ----------------------------------------------------------------------
-# load($module)
+# load(MODULE [,PATH[,PATH]...])
 #
 # Loads a Perl module.  Short circuits if a module is already loaded.
+#
+# MODULE - is the name of the module to load.
+#
+# PATH - optional list of 'package paths' to look for the module in. e.g
+# If you called load(Bar => 'Foo', 'My::Modules') it will try to load the mod
+# Bar then Foo::Bar then My::Modules::Bar.
+#
+# Returns package name of the module actually loaded or false and sets error.
+#
+# Note, you can't load a name from the root namespace (ie one without '::' in 
+# it), therefore a single word name without a path fails.
 # ----------------------------------------------------------------------
 sub load {
-    my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
-    return 1 if $INC{$module};
+    my $name = shift;
+    my @path;
+    push @path, "" if $name =~ /::/; # Empty path to check name on its own first
+    push @path, @_ if @_;
 
-    eval {
-        require $module;
-        $module->import(@_);
-    };
+    foreach (@path) {
+        my $module = $_ ? "$_\::$name" : $name;
+        my $file = $module; $file =~ s[::][/]g; $file .= ".pm";
+        __PACKAGE__->debug("Loading $name as $file\n");
+        return $module if $INC{$file}; # Already loaded
+        
+        eval { require $file };
+        next if $@ =~ /Can't locate $file in \@INC/; 
+        eval { $file->import(@_) } unless $@;
+        return __PACKAGE__->error("Error loading $name as $module : $@") if $@;
 
-    return __PACKAGE__->error($@) if ($@);
-    return 1;
+        return $module; # Module loaded ok
+    }
+
+    return 0;
 }
 
 # ----------------------------------------------------------------------
