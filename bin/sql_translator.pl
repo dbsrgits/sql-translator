@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.10 2003-06-16 18:16:25 kycl4rk Exp $
+# $Id: sql_translator.pl,v 1.11 2003-07-18 22:56:41 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -46,6 +46,8 @@ my $no_scan;          # don't scan xSV fields for data types and sizes
 my $field_separator;  # for xSV files
 my $record_separator; # for xSV files
 my $validate;         # whether to validate the parsed document
+my $imap_file;        # filename where to place image map coords
+my $imap_url;         # URL to use in making image map
 
 #
 # Get options, explain how to use the script if necessary.
@@ -65,6 +67,8 @@ GetOptions(
     'no-scan'         => \$no_scan,
     'fs:s'            => \$field_separator,
     'rs:s'            => \$record_separator,
+    'imap-file:s'     => \$imap_file,
+    'imap-url:s'      => \$imap_url,
 ) or pod2usage(2);
 
 my @files = @ARGV; # the create script(s) for the original db
@@ -86,7 +90,11 @@ my $translator      =  SQL::Translator->new(
         scan_fields      => $no_scan ? 0 : 1,
         field_separator  => $field_separator,
         record_separator => $record_separator,
-    }
+    },
+    producer_args   => {
+        imap_file        => $imap_file,
+        imap_url         => $imap_url,
+    },
 );
 
 if ( $list ) {
@@ -158,6 +166,11 @@ To translate a schema:
     --rs                  The record separator
     --no-trim             Don't trim whitespace on fields 
     --no-scan             Don't scan fields for data types and sizes 
+
+  Diagram Options:
+
+    --imap-file           Filename to put image map data
+    --imap-url            URL to use for image map
 
 =head1 DESCRIPTION
 
