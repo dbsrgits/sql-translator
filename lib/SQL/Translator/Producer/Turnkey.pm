@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.44 2004-04-16 23:10:20 boconnor Exp $
+# $Id: Turnkey.pm,v 1.45 2004-04-20 01:59:07 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -362,12 +362,23 @@ package [% baseclass %];
 # Template used: classdbi
 
 use strict;
+use Data::Dumper
 no warnings 'redefine';
 use base qw(Class::DBI::Pg);
 
 [% baseclass %]->set_db('Main', '[% db_dsn  %]', '[% db_user %]', '[% db_pass %]');
 sub search_ilike { shift->_do_search(ILIKE => [% "\@\_" %] ) }
 
+# debug method
+sub dump {
+  my $self = shift;
+  my %arg  = @_;
+  $arg{indent} ||= 1;
+  $arg{depth} ||= 2;
+  $Data::Dumper::Maxdepth = $arg{depth} if defined $arg{depth};
+  $Data::Dumper::Indent = $arg{indent} if defined $arg{indent};
+  return(Dumper($obj));
+}
 
 [% FOREACH node = nodes %]
     [% printPackage(node.value) %]
