@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.6 2003-05-12 15:39:28 dlc Exp $
+# $Id: Utils.pm,v 1.7 2003-05-12 15:47:23 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -116,13 +116,13 @@ HEADER_COMMENT
 }
 
 # ----------------------------------------------------------------------
-sub parse_list_arg {                                                                                                
-    my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];                                                   
-                                                                                                                    
-    return [ map { s/^\s+|\s+$//g; $_ }                                                                             
-             map { split /,/ }                                                                                      
-             grep { defined } @$list                                                                                
-           ];                                                                                                       
+sub parse_list_arg {
+    my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
+
+    return [ map { s/^\s+|\s+$//g; $_ }
+             map { split /,/ }
+             grep { defined && length } @$list
+           ];
 }
 
 1;
@@ -154,7 +154,7 @@ Nothing is exported by default.
 C<debug> takes 0 or more messages, which will be sent to STDERR using
 C<warn>.  Occurances of the strings I<PKG>, I<SUB>, and I<LINE>
 will be replaced by the calling package, subroutine, and line number,
-respectively, as reported by C<caller(1)>.  
+respectively, as reported by C<caller(1)>.
 
 For example, from within C<foo> in F<SQL/Translator.pm>, at line 666:
 
@@ -206,17 +206,17 @@ this use).  For example, this:
   use SQL::Translator::Utils qw(header_comment $DEFAULT_COMMENT);
 
   print header_comment(__PACKAGE__,
-                       $DEFAULT_COMMENT, 
+                       $DEFAULT_COMMENT,
                        "Hi mom!");
 
 produces:
 
-  -- 
+  --
   -- Created by My::Prodcuer
   -- Created on Fri Apr 25 06:56:02 2003
-  -- 
+  --
   -- Hi mom!
-  -- 
+  --
 
 Note the gratuitous spacing.
 
