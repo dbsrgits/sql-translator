@@ -218,7 +218,7 @@ schema:
           where  person.person_id=pet.pet_id
 translator:
   add_drop_table: 0
-  filename: '/work/sqlfairy/sqlfairy/t/data/sqlite/create.sql'
+  filename: ~
   no_comments: 0
   parser_args: {}
   parser_type: SQL::Translator::Parser::SQLite
@@ -226,13 +226,17 @@ translator:
   producer_type: SQL::Translator::Producer::YAML
   show_warnings: 0
   trace: 0
-  version: 0.05
+  version: 0.06
 YAML
 
-my $tr = SQL::Translator->new(
+my $file = "$Bin/data/sqlite/create.sql";
+open FH, "<$file" or die "Can't read '$file': $!\n";
+local $/;
+my $data = <FH>;
+my $tr   = SQL::Translator->new(
     parser   => 'SQLite',
     producer => 'YAML',
-    filename => "$Bin/data/sqlite/create.sql",
+    data     => $data,
 );
 
 my $out;
