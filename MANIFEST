@@ -51,6 +51,7 @@ t/11normalize.t
 t/12header_comment.t
 t/13schema.t
 t/14postgres-parser.t
+t/15oracle-parser.t
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
