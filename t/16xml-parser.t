@@ -66,6 +66,7 @@ schema_ok( $scma, {
                     size => 10,
                     is_primary_key => 1,
                     is_auto_increment => 1,
+                    extra => { ZEROFILL => 1 },
                 },
                 {
                     name => "title",
@@ -87,6 +88,11 @@ schema_ok( $scma, {
                     is_unique => 1,
                     default_value => undef,
                     is_nullable => 1,
+                    extra => {
+                        foo => "bar",
+                        hello => "world",
+                        bar => "baz",
+                    }
                 },
                 {
                     name => "explicitnulldef",
@@ -105,6 +111,7 @@ schema_ok( $scma, {
                     data_type => "varchar",
                     default_value => "",
                     is_nullable => 1,
+                    comments => "Hello emptytagdef",
                 },
             ],
             constraints => [

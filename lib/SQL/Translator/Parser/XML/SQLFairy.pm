@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.7 2004-07-08 19:34:29 grommit Exp $
+# $Id: SQLFairy.pm,v 1.8 2004-07-09 00:50:06 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -103,7 +103,7 @@ To convert your old format files simply pass them through the translator;
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -153,7 +153,7 @@ sub parse {
             } @nodes
         ) {
             my %fdata = get_tagfields($xp, $_, "sqlf:",
-                qw/name data_type size default_value is_nullable 
+                qw/name data_type size default_value is_nullable extra
                 is_auto_increment is_primary_key is_foreign_key comments/
             );
 
@@ -177,7 +177,6 @@ sub parse {
             # TODO:
             # - We should be able to make the table obj spot this when
             #   we use add_field.
-            # - Deal with $field->extra
             #
         }
 
@@ -257,7 +256,7 @@ sub get_tagfields {
         if ( m/:$/ ) { $ns = $_; next; }  # Set def namespace
         my $thisns = (s/(^.*?:)// ? $1 : $ns);
 
-        my $is_attrib = m/^sql|comments|action$/ ? 0 : 1;
+        my $is_attrib = m/^(sql|comments|action|extra)$/ ? 0 : 1;
 
         my $attrib_path = "\@$thisns$_";
         my $tag_path    = "$thisns$_";
@@ -270,7 +269,17 @@ sub get_tagfields {
             debug "Got $_=".( defined $data{ $_ } ? $data{ $_ } : 'UNDEF' );
         }
         elsif ( $xp->exists($tag_path,$node) ) {
-            $data{$_} = "".$xp->findvalue($tag_path,$node);
+            if ($_ eq "extra") {
+                my %extra;
+                my $extra_nodes = $xp->find($tag_path,$node);
+                foreach ( $extra_nodes->pop->getAttributes ) {
+                    $extra{$_->getName} = $_->getData;
+                }
+                $data{$_} = \%extra;
+            }
+            else {
+                $data{$_} = "".$xp->findvalue($tag_path,$node);
+            }
             warn "Use of '$_' as a child tag is depricated."
                 ." Use an attribute instead."
                 ." To convert your file to the new version see the Docs.\n"
@@ -300,7 +309,7 @@ output by the SQLFairy XML producer).
 
 =item *
 
-Support options and extra attributes.
+Support options attribute.
 
 =item *
 

@@ -4,51 +4,61 @@ Created by SQL::Translator::Producer::SqlfXML
 Created on Fri Aug 15 15:08:18 2003
 
  -->
-<sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+<schema xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
 
-  <sqlt:table order="1" name="Basic">
-    <sqlt:fields>
-      <sqlt:field
-          name="id" 
+  <table order="1" name="Basic">
+    <fields>
+      <field
+          name="id"
           is_primary_key="1" is_foreign_key="0"
           size="10" data_type="int" is_auto_increment="1" order="1"
-          is_nullable="0" />
-      <sqlt:field 
-          name="title" 
+          is_nullable="0">
+          <extra ZEROFILL="1" />
+      </field>
+      <field
+          name="title"
           is_primary_key="0" is_foreign_key="0"
           size="100" is_auto_increment="0" data_type="varchar"
           order="2" default_value="hello" is_nullable="0" />
-      <sqlt:field 
+      <field
           name="description"
           size="0" data_type="text" order="3" default_value="" />
-      <sqlt:field name="email" size="255" data_type="varchar" order="4" />
-      <sqlt:field name="explicitnulldef" size="0" data_type="varchar" order="5" />
-      <sqlt:field name="explicitemptystring" size="0"
+      <field name="email" size="255" data_type="varchar" order="4">
+          <extra foo="bar" hello="world" bar="baz" />
+      </field>
+      <field name="explicitnulldef" size="0" data_type="varchar" order="5" />
+      <field name="explicitemptystring" size="0"
           data_type="varchar" order="6" default_value="" />
-      <sqlt:field name="emptytagdef" size="0"
+      <field name="emptytagdef" size="0"
           data_type="varchar" order="7" default_value="" >
-          <comments>Hello World</comments>
-      </sqlt:field>
-    </sqlt:fields>
-    <sqlt:indices>
-      <sqlt:index name="titleindex" fields="title" type="NORMAL" />
-    </sqlt:indices>
-    <sqlt:constraints>
-      <sqlt:constraint name="" type="PRIMARY KEY" fields="id"
+          <comments>Hello emptytagdef</comments>
+      </field>
+    </fields>
+
+    <indices>
+      <index name="titleindex" fields="title" type="NORMAL" />
+    </indices>
+
+    <constraints>
+      <constraint name="" type="PRIMARY KEY" fields="id"
           reference_table="" options="" deferrable="1" match_type=""
           expression="" on_update="" on_delete="" />
-      <sqlt:constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
-    </sqlt:constraints>
-  </sqlt:table>
-  <sqlt:view name="email_list" fields="email" order="1">
-      <sqlt:sql>SELECT email FROM Basic WHERE email IS NOT NULL</sqlt:sql>
-  </sqlt:view>
-  <sqlt:trigger name="foo_trigger" database_event="insert" on_table="foo"
+      <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
+    </constraints>
+  </table>
+
+  <view name="email_list" fields="email" order="1">
+      <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
+  </view>
+
+  <trigger name="foo_trigger" database_event="insert" on_table="foo"
       perform_action_when="after" order="1">
-      <sqlt:action>update modified=timestamp();</sqlt:action>
-  </sqlt:trigger>
-  <sqlt:procedure name="foo_proc" order="1" owner="Nomar" parameters="foo,bar">
-      <sqlt:sql>select foo from bar</sqlt:sql>
-      <sqlt:comments>Go Sox!</sqlt:comments>
-  </sqlt:procedure>
-</sqlt:schema>
+      <action>update modified=timestamp();</action>
+  </trigger>
+
+  <procedure name="foo_proc" order="1" owner="Nomar" parameters="foo,bar">
+      <sql>select foo from bar</sql>
+      <comments>Go Sox!</comments>
+  </procedure>
+
+</schema>
