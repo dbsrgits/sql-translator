@@ -47,31 +47,31 @@ use SQL::Translator::Producer::XML::SQLFairy;
 my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
-<sqlf:schema name="" database="" xmlns:sqlf="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlf:table name="Basic" order="1">
-    <sqlf:fields>
-      <sqlf:field name="id" data_type="integer" size="10" is_nullable="0" is_auto_increment="1" is_primary_key="1" is_foreign_key="0" order="1">
-        <sqlf:comments>comment on id field</sqlf:comments>
-      </sqlf:field>
-      <sqlf:field name="title" data_type="varchar" size="100" is_nullable="0" default_value="hello" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="2">
-        <sqlf:comments></sqlf:comments>
-      </sqlf:field>
-      <sqlf:field name="description" data_type="text" size="65535" is_nullable="1" default_value="" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="3">
-        <sqlf:comments></sqlf:comments>
-      </sqlf:field>
-      <sqlf:field name="email" data_type="varchar" size="255" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="4">
-        <sqlf:comments></sqlf:comments>
-      </sqlf:field>
-    </sqlf:fields>
-    <sqlf:indices>
-      <sqlf:index name="titleindex" type="NORMAL" fields="title" options="" />
-    </sqlf:indices>
-    <sqlf:constraints>
-      <sqlf:constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
-      <sqlf:constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
-    </sqlf:constraints>
-  </sqlf:table>
-</sqlf:schema>
+<schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <table name="Basic" order="1">
+    <fields>
+      <field name="id" data_type="integer" size="10" is_nullable="0" is_auto_increment="1" is_primary_key="1" is_foreign_key="0" order="1">
+        <comments>comment on id field</comments>
+      </field>
+      <field name="title" data_type="varchar" size="100" is_nullable="0" default_value="hello" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="2">
+        <comments></comments>
+      </field>
+      <field name="description" data_type="text" size="65535" is_nullable="1" default_value="" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="3">
+        <comments></comments>
+      </field>
+      <field name="email" data_type="varchar" size="255" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="4">
+        <comments></comments>
+      </field>
+    </fields>
+    <indices>
+      <index name="titleindex" type="NORMAL" fields="title" options="" />
+    </indices>
+    <constraints>
+      <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+      <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+    </constraints>
+  </table>
+</schema>
 EOXML
 
 $obj = SQL::Translator->new(
@@ -99,11 +99,11 @@ eq_or_diff $xml, $ans, "XML looks right";
 my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
-<sqlf:schema name="" database="" xmlns:sqlf="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlf:view name="foo_view" fields="name,age" order="1">
-    <sqlf:sql>select name, age from person</sqlf:sql>
-  </sqlf:view>
-</sqlf:schema>
+<schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <view name="foo_view" fields="name,age" order="1">
+    <sql>select name, age from person</sql>
+  </view>
+</schema>
 EOXML
 
     $obj = SQL::Translator->new(
@@ -143,11 +143,11 @@ EOXML
 my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
-<sqlf:schema name="" database="" xmlns:sqlf="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlf:trigger name="foo_trigger" database_event="insert" on_table="foo" perform_action_when="after" order="1">
-    <sqlf:action>update modified=timestamp();</sqlf:action>
-  </sqlf:trigger>
-</sqlf:schema>
+<schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <trigger name="foo_trigger" database_event="insert" on_table="foo" perform_action_when="after" order="1">
+    <action>update modified=timestamp();</action>
+  </trigger>
+</schema>
 EOXML
 
     $obj = SQL::Translator->new(
@@ -190,12 +190,12 @@ EOXML
 my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
-<sqlf:schema name="" database="" xmlns:sqlf="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlf:procedure name="foo_proc" parameters="foo,bar" owner="Nomar" order="1">
-    <sqlf:sql>select foo from bar</sqlf:sql>
-    <sqlf:comments>Go Sox!</sqlf:comments>
-  </sqlf:procedure>
-</sqlf:schema>
+<schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <procedure name="foo_proc" parameters="foo,bar" owner="Nomar" order="1">
+    <sql>select foo from bar</sql>
+    <comments>Go Sox!</comments>
+  </procedure>
+</schema>
 EOXML
 
     $obj = SQL::Translator->new(

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.13 2004-07-08 19:34:29 grommit Exp $
+# $Id: SQLFairy.pm,v 1.14 2004-07-08 20:37:26 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -101,7 +101,33 @@ To see a complete example of the XML translate one of your schema :)
 
 =head1 ARGS
 
-Doesn't take any extra arguments.
+=over 4
+
+=item add_prefix
+
+Set to true to use the default namespace prefix of 'sqlf', instead of using
+the default namespace for
+C<http://sqlfairy.sourceforge.net/sqlfairy.xml namespace>
+
+e.g.
+
+ <!-- add_prefix=0 -->
+ <field name="foo" />
+
+ <!-- add_prefix=1 -->
+ <sqlf:field name="foo" />
+
+=item prefix
+
+Set to the namespace prefix you want to use for the
+C<http://sqlfairy.sourceforge.net/sqlfairy.xml namespace>
+
+e.g.
+
+ <!-- prefix='foo' -->
+ <foo:field name="foo" />
+
+=back
 
 =head1 LEGACY FORMAT
 
@@ -121,7 +147,7 @@ To convert your old format files simply pass them through the translator;
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -144,13 +170,19 @@ sub produce {
     my $translator  = shift;
     my $schema      = $translator->schema;
     $PArgs          = $translator->producer_args;
+    my $newlines    = defined $PArgs->{newlines} ? $PArgs->{newlines} : 1;
+    my $indent      = defined $PArgs->{indent}   ? $PArgs->{indent}   : 2;
     my $io          = IO::Scalar->new;
+
+    my $prefix = "";
+    $prefix    = $Name            if $PArgs->{add_prefix};
+    $prefix    = $PArgs->{prefix} if $PArgs->{prefix};
     my $xml         = XML::Writer->new(
         OUTPUT      => $io,
         NAMESPACES  => 1,
-        PREFIX_MAP  => { $Namespace => $Name },
-        DATA_MODE   => 1,
-        DATA_INDENT => 2,
+        PREFIX_MAP  => { $Namespace => $prefix },
+        DATA_MODE   => $newlines,
+        DATA_INDENT => $indent,
     );
 
     $xml->xmlDecl('UTF-8');
