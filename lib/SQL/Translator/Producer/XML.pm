@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.6 2003-04-25 11:47:25 dlc Exp $
+# $Id: XML.pm,v 1.7 2003-05-03 15:21:12 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::XML;
 
 use strict;
 use vars qw[ $VERSION $XML ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Utils qw(header_comment);
 
@@ -106,7 +106,8 @@ sub produce {
 
 # -------------------------------------------------------------------
 sub aggregate {
-    my ( $text, $indent ) = @_;
+    my $text   = shift or return;
+    my $indent = shift || 0;
     $XML .= ('  ' x $indent) . "$text\n";
 }
 
