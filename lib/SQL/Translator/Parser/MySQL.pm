@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 #-----------------------------------------------------
-# $Id: MySQL.pm,v 1.3 2002-07-23 19:22:11 dlc Exp $
+# $Id: MySQL.pm,v 1.4 2002-10-11 21:09:49 cmungall Exp $
 #-----------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Parser::MySQL;
 
 use strict;
 use vars qw($VERSION $GRAMMAR @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 #use SQL::Translator::Parser;  # This is not necessary!
 use Parse::RecDescent;
@@ -89,6 +89,16 @@ $GRAMMAR =
                     }
                        | <error>
 
+        create       : create_index index_name /on/i table_name '(' field_name(s /,/) ')' ';'
+#        create       : create_index index_name keyword_on table_name '(' field_name ')' ';'
+                       {
+			  # do nothing just now
+			  my $dummy = 0;
+                       }
+                        | <error>
+
+        keyword_on   : /on/i
+
         line         : index
                        | field
                        | <error>
@@ -97,22 +107,58 @@ $GRAMMAR =
 
         blank        : /\s*/
 
-        field        : field_name data_type not_null(?) default_val(?) auto_inc(?) primary_key(?)
+
+        field        : field_name data_type field_qualifier(s?)
                        { 
-                            my $null = defined $item{'not_null'}[0] 
-                                       ? $item{'not_null'}[0] : 1 ;
-                            $return = { 
+			   my %qualifier_h =  
+			     map {%$_} @{$item{'field_qualifier'} || []};
+			   my $null = defined $item{'not_null'}
+			     ? $item{'not_null'} : 1 ;
+			   delete $qualifier_h{'not_null'};
+			   $return = { 
                                 type           => 'field',
                                 name           => $item{'field_name'}, 
                                 data_type      => $item{'data_type'}{'type'},
-                                size           => $item{'data_type'}{'size'},
-                                null           => $null,
-                                default        => $item{'default_val'}[0], 
-                                is_auto_inc    => $item{'auto_inc'}[0], 
-                                is_primary_key => $item{'primary_key'}[0], 
+				null           => $null,
+				%qualifier_h,
                            } 
                        }
                     | <error>
+
+        field_qualifier : not_null
+            { 
+                $return = { 
+                     null => $item{'not_null'},
+                } 
+            }
+
+        field_qualifier : default_val
+            { 
+                $return = { 
+                     default => $item{default_val},
+                } 
+            }
+
+        field_qualifier : auto_inc
+            { 
+                $return = { 
+                     is_auto_inc => $item{auto_inc},
+                } 
+            }
+
+        field_qualifier : primary_key
+            { 
+                $return = { 
+                     is_primary_key => $item{primary_key},
+                } 
+            }
+
+        field_qualifier : unsigned
+            { 
+                $return = { 
+                     is_unsigned => $item{unsigned},
+                } 
+            }
 
         index        : primary_key_index
                        | unique_index
@@ -144,7 +190,11 @@ $GRAMMAR =
 
         create_table : /create/i /table/i
 
+        create_index : /create/i /index/i
+
         not_null     : /not/i /null/i { $return = 0 }
+
+        unsigned     : /unsigned/i { $return = 0 }
 
         default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ { $item[2]=~s/'//g; $return=$item[2] }
 
@@ -170,7 +220,7 @@ $GRAMMAR =
                 } 
             }
 
-        unique_index      : /unique/i key index_name(?) '(' field_name(s /,/) ')'
+        unique_index      : /unique/i key(?) index_name(?) '(' field_name(s /,/) ')'
             { 
                 $return = { 
                     name   => $item{'index_name'}[0],

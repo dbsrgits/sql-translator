@@ -22,3 +22,5 @@ close FH;
 
 
 print $tr->translate(\$data);
+print "ok 1\n";
+
