@@ -12,24 +12,32 @@
 use strict;
 
 use IO::File;
+use Storable 'freeze';
 use SQL::Translator;
 use Test::More tests => 3;
 
-# Our object; uses the default parser and producer
-my $tr = SQL::Translator->new;
 
 # The filename, holder for all the data, and the filehandle
 my $datafile = "t/data/mysql/Apache-Session-MySQL.sql";
 my $data;
 my $fh = IO::File->new($datafile);
 
-# Pass filename: simplest way
-my $translated_datafile = $tr->translate($datafile);
+my ($v1, $v2);
+{
+    my $tr = SQL::Translator->new;
+    # Pass filename: simplest way
+    $tr->translate($datafile);
+    $v1 = freeze( $tr->schema );
+}
 
-# Pass string reference
-read($fh, $data, -s $datafile);
-my $translated_data = $tr->translate(\$data);
+{
+    my $tr = SQL::Translator->new;
+    # Pass string reference
+    read($fh, $data, -s $datafile);
+    $tr->translate(\$data);
+    $v2 = freeze( $tr->schema );
+}
 
-ok(length $translated_datafile, "passing string (filename) works");
-ok(length $translated_data, "passing string as SCALAR reference");
-is($translated_datafile, $translated_data, "from file == from string");
+ok(length $v1, "passing string (filename) works");
+ok(length $v2, "passing string as SCALAR reference");
+is($v1, $v2, "from file == from string");
