@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.56 2004-07-26 20:49:34 boconnor Exp $
+# $Id: Turnkey.pm,v 1.57 2004-08-05 02:05:46 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.56 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.57 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -629,9 +629,9 @@ EOF
                    <div class="middle-header">[% name %]</div>
                [% END %]
               <!-- begin atom: [% p.label %] -->
-              <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
+              <!-- table cellpadding="0" cellspacing="0" width="100%" --><!-- [% ref(atom) %] [% ref(dbobject) %] -->
                 [% renderatom(name,dbobject,p.containers[0]) %]
-              </table>
+              <!-- /table -->
               </div></div>
               <div class="cleaner"></div>
             [% ELSIF p.type == 'minor' %]
@@ -643,9 +643,9 @@ EOF
                    <div class="box-header">[% atom.name | replace('Turnkey::Atom::', '') %]</div>
                [% END %]
               <!-- begin atom: [% p.label %] -->
-              <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
+              <!-- table cellpadding="0" cellspacing="0" width="100%" --><!-- [% ref(atom) %] [% ref(dbobject) %] -->
                 [% renderatom(name,dbobject,atom) %]
-              </table>
+              <!-- /table -->
               </div>
               [% END %]
               </div></div>
@@ -700,14 +700,16 @@ EOF
       [% renderlist(atom.render(dbobject)) %]
 [% END %]
 [% MACRO renderlist(lstArr) BLOCK %]
-   <div class="left-item"><ul>
+   <div class="left-item">
+   <ul>
   [% FOREACH item = lstArr %]
     [% class = ref(atom) | replace('::Atom::', '::Model::') %]
     [% id = item.id %]
     [% PROCESS make_linked_dbobject %]
     <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
   [% END %]
-   </ul></div>
+   </ul>
+   </div>
 [% END %]
 EOF
 
@@ -742,7 +744,7 @@ EOF
     [% PROCESS make_linked_dbobject %]
     <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
   [% END %]
-   </ul>
+  </ul>
 [% END %]
 [- END -]
 EOF
