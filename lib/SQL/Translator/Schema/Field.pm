@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.8 2003-06-09 02:10:59 kycl4rk Exp $
+# $Id: Field.pm,v 1.9 2003-06-09 04:11:57 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -276,7 +276,6 @@ Returns whether or not the field is a foreign key.
     return $self->{'is_foreign_key'} || 0;
 }
 
-
 # ----------------------------------------------------------------------
 sub is_nullable {
 
@@ -341,6 +340,38 @@ a table constraint (should it?).
     }
 
     return $self->{'is_primary_key'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub is_unique {
+
+=pod
+
+=head2 is_unique
+
+Determine whether the field has a UNIQUE constraint or not.
+
+  my $is_unique = $field->is_unique;
+
+=cut
+
+    my $self = shift;
+    
+    unless ( defined $self->{'is_unique'} ) {
+        if ( my $table = $self->table ) {
+            for my $c ( $table->get_constraints ) {
+                if ( $c->type eq UNIQUE ) {
+                    my %fields = map { $_, 1 } $c->fields;
+                    if ( $fields{ $self->name } ) {
+                        $self->{'is_unique'} = 1;
+                        last;
+                    }
+                }
+            }
+        }
+    }
+
+    return $self->{'is_unique'} || 0;
 }
 
 # ----------------------------------------------------------------------
