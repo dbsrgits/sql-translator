@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.22 2003-08-20 22:53:26 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.23 2003-08-21 18:09:50 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -314,7 +314,7 @@ sub produce {
             my @fields  = map { unreserve( $_, $table_name ) } $c->fields;
             my @rfields = map { unreserve( $_, $table_name ) } 
                 $c->reference_fields;
-            next unless @fields;
+            next if !@fields && $c->type ne CHECK_C;
 
             if ( $c->type eq PRIMARY_KEY ) {
                 $name ||= mk_name( $table_name, 'pk' );
@@ -326,8 +326,13 @@ sub produce {
                 push @constraint_defs, "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
+            elsif ( $c->type eq CHECK_C ) {
+                $name ||= mk_name( $table_name, 'ck' );
+                my $expression = $c->expression || '';
+                push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
+            }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                $name ||= mk_name( $table_name, 'fk' );
+                $name ||= mk_name( join('_', $table_name, $c->fields), 'fk' );
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
