@@ -10,7 +10,7 @@
 # Tests that;
 #
 
-use Test::More qw/no_plan/;
+use Test::More tests => 78;
 use Test::Exception;
 
 use strict;
@@ -40,24 +40,27 @@ is_auto_increment
 /];
 
 sub test_field {
-	my ($fld,$test) = @_;
-	die "test_field needs a least a name!" unless $test->{name};
-	my $name = $test->{name};
-	is $fld->name, $name, "$name - Name right";
+    my ($fld,$test) = @_;
+    die "test_field needs a least a name!" unless $test->{name};
+    my $name = $test->{name};
+    is $fld->name, $name, "$name - Name right";
 
-	foreach my $attr ( @{$ATTRIBUTES{field}} ) {
-		if ( defined(my $ans = $test->{$attr}) ) {
-			if ( $attr =~ m/^is_/ ) {
-				ok $fld->$attr, " $name - $attr true";
-			}
-			else {
-				is $fld->$attr, $ans, " $name - $attr = '$ans'";
-			}
-		}
-		else {
-			ok !$fld->$attr, "$name - $attr not set";
-		}
-	}
+    foreach my $attr ( @{$ATTRIBUTES{field}} ) {
+        if ( exists $test->{$attr} ) {
+            my $ans = $test->{$attr};
+            if ( $attr =~ m/^is_/ ) {
+                if ($ans) { ok $fld->$attr,  " $name - $attr true"; }
+                else      { ok !$fld->$attr, " $name - $attr false"; }
+            }
+            else {
+                is $fld->$attr, $ans, " $name - $attr = '"
+                                     .(defined $ans ? $ans : "NULL" )."'";
+            }
+        }
+        else {
+            ok !$fld->$attr, "$name - $attr not set";
+        }
+    }
 }
 
 # TODO test_constraint, test_index
@@ -71,18 +74,18 @@ use SQL::Translator::Schema::Constants;
 # Parse the test XML schema
 our $obj;
 $obj = SQL::Translator->new(
-	debug          => DEBUG,
-	show_warnings  => 1,
-	add_drop_table => 1,
+    debug          => DEBUG,
+    show_warnings  => 1,
+    add_drop_table => 1,
 );
 my $testschema = "$Bin/data/xml/schema-basic.xml";
 die "Can't find test schema $testschema" unless -e $testschema;
 my $sql = $obj->translate(
-	from     => "SqlfXML",
-	to       =>"MySQL",
-	filename => $testschema,
+    from     => "SqlfXML",
+    to       =>"MySQL",
+    filename => $testschema,
 );
-print $sql;
+print $sql if DEBUG;
 #print "Debug:", Dumper($obj) if DEBUG;
 
 # Test the schema objs generted from the XML
@@ -94,35 +97,56 @@ is_deeply( \@tblnames, [qw/Basic/], "tables");
 # Basic
 my $tbl = $scma->get_table("Basic");
 is $tbl->order, 1, "Basic->order";
-is_deeply( [map {$_->name} $tbl->get_fields], [qw/id title description email/]
-													, "Table Basic's fields");
+is_deeply( [map {$_->name} $tbl->get_fields],
+    [qw/id title description email explicitnulldef explicitemptystring/] , 
+    "Table Basic's fields");
 test_field($tbl->get_field("id"),{
-	name => "id",
-	order => 1,
-	data_type => "int",
-	size => 10,
-	is_primary_key => 1,
-	is_auto_increment => 1,
+    name => "id",
+    order => 1,
+    data_type => "int",
+    default_value => undef,
+    is_nullable => 0,
+    size => 10,
+    is_primary_key => 1,
+    is_auto_increment => 1,
 });
 test_field($tbl->get_field("title"),{
-	name => "title",
-	order => 2,
-	data_type => "varchar",
-	default_value => "hello",
-	size => 100,
+    name => "title",
+    order => 2,
+    data_type => "varchar",
+    is_nullable => 0,
+    default_value => "hello",
+    size => 100,
 });
 test_field($tbl->get_field("description"),{
-	name => "description",
-	order => 3,
-	data_type => "text",
-	is_nullable => 1,
+    name => "description",
+    order => 3,
+    data_type => "text",
+    is_nullable => 1,
+    default_value => "",
 });
 test_field($tbl->get_field("email"),{
-	name => "email",
-	order => 4,
-	data_type => "varchar",
-	size => 255,
-	is_unique => 1,
+    name => "email",
+    order => 4,
+    data_type => "varchar",
+    size => 255,
+    is_unique => 1,
+    default_value => undef,
+    is_nullable => 1,
+});
+test_field($tbl->get_field("explicitnulldef"),{
+    name => "explicitnulldef",
+    order => 5,
+    data_type => "varchar",
+    default_value => undef,
+    is_nullable => 1,
+});
+test_field($tbl->get_field("explicitemptystring"),{
+    name => "explicitemptystring",
+    order => 6,
+    data_type => "varchar",
+    default_value => "",
+    is_nullable => 1,
 });
 
 my @indices = $tbl->get_indices;
