@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.27 2003-07-09 06:09:56 allenday Exp $
+# $Id: ClassDBI.pm,v 1.28 2003-07-09 17:48:12 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -120,20 +120,97 @@ sub produce {
             if ( my $constraint = $table->primary_key ) {
                 my $field          = ($constraint->fields)[0];
                 my $pk_name        = $pk_xform->($table_pkg_name, $field);
-                
+
                 $packages{ $table_pkg_name }{'pk_accessor'} = 
                     "#\n# Primary key accessor\n#\n".
                     "sub $pk_name {\n    shift->$field\n}\n\n"
                 ;
             }
         }
-        
+
+        my $is_data = 0;
+        foreach my $field ( $table->get_fields ) {
+		  $is_data++ if !$field->is_foreign_key and !$field->is_primary_key;
+		}
+
+		my %linked;
+		if ( $is_data ) {
+		  foreach my $link ( keys %{ $linkable{ $table_name } } ) {
+			my $linkmethodname;
+
+			if ( my $fk_xform = $t->format_fk_name ) {
+			  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+			  $linkmethodname = $fk_xform->($linkable{$table_name}{$link}->name,
+											($schema->get_table($link)->primary_key->fields)[0]).'s';
+			} else {
+			  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+			  $linkmethodname = $linkable{$table_name}{$link}->name.'_'.
+				($schema->get_table($link)->primary_key->fields)[0].'s';
+			}
+
+			my @rk_fields = ();
+			my @lk_fields = ();
+			foreach my $field ($linkable{$table_name}{$link}->get_fields) {
+			  next unless $field->is_foreign_key;
+
+			  next unless(
+						  $field->foreign_key_reference->reference_table eq $table_name
+						  ||
+						  $field->foreign_key_reference->reference_table eq $link
+						 );
+			  push @lk_fields, ($field->foreign_key_reference->reference_fields)[0]
+				if $field->foreign_key_reference->reference_table eq $link;
+			  push @rk_fields, $field->name
+				if $field->foreign_key_reference->reference_table eq $table_name;
+			}
+
+			#if one possible traversal via link table
+			if (scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1) {
+			  foreach my $rk_field (@rk_fields) {
+				push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
+				  "sub ".$linkmethodname." { my \$self = shift; ".
+					"return map \$_->".
+					  ($schema->get_table($link)->primary_key->fields)[0].
+						", \$self->".$linkable{$table_name}{$link}->name.
+						  "_".$rk_field." }\n\n";
+			  }
+			  #else there is more than one way to traverse it.  ack!
+			  #let's treat these types of link tables as a many-to-one (easier)
+			  #
+			  #NOTE: we need to rethink the link method name, as the cardinality
+			  #has shifted on us.
+			} elsif (scalar(@rk_fields) == 1) {
+			  foreach my $rk_field (@rk_fields) {
+				# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+				push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
+				  "sub " . $linkable{$table_name}{$link}->name .
+					"s { my \$self = shift; return \$self->" .
+					  $linkable{$table_name}{$link}->name . "_" .
+						$rk_field . "(\@_) }\n\n";
+			  }
+			} elsif (scalar(@lk_fields) == 1) {
+			  #these will be taken care of on the other end...
+			} else {
+			  #many many many.  need multiple iterations here, data structure revision
+			  #to handle N FK sources.  This code has not been tested and likely doesn't
+			  #work here
+			  foreach my $rk_field (@rk_fields) {
+				# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+				push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
+				  "sub " . $linkable{$table_name}{$link}->name . "_" . $rk_field .
+					"s { my \$self = shift; return \$self->" .
+					  $linkable{$table_name}{$link}->name . "_" .
+						$rk_field . "(\@_) }\n\n";
+			  }
+			}
+		  }
+        }
+
+
         #
         # Use foreign keys to set up "has_a/has_many" relationships.
         #
-        my $is_data = 0;
         foreach my $field ( $table->get_fields ) {
-            $is_data++ if !$field->is_foreign_key and !$field->is_primary_key;
             if ( $field->is_foreign_key ) {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
@@ -155,89 +232,26 @@ sub produce {
                 # that the other table "has many" of this one, right?
                 #
 				# No... there is the possibility of 1-1 cardinality
-                push @{ $packages{ $ref_pkg }{'has_many'} },
-                    "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
-                    "'$table_pkg_name' => '$field_name'\n);\n\n"
-                ;
+
+				#if there weren't M-M relationships via the has_many
+				#being set up here, create nice pluralized method alias
+				#rather for user as alt. to ugly tablename_fieldname name
+				if(! $packages{ $ref_pkg }{ 'has_many' }{ $table_name } ){
+				  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
+					"sub $table_name\s {\n    return shift->$table_name\_$field_name\n}\n\n";
+
+				#else ugly
+				} else {
+				}
+
+				push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
+				  "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
+				  "'$table_pkg_name' => '$field_name'\n);\n\n";
+
             }
 		}
-
-         my %linked;
-         if ( $is_data ) {
-             foreach my $link ( keys %{ $linkable{ $table_name } } ) {
-			   my $linkmethodname;
-
-			   # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-			   if ( my $fk_xform = $t->format_fk_name ){
-				 $linkmethodname = $fk_xform->($linkable{$table_name}{$link}->name,
-				   ($schema->get_table($link)->primary_key->fields)[0]).'s';
-			   } else {
-				 $linkmethodname = $linkable{$table_name}{$link}->name.'_'.
-				   ($schema->get_table($link)->primary_key->fields)[0].'s';
-			   }
-
-#$create .= $field->name. "\n";
-#$create .= $field->foreign_key_reference->reference_table. "\n";
-#$create .= $linkable{ $table_name }{ $link }->name. "\n";
-#$create .= $table_name. "\n";
-#$create .= $link. "\n";
-#$create .= "***\n\n";
-
-			   my @rk_fields = ();
-			   my @lk_fields = ();
-			   foreach my $field ($linkable{$table_name}{$link}->get_fields){
-				 next unless $field->is_foreign_key;
-
-				 next unless(
-							 $field->foreign_key_reference->reference_table eq $table_name
-							 ||
-							 $field->foreign_key_reference->reference_table eq $link
-							);
-				 push @lk_fields, ($field->foreign_key_reference->reference_fields)[0]
-				   if $field->foreign_key_reference->reference_table eq $link;
-				 push @rk_fields, $field->name
-				   if $field->foreign_key_reference->reference_table eq $table_name;
-			   }
-
-			   #if one possible traversal via link table
-			   if(scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1){
-				 foreach my $rk_field (@rk_fields){
-				   push @{ $packages{ $table_pkg_name }{'has_many'} },
-					 "sub ".$linkmethodname." { my \$self = shift; ".
-					   "return map \$_->".
-						 ($schema->get_table($link)->primary_key->fields)[0].
-						   ", \$self->".$linkable{$table_name}{$link}->name.
-							 "_".$rk_field." }\n\n";
-				 }
-			   #else there is more than one way to traverse it.  ack!
-			   #let's treat these types of link tables as a many-to-one (easier)
-			   #
-			   #NOTE: we need to rethink the link method name, as the cardinality
-			   #has shifted on us.
-			   } elsif(scalar(@rk_fields) == 1){
-				 foreach my $rk_field (@rk_fields){
-				   push @{ $packages{ $table_pkg_name }{'has_many'} },
-					 "sub " . $linkable{$table_name}{$link}->name .
-					   "s { my \$self = shift; return \$self->" .
-						 $linkable{$table_name}{$link}->name . "_" .
-						   $rk_field . "(\@_) }\n\n";
-				 }
-			   } elsif(scalar(@lk_fields) == 1){
-				 #these will be taken care of on the other end...
-			   } else {
-				 #many many many.  need multiple iterations here, data structure revision
-				 #to handle N FK sources
-				 foreach my $rk_field (@rk_fields){
-				   push @{ $packages{ $table_pkg_name }{'has_many'} },
-					 "sub " . $linkable{$table_name}{$link}->name . "_" . $rk_field .
-					   "s { my \$self = shift; return \$self->" .
-						 $linkable{$table_name}{$link}->name . "_" .
-						   $rk_field . "(\@_) }\n\n";
-				 }
-			   }
-            }
-        }
-    }
+	}
 
     #
     # Now build up text of package.
@@ -287,9 +301,11 @@ sub produce {
             $create .= $_ for @has_a;
         }
 
-        if ( my @has_many = @{ $pkg->{'has_many'} || [] } ) {
+		foreach my $has_many_key (keys %{ $pkg->{'has_many'} }){
+		  if ( my @has_many = @{ $pkg->{'has_many'}{ $has_many_key } || [] } ) {
             $create .= $_ for @has_many;
-        }
+		  }
+		}
     }
 
     $create .= "1;\n";
