@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.22 2003-08-04 15:16:13 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.23 2003-08-07 18:15:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -165,7 +165,7 @@ revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_q
         push @{ $tables{ $table_name }{'permissions'} }, {
             type       => 'revoke',
             actions    => $item[2],
-            users      => $item[6],
+            users      => $item[7],
         }
     }
 
@@ -175,7 +175,7 @@ grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quote
         push @{ $tables{ $table_name }{'permissions'} }, {
             type       => 'grant',
             actions    => $item[2],
-            users      => $item[6],
+            users      => $item[7],
         }
     }
 
