@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.22 2003-06-04 22:04:53 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.23 2003-06-06 00:05:09 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -174,14 +174,15 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
 
         my $i = 1;
         for my $definition ( @{ $item[7] } ) {
-            if ( $definition->{'type'} eq 'field' ) {
+            if ( $definition->{'supertype'} eq 'field' ) {
+
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } = 
                     { %$definition, order => $i };
                 $i++;
         
                 if ( $definition->{'is_primary_key'} ) {
-                    push @{ $tables{ $table_name }{'indices'} },
+                    push @{ $tables{ $table_name }{'constraints'} },
                         {
                             type   => 'primary_key',
                             fields => [ $field_name ],
@@ -189,15 +190,19 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
                     ;
                 }
             }
-            elsif ( $definition->{'type'} eq 'foreign_key' ) {
-                for my $field ( @{ $definition->{'fields'} } ) {
-                    push @{ 
-                        $tables{$table_name}{'fields'}{$field}{'constraints'}
-                    },
-                    $definition; 
-                }
+            elsif ( $definition->{'supertype'} eq 'constraint' ) {
+                # prob get rid of this?
+#                for my $field ( @{ $definition->{'fields'} } ) {
+#                    push @{ 
+#                        $tables{$table_name}{'fields'}{$field}{'constraints'}
+#                    },
+#                    $definition; 
+#                }
+
+                # this should be the only one needed
+                push @{ $tables{ $table_name }{'constraints'} }, $definition;
             }
-            else {
+            elsif ( $definition->{'supertype'} eq 'index' ) {
                 push @{ $tables{ $table_name }{'indices'} },
                     $definition;
             }
@@ -214,7 +219,7 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
 
 opt_if_not_exists : /if not exists/i
 
-create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
+create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
     {
         push @{ $tables{ $item{'table_name'} }{'indices'} },
             {
@@ -225,8 +230,8 @@ create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' fiel
         ;
     }
 
-create_definition : index
-    | foreign_key 
+create_definition : constraint 
+    | index
     | field
     | <error>
 
@@ -244,13 +249,13 @@ field : field_name data_type field_qualifier(s?) reference_definition(?)
         }
 
         $return = { 
-            type           => 'field',
-            name           => $item{'field_name'}, 
-            data_type      => $item{'data_type'}{'type'},
-            size           => $item{'data_type'}{'size'},
-            list           => $item{'data_type'}{'list'},
-            null           => $null,
-            constraints    => $item{'reference_definition(?)'},
+            supertype   => 'field',
+            name        => $item{'field_name'}, 
+            data_type   => $item{'data_type'}{'type'},
+            size        => $item{'data_type'}{'size'},
+            list        => $item{'data_type'}{'list'},
+            null        => $null,
+            constraints => $item{'reference_definition(?)'},
             %qualifiers,
         } 
     }
@@ -303,7 +308,6 @@ reference_definition : /references/i table_name parens_field_list(?) match_type(
         }
     }
 
-
 match_type : /match full/i { 'match_full' }
     |
     /match partial/i { 'match_partial' }
@@ -321,10 +325,8 @@ reference_option: /restrict/i |
     /set default/i
     { $item[1] }  
 
-index : primary_key_index
-    | unique_index
+index : normal_index
     | fulltext_index
-    | normal_index
     | <error>
 
 table_name   : WORD
@@ -359,6 +361,7 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
                 $size = [9];
             }
             elsif ( $type =~ /^int(eger)?$/ ) {
+                $type = 'int';
                 $size = [11];
             }
             elsif ( lc $type eq 'bigint' ) {
@@ -404,9 +407,15 @@ auto_inc : /auto_increment/i { 1 }
 
 primary_key : /primary/i /key/i { 1 }
 
-foreign_key : opt_constraint(?) /foreign key/i WORD(?) parens_field_list reference_definition
+constraint : primary_key_def
+    | unique_key_def
+    | foreign_key_def
+    | <error>
+
+foreign_key_def : opt_constraint(?) /foreign key/i WORD(?) parens_field_list reference_definition
     {
         $return              =  {
+            supertype        => 'constraint',
             type             => 'foreign_key',
             name             => $item[3][0],
             fields           => $item[4],
@@ -416,50 +425,52 @@ foreign_key : opt_constraint(?) /foreign key/i WORD(?) parens_field_list referen
 
 opt_constraint : /constraint/i WORD
 
-primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
+primary_key_def : primary_key index_name(?) '(' field_name(s /,/) ')'
     { 
-        $return    = { 
-            name   => $item{'index_name(?)'}[0],
-            type   => 'primary_key',
-            fields => $item[4],
+        $return       = { 
+            supertype => 'constraint',
+            name      => $item{'index_name(?)'}[0],
+            type      => 'primary_key',
+            fields    => $item[4],
         };
     }
 
-normal_index : key index_name(?) '(' name_with_opt_paren(s /,/) ')'
+unique_key_def : UNIQUE KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
-        $return    = { 
-            name   => $item{'index_name(?)'}[0],
-            type   => 'normal',
-            fields => $item[4],
+        $return       = { 
+            supertype => 'constraint',
+            name      => $item{'index_name(?)'}[0],
+            type      => 'unique',
+            fields    => $item[5],
         } 
     }
 
-unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
+normal_index : KEY index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
-        $return    = { 
-            name   => $item{'index_name(?)'}[0],
-            type   => 'unique',
-            fields => $item[5],
+        $return       = { 
+            supertype => 'index',
+            type      => 'normal',
+            name      => $item{'index_name(?)'}[0],
+            fields    => $item[4],
         } 
     }
 
-fulltext_index : fulltext key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
+fulltext_index : /fulltext/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
-        $return    = { 
-            name   => $item{'index_name(?)'}[0],
-            type   => 'fulltext',
-            fields => $item[5],
+        $return       = { 
+            supertype => 'index',
+            type      => 'fulltext',
+            name      => $item{'index_name(?)'}[0],
+            fields    => $item[5],
         } 
     }
 
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
 
-fulltext : /fulltext/i { 1 }
+UNIQUE : /unique/i { 1 }
 
-unique : /unique/i { 1 }
-
-key : /key/i | /index/i
+KEY : /key/i | /index/i
 
 table_option : /[^\s;]*/ 
     { 
@@ -485,8 +496,13 @@ NAME    : "`" /\w+/ "`"
 
 VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
-    | /'.*?'/   # XXX doesn't handle embedded quotes
-    { $item[1] }
+    | /'.*?'/   
+    { 
+        # remove leading/trailing quotes 
+        my $val = $item[1];
+        $val    =~ s/^['"]|['"]$//g;
+        $return = $val;
+    }
     | /NULL/
     { 'NULL' }
 
@@ -516,6 +532,12 @@ sub parse {
             name  => $tdata->{'table_name'},
         ) or die $schema->error;
 
+#        for my $opt ( @{ $tdata->{'table_options'} } ) {
+#            if ( my ( $key, $val ) = each %$opt ) {
+#                $tables->options( 
+#            }
+#        }
+
         my @fields = sort { 
             $tdata->{'fields'}->{$a}->{'order'} 
             <=>
@@ -531,6 +553,51 @@ sub parse {
                 default_value     => $fdata->{'default'},
                 is_auto_increment => $fdata->{'is_auto_inc'},
                 is_nullable       => $fdata->{'null'},
+            ) or die $table->error;
+
+            $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
+
+            for my $qual ( qw[ binary unsigned zerofill list ] ) {
+                if ( my $val = $fdata->{ $qual } || $fdata->{ uc $qual } ) {
+                    next if ref $val eq 'ARRAY' && !@$val;
+                    $field->extra( $qual, $val );
+                }
+            }
+
+            if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
+                my %extra = $field->extra;
+                my $longest;
+                for my $len ( map { length } @{ $extra{'list'} || [] } ) {
+                    $longest = $len if $len > $longest;
+                }
+                $field->size( $longest ) if $longest;
+            }
+
+            for my $cdata ( @{ $fdata->{'constraints'} } ) {
+                next unless $cdata->{'type'} eq 'foreign_key';
+                $cdata->{'fields'} ||= [ $field->name ];
+                push @{ $tdata->{'constraints'} }, $cdata;
+            }
+        }
+
+        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
+            my $index  =  $table->add_index(
+                name   => $idata->{'name'},
+                type   => uc $idata->{'type'},
+                fields => $idata->{'fields'},
+            ) or die $table->error;
+        }
+
+        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
+            my $constraint       =  $table->add_constraint(
+                name             => $cdata->{'name'},
+                type             => $cdata->{'type'},
+                fields           => $cdata->{'fields'},
+                reference_table  => $cdata->{'reference_table'},
+                reference_fields => $cdata->{'reference_fields'},
+                match_type       => $cdata->{'match_type'} || '',
+                on_delete        => $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }
