@@ -5,12 +5,11 @@ SYNOPSIS
       use SQL::Translator;
 
       my $translator     = SQL::Translator->new(
-          xlate          => $xlate || {},    # Overrides for field translation
-          debug          => $debug,          # Print debug info
-          trace          => $trace,          # Print Parse::RecDescent trace
-          no_comments    => $no_comments,    # Don't include comments in output
-          show_warnings  => $show_warnings,  # Print name mutations, conflicts
-          add_drop_table => $add_drop_table, # Add "drop table" statements
+          debug          => 1, # Print debug info
+          trace          => 0, # Print Parse::RecDescent trace
+          no_comments    => 0, # Don't include comments in output
+          show_warnings  => 0, # Print name mutations, conflicts
+          add_drop_table => 1, # Add "drop table" statements
       );
 
       my $output     = $translator->translate(
@@ -33,13 +32,20 @@ CONSTRUCTOR
     The constructor is called new, and accepts a optional hash of options.
     Valid options are:
 
-    parser (aka from)
-    parser_args
-    producer (aka to)
-    producer_args
-    filename (aka file)
-    data
-    debug
+    *   parser / from
+
+    *   parser_args
+
+    *   producer / to
+
+    *   producer_args
+
+    *   filename / file
+
+    *   data
+
+    *   debug
+
     All options are, well, optional; these attributes can be set via
     instance methods. Internally, they are; no (non-syntactical) advantage
     is gained by passing options to the constructor.
@@ -68,26 +74,26 @@ METHODS
     The producer method is an accessor/mutator, used to retrieve or define
     what subroutine is called to produce the output. A subroutine defined as
     a producer will be invoked as a function (*not a method*) and passed 2
-    parameters: its container SQL::Translator instance and a data structure.
-    It is expected that the function transform the data structure to a
-    string. The SQL::Transformer instance is provided for informational
-    purposes; for example, the type of the parser can be retrieved using the
-    parser_type method, and the error and debug methods can be called when
-    needed.
+    parameters: its container "SQL::Translator" instance and a data
+    structure. It is expected that the function transform the data structure
+    to a string. The "SQL::Transformer" instance is provided for
+    informational purposes; for example, the type of the parser can be
+    retrieved using the parser_type method, and the error and debug methods
+    can be called when needed.
 
     When defining a producer, one of several things can be passed in: A
-    module name (e.g., My::Groovy::Producer), a module name relative to the
-    SQL::Translator::Producer namespace (e.g., MySQL), a module name and
-    function combination (My::Groovy::Producer::transmogrify), or a
+    module name (e.g., "My::Groovy::Producer", a module name relative to the
+    "SQL::Translator::Producer" namespace (e.g., MySQL), a module name and
+    function combination ("My::Groovy::Producer::transmogrify"), or a
     reference to an anonymous subroutine. If a full module name is passed in
     (for the purposes of this method, a string containing "::" is considered
     to be a module name), it is treated as a package, and a function called
-    "produce" will be invoked: $modulename::produce. If $modulename cannot
+    "produce" will be invoked: "$modulename::produce". If $modulename cannot
     be loaded, the final portion is stripped off and treated as a function.
     In other words, if there is no file named
-    My/Groovy/Producer/transmogrify.pm, SQL::Translator will attempt to load
-    My/Groovy/Producer.pm and use transmogrify as the name of the function,
-    instead of the default "produce".
+    My/Groovy/Producer/transmogrify.pm, "SQL::Translator" will attempt to
+    load My/Groovy/Producer.pm and use transmogrify as the name of the
+    function, instead of the default "produce".
 
       my $tr = SQL::Translator->new;
 
@@ -133,9 +139,9 @@ METHODS
     The parser method defines or retrieves a subroutine that will be called
     to perform the parsing. The basic idea is the same as that of producer
     (see above), except the default subroutine name is "parse", and will be
-    invoked as $module_name::parse($tr, $data). Also, the parser subroutine
-    will be passed a string containing the entirety of the data to be
-    parsed.
+    invoked as "$module_name::parse($tr, $data)". Also, the parser
+    subroutine will be passed a string containing the entirety of the data
+    to be parsed.
 
       # Invokes SQL::Translator::Parser::MySQL::parse()
       $tr->parser("MySQL");
@@ -172,8 +178,8 @@ METHODS
     Here is how the parameter list to translate is parsed:
 
     *   1 argument means it's the data to be parsed; which could be a string
-        (filename) or a refernce to a scalar (a string stored in memory), or
-        a reference to a hash, which is parsed as being more than one
+        (filename) or a reference to a scalar (a string stored in memory),
+        or a reference to a hash, which is parsed as being more than one
         argument (see next section).
 
           # Parse the file /path/to/datafile
@@ -245,6 +251,9 @@ COPYRIGHT
     You should have received a copy of the GNU General Public License along
     with this program; if not, write to the Free Software Foundation, Inc.,
     59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+BUGS
+    Please use http://rt.cpan.org/ for reporting bugs.
 
 SEE ALSO
     the perl manpage, the SQL::Translator::Parser manpage, the
