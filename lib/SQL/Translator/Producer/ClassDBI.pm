@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.37 2003-10-15 19:46:15 allenday Exp $
+# $Id: ClassDBI.pm,v 1.38 2003-10-15 19:56:13 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -275,12 +275,6 @@ sub produce {
                   . "sub $fk_method {\n"
                   . "    return shift->$field_name\n}\n\n";
 
-                #
-                # If this table "has a" to the other, then it follows 
-                # that the other table "has many" of this one, right?
-                #
-                # No... there is the possibility of 1-1 cardinality
-                #
                 # if there weren't M-M relationships via the has_many
                 # being set up here, create nice pluralized method alias
                 # rather for user as alt. to ugly tablename_fieldname name
@@ -337,53 +331,13 @@ sub produce {
                 else {
                     my $table       = $schema->get_table( $pkg->{'table'} );
                     my @field_names = map { $_->name } $table->get_fields;
-        
+					
                     $create .= join("\n",
                         $pkg_name."->table('".$pkg->{'table'}."');\n",
                         $pkg_name."->columns(All => qw/".
                         join(' ', @field_names)."/);\n\n",
                     );
                 }
-
-        #
-        # The approach here is to do lazy loading on the expensive
-        # columns (expensive defined as those columns which require
-        # construction of a referenced object) fields which are
-        # strictly data (ie, not references) are treated as essential
-        # b/c they don't require much time to set up.
-        #
-#        $create .= $pkg_name . "->table('" . $pkg->{'table'} . "');\n";
-
-        #
-        # Set up primary key field.
-        #
-#        if ( $pkg->{'_columns_primary'} ) {
-#            $create .= $pkg_name
-#              . "->columns(Primary   => qw/"
-#              . $pkg->{'_columns_primary'} . "/);\n";
-#        }
-#        else {
-#            die "Class::DBI isn't going to like that you don't " .
-#              "have a primary key field for table " . $pkg->{'table'};
-#        }
-
-        #
-        # Set up non-FK fields to be populated at construction.
-        #
-#        if ( $pkg->{'_columns_essential'} ) {
-#            $create .= $pkg_name
-#              . "->columns(Essential => qw/"
-#              . join ( ' ', @{ $pkg->{'_columns_essential'} } ) . "/);\n";
-#        }
-
-        #
-        # Set up FK fields for lazy loading on request.
-        #
-#        if ( $pkg->{'_columns_others'} ) {
-#            $create .= $pkg_name
-#              . "->columns(Others    => qw/"
-#              . join ( ' ', @{ $pkg->{'_columns_others'} } ) . "/);\n";
-#        }
 
         $create .= "\n";
 
