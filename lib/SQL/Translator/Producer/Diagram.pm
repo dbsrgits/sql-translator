@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.10 2004-02-11 21:30:19 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.11 2004-03-04 14:39:15 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -30,17 +30,8 @@ Use via SQL::Translator:
 
   use SQL::Translator;
 
-  my $t = SQL::Translator->new( parser => 'MySQL', '...' );
+  my $t = SQL::Translator->new( producer => 'Diagram', '...' );
   $t->translate;
-
-Or use more directly:
-
-  use SQL::Translator;
-  use SQL::Translator::MySQL 'parse';
-
-  my $t = SQL::Translator->new( filename => '...' );;
-  parse( $t, 
-
 
 =cut
 
@@ -51,7 +42,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
