@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.40 2003-08-20 13:50:46 dlc Exp $
+# $Id: Translator.pm,v 1.41 2003-08-20 22:19:14 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -195,6 +195,7 @@ sub producer {
 
         # passed a string containing no "::"; relative package name
         else {
+            $producer =~ s/-/::/g;
             my $Pp = sprintf "SQL::Translator::Producer::$producer";
             load($Pp) or die "Can't load $Pp: $@";
             $self->{'producer'} = \&{ "$Pp\::produce" };
@@ -287,6 +288,7 @@ sub parser {
 
         # passed a string containing no "::"; relative package name
         else {
+            $parser =~ s/-/::/g;
             my $Pp = "SQL::Translator::Parser::$parser";
             load( $Pp ) or die "Can't load $Pp: $@";
             $self->{'parser'}      = \&{ "$Pp\::parse" };
