@@ -1,10 +1,9 @@
 package SQL::Translator::Parser::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.4 2004-01-25 18:10:55 kycl4rk Exp $
+# $Id: YAML.pm,v 1.5 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
-#   Ken Y. Clark <kclark@cpan.org>.
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -23,7 +22,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -139,7 +138,7 @@ SQL::Translator::Parser::YAML - Parse a YAML representation of a schema
 
 C<SQL::Translator::Parser::YAML> parses a schema serialized with YAML.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.

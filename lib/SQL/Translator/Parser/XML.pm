@@ -1,9 +1,9 @@
 package SQL::Translator::Parser::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.1 2003-08-26 16:26:33 kycl4rk Exp $
+# $Id: XML.pm,v 1.2 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -44,7 +44,7 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Parser::XML::SQLFairy;

@@ -1,11 +1,9 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.42 2004-01-25 18:09:51 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.43 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -123,7 +121,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

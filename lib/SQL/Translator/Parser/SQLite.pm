@@ -1,11 +1,9 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.5 2004-02-04 17:32:42 dlc Exp $
+# $Id: SQLite.pm,v 1.6 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -154,7 +152,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

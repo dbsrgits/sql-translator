@@ -1,9 +1,9 @@
 package SQL::Translator::Parser::DBI::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.3 2003-10-15 16:36:28 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.4 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -42,7 +42,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

@@ -1,10 +1,9 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.15 2003-11-06 16:55:30 kycl4rk Exp $
+# $Id: xSV.pm,v 1.16 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -68,7 +67,7 @@ C<SQL::Translator::Utils::normalize_name>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -189,7 +188,7 @@ sub parse {
 # -------------------------------------------------------------------
 =pod
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.

@@ -1,12 +1,9 @@
 package SQL::Translator::Parser::Excel;
 
 # -------------------------------------------------------------------
-# $Id: Excel.pm,v 1.13 2003-11-06 16:54:43 kycl4rk Exp $
+# $Id: Excel.pm,v 1.14 2004-02-09 22:23:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>,
-#                    Mike Mellilo <mmelillo@users.sourceforge.net>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -54,7 +51,7 @@ and field sizes.  True by default.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 use Spreadsheet::ParseExcel;
 use Exporter;
