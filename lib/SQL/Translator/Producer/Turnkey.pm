@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.58 2004-09-22 23:46:53 boconnor Exp $
+# $Id: Turnkey.pm,v 1.59 2004-10-13 22:24:49 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.58 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.59 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -57,6 +57,7 @@ sub produce {
     local $DEBUG      = $t->debug;
 
 	my %meta          = (
+concat => $args->{'concat'} || '',
 						 format_fk => $t->format_fk_name,
 						 format_package => $t->format_package_name,
 						 format_table => $t->format_table_name,
@@ -179,6 +180,8 @@ sub translateForm {
     $template->process(\$tt2, $meta, \$result) || die $template->error();
   }
 
+  #warn $result if $type eq 'dbi';
+
   return($result);
 }
 
@@ -218,7 +221,7 @@ sub template {
 	return <<'EOF';
 [% MACRO printPackage(node) BLOCK %]
 
-########[% node.name | replace('Turnkey::Model::', '') %]########
+########[% node.table.name | ucfirst #node.name | replace("Turnkey${concat}::Model::", '') %]########
 
 package [% node.name %];
 use base '[% node.base %]';
@@ -360,13 +363,13 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
 
 ########AutoDBI########
-use Turnkey::Model::DBI;
+use Turnkey[% concat %]::Model::DBI;
 [% FOREACH node = nodes %]
 use [% node.value.name %];
 [% END %]
 1;
 
-########[% baseclass | replace('Turnkey::Model::', '') %]########
+########DBI########
 package [% baseclass %];
 
 # Created by SQL::Translator::Producer::Turnkey
@@ -427,13 +430,13 @@ use [% node.value.name %];
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
 
-########[% node.value.name | replace('Turnkey::Model::', '') %]########
+########[% node.value.name | replace('.+::', '') %]########
 
-package Turnkey::Atom::[% node.value.name FILTER replace "Turnkey::Model::", "" %];
+package Turnkey[% concat %]::Atom::[% node.value.name FILTER replace '.+::', '' %];
 
-[% pname = node.value.name FILTER replace "Turnkey::Model::", "" %]
+[% pname = node.value.name FILTER replace '.+::', '' %]
 
-use base qw(Turnkey::Atom);
+use base qw(Turnkey[% concat %]::Atom);
 use Data::Dumper;
 
 sub can_render {
@@ -446,7 +449,7 @@ sub render {
 
 	# Assumption here that if it's not rendering on it's own dbobject
 	# then it's a list. This will be updated when AtomLists are implemented -boconnor
-	if(ref($dbobject) eq 'Turnkey::Model::[% pname %]') {
+	if(ref($dbobject) eq 'Turnkey[% concat %]::Model::[% pname %]') {
 		$self->focus('yes');
 		return(_render_record($dbobject));
 	}
@@ -578,23 +581,23 @@ EOF
   </layout>
   [%- END %]
 [% END %]
-<!-- custom -->
-  <layout label="Turnkey::Util::Frontpage">
+<!-- custom FIXME remove -->
+  <layout label="Turnkey[% concat%]::Util::Frontpage">
     <placement from="#MainContainer"    label="MainContainer2AnalysisAtom"    to="#FrontpageAtom"/>
   </layout>
-  <layout label="Turnkey::Util::Search">
+  <layout label="Turnkey[% concat %]::Util::Search">
     <placement from="#MainContainer"    label="MainContainer2AnalysisAtom"    to="#SearchAtom"/>
   </layout>
-  <layout label="Turnkey::Util::Userinfo">
+  <layout label="Turnkey[% concat %]::Util::Userinfo">
     <placement from="#MainContainer"    label="MainContainer2UserinfoAtom"    to="#UserinfoAtom"/>
   </layout>
 <!-- custom -->
 </layouts>
 
 <uribindings>
-  <uribinding uri="/db" class="Turnkey::Util::Frontpage"/>
-  <uribinding uri="/db/search" class="Turnkey::Util::Search"/>
-  <uribinding uri="/db/userinfo" class="Turnkey::Util::Userinfo"/>
+  <uribinding uri="/db" class="Turnkey[% concat%]::Util::Frontpage"/>
+  <uribinding uri="/db/search" class="Turnkey[% concat %]::Util::Search"/>
+  <uribinding uri="/db/userinfo" class="Turnkey[% concat %]::Util::Userinfo"/>
 </uribindings>
 
 <classbindings>
@@ -604,9 +607,9 @@ EOF
 [%- END -%]
 [% END %]
 <!-- custom -->
-  <classbinding class="Turnkey::Util::Frontpage" plugin="#FrontpageAtom" rank="0"/>
-  <classbinding class="Turnkey::Util::Search" plugin="#SearchAtom" rank="0"/>
-  <classbinding class="Turnkey::Util::Userinfo" plugin="#UserinfoAtom" rank="0"/>
+  <classbinding class="Turnkey[% concat %]::Util::Frontpage" plugin="#FrontpageAtom" rank="0"/>
+  <classbinding class="Turnkey[% concat %]::Util::Search" plugin="#SearchAtom" rank="0"/>
+  <classbinding class="Turnkey[% concat %]::Util::Userinfo" plugin="#UserinfoAtom" rank="0"/>
 <!-- custom -->
 </classbindings>
 
@@ -640,7 +643,7 @@ EOF
                <div class="left-item">
                [% IF name %]
                    [% linkname = ref(p.containers[0]) %]
-                   <div class="box-header">[% atom.name | replace('Turnkey::Atom::', '') %]</div>
+                   <div class="box-header">[% atom.name | replace("Turnkey${concat}::Atom::", '') %]</div>
                [% END %]
               <!-- begin atom: [% p.label %] -->
               <!-- table cellpadding="0" cellspacing="0" width="100%" --><!-- [% ref(atom) %] [% ref(dbobject) %] -->
