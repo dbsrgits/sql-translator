@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SqlfXML;
 
 # -------------------------------------------------------------------
-# $Id: SqlfXML.pm,v 1.5 2003-08-15 15:08:08 grommit Exp $
+# $Id: SqlfXML.pm,v 1.6 2003-08-20 22:50:30 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -80,10 +80,9 @@ Doesn't take any extra parser args at the moment.
 =cut
 
 use strict;
-use warnings;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
