@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.26 2004-03-29 12:25:54 grommit Exp $
+# $Id: Table.pm,v 1.27 2004-11-04 16:29:56 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,6 @@ C<SQL::Translator::Schema::Table> is the table object.
 =cut
 
 use strict;
-use Class::Base;
 use SQL::Translator::Utils 'parse_list_arg';
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;
@@ -48,10 +47,11 @@ use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Index;
 use Data::Dumper;
 
-use base 'Class::Base';
+use base 'SQL::Translator::Schema::Object';
+
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Trigger;
 
 # ----------------------------------------------------------------------
-# $Id: Trigger.pm,v 1.3 2004-02-09 22:15:15 kycl4rk Exp $
+# $Id: Trigger.pm,v 1.4 2004-11-04 16:29:56 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -48,13 +48,13 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 =cut
 
 use strict;
-use Class::Base;
 use SQL::Translator::Utils 'parse_list_arg';
 
-use base 'Class::Base';
+use base 'SQL::Translator::Schema::Object';
+
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {

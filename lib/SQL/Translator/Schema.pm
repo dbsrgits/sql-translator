@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.18 2004-10-15 03:52:50 allenday Exp $
+# $Id: Schema.pm,v 1.19 2004-11-04 16:29:56 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -43,7 +43,6 @@ returns the database structure.
 =cut
 
 use strict;
-use Class::Base;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
@@ -52,10 +51,10 @@ use SQL::Translator::Schema::View;
 use SQL::Translator::Schema::Graph;
 use SQL::Translator::Utils 'parse_list_arg';
 
-use base 'Class::Base';
+use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {

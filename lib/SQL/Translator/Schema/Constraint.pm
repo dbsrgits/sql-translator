@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.13 2004-03-29 11:18:12 grommit Exp $
+# $Id: Constraint.pm,v 1.14 2004-11-04 16:29:56 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,14 +44,14 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 =cut
 
 use strict;
-use Class::Base;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 
-use base 'Class::Base';
+use base 'SQL::Translator::Schema::Object';
+
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
