@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.35 2003-08-19 15:46:09 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.36 2003-08-20 16:08:38 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -162,18 +162,18 @@ statement : comment
     | <error>
 
 use : /use/i WORD ';'
-#    { @table_comments = () }
+    { @table_comments = () }
 
 set : /set/i /[^;]+/ ';'
-#    { @table_comments = () }
+    { @table_comments = () }
 
 drop : /drop/i TABLE ';'
 
 drop : /drop/i WORD(s) ';'
-#    { @table_comments = () }
+    { @table_comments = () }
 
 create : CREATE /database/i WORD ';'
-#    { @table_comments = () }
+    { @table_comments = () }
 
 create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     { 
@@ -261,11 +261,13 @@ blank : /\s*/
 field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) field_comment(s?)
     { 
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
-        my $null        = defined $item{'not_null'} ? $item{'not_null'} : 1;
-        delete $qualifiers{'not_null'};
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
             $qualifiers{ $_ } = 1 for @type_quals;
         }
+
+        my $null = defined $qualifiers{'not_null'} 
+                   ? $qualifiers{'not_null'} : 1;
+        delete $qualifiers{'not_null'};
 
         my @comments = ( @{ $item[1] }, @{ $item[6] } );
 
