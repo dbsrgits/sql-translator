@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.6 2003-10-10 16:38:43 dlc Exp $
+# $Id: sqlt,v 1.7 2003-10-10 16:44:27 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclar@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -113,7 +113,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -168,7 +168,8 @@ GetOptions(
     'db-password:s'   => \$db_password,
 ) or pod2usage(2);
 
-my @files = @ARGV || '-'; # source files
+my @files = @ARGV; # source files
+@files = ('-') unless (@files);
 
 pod2usage(1) if $help;
 
