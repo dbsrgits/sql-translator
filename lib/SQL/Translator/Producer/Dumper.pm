@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.3 2004-03-11 17:14:31 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.4 2004-04-23 00:44:10 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -61,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -158,7 +158,7 @@ GetOptions(
 if ( $help ) {
     print <<"USAGE";
 Usage:
-  $0 [options]
+  $0 [options] > dump.sql
 
   Options:
     -h|--help          Show help and exit
