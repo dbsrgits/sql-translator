@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 201;
+use Test::More tests => 202;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -151,6 +151,8 @@ require_ok( 'SQL::Translator::Schema' );
 
     is( $fields[0]->name, 'foo', 'First field is "foo"' );
     is( $fields[1]->name, 'f2', 'Second field is "f2"' );
+    is( join(",",$person_table->field_names), 'foo,f2',
+        'field_names is "foo,f2"' );
 
     #
     # Field methods
