@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.5 2003-05-09 17:11:00 kycl4rk Exp $
+# $Id: Table.pm,v 1.6 2003-06-06 00:10:32 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -79,35 +79,6 @@ Object constructor.
 }
 
 # ----------------------------------------------------------------------
-sub name {
-
-=pod
-
-=head2 name
-
-Get or set the table's name.
-
-If provided an argument, checks the schema object for a table of 
-that name and disallows the change if one exists.
-
-  my $table_name = $table->name('foo');
-
-=cut
-
-    my $self = shift;
-
-    if ( my $arg = shift ) {
-        if ( my $schema = $self->schema ) {
-            return $self->error( qq[Can't use table name "$arg": table exists] )
-                if $schema->get_table( $arg );
-        }
-        $self->{'name'} = $arg;
-    }
-
-    return $self->{'name'} || '';
-}
-
-# ----------------------------------------------------------------------
 sub add_constraint {
 
 =pod
@@ -117,14 +88,14 @@ sub add_constraint {
 Add a constraint to the table.  Returns the newly created 
 C<SQL::Translator::Schema::Constraint> object.
 
-  my $constraint1 = $table->add_constraint(
+  my $c1 = $table->add_constraint(
       name        => 'pk',
       type        => PRIMARY_KEY,
       fields      => [ 'foo_id' ],
   );
 
-  my $constraint2 = SQL::Translator::Schema::Constraint->new( name => 'uniq' );
-  $constraint2    = $table->add_constraint( $constraint );
+  my $c2 = SQL::Translator::Schema::Constraint->new( name => 'uniq' );
+  $c2    = $table->add_constraint( $constraint );
 
 =cut
 
@@ -143,7 +114,40 @@ C<SQL::Translator::Schema::Constraint> object.
             return $self->error( $constraint_class->error );
     }
 
-    push @{ $self->{'constraints'} }, $constraint;
+    #
+    # If we're trying to add a PK when one is already defined,
+    # then just add the fields to the existing definition.
+    #
+    my $ok = 0;
+    my $pk = $self->primary_key;
+    if ( $pk && $constraint->type eq PRIMARY_KEY ) {
+        $self->primary_key( $constraint->fields );
+        $constraint = $pk;
+    }
+    else {
+        my @field_names = $constraint->fields;
+        $ok = 1;
+
+        for my $c ( 
+            grep { $_->type eq $constraint->type } 
+            $self->get_constraints 
+        ) {
+            my %fields = map { $_, 1 } $c->fields;
+            for my $field_name ( @field_names ) {
+                if ( $fields{ $field_name } ) {
+                    $constraint = $c;
+                    $ok = 0; 
+                    last;
+                }
+            }
+            last unless $ok;
+        }
+    }
+
+    if ( $ok ) {
+        push @{ $self->{'constraints'} }, $constraint;
+    }
+
     return $constraint;
 }
 
@@ -157,14 +161,14 @@ sub add_index {
 Add an index to the table.  Returns the newly created
 C<SQL::Translator::Schema::Index> object.
 
-  my $index1 = $table->add_index(
+  my $i1 = $table->add_index(
       name   => 'name',
       fields => [ 'name' ],
       type   => 'normal',
   );
 
-  my $index2 = SQL::Translator::Schema::Index->new( name => 'id' );
-  $index2    = $table->add_index( $index );
+  my $i2 = SQL::Translator::Schema::Index->new( name => 'id' );
+  $i2    = $table->add_index( $index );
 
 =cut
 
@@ -199,21 +203,21 @@ C<SQL::Translator::Schema::Field> object.  The "name" parameter is
 required.  If you try to create a field with the same name as an 
 existing field, you will get an error and the field will not be created.
 
-  my $field1    =  $table->add_field(
+  my $f1    =  $table->add_field(
       name      => 'foo_id',
       data_type => 'integer',
       size      => 11,
   );
 
-  my $field2 =  SQL::Translator::Schema::Field->new( 
+  my $f2 =  SQL::Translator::Schema::Field->new( 
       name   => 'name', 
       table  => $table,
   );
-  $field2    = $table->add_field( $field2 ) or die $table->error;
+  $f2    = $table->add_field( $field2 ) or die $table->error;
 
 =cut
 
-    my $self  = shift;
+    my $self        = shift;
     my $field_class = 'SQL::Translator::Schema::Field';
     my $field;
 
@@ -368,6 +372,35 @@ Determine whether the view is valid or not.
 }
 
 # ----------------------------------------------------------------------
+sub name {
+
+=pod
+
+=head2 name
+
+Get or set the table's name.
+
+If provided an argument, checks the schema object for a table of 
+that name and disallows the change if one exists.
+
+  my $table_name = $table->name('foo');
+
+=cut
+
+    my $self = shift;
+
+    if ( my $arg = shift ) {
+        if ( my $schema = $self->schema ) {
+            return $self->error( qq[Can't use table name "$arg": table exists] )
+                if $schema->get_table( $arg );
+        }
+        $self->{'name'} = $arg;
+    }
+
+    return $self->{'name'} || '';
+}
+
+# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -453,7 +486,7 @@ These are eqivalent:
         }
     }
 
-    return $self->error('No primary key');
+    return;
 }
 
 # ----------------------------------------------------------------------
