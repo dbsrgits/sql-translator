@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.9 2003-10-21 15:12:51 grommit Exp $
+# $Id: SQLFairy.pm,v 1.10 2004-01-29 21:49:19 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -116,8 +116,8 @@ sub produce {
     #
     for my $table ( $schema->get_tables ) {
         debug "Table:",$table->name;
-		xml_obj($xml, $table,
-		 	tag => "table", methods => [qw/name order/], end_tag => 0 );
+        xml_obj($xml, $table,
+             tag => "table", methods => [qw/name order/], end_tag => 0 );
 
         #
         # Fields
@@ -125,14 +125,13 @@ sub produce {
         $xml->startTag( [ $Namespace => 'fields' ] );
         for my $field ( $table->get_fields ) {
             debug "    Field:",$field->name;
-			xml_obj($xml, $field,
-				tag     =>"field",
-				end_tag => 1,
-				methods =>[qw/name data_type default_value is_auto_increment
-                    is_primary_key is_nullable is_foreign_key order size
-                    comments 
-				/],
-			);
+            xml_obj($xml, $field,
+                tag     =>"field",
+                end_tag => 1,
+                methods =>[qw/name data_type size is_nullable default_value
+                    is_auto_increment is_primary_key is_foreign_key comments order
+                /],
+            );
         }
         $xml->endTag( [ $Namespace => 'fields' ] );
 
@@ -142,11 +141,11 @@ sub produce {
         $xml->startTag( [ $Namespace => 'indices' ] );
         for my $index ( $table->get_indices ) {
             debug "Index:",$index->name;
-			xml_obj($xml, $index,
-				tag     => "index",
-				end_tag => 1,
-				methods =>[qw/fields name options type/],
-			);
+            xml_obj($xml, $index,
+                tag     => "index",
+                end_tag => 1,
+                methods =>[qw/ name type fields options/],
+            );
         }
         $xml->endTag( [ $Namespace => 'indices' ] );
 
@@ -156,45 +155,45 @@ sub produce {
         $xml->startTag( [ $Namespace => 'constraints' ] );
         for my $index ( $table->get_constraints ) {
             debug "Constraint:",$index->name;
-			xml_obj($xml, $index,
-				tag     => "constraint",
-				end_tag => 1,
-				methods =>[qw/
-                    deferrable expression fields match_type name 
-                    options on_delete on_update reference_fields
-                    reference_table type/], 
-			);
+            xml_obj($xml, $index,
+                tag     => "constraint",
+                end_tag => 1,
+                methods =>[qw/
+                    name type fields reference_table reference_fields
+                    on_delete on_update match_type expression options deferrable
+                    /],
+            );
         }
         $xml->endTag( [ $Namespace => 'constraints' ] );
 
         $xml->endTag( [ $Namespace => 'table' ] );
     }
-    
+
     #
     # Views
     #
     for my $foo ( $schema->get_views ) {
-		xml_obj($xml, $foo, tag => "view",
+        xml_obj($xml, $foo, tag => "view",
         methods => [qw/name sql fields order/], end_tag => 1 );
     }
-    
+
     #
     # Tiggers
     #
     for my $foo ( $schema->get_triggers ) {
-		xml_obj($xml, $foo, tag => "trigger",
-        methods => [qw/name perform_action_when database_event fields on_table
-        action order/], end_tag => 1 );
+        xml_obj($xml, $foo, tag => "trigger",
+        methods => [qw/name database_event action on_table perform_action_when
+        fields order/], end_tag => 1 );
     }
 
     #
     # Procedures
     #
     for my $foo ( $schema->get_procedures ) {
-		xml_obj($xml, $foo, tag => "procedure",
+        xml_obj($xml, $foo, tag => "procedure",
         methods => [qw/name sql parameters owner comments order/], end_tag=>1 );
     }
-    
+
     $xml->endTag([ $Namespace => 'schema' ]);
     $xml->end;
 
@@ -209,33 +208,34 @@ sub produce {
 #   as Writer ie [ NS => TAGNAME ]
 #
 sub xml_obj {
-	my ($xml, $obj, %args) = @_;
-	my $tag                = $args{'tag'}              || '';
-	my $end_tag            = $args{'end_tag'}          || '';
-	my $attrib_values      = $PArgs->{'attrib_values'} || '';
-	my @meths              = @{ $args{'methods'} };
-	my $empty_tag          = 0;
+    my ($xml, $obj, %args) = @_;
+    my $tag                = $args{'tag'}              || '';
+    my $end_tag            = $args{'end_tag'}          || '';
+    my $attrib_values      = $PArgs->{'attrib_values'} || '';
+    my @meths              = @{ $args{'methods'} };
+    my $empty_tag          = 0;
 
-	if ( $attrib_values and $end_tag ) {
-		$empty_tag = 1;
-		$end_tag   = 0;
-	}
+    if ( $attrib_values and $end_tag ) {
+        $empty_tag = 1;
+        $end_tag   = 0;
+    }
 
-	if ( $attrib_values ) {
+    if ( $attrib_values ) {
         # Use array to ensure consistant (ie not hash) ordering of attribs
-		my @attr = map { 
-			my $val = $obj->$_;
-			($_ => ref($val) eq 'ARRAY' ? join(', ', @$val) : $val);
-		} grep { defined $obj->$_ } sort @meths;
+        # The order comes from the meths list passes in.
+        my @attr = map {
+            my $val = $obj->$_;
+            ($_ => ref($val) eq 'ARRAY' ? join(', ', @$val) : $val);
+        } grep { defined $obj->$_ } @meths;
         $empty_tag ? $xml->emptyTag( [ $Namespace => $tag ], @attr )
-		           : $xml->startTag( [ $Namespace => $tag ], @attr );
-	}
-	else {
-		$xml->startTag( [ $Namespace => $tag ] );
-		xml_objAttr( $xml, $obj, @meths );
-	}
+                   : $xml->startTag( [ $Namespace => $tag ], @attr );
+    }
+    else {
+        $xml->startTag( [ $Namespace => $tag ] );
+        xml_objAttr( $xml, $obj, @meths );
+    }
 
-	$xml->endTag( [ $Namespace => $tag ] ) if $end_tag;
+    $xml->endTag( [ $Namespace => $tag ] ) if $end_tag;
 }
 
 # -------------------------------------------------------------------
@@ -246,7 +246,7 @@ sub xml_objAttr {
     my ($xml, $obj, @methods) = @_;
     my $emit_empty            = $PArgs->{'emit_empty_tags'};
 
-	for my $method ( sort @methods ) {
+    for my $method ( @methods ) {
         my $val = $obj->$method;
         debug "        ".ref($obj)."->$method=",
               (defined $val ? "'$val'" : "<UNDEF>");
@@ -270,8 +270,8 @@ sub xml_objAttr {
 
 =head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>, 
-Darren Chamberlain E<lt>darren@cpan.orgE<gt>, 
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
 Mark Addison E<lt>mark.addison@itn.co.ukE<gt>.
 
 =head1 SEE ALSO
