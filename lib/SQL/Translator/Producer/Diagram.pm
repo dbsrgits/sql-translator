@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.2 2003-04-24 19:40:52 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.3 2003-06-09 04:40:50 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -23,10 +23,11 @@ package SQL::Translator::Producer::Diagram;
 use strict;
 use GD;
 use Data::Dumper;
+use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -42,10 +43,11 @@ use constant VALID_IMAGE_TYPE => {
 };
 
 sub produce {
-    my ($t, $data) = @_;
+    my $t          = shift;
+    my $schema     = $t->schema;
     my $args       = $t->producer_args;
     local $DEBUG   = $t->debug;
-    debug("Data =\n", Dumper( $data ));
+    debug("Schema =\n", Dumper( $schema ));
     debug("Producer args =\n", Dumper( $args ));
 
     my $out_file     = $args->{'out_file'}   || '';
@@ -59,7 +61,12 @@ sub produce {
     my $join_pk_only = $args->{'join_pk_only'};
     my $natural_join = $args->{'natural_join'} || $join_pk_only;
     my $skip_fields  = $args->{'skip_fields'};
-    my %skip         = map { $_, 1 } split ( /,/, $skip_fields );
+    my %skip         = map { s/^\s+|\s+$//g; $_,1 } split (/,/, $skip_fields);
+
+    $schema->make_natural_joins(
+        join_pk_only => $join_pk_only,
+        skip_fields  => $args->{'skip_fields'},
+    ) if $natural_join;
 
     die "Invalid image type '$image_type'"
         unless VALID_IMAGE_TYPE ->{ $image_type  };
@@ -73,7 +80,8 @@ sub produce {
         $font_size eq 'small'  ? gdTinyFont  :
         $font_size eq 'medium' ? gdSmallFont :
         $font_size eq 'large'  ? gdLargeFont : gdGiantFont;
-    my $no_tables    = scalar keys %$data;
+    my @tables       = $schema->get_tables;
+    my $no_tables    = scalar @tables;
     $no_columns      = 0 unless $no_columns =~ /^\d+$/;
     $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
     $no_columns    ||= .5;
@@ -91,82 +99,11 @@ sub produce {
     my @fk_registry;                # for locations of fields for foreign keys
     my %table_x;                    # for max x of each table
     my $field_no;                   # counter to give distinct no. to each field
+    my %coords;                     # holds fields coordinates
     my %legend;
 
-    #
-    # If necessary, pre-process fields to find foreign keys.
-    #
-    if ( $show_fk_only && $natural_join ) {
-        my ( %common_keys, %pk );
-        for my $table ( values %$data ) {
-            for my $index ( 
-                @{ $table->{'indices'}     || [] },
-                @{ $table->{'constraints'} || [] },
-            ) {
-                my @fields = @{ $index->{'fields'} || [] } or next;
-                if ( $index->{'type'} eq 'primary_key' ) {
-                    $pk{ $_ } = 1 for @fields;
-                }
-            }
-
-            for my $field ( values %{ $table->{'fields'} } ) {
-                push @{ $common_keys{ $field->{'name'} } }, 
-                    $table->{'table_name'};
-            }
-        }
-
-        for my $field ( keys %common_keys ) {
-            my @tables = @{ $common_keys{ $field } };
-            next unless scalar @tables > 1;
-            for my $table ( @tables ) {
-                next if $join_pk_only and !defined $pk{ $field };
-                $data->{ $table }{'fields'}{ $field }{'is_fk'} = 1;
-            }
-        }
-    }
-    else {
-        for my $table ( values %$data ) {
-            for my $field ( values %{ $table->{'fields'} } ) {
-                for my $constraint ( 
-                    grep { $_->{'type'} eq 'foreign_key' }
-                    @{ $field->{'constraints'} }
-                ) {
-                    my $ref_table  = $constraint->{'reference_table'} or next;
-                    my @ref_fields = @{$constraint->{'reference_fields'} || []};
-
-                    unless ( @ref_fields ) {
-                        for my $field ( 
-                            values %{ $data->{ $ref_table }{'fields'} } 
-                        ) {
-                            for my $pk (
-                                grep { $_->{'type'} eq 'primary_key' }
-                                @{ $field->{'constraints'} }
-                            ) {
-                                push @ref_fields, @{ $pk->{'fields'} };
-                            }
-                        }
-
-                        $constraint->{'reference_fields'} = [ @ref_fields ];
-                    }
-
-                    for my $ref_field ( 
-                        @{ $constraint->{'reference_fields'} } 
-                    ) {
-                        $data->{$ref_table}{'fields'}{$ref_field}{'is_fk'} = 1;
-                    }
-                }
-            }
-        }
-    }
-
-
-    for my $table (
-        map  { $_->[1] }
-        sort { $a->[0] <=> $b->[0] }
-        map  { [ $_->{'order'}, $_ ] }
-        values %$data 
-    ) {
-        my $table_name = $table->{'table_name'};
+    for my $table ( @tables ) {
+        my $table_name = $table->name;
         my $top        = $y;
         push @shapes, 
             [ 'string', $font, $this_col_x, $y, $table_name, 'black' ];
@@ -179,65 +116,32 @@ sub produce {
 
         debug("Processing table '$table_name'");
 
-        my @fields = 
-            map  { $_->[1] }
-            sort { $a->[0] <=> $b->[0] }
-            map  { [ $_->{'order'}, $_ ] }
-            values %{ $table->{'fields'} };
-
-        debug("Fields = ", join(', ', map { $_->{'name'} } @fields));
-
-        my ( %pk, %unique );
-        for my $index ( 
-            @{ $table->{'indices'}     || [] },
-            @{ $table->{'constraints'} || [] },
-        ) {
-            my @fields = @{ $index->{'fields'} || [] } or next;
-            if ( $index->{'type'} eq 'primary_key' ) {
-                $pk{ $_ } = 1 for @fields;
-            }
-            elsif ( $index->{'type'} eq 'unique' ) {
-                $unique{ $_ } = 1 for @fields;
-            }
-        }
-
-        debug("PK = ", join(', ', sort keys %pk)) if %pk;
-        debug("Unique = ", join(', ', sort keys %unique)) if %unique;
+        my @fields = $table->get_fields;
+        debug("Fields = ", join(', ', map { $_->name } @fields));
 
         my ( @fld_desc, $max_name );
         for my $f ( @fields ) {
-            my $name      = $f->{'name'} or next;
-            my $is_pk     = $pk{ $name };
-            my $is_unique = $unique{ $name };
+            my $name  = $f->name or next;
+            my $is_pk = $f->is_primary_key;
 
             #
             # Decide if we should skip this field.
             #
             if ( $show_fk_only ) {
-                if ( $natural_join ) {
-                    next unless $is_pk || $f->{'is_fk'};
-                }
-                else {
-                    next unless $is_pk || $f->{'is_fk'} || 
-                        grep { $_->{'type'} eq 'foreign_key' }
-                        @{ $f->{'constraints'} }
-                    ;
-                }
+                next unless $is_pk || $f->is_foreign_key;
             }
 
             if ( $is_pk ) {
                 $name .= ' *';
                 $legend{'Primary key'} = '*';
             }
-            elsif ( $is_unique ) {
+            elsif ( $f->is_unique ) {
                 $name .= ' [U]';
                 $legend{'Unique constraint'} = '[U]';
             }
 
-            my $size = @{ $f->{'size'} || [] } 
-                ? '(' . join( ',', @{ $f->{'size'} } ) . ')'
-                : '';
-            my $desc = join( ' ', map { $_ || () } $f->{'data_type'}, $size );
+            my $desc = $f->data_type;
+            $desc   .= '('.$f->size.')' if $f->size;
             
             my $nlen  = length $name;
             $max_name = $nlen if $nlen > $max_name;
@@ -261,24 +165,9 @@ sub produce {
             if ( $natural_join && !$skip{ $orig_name } ) {
                 push @{ $nj_registry{ $orig_name } }, $table_name;
             }
-            elsif ( @{ $constraints || [] } ) {
-                for my $constraint ( @$constraints ) {
-                    next unless $constraint->{'type'} eq 'foreign_key';
-                    for my $fk_field ( 
-                        @{ $constraint->{'reference_fields'} || [] }
-                    ) {
-                        my $fk_table = $constraint->{'reference_table'};
-                        next unless defined $data->{ $fk_table };
-                        push @fk_registry, [
-                            [ $table_name, $orig_name ],
-                            [ $fk_table  , $fk_field  ],
-                        ];
-                    }
-                }
-            }
 
             my $y_link = $y - $font->height/2;
-            $table->{'fields'}{ $orig_name }{'coords'} = {
+            $coords{ $table_name }{ $orig_name }{'coords'} = {
                 left     => [ $this_col_x - 6, $y_link ],
                 right    => [ $length + 2    , $y_link ],
                 table    => $table_name,
@@ -286,6 +175,23 @@ sub produce {
                 is_pk    => $is_pk,
                 fld_name => $orig_name,
             };
+        }
+
+        unless ( $natural_join ) {
+            for my $c ( $table->get_constraints ) {
+                next unless $c->type eq FOREIGN_KEY;
+                my $fk_table = $c->reference_table or next;
+
+                for my $field_name ( $c->fields ) {
+                    for my $fk_field ( $c->reference_fields ) {
+                        next unless defined $schema->get_table( $fk_table );
+                        push @fk_registry, [
+                            [ $table_name, $field_name ],
+                            [ $fk_table  , $fk_field  ],
+                        ];
+                    }
+                }
+            }
         }
 
         $this_max_x += 5;
@@ -333,7 +239,7 @@ sub produce {
 
                 for my $table_name ( @table_names ) {
                     push @positions,
-                        $data->{$table_name}{'fields'}{ $field_name }{'coords'};
+                        $coords{ $table_name }{ $field_name }{'coords'};
                 }
 
                 push @position_bunches, [ @positions ];
@@ -342,8 +248,8 @@ sub produce {
         else {
             for my $pair ( @fk_registry ) {
                 push @position_bunches, [ 
-                    $data->{$pair->[0][0]}{'fields'}{ $pair->[0][1] }{'coords'},
-                    $data->{$pair->[1][0]}{'fields'}{ $pair->[1][1] }{'coords'},
+                    $coords{$pair->[0][0]}{ $pair->[0][1] }{'coords'},
+                    $coords{$pair->[1][0]}{ $pair->[1][1] }{'coords'},
                 ];
             }
         }
