@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.28 2003-08-04 15:19:08 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.29 2003-08-08 22:22:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -156,11 +156,14 @@ eofile : /^\Z/
 
 statement : comment
     | use
+    | set
     | drop
     | create
     | <error>
 
 use : /use/i WORD ';'
+
+set : /set/i /[^;]+/ ';'
 
 drop : /drop/i WORD(s) ';'
 
@@ -237,7 +240,7 @@ create_definition : constraint
 
 comment : /^\s*(?:#|-{2}).*\n/ { 
     my $comment =  $item[1];
-    $comment    =~ s/^\s*(#|-{2})//;
+    $comment    =~ s/^\s*(#|-{2})\s*//;
     $comment    =~ s/\s*$//;
     $return     = $comment;
 }
