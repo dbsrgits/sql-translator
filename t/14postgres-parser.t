@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 107;
+use Test::More tests => 117;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::PostgreSQL qw(parse);
@@ -25,7 +25,9 @@ my $sql = q[
     create table t_test2 (
         f_id integer NOT NULL,
         f_varchar varchar(25),
-        primary key (f_id)
+        f_int smallint,
+        primary key (f_id),
+        check (f_int between 1 and 5)
     );
 
     alter table only t_test1 add constraint c_u1 unique (f_varchar);
@@ -176,7 +178,7 @@ my $t2 = shift @tables;
 is( $t2->name, 't_test2', 'Table t_test2 exists' );
 
 my @t2_fields = $t2->get_fields;
-is( scalar @t2_fields, 2, '2 fields in t_test2' );
+is( scalar @t2_fields, 3, '3 fields in t_test2' );
 
 my $t2_f1 = shift @t2_fields;
 is( $t2_f1->name, 'f_id', 'First field is "f_id"' );
@@ -187,9 +189,29 @@ is( $t2_f1->default_value, undef, 'Default value is undefined' );
 is( $t2_f1->is_primary_key, 1, 'Field is PK' );
 
 my $t2_f2 = shift @t2_fields;
-is( $t2_f2->name, 'f_varchar', 'First field is "f_varchar"' );
+is( $t2_f2->name, 'f_varchar', 'Second field is "f_varchar"' );
 is( $t2_f2->data_type, 'varchar', 'Field is an varchar' );
 is( $t2_f2->is_nullable, 1, 'Field can be null' );
 is( $t2_f2->size, 25, 'Size is "25"' );
 is( $t2_f2->default_value, undef, 'Default value is undefined' );
 is( $t2_f2->is_primary_key, 0, 'Field is not PK' );
+
+my $t2_f3 = shift @t2_fields;
+is( $t2_f3->name, 'f_int', 'Third field is "f_int"' );
+is( $t2_f3->data_type, 'integer', 'Field is an integer' );
+is( $t2_f3->is_nullable, 1, 'Field can be null' );
+is( $t2_f3->size, 5, 'Size is "5"' );
+is( $t2_f3->default_value, undef, 'Default value is undefined' );
+is( $t2_f3->is_primary_key, 0, 'Field is not PK' );
+
+my @t2_constraints = $t2->get_constraints;
+is( scalar @t2_constraints, 3, "Three constraints on table" );
+
+my $t2_c1 = shift @t2_constraints;
+is( $t2_c1->type, NOT_NULL, "Constraint is NOT NULL" );
+
+my $t2_c2 = shift @t2_constraints;
+is( $t2_c2->type, PRIMARY_KEY, "Constraint is a PK" );
+
+my $t2_c3 = shift @t2_constraints;
+is( $t2_c3->type, CHECK_C, "Constraint is a 'CHECK'" );
