@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
+# vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.3 2003-09-03 14:52:50 dlc Exp $
+# $Id: sqlt,v 1.4 2003-10-03 17:08:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclar@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -48,6 +49,12 @@ To translate a schema:
     -v|--validate      Validate the schema
     --trace            Print parser trace info
     --show-warnings    Print warnings to STDERR
+
+  DBI Parser Options:
+
+    --dsn              DSN for connecting to database
+    --db-user          Database user
+    --db-password      Database password              
 
   xSV Parser Options:
 
@@ -106,7 +113,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -130,6 +137,9 @@ my $template;         # template to pass to TTSchema producer
 my $title;            # title for HTML/POD producer
 my $emit_empty_tags;  # show empty XML tags
 my $attrib_values;    # use XML attributes instead of tags
+my $dsn;              # DBI parser 
+my $db_user;          # DBI parser 
+my $db_password;      # DBI parser 
 
 GetOptions(
     'add-drop-table'  => \$add_drop_table,
@@ -153,6 +163,9 @@ GetOptions(
     'title:s'         => \$title,
     'trace'           => \$trace,
     'v|validate'      => \$validate,
+    'dsn:s'           => \$dsn,
+    'db-user:s'       => \$db_user,
+    'db-password:s'   => \$db_password,
 ) or pod2usage(2);
 
 my @files = @ARGV; # source files
@@ -171,6 +184,9 @@ my $translator           =  SQL::Translator->new(
         scan_fields      => $no_scan ? 0 : 1,
         field_separator  => $field_separator,
         record_separator => $record_separator,
+        dsn              => $dsn,
+        db_user          => $db_user,
+        db_password      => $db_password,
     },
     producer_args   => {
         imap_file        => $imap_file,
