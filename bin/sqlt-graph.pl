@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-graph.pl,v 1.3 2003-06-05 01:51:29 kycl4rk Exp $
+# $Id: sqlt-graph.pl,v 1.1 2003-06-16 18:23:08 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -67,7 +67,7 @@ use GraphViz;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.3 $)[-1];
+my $VERSION = (qw$Revision: 1.1 $)[-1];
 
 #
 # Get arguments.
