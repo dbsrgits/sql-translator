@@ -1,0 +1,12 @@
+MANIFEST
+Makefile.PL
+bin/sql_translator.pl
+lib/SQL/Translator.pm
+lib/SQL/Translator/Parser.pm
+lib/SQL/Translator/Parser/MySQL.pm
+lib/SQL/Translator/Parser/Sybase.pm
+lib/SQL/Translator/Producer.pm
+lib/SQL/Translator/Producer/Oracle.pm
+lib/SQL/Translator/Producer/XML.pm
+t/02mysql-parser.t
+t/data/mysql/Apache-Session-MySQL.sql
