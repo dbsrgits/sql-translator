@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.13 2003-08-17 00:46:23 rossta Exp $
+# $Id: PostgreSQL.pm,v 1.14 2003-08-18 15:43:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -197,16 +197,16 @@ sub produce {
             my $data_type = lc $field->data_type;
             my %extra     = $field->extra;
             my $list      = $extra{'list'} || [];
-            # \todo deal with embedded quotes
-            my $commalist = "'" . join("','", @$list) . "'";
+            # todo deal with embedded quotes
+            my $commalist = join( ', ', map { qq['$_'] } @$list );
             my $seq_name;
 
             if ( $data_type eq 'enum' ) {
                 my $len = 0;
                 $len = ($len < length($_)) ? length($_) : $len for (@$list);
-                my $check_name = mk_name( $table_name.'_'.$field_name, 'chk' );
+                my $chk_name = mk_name( $table_name.'_'.$field_name, 'chk' );
                 push @constraint_defs, 
-                "CONSTRAINT $check_name CHECK (\"$field_name\" IN ($commalist))";
+                qq[CONSTRAINT $chk_name CHECK ("$field_name" IN ($commalist))];
                 $data_type = 'character varying';
             }
             elsif ( $data_type eq 'set' ) {

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.25 2003-08-16 20:11:39 rossta Exp $
+# $Id: MySQL.pm,v 1.26 2003-08-18 15:43:14 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -89,7 +89,7 @@ sub produce {
             my %extra     = $field->extra;
             my $list      = $extra{'list'} || [];
             # \todo deal with embedded quotes
-            my $commalist = "'" . join("','", @$list) . "'";
+            my $commalist = join( ', ', map { qq['$_'] } @$list );
 
             #
             # Oracle "number" type -- figure best MySQL type
