@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.52 2004-04-25 18:08:06 boconnor Exp $
+# $Id: Turnkey.pm,v 1.53 2004-06-24 00:35:36 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -222,6 +222,7 @@ sub template {
 package [% node.name %];
 use base '[% node.base %]';
 use Class::DBI::Pager;
+no warnings qw(redefine);
 
 [% node.name %]->set_up_table('[% node.table.name %]');
 [% printPKAccessors(node.primary_key, node.table.name) %]
