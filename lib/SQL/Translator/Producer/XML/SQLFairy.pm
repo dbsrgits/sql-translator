@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.6 2003-10-20 11:50:38 dlc Exp $
+# $Id: SQLFairy.pm,v 1.7 2003-10-20 13:15:23 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -169,7 +169,32 @@ sub produce {
 
         $xml->endTag( [ $Namespace => 'table' ] );
     }
+    
+    #
+    # Views
+    #
+    for my $foo ( $schema->get_views ) {
+		xml_obj($xml, $foo, tag => "view",
+        methods => [qw/name sql fields order/], end_tag => 1 );
+    }
+    
+    #
+    # Tiggers
+    #
+    for my $foo ( $schema->get_triggers ) {
+		xml_obj($xml, $foo, tag => "trigger",
+        methods => [qw/name perform_action_when database_event fields on_table
+        action order/], end_tag => 1 );
+    }
 
+    #
+    # Procedures
+    #
+    for my $foo ( $schema->get_procedures ) {
+		xml_obj($xml, $foo, tag => "procedure",
+        methods => [qw/name sql parameters owner comments order/], end_tag=>1 );
+    }
+    
     $xml->endTag([ $Namespace => 'schema' ]);
     $xml->end;
 

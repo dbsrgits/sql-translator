@@ -33,16 +33,17 @@ if ($@ && $@ =~ m!locate Test/Differences.pm in!) {
     plan skip_all => "You need Test::Differences for this test.";
 }
 use Test::Differences;
-plan tests => 9;
+plan tests => 18;
     
 use SQL::Translator;
 use SQL::Translator::Producer::XML::SQLFairy;
 
-my ($obj,$ans,$xml);
 
 #
 # emit_empty_tags => 0
 #
+{
+my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
@@ -152,9 +153,13 @@ print "XML:\n$xml" if DEBUG;
 $xml =~ s/^([^\n]*\n){7}//m; 
 eq_or_diff $xml, $ans                       ,"XML looks right";
 
+} # end emit_empty_tags=>0
+
 #
 # emit_empty_tags => 1
 #
+{
+my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
@@ -253,7 +258,6 @@ $ans = <<EOXML;
 </sqlt:schema>
 EOXML
 
-undef $obj;
 $obj = SQL::Translator->new(
     debug          => DEBUG,
     trace          => TRACE,
@@ -270,27 +274,29 @@ print "XML emit_empty_tags=>1:\n$xml" if DEBUG;
 $xml =~ s/^([^\n]*\n){7}//m; 
 eq_or_diff $xml, $ans                       ,"XML looks right";
 
-
+} # end emit_empty_tags => 1
 
 #
 # attrib_values => 1
 #
+{
+my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <sqlt:schema database="" name="" xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <sqlt:table order="3" name="Basic">
     <sqlt:fields>
-      <sqlt:field comments="comment on id field" is_primary_key="1" data_type="integer" name="id" is_foreign_key="0" is_auto_increment="1" is_nullable="0" order="9" size="10" />
-      <sqlt:field comments="" is_primary_key="0" data_type="varchar" name="title" is_foreign_key="0" is_nullable="0" is_auto_increment="0" order="10" size="100" default_value="hello" />
-      <sqlt:field comments="" is_primary_key="0" data_type="text" name="description" is_foreign_key="0" is_nullable="1" is_auto_increment="0" order="11" size="65535" default_value="" />
-      <sqlt:field comments="" is_primary_key="0" data_type="varchar" name="email" is_foreign_key="0" is_nullable="1" is_auto_increment="0" order="12" size="255" />
+      <sqlt:field is_primary_key="1" is_foreign_key="0" name="id" comments="comment on id field" size="10" data_type="integer" is_auto_increment="1" order="9" is_nullable="0" />
+      <sqlt:field is_primary_key="0" is_foreign_key="0" name="title" comments="" size="100" is_auto_increment="0" data_type="varchar" order="10" default_value="hello" is_nullable="0" />
+      <sqlt:field is_primary_key="0" is_foreign_key="0" name="description" comments="" size="65535" is_auto_increment="0" data_type="text" order="11" default_value="" is_nullable="1" />
+      <sqlt:field is_primary_key="0" is_foreign_key="0" name="email" comments="" size="255" is_auto_increment="0" data_type="varchar" order="12" is_nullable="1" />
     </sqlt:fields>
     <sqlt:indices>
       <sqlt:index options="" name="titleindex" fields="title" type="NORMAL" />
     </sqlt:indices>
     <sqlt:constraints>
-      <sqlt:constraint reference_table="" options="" deferrable="1" name="" fields="id" on_delete="" expression="" on_update="" match_type="" type="PRIMARY KEY" />
-      <sqlt:constraint reference_table="" options="" deferrable="1" name="" fields="email" on_delete="" expression="" on_update="" match_type="" type="UNIQUE" />
+      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="id" expression="" type="PRIMARY KEY" />
+      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="email" expression="" type="UNIQUE" />
     </sqlt:constraints>
   </sqlt:table>
 </sqlt:schema>
@@ -312,3 +318,161 @@ print "XML attrib_values=>1:\n$xml" if DEBUG;
 $xml =~ s/^([^\n]*\n){7}//m; 
 eq_or_diff $xml, $ans                       ,"XML looks right";
 
+} # end attrib_values => 1
+
+#
+# View
+#
+# Thanks to Ken for the schema setup lifted from 13schema.t
+{
+my ($obj,$ans,$xml);
+
+$ans = <<EOXML;
+<sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <sqlt:database></sqlt:database>
+  <sqlt:name></sqlt:name>
+  <sqlt:view>
+    <sqlt:fields>name,age</sqlt:fields>
+    <sqlt:name>foo_view</sqlt:name>
+    <sqlt:order>1</sqlt:order>
+    <sqlt:sql>select name, age from person</sqlt:sql>
+  </sqlt:view>
+</sqlt:schema>
+EOXML
+
+    $obj = SQL::Translator->new(
+        debug          => DEBUG,
+        trace          => TRACE,
+        show_warnings  => 1,
+        add_drop_table => 1,
+        from           => "MySQL",
+        to             => "XML-SQLFairy",
+    );
+    my $s      = $obj->schema;
+    my $name   = 'foo_view';
+    my $sql    = 'select name, age from person';
+    my $fields = 'name, age';
+    my $v      = $s->add_view(
+        name   => $name,
+        sql    => $sql,
+        fields => $fields,
+        schema => $s,
+    ) or die $s->error;
+    
+    # As we have created a Schema we give translate a dummy string so that
+    # it will run the produce.
+    lives_ok {$xml =$obj->translate("FOO");} "Translate (View) ran";
+    ok("$xml" ne ""                             ,"Produced something!");
+    print "XML attrib_values=>1:\n$xml" if DEBUG;
+    # Strip sqlf header with its variable date so we diff safely
+    $xml =~ s/^([^\n]*\n){7}//m; 
+    eq_or_diff $xml, $ans                       ,"XML looks right";
+} # end View
+
+#
+# Trigger
+#
+# Thanks to Ken for the schema setup lifted from 13schema.t
+{
+my ($obj,$ans,$xml);
+
+$ans = <<EOXML;
+<sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <sqlt:database></sqlt:database>
+  <sqlt:name></sqlt:name>
+  <sqlt:trigger>
+    <sqlt:action>update modified=timestamp();</sqlt:action>
+    <sqlt:database_event>insert</sqlt:database_event>
+    <sqlt:name>foo_trigger</sqlt:name>
+    <sqlt:on_table>foo</sqlt:on_table>
+    <sqlt:order>1</sqlt:order>
+    <sqlt:perform_action_when>after</sqlt:perform_action_when>
+  </sqlt:trigger>
+</sqlt:schema>
+EOXML
+
+    $obj = SQL::Translator->new(
+        debug          => DEBUG,
+        trace          => TRACE,
+        show_warnings  => 1,
+        add_drop_table => 1,
+        from           => "MySQL",
+        to             => "XML-SQLFairy",
+    );
+    my $s                   = $obj->schema;
+    my $name                = 'foo_trigger';
+    my $perform_action_when = 'after';
+    my $database_event      = 'insert';
+    my $on_table            = 'foo';
+    my $action              = 'update modified=timestamp();';
+    my $t                   = $s->add_trigger(
+        name                => $name,
+        perform_action_when => $perform_action_when,
+        database_event      => $database_event,
+        on_table            => $on_table,
+        action              => $action,
+    ) or die $s->error;
+    
+    # As we have created a Schema we give translate a dummy string so that
+    # it will run the produce.
+    lives_ok {$xml =$obj->translate("FOO");} "Translate (Trigger) ran";
+    ok("$xml" ne ""                             ,"Produced something!");
+    print "XML attrib_values=>1:\n$xml" if DEBUG;
+    # Strip sqlf header with its variable date so we diff safely
+    $xml =~ s/^([^\n]*\n){7}//m; 
+    eq_or_diff $xml, $ans                       ,"XML looks right";
+} # end Trigger
+
+#
+# Procedure
+#
+# Thanks to Ken for the schema setup lifted from 13schema.t
+{
+my ($obj,$ans,$xml);
+
+$ans = <<EOXML;
+<sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <sqlt:database></sqlt:database>
+  <sqlt:name></sqlt:name>
+  <sqlt:procedure>
+    <sqlt:comments>Go Sox!</sqlt:comments>
+    <sqlt:name>foo_proc</sqlt:name>
+    <sqlt:order>1</sqlt:order>
+    <sqlt:owner>Nomar</sqlt:owner>
+    <sqlt:parameters>foo,bar</sqlt:parameters>
+    <sqlt:sql>select foo from bar</sqlt:sql>
+  </sqlt:procedure>
+</sqlt:schema>
+EOXML
+
+    $obj = SQL::Translator->new(
+        debug          => DEBUG,
+        trace          => TRACE,
+        show_warnings  => 1,
+        add_drop_table => 1,
+        from           => "MySQL",
+        to             => "XML-SQLFairy",
+    );
+    my $s          = $obj->schema;
+    my $name       = 'foo_proc';
+    my $sql        = 'select foo from bar';
+    my $parameters = 'foo, bar';
+    my $owner      = 'Nomar';
+    my $comments   = 'Go Sox!';
+    my $p          = $s->add_procedure(
+        name       => $name,
+        sql        => $sql,
+        parameters => $parameters,
+        owner      => $owner,
+        comments   => $comments,
+    ) or die $s->error;
+    
+    # As we have created a Schema we give translate a dummy string so that
+    # it will run the produce.
+    lives_ok {$xml =$obj->translate("FOO");} "Translate (Procedure) ran";
+    ok("$xml" ne ""                             ,"Produced something!");
+    print "XML attrib_values=>1:\n$xml" if DEBUG;
+    # Strip sqlf header with its variable date so we diff safely
+    $xml =~ s/^([^\n]*\n){7}//m; 
+    eq_or_diff $xml, $ans                       ,"XML looks right";
+} # end Procedure
