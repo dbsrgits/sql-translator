@@ -29,6 +29,7 @@ lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/Sybase.pm
 lib/SQL/Translator/Producer/SqlfXML.pm
+lib/SQL/Translator/Producer/TTSchema.pm
 lib/SQL/Translator/Schema.pm
 lib/SQL/Translator/Schema/Constants.pm
 lib/SQL/Translator/Schema/Constraint.pm
