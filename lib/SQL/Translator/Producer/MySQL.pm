@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.6 2003-02-25 05:02:06 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.7 2003-02-26 05:17:49 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -162,8 +162,13 @@ sub produce {
                         ( $match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
                 }
 
-                $def .= " ON DELETE $on_delete" if $on_delete;
-                $def .= " ON UPDATE $on_update" if $on_update;
+                if ( @{ $on_delete || [] } ) {
+                    $def .= ' ON DELETE '.join(' ', @$on_delete);
+                }
+
+                if ( @{ $on_update || [] } ) {
+                    $def .= ' ON UPDATE '.join(' ', @$on_update);
+                }
 
                 push @constraints, $def;
             }
