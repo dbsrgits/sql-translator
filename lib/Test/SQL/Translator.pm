@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.2 2004-02-29 20:10:35 grommit Exp $
+# $Id: Translator.pm,v 1.3 2004-02-29 20:32:39 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,7 +34,7 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 @EXPORT = qw( 
     schema_ok
     table_ok
@@ -529,6 +529,11 @@ table_ok, field_ok, constraint_ok, index_ok, view_ok, trigger_ok, procedure_ok
 =item schema_ok()
 
 Test whole schema.
+
+=item Test Count Constants
+
+Constants to give the number of tests each *_ok sub uses. e.g. How many tests 
+does field_ok run? Can then use these to set up the test plan easily.
 
 =item Test skipping
 
