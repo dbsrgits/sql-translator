@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 105;
+use Test::More tests => 107;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::PostgreSQL qw(parse);
@@ -56,6 +56,7 @@ is( $f1->is_nullable, 0, 'Field cannot be null' );
 is( $f1->size, 4, 'Size is "4"' );
 is( $f1->default_value, '0', 'Default value is "0"' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
+is( $f1->is_auto_increment, 1, 'Field is auto increment' );
 
 my $f2 = shift @t1_fields;
 is( $f2->name, 'f_varchar', 'Second field is "f_varchar"' );
@@ -64,6 +65,7 @@ is( $f2->is_nullable, 1, 'Field can be null' );
 is( $f2->size, 255, 'Size is "255"' );
 is( $f2->default_value, undef, 'Default value is undefined' );
 is( $f2->is_primary_key, 0, 'Field is not PK' );
+is( $f2->is_auto_increment, 0, 'Field is not auto increment' );
 
 my $f3 = shift @t1_fields;
 is( $f3->name, 'f_double', 'Third field is "f_double"' );
