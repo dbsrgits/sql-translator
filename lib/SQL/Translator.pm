@@ -1,8 +1,8 @@
 package SQL::Translator;
 
-#-----------------------------------------------------
-# $Id: Translator.pm,v 1.3.2.2 2002-03-15 20:13:46 dlc Exp $
-#-----------------------------------------------------
+# ----------------------------------------------------------------------
+# $Id: Translator.pm,v 1.3.2.3 2002-03-18 20:35:51 dlc Exp $
+# ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
 #
@@ -29,10 +29,12 @@ SQL::Translator - convert schema from one database to another
 
   use SQL::Translator;
   my $translator = SQL::Translator->new;
-  $translator->parser("MySQL");
-  $translator->producer("Oracle");
 
-  my $output = $translator->translate($file) or die $translator->error;
+  my $output = $translator->translate(
+                      from     => "MySQL",
+                      to       => "Oracle",
+                      filename => $file,
+               ) or die $translator->error;
   print $output;
 
 =head1 DESCRIPTION
@@ -40,8 +42,8 @@ SQL::Translator - convert schema from one database to another
 This module attempts to simplify the task of converting one database
 create syntax to another through the use of Parsers and Producers.
 The idea is that any Parser can be used with any Producer in the
-conversion process.  So, if you wanted PostgreSQL-to-Oracle, you could
-just write the PostgreSQL parser and use an existing Oracle producer.
+conversion process.  So, if you wanted PostgreSQL-to-Oracle, you would
+use the PostgreSQL parser and the Oracle producer.
 
 Currently, the existing parsers use Parse::RecDescent, but this not
 a requirement, or even a recommendation.  New parser modules don't
@@ -55,13 +57,19 @@ contributing their parsers or producers back to the project.
 
 use strict;
 use vars qw($VERSION $DEFAULT_SUB $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3.2.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3.2.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
-$DEFAULT_SUB = sub { $_[0] } unless defined $DEFAULT_SUB;
+# ----------------------------------------------------------------------
+# The default behavior is to "pass through" values (note that the
+# SQL::Translator instance is the first value ($_[0]), and the stuff
+# to be parsed is the second value ($_[1])
+# ----------------------------------------------------------------------
+$DEFAULT_SUB = sub { $_[1] } unless defined $DEFAULT_SUB;
 
-*can = \&UNIVERSAL::can;
 *isa = \&UNIVERSAL::isa;
+
+use Carp qw(carp);
 
 =head1 CONSTRUCTOR
 
@@ -79,29 +87,47 @@ Valid options are:
 =back
 
 All options are, well, optional; these attributes can be set via
-instance methods.
+instance methods.  Internally, they are; no (non-syntactical)
+advantage is gained by passing options to the constructor.
 
 =cut
 
 # {{{ new
-
+# ----------------------------------------------------------------------
+# new([ARGS])
+#   The constructor.
+#
+#   new takes an optional hash of arguments.  These arguments may
+#   include a parser, specified with the keys "parser" or "from",
+#   and a producer, specified with the keys "producer" or "to".
+#
+#   The values that can be passed as the parser or producer are
+#   given directly to the parser or producer methods, respectively.
+#   See the appropriate method description below for details about
+#   what each expects/accepts.
+#
+#   TODO
+#     * Support passing an input (filename or string) as with
+#       translate
+# ----------------------------------------------------------------------
 sub new {
     my $class = shift;
     my $args  = isa($_[0], 'HASH') ? shift : { @_ };
     my $self  = bless { } => $class;
 
-    # 
-    # Set the parser and producer.  If a 'parser' or 'from' parameter
-    # is passed in, use that as the parser; if a 'producer' or 'to'
-    # parameter is passed in, use that as the producer; both default
-    # to $DEFAULT_SUB.
+    # ------------------------------------------------------------------
+    # Set the parser and producer.
     #
+    # If a 'parser' or 'from' parameter is passed in, use that as the
+    # parser; if a 'producer' or 'to' parameter is passed in, use that
+    # as the producer; both default to $DEFAULT_SUB.
+    # ------------------------------------------------------------------
     $self->parser(  $args->{'parser'}   || $args->{'from'} || $DEFAULT_SUB);
     $self->producer($args->{'producer'} || $args->{'to'}   || $DEFAULT_SUB);
 
-    #
+    # ------------------------------------------------------------------
     # Clear the error
-    #
+    # ------------------------------------------------------------------
     $self->error_out("");
 
     return $self;
@@ -110,26 +136,31 @@ sub new {
 
 =head1 METHODS
 
-
 =head2 B<producer>
 
 The B<producer> method is an accessor/mutator, used to retrieve or
 define what subroutine is called to produce the output.  A subroutine
-defined as a producer subroutine will be invoked as a function (not a
-method) and passed 2 parameters: its encompassing SQL::Translator
-instance and a data structure.  It is expected that the function
-transform the data structure to the output format, and return a
-string.  The SQL::Transformer instance is provided for informational
-purposes; the type of the parser, for example, can be retrieved using
-the B<parser_type> method, and the B<error> and B<debug> methods can
-be called when needed.
+defined as a producer will be invoked as a function (not a method) and
+passed 2 parameters: its container SQL::Translator instance and a
+data structure.  It is expected that the function transform the data
+structure to a string.  The SQL::Transformer instance is provided for
+informational purposes; for example, the type of the parser can be
+retrieved using the B<parser_type> method, and the B<error> and
+B<debug> methods can be called when needed.
 
-When defining a producer, one of three things can be passed
-in:  A full module name (e.g., My::Groovy::Parser), a module name
-relative to the SQL::Translator::Producer namespace (e.g., MySQL), or
-a reference to an anonymous subroutine.  If a full module name is
-passed in, it is treated as a package, and a function called
-"produce" will be invoked as $modulename::produce.
+When defining a producer, one of several things can be passed
+in:  A module name (e.g., My::Groovy::Producer), a module name
+relative to the SQL::Translator::Producer namespace (e.g., MySQL), a
+module name and function combination (My::Groovy::Producer::transmogrify),
+or a reference to an anonymous subroutine.  If a full module name is
+passed in (for the purposes of this method, a string containing "::"
+is considered to be a module name), it is treated as a package, and a
+function called "produce" will be invoked: $modulename::produce.  If
+$modulename cannot be loaded, the final portion is stripped off and
+treated as a function.  In other words, if there is no file named
+My/Groovy/Producer/transmogrify.pm, SQL::Translator will attempt to load
+My/Groovy/Producer.pm and use transmogrify as the name of the function,
+instead of the default "produce".
 
   my $tr = SQL::Translator->new;
 
@@ -138,6 +169,11 @@ passed in, it is treated as a package, and a function called
 
   # This will invoke SQL::Translator::Producer::Sybase::produce($tr, $data)
   $tr->producer("Sybase");
+
+  # This will invoke My::Groovy::Producer::transmogrify($tr, $data),
+  # assuming that My::Groovy::Producer::transmogrify is not a module
+  # on disk.
+  # $tr->producer("My::Groovy::Producer::transmogrify);
 
   # This will invoke the referenced subroutine directly, as
   # $subref->($tr, $data);
@@ -153,37 +189,62 @@ the string "CODE".
 # {{{ producer and producer_type
 sub producer {
     my $self = shift;
+
+    # {{{ producer as a mutator
     if (@_) {
         my $producer = shift;
+
+        # {{{ Passed a module name (string containing "::")
         if ($producer =~ /::/) {
             my $func_name;
+
+            # {{{ Module name was passed directly
+            # We try to load the name; if it doesn't load, there's
+            # a possibility that it has a function name attached to
+            # it.
             if (load($producer)) {
                 $func_name = "produce";
-            } else {
-                # Oops!  Passed Module::Name::function; try to recover
+            } # }}}
+
+            # {{{ Module::function was passed
+            else {
+                # Passed Module::Name::function; try to recover
                 my @func_parts = split /::/, $producer;
                 $func_name = pop @func_parts;
                 $producer = join "::", @func_parts;
-                load($producer) or die "Can't load $producer: $@";
-            }
 
+                # If this doesn't work, then we have a legitimate
+                # problem.
+                load($producer) or die "Can't load $producer: $@";
+            } # }}}
+
+            # {{{ get code reference and assign
             $self->{'producer'} = \&{ "$producer\::$func_name" };
             $self->{'producer_type'} = $producer;
             $self->debug("Got 'producer': $producer\::$func_name");
-        } elsif (isa($producer, 'CODE')) {
+            # }}}
+        } # }}}
+
+        # {{{ passed an anonymous subroutine reference
+        elsif (isa($producer, 'CODE')) {
             $self->{'producer'} = $producer;
             $self->{'producer_type'} = "CODE";
             $self->debug("Got 'producer': code ref");
-        } else {
+        } # }}}
+
+        # {{{ passed a string containing no "::"; relative package name
+        else {
             my $Pp = sprintf "SQL::Translator::Producer::$producer";
             load($Pp) or die "Can't load $Pp: $@";
             $self->{'producer'} = \&{ "$Pp\::produce" };
             $self->{'producer_type'} = $Pp;
             $self->debug("Got producer: $Pp");
-        }
+        } # }}}
+
         # At this point, $self->{'producer'} contains a subroutine
-        # reference that is ready to run!
-    }
+        # reference that is ready to run
+    } # }}}
+
     return $self->{'producer'};
 };
 
@@ -217,27 +278,63 @@ entirety of the data to be parsed (or possibly a reference to a string?).
 # {{{ parser and parser_type
 sub parser {
     my $self = shift;
+
+    # {{{ parser as a mutator
     if (@_) {
         my $parser = shift;
+
+        # {{{ Passed a module name (string containing "::")
         if ($parser =~ /::/) {
-            load($parser) or die "Can't load $parser: $@";
-            $self->{'parser'} = \&{ "$parser\::parse" };
+            my $func_name;
+
+            # {{{ Module name was passed directly
+            # We try to load the name; if it doesn't load, there's
+            # a possibility that it has a function name attached to
+            # it.
+            if (load($parser)) {
+                $func_name = "parse";
+            } # }}}
+
+            # {{{ Module::function was passed
+            else {
+                # Passed Module::Name::function; try to recover
+                my @func_parts = split /::/, $parser;
+                $func_name = pop @func_parts;
+                $parser = join "::", @func_parts;
+
+                # If this doesn't work, then we have a legitimate
+                # problem.
+                load($parser) or die "Can't load $parser: $@";
+            } # }}}
+
+            # {{{ get code reference and assign
+            $self->{'parser'} = \&{ "$parser\::$func_name" };
             $self->{'parser_type'} = $parser;
-            $self->debug("Got parser: $parser\::parse");
-        } elsif (isa($parser, 'CODE')) {
+            $self->debug("Got parser: $parser\::$func_name");
+            # }}}
+        } # }}}
+
+        # {{{ passed an anonymous subroutine reference
+        elsif (isa($parser, 'CODE')) {
             $self->{'parser'} = $parser;
             $self->{'parser_type'} = "CODE";
-            $self->debug("Got parser: code ref");
-        } else {
-            my $Pp = "SQL::Translator::Parser::$parser";
+            $self->debug("Got 'parser': code ref");
+        } # }}}
+
+        # {{{ passed a string containing no "::"; relative package name
+        else {
+            my $Pp = sprintf "SQL::Translator::Parser::$parser";
             load($Pp) or die "Can't load $Pp: $@";
             $self->{'parser'} = \&{ "$Pp\::parse" };
             $self->{'parser_type'} = $Pp;
             $self->debug("Got parser: $Pp");
-        }
-        # At this point, $self->{$pp} contains a subroutine
-        # reference that is ready to run!
-    }
+        } # }}}
+
+        # At this point, $self->{'parser'} contains a subroutine
+        # reference that is ready to run
+    } # }}}
+
+
     return $self->{'parser'};
 }
 
@@ -259,28 +356,21 @@ Here is how the parameter list to B<translate> is parsed:
 =item *
 
 1 argument means it's the data to be parsed; which could be a string
-(filename), a reference to a GLOB (filehandle from which to read a
-string), a refernce to a scalar (a string stored in memory), or a
-reference to a hash (which means the same thing as below).
+(filename) or a refernce to a scalar (a string stored in memory), or a
+reference to a hash, which is parsed as being more than one argument
+(see next section).
 
   # Parse the file /path/to/datafile
   my $output = $tr->translate("/path/to/datafile");
 
-  # The same thing:
-  my $fh = IO::File->new("/path/to/datafile");
-  my $output = $tr->translate($fh);
-
-  # Again, the same thing:
-  my $fh = IO::File->new("/path/to/datafile");
-  my $data = { local $/; <$fh> };
+  # Parse the data contained in the string $data
   my $output = $tr->translate(\$data);
 
 =item *
 
 More than 1 argument means its a hash of things, and it might be
 setting a parser, producer, or datasource (this key is named
-"filename" or "file" if it's a file, or "data" for a GLOB or
-SCALAR reference).
+"filename" or "file" if it's a file, or "data" for a SCALAR reference.
 
   # As above, parse /path/to/datafile, but with different producers
   for my $prod ("MySQL", "XML", "Sybase") {
@@ -291,9 +381,6 @@ SCALAR reference).
   }
 
   # The filename hash key could also be:
-      datasource => $fh,
-
-  # or
       datasource => \$data,
 
 You get the idea.
@@ -313,56 +400,43 @@ sub translate {
             $self->debug("translate: Got a hashref");
             $args = $_[0];
         }
-        elsif (my $getlines = can($_[0], "getlines")) {
-            # passed a IO::Handle derivative
-            # XXX Something about this does not work!
-            # XXX look into how Template does this.
-            $self->debug("translate: Got a IO::Handle subclass (can getlines)");
-            my $fh = $_[0];
-            $fh->setpos(0);
-            my $data = join '', $fh->$getlines;
-            $args = { data => $data };
-        }
-        elsif (isa($_[0], 'GLOB')) {
-            # passed a filehandle; slurp it
-            $self->debug("translate: Got a GLOB");
-            local $/;
-            $args = { data => <$_[0]> };
-        } 
         elsif (isa($_[0], 'SCALAR')) {
             # passed a ref to a string; deref it
             $self->debug("translate: Got a SCALAR reference (string)");
             $args = { data => ${$_[0]} };
         }
-        else {
+        elsif (! ref $_[0]) {
             # Not a ref, it's a filename
             $self->debug("translate: Got a filename");
             $args = { filename => $_[0] };
         }
+        else {
+            # We're not impressed.  Take your empty string and leave.
+            return "";
+        }
     }
     else {
-        # Should we check if @_ % 2, or just eat the errors if they occur?
+        # You must pass in a hash, or you get nothing.
+        return "" if @_ % 2;
         $args = { @_ };
     }
 
-    if ((defined $args->{'filename'} ||
-         defined $args->{'file'}   ) && not $args->{'data'}) {
+    if ((defined $args->{'filename'} || defined $args->{'file'}) &&
+         not $args->{'data'}) {
         local *FH;
         local $/;
 
-        open FH, $args->{'filename'} or die "Can't open $args->{'filename'}: $!";
+        open FH, $args->{'filename'}
+            or die "Can't open $args->{'filename'} for reading: $!";
         $args->{'data'} = <FH>;
-        close FH or die $!;
+        close FH or die "Can't close $args->{'filename'}: $!";
     }
 
     #
     # Last chance to bail out; if there's nothing in the data
     # key of %args, back out.
     #
-    return unless defined $args->{'data'};
-
-    use Data::Dumper;
-    warn Dumper($args);
+    return "" unless defined $args->{'data'};
 
     #
     # Local reference to the parser subroutine
@@ -385,9 +459,7 @@ sub translate {
     #
     # Execute the parser, then execute the producer with that output
     #
-    my $translated = $parser->($self, $args->{'data'});
-
-    return $producer->($self, $translated);
+    return $producer->($self, $parser->($self, $args->{'data'}));
 }
 # }}}
 
@@ -435,7 +507,6 @@ not set, then this method does nothing.
 =cut
 
 # {{{ debug
-use Carp qw(carp);
 sub debug {
     my $self = shift;
     carp @_ if ($DEBUG);
