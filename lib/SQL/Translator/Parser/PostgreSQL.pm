@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.42 2004-10-23 19:58:19 cmungall Exp $
+# $Id: PostgreSQL.pm,v 1.43 2004-10-23 20:18:44 cmungall Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -275,8 +275,13 @@ comment_on_column : /comment/i /on/i /column/i column_name /is/i comment_phrase 
     {
         my $table_name = $item[4]->{'table'};
         my $field_name = $item[4]->{'field'};
-        push @{ $tables{ $table_name }{'fields'}{ $field_name }{'comments'} }, 
-            $item{'comment_phrase'};
+        if ($tables{ $table_name }{'fields'}{ $field_name } ) {
+          push @{ $tables{ $table_name }{'fields'}{ $field_name }{'comments'} }, 
+              $item{'comment_phrase'};
+        }
+        else {
+           die "No such column as $table_name.$field_name";
+        }
     }
 
 comment_on_other : /comment/i /on/i /\w+/ /\w+/ /is/i comment_phrase ';'
