@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.26 2003-08-15 22:29:16 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.27 2003-08-17 00:46:23 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -385,12 +385,11 @@ data_type : pg_data_type parens_value_list(?)
     }
 
 pg_data_type :
-    /(bigint|int8|bigserial|serial8)/i
+    /(bigint|int8)/i
         { 
             $return = { 
-                type           => 'integer',
-                size           => [8],
-                auto_increment => 1,
+                type => 'integer',
+                size => [8],
             };
         }
     |
@@ -402,10 +401,18 @@ pg_data_type :
             };
         }
     |
-    /int(eger)?|int4/i
+    /(integer|int4?)/i # interval must come before this
         { 
             $return = {
                 type => 'integer', 
+                size => [4],
+            };
+        }
+    |    
+    /(real|float4)/i
+        { 
+            $return = {
+                type => 'real', 
                 size => [4],
             };
         }
@@ -418,11 +425,12 @@ pg_data_type :
             }; 
         }
     |
-    /(real|float4)/i
+    /(bigserial|serial8)/i
         { 
-            $return = {
-                type => 'real', 
-                size => [4],
+            $return = { 
+                type           => 'integer', 
+                size           => [8], 
+                auto_increment => 1,
             };
         }
     |
@@ -431,15 +439,6 @@ pg_data_type :
             $return = { 
                 type           => 'integer',
                 size           => [4], 
-                auto_increment => 1,
-            };
-        }
-    |
-    /bigserial/i
-        { 
-            $return = { 
-                type           => 'integer', 
-                size           => [8], 
                 auto_increment => 1,
             };
         }
@@ -469,12 +468,12 @@ pg_data_type :
             $return = { type => 'bytea' };
         }
     |
-    /timestampz?/i
+    /(timestamptz|timestamp)/i
         { 
             $return = { type => 'timestamp' };
         }
     |
-    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|time|varchar)/i
+    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|timetz|time|varchar)/i
         { 
             $return = { type => $item[1] };
         }
