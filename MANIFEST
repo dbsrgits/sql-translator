@@ -67,3 +67,10 @@ t/data/mysql/sqlfxml-producer-basic.sql
 t/data/pgsql/Chado-CV-PostGreSQL.sql
 t/data/template/basic.tt
 t/data/xml/schema-basic.xml
+t/19sybase-parser.t
+t/20format_X_name.t
+t/data/mysql/entire_syntax.sql
+t/data/pgsql/entire_syntax.sql
+t/data/sybase/create.sql
+t/data/xml/schema-basic-attribs.xml
+t/data/xml/schema-basic-no_ns.xml

@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.39 2003-08-18 16:53:16 dlc Exp $
+# $Id: Translator.pm,v 1.40 2003-08-20 13:50:46 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -692,62 +692,43 @@ sub load {
 
 # ----------------------------------------------------------------------
 sub format_table_name {
-    my $self = shift;
-    my $sub  = shift;
-    $self->{'_format_table_name'} = $sub if ref $sub eq 'CODE';
-    return $self->{'_format_table_name'}->( $sub, @_ ) 
-        if defined $self->{'_format_table_name'};
-    return $sub;
+    return shift->_format_name('_format_table_name', @_);
 }
 
 # ----------------------------------------------------------------------
 sub format_package_name {
-    my $self = shift;
-    my $sub  = shift;
-    $self->{'_format_package_name'} = $sub if ref $sub eq 'CODE';
-    return $self->{'_format_package_name'}->( $sub, @_ ) 
-        if defined $self->{'_format_package_name'};
-    return $sub;
+    return shift->_format_name('_format_package_name', @_);
 }
 
 # ----------------------------------------------------------------------
 sub format_fk_name {
-    my $self = shift;
-
-    if ( ref $_[0] eq 'CODE' ) {
-        $self->{'_format_fk_name'} = shift;
-    }
-
-    if ( @_ ) {
-        if ( defined $self->{'_format_fk_name'} ) {
-            return $self->{'_format_fk_name'}->( @_ );
-        }
-        else {
-            return '';
-        }
-    }
-
-    return $self->{'_format_fk_name'};
+    return shift->_format_name('_format_fk_name', @_);
 }
 
 # ----------------------------------------------------------------------
 sub format_pk_name {
+    return shift->_format_name('_format_pk_name', @_);
+}
+
+# ----------------------------------------------------------------------
+# The other format_*_name methods rely on this one.  It optionally 
+# accepts a subroutine ref as the first argument (or uses an identity
+# sub if one isn't provided or it doesn't already exist), and applies
+# it to the rest of the arguments (if any).
+# ----------------------------------------------------------------------
+sub _format_name {
     my $self = shift;
+    my $field = shift;
+    my @args = @_;
 
-    if ( ref $_[0] eq 'CODE' ) {
-        $self->{'_format_pk_name'} = shift;
+    if (ref($args[0]) eq 'CODE') {
+        $self->{$field} = shift @args;
+    }
+    elsif (! exists $self->{$field}) {
+        $self->{$field} = sub { return shift };
     }
 
-    if ( @_ ) {
-        if ( defined $self->{'_format_pk_name'} ) {
-            return $self->{'_format_pk_name'}->( @_ );
-        }
-        else {
-            return '';
-        }
-    }
-
-    return $self->{'_format_pk_name'};
+    return @args ? $self->{$field}->(@args) : $self->{$field};
 }
 
 # ----------------------------------------------------------------------

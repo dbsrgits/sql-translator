@@ -37,14 +37,14 @@ print "\n";
 if (@{$missing{'optional'}} + @{$missing{'required'}}) {
     print "Some components might not work correctly:\n";
     my $count;
-    if ($missing{'required'}) {
+    if (@{$missing{'required'}}) {
         $count = scalar(@{$missing{'required'}});
         printf "  You are missing %d required module%s: %s\n",
             $count,
             $count == 1 ? '' : 's',
             join ', ', @{$missing{'required'}};
     }
-    if ($missing{'optional'}) {
+    if (@{$missing{'optional'}}) {
         $count = scalar(@{$missing{'optional'}});
         printf "  You are missing %d optional module%s: %s\n",
             $count,

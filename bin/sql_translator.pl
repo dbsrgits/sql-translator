@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.11 2003-07-18 22:56:41 kycl4rk Exp $
+# $Id: sql_translator.pl,v 1.12 2003-08-20 13:50:46 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -48,6 +48,7 @@ my $record_separator; # for xSV files
 my $validate;         # whether to validate the parsed document
 my $imap_file;        # filename where to place image map coords
 my $imap_url;         # URL to use in making image map
+my $pretty;           # use CGI::Pretty instead of CGI (HTML producer)
 
 #
 # Get options, explain how to use the script if necessary.
@@ -69,6 +70,7 @@ GetOptions(
     'rs:s'            => \$record_separator,
     'imap-file:s'     => \$imap_file,
     'imap-url:s'      => \$imap_url,
+    'pretty!'         => \$pretty,
 ) or pod2usage(2);
 
 my @files = @ARGV; # the create script(s) for the original db
@@ -94,6 +96,7 @@ my $translator      =  SQL::Translator->new(
     producer_args   => {
         imap_file        => $imap_file,
         imap_url         => $imap_url,
+        pretty           => $pretty,
     },
 );
 
@@ -119,7 +122,7 @@ $translator->parser($from);
 $translator->producer($to);
 
 for my $file (@files) {
-    my $output = $translator->translate( $file ) or die
+    my $output = $translator->translate(file => $file) or die
         "Error: " . $translator->error;
     print $output;
 }

@@ -4,6 +4,8 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
+local $^W = 0;
+
 use strict;
 use Test::More;
 use Test::Exception;
@@ -78,7 +80,7 @@ $ans = <<EOXML;
         <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>3</sqlt:order>
-        <sqlt:size>0</sqlt:size>
+        <sqlt:size>65000</sqlt:size>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>email</sqlt:name>
@@ -185,7 +187,7 @@ $ans = <<EOXML;
         <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>7</sqlt:order>
-        <sqlt:size>0</sqlt:size>
+        <sqlt:size>65000</sqlt:size>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>email</sqlt:name>

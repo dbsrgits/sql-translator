@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.33 2003-08-18 20:35:06 dlc Exp $
+# $Id: ClassDBI.pm,v 1.34 2003-08-20 13:50:46 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -246,7 +246,7 @@ sub produce {
 				if(! $packages{ $ref_pkg }{ 'has_many' }{ $table_name } ){
 				  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
 				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
-					"sub $table_name\s {\n    return shift->$table_name\_$field_name\n}\n\n";
+					"sub ${table_name}s {\n    return shift->$table_name\_$field_name\n}\n\n";
 
 				#else ugly
 				} else {

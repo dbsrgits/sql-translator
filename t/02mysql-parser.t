@@ -38,7 +38,7 @@ use SQL::Translator::Schema::Constants;
 
     is( $f2->name, 'a_session', 'Second field name is "a_session"' );
     is( $f2->data_type, 'text', 'Type is "text"' );
-    is( $f2->size, 0, 'Size is "0"' );
+    is( $f2->size, 65000, 'Size is "65000"' );
     is( $f2->is_nullable, 1, 'Field can be null' );
     is( $f2->default_value, undef, 'Default value is undefined' );
     is( $f2->is_primary_key, 0, 'Field is not PK' );
