@@ -10,12 +10,13 @@
 # Tests that;
 #
 
+use strict;
 use Test::More;
 use Test::Exception;
 
 use strict;
 use Data::Dumper;
-our %opt;
+my %opt;
 BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 local $SIG{__WARN__} = sub { diag "[warn] ", @_; };
@@ -25,7 +26,7 @@ use FindBin qw/$Bin/;
 # Usefull test subs for the schema objs
 #=============================================================================
 
-our %ATTRIBUTES;
+my %ATTRIBUTES;
 $ATTRIBUTES{field} = [qw/
 name
 data_type
@@ -82,7 +83,7 @@ foreach (
 sub do_file {
     my $testschema = shift;
     # Parse the test XML schema
-    our $obj;
+    my $obj;
     $obj = SQL::Translator->new(
         debug          => DEBUG,
         show_warnings  => 1,
@@ -90,8 +91,8 @@ sub do_file {
     );
     die "Can't find test schema $testschema" unless -e $testschema;
     my $sql = $obj->translate(
-        from     => "SqlfXML",
-        to       =>"MySQL",
+        from     => 'XML-SQLFairy',
+        to       => 'MySQL',
         filename => $testschema,
     );
     print $sql if DEBUG;

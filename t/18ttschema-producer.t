@@ -4,11 +4,13 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
+use strict;
 use Test::More;
 use Test::Exception;
 
 use Data::Dumper;
-BEGIN { our %opt; map { $opt{$_}=1 if s/^-// } @ARGV; }
+use vars '%opt';
+BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 local $SIG{__WARN__} = sub { diag "[warn] ", @_; };
 
@@ -32,12 +34,12 @@ use SQL::Translator;
 use SQL::Translator::Producer::TTSchema;
 
 # Parse the test XML schema
-our $obj;
+my $obj;
 $obj = SQL::Translator->new(
     debug          => DEBUG, #$opt{d},
     show_warnings  => 1,
     add_drop_table => 1,
-    from           => "SqlfXML",
+    from           => "XML-SQLFairy",
     filename       => "$Bin/data/xml/schema-basic.xml",
     to             => "TTSchema",
      producer_args  => {

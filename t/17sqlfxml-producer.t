@@ -11,7 +11,7 @@ use Test::More;
 use Test::Exception;
 
 use Data::Dumper;
-our %opt;
+my %opt;
 BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 use constant TRACE => (exists $opt{t} ? 1 : 0);
@@ -267,7 +267,7 @@ eq_or_diff $xml, $ans                       ,"XML looks right";
 #     show_warnings  => 1,
 #     add_drop_table => 1,
 #     from           => "MySQL",
-#     to             => "SqlfXML",
+#     to             => "XML-SQLFairy",
 #     producer_args  => { attrib_values => 1 },
 # );
 # print $obj->translate($file);
