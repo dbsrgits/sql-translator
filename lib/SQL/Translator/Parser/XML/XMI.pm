@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI;
 
 # -------------------------------------------------------------------
-# $Id: XMI.pm,v 1.4 2003-09-09 01:00:44 grommit Exp $
+# $Id: XMI.pm,v 1.5 2003-09-09 01:37:25 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -82,7 +82,7 @@ translated.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -159,12 +159,15 @@ sub get_classes {
 		}
 		$class->{stereotype} = get_stereotype($classnode);
 
-		# Class Attributes
-		my $xpath = 'UML:Classifier.feature/UML:Attribute';
         $class->{attributes} = get_attributes( $classnode,
-            xpath => $xpath, test => $args{attribute_test} );
+            xpath => 'UML:Classifier.feature/UML:Attribute',
+            test => $args{attribute_test} );
         
-		push @$classes, $class;
+        $class->{operations} = get_operations( $classnode,
+            xpath => '//UML:Classifier.feature/UML:Operation',
+            test => $args{operation_test} );
+		
+        push @$classes, $class;
 	}
 	return wantarray ? @$classes : $classes;
 };
@@ -185,7 +188,7 @@ sub get_attributes {
         }
         $attr->{stereotype} = get_stereotype($node);
 
-        # Get datatype name and the name body of the initial value
+        # Get datatype name and the body of the initial value
         $attr->{datatype} = "".$node->find(
               'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name');
         if ( my @body = $node->findnodes(
@@ -199,7 +202,56 @@ sub get_attributes {
     return wantarray ? @$attributes : $attributes;
 }
 
+sub get_operations {
+    my ($xp, %args) = @_;
 
+	my $xpath = $args{xpath} ||= '//UML:Classifier.feature/UML:Operation';
+    $xpath = _add_xpath_tests $xpath, $args{test};
+	debug "Searching for operations using:$xpath";
+	
+    my $operations;
+    foreach my $node ( $xp->findnodes($xpath) ) {
+        my $operation = {};
+        
+        foreach (qw/name visibility isSpecification ownerScope isQuery
+            concurrency isRoot isLeaf isAbstract/) {
+            $operation->{$_} = $node->getAttribute($_);
+        }
+        $operation->{stereotype} = get_stereotype($node);
+
+        $operation->{parameters} = get_parameters( $node,
+            xpath => 'UML:BehavioralFeature.parameter/UML:Parameter',
+            test  => $args{attribute_test} 
+        );
+        
+        push @$operations, $operation;
+    }
+    return wantarray ? @$operations : $operations;
+}
+
+sub get_parameters {
+    my ($xp, %args) = @_;
+
+	my $xpath = $args{xpath} ||= '//UML:Classifier.feature/UML:Attribute';
+    $xpath = _add_xpath_tests $xpath, $args{test};
+	debug "Searching for Attributes using:$xpath";
+	
+    my $parameters;
+    foreach my $node ( $xp->findnodes($xpath) ) {
+        my $parameter = {};
+        
+        foreach (qw/name isSpecification kind/) {
+            $parameter->{$_} = $node->getAttribute($_);
+        }
+        $parameter->{stereotype} = get_stereotype($node);
+
+        $parameter->{datatype} = "".$node->find(
+              'xmiDeref(UML:Parameter.type/UML:DataType)/@name');
+        
+        push @$parameters, $parameter;
+    }
+    return wantarray ? @$parameters : $parameters;
+}
 
 # SQLFairy Parser
 #-----------------------------------------------------------------------------
@@ -415,6 +467,9 @@ big and complex, especially all the diagram info.
 
 B<field sizes> Don't think UML does this directly so may need to include
 it in the datatype names.
+
+B<Check the Tag Attribute lists in get_* subs> I have taken them from looking
+at Poseidon so need to check against XMI spec.
 
 B<table_visibility and field_visibility args> Seperate control over what is 
 parsed, setting visibility arg will set both.
