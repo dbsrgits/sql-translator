@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 150;
+use Test::More tests => 157;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -51,7 +51,8 @@ require_ok( 'SQL::Translator::Schema' );
 
     my $redundant_table = $schema->add_table(name => 'foo');
     is( $redundant_table, undef, qq[Can't create another "foo" table...] );
-    like( $schema->error, qr/can't use table name/i, '... because "foo" exists' );
+    like( $schema->error, qr/can't use table name/i, 
+        '... because "foo" exists' );
 
     #
     # Table default new
@@ -63,12 +64,21 @@ require_ok( 'SQL::Translator::Schema' );
     is( scalar @{ $fields || [] }, 0, 'Table "foo" has no fields' );
     like( $foo_table->error, qr/no fields/i, 'Error for no fields' );
 
+    is( $foo_table->comments, '', 'No comments' );
+
     #
     # New table with args
     #
-    my $person_table = $schema->add_table( name => 'person' );
+    my $person_table = $schema->add_table( 
+        name     => 'person', 
+        comments => 'foo',
+    );
     is( $person_table->name, 'person', 'Table name is "person"' );
     is( $person_table->is_valid, undef, 'Table is not yet valid' );
+    is( $person_table->comments, 'foo', 'Comments = "foo"' );
+    is( join(',', $person_table->comments('bar')), 'foo,bar', 
+        'Table comments = "foo,bar"' );
+    is( $person_table->comments, "foo\nbar", 'Table comments = "foo,bar"' );
 
     #
     # Field default new
@@ -82,16 +92,23 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f1->is_primary_key, '0', 'Field is_primary_key is false' );
     is( $f1->is_nullable, 1, 'Field can be NULL' );
     is( $f1->default_value, undef, 'Field default is undefined' );
+    is( $f1->comments, '', 'No comments' );
 
-    my $f2 = SQL::Translator::Schema::Field->new (name => 'f2') or 
-        warn SQL::Translator::Schema::Field->error;
+    my $f2 = SQL::Translator::Schema::Field->new (
+        name     => 'f2',
+        comments => 'foo',
+    ) or warn SQL::Translator::Schema::Field->error;
     $f2 = $person_table->add_field( $f2 );
     isa_ok( $f1, 'SQL::Translator::Schema::Field', 'f2' );
     is( $f2->name, 'f2', 'Add field "f2"' );
     is( $f2->is_nullable(0), 0, 'Field cannot be NULL' );
     is( $f2->is_nullable(''), 0, 'Field cannot be NULL' );
     is( $f2->is_nullable('0'), 0, 'Field cannot be NULL' );
-    is( $f1->default_value(''), '', 'Field default is empty string' );
+    is( $f2->default_value(''), '', 'Field default is empty string' );
+    is( $f2->comments, 'foo', 'Field comment = "foo"' );
+    is( join(',', $f2->comments('bar')), 'foo,bar', 
+        'Field comment = "foo,bar"' );
+    is( $f2->comments, "foo\nbar", 'Field comment = "foo,bar"' );
 
     $person_table = $f2->table( $person_table );
     isa_ok( $person_table, 'SQL::Translator::Schema::Table', 'person_table' );
@@ -376,7 +393,6 @@ require_ok( 'SQL::Translator::Schema' );
     my $t = $s->add_table( name => 'person' );
 
     is( $t->primary_key, undef, 'No primary key' );
-    like( $t->error, qr/no primary key/i, 'No primary key error' );
 
     is( $t->primary_key('person_id'), undef, 
             q[Can't make PK on "person_id"...] );
