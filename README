@@ -1,17 +1,22 @@
                       SQL::Translator README
 
-SQL::Translator is a group of Perl modules that converts
-vendor-specific SQL table definitions into other formats, such as
-other vendor-specific SQL, ER diagrams, documentation (POD and HTML),
-XML, and Class::DBI classes.  The main focus of SQL::Translator is
-SQL, but parsers exist for other structured data formats, including
-Excel spreadsheets and arbitrarily delimited text files.  Through the
-separation of the code into parsers and producers with an object model
-in between, it's possible to combine any parser with any producer, to
-plug in custom parsers or producers, or to manipulate the parsed data
-via the built-in object model.  Presently only the definition parts of
-SQL are handled (CREATE, ALTER), not the manipulation of data (INSERT,
-UPDATE, DELETE).
+SQL::Translator is a group of Perl modules that manipulate structure
+data definitions (mostly database schemas) in interesting ways, such
+as converting among different dialects of CREATE syntax (e.g.,
+MySQL-to-Oracle), visualizations of schemas (pseudo-ER diagrams
+GraphViz or GD), automatic code generation (using Class::DBI),
+converting non-RDBMS files to SQL schemas (xSV text files, Excel
+spreadsheets), serializing parsed schemas (via Storable, YAML and
+XML), creating documentation (HTML and POD), and more.  New to version
+0.03 is the ability to talk directly to a database through DBI to
+query for the structures of several databases.
+
+Through the separation of the code into parsers and producers with an
+object model in between, it's possible to combine any parser with any
+producer, to plug in custom parsers or producers, or to manipulate the
+parsed data via the built-in object model.  Presently only the
+definition parts of SQL are handled (CREATE, ALTER), not the
+manipulation of data (INSERT, UPDATE, DELETE).
 
 As of version 0.03, parsers exist for the following:
 
@@ -20,11 +25,18 @@ As of version 0.03, parsers exist for the following:
         Oracle
         PostgreSQL
         Sybase
+        SQLite
+
+        DBI-MySQL
+        DBI-PostgreSQL
+        DBI-SQLite
+        DBI-Sybase
 
     Other:
-        xSV         : arbitrarily delimited text files
-        Excel       : Microsoft Excel spreadsheets
-        XML-SQLFairy: SQLFairy's XML format
+        xSV          : arbitrarily delimited text files
+        Excel        : Microsoft Excel spreadsheets
+        XML-SQLFairy : SQLFairy's XML format
+        YAML/Storable: Serialization of schema objects
 
 And the following producers exist:
 
@@ -34,19 +46,23 @@ And the following producers exist:
         PostgreSQL
         SQLite
         Sybase
-
     
     Code Generators:
-        ClassDBI: Class::DBI classes
+        ClassDBI     : Class::DBI classes
 
     Documentation:
-        Diagram     : quasi-ER diagrams using libgd
-        GraphViz    : ER diagrams using GraphViz
-        HTML        : HTML documentation of schema
-        POD         : Plain Old Documenation of schema
+        Diagram      : quasi-ER diagrams using libgd
+        GraphViz     : ER diagrams using GraphViz
+        HTML         : HTML documentation of schema
+        POD          : Plain Old Documenation of schema
+
+    Serialization:
+        Storable     : using Perl's Storable module
+        YAML         : YAML format
+        XML-SQLFairy : structure of the schema described in SQLFairy's XML
 
     Other:
-        XML-SQLFairy: structure of the schema described in SQLFairy's XML
+        TTSchema     : to any text format via Template Toolkit
 
 Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
@@ -116,3 +132,7 @@ Check out the SQLFairy homepage at Sourceforge for more information,
 mailing lists, etc.:
 
     http://sqlfairy.sourceforge.net/
+
+AUTHORS
+
+See the include AUTHORS file.
