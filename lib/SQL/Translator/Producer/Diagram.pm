@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.9 2004-02-09 23:02:13 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.10 2004-02-11 21:30:19 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -145,10 +145,12 @@ sub produce {
         my @fields = $table->get_fields;
         debug("Fields = ", join(', ', map { $_->name } @fields));
 
-        my ( @fld_desc, $max_name );
+        my ( @fld_desc, $max_name, $max_desc );
         for my $f ( @fields ) {
             my $name  = $f->name or next;
             my $is_pk = $f->is_primary_key;
+
+            my @attr;
 
             #
             # Decide if we should skip this field.
@@ -158,29 +160,45 @@ sub produce {
             }
 
             if ( $is_pk ) {
-                $name .= ' *';
-                $legend{'Primary key'} = '*';
+                push @attr, 'PK';
+                $legend{'Primary key'} = '[PK]';
             }
 
             if ( $f->is_unique ) {
-                $name .= ' [U]';
+                push @attr, 'U';
                 $legend{'Unique constraint'} = '[U]';
             }
 
+            if ( $f->is_foreign_key ) {
+                push @attr, 'FK';
+                $legend{'Foreign Key'} = '[FK]';
+            }
+
+            my $attr = '';
+            if ( @attr ) {
+                $attr .= '[' . join(', ', @attr) . ']';
+            }
+
             my $desc = $f->data_type;
-            $desc   .= '('.$f->size.')' if $f->size;
+            $desc   .= '('.$f->size.')' if $f->size &&
+                       $f->data_type =~ /^(VAR)?CHAR2?$/i;
             
             my $nlen  = length $name;
+            my $dlen  = length $desc;
             $max_name = $nlen if $nlen > $max_name;
-            push @fld_desc, [ $name, $desc, $f->{'name'}, $is_pk ];
+            $max_desc = $dlen if $dlen > $max_desc;
+            push @fld_desc, [ $name, $desc, $f->{'name'}, $is_pk, $attr ];
         }
 
-        $max_name += 4;
+        $max_name += 2;
+        $max_desc += 2;
         for my $fld_desc ( @fld_desc ) {
-            my ( $name, $desc, $orig_name, $is_pk ) = @$fld_desc;
-            my $diff = $max_name - length $name;
-            $name   .= ' ' x $diff;
-            $desc    = $name . $desc;
+            my ( $name, $desc, $orig_name, $is_pk, $attr ) = @$fld_desc;
+            my $diff1 = $max_name - length $name;
+            my $diff2 = $max_desc - length $desc;
+            $name    .= ' ' x $diff1;
+            $desc    .= ' ' x $diff2;
+            $desc     = $name . $desc . $attr;
 
             push @shapes, [ 'string', $font, $this_col_x, $y, $desc, 'black' ];
             $y         += $font->height + 2;
@@ -446,7 +464,7 @@ sub produce {
         }
     }
 
-    my $sig     = __PACKAGE__." $VERSION";
+    my $sig     = 'Created by SQL::Translator ' . $t->version;
     my $sig_len = $font->width * length $sig;
     push @shapes, [ 
         'string', $font, $max_x - $sig_len, $max_y - $font->height - 4, 
