@@ -8,10 +8,10 @@ use File::Temp qw(tempfile);
 use FindBin qw($Bin);
 use Test;
 
-my @script = qw(blib script auto-dia.pl);
+my @script = qw(blib script sqlt-diagram.pl);
 my @data = qw(data mysql Apache-Session-MySQL.sql);
 
-my $auto_dia = (-d "blib")
+my $sqlt_diagram = (-d "blib")
     ? catfile($Bin, updir, @script)
     : catfile($Bin, @script);
 
@@ -29,13 +29,13 @@ BEGIN {
     plan tests => 3;
 }
 
-ok(-e $auto_dia); 
+ok(-e $sqlt_diagram); 
 eval { require GD; };
 if ($@ && $@ =~ /locate GD.pm in /) {
     skip($@, "GD not installed");
     skip($@, "GD not installed");
 } else {
-    my @cmd = ($auto_dia, "-d", "MySQL", "-o", $tmp, $test_data);
+    my @cmd = ($sqlt_diagram, "-d", "MySQL", "-o", $tmp, $test_data);
     eval { system(@cmd); };
     ok(!$@ && ($? == 0));
     ok(-e $tmp); 
