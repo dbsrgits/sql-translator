@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 197;
+use Test::More tests => 199;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -106,6 +106,8 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f1->is_nullable, 1, 'Field can be NULL' );
     is( $f1->default_value, undef, 'Field default is undefined' );
     is( $f1->comments, '', 'No comments' );
+    is( $f1->table, 'person', 'Field table is person' );
+    is( $f1->schema->database, 'PostgreSQL', 'Field schema shortcut works' );
 
     my $f2 = SQL::Translator::Schema::Field->new (
         name     => 'f2',
