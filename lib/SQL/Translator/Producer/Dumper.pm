@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.4 2004-04-23 00:44:10 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.5 2004-04-23 12:46:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -61,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -272,7 +272,7 @@ for my $table ( @tables ) {
         else {
             print "INSERT INTO $table_name (".
                 join(', ', @{ $table->{'fields'} }) . 
-                ' VALUES (', join(', ', @vals), ");\n";
+                ') VALUES (', join(', ', @vals), ");\n";
         }
     }
 
