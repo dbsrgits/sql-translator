@@ -1,6 +1,6 @@
 package SQL::Translator::Parser::DBI::Sybase;
 
-# $Id: Sybase.pm,v 1.2 2003-10-03 20:56:40 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.3 2003-10-04 00:10:00 phrrngtn Exp $
 
 =head1 NAME
 
@@ -22,7 +22,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -94,32 +94,79 @@ ORDER BY o.name,
     map {
         $stuff->{indexes}->{$_->[0]}++
             if defined;
-    } @{$dbh->selectall_arrayref("SELECT DISTINCT object_name(id) AS
-name
-                                        FROM sysindexes
-                                       WHERE indid > 0")};
-
+    } @{$dbh->selectall_arrayref("SELECT DISTINCT object_name(id) AS name
+                                    FROM sysindexes
+                                   WHERE indid > 0")};
 
     ## slurp objects
     map {
         $stuff->{$_->[1]}->{$_->[0]} = $_;
-    } @{$dbh->selectall_arrayref("SELECT name,type, id FROM
-sysobjects")};
+    } @{$dbh->selectall_arrayref("SELECT name,type, id FROM sysobjects")};
 
 
     ### Procedures
+
+    # This gets legitimate procedures by used the 'supported' API: sp_stored_procedures
+    map {
+        my $n = $_->{PROCEDURE_NAME};
+        $n =~ s/;\d+$//;        # Ignore versions for now
+        $_->{name} = $n;
+        $stuff->{procedures}->{$n} = $_;
+    } values %{$dbh->selectall_hashref("sp_stored_procedures", 'PROCEDURE_NAME')};
+
+
+    # And this blasts in the text of 'legit' stored procedures.  Do
+    # this rather than calling sp_helptext in a loop.
+
+    $h = $dbh->selectall_arrayref(q{
+SELECT o.name, colid,colid2,c.text
+  FROM syscomments c
+  JOIN sysobjects o
+    ON c.id = o.id
+ WHERE o.type ='P'
+ORDER BY o.name,
+         c.colid,
+         c.colid2
+}
+);
+
+    foreach (@{$h}) {
+        $stuff->{procedures}->{$_->[0]}->{text} .= $_->[3]
+            if (defined($stuff->{procedures}->{$_->[0]}));
+    }
+
     ### Defaults
     ### Rules
     ### Bind Defaults
     ### Bind Rules
 
     ### Triggers
+    # Since the 'target' of the trigger is defined in the text, we will
+    # just create them independently for now rather than associating them
+    # with a table.
+
+    $h = $dbh->selectall_arrayref(q{
+SELECT o.name, colid,colid2,c.text
+  FROM syscomments c
+  JOIN sysobjects o
+    ON c.id = o.id
+  JOIN sysobjects o1
+    ON (o.id = o1.instrig OR o.id = o1.deltrig or o.id = o1.updtrig)
+ WHERE o.type ='TR'
+ORDER BY o.name,
+         c.colid,
+         c.colid2
+}
+);
+    foreach (@{$h}) {
+        $stuff->{triggers}->{$_->[0]}->{text} .= $_->[3];
+    }
 
     ### References
     ### Keys
 
     ### Types
-
+    # Not sure what to do with these?
     $stuff->{type_info_all} = $dbh->type_info_all;
 
     ### Tables
@@ -154,15 +201,13 @@ $table_info->{TABLE_TYPE},
                             ->{columns};
 
             foreach my $c (values %{$cols}) {
-                my $f = $table->add_field(name        =>
-$c->{COLUMN_NAME},
-                                          data_type   =>
-$c->{TYPE_NAME},
-                                          order       =>
-$c->{ORDINAL_POSITION},
-                                          size        =>
-$c->{COLUMN_SIZE},
+                my $f = $table->add_field(
+                                          name        => $c->{COLUMN_NAME},
+                                          data_type   => $c->{TYPE_NAME},
+                                          order       => $c->{ORDINAL_POSITION},
+                                          size        => $c->{COLUMN_SIZE},
                                          ) || die $table->error;
+
                 $f->is_nullable(1)
                     if ($c->{NULLABLE} == 1);
             }
@@ -185,8 +230,7 @@ $table_info->{TABLE_NAME}", 'COLUMN_NAME');
             # already been created as part of a primary key or other
             # constraint?
 
-            if (defined($stuff->{indexes}->{$table_info->{TABLE_NAME}}))
-{
+            if (defined($stuff->{indexes}->{$table_info->{TABLE_NAME}})){
                 my $h = $dbh->selectall_hashref("sp_helpindex
 $table_info->{TABLE_NAME}", 'INDEX_NAME');
                 foreach (values %{$h}) {
@@ -219,6 +263,7 @@ $_->{INDEX_NAME},
 $table_info->{TABLE_NAME},
                                           );
 
+
             my $cols =
                 $columns->{$table_info->{TABLE_QUALIFIER}}
                     ->{$table_info->{TABLE_OWNER}}
@@ -232,18 +277,26 @@ $table_info->{TABLE_NAME},
                 } values %{$cols}
                          );
 
- 
-$view->sql($stuff->{view}->{$table_info->{TABLE_NAME}}->{text})
-                if
-(defined($stuff->{view}->{$table_info->{TABLE_NAME}}->{text}));
+            $view->sql($stuff->{view}->{$table_info->{TABLE_NAME}}->{text})
+                if (defined($stuff->{view}->{$table_info->{TABLE_NAME}}->{text}));
         }
+    }
+
+    foreach my $p (values %{$stuff->{procedures}}) {
+        my $proc = $schema->add_procedure(
+                               name      => $p->{name},
+                               owner     => $p->{PROCEDURE_OWNER},
+                               comments  => $p->{REMARKS},
+                               sql       => $p->{text},
+                               );
+
     }
     ### Permissions
     ### Groups
     ### Users
     ### Aliases
     ### Logins
-    return 1;
+return 1;
 }
 
 1;
