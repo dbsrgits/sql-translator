@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.12 2003-10-09 21:49:19 kycl4rk Exp $
+# $Id: xSV.pm,v 1.13 2003-10-10 15:59:03 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -68,7 +68,7 @@ C<SQL::Translator::Utils::normalize_name>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -145,7 +145,7 @@ sub parse {
                 ) {
                     $type = 'float';
                     my ( $w, $d ) = map { s/,//g; $_ } split( /\./, $data );
-                    $size = [ length $w, length $d ];
+                    $size = [ length $w + length $d, length $d ];
                 }
                 else {
                     $type = 'char';
