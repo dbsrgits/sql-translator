@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.5 2002-11-23 01:26:56 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.6 2002-11-26 03:59:58 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -22,12 +22,9 @@ package SQL::Translator::Producer::Oracle;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+use vars qw[ $VERSION $DEBUG $WARN ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
-
-my $max_id_length = 30;
-my %used_identifiers = ();
 
 my %translate  = (
     #
@@ -96,7 +93,7 @@ my %translate  = (
 # http://technet.oracle.com/docs/products/oracle8i/doc_library/\
 # 817_doc/server.817/a85397/ap_keywd.htm
 #
-my @ora_reserved = qw(
+my %ora_reserved = map { $_, 1 } qw(
     ACCESS ADD ALL ALTER AND ANY AS ASC AUDIT 
     BETWEEN BY
     CHAR CHECK CLUSTER COLUMN COMMENT COMPRESS CONNECT CREATE CURRENT
@@ -121,15 +118,19 @@ my @ora_reserved = qw(
     WHENEVER WHERE WITH
 );
 
-my %ora_reserved = map { $_ => 1 } @ora_reserved;
+my $max_id_length    = 30;
+my %used_identifiers = ();
 my %global_names;
 my %unreserve;
 my %truncated;
 
+# -------------------------------------------------------------------
 sub produce {
     my ( $translator, $data ) = @_;
     $DEBUG                    = $translator->debug;
+    $WARN                     = $translator->show_warnings;
     my $no_comments           = $translator->no_comments;
+    my $add_drop_table        = $translator->add_drop_table;
     my $output;
 
     unless ( $no_comments ) {
@@ -254,7 +255,7 @@ sub produce {
 
             if ( uc $field->{'data_type'} eq 'TIMESTAMP' ) {
                 my $base_name = $table_name . "_". $field_name_ur;
-                my $trig_name = mk_name($base_name,'ts');
+                my $trig_name = mk_name( $base_name, 'ts' );
                 push @trigger_decs, 
                     "CREATE OR REPLACE TRIGGER $trig_name\n".
                     "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
@@ -300,11 +301,14 @@ sub produce {
                     join( ', ', @fields ).  ");"; 
             }
             else {
-                warn "Unknown index type ($index_type) on table $table_name.\n";
+                warn "Unknown index type ($index_type) on table $table_name.\n"
+                    if $WARN;
             }
         }
 
-        my $create_statement = "CREATE TABLE $table_name_ur (\n".
+        my $create_statement;
+        $create_statement  = "DROP TABLE $table_name_ur;\n" if $add_drop_table;
+        $create_statement .= "CREATE TABLE $table_name_ur (\n".
             join( ",\n", map { "  $_" } @field_decs ).
             "\n);"
         ;
@@ -318,6 +322,19 @@ sub produce {
         );
     }
 
+    if ( $WARN ) {
+        if ( %truncated ) {
+            warn "Truncated " . keys( %truncated ) . " names:\n";
+            warn "\t" . join( "\n\t", sort keys %truncated ) . "\n";
+        }
+
+        if ( %unreserve ) {
+            warn "Encounted " . keys( %unreserve ) .
+                " unsafe names in schema (reserved or invalid):\n";
+            warn "\t" . join( "\n\t", sort keys %unreserve ) . "\n";
+        }
+    }
+
     return $output;
 }
 
@@ -326,36 +343,41 @@ sub mk_name {
     my ($basename, $type, $scope, $critical) = @_;
     my $basename_orig = $basename;
     my $max_name      = $max_id_length - (length($type) + 1);
-    $basename         = substr($basename, 0, $max_name) 
-                        if length($basename) > $max_name;
+    $basename         = substr( $basename, 0, $max_name ) 
+                        if length( $basename ) > $max_name;
     my $name          = $type ? "${type}_$basename" : $basename;
 
     if ( $basename ne $basename_orig and $critical ) {
         my $show_type = $type ? "+'$type'" : "";
         warn "Truncating '$basename_orig'$show_type to $max_id_length ",
-            "character limit to make '$name'\n" if $DEBUG;
-        $truncated{$basename_orig} = $name;
+            "character limit to make '$name'\n" if $WARN;
+        $truncated{ $basename_orig } = $name;
     }
 
     $scope ||= \%global_names;
-    return $name unless $scope->{$name}++;
-    my $name_orig = $name;
-    $name .= "02";
-    substr($name, $max_id_length - 3) = "00" if length($name) > $max_id_length;
-    ++$name while $scope->{$name};
-    warn "The name '$name_orig' has been changed to ",
-         "'$name' to make it unique\n" if $DEBUG;
+    if ( my $prev = $scope->{ $name } ) {
+        my $name_orig = $name;
+        $name        .= sprintf( "%02d", ++$prev );
+        substr($name, $max_id_length - 3) = "00" 
+            if length( $name ) > $max_id_length;
+
+        warn "The name '$name_orig' has been changed to ",
+             "'$name' to make it unique.\n" if $WARN;
+
+        $scope->{ $name_orig }++;
+    }
+
+    $scope->{ $name }++;
     return $name;
 }
 
 # -------------------------------------------------------------------
 sub unreserve {
-    my ($name, $schema_obj_name) = @_;
-    my ($suffix) = ($name =~ s/(\W.*)$//) ? $1 : '';
+    my ( $name, $schema_obj_name ) = @_;
+    my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
 
     # also trap fields that don't begin with a letter
-    return $_[0] if !$ora_reserved{uc $name}
-        && $name =~ /^[a-z]/i; 
+    return $_[0] if !$ora_reserved{ uc $name } && $name =~ /^[a-z]/i; 
 
     if ( $schema_obj_name ) {
         ++$unreserve{"$schema_obj_name.$name"};
@@ -398,19 +420,6 @@ SQL::Translator::Producer::Oracle takes a parsed data structure,
 created by a SQL::Translator::Parser subclass, and turns it into a
 create string suitable for use with an Oracle database.
 
-=head1 BUGS
-
-Problem with SQL::Translator::Producer::Oracle: it is keeping track
-of the last sequence number used, so as not to duplicate them, which
-is reasonable.  However on runs past the first, it seems to be
-creating multiple constraint lines, that look like:
-
-    CONSTRAINT i_sessions_pk_2 PRIMARY KEY (id),
-    CONSTRAINT i_sessions_pk_3 PRIMARY KEY (id)
-
-This is a very preliminary finding, and needs to be investigated more
-thoroughly, of course.
-
 =head1 CREDITS
 
 A hearty "thank-you" to Tim Bunce for much of the logic stolen from 
@@ -425,65 +434,3 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 perl(1).
 
 =cut
-
-__END__
-!!!!!Code Graveyard!!!!!
-#
-# Used to make index names
-#
-sub make_identifier {
-    my ( $identifier, @mutations ) = @_;
-    my $length_of_mutations;
-    for my $mutation ( @mutations ) {
-        $length_of_mutations += length( $mutation );
-    }
-
-    if ( 
-        length( $identifier ) + $length_of_mutations >
-        $max_id_length
-    ) {
-        $identifier = substr( 
-            $identifier, 
-            0, 
-            $max_id_length - $length_of_mutations
-        );
-    }
-
-    for my $mutation ( @mutations ) {
-        if ( $mutation =~ m/.+_$/ ) {
-            $identifier = $mutation.$identifier;
-        }
-        elsif ( $mutation =~ m/^_.+/ ) {
-            $identifier = $identifier.$mutation;
-        }
-    }
-
-    if ( $used_identifiers{ $identifier } ) {
-        my $index = 1;
-        if ( $identifier =~ m/_(\d+)$/ ) {
-            $index = $1;
-            $identifier = substr( 
-                $identifier, 
-                0, 
-                length( $identifier ) - ( length( $index ) + 1 )
-            );
-        }
-        $index++;
-        return make_identifier( $identifier, '_'.$index );
-    }
-
-    $used_identifiers{ $identifier } = 1;
-
-    return $identifier;
-}
-
-#
-# Checks to see if an identifier is not too long
-#
-sub check_identifier {
-    my $identifier = shift;
-    die "Identifier '$identifier' is too long, unrecoverable error.\n"
-        if length( $identifier ) > $max_id_length;
-    return $identifier;
-}
-
