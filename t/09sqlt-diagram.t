@@ -4,7 +4,7 @@
 use strict;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
-use File::Temp qw(tempfile);
+use File::Temp qw(mktemp);
 use FindBin qw($Bin);
 use Test;
 
@@ -19,11 +19,7 @@ my $test_data = (-d "t")
     ? catfile($Bin, @data)
     : catfile($Bin, "t", @data);
 
-my (undef, $tmp) = tempfile("sqlXXXXX",
-                             OPEN   => 0,
-                             UNLINK => 1,
-                             SUFFIX => '.png',
-                             DIR    => tmpdir);
+my $tmp = mktemp('sqlXXXXX');
 
 BEGIN {
     plan tests => 3;
