@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.57 2004-04-22 19:59:46 kycl4rk Exp $
+# $Id: Translator.pm,v 1.58 2004-10-15 02:23:29 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.57 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.58 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -426,7 +426,10 @@ sub schema {
     my $self = shift;
 
     unless ( defined $self->{'schema'} ) {
-        $self->{'schema'} = SQL::Translator::Schema->new;
+        $self->{'schema'} = SQL::Translator::Schema->new(
+            parser_args     => $self->parser_args,
+            producer_args   => $self->producer_args,
+        );
     }
 
     return $self->{'schema'};
