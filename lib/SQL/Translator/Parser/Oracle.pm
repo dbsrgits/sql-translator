@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.11 2003-09-09 15:57:38 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.12 2003-09-26 21:03:28 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -142,7 +142,9 @@ drop : /drop/i TABLE ';'
 drop : /drop/i WORD(s) ';'
     { @table_comments = () }
 
-create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
+prompt : /prompt/i create_table table_name
+
+create : prompt(?) create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     {
         my $table_name                       = $item{'table_name'};
         $tables{ $table_name }{'order'}      = ++$table_order;
@@ -155,7 +157,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
 
         my $i = 1;
         my @constraints;
-        for my $definition ( @{ $item[4] } ) {
+        for my $definition ( @{ $item[5] } ) {
             if ( $definition->{'type'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } = 
@@ -177,9 +179,8 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
             }
         }
 
-        for my $option ( @{ $item[6] } ) {
-            $tables{ $table_name }{'table_options'}{ $option->{'type'} } = 
-                $option;
+        for my $option ( @{ $item[7] } ) {
+            push @{ $tables{ $table_name }{'table_options'} }, $option;
         }
 
         1;
@@ -403,6 +404,26 @@ default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
 
 create_table : /create/i global_temporary(?) /table/i
 
+table_option : /organization/i WORD
+    {
+        $return = { 'ORGANIZATION' => $item[2] }
+    }
+
+table_option : /nomonitoring/i
+    {
+        $return = { 'NOMONITORING' => undef }
+    }
+
+table_option : /parallel/i '(' key_value(s) ')'
+    {
+        $return = { 'PARALLEL' => $item[3] }
+    }
+
+key_value : WORD VALUE
+    {
+        $return = { $item[1], $item[2] }
+    }
+
 table_option : /[^;]+/
 
 table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrable(?) deferred(?) comment(s?)
@@ -513,6 +534,12 @@ sub parse {
             name     => $tdata->{'table_name'},
             comments => $tdata->{'comments'},
         ) or die $schema->error;
+
+        $table->options( $tdata->{'table_options'} );
+
+#        for my $opt ( @{ $tdata->{'table_options'} || [] } ) {
+#            $table->options( $opt );
+#        }
 
         my @fields = sort { 
             $tdata->{'fields'}->{$a}->{'order'} 
