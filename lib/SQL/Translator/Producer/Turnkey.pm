@@ -2,22 +2,15 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Graph;
 use SQL::Translator::Schema::Graph::HyperEdge;
-use SQL::Translator::Utils qw(header_comment);
+use Log::Log4perl; Log::Log4perl::init('/etc/log4perl.conf');
 use Data::Dumper;
 use Template;
-
-#{
-#  local $/;
-#  my $data = <SQL::Translator::Producer::Turnkey::DATA>;
-#  eval { $data };
-#  warn $@ if $@;
-#}
 
 my %producer2dsn = (
     MySQL      => 'mysql',
@@ -27,12 +20,16 @@ my %producer2dsn = (
 
 # -------------------------------------------------------------------
 sub produce {
+    my $log           = Log::Log4perl->get_logger('sql.translator');
+
     my $t             = shift;
 	my $create        = undef;
     my $args          = $t->producer_args;
     my $no_comments   = $t->no_comments;
 	my $baseclass     = $args->{'main_pkg_name'} || $t->format_package_name('DBI');
-	my $graph         = SQL::Translator::Schema::Graph->new(translator => $t, baseclass => $baseclass);
+	my $graph         = SQL::Translator::Schema::Graph->new(translator => $t,
+															baseclass => $baseclass
+														   );
 
 	my $parser_type   = (split /::/, $t->parser_type)[-1];
 
@@ -56,7 +53,9 @@ sub produce {
     # create methods
     #
 	foreach my $node_from ($graph->node_values){
-	  next unless $node_from->table->is_data;
+
+	  next unless $node_from->table->is_data or !$node_from->table->is_trivial_link;
+
 	  foreach my $cedge ( $node_from->compoundedges ){
 
 		my $hyperedge = SQL::Translator::Schema::Graph::HyperEdge->new();
@@ -78,41 +77,43 @@ sub produce {
 			if($edge->thisnode->name ne $cedge->via->name){
 			  $node_to ||= $graph->node($edge->thisnode->table->name);
 			}
-
 			$hyperedge->push_thatnode($edge->thisnode);
 			$hyperedge->push_thatfield($edge->thisfield);
 			$hyperedge->push_thatviafield($edge->thatfield);
 		  }
+		  $log->debug($edge->thisfield->name);
+		  $log->debug($edge->thatfield->name);
 		}
+
 		   if($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode == 1){ $hyperedge->type('one2one')   }
 		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode == 1){ $hyperedge->type('many2one')  }
 		elsif($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('one2many')  }
 		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('many2many') }
 
-		if(scalar($hyperedge->thisnode) > 1){
-warn $hyperedge;
-warn $hyperedge->type;
-		  foreach my $thisnode ( $hyperedge->thisnode ){
-#warn $thisnode;
-#warn $hyperedge->thatnode;
-warn $thisnode->name;
+#warn join "\n", sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
 
-eval { $hyperedge->thatnode->name }; warn $@ if $@;
+		#node_to won't always be defined b/c of multiple edges to a single other node
+		if(defined($node_to)){
+		  $log->debug($node_from->name);
+		  $log->debug($node_to->name);
 
-warn $hyperedge->thatnode if(defined($hyperedge->thatnode));
-
-
-#warn $hyperedge->thisfield->name;
-#warn $hyperedge->thatfield->name;
-#warn $hyperedge->thisviafield->name;
-#warn $hyperedge->thatviafield->name;
+		  if(scalar($hyperedge->thisnode) > 1){
+			$log->debug($hyperedge->type ." via ". $hyperedge->vianode->name);
+			my $i = 0;
+			foreach my $thisnode ( $hyperedge->thisnode ){
+			  $log->debug($thisnode->name .' '.
+						  $hyperedge->thisfield_index(0)->name .' -> '.
+						  $hyperedge->thisviafield_index($i)->name .' '.
+						  $hyperedge->vianode->name .' '.
+						  $hyperedge->thatviafield_index(0)->name .' <- '.
+						  $hyperedge->thatfield_index(0)->name .' '.
+						  $hyperedge->thatnode_index(0)->name ."\n"
+						 );
+			  $i++;
+			}
 		  }
+		  $node_from->push_hyperedges($hyperedge);
 		}
-exit;
-
-#warn $node_from->name ."\t". $node_to->name ."\t". $hyperedge->type ."\t". $hyperedge->vianode->name;
-
-		$node_from->push_hyperedges($hyperedge);
 	  }
  	}
 
@@ -128,12 +129,12 @@ sub translateForm {
   my $tt2;
   $tt2 = template($type);
   my $template = Template->new({
+								PRE_CHOMP => 1,
+								POST_CHOMP => 0,
 								EVAL_PERL => 1
 							   });
 
   my $result;
-  # specify input filename, or file handle, text reference, etc.
-  # process input template, substituting variables
   $template->process(\$tt2, $meta, \$result) || die $template->error();
   return($result);
 }
@@ -159,7 +160,6 @@ L<http://turnkey.sourceforge.net>.
 =head1 AUTHORS
 
 Allen Day E<lt>allenday@ucla.eduE<gt>
-Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
 Brian O\'Connor E<lt>brian.oconnor@excite.comE<gt>.
 
 =cut
@@ -185,7 +185,7 @@ use Class::DBI::Pager;
 [% printHasA(node.edges, node) %]
 [% printHasMany(node.edges, node) %]
 [% printHasCompound(node.compoundedges, node.hyperedges, node.name) %]
-[% printHasFriendly(node) %]
+[% #printHasFriendly(node) %]
 [% END %]
 
 [% MACRO printPKAccessors(array, name) BLOCK %]
@@ -196,38 +196,49 @@ use Class::DBI::Pager;
 sub id { shift->[% item %] }
 sub [% name %] { shift->[% item %] }
 [% END %]
+
 [% END %]
 
 [% MACRO printHasA(edges, name) BLOCK %]
 #
 # Has A
 #
+
 [% FOREACH edge = edges %]
-  [%- IF edge.type == 'import' -%]
+  [% IF edge.type == 'import' %]
 [% node.name %]->has_a([% edge.thisfield.name %] => '[% edge.thatnode.name %]');
-    [%- IF node.has(edge.thatnode.name) < 2 %]
+    [% IF node.has(edge.thatnode.name) < 2 %]
 sub [% edge.thatnode.table.name %] { return shift->[% edge.thisfield.name %] }
-    [%- ELSE %]
+    [% ELSE %]
 sub [% format_fk(edge.thisnode.table.name,edge.thisfield.name) %] { return shift->[% edge.thisfield.name %] }
-    [%- END %]
-  [%- END %]
+    [% END %]
+
+  [% END %]
 [% END %]
+
 [% END %]
 
 [% MACRO printHasMany(edges, node) BLOCK %]
 #
 # Has Many
 #
+
 [% FOREACH edge = edges %]
-  [%- IF edge.type == 'export' -%]
+  [% IF edge.type == 'export' %]
 [% node.name %]->has_many([% edge.thatnode.table.name %]_[% edge.thatfield.name %], '[% edge.thatnode.name %]' => '[% edge.thatfield.name %]');
-    [%- IF node.via(edge.thatnode.name) >= 1 %]
+    [% IF node.via(edge.thatnode.name) >= 1 %]
 sub [% edge.thatnode.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfield.name) %]s { return shift->[% edge.thatnode.table.name %]_[% edge.thatfield.name %] }
-    [%- ELSIF edge.thatnode.table.is_data %]
+    [% ELSIF edge.thatnode.table.is_data %]
+      [% IF node.edgecount(edge.thatnode.name) > 1 %]
+sub [% edge.thatnode.table.name %]_[% format_fk(edge.thatnode.name,edge.thatfield.name) %]s { return shift->[% edge.thatnode.table.name %]_[% edge.thatfield.name %] }
+      [% ELSE %]
 sub [% edge.thatnode.table.name %]s { return shift->[% edge.thatnode.table.name %]_[% edge.thatfield.name %] }
-    [%- END %]
-  [%- END %]
+      [% END %]
+    [% END %]
+
+  [% END %]
 [% END %]
+
 [% END %]
 
 [% MACRO printHasCompound(cedges,hedges,name) BLOCK %]
@@ -236,29 +247,49 @@ sub [% edge.thatnode.table.name %]s { return shift->[% edge.thatnode.table.name 
 #
 [% FOREACH cedge = cedges %]
 [% FOREACH edge = cedge.edges %]
-  [%- NEXT IF edge.thisnode.name != name -%]
+  [% NEXT IF edge.thisnode.name != name %]
 sub [% cedge.via.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfield.name) %]s { return shift->[% cedge.via.table.name %]_[% edge.thatfield.name %] }
 [% END %]
 [% END %]
+
 [% FOREACH h = hedges %]
-  [%- NEXT IF h.thisnode.name != name -%]
-  [%- IF h.type == 'one2one' %]
-1sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
-  [%- ELSIF h.type == 'one2many' %]
-    [% FOREACH thisnode = h.thisnode %]
-2
- h.thatnode.name=[% h.thatnode.name %]
- h.thatfield.name [% h.thatfield.name %]
- h.thisnode.name=[% thisnode.name %]
- h.thisfield.name=[% thisfield.name %]
-2
+########## [% h.type %] ##########
+  [% IF h.type == 'one2one' %]
+sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
+
+  [% ELSIF h.type == 'one2many' %]
+    [% thisnode = h.thisnode_index(0) %]
+    [% i = 0 %]
+    [% FOREACH thatnode = h.thatnode %]
+#[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
+sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
+      [% i = i + 1 %]
     [% END %]
-  [%- ELSIF h.type == 'many2one' %]
-3sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
-  [%- ELSIF h.type == 'many2many' %]
-4
-  [%- END %]
+
+  [% ELSIF h.type == 'many2one' %]
+    [% i = 0 %]
+    [% FOREACH thisnode = h.thisnode %]
+#[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
+sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
+      [% i = i + 1 %]
+
+    [% END %]
+
+  [% ELSIF h.type == 'many2many' %]
+    [% i = 0 %]
+    [% FOREACH thisnode = h.thisnode %]
+      [% j = 0 %]
+      [% FOREACH thatnode = h.thatnode %]
+#[% thisnode.name %]::[% h.thisfield_index(i).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(j).name %] <- [% h.thatnode_index(j).name %]::[% h.thatfield_index(j).name %]
+sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(j).name) %]s { my \$self = shift; return map \$_->[% %], \$self->[% %] }
+        [% j = j + 1 %]
+
+      [% END %]
+      [% i = i + 1 %]
+    [% END %]
+  [% END %]
 [% END %]
+
 [% END %]
 
 [% MACRO printHasFriendly(node) BLOCK %]

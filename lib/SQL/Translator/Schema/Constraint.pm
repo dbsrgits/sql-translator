@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.8 2003-08-21 18:11:45 kycl4rk Exp $
+# $Id: Constraint.pm,v 1.9 2003-09-25 01:31:28 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -51,7 +51,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -75,8 +75,8 @@ Object constructor.
       type             => 'foreign_key', # type of table constraint
       name             => 'fk_phone_id', # name of the constraint
       fields           => 'phone_id',    # field in the referring table
-      reference_fields => 'phone_id',    # referenced table
-      reference_table  => 'phone',       # referenced fields
+      reference_fields => 'phone_id',    # referenced field
+      reference_table  => 'phone',       # referenced table
       match_type       => 'full',        # how to match
       on_delete_do     => 'cascade',     # what to do on deletes
       on_update_do     => '',            # what to do on updates

@@ -17,6 +17,10 @@ use Class::MakeMethods::Template::Hash (
 
 sub flip {
   my $self = shift;
+
+#warn "self thisfield: ".$self->thisfield->name;
+#warn "self thatfield: ".$self->thatfield->name;
+
   return SQL::Translator::Schema::Graph::Edge->new( thisfield => $self->thatfield,
 													thatfield => $self->thisfield,
 													thisnode  => $self->thatnode,

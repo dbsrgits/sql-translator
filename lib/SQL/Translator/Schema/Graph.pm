@@ -67,13 +67,17 @@ sub init {
 						   thisnode => $node,
 						   thisfield => $field,
 						   thatnode => $that,
-						   thatfield => ($field->foreign_key_reference->reference_fields)[0]
+						   #can you believe this sh*t just to get a field obj?
+						   thatfield => $self->translator->schema->get_table($field->foreign_key_reference->reference_table)->get_field(($field->foreign_key_reference->reference_fields)[0])
 						  );
 
+	  $node->edgecount($that->name, $node->edgecount($that->name)+1);
 
 	  $node->has($that->name, $node->has($that->name)+1);
 	  $that->many($node->name, $that->many($node->name)+1);
 
+	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
+warn $node->name . "\t" . $that->edgecount($node->name);
 	  $node->push_edges( $edge );
 	  $that->push_edges( $edge->flip );
 	}
@@ -82,29 +86,45 @@ sub init {
   #
   # type MM relationships
   #
+  #foreach linknode
   foreach my $lnode (sort $self->node_values){
 	next if $lnode->table->is_data;
 	foreach my $inode1 (sort $self->node_values){
+	  #linknode can't link to itself
 	  next if $inode1 eq $lnode;
 
 	  my @inode1_imports = grep { $_->type eq 'import' and $_->thatnode eq $inode1 } $lnode->edges;
 	  next unless @inode1_imports;
 
 	  foreach my $inode2 (sort $self->node_values){
+		#linknode can't link to itself
+		next if $inode2 eq $lnode;
+
+		#identify tables that import keys to linknode
 		my %i = map {$_->thatnode->name => 1} grep { $_->type eq 'import'} $lnode->edges;
+
 		if(scalar(keys %i) == 1) {
 		} else {
 		  last if $inode1 eq $inode2;
 		}
 
-		next if $inode2 eq $lnode;
 		my @inode2_imports =  grep { $_->type eq 'import' and $_->thatnode eq $inode2 } $lnode->edges;
 		next unless @inode2_imports;
 
 		my $cedge = CompoundEdge->new();
 		$cedge->via($lnode);
 
-		$cedge->push_edges( map {$_->flip} grep {$_->type eq 'import' and ($_->thatnode eq $inode1 or $_->thatnode eq $inode2)} $lnode->edges);
+		#warn join ' ', map {$_->thisfield->name} map {$_->flip} $lnode->edges;
+		#warn join ' ', map {$_->thisfield->name} $lnode->edges;
+		#warn join ' ', map {$_->thisfield->name} map {$_->flip} grep {$_->type eq 'import'} $lnode->edges;
+		#warn join ' ', map {$_->thatfield->name} map {$_->flip} grep {$_->type eq 'import'} $lnode->edges;
+		$cedge->push_edges(
+						   map {$_->flip}
+						   grep {$_->type eq 'import'
+								   and
+								 ($_->thatnode eq $inode1 or $_->thatnode eq $inode2)
+							    } $lnode->edges
+						  );
 
 		if(scalar(@inode1_imports) == 1 and scalar(@inode2_imports) == 1){
 		  $cedge->type('one2one');
@@ -130,7 +150,6 @@ sub init {
 
 		$inode1->push_compoundedges($cedge);
 		$inode2->push_compoundedges($cedge) unless $inode1 eq $inode2;
-
 	  }
 	}
   }
