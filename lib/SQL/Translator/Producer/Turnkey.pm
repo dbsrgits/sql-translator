@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.59 2004-10-13 22:24:49 allenday Exp $
+# $Id: Turnkey.pm,v 1.60 2004-10-13 22:31:59 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.59 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.60 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -696,7 +696,7 @@ EOF
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
     [% CASE '[- format_table(node.key) -]' %]
-      [% INCLUDE [- format_table(node.key) -].tt2 %]
+      [% INCLUDE [- format_table(node.key) | lower -].tt2 %]
   [- END -]
   [- END -]
     [% CASE DEFAULT %]
