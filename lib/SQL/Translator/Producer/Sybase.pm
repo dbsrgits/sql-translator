@@ -1,11 +1,12 @@
 package SQL::Translator::Producer::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.1 2003-05-12 14:29:51 angiuoli Exp $
+# $Id: Sybase.pm,v 1.2 2003-05-12 15:00:34 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>
+#                    Chris Mungall <cjm@fruitfly.org>,
+#                    Sam Angiuoli <angiuoli@users.sourceforge.net>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -30,10 +31,11 @@ SQL::Translator::Producer::Sybase - Sybase producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
+use SQL::Translator::Utils qw(debug header_comment);
 
 my %translate  = (
     #
@@ -52,7 +54,7 @@ my %translate  = (
     serial     => 'numeric', 
     boolean    => 'varchar',
     char  => 'char'
-		  
+          
 );
 
 my %reserved = map { $_, 1 } qw[
@@ -129,11 +131,7 @@ sub produce {
     my $add_drop_table        = $translator->add_drop_table;
 
     my $output;
-    unless ( $no_comments ) {
-        $output .=  sprintf 
-            "--\n-- Created by %s\n-- Created on %s\n--\n\n",
-            __PACKAGE__, scalar localtime;
-    }
+    $output .= header_comment unless ($no_comments);
 
     for my $table ( 
         map  { $_->[1] }
@@ -164,16 +162,16 @@ sub produce {
             );
             my $field_name_ur = unreserve( $field_name, $table_name );
             my $field_str     = qq["$field_name_ur"];
-	    $field_str =~ s/\"//g;
-	    if ($field_str =~ /identity/){
-		$field_str =~ s/identity/pidentity/;
-	    }
+            $field_str =~ s/\"//g;
+            if ($field_str =~ /identity/){
+                $field_str =~ s/identity/pidentity/;
+            }
 
             #
             # Datatype
             #
             my $data_type = lc $field->{'data_type'};
-	    my $orig_data_type = $data_type;
+            my $orig_data_type = $data_type;
             my $list      = $field->{'list'} || [];
             my $commalist = join ",", @$list;
             my $seq_name;
@@ -181,7 +179,9 @@ sub produce {
             if ( $data_type eq 'enum' ) {
                 my $len = 0;
                 $len = ($len < length($_)) ? length($_) : $len for (@$list);
-                my $check_name = mk_name( $table_name.'_'.$field_name, 'chk' ,undef,1);
+                my $check_name = mk_name( 
+                    $table_name.'_'.$field_name, 'chk' ,undef, 1
+                );
                 push @constraints, 
                 "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
                 $field_str .= " character varying($len)";
@@ -204,19 +204,20 @@ sub produce {
                     $field_str .= '('.join(',', @{ $field->{'size'} }).')' 
                         if @{ $field->{'size'} || [] };
                 }
-		elsif( $data_type =~ /numeric/){
-		    $field_str .= '(9,0)';
-		}
-		if( $orig_data_type eq 'text'){
-		    #interpret text fields as long varchars
-		    $field_str .= '(255)';
-		}
-		elsif($data_type eq "varchar" && $orig_data_type eq "boolean"){
-		    $field_str .= '(6)';
-		}
-		elsif($data_type eq "varchar" && (!$field->{'size'})){
-		    $field_str .= '(255)';
-		}
+                elsif( $data_type =~ /numeric/){
+                    $field_str .= '(9,0)';
+                }
+
+                if( $orig_data_type eq 'text'){
+                    #interpret text fields as long varchars
+                    $field_str .= '(255)';
+                }
+                elsif($data_type eq "varchar" && $orig_data_type eq "boolean"){
+                    $field_str .= '(6)';
+                }
+                elsif($data_type eq "varchar" && (!$field->{'size'})){
+                    $field_str .= '(255)';
+                }
             }
 
 
@@ -238,12 +239,11 @@ sub produce {
             #
             unless ( $field->{'null'} ) {
                 my $constraint_name = mk_name($field_name_ur, 'nn',undef,1);
-#                $field_str .= ' CONSTRAINT '.$constraint_name.' NOT NULL';
                 $field_str .= ' NOT NULL';
             }
-	    else {
-		$field_str .= ' NULL' if($data_type ne "bit");
-	    }
+            else {
+                $field_str .= ' NULL' if($data_type ne "bit");
+            }
 
             push @field_decs, $field_str;
         }
@@ -262,29 +262,34 @@ sub produce {
 
             if ( $constraint_type eq 'primary_key' ) {
                 $constraint_name = mk_name( $table_name, 'pk',undef,1 );
-                push @constraints, 'CONSTRAINT '.$constraint_name.' PRIMARY KEY '.
+                push @constraints, 
+                    'CONSTRAINT '.$constraint_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
             if ( $constraint_type eq 'foreign_key' ) {
                 $constraint_name = mk_name( $table_name, 'fk',undef,1 );
-                push @constraints, 'CONSTRAINT '.$constraint_name.' FOREIGN KEY '.
+                push @constraints, 
+                    'CONSTRAINT '.$constraint_name.' FOREIGN KEY '.
                     '(' . join( ', ', @fields ) . ') '.
-		    "REFERENCES $constraint->{'reference_table'}($constraint->{'reference_fields'}[0])";
+                    "REFERENCES $constraint->{'reference_table'}($constraint->{'reference_fields'}[0])";
             }
             elsif ( $constraint_type eq 'unique' ) {
                 $constraint_name = mk_name( 
-                    $table_name, $constraint_name || ++$idx_name_default,undef, 1
+                    $table_name, 
+                    $constraint_name || ++$idx_name_default,undef, 1
                 );
-                push @constraints, 'CONSTRAINT ' . $constraint_name . ' UNIQUE ' .
+                push @constraints, 
+                    'CONSTRAINT ' . $constraint_name . ' UNIQUE ' .
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $constraint_type eq 'normal' ) {
                 $constraint_name = mk_name( 
-                    $table_name, $constraint_name || ++$idx_name_default, undef, 1
+                    $table_name, 
+                    $constraint_name || ++$idx_name_default, undef, 1
                 );
                 push @constraint_decs, 
                     qq[CREATE CONSTRAINT "$constraint_name" on $table_name_ur (].
-                        join( ', ', @fields ).  
+                    join( ', ', @fields ).  
                     ');'; 
             }
             else {
@@ -308,26 +313,30 @@ sub produce {
             @constraint_decs, 
             '' 
         );
-			    }
-#
-	    # Index Declarations
-	    #
-	    for my $table ( 
-			    map  { $_->[1] }
-			    sort { $a->[0] <=> $b->[0] }
-			    map  { [ $_->{'order'}, $_ ] }
-			    values %$data
-			    ) {
-		my $table_name    = $table->{'table_name'};
-		$table_name       = mk_name( $table_name, '', undef, 1 );
-		my $table_name_ur = unreserve($table_name);
-		
-		my @index_decs = ();
-		for my $index ( @{ $table->{'indices'} } ) {
-		    my $unique = ($index->{'name'} eq 'unique') ? 'unique' : '';
-		    $output .= "CREATE $unique INDEX $index->{'name'} ON $table->{'table_name'} (".join(',',@{$index->{'fields'}}).");\n";
-		}
-	    }
+    }
+
+    #
+    # Index Declarations
+    #
+    for my $table ( 
+        map  { $_->[1] }
+        sort { $a->[0] <=> $b->[0] }
+        map  { [ $_->{'order'}, $_ ] }
+        values %$data
+    ) {
+        my $table_name    = $table->{'table_name'};
+        $table_name       = mk_name( $table_name, '', undef, 1 );
+        my $table_name_ur = unreserve($table_name);
+        
+        my @index_decs = ();
+        for my $index ( @{ $table->{'indices'} } ) {
+            my $unique = ($index->{'name'} eq 'unique') ? 'unique' : '';
+            $output .= "CREATE $unique INDEX $index->{'name'} ".
+                "ON $table->{'table_name'} (".
+                join(',',@{$index->{'fields'}}).");\n";
+        }
+    }
+
     if ( $WARN ) {
         if ( %truncated ) {
             warn "Truncated " . keys( %truncated ) . " names:\n";
@@ -401,15 +410,12 @@ sub unreserve {
 1;
 
 # -------------------------------------------------------------------
-# Life is full of misery, loneliness, and suffering --
-# and it's all over much too soon.
-# Woody Allen
-# -------------------------------------------------------------------
 
 =pod
 
-=head1 AUTHOR
+=head1 AUTHORS
 
+Sam Angiuoli E<lt>angiuoli@users.sourceforge.netE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 
 =cut
