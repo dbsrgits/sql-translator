@@ -1,9 +1,30 @@
+package Turnkey::Package;
+
+use strict;
+use Class::MakeMethods::Template::Hash (
+  new => [ 'new' ],
+  hash => [ qw( many ) ],
+  hash_of_arrays => [ qw( many_via) ],
+  scalar => [ qw( base name order primary_key primary_key_accessor table) ],
+);
+
+
+#  get_set => [ qw(order base name table primary_key primary_key_accessor) ],
+#  new_with_init => 'new',
+#;
+
+sub init {
+}
+
+1;
+
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1 2003-08-28 08:51:09 boconnor Exp $
+# $Id: Turnkey.pm,v 1.2 2003-08-29 05:38:56 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
+#                    Brian O'Connor <boconnor@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
 #
 # This program is free software; you can redistribute it and/or
@@ -23,7 +44,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -63,125 +84,98 @@ sub produce {
     #
     my %linkable;
     my %linktable;
-    foreach my $table ( $schema->get_tables ) {
-        my $is_link = 1;
-        foreach my $field ( $table->get_fields ) {
-            unless ( $field->is_primary_key or $field->is_foreign_key ) {
-                $is_link = 0; 
-                last;
-            }
-        }
+	my %packages;
+	my $order;
 
-        next unless $is_link;
-      
-        foreach my $left ( $table->get_fields ) {
-            next unless $left->is_foreign_key;
-            my $lfk           = $left->foreign_key_reference or next;
-            my $lr_table      = $schema->get_table( $lfk->reference_table )
-                                 or next;
-            my $lr_field_name = ($lfk->reference_fields)[0];
-            my $lr_field      = $lr_table->get_field($lr_field_name);
-            next unless $lr_field->is_primary_key;
 
-            foreach my $right ( $table->get_fields ) {
-                next if $left->name eq $right->name;
-        
-                my $rfk      = $right->foreign_key_reference or next;
-                my $rr_table = $schema->get_table( $rfk->reference_table )
-                               or next;
-                my $rr_field_name = ($rfk->reference_fields)[0];
-                my $rr_field      = $rr_table->get_field($rr_field_name);
-                next unless $rr_field->is_primary_key;
-        
-                $linkable{ $lr_table->name }{ $rr_table->name } = $table;
-                $linkable{ $rr_table->name }{ $lr_table->name } = $table;
-                $linktable{ $table->name } = $table;
-            }
-        }
-    }
+	foreach my $table ($schema->get_tables){
+	  die __PACKAGE__." table ".$table->name." doesn't have a primary key!" unless $table->primary_key;
+	  die __PACKAGE__." table ".$table->name." can't have a composite primary key!" if ($table->primary_key->fields)[1];
+
+
+	  my $package = Turnkey::Package->new();
+	  $packages{ $package->name } = $package;
+
+	  $package->order( ++$order );
+	  $package->name( $t->format_package_name($table->name) );
+	  $package->base( $main_pkg_name );
+	  $package->table( $table );
+	  $package->primary_key( ($table->primary_key->fields)[0] );
+	  # Primary key may have a differenct accessor method name
+	  $package->primary_key_accessor(
+									 defined($t->format_pk_name) ? $t->format_pk_name->( $package->name, $package->primary_key )
+									                             : undef
+									);
+	}
+
+	foreach my $maylink ( $schema->get_tables ){
+	  foreach my $left ($schema->get_tables){
+		foreach my $right ($schema->get_tables){
+
+		  next if $left->name eq $right->name;
+
+		  if( $maylink->can_link($left,$right) ){
+
+			$lpackage = $packages{$left->name};
+			$rpackage = $packages{$right->name};
+
+			$lpackage->many_via($rpackage => $maylink);
+			$rpackage->many_via($lpackage => $maylink);
+#			$linktable{ $maylink->name } = $maylink;
+		  }
+
+		}
+	  }
+	}
 
     #
     # Iterate over all tables
     #
-    my ( %packages, $order );
-    for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name or next;
+    for my $table_from ( $schema->get_tables ) {
+	  my %linked;
 
-        my $table_pkg_name = $t->format_package_name($table_name);
-        $packages{ $table_pkg_name } = {
-            order     => ++$order,
-            pkg_name  => $table_pkg_name,
-            base      => $main_pkg_name,
-            table     => $table_name,
-        };
 
-        #
-        # Primary key may have a differenct accessor method name
-        #
-        if ( my $constraint = $table->primary_key ) {
-            my $field          = ($constraint->fields)[0];
-			$packages{ $table_pkg_name }{'columns_primary'} = $field;
+	  next unless $table_from->is_data;
 
-            if ( my $pk_xform = $t->format_pk_name ) {
-                my $pk_name = $pk_xform->( $table_pkg_name, $field );
-
-                $packages{ $table_pkg_name }{'pk_accessor'} = 
-                    "#\n# Primary key accessor\n#\n".
-                    "sub $pk_name {\n    shift->$field\n}\n\n";
-				
-            }
-        }
-
-        my $is_data = 0;
-        foreach my $field ( $table->get_fields ) {
-		  if ( !$field->is_foreign_key and !$field->is_primary_key ) {
-			push @{ $packages{ $table_pkg_name }{'columns_essential'} }, $field->name;
-			$is_data++;
-		  } elsif ( !$field->is_primary_key ) {
-			push @{ $packages{ $table_pkg_name }{'columns_others'} }, $field->name;
-		  }
-		}
-
-		my %linked;
-		if ( $is_data ) {
-		  foreach my $link ( keys %{ $linkable{ $table_name } } ) {
-			my $linkmethodname;
+	  if($table_from->is_data){
+		foreach my $link ( keys %{ $linkable{ $table_from->name } } ) {
+		  my $linkmethodname;
 
 			if ( my $fk_xform = $t->format_fk_name ) {
 			  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-			  $linkmethodname = $fk_xform->($linkable{$table_name}{$link}->name,
+			  $linkmethodname = $fk_xform->($linkable{$table->name}{$link}->name,
 											($schema->get_table($link)->primary_key->fields)[0]).'s';
 			} else {
 			  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-			  $linkmethodname = $linkable{$table_name}{$link}->name.'_'.
+			  $linkmethodname = $linkable{$table->name}{$link}->name.'_'.
 				($schema->get_table($link)->primary_key->fields)[0].'s';
 			}
 
 			my @rk_fields = ();
 			my @lk_fields = ();
-			foreach my $field ($linkable{$table_name}{$link}->get_fields) {
+			foreach my $field ($linkable{$table->name}{$link}->get_fields) {
 			  next unless $field->is_foreign_key;
 
 			  next unless(
-						  $field->foreign_key_reference->reference_table eq $table_name
+						  $field->foreign_key_reference->reference_table eq $table->name
 						  ||
 						  $field->foreign_key_reference->reference_table eq $link
 						 );
 			  push @lk_fields, ($field->foreign_key_reference->reference_fields)[0]
 				if $field->foreign_key_reference->reference_table eq $link;
 			  push @rk_fields, $field->name
-				if $field->foreign_key_reference->reference_table eq $table_name;
+				if $field->foreign_key_reference->reference_table eq $table->name;
 			}
 
 			#if one possible traversal via link table
 			if (scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1) {
 			  foreach my $rk_field (@rk_fields) {
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
-				push @{ $packages{ $table_pkg_name }{'has_many'}{$link}{'link_one_one'} },
+				push @{ $packages{ $package->name }{'has_many'}{$link}{'link_one_one'} },
 				  "sub ".$linkmethodname." { my \$self = shift; ".
 					"return map \$_->".
 					  ($schema->get_table($link)->primary_key->fields)[0].
-						", \$self->".$linkable{$table_name}{$link}->name.
+						", \$self->".$linkable{$table->name}{$link}->name.
 						  "_".$rk_field." }\n\n";
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'one_one'} },
 				#  {link_method_name => $linkmethodname, primary_key_field => ($schema->get_table($link)->primary_key->fields)[0],
@@ -196,10 +190,10 @@ sub produce {
 			  foreach my $rk_field (@rk_fields) {
 				# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
-				push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'link_many_one'} },
-				  "sub " . $linkable{$table_name}{$link}->name .
+				push @{ $packages{ $package->name }{'has_many'}{ $link }{'link_many_one'} },
+				  "sub " . $linkable{$table->name}{$link}->name .
 					"s { my \$self = shift; return \$self->" .
-					  $linkable{$table_name}{$link}->name . "_" .
+					  $linkable{$table->name}{$link}->name . "_" .
 						$rk_field . "(\@_) }\n\n";
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'many_one'} },
 				#  {
@@ -215,10 +209,10 @@ sub produce {
 			  foreach my $rk_field (@rk_fields) {
 				# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
-				push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'link_many_many'} },
-				  "sub " . $linkable{$table_name}{$link}->name . "_" . $rk_field .
+				push @{ $packages{ $package->name }{'has_many'}{ $link }{'link_many_many'} },
+				  "sub " . $linkable{$table->name}{$link}->name . "_" . $rk_field .
 					"s { my \$self = shift; return \$self->" .
-					  $linkable{$table_name}{$link}->name . "_" .
+					  $linkable{$table->name}{$link}->name . "_" .
 						$rk_field . "(\@_) }\n\n";
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'many_many'} },
 				#  {
@@ -243,11 +237,9 @@ sub produce {
                 my $ref_pkg    = $t->format_package_name($ref_table);
                 my $ref_field  = ($fk->reference_fields)[0];
 
-                push @{ $packages{ $table_pkg_name }{'has_a'} },
-                    "$table_pkg_name->has_a(\n".
-                    "    $field_name => '$ref_pkg'\n);\n\n".
-                    "sub $fk_method {\n".
-                    "    return shift->$field_name\n}\n\n"
+                push @{ $packages{ $package->name }{'has_a'} },
+                    $package->name."->has_a( $field_name => '$ref_pkg');\n".
+                    "sub $fk_method { return shift->$field_name }\n\n"
                 ;
 				
 				
@@ -260,12 +252,12 @@ sub produce {
 				#if there weren't M-M relationships via the has_many
 				#being set up here, create nice pluralized method alias
 				#rather for user as alt. to ugly tablename_fieldname name
-				if(! $packages{ $ref_pkg }{ 'has_many' }{ $table_name } ){
+				if(! $packages{ $ref_pkg }{ 'has_many' }{ $table->name } ){
 				  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
 				  #push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
 				#	"sub $table_name\s {\n    return shift->$table_name\_$field_name\n}\n\n";
-				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name }{'fk_pluralized'} },
-					{ table_name => $table_name, field_name => $field_name };
+				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table->name }{'fk_pluralized'} },
+					{ table_name => $table->name, field_name => $field_name };
 
 				#else ugly
 				} else {
@@ -275,7 +267,7 @@ sub produce {
 				#  "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
 				#  "'$table_pkg_name' => '$field_name'\n);\n\n";
 				push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name }{pluralized} },
-				  { ref_pkg => $ref_pkg, table_pkg_name => $table_pkg_name, table_name => $table_name, field_name => $field_name };
+				  { ref_pkg => $ref_pkg, table_pkg_name => $package->name, table_name => $table->name, field_name => $field_name };
             }
 		}
 	}
@@ -464,37 +456,38 @@ my $turnkey_xml_tt2 = <<EOF;
 <!-- Atom Classes -->
 [% FOREACH package = linkable %]
   <atom class="Durian::Atom::[% package.key FILTER ucfirst %]"  name="[% package.key FILTER ucfirst %]" xlink:label="[% package.key FILTER ucfirst %]Atom"/>
-[% END %]
+[%- END -%]
 
 <!-- Atom Bindings -->
 <atomatombindings>
 [% FOREACH focus_atom = linkable %]
   [% FOREACH link_atom = focus_atom.value %]
   <atomatombinding xlink:from="#[% focus_atom.key FILTER ucfirst %]Atom" xlink:to="#[% link_atom.key FILTER ucfirst %]Atom" xlink:label="[% focus_atom.key FILTER ucfirst %]Atom2[% link_atom.key FILTER ucfirst %]Atom"/>
-  [% END %]
-[% END %]
+  [%- END -%]
+[%- END -%]
 </atomatombindings>
 
 <atomcontainerbindings>
-	[% FOREACH focus_atom = linkable %]
-	<atomcontainerbindingslayout xlink:label="Durian::Model::[% focus_atom.key FILTER ucfirst %]">
-	  [% FOREACH link_atom = focus_atom.value %]
-	  <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.key FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.key FILTER ucfirst %]Atom"/>
-	  [% END %]
-	  <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% focus_atom.key FILTER ucfirst %]Atom"    xlink:to="#[% focus_atom.key FILTER ucfirst %]Atom"/>
-    </atomcontainerbindingslayout>
-	[% END %]
-   </atomcontainerbindings>
+[% FOREACH focus_atom = linkable %]
+  <atomcontainerbindingslayout xlink:label="Durian::Model::[% focus_atom.key FILTER ucfirst %]">
+  [% FOREACH link_atom = focus_atom.value %]
+    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.key FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.key FILTER ucfirst %]Atom"/>
+  [%- END -%]
+  <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% focus_atom.key FILTER ucfirst %]Atom"    xlink:to="#[% focus_atom.key FILTER ucfirst %]Atom"/>
+  </atomcontainerbindingslayout>
+  [%- END -%]
+</atomcontainerbindings>
 
-  <uribindings>
-    <uribinding uri="/" class="Durian::Util::Frontpage"/>
-  </uribindings>
+<uribindings>
+  <uribinding uri="/" class="Durian::Util::Frontpage"/>
+</uribindings>
 
-  <classbindings>
-	[% FOREACH focus_atom = linkable %]
-     <classbinding class="Durian::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
-	[% END %]
-  </classbindings>
+<classbindings>
+[% FOREACH focus_atom = linkable %]
+   <classbinding class="Durian::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
+[%- END -%]
+
+</classbindings>
 
 </Durian>
 EOF
@@ -571,10 +564,12 @@ sub translateForm
   my $args = $t->producer_args;
   my $tt2     = $args->{'template'};
   my $tt2Ref;
-  if ($tt2 eq 'atom') { $tt2Ref = \$turnkey_atom_tt2; }
-  if ($tt2 eq 'dbi') { $tt2Ref = \$turnkey_dbi_tt2; }
-  if ($tt2 eq 'xml') { $tt2Ref = \$turnkey_xml_tt2; }
-  if ($tt2 eq 'template') { $tt2Ref = \$turnkey_template_tt2; }
+
+     if ($tt2 eq 'atom')     { $tt2Ref = \$turnkey_atom_tt2;     }
+  elsif ($tt2 eq 'classdbi') { $tt2Ref = \$turnkey_dbi_tt2;      }
+  elsif ($tt2 eq 'xml')      { $tt2Ref = \$turnkey_xml_tt2;      }
+  elsif ($tt2 eq 'template') { $tt2Ref = \$turnkey_template_tt2; }
+  else                       { die __PACKAGE__." didn't recognize your template option: $tt2" }
 
   my $vars = {
 				packages  => $output->{packages},
@@ -613,7 +608,7 @@ SQL::Translator::Producer::ClassDBI - create Class::DBI classes from schema
 Use this producer as you would any other from SQL::Translator.  See
 L<SQL::Translator> for details.
 
-This package utilizes SQL::Translator's formatting methods
+This package utilizes SQL::Translator\'s formatting methods
 format_package_name(), format_pk_name(), format_fk_name(), and
 format_table_name() as it creates classes, one per table in the schema
 provided.  An additional base class is also created for database connectivity
@@ -624,4 +619,4 @@ configuration.  See L<Class::DBI> for details on how this works.
 Allen Day E<lt>allenday@ucla.eduE<gt>
 Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Brian O'Connor E<lt>brian.oconnor@excite.comE<gt>.
+Brian O\'Connor E<lt>brian.oconnor@excite.comE<gt>.

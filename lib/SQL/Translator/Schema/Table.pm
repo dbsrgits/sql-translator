@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.14 2003-08-21 20:27:04 kycl4rk Exp $
+# $Id: Table.pm,v 1.15 2003-08-29 05:38:56 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Schema::Index;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -246,7 +246,7 @@ existing field, you will get an error and the field will not be created.
     my $field_name = $field->name or return $self->error('No name');
 
     if ( exists $self->{'fields'}{ $field_name } ) { 
-        return $self->error(qq[Can't create field: "$field_name" exists]);
+        return $self->error(qq[Can\'t create field: "$field_name" exists]);
     }
     else {
         $self->{'fields'}{ $field_name } = $field;
@@ -418,6 +418,72 @@ Determine whether the view is valid or not.
     return 1;
 }
 
+sub is_data {
+  my $self = shift;
+  return $self->{'is_data'} if defined $self->{'is_data'};
+
+  $self->{'is_data'} = 0;
+
+  foreach my $field ($self->get_fields){
+	if(!$field->is_primary_key or !$field->is_foreign_key){
+	  $self->{'is_data'} = 1;
+	  return $self->{'is_data'}
+	}
+  }
+
+  return $self->{'is_data'};
+}
+
+sub can_link {
+
+=pod
+
+=head2 can_link
+
+Determine whether the table can link two arg tables via many-to-many.
+
+  my $ok = $table->can_link($table1,$table2);
+
+=cut
+
+  my($self,$table1,$table2) = @_;
+
+  #get tables in abc order
+  ($table1,$table2) = sort {$a->name cmp $b->name} ($table1,$table2);
+
+  return $self->{'can_link'}{$table1->name}{$table2->name} if defined $self->{'can_link'}{$table1->name}{$table2->name};
+
+  if($self->is_data == 1){
+	$self->{'can_link'}{$table1->name}{$table2->name} = 0;
+	return $self->{'can_link'}{$table1->name}{$table2->name};
+  }
+
+  my %fk = ();
+
+  foreach my $field ($self->get_fields){
+	#if the table has non-key fields, it can't be a link
+	if(!$field->is_primary_key or !$field->is_foreign_key){
+	  $self->{'can_link'}{$table1->name}{$table2->name} = 0;
+	  return $self->{'can_link'}{$table1->name}{$table2->name};
+
+	#otherwise, count up how many fields refer to each FK table.field
+	} elsif($field->is_foreign_key){
+	  $fk{$field->foreign_key_reference->reference_table->name}++;
+	}
+  }
+
+  if($fk{ $table1->name } == 1
+	 and
+	 $fk{ $table2->name } == 1
+	){
+	$self->{'can_link'}{$table1->name}{$table2->name} = 1;
+  } else {
+	$self->{'can_link'}{$table1->name}{$table2->name} = 0;
+  }
+
+  return $self->{'can_link'}{$table1->name}{$table2->name};
+}
+
 # ----------------------------------------------------------------------
 sub name {
 
@@ -425,7 +491,7 @@ sub name {
 
 =head2 name
 
-Get or set the table's name.
+Get or set the table\'s name.
 
 If provided an argument, checks the schema object for a table of 
 that name and disallows the change if one exists.
@@ -438,7 +504,7 @@ that name and disallows the change if one exists.
 
     if ( my $arg = shift ) {
         if ( my $schema = $self->schema ) {
-            return $self->error( qq[Can't use table name "$arg": table exists] )
+            return $self->error( qq[Can\'t use table name "$arg": table exists] )
                 if $schema->get_table( $arg );
         }
         $self->{'name'} = $arg;
@@ -454,7 +520,7 @@ sub schema {
 
 =head2 schema
 
-Get or set the table's schema object.
+Get or set the table\'s schema object.
 
   my $schema = $table->schema;
 
@@ -477,7 +543,7 @@ sub primary_key {
 
 =head2 options
 
-Gets or sets the table's primary key(s).  Takes one or more field
+Gets or sets the table\'s primary key(s).  Takes one or more field
 names (as a string, list or array[ref]) as an argument.  If the field
 names are present, it will create a new PK if none exists, or it will
 add to the fields of an existing PK (and will unique the field names).
@@ -543,7 +609,7 @@ sub options {
 
 =head2 options
 
-Get or set the table's options (e.g., table types for MySQL).  Returns
+Get or set the table\'s options (e.g., table types for MySQL).  Returns
 an array or array reference.
 
   my @options = $table->options;
@@ -570,7 +636,7 @@ sub order {
 
 =head2 order
 
-Get or set the table's order.
+Get or set the table\'s order.
 
   my $order = $table->order(3);
 
