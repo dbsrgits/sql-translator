@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.2 2003-04-24 20:02:31 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.3 2003-05-26 22:29:48 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -26,7 +26,7 @@ use Data::Dumper;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -83,6 +83,8 @@ sub produce {
     debug("Data =\n", Dumper( $data ));
     debug("Producer args =\n", Dumper( $args ));
 
+    my $width           = $args->{'width'}       || 8.5;
+    my $height          = $args->{'height'}      || 11;
     my $out_file        = $args->{'out_file'}    || '';
     my $layout          = $args->{'layout'}      || 'neato';
     my $node_shape      = $args->{'node_shape'}  || 'ellipse';
@@ -106,6 +108,8 @@ sub produce {
     #
     my $gv            =  GraphViz->new(
         directed      => $natural_join ? 0 : 1,
+        width         => $width,
+        height        => $height,
         layout        => $layout,
         no_overlap    => 1,
         bgcolor       => $add_color ? 'lightgoldenrodyellow' : 'white',
