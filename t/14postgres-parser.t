@@ -119,7 +119,7 @@ my $f9 = shift @t1_fields;
 is( $f9->name, 'f_text', 'Ninth field is "f_text"' );
 is( $f9->data_type, 'text', 'Field is text' );
 is( $f9->is_nullable, 1, 'Field can be null' );
-is( $f9->size, 0, 'Size is "0"' );
+is( $f9->size, 64000, 'Size is "64,000"' );
 is( $f9->default_value, undef, 'Default value is undefined' );
 is( $f9->is_primary_key, 0, 'Field is not PK' );
 
