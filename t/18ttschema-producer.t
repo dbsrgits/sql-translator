@@ -22,7 +22,7 @@ use FindBin qw/$Bin/;
 BEGIN {
     maybe_plan(3, 
         'XML::XPath', 
-        'SQL::Translator::Parser::XML::SQLFairy'
+        'SQL::Translator::Parser::XML::SQLFairy',
         'Template', 
         'Test::Differences'
     )
