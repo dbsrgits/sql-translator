@@ -52,3 +52,14 @@
 *   Changes all included script names to start with "sqlt"
 
 *   Added capturing and printing most embedded table and field comments
+
+# -----------------------------------------------------------
+# 0.04    2003-11-07
+# -----------------------------------------------------------
+
+*   Increased version of Constants module to 1.41 to avoid a problem 
+    where 0.02 has 1.4 of that file and 0.03 had 1.06 which confused
+    CPAN
+
+*   Hard-coded all the PREREQ_PM modules in Makefile.PL (rather than
+    setting them dynamically) so that automated tests would pass
