@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.22 2003-06-11 04:00:43 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.23 2003-08-04 15:20:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -60,6 +60,7 @@ sub produce {
 
     my $create; 
     $create .= header_comment unless ($no_comments);
+    $create .= "SET foreign_key_checks=0;\n\n";
 
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name;
