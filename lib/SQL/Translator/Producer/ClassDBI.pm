@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.23 2003-06-25 19:47:10 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.24 2003-06-27 02:28:11 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -38,16 +38,16 @@ my %CDBI_auto_pkgs = (
 
 # -------------------------------------------------------------------
 sub produce {
-    my $translator    = shift;
-    local $DEBUG      = $translator->debug;
-    my $no_comments   = $translator->no_comments;
-    my $schema        = $translator->schema;
-    my $args          = $translator->producer_args;
+    my $t             = shift;
+    local $DEBUG      = $t->debug;
+    my $no_comments   = $t->no_comments;
+    my $schema        = $t->schema;
+    my $args          = $t->producer_args;
     my $db_user       = $args->{'db_user'} || '';
     my $db_pass       = $args->{'db_pass'} || '';
-    my $main_pkg_name = $translator->format_package_name('DBI');
+    my $main_pkg_name = $t->format_package_name('DBI');
     my $header        = header_comment(__PACKAGE__, "# ");
-    my $parser_type   = ( split /::/, $translator->parser_type )[-1];
+    my $parser_type   = ( split /::/, $t->parser_type )[-1];
     my $from          = $CDBI_auto_pkgs{ $parser_type } || '';
     my $dsn           = $args->{'dsn'} || sprintf( 'dbi:%s:_',
                             $CDBI_auto_pkgs{ $parser_type }
@@ -62,7 +62,7 @@ sub produce {
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
 
-        my $table_pkg_name = $translator->format_package_name($table_name);
+        my $table_pkg_name = $t->format_package_name($table_name);
         $packages{ $table_pkg_name } = {
             order     => ++$order,
             pkg_name  => $table_pkg_name,
@@ -73,14 +73,14 @@ sub produce {
         #
         # Primary key may have a differenct accessor method name
         #
-        if ( my $pk_xform = $translator->format_pk_name ) {
+        if ( my $pk_xform = $t->format_pk_name ) {
             if ( my $constraint = $table->primary_key ) {
                 my $field          = ($constraint->fields)[0];
                 my $pk_name        = $pk_xform->($table_pkg_name, $field);
                 
                 $packages{ $table_pkg_name }{'pk_accessor'} = 
                     "#\n# Primary key accessor\n#\n".
-                    "sub $pk_name {\n    shift->$field\n}\n"
+                    "sub $pk_name {\n    shift->$field\n}\n\n"
                 ;
             }
         }
@@ -92,16 +92,16 @@ sub produce {
             if ( $field->is_foreign_key ) {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
+                my $fk_method  = $t->format_fk_name($table_name, $field_name);
                 my $fk         = $field->foreign_key_reference;
                 my $ref_table  = $fk->reference_table;
-                my $ref_pkg    = $translator->format_package_name($ref_table);
-                my $ref_fld    = 
-                    $translator->format_fk_name($ref_table, $field_name);
+                my $ref_pkg    = $t->format_package_name($ref_table);
+                my $ref_field  = ($fk->reference_fields)[0];
 
                 push @{ $packages{ $table_pkg_name }{'has_a'} },
                     "$table_pkg_name->has_a(\n".
                     "    $field_name => '$ref_pkg'\n);\n\n".
-                    "sub $ref_fld {\n".
+                    "sub $fk_method {\n".
                     "    return shift->$field_name\n}\n\n"
                 ;
 
@@ -110,7 +110,7 @@ sub produce {
                 # that the other table "has many" of this one, right?
                 #
                 push @{ $packages{ $ref_pkg }{'has_many'} },
-                    "$ref_pkg->has_many(\n    '$table_name', ".
+                    "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
                     "'$table_pkg_name' => '$field_name'\n);\n\n"
                 ;
             }
@@ -192,18 +192,18 @@ sub produce {
 #        if ( $is_data ) {
 #            foreach my $link ( keys %{ $linkable{ $table->name } } ) {
 #                my $linkmethodname = 
-#                    "_".$translator->format_fk_name($table->name,$link)."_refs"
+#                    "_".$t->format_fk_name($table->name,$link)."_refs"
 #                ;
 #
-#                $create .= $translator->format_package_name($table->name).
+#                $create .= $t->format_package_name($table->name).
 #                    "->has_many('$linkmethodname','".
-#                    $translator->format_package_name(
+#                    $t->format_package_name(
 #                        $linkable{$table->name}{$link}->name
 #                    )."','".
 #                    ($schema->get_table($link)->primary_key->fields)[0]."');\n"
 #                ;
 #
-#                $create .= "sub ". $translator->format_fk_name($table,$link).
+#                $create .= "sub ". $t->format_fk_name($table,$link).
 #                    # HARDCODED 's' HERE.  
 #                    # ADD CALLBACK FOR PLURALIZATION MANGLING
 #                    "s {\n    my \$self = shift; return map \$_->".$link.
