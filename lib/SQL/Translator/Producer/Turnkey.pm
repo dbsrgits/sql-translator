@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.10 2003-12-28 12:14:59 boconnor Exp $
+# $Id: Turnkey.pm,v 1.11 2003-12-31 11:17:58 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -354,14 +354,14 @@ elsif($type eq 'atom'){
 [% ###### DOCUMENT START ###### %]
 
 [% FOREACH node = nodes %]
-[% IF node.value.compoundedges %]
+[% IF !node.value.is_trivial_link %]
 
 ##############################################
 
 package Turnkey::Atom::[% node.value.name FILTER replace "Turnkey::Model::", "" %];
 
 [% pname = node.value.name FILTER replace "Turnkey::Model::", "" %]
-[% pkey = "Turnkey::Model::${pname}" %]
+
 
 use base qw(Turnkey::Atom);
 use Data::Dumper;
@@ -429,8 +429,8 @@ EOF
 } elsif($type eq 'xml'){
   return <<EOF;
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Durian SYSTEM "Durian.dtd">
-<Durian>
+<!DOCTYPE Turnkey SYSTEM "Turnkey.dtd">
+<Turnkey>
 
 <!-- The basic layout is fixed -->
   <container bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" height="90%" orientation="vertical" type="root" width="100%" xlink:label="RootContainer">
@@ -441,42 +441,63 @@ EOF
   </container>
 
 <!-- Atom Classes -->
-[% FOREACH node = linkable %]
-  <atom class="Durian::Atom::[% node.key FILTER ucfirst %]"  name="[% node.key FILTER ucfirst %]" xlink:label="[% node.key FILTER ucfirst %]Atom"/>
+[% FOREACH node = nodes %]
+[% IF !node.value.is_trivial_link %]
+  <atom class="Turnkey::Atom::[% node.key FILTER ucfirst %]"  name="[% node.key FILTER ucfirst %]" xlink:label="[% node.key FILTER ucfirst %]Atom"/>
 [%- END -%]
+[% END %]
 
 <!-- Atom Bindings -->
 <atomatombindings>
-[% FOREACH focus_atom = linkable %]
-  [% FOREACH link_atom = focus_atom.value %]
-  <atomatombinding xlink:from="#[% focus_atom.key FILTER ucfirst %]Atom" xlink:to="#[% link_atom.key FILTER ucfirst %]Atom" xlink:label="[% focus_atom.key FILTER ucfirst %]Atom2[% link_atom.key FILTER ucfirst %]Atom"/>
+[% FOREACH focus_atom = nodes %]
+[% IF !focus_atom.value.is_trivial_link %]
+  [% FOREACH link_atom = focus_atom.value.hyperedges %]
+  <atomatombinding xlink:from="#[% focus_atom.key FILTER ucfirst %]Atom" xlink:to="#[% link_atom.thatnode.table.name FILTER ucfirst %]Atom" xlink:label="[% focus_atom.key FILTER ucfirst %]Atom2[% link_atom.thatnode.table.name FILTER ucfirst %]Atom"/>
   [%- END -%]
+  [% previous = "" %]
+  [% FOREACH link_atom = focus_atom.value.edges %]
+  [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name && link_atom.thatnode.table.name != "" %]
+  <atomatombinding xlink:from="#[% focus_atom.key FILTER ucfirst %]Atom" xlink:to="#[% link_atom.thatnode.table.name FILTER ucfirst %]Atom" xlink:label="[% focus_atom.key FILTER ucfirst %]Atom2[% link_atom.thatnode.table.name FILTER ucfirst %]Atom"/>
+  [% previous = link_atom.thatnode.table.name %]
+  [% END %]
+ [%- END %]
 [%- END -%]
+[% END %]
 </atomatombindings>
 
 <atomcontainerbindings>
-[% FOREACH focus_atom = linkable %]
-  <atomcontainerbindingslayout xlink:label="Durian::Model::[% focus_atom.key FILTER ucfirst %]">
-  [% FOREACH link_atom = focus_atom.value %]
-    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.key FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.key FILTER ucfirst %]Atom"/>
-  [%- END -%]
-  <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% focus_atom.key FILTER ucfirst %]Atom"    xlink:to="#[% focus_atom.key FILTER ucfirst %]Atom"/>
+[% FOREACH focus_atom = nodes %]
+[% IF !focus_atom.value.is_trivial_link %]
+  <atomcontainerbindingslayout xlink:label="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]">
+  [% FOREACH link_atom = focus_atom.value.hyperedges %]
+    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.thatnode.table.name FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.thatnode.table.name FILTER ucfirst %]Atom"/>
+  [%- END%]
+  [% previous = "" %]
+  [% FOREACH link_atom = focus_atom.value.edges %]
+  [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name %]
+    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.thatnode.table.name FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.thatnode.table.name FILTER ucfirst %]Atom"/>
+  [% previous = link_atom.thatnode.table.name %]
+  [% END %]
+  [%- END %]
+    <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% focus_atom.key FILTER ucfirst %]Atom"    xlink:to="#[% focus_atom.key FILTER ucfirst %]Atom"/>
   </atomcontainerbindingslayout>
-  [%- END -%]
+  [%- END %]
+[% END %]
 </atomcontainerbindings>
 
 <uribindings>
-  <uribinding uri="/" class="Durian::Util::Frontpage"/>
+  <uribinding uri="/" class="Turnkey::Util::Frontpage"/>
 </uribindings>
 
 <classbindings>
-[% FOREACH focus_atom = linkable %]
-   <classbinding class="Durian::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
+[% FOREACH focus_atom = nodes %]
+[% IF !focus_atom.value.is_trivial_link %]
+   <classbinding class="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
 [%- END -%]
-
+[% END %]
 </classbindings>
 
-</Durian>
+</Turnkey>
 EOF
 
 } elsif($type eq 'template'){
@@ -524,19 +545,23 @@ EOF
     [% CASE DEFAULT %]
       [% renderlist(atom.render(dbobject)) %]
 [% END %]
-[- FOREACH node = linkable -]
+[- FOREACH node = nodes -]
+[- IF !node.value.is_trivial_link -]
 [% MACRO render[- node.key FILTER ucfirst -]Atom(lstArr) BLOCK %]
   [% FOREACH record = lstArr %]
     [% fields = record.data %]
     [- pname = node.key FILTER ucfirst -]
-    [- pkey = "Durian::Model::${pname}" -]
-    [- FOREACH field = nodes.$pkey.columns_essential -]
+    [- pkey = "Turnkey::Model::${pname}" -]
+    [- FOREACH field = node.value.data_fields -]
+    [- IF field != "1" -]
       <tr><td><b>[- field -]</b></td><td>[% fields.[- field -] %]</td></tr>
+    [- END -]
     [- END -]
     [% id = record.id %]
     <tr><td><a href="?id=[% id %];class=Durian::Model::[- node.key FILTER ucfirst -]">Link</a></td><td></td></tr>
   [% END %]
 [% END %]
+[- END -]
 [- END -]
 [% MACRO renderlist(lstArr) BLOCK %]
   [%  FOREACH item = lstArr %]
