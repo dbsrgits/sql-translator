@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.62 2004-12-12 18:38:11 grommit Exp $
+# $Id: Translator.pm,v 1.63 2004-12-13 16:32:07 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.62 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.63 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -619,7 +619,17 @@ sub _tool {
         $tool =~ s/-/::/g if $tool !~ /::/;
         my ($code,$sub);
         ($code,$sub) = _load_sub("$tool\::$default_sub", $path);
-        ($code,$sub) = _load_sub("$tool", $path) unless $code;
+        unless ($code) {
+            if ( __PACKAGE__->error =~ m/Can't find module/ ) {
+                # Mod not found so try sub
+                ($code,$sub) = _load_sub("$tool", $path) unless $code;
+                die "Can't load $name subroutine '$tool' : ".__PACKAGE__->error
+                unless $code;
+            }
+            else {
+                die "Can't load $name '$tool' : ".__PACKAGE__->error;
+            }
+        }
 
         # get code reference and assign
         my (undef,$module,undef) = $sub =~ m/((.*)::)?(\w+)$/;
@@ -731,7 +741,7 @@ sub load {
         return $module; # Module loaded ok
     }
 
-    return __PACKAGE__->error("Can't find $name. Path:".join(",",@path));
+    return __PACKAGE__->error("Can't find module $name. Path:".join(",",@path));
 }
 
 # ----------------------------------------------------------------------
