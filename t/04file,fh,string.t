@@ -13,9 +13,7 @@ use strict;
 
 use IO::File;
 use SQL::Translator;
-use Test::More;
-
-plan tests => 3;
+use Test::More tests => 3;
 
 # Our object; uses the default parser and producer
 my $tr = SQL::Translator->new;
