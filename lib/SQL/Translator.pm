@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.5 2002-03-26 12:46:54 dlc Exp $
+# $Id: Translator.pm,v 1.6 2002-03-27 12:41:52 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -57,7 +57,7 @@ contributing their parsers or producers back to the project.
 
 use strict;
 use vars qw($VERSION $DEFAULT_SUB $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 # ----------------------------------------------------------------------
@@ -80,9 +80,17 @@ Valid options are:
 
 =item parser (aka from)
 
+=item parser_args
+
 =item producer (aka to)
 
-=item filename
+=item producer_args
+
+=item filename (aka file)
+
+=item data
+
+=item debug
 
 =back
 
@@ -105,10 +113,6 @@ advantage is gained by passing options to the constructor.
 #   given directly to the parser or producer methods, respectively.
 #   See the appropriate method description below for details about
 #   what each expects/accepts.
-#
-#   TODO
-#     * Support passing an input (filename or string) as with
-#       translate
 # ----------------------------------------------------------------------
 sub new {
     my $class = shift;
@@ -131,6 +135,23 @@ sub new {
     for my $pargs (qw(parser_args producer_args)) {
         $self->$pargs($args->{$pargs}) if defined $args->{$pargs};
     }
+
+    # ------------------------------------------------------------------
+    # Set the data source, if 'filename' or 'file' is provided.
+    # ------------------------------------------------------------------
+    $args->{'filename'} ||= $args->{'file'} || "";
+    $self->filename($args->{'filename'}) if $args->{'filename'};
+
+    # ------------------------------------------------------------------
+    # Finally, if there is a 'data' parameter, use that in preference
+    # to filename and file
+    # ------------------------------------------------------------------
+    if (my $data = $args->{'data'}) {
+        $self->data($data);
+    }
+
+    $self->{'debug'} = $DEBUG;
+    $self->{'debug'} = $args->{'debug'} if (defined $args->{'debug'});
 
     # ------------------------------------------------------------------
     # Clear the error
@@ -255,7 +276,7 @@ sub producer {
         elsif (isa($producer, 'CODE')) {
             $self->{'producer'} = $producer;
             $self->{'producer_type'} = "CODE";
-            $self->debug("Got 'producer': code ref");
+            $self->debug("Got producer: code ref");
         } # }}}
 
         # {{{ passed a string containing no "::"; relative package name
@@ -369,7 +390,7 @@ sub parser {
         elsif (isa($parser, 'CODE')) {
             $self->{'parser'} = $parser;
             $self->{'parser_type'} = "CODE";
-            $self->debug("Got 'parser': code ref");
+            $self->debug("Got parser: code ref");
         } # }}}
 
         # {{{ passed a string containing no "::"; relative package name
@@ -449,79 +470,173 @@ You get the idea.
 
 =back
 
+=head2 B<filename>, B<data>
+
+Using the B<filename> method, the filename of the data to be parsed
+can be set. This method can be used in conjunction with the B<data>
+method, below.  If both the B<filename> and B<data> methods are
+invoked as mutators, the data set in the B<data> method is used.
+
+    $tr->filename("/my/data/files/create.sql");
+
+or:
+
+    my $create_script = do {
+        local $/;
+        open CREATE, "/my/data/files/create.sql" or die $!;
+        <CREATE>;
+    };
+    $tr->data(\$create_script);
+
+B<filename> takes a string, which is interpreted as a filename.
+B<data> takes a reference to a string, which is used as the data o be
+parsed.  If a filename is set, then that file is opened and read when
+the B<translate> method is called, as long as the data instance
+variable is not set.
+
 =cut
+
+# {{{ filename - get or set the filename
+sub filename {
+    my $self = shift;
+    if (@_) {
+        $self->{'filename'} = shift;
+        $self->debug("Got filename: $self->{'filename'}");
+    }
+    $self->{'filename'};
+} # }}}
+
+# {{{ data - get or set the data
+# if $self->{'data'} is not set, but $self->{'filename'} is, then
+# $self->{'filename'} is opened and read, whith the results put into
+# $self->{'data'}.
+sub data {
+    my $self = shift;
+
+    # {{{ Set $self->{'data'} to $_[0], if it is provided.
+    if (@_) {
+        my $data = shift;
+        if (isa($data, "SCALAR")) {
+            $self->{'data'} =  $data;
+        }
+        elsif (! ref $data) {
+            $self->{'data'} = \$data;
+        }
+    }
+    # }}}
+
+    # {{{ If we have a filename but no data yet, populate.
+    if (not $self->{'data'} and my $filename = $self->filename) {
+        $self->debug("Opening '$filename' to get contents...");
+        local *FH;
+        local $/;
+        my $data;
+
+        unless (open FH, $filename) {
+            $self->error_out("Can't open $filename for reading: $!");
+            return;
+        }
+
+        $data = <FH>;
+        $self->{'data'} = \$data;
+
+        unless (close FH) {
+            $self->error_out("Can't close $filename: $!");
+            return;
+        }
+    }
+    # }}}
+
+    return $self->{'data'};
+} # }}}
 
 # {{{ translate
 sub translate {
     my $self = shift;
     my ($args, $parser, $producer);
 
-    if (@_ == 1) {
+    # {{{ Parse arguments
+    if (@_ == 1) { 
+        # {{{ Passed a reference to a hash
         if (isa($_[0], 'HASH')) {
             # Passed a hashref
             $self->debug("translate: Got a hashref");
             $args = $_[0];
         }
+        # }}}
+
+        # {{{ Passed a reference to a string containing the data
         elsif (isa($_[0], 'SCALAR')) {
-            # passed a ref to a string; deref it
+            # passed a ref to a string
             $self->debug("translate: Got a SCALAR reference (string)");
-            $args = { data => ${$_[0]} };
+            $self->data($_[0]);
         }
+        # }}}
+
+        # {{{ Not a reference; treat it as a filename
         elsif (! ref $_[0]) {
             # Not a ref, it's a filename
             $self->debug("translate: Got a filename");
-            $args = { filename => $_[0] };
+            $self->filename($_[0]);
         }
+        # }}}
+
+        # {{{ Passed something else entirely.
         else {
             # We're not impressed.  Take your empty string and leave.
             return "";
         }
+        # }}}
     }
     else {
         # You must pass in a hash, or you get nothing.
         return "" if @_ % 2;
         $args = { @_ };
+    } # }}}
+
+    # ----------------------------------------------------------------------
+    # Can specify the data to be transformed using "filename", "file",
+    # or "data"
+    # ----------------------------------------------------------------------
+    if (my $filename = $args->{'filename'} || $args->{'file'}) {
+        $self->filename($filename);
     }
 
-    if ((defined $args->{'filename'} || defined $args->{'file'}) &&
-         not $args->{'data'}) {
-        local *FH;
-        local $/;
-
-        open FH, $args->{'filename'}
-            or die "Can't open $args->{'filename'} for reading: $!";
-        $args->{'data'} = <FH>;
-        close FH or die "Can't close $args->{'filename'}: $!";
+    if (my $data = $self->{'data'}) {
+        $self->data($data);
     }
 
-    #
-    # Last chance to bail out; if there's nothing in the data
-    # key of %args, back out.
-    #
-    return "" unless defined $args->{'data'};
+    # ----------------------------------------------------------------
+    # Get the data.
+    # ----------------------------------------------------------------
+    my $data = $self->data;
+    unless (defined $$data) {
+        $self->error_out("Empty data file!");
+        return "";
+    }
 
-    #
+    # ----------------------------------------------------------------
     # Local reference to the parser subroutine
-    #
+    # ----------------------------------------------------------------
     if ($parser = ($args->{'parser'} || $args->{'from'})) {
         $self->parser($parser);
     } else {
         $parser = $self->parser;
     }
 
-    #
+    # ----------------------------------------------------------------
     # Local reference to the producer subroutine
-    #
+    # ----------------------------------------------------------------
     if ($producer = ($args->{'producer'} || $args->{'to'})) {
         $self->producer($producer);
     } else {
         $producer = $self->producer;
     }
 
-    #
+    # ----------------------------------------------------------------
     # Execute the parser, then execute the producer with that output
-    #
-    return $producer->($self, $parser->($self, $args->{'data'}));
+    # ----------------------------------------------------------------
+    return $producer->($self, $parser->($self, $$data));
 }
 # }}}
 
@@ -571,7 +686,15 @@ not set, then this method does nothing.
 # {{{ debug
 sub debug {
     my $self = shift;
-    carp @_ if ($DEBUG);
+#    if (ref $self) {
+#        carp @_ if $self->{'debug'};
+#    }
+#    else {
+        if ($DEBUG) {
+            my $class = ref $self || $self;
+            carp "[$class] $_" for @_;
+        }
+#    }
 }
 # }}}
 

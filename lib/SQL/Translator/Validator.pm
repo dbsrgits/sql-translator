@@ -1,7 +1,7 @@
 package SQL::Translator::Validator;
 
 # ----------------------------------------------------------------------
-# $Id: Validator.pm,v 1.1 2002-03-26 12:46:54 dlc Exp $
+# $Id: Validator.pm,v 1.2 2002-03-27 12:41:53 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Validator;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -33,6 +33,9 @@ use Data::Dumper;
 
 sub by_context($$$) { ($_[0]) ? ($_[1], $_[2]) : $_[1]; }
 
+# XXX If called in scalar context, then validate should *not*
+# genertate or return $log.  It's a lot of extra work if we know we
+# are not going to use it.
 sub validate {
     my $data = shift;
     my $wa = wantarray;
@@ -160,6 +163,47 @@ trust:
       return unless validate($data);
 
       # continue...
+
+SQL::Translator::Validator can also be used as a reporting tool.  When
+B<validate> is called in a list context, the second value returned
+(assuming the data structure is well-formed) is a summary of the
+table's information.  For example, the following table definition
+(MySQL format):
+
+  CREATE TABLE random (
+    id  int(11) not null default 1,
+    seed char(32) not null default 1
+  );
+
+  CREATE TABLE session (
+    foo char(255),
+    id int(11) not null default 1 primary key
+  ) TYPE=HEAP;
+
+Produces the following summary:
+
+    Contains 2 tables.
+    Table 1: random
+            Type: not defined
+            Indeces: none defined
+            Fields:
+                    id int (11)
+                            Default: 1
+                            Null: no
+                    seed char (32)
+                            Default: 1
+                            Null: no
+    Table 2: session
+            Type: HEAP
+            Indeces:
+                    (unnamed) on id
+            Fields:
+                    foo char (255)
+                            Null: yes
+                    id int (11)
+                            Default: 1
+                            Null: no
+
 
 =head1 EXPORTED FUNCTIONS
 

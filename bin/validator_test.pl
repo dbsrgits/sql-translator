@@ -29,7 +29,7 @@ my $data = {
         type => "HEAP",
         indeces => [
             {
-                name => "main_idx",
+                name => undef,
                 primary_key => 1,
                 fields => [ "id" ],
             }
@@ -58,7 +58,7 @@ use SQL::Translator;
 
 my $tr = SQL::Translator->new(parser => "MySQL");
 
-$data = $tr->translate("t/data/mysql/BGEP-RE-create.sql");
+#$data = $tr->translate("t/data/mysql/BGEP-RE-create.sql");
 
 my @r = validate($data);
 

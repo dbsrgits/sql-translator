@@ -2,6 +2,7 @@ package SQL::Translator;
 
 use strict;
 use ExtUtils::MakeMaker;
+use Config;
 
 WriteMakefile(
     'NAME'         => __PACKAGE__,
@@ -15,3 +16,5 @@ WriteMakefile(
         'Pod::Usage'         => 0,
     },
 );
+
+

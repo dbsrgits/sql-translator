@@ -3,6 +3,8 @@ Define structure of the data returned by parsers:
   o For testing purposes, we need to know if parsers are returning
     something reasonable
 
-cvs rm t/data/mysql/Apache-Session-MySQL.sql
-cvs add TODO
-cvs add t/01load.t
+Modules to be written/finished
+    SQL::Translator::Validator
+    SQL::Translator::Parser::xSV
+    SQL::Translator::Producer::MySQL
+
