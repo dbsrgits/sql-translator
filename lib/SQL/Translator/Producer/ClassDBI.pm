@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.3 2003-04-19 22:58:12 allenday Exp $
+# $Id: ClassDBI.pm,v 1.4 2003-04-19 23:44:06 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
 #                    Allen Day <allenday@ucla.edu>,
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -56,14 +56,14 @@ sub produce {
 	my @fields =  keys %{$table_data->{'fields'}};
 
 
-	$create .= "##\n## Package:" .$translator->format_package_name($table). "\n##\n" unless $no_comments;
+	$create .= "##\n## Package: " .$translator->format_package_name($table). "\n##\n" unless $no_comments;
 	$create .= "package ". $translator->format_package_name($table). ";\n";
 
 	$create .= "use base \'Chado::DBI\';\n";
 	$create .= "use mixin \'Class::DBI::Join\';\n";
 	$create .= "use Class::DBI::Pager;\n\n";
 
-	$create .= $translator->format_package_name($table). " -> set_up_table('$table');\n\n";
+	$create .= $translator->format_package_name($table). "->set_up_table('$table');\n\n";
 
 	
 
@@ -80,7 +80,7 @@ sub produce {
 	  my $ref_fields = $constraint->{'reference_fields'};
 
 	  if ( $type eq 'primary_key') {
-		$create .= "sub " .$translator->format_pk_name($translator->format_package_name($table), $fields[0]). "{ shift -> $fields[0] }\n\n";
+		$create .= "sub " .$translator->format_pk_name($translator->format_package_name($table), $fields[0]). "{ shift->$fields[0] }\n\n";
 	  }
 			
 	}
@@ -96,8 +96,8 @@ sub produce {
 	  my $ref_fields = $field_data->[1]->{'reference_fields'};
 			
 	  if ($type eq 'foreign_key') {
-		$create .= $translator->format_package_name($table). " -> hasa(" .$translator->format_package_name($ref_table). " => \'@$ref_fields\');\n";
-		$create .= "sub " .$translator->format_fk_name($ref_table, @$ref_fields). "{ return shift -> @$ref_fields }\n\n";
+		$create .= $translator->format_package_name($table). "->hasa(" .$translator->format_package_name($ref_table). " => \'@$ref_fields\');\n";
+		$create .= "sub " .$translator->format_fk_name($ref_table, @$ref_fields). "{ return shift->@$ref_fields }\n\n";
 	  }
 	}
 	
