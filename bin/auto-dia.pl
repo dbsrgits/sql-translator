@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.4 2003-04-01 16:43:34 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.5 2003-04-01 17:06:22 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -36,7 +36,7 @@ use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.4 $)[-1];
+my $VERSION = (qw$Revision: 1.5 $)[-1];
 
 use constant VALID_FONT_SIZE => {
     small  => 1,
@@ -97,6 +97,7 @@ my $gutter      = 30;            # distance b/w columns
 my %registry;                    # for locations of fields
 my %table_x;                     # for max x of each table
 my $field_no;                    # counter to give distinct no. to each field
+my %legend;
 
 for my $table (
     map  { $_->[1] }
@@ -119,18 +120,30 @@ for my $table (
         map  { [ $_->{'order'}, $_ ] }
         values %{ $table->{'fields'} };
 
-    my %pk;
+    my ( %pk, %unique );
     for my $index ( @{ $table->{'indices'} || [] } ) {
-        next unless $index->{'type'} eq 'primary_key';
         my @fields = @{ $index->{'fields'} || [] } or next;
-        $pk{ $_ } = 1 for @fields;
+        if ( $index->{'type'} eq 'primary_key' ) {
+            $pk{ $_ } = 1 for @fields;
+        }
+        elsif ( $index->{'type'} eq 'unique' ) {
+            $unique{ $_ } = 1 for @fields;
+        }
     }
 
     my ( @fld_desc, $max_name );
     for my $f ( @fields ) {
-        my $name  = $f->{'name'} or next;
-        my $is_pk = $pk{ $name };
-        $name   .= ' *' if $is_pk;
+        my $name      = $f->{'name'} or next;
+        my $is_pk     = $pk{ $name };
+        my $is_unique = $unique{ $name };
+        if ( $is_pk ) {
+            $name .= ' *';
+            $legend{'Primary key'} = '*';
+        }
+        elsif ( $is_unique ) {
+            $name .= ' [U]';
+            $legend{'Unique constraint'} = '[U]';
+        }
 
         my $size = @{ $f->{'size'} || [] } 
             ? '(' . join( ',', @{ $f->{'size'} } ) . ')'
@@ -277,13 +290,37 @@ unless ( $no_lines ) {
 }
 
 #
-# Add the title and signature.
+# Add the title, legend and signature.
 #
 my $large_font = gdLargeFont;
 my $title_len  = $large_font->width * length $title;
 push @shapes, [ 
     'string', $large_font, $max_x/2 - $title_len/2, 10, $title, 'black' 
 ];
+
+if ( %legend ) {
+    $max_y += 5;
+    push @shapes, [ 
+        'string', $font, $x, $max_y - $font->height - 4, 'Legend', 'black'
+    ];
+    $max_y += $font->height + 4;
+
+    my $longest;
+    for my $len ( map { length $_ } values %legend ) {
+        $longest = $len if $len > $longest; 
+    }
+    $longest += 2;
+
+    while ( my ( $key, $shape ) = each %legend ) {
+        my $space = $longest - length $shape;
+        push @shapes, [ 
+            'string', $font, $x, $max_y - $font->height - 4, 
+            join( '', $shape, ' ' x $space, $key ), 'black'
+        ];
+
+        $max_y += $font->height + 4;
+    }
+}
 
 my $sig     = "auto-dia.pl $VERSION";
 my $sig_len = $font->width * length $sig;
