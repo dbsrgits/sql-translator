@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.47 2003-10-17 19:49:16 dlc Exp $
+# $Id: Translator.pm,v 1.48 2003-11-07 16:57:25 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -28,8 +28,8 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.03';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
+$VERSION  = '0.04';
+$REVISION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
