@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.1 2003-04-24 16:36:49 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.2 2003-04-24 19:40:52 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -26,7 +26,7 @@ use Data::Dumper;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -74,6 +74,7 @@ sub produce {
         $font_size eq 'medium' ? gdSmallFont :
         $font_size eq 'large'  ? gdLargeFont : gdGiantFont;
     my $no_tables    = scalar keys %$data;
+    $no_columns      = 0 unless $no_columns =~ /^\d+$/;
     $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
     $no_columns    ||= .5;
     my $no_per_col   = sprintf( "%.0f", $no_tables/$no_columns + .5 );
@@ -543,7 +544,7 @@ sub produce {
         close $fh;
     }
     else {
-        print $gd->$image_type;
+        return $gd->$image_type;
     }
 }
 
