@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.13 2004-03-09 19:11:30 kycl4rk Exp $
+# $Id: sqlt,v 1.14 2004-07-08 20:37:53 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -31,15 +31,15 @@ For help:
 
   sqlt -h|--help
 
-For a list of all parsers and producers: 
+For a list of all parsers and producers:
 
   sqlt -l|--list
 
 To translate a schema:
 
-  sqlt -f|--from|--parser MySQL 
-       -t|--to|--producer Oracle 
-       [options] 
+  sqlt -f|--from|--parser MySQL
+       -t|--to|--producer Oracle
+       [options]
        file [file2 ...]
 
   General Options:
@@ -53,14 +53,14 @@ To translate a schema:
 
     --dsn              DSN for connecting to database
     --db-user          Database user
-    --db-password      Database password              
+    --db-password      Database password
 
   xSV Parser Options:
 
     --fs               The field separator
     --rs               The record separator
-    --no-trim          Don't trim whitespace on fields 
-    --no-scan          Don't scan fields for data types and sizes 
+    --no-trim          Don't trim whitespace on fields
+    --no-scan          Don't scan fields for data types and sizes
 
   DB Producer Options:
 
@@ -92,9 +92,10 @@ To translate a schema:
 
   XML-SQLFairy Producer Options:
 
-    --emit-empty-tags  Print empty tags for attributes
-    --attrib-values    Use attributes instead of tags for 
-                       values of the schema objects
+    --add-prefix       Use an explicit namespace prefix of 'sqlf:'
+    --prefix=<p>       Use the namespace prefix given as argument.
+    --no-newlines      Write the XML as a single line.
+    --indent=<n>       Use <n> characters of whitespace to indent the XML.
 
 =head1 DESCRIPTION
 
@@ -102,7 +103,7 @@ This script is part of the SQL Fairy project.  It will try to convert
 any source file for which it has a grammar into any format for which
 it has a producer.
 
-If using "show-warnings," be sure to redirect STDERR to a separate file.  
+If using "show-warnings," be sure to redirect STDERR to a separate file.
 In bash, you could do this:
 
     $ sql_translator.pl -f MySQL -t PostgreSQL --show-warnings \
@@ -121,10 +122,10 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
-my $to;               # the destination database 
+my $to;               # the destination database
 my $help;             # show POD and bail
 my $stdin;            # whether to read STDIN for create script
 my $no_comments;      # whether to put comments in out file
@@ -143,23 +144,23 @@ my $imap_url;         # URL to use in making image map
 my $pretty;           # use CGI::Pretty instead of CGI (HTML producer)
 my $template;         # template to pass to TTSchema producer
 my $title;            # title for HTML/POD producer
-my $emit_empty_tags;  # show empty XML tags
-my $attrib_values;    # use XML attributes instead of tags
-my $dsn;              # DBI parser 
-my $db_user;          # DBI parser 
-my $db_password;      # DBI parser 
-my $skip;             
-my $skiplike;        
-my $dumper_db_user; 
+my $add_prefix;       # Use explicit namespace prefix (XML producer)
+my $prefix;           # Set explicit namespace prefix (XML producer)
+my $newlines;         # Add newlines around tags (XML producer)
+my $indent;           # Number of indent chars for XML
+my $dsn;              # DBI parser
+my $db_user;          # DBI parser
+my $db_password;      # DBI parser
+my $skip;
+my $skiplike;
+my $dumper_db_user;
 my $dumper_db_pass;
 my $dumper_dsn;
 my $add_truncate;
 
 GetOptions(
     'add-drop-table'   => \$add_drop_table,
-    'attrib-values'    => \$attrib_values,
     'd|debug'          => \$debug,
-    'emit-empty-tags'  => \$emit_empty_tags,
     'f|from|parser:s'  => \$from,
     'fs:s'             => \$field_separator,
     'h|help'           => \$help,
@@ -186,6 +187,10 @@ GetOptions(
     'skip:s'           => \$skip,
     'skiplike:s'       => \$skiplike,
     'add_truncate'     => \$add_truncate,
+    'add-prefix'       => \$add_prefix,
+    'prefix:s'         => \$prefix,
+    'indent:s'         => \$indent,
+    'newlines!'        => \$newlines,
 ) or pod2usage(2);
 
 my @files = @ARGV; # source files
@@ -222,14 +227,16 @@ my $translator           =  SQL::Translator->new(
         pretty           => $pretty,
         ttfile           => $template,
         title            => $title,
-        emit_empty_tags  => $emit_empty_tags,
-        attrib_values    => $attrib_values,
         dsn              => $dumper_dsn,
         db_user          => $dumper_db_user,
         db_password      => $dumper_db_pass,
         skip             => $skip,
         skiplike         => $skiplike,
         add_truncate     => $add_truncate,
+        add_prefix       => $add_prefix,
+        prefix           => $prefix,
+        indent           => $indent,
+        newlines         => $newlines,
     },
 );
 
@@ -242,14 +249,14 @@ if ( $list ) {
             $_ = $1;
         }
     }
-    
+
     print "\nParsers:\n",   map { "\t$_\n" } sort @parsers;
     print "\nProducers:\n", map { "\t$_\n" } sort @producers;
     print "\n";
     exit(0);
 }
 
-pod2usage( msg => 'Please supply "from" and "to" arguments' ) 
+pod2usage( msg => 'Please supply "from" and "to" arguments' )
     unless $from && $to;
 
 $translator->parser($from);
