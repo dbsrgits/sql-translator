@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.9 2003-06-06 00:05:44 kycl4rk Exp $
+# $Id: xSV.pm,v 1.10 2003-06-11 03:59:49 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -66,7 +66,7 @@ C<SQL::Translator::Utils::normalize>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -92,17 +92,6 @@ sub parse {
     $parser->field_filter( sub { $_ = shift; s/^\s+|\s+$//g; $_ } ) 
         unless defined $args->{'trim_fields'} && $args->{'trim_fields'} == 0;
 
-    #
-    # Create skeleton structure, mostly empty.
-    #
-    my $parsed      =  {
-        table1      => {
-            type    => undef,
-            indices => [ { } ],
-            fields  => { },
-        },
-    };
-
     my $schema = $tr->schema;
     my $table = $schema->add_table( name => 'table1' );
 
@@ -113,24 +102,6 @@ sub parse {
     my @field_names = $parser->field_list;
 
     for ( my $i = 0; $i < @field_names; $i++ ) {
-        $parsed->{'table1'}{'fields'}{ $field_names[$i] } = {
-            type           => 'field',
-            order          => $i,
-            name           => $field_names[$i],
-
-            # Default datatype is "char"
-            data_type      => 'char',
-
-            # default size is 8bits; something more reasonable?
-            size           => [ 255 ],
-            null           => 1,
-            default        => '',
-            is_auto_inc    => undef,
-
-            # field field is the primary key
-            is_primary_key => ($i == 0) ? 1 : undef,
-        };
-
         my $field = $table->add_field(
             name              => $field_names[$i],
             data_type         => 'char',
@@ -196,27 +167,13 @@ sub parse {
                 $field_info{ $field }{'char'}  ? 'char'  : 
                 $field_info{ $field }{'float'} ? 'float' : 'integer';
 
-            $parsed->{'table1'}{'fields'}{ $field }{'size'} = 
-                $field_info{ $field }{'size'};
-
-            $parsed->{'table1'}{'fields'}{ $field }{'data_type'} = $data_type;
-
             my $field = $table->get_field( $field );
             $field->size( $size );
             $field->data_type( $data_type );
         }
     }
 
-    #
-    # Field 0 is primary key, by default, so add an index
-    #
-    for ( $parsed->{'table1'}->{'indices'}->[0] ) {
-        $_->{'type'}   = 'primary_key';
-        $_->{'name'}   = undef;
-        $_->{'fields'} = [ $field_names[0] ];
-    }
-
-    return $parsed;
+    return 1;
 }
 
 1;

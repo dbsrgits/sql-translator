@@ -71,7 +71,6 @@ sub parse {
     my $schema      = $tr->schema;
     my $table_no    = 0;
 
-    my %parsed;
     my $wb_count = $wb->{'SheetCount'} || 0;
     for my $num ( 0 .. $wb_count - 1 ) {
         $table_no++;
@@ -81,32 +80,12 @@ sub parse {
         my @cols = $ws->ColRange;
         next unless $cols[1] > 0;
 
-        $parsed{ $table_name } = {
-            table_name  => $table_name,
-            type        => undef,
-            indices     => [ {} ],
-            fields      => { },
-        };
         my $table = $schema->add_table( name => $table_name );
 
         for my $col ( $cols[0] .. $cols[1] ) {
             my $cell      = $ws->Cell(0, $col);
             my $col_name  = normalize_name( $cell->{'Val'} );
             my $data_type = ET_to_ST( $cell->{'Type'} );
-
-            $parsed{ $table_name }{'fields'}{ $col_name } = {
-                type           => 'field',
-                order          => $col,
-                name           => $col_name,
-                data_type      => $data_type,
-                size           => [ 255 ],
-                null           => 1,
-                default        => '',
-                is_auto_inc    => undef,
-
-                # first field is the primary key
-                is_primary_key => ($col == 0) ? 1 : undef,
-            };
 
             my $field = $table->add_field(
                 name              => $col_name,
@@ -124,7 +103,7 @@ sub parse {
         }
     }
 
-    return \%parsed;
+    return 1;
 }
 
 sub ET_to_ST {
