@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI;
 
 # -------------------------------------------------------------------
-# $Id: XMI.pm,v 1.6 2003-09-16 16:29:49 grommit Exp $
+# $Id: XMI.pm,v 1.7 2003-09-17 16:27:21 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -81,7 +81,7 @@ translated.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -114,14 +114,14 @@ use SQL::Translator::XMI::Parser;
     }
 }
 
+my ($schema, $pargs);
+
 sub parse {
     my ( $translator, $data ) = @_;
     local $DEBUG  = $translator->debug;
-    my $schema    = $translator->schema;
-    my $pargs     = $translator->parser_args;
-    
-    eval {
-        
+    $schema    = $translator->schema;
+    $pargs     = $translator->parser_args;
+
     debug "Visibility Level:$pargs->{visibility}" if $DEBUG;
 
     my $xmip = SQL::Translator::XMI::Parser->new(xml => $data);
@@ -129,7 +129,7 @@ sub parse {
     # TODO
     # - Options to set the initial context node so we don't just
     #   blindly do all the classes. e.g. Select a diag name to do.
-    
+
     my $classes = $xmip->get_classes(
         filter => sub {
             return unless $_->{name};
@@ -142,7 +142,7 @@ sub parse {
             return 1;
         },
     );
-    
+
     debug "Found ".scalar(@$classes)." Classes: ".join(", ",
         map {$_->{"name"}} @$classes) if $DEBUG;
     debug "Classes:",Dumper($classes);
@@ -151,9 +151,15 @@ sub parse {
 	#
 	# Turn the data from get_classes into a Schema
 	#
-	# TODO This is where we will applie different strategies for different UML
-	# data modeling profiles.
-	#
+	profile_default($classes);
+
+
+    return 1;
+}
+
+sub profile_default {
+	my ($classes) = @_;
+
 	foreach my $class (@$classes) {
         # Add the table
         debug "Adding class: $class->{name}" if $DEBUG;
@@ -185,15 +191,85 @@ sub parse {
         }
 
     } # Classes loop
-    
-    };
-    print "ERROR:$@" if $@;
-
-    return 1;
 }
 
-1;
+sub profile_rational {
+	my ($classes) = @_;
 
+	foreach my $class (@$classes) {
+        next unless $class->{stereotype} eq "Table";
+
+		# Add the table
+        debug "Adding class: $class->{name}" if $DEBUG;
+        my $table = $schema->add_table( name => $class->{name} )
+            or die "Schema Error: ".$schema->error;
+
+        #
+        # Fields from Class attributes
+        #
+        foreach my $attr ( @{$class->{attributes}} ) {
+			next unless $attr->{stereotype} eq "Column"
+				or $attr->{stereotype} eq "PK"
+				or $attr->{stereotype} eq "FK"
+				or $attr->{stereotype} eq "PFK";
+
+			my $ispk =
+			    $attr->{stereotype} eq "PK" or $attr->{stereotype} eq "PFK"
+				? 1 : 0;
+			my %data = (
+                name           => $attr->{name},
+                data_type      => $attr->{datatype},
+                is_primary_key => $ispk,
+            );
+			$data{default_value} = $attr->{initialValue}
+				if exists $attr->{initialValue};
+
+            my $field = $table->add_field( %data ) or die $schema->error;
+            $table->primary_key( $field->name ) if $data{'is_primary_key'};
+		}
+
+		#
+		# Constraints and indexes from Operations
+		#
+        foreach my $op ( @{$class->{operations}} ) {
+			next unless my $stereo = $op->{stereotype};
+			my @fields = map {$_->{name}} @{$op->{parameters}};
+			my %data = (
+                name      => $op->{name},
+                type      => "",
+				fields    => [@fields],
+            );
+			
+			# Work out type and any other data
+			if ( $stereo eq "Unique" ) {
+				$data{type} = "UNIQUE";
+			}
+			elsif ( $stereo eq "PK" ) {
+				$data{type} = "PRIMARY_KEY";
+			}
+			# TODO We need to work out the ref table
+			#elsif ( $stereo eq "FK" ) {
+			#	$data{type} = "FOREIGN_KEY";
+			#}
+            
+			# Add the constraint or index
+			if ( $data{type} ) {
+				$table->add_constraint( %data ) or die $schema->error;
+			}
+			elsif ( $stereo eq "Index" ) {
+            	$data{type} = "NORMAL";
+				$table->add_index( %data ) or die $schema->error;
+			}
+			
+			
+		} # Ops loop
+
+    } # Classes loop
+}
+
+1; #---------------------------------------------------------------------------
+
+__END__
 
 =pod
 
