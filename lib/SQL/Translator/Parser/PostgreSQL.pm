@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.21 2003-07-11 15:22:45 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.22 2003-08-04 15:16:13 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -159,7 +159,7 @@ connect : /^\s*\\\connect.*\n/
 
 set : /SET/ /[^;]*/ ';'
 
-revoke : /revoke/i WORD(s /,/) /on/i /table/i table_name /from/i name_with_opt_quotes(s /,/) ';'
+revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_quotes(s /,/) ';'
     {
         my $table_name = $item{'table_name'};
         push @{ $tables{ $table_name }{'permissions'} }, {
@@ -169,7 +169,7 @@ revoke : /revoke/i WORD(s /,/) /on/i /table/i table_name /from/i name_with_opt_q
         }
     }
 
-grant : /grant/i WORD(s /,/) /on/i /table/i table_name /to/i name_with_opt_quotes(s /,/) ';'
+grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quotes(s /,/) ';'
     {
         my $table_name = $item{'table_name'};
         push @{ $tables{ $table_name }{'permissions'} }, {
@@ -613,7 +613,7 @@ alter_table : /alter/i /table/i only(?)
 
 only : /only/i
 
-create_table : /create/i /table/i
+create_table : /create/i TABLE
 
 create_index : /create/i /index/i
 
@@ -652,6 +652,8 @@ table_option : /inherits/i '(' name_with_opt_quotes(s /,/) ')'
     {
         $return = { type => $item[1] =~ /out/i ? 'without_oids' : 'with_oids' }
     }
+
+TABLE : /table/i
 
 SEMICOLON : /\s*;\n?/
 
