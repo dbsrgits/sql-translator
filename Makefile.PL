@@ -5,6 +5,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'         => __PACKAGE__,
+    'SIGN'         => 1,
     'VERSION_FROM' => 'lib/SQL/Translator.pm',
     'EXE_FILES'    => [
         'bin/sqlt-diagram',
