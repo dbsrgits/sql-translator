@@ -17,6 +17,8 @@ use SQL::Translator;
 # How many tests
 BEGIN { print "1..3\n"; }
 
+$SQL::Translator::DEBUG = 0;
+
 # Our object; uses the default parser and producer
 my $tr = SQL::Translator->new;
 
@@ -27,12 +29,12 @@ my $fh = IO::File->new($datafile);
 
 # Pass filename: simplest way
 my $translated_datafile = $tr->translate($datafile);
-warn "Data from filename method is\n$translated_datafile\n\n\n";
+#warn "Data from filename method is\n$translated_datafile\n\n\n";
 
 # Pass string reference
 read($fh, $data, -s $datafile);
 my $translated_data = $tr->translate(\$data);
-warn "Data from string is\n$translated_data\n\n\n";
+#warn "Data from string is\n$translated_data\n\n\n";
 
 print "not " unless length $translated_datafile;
 print "ok 1 # passing string (filename) works\n";
