@@ -1,18 +1,19 @@
-*   The Sybase parser still doesn't work.  It is not included with the
-    distribution but can be found in CVS.  There has been some
-    discussion about reviving this, but no one has had that particular
-    itch to scratch, so it's languished.
+*   The regular Sybase parser is only just functional.  If you are
+    interested in using Sybase, I would suggest serializing the schema
+    (via YAML or Storable) using the DBI-Sybase parser and then
+    manipulating that as you see fit. 
 
 *   Some way to deeply check to schema objects, e.g., for testing I
     parse a MySQL schema, translate to Oracle, then parse the created
-    Oracle schema and want to check the two schema objects.
+    Oracle schema and want to check the two schema objects.  I've
+    started a script called "sqlt-diff" to diff two schemas, but it's 
+    not included with the 0.03 release.  Submit ideas on how this
+    should work and what it should create (e.g., text reports and ALTER 
+    statements) to the list.
 
-*   Explore some way to pass an open database handle instead of a
-    schema and then query through DBI methods to get the schema
-    definition, somewhat a la SQL::Schema (which only works with
-    Oracle right now)
-
-*   Add "CREATE VIEW" support to existing parsers
+*   Add more DBI parsers!  These have the potential to be very
+    thorough and far faster than parsing text files with
+    Parse::RecDescent.
 
 *   At least allow more pass-through of INSERT, DELETE, and UPDATE
     statements
@@ -28,9 +29,9 @@
     to distribute the tables so that the lines don't overlap so badly
 
 *   Integrate more with some standard XML schema representations,
-    maybe like Torque DB (http://db.apache.org/torque/)
+    maybe like Torque DB (http://db.apache.org/torque/).  We've
+    started messing around with XMI, too, but that wasn't quite usable
+    for the 0.03 release.
 
 *   Possibly write a basic ANSI-92 SQL parser which could be extended
-    when writing other new parsers
-
-*   More parsers, more producers!
+    when writing other new parsers.
