@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.4 2003-09-09 16:05:09 kycl4rk Exp $
+# $Id: SQLFairy.pm,v 1.5 2003-10-17 13:39:01 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -107,7 +107,9 @@ sub produce {
 
     $xml->xmlDecl('UTF-8');
     $xml->comment(header_comment('', ''));
-    $xml->startTag([ $Namespace => 'schema' ]);
+    #$xml->startTag([ $Namespace => 'schema' ]);
+    xml_obj($xml, $schema,
+        tag => "schema", methods => [qw/name database/], end_tag => 0 );
 
     #
     # Table
@@ -175,6 +177,12 @@ sub produce {
 }
 
 # -------------------------------------------------------------------
+#
+# TODO 
+# - Doc this sub
+# - Should the Namespace be passed in instead of global? Pass in the same
+#   as Writer ie [ NS => TAGNAME ]
+#
 sub xml_obj {
 	my ($xml, $obj, %args) = @_;
 	my $tag                = $args{'tag'}              || '';

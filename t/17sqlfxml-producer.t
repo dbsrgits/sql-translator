@@ -46,6 +46,8 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <sqlt:name></sqlt:name>
+  <sqlt:database></sqlt:database>
   <sqlt:table>
     <sqlt:name>Basic</sqlt:name>
     <sqlt:order>1</sqlt:order>
@@ -156,6 +158,8 @@ eq_or_diff $xml, $ans                       ,"XML looks right";
 
 $ans = <<EOXML;
 <sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <sqlt:name></sqlt:name>
+  <sqlt:database></sqlt:database>
   <sqlt:table>
     <sqlt:name>Basic</sqlt:name>
     <sqlt:order>2</sqlt:order>
