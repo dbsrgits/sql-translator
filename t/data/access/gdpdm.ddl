@@ -314,4 +314,3 @@ CREATE TABLE qtl_treatment_ontology
 
 
 -- CREATE ANY Relationships ...
-
