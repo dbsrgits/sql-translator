@@ -1,4 +1,14 @@
 # -----------------------------------------------------------
+# 0.05    2004-02-27
+# -----------------------------------------------------------
+*   Various bug fixes and enhancements to Parsers (esp. PostgreSQL)
+    and Producers (esp. Oracle)
+
+*   Now distributing sqlt-diff script as it's pretty usable
+
+*   Added new options to sqlt-graph and GraphViz producer (Dave Cash)
+
+# -----------------------------------------------------------
 # 0.04    2003-11-07
 # -----------------------------------------------------------
 
@@ -62,4 +72,46 @@
 # 0.01    2003-02-27
 # -----------------------------------------------------------
 
+<<<<<<< Changes
+*   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL, 
+    DBI-PostgreSQL, DBI-SQLite, DBI-Sybase, Storable, YAML
+
+*   Added producers: XML::SQLFairy, TTSchema, Storable, YAML
+
+*   HTML producer now uses stylesheets to allow easy customization of colors
+
+*   Many bug fixes to most every module
+
+*   Added "sqlt-dumper" script to help create a script for dumping
+    a database a la "mysqldump"
+
+*   Reversed the arrowheads on the graphical producers to show the 
+    relationships in a more standard way
+
+*   Changes all included script names to start with "sqlt"
+
+*   Added capturing and printing most embedded table and field comments
+
+# -----------------------------------------------------------
+# 0.04    2003-11-07
+# -----------------------------------------------------------
+
+*   Increased version of Constants module to 1.41 to avoid a problem 
+    where 0.02 has 1.4 of that file and 0.03 had 1.06 which confused
+    CPAN
+
+*   Hard-coded all the PREREQ_PM modules in Makefile.PL (rather than
+    setting them dynamically) so that automated tests would pass
+
+# -----------------------------------------------------------
+# 0.05    2003-12-17
+# -----------------------------------------------------------
+
+*   Added "COMMENT ON *" syntax to PostgreSQL parser
+
+*   Some fixes to Oracle parser as reported by Gail Binkley
+
+*   Added support in PostgreSQL parser for all "ALTER TABLE" statements
+=======
 *   Initial release.
+>>>>>>> 1.10
