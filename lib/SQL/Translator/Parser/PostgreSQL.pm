@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.27 2003-08-17 00:46:23 rossta Exp $
+# $Id: PostgreSQL.pm,v 1.28 2003-08-20 18:58:54 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -290,15 +290,16 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
         my @comments = ( @{ $item[1] }, @{ $item[5] } );
 
         $return = {
-            type           => 'field',
-            name           => $item{'field_name'}, 
-            data_type      => $item{'data_type'}{'type'},
-            size           => $item{'data_type'}{'size'},
-            null           => $null,
-            default        => $default->{'value'},
-            constraints    => [ @constraints ],
-            comments       => [ @comments ],
-            is_primary_key => $is_pk || 0,
+            type              => 'field',
+            name              => $item{'field_name'}, 
+            data_type         => $item{'data_type'}{'type'},
+            size              => $item{'data_type'}{'size'},
+            null              => $null,
+            default           => $default->{'value'},
+            constraints       => [ @constraints ],
+            comments          => [ @comments ],
+            is_primary_key    => $is_pk || 0,
+            is_auto_increment => $item{'data_type'}{'is_auto_increment'},
         } 
     }
     | <error>
@@ -428,18 +429,18 @@ pg_data_type :
     /(bigserial|serial8)/i
         { 
             $return = { 
-                type           => 'integer', 
-                size           => [8], 
-                auto_increment => 1,
+                type              => 'integer', 
+                size              => [8], 
+                is_auto_increment => 1,
             };
         }
     |
     /serial4?/i
         { 
             $return = { 
-                type           => 'integer',
-                size           => [4], 
-                auto_increment => 1,
+                type              => 'integer',
+                size              => [4], 
+                is_auto_increment => 1,
             };
         }
     |
@@ -719,7 +720,7 @@ sub parse {
                 data_type         => $fdata->{'data_type'},
                 size              => $fdata->{'size'},
                 default_value     => $fdata->{'default'},
-                is_auto_increment => $fdata->{'is_auto_inc'},
+                is_auto_increment => $fdata->{'is_auto_increment'},
                 is_nullable       => $fdata->{'null'},
             ) or die $table->error;
 
