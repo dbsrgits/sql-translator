@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.3 2004-02-29 20:32:39 grommit Exp $
+# $Id: Translator.pm,v 1.4 2004-03-04 14:41:49 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,7 +34,7 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 @EXPORT = qw( 
     schema_ok
     table_ok
@@ -44,6 +44,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
     view_ok
     trigger_ok
     procedure_ok
+    maybe_plan
 );
 
 use Test::More;
@@ -425,6 +426,35 @@ sub schema_ok {
     });
 }
 
+# maybe_plan($ntests, @modules)
+#
+# Calls plan $ntests if @modules can all be loaded; otherwise,
+# calls skip_all with an explanation of why the tests were skipped.
+sub maybe_plan {
+    my ($ntests, @modules) = @_;
+    my @errors;
+
+    for my $module (@modules) {
+        eval "use $module;";
+        if ($@ && $@ =~ /Can't locate (\S+)/) {
+            my $mod = $1;
+            $mod =~ s/\.pm$//;
+            $mod =~ s#/#::#g;
+            push @errors, $mod;
+        }
+    }
+
+    if (@errors) {
+        my $msg = sprintf "Missing dependenc%s: %s",
+            @errors == 1 ? 'y' : 'ies',
+            join ", ", @errors;
+        plan skip_all => $msg;
+    }
+    else {
+        plan tests => $ntests;
+    }
+}
+
 1; # compile please ===========================================================
 __END__
 
@@ -516,9 +546,25 @@ names.
 
 =head2 procedure_ok
 
+=head1 CONDITIONAL TESTS
+
+The C<maybe_plan> function handles conditionally running an individual
+test.  It is here to enable running the test suite even when dependencies
+are missing; not having (for example) GraphViz installed should not keep
+the test suite from passing.
+
+C<maybe_plan> takes the number of tests to (maybe) run, and a list of
+modules on which test execution depends:
+
+    maybe_plan(180, 'SQL::Translator::Parser::MySQL');
+
+If one of C<SQL::Translator::Parser::MySQL>'s dependencies does not exist,
+then the test will be skipped.
+
 =head1 EXPORTS
 
-table_ok, field_ok, constraint_ok, index_ok, view_ok, trigger_ok, procedure_ok
+table_ok, field_ok, constraint_ok, index_ok, view_ok, trigger_ok, procedure_ok,
+maybe_plan
 
 =head1 TODO
 
