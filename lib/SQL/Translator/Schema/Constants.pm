@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constants;
 
 # ----------------------------------------------------------------------
-# $Id: Constants.pm,v 1.5 2003-06-27 16:47:40 kycl4rk Exp $
+# $Id: Constants.pm,v 1.6 2003-10-08 16:03:01 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -22,11 +22,11 @@ package SQL::Translator::Schema::Constants;
 
 =head1 NAME
 
-SQL::Translator::CMap::Constants - constants module
+SQL::Translator::Schema::Constants - constants module
 
 =head1 SYNOPSIS
 
-  use SQL::Translator::CMap::Constants;
+  use SQL::Translator::Schema::Constants;
 
   $table->add_constraint(
       name => 'foo',
@@ -43,7 +43,7 @@ use strict;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 @EXPORT = qw[ 
     CHECK_C
