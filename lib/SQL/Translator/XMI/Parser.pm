@@ -59,20 +59,21 @@ $spec12->{class} = {
             # How many we get back. Use '1' for 1 and '*' for lots.
 			# TODO If not set then decide depening on the return?
         },
-        { 
+        {
             name  => "operations",
             path  => "UML:Classifier.feature/UML:Operation",
             class => "operation", 
             multiplicity => "*",
         },
-        { 
+        {
             name  => "taggedValues",
             path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
-            class => "taggedValue", 
+            class => "taggedValue",
             multiplicity => "*",
-			# Nice if we could say that the list should me folded into a hash
-			# on the name key. type=>"hash", hash_key=>"name" or something!
-        },
+			map => "name",
+        	# Add a _map_taggedValues to the data. Its a hash of the name data
+			# which refs the normal list of kids
+		},
     ],
 };
 
@@ -120,6 +121,7 @@ $spec12->{attribute} = {
             path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
             class => "taggedValue", 
             multiplicity => "*",
+			map => "name",
         },
     ],
 };
@@ -150,6 +152,7 @@ $spec12->{operation} = {
             path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
             class => "taggedValue", 
             multiplicity => "*",
+			map => "name",
         },
     ],
 };
@@ -157,7 +160,7 @@ $spec12->{operation} = {
 $spec12->{parameter} = {
     name   => "parameter",
     plural => "parameters",
-    default_path => '//UML:BehavioralFeature.parameter/UML:Parameter[@xmi.id]',
+    default_path => '//UML:Parameter[@xmi.id]',
     attrib_data  => [qw/name isSpecification kind/],
     path_data => [
         { 
@@ -382,15 +385,15 @@ sub mk_gets {
 # NB: DO NOT use publicly as you will break the version independance. e.g. When
 # using _xpath you need to know which version of XMI to use. This is handled by
 # the use of different paths in the specs.
-# 
+#
 #  _context => The context node to use, if not given starts from root.
-# 
+#
 #  _xpath   => The xpath to use for finding stuff.
-# 
+#
 use Data::Dumper;
 sub mk_get {
     my $spec = shift;
-    
+
     # get_* closure using $spec
     return sub {
 	my ($me, %args) = @_;
@@ -406,12 +409,12 @@ sub mk_get {
 	for my $node (@nodes) {
 		my $thing = {};
         # my $thing = { xpNode => $node };
-		
+
 		# Get the Tag attributes
         foreach ( @{$spec->{attrib_data}} ) {
 			$thing->{$_} = $node->getAttribute($_);
 		}
-		
+
         # Add the path data
         foreach ( @{$spec->{path_data}} ) {
 #warn "Searching for $spec->{plural} - $_->{name} using:$_->{path}\n";
@@ -419,29 +422,33 @@ sub mk_get {
             $thing->{$_->{name}} = @nodes ? $nodes[0]->getData
                 : (exists $_->{default} ? $_->{default} : undef);
         }
-        
-        # Run any filters set 
-        # 
+
+        # Run any filters set
+        #
         # Should we do this after the kids as we may want to test them?
         # e.g. test for number of attribs
         if ( my $filter = $args{filter} ) {
             local $_ = $thing;
             next unless $filter->($thing);
         }
-        
+
         # Kids
         #
         foreach ( @{$spec->{kids}} ) {
-            my $data;
+			my $data;
             my $meth = $_->{get_method};
-            $data = $me->$meth( _context => $node, _xpath => $_->{path},
+            my $path = $_->{path};
+			$data = $me->$meth( _context => $node, _xpath => $path,
                 filter => $args{"filter_$_->{name}"} );
-           
+
             if ( $_->{multiplicity} eq "1" ) {
                 $thing->{$_->{name}} = shift @$data;
             }
             else {
-                $thing->{$_->{name}} = $data || [];
+                my $kids = $thing->{$_->{name}} = $data || [];
+				if ( my $key = $_->{"map"} ) {
+					$thing->{"_map_$_->{name}"} = _mk_map($kids,$key);
+				}
             }
         }
 
@@ -451,6 +458,15 @@ sub mk_get {
 } # /closure sub
 
 } # /mk_get
+
+sub _mk_map {
+	my ($kids,$key) = @_;
+	my $map = {};
+	foreach (@$kids) {
+		$map->{$_->{$key}} = $_ if exists $_->{$key};
+	}
+	return $map;
+}
 
 1; #===========================================================================
 
