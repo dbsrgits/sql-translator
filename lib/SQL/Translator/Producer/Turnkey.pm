@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.4 2003-10-10 21:32:41 allenday Exp $
+# $Id: Turnkey.pm,v 1.1.2.5 2003-10-12 02:08:22 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -315,6 +315,7 @@ sub render {
     # Assumption here that if it's not rendering on it's own dbobject
     # then it's a list. This will be updated when AtomLists are implemented -boconnor
 	if(ref($dbobject) eq 'Turnkey::Model::[% package.key FILTER ucfirst %]') {
+        $self->focus("yes");
 		return(_render_record($dbobject));
 	}
 	else { return(_render_list($dbobject)); }
@@ -555,13 +556,16 @@ my $turnkey_template_tt2 = <<'EOF';
 [% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
   [- FOREACH package = linkable -]
     [% CASE '[- package.key FILTER ucfirst -]' %]
-      [% render[- package.key FILTER ucfirst -]Atom(atom.render(dbobject)) %]
+      [% render[- package.key FILTER ucfirst -]Atom(atom, dbobject) %]
   [- END -]
     [% CASE DEFAULT %]
-      [% renderlist(atom.render(dbobject)) %]
+      [% renderlist(atom, dbobject) %]
 [% END %]
 [- FOREACH package = linkable -]
-[% MACRO render[- package.key FILTER ucfirst -]Atom(lstArr) BLOCK %]
+[% MACRO render[- package.key FILTER ucfirst -]Atom(atom, dbobject) BLOCK %]
+  [% lstArr = atom.render(dbobject) %]
+  [% rowcount = 0 %]
+  [% IF atom.focus == "yes" %]
   [% FOREACH record = lstArr %]
     [% field = record.data %]
     [- pname = package.key FILTER ucfirst -]
@@ -579,11 +583,20 @@ my $turnkey_template_tt2 = <<'EOF';
     [- FOREACH field = packages.$pkey.columns_others -]
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
     [- END -]
-      <tr><td colspan="2"><hr></td></tr>
+    [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
+    [% rowcount = rowcount + 1 %]
+  [% END %]
+  [% ELSE %]
+   <tr><td>
+  [% FOREACH record = lstArr %]
+    <a href="?id=[% record.id %]&class=[% ref(atom) | replace('::Atom::', '::Model::') %]">[% record.id %]</a><br>
+  [% END %]
+   </td></tr>
   [% END %]
 [% END %]
 [- END -]
-[% MACRO renderlist(lstArr) BLOCK %]
+[% MACRO renderlist(atom, dbobject) BLOCK %]
+  [% lstArr = atom.render(dbobject) %]
   [%  FOREACH item = lstArr %]
     <tr>[% item %]</tr>
   [% END %]
