@@ -39,6 +39,9 @@ sub init {
 
 	$self->node_push($table->name => $node);
 
+	if ($table->is_trivial_link) { $node->is_trivial_link(1); }
+	else { $node->is_trivial_link(0); }
+
 	$node->order($self->order_incr());
 	$node->name( $self->translator->format_package_name($table->name) );
 	$node->base( $self->baseclass );
@@ -55,8 +58,8 @@ sub init {
 
   foreach my $node ($self->node_values){
 	foreach my $field ($node->table->get_fields){
-	  next unless $field->is_foreign_key;
-
+	  if (!$field->is_foreign_key && !$field->is_primary_key) { $node->data_fields->{$field->name} = 1; }
+	  elsif($field->is_foreign_key) {
 	  my $that = $self->node($field->foreign_key_reference->reference_table);
 
 	  #this means we have an incomplete schema
@@ -80,6 +83,7 @@ sub init {
 warn $node->name . "\t" . $that->edgecount($node->name);
 	  $node->push_edges( $edge );
 	  $that->push_edges( $edge->flip );
+      }
 	}
   }
 

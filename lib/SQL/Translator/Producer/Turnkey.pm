@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.9 2003-10-15 16:48:39 kycl4rk Exp $
+# $Id: Turnkey.pm,v 1.10 2003-12-28 12:14:59 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -137,7 +137,6 @@ sub produce {
 		}
 	  }
  	}
-
 	$meta{"nodes"} = $graph->node;
 	return(translateForm($t, \%meta));
 }
@@ -145,6 +144,12 @@ sub produce {
 sub translateForm {
   my $t = shift;
   my $meta = shift;
+
+
+#print "Node Data:\n";
+#print Dumper $meta->{nodes};
+#exit;
+
   my $args = $t->producer_args;
   my $type = $meta->{'template'};
   my $tt2;
@@ -192,8 +197,11 @@ sub template {
 # Here documents for the tt2 templates    #
 ###########################################
 
-  if($type eq 'classdbi'){
+  if($type eq 'dbi'){
 	return <<EOF;
+
+# MACRO
+
 [% MACRO printPackage(node) BLOCK %]
 # --------------------------------------------
 
@@ -208,6 +216,8 @@ use Class::DBI::Pager;
 [% printHasCompound(node.compoundedges, node.hyperedges, node.name) %]
 [% #printHasFriendly(node) %]
 [% END %]
+
+# MACRO
 
 [% MACRO printPKAccessors(array, name) BLOCK %]
 #
@@ -246,7 +256,7 @@ sub [% format_fk(edge.thisnode.table.name,edge.thisfield.name) %] { return shift
 
 [% FOREACH edge = edges %]
   [% IF edge.type == 'export' %]
-[% node.name %]->has_many([% edge.thatnode.table.name %]_[% edge.thatfield.name %], '[% edge.thatnode.name %]' => '[% edge.thatfield.name %]');
+[% node.name %]->has_many('[% edge.thatnode.table.name %]_[% edge.thatfield.name %]', '[% edge.thatnode.name %]' => '[% edge.thatfield.name %]');
     [% IF node.via(edge.thatnode.name) >= 1 %]
 sub [% edge.thatnode.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfield.name) %]s { return shift->[% edge.thatnode.table.name %]_[% edge.thatfield.name %] }
     [% ELSIF edge.thatnode.table.is_data %]
@@ -317,7 +327,7 @@ sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).na
 #
 # Has Friendly
 #
-hello, sailor!
+
 [% END %]
 
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
@@ -335,21 +345,25 @@ use base qw(Class::DBI::Pg);
     [% printPackage(node.value) %]
 [% END %]
 EOF
+}
 
-} elsif($type eq 'atom'){
+
+elsif($type eq 'atom'){
+
   return <<'EOF';
 [% ###### DOCUMENT START ###### %]
 
-[% FOREACH node = linkable %]
+[% FOREACH node = nodes %]
+[% IF node.value.compoundedges %]
 
 ##############################################
 
-package Durian::Atom::[% node.key FILTER ucfirst %];
+package Turnkey::Atom::[% node.value.name FILTER replace "Turnkey::Model::", "" %];
 
-[% pname = node.key FILTER ucfirst%]
-[% pkey = "Durian::Model::${pname}" %]
+[% pname = node.value.name FILTER replace "Turnkey::Model::", "" %]
+[% pkey = "Turnkey::Model::${pname}" %]
 
-use base qw(Durian::Atom);
+use base qw(Turnkey::Atom);
 use Data::Dumper;
 
 sub can_render {
@@ -361,7 +375,7 @@ sub render {
 	my $dbobject = shift;
     # Assumption here that if it's not rendering on it's own dbobject
     # then it's a list. This will be updated when AtomLists are implemented -boconnor
-	if(ref($dbobject) eq 'Durian::Model::[% node.key FILTER ucfirst %]') {
+	if(ref($dbobject) eq 'Turnkey::Model::[% pname %]') {
 		return(_render_record($dbobject));
 	}
 	else { return(_render_list($dbobject)); }
@@ -372,8 +386,10 @@ sub _render_record {
 	my @output = ();
 	my $row = {};
 	my $field_hash = {};
-	[% FOREACH field = nodes.$pkey.columns_essential %]
-	$field_hash->{[% field %]} = $dbobject->[% field %]();
+	[% FOREACH value = node.value.data_fields %]
+	[% IF value != 1 %]
+    $field_hash->{[% value %]} = $dbobject->[% value %]();
+    [% END %]
     [% END %]
 	$row->{data} = $field_hash;
 	$row->{id} = $dbobject->id();
@@ -389,9 +405,11 @@ sub _render_list {
     {
 		my $row = {};
 	    my $field_hash = {};
-	  [% FOREACH field = nodes.$pkey.columns_essential %]
-		$field_hash->{[% field %]} = $object->[% field %]();
-	  [% END %]
+	    [% FOREACH value = node.value.data_fields %]
+	    [% IF value != 1 %]
+        $field_hash->{[% value %]} = $object->[% value %]();
+        [% END %]
+        [% END %]
 		$row->{data} = $field_hash;
 	    $row->{id} = $object->id();
 	    push @output, $row;
@@ -404,7 +422,7 @@ sub head {
 }
 
 1;
-
+[% END %]
 [% END %]
 EOF
 
