@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.3 2003-06-09 04:40:50 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.4 2003-07-18 22:54:17 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -50,10 +50,12 @@ sub produce {
     debug("Schema =\n", Dumper( $schema ));
     debug("Producer args =\n", Dumper( $args ));
 
-    my $out_file     = $args->{'out_file'}   || '';
-    my $image_type   = $args->{'image_type'} || 'png';
-    my $title        = $args->{'title'}      || $t->filename;
-    my $font_size    = $args->{'font_size'}  || 'medium';
+    my $out_file     = $args->{'out_file'}     || '';
+    my $image_type   = $args->{'image_type'}   || 'png';
+    my $title        = $args->{'title'}        || $t->filename;
+    my $font_size    = $args->{'font_size'}    || 'medium';
+    my $imap_file    = $args->{'imap_file'}    || '';
+    my $imap_url     = $args->{'imap_url'}     || '';
     my $no_columns   = $args->{'no_columns'};
     my $no_lines     = $args->{'no_lines'};
     my $add_color    = $args->{'add_color'};
@@ -100,6 +102,7 @@ sub produce {
     my %table_x;                    # for max x of each table
     my $field_no;                   # counter to give distinct no. to each field
     my %coords;                     # holds fields coordinates
+    my @imap_coords;                # for making clickable image map
     my %legend;
 
     for my $table ( @tables ) {
@@ -107,7 +110,6 @@ sub produce {
         my $top        = $y;
         push @shapes, 
             [ 'string', $font, $this_col_x, $y, $table_name, 'black' ];
-
         $y                   += $font->height + 2;
         my $below_table_name  = $y;
         $y                   += 2;
@@ -175,6 +177,11 @@ sub produce {
                 is_pk    => $is_pk,
                 fld_name => $orig_name,
             };
+
+            push @imap_coords, [ 
+                $imap_url."#$table_name-$orig_name",
+                $this_col_x, $y - $font->height, $length, $y_link,
+            ];
         }
 
         unless ( $natural_join ) {
@@ -208,6 +215,12 @@ sub produce {
             ];
             unshift @shapes, [ 'filledRectangle', @bounds, 'white' ];
         }
+
+        push @imap_coords, [ 
+            $imap_url."#$table_name",
+            $bounds[0], $bounds[1], $this_max_x, $below_table_name,
+        ];
+
         push @shapes, [ 'rectangle', @bounds, 'black' ];
         $max_x = $this_max_x if $this_max_x > $max_x;
         $y    += 25;
@@ -439,6 +452,22 @@ sub produce {
         my $method = shift @$shape;
         my $color  = pop   @$shape;
         $gd->$method( @$shape, $colors{ $color } );
+    }
+
+    #
+    # Make image map.
+    #
+    debug("imap file = '$imap_file'");
+    if ( $imap_file && @imap_coords ) {
+        open my $fh, ">$imap_file" or die "Can't write '$imap_file': $!\n";
+        print $fh qq[<html><body><img src="" usemap="#imap" border="0">\n].
+            qq[<map name="imap">\n];
+        for my $rec ( @imap_coords ) {
+            my $href = shift @$rec;
+            print $fh q[<area coords="].join(',', @$rec).qq[" href="$href">\n];
+        } 
+        print $fh qq[</body></html>];
+        close $fh;
     }
 
     #
