@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.7 2003-10-15 18:35:09 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.8 2003-11-05 23:27:09 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -42,7 +42,7 @@ DBI-Sybase parser included with SQL::Translator.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -59,7 +59,7 @@ $::RD_HINT   = 1;
 $GRAMMAR = q{
 
 { 
-    my ( %tables, @table_comments );
+    my ( %tables, @table_comments, $table_order );
 }
 
 startrule : statement(s) eofile { \%tables }
@@ -133,6 +133,7 @@ create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_sys
             @table_comments = ();
         }
 
+        $tables{ $table_name }{'order'}  = ++$table_order;
         $tables{ $table_name }{'name'}   = $table_name;
         $tables{ $table_name }{'owner'}  = $table_owner;
         $tables{ $table_name }{'system'} = $item[7];
