@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.55 2004-07-23 01:11:23 boconnor Exp $
+# $Id: Turnkey.pm,v 1.56 2004-07-26 20:49:34 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.55 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.56 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -402,13 +402,16 @@ sub dump {
 }
 
 1;
-########soap.tt2########
 
-[% FOREACH node = nodes %][% node.value.name %], [%- END -%]
 [% FOREACH node = nodes %][% printPackage(node.value) %][% END %]
 EOF
 }
 
+elsif($type eq 'soap'){
+  return <<'EOF';
+[% FOREACH node = nodes %][% node.value.name %], [%- END -%]
+EOF
+}
 
 elsif($type eq 'atom'){
 
