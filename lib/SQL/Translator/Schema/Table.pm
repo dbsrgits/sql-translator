@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.6 2003-06-06 00:10:32 kycl4rk Exp $
+# $Id: Table.pm,v 1.7 2003-06-06 22:36:09 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -70,9 +70,9 @@ Object constructor.
 
     my ( $self, $config ) = @_;
     
-    for my $arg ( qw[ schema name ] ) {
+    for my $arg ( qw[ schema name comments ] ) {
         next unless defined $config->{ $arg };
-        $self->$arg( $config->{ $arg } ) or return;
+        defined $self->$arg( $config->{ $arg } ) or return;
     }
 
     return $self;
@@ -243,6 +243,32 @@ existing field, you will get an error and the field will not be created.
     }
 
     return $field;
+}
+
+# ----------------------------------------------------------------------
+sub comments {
+
+=pod
+
+=head2 comments
+
+Get or set the comments on a table.  May be called several times to 
+set and it will accumulate the comments.  Called in an array context,
+returns each comment individually; called in a scalar context, returns
+all the comments joined on newlines.
+
+  $table->comments('foo');
+  $table->comments('bar');
+  print join( ', ', $table->comments ); # prints "foo, bar"
+
+=cut
+
+    my $self = shift;
+    push @{ $self->{'comments'} }, @_ if @_;
+
+    return wantarray 
+        ? @{ $self->{'comments'} || [] }
+        : join( "\n", @{ $self->{'comments'} || [] } );
 }
 
 # ----------------------------------------------------------------------
@@ -473,7 +499,7 @@ These are eqivalent:
             $constraint = $self->add_constraint(
                 type   => PRIMARY_KEY,
                 fields => $fields,
-            );
+            ) or return;
         }
     }
 
