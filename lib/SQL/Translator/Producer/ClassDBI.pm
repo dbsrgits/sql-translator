@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.21 2003-06-25 19:10:17 allenday Exp $
+# $Id: ClassDBI.pm,v 1.22 2003-06-25 19:17:06 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -72,12 +72,10 @@ sub produce {
         #
         # Primary key may have a differenct accessor method name
         #
-        if(defined($translator->format_pk_name)) {
-#        if ( my $pk_xform = $translator->format_pk_name ) {
+        if ( my $pk_xform = $translator->format_pk_name ) {
             if ( my $constraint = $table->primary_key ) {
                 my $field          = ($constraint->fields)[0];
-#                my $pk_name        = $pk_xform->($table_pkg_name, $field);
-                my $pk_name        = $translator->format_pk_name($table_pkg_name, $field);
+                my $pk_name        = $pk_xform->($table_pkg_name, $field);
                 
                 $packages{ $table_pkg_name }{'pk_accessor'} = 
                     "#\n# Primary key accessor\n#\n".
