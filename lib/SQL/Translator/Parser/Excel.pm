@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Excel;
 
 # -------------------------------------------------------------------
-# $Id: Excel.pm,v 1.8 2003-10-09 16:38:25 kycl4rk Exp $
+# $Id: Excel.pm,v 1.9 2003-10-09 21:49:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -56,7 +56,7 @@ and field sizes.  True by default.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 use Spreadsheet::ParseExcel;
 use Exporter;
@@ -140,7 +140,7 @@ sub parse {
                 ) {
                     my $field = $field_names[ $iC ];
                     my $data  = $ws->{'Cells'}[ $iR ][ $iC ]->{'_Value'};
-                       $data  = '' unless defined $data;
+                    next if !defined $data || $data eq '';
                     my $size  = [ length $data ];
                     my $type;
 
@@ -175,13 +175,18 @@ sub parse {
             }
 
             for my $field ( keys %field_info ) {
-                my $size      = $field_info{ $field }{'size'};
+                my $size      = $field_info{ $field }{'size'} || 0;
                 my $data_type = 
-                    $field_info{ $field }{'char'}  ? 'char'  : 
-                    $field_info{ $field }{'float'} ? 'float' : 'integer';
+                    $field_info{ $field }{'char'}    ? 'char'    : 
+                    $field_info{ $field }{'float'}   ? 'float'   :
+                    $field_info{ $field }{'integer'} ? 'integer' : 'char';
+
+                if ( $data_type eq 'char' && scalar @$size == 2 ) {
+                    $size = [ $size->[0] + $size->[1] ];
+                }
 
                 my $field = $table->get_field( $field );
-                $field->size( $size );
+                $field->size( $size ) if $size;
                 $field->data_type( $data_type );
             }
         }
