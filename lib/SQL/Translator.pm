@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.42 2003-08-21 18:12:56 kycl4rk Exp $
+# $Id: Translator.pm,v 1.43 2003-08-22 20:35:18 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -37,6 +37,7 @@ use Carp qw(carp);
 
 use Data::Dumper;
 use Class::Base;
+use File::Find;
 use File::Spec::Functions qw(catfile);
 use File::Basename qw(dirname);
 use IO::Dir;
@@ -655,26 +656,57 @@ sub _args {
 # _list($type)
 # ----------------------------------------------------------------------
 sub _list {
-    my $self = shift;
-    my $type = shift || return ();
+    my $self   = shift;
+    my $type   = shift || return ();
     my $uctype = ucfirst lc $type;
-    my %found;
 
+    #
+    # First find all the directories where SQL::Translator 
+    # parsers or producers (the "type") appear to live.
+    #
     load("SQL::Translator::$uctype") or return ();
     my $path = catfile "SQL", "Translator", $uctype;
+    my @dirs;
     for (@INC) {
         my $dir = catfile $_, $path;
         $self->debug("_list_${type}s searching $dir\n");
         next unless -d $dir;
-
-        my $dh = IO::Dir->new($dir);
-        for (grep /\.pm$/, $dh->read) {
-            s/\.pm$//;
-            $found{ join "::", "SQL::Translator::$uctype", $_ } = 1;
-        }
+        push @dirs, $dir;
     }
 
-    return keys %found;
+    #
+    # Now use File::File::find to look recursively in those 
+    # directories for all the *.pm files, then present them
+    # with the slashes turned into dashes.
+    #
+    my %found;
+    find( 
+        sub { 
+            if ( -f && m/\.pm$/ ) {
+                my $mod      =  $_;
+                   $mod      =~ s/\.pm$//;
+                my $cur_dir  = $File::Find::dir;
+                my $base_dir = catfile 'SQL', 'Translator', $uctype;
+
+                #
+                # See if the current directory is below the base directory.
+                #
+                if ( $cur_dir =~ m/$base_dir(.*)/ ) {
+                    $cur_dir = $1;
+                    $cur_dir =~ s!^/!!;  # kill leading slash
+                    $cur_dir =~ s!/!-!g; # turn other slashes into dashes
+                }
+                else {
+                    $cur_dir = '';
+                }
+
+                $found{ join '-', map { $_ || () } $cur_dir, $mod } = 1;
+            }
+        },
+        @dirs
+    );
+
+    return sort { lc $a cmp lc $b } keys %found;
 }
 
 # ----------------------------------------------------------------------
