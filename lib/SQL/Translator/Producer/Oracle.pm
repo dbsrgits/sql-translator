@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.16 2003-08-15 16:16:05 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.17 2003-08-15 16:26:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -247,9 +247,9 @@ sub produce {
                 push @trigger_defs, 
                     "CREATE OR REPLACE TRIGGER $trig_name\n".
                     "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
-                    "FOR EACH ROW WHEN (new.$field_name_ur} IS NULL)\n".
+                    "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
                     "BEGIN \n".
-                    " SELECT sysdate INTO :new.$field_name_ur} FROM dual;\n".
+                    " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
                     "END;\n/";
             }
 
