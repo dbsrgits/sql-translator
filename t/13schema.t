@@ -233,26 +233,26 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $constraint1, 'SQL::Translator::Schema::Constraint', 'Constraint' );
     is( $constraint1->name, 'foo', 'Constraint name is "foo"' );
 
-    $fields = join(',', $constraint1->fields('id') );
-    is( $fields, 'id', 'Constraint field = "id"' );
+    $fields = join(',', $constraint1->fields('age') );
+    is( $fields, 'age', 'Constraint field = "age"' );
 
-    $fields = join(',', $constraint1->fields('id,id') );
-    is( $fields, 'id', 'Constraint field = "id"' );
+    $fields = join(',', $constraint1->fields('age,age') );
+    is( $fields, 'age', 'Constraint field = "age"' );
 
-    $fields = join(',', $constraint1->fields('id', 'name') );
-    is( $fields, 'id,name', 'Constraint field = "id,name"' );
+    $fields = join(',', $constraint1->fields('age', 'name') );
+    is( $fields, 'age,name', 'Constraint field = "age,name"' );
 
-    $fields = join(',', $constraint1->fields( 'id,name,id' ) );
-    is( $fields, 'id,name', 'Constraint field = "id,name"' );
+    $fields = join(',', $constraint1->fields( 'age,name,age' ) );
+    is( $fields, 'age,name', 'Constraint field = "age,name"' );
 
-    $fields = join(',', $constraint1->fields( 'id, name' ) );
-    is( $fields, 'id,name', 'Constraint field = "id,name"' );
+    $fields = join(',', $constraint1->fields( 'age, name' ) );
+    is( $fields, 'age,name', 'Constraint field = "age,name"' );
 
-    $fields = join(',', $constraint1->fields( [ 'id', 'name' ] ) );
-    is( $fields, 'id,name', 'Constraint field = "id,name"' );
+    $fields = join(',', $constraint1->fields( [ 'age', 'name' ] ) );
+    is( $fields, 'age,name', 'Constraint field = "age,name"' );
 
-    $fields = join(',', $constraint1->fields( qw[ id name ] ) );
-    is( $fields, 'id,name', 'Constraint field = "id,name"' );
+    $fields = join(',', $constraint1->fields( qw[ age name ] ) );
+    is( $fields, 'age,name', 'Constraint field = "age,name"' );
 
     is( $constraint1->match_type, '', 'Constraint match type is empty' );
     is( $constraint1->match_type('foo'), undef, 
