@@ -1,18 +1,17 @@
                       SQL::Translator README
 
-The SQLFairy project began with the idea of simplifying the task of
-converting one database create syntax to another through the use of
-Parsers (which understand the source format) and Producers (which
-understand the destination format).  The idea is that any Parser can be
-used with any Producer in the conversion process, so, if you wanted
-Postgres-to-Oracle, you would use the Postgres parser and the Oracle
-producer.  The project has since grown to include parsing structured data
-files like Excel spreadsheets and delimited text files and the
-production of various documentation aids, such as images, graphs, POD,
-and HTML descriptions of the schema, as well as automatic code
-generators through the use of Class::DBI.  Presently only the definition
-parts of SQL are handled (CREATE, ALTER), not the manipulation of data
-(INSERT, UPDATE, DELETE).
+The SQL::Translator is a group of Perl modules that converts
+vendor-specific SQL table definitions into other formats, such as
+other vendor-specific SQL, ER diagrams, documentation (POD and HTML),
+XML, and Class::DBI classes.  The main focus of SQL::Translator is
+SQL, but parsers exist for other structured data formats, including
+Excel spreadsheets and arbitrarily delimited text files.  Through the
+separation of the code into parsers and producers with an object model
+in between, it's possible to combine any parser with any producer, to
+plug in custom parsers or producers, or to manipulate the parsed data
+via the built-in object model.  Presently only the definition parts of
+SQL are handled (CREATE, ALTER), not the manipulation of data (INSERT,
+UPDATE, DELETE).
 
 As of version 0.02, parsers exist for the following:
 
@@ -36,10 +35,6 @@ And the following producers exist:
     SQLite: SQLite-specific schema
     Sybase: Sybase-specific schema
     XML: structure of the schema described in XML
-
-You can, of course, define your own parsers or producers and pair them
-with existing parsers or producers as long as they adhere to the API
-of the SQL::Translator::Schema object.
 
 Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
