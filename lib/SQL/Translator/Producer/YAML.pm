@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.1 2003-10-08 16:33:13 dlc Exp $
+# $Id: YAML.pm,v 1.2 2003-10-08 17:27:40 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
 #
@@ -22,56 +22,44 @@ package SQL::Translator::Producer::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
-use SQL::Translator::Utils qw(header_comment);
+use YAML qw(Dump);
 
 sub produce {
     my $translator  = shift;
     my $schema      = $translator->schema;
 
-    return 
-        join "\n" => 
-            '--- #YAML:1.0',
-            #header_comment('', '# '),
-            map { view_table($_) } $schema->get_tables;
+    return Dump({
+        schema => {
+            map { ($_->name => view_table($_)) } $schema->get_tables
+        }
+    });
 }
 
 sub view_table {
     my $table = shift;
+    my $name = $table->name;
 
-    return
-        sprintf "%s:\n%s\n",
-            $table->name,
-            join "\n" =>
-                map { "    $_" }
-                map { view_field($_) } $table->get_fields;
+    return {
+        map { ($_->name => view_field($_)) } $table->get_fields
+    };
 }
 
 sub view_field {
     my $field = shift;
 
-    return
-        sprintf("%s: %s" => $field->name),
-        map {
-            sprintf "    %s: %s" => $_->[0], view($_->[1])
-        } (
-            [ 'order' =>   $field->order        ],
-            [ 'name'  =>   $field->name         ],
-            [ 'type'  =>   $field->data_type    ],
-            [ 'size'  => [ $field->size  ]      ],
-            [ 'extra' => { $field->extra }      ],
-        );
-}
-
-sub view {
-    my $thingie = shift;
-
-    {   ''       => sub { $_[0] },
-        'SCALAR' => sub { ${$_[0]} },
-        'ARRAY'  => sub { join "\n    - $_", @{$_[0]} },
-        'HASH'   => sub { join "\n    " => map { "$_: $_[0]->{$_}" } keys %{$_[0]} },
-    }->{ref $thingie}->($thingie);
+    return {
+        'order' => scalar $field->order,
+        'name'  => scalar $field->name,
+        'type'  => scalar $field->data_type,
+        'size'  => [ $field->size ],
+        'extra' => { $field->extra },
+    };
 }
 
 1;
+
+=head1 NAME
+
+SQL::Translator::Producer::YAML - A YAML producer for SQL::Translator

@@ -15,25 +15,29 @@ CREATE TABLE random (
 |;
 
 my $yaml = q|--- #YAML:1.0
-random:
-    id: 
-        order: 1
-        name: id
-        type: int
-        size: 11
-        extra: 
-    foo: 
-        order: 2
-        name: foo
-        type: varchar
-        size: 255
-        extra: 
-    updated: 
-        order: 3
-        name: updated
-        type: timestamp
-        size: 0
-        extra: 
+schema:
+  random:
+    foo:
+      extra: {}
+      name: foo
+      order: 2
+      size:
+        - 255
+      type: varchar
+    id:
+      extra: {}
+      name: id
+      order: 1
+      size:
+        - 11
+      type: int
+    updated:
+      extra: {}
+      name: updated
+      order: 3
+      size:
+        - 0
+      type: timestamp
 |;
 
 my $out;
