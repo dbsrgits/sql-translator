@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser::V12;
 
 # -------------------------------------------------------------------
-# $Id: V12.pm,v 1.2 2003-10-01 17:45:47 grommit Exp $
+# $Id: V12.pm,v 1.3 2003-10-03 13:17:28 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -31,7 +31,7 @@ SQL::Translator::XMI::Parser::V12 - Version 1.2 parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use base qw(SQL::Translator::XMI::Parser);
 
@@ -119,10 +119,6 @@ $spec12->{attribute} = {
             default => "",
         },
         { 
-            name  => "datatype",
-            path  => 'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name',
-        },
-        { 
             name  => "initialValue",
             path  => 'UML:Attribute.initialValue/UML:Expression/@body',
         },
@@ -135,8 +131,31 @@ $spec12->{attribute} = {
             multiplicity => "*",
 			map => "name",
         },
+        { 
+            name  => "dataType",
+            path  => 'xmiDeref(UML:StructuralFeature.type/UML:DataType)',
+            class => "dataType", 
+            multiplicity => "1",
+        },
     ],
 };
+
+$spec12->{dataType} = {
+    name   => "datatype",
+    plural => "datatypes",
+    default_path => '//UML:DataType[@xmi.id]',
+    attrib_data  =>
+        [qw/name visibility isSpecification isRoot isLeaf isAbstract/],
+    path_data => [
+        { 
+            name  => "stereotype",
+            path  => 'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name',
+            default => "",
+        },
+    ],
+};
+
+
 
 $spec12->{operation} = {
     name => "operation",

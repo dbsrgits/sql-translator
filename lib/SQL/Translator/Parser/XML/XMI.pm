@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI;
 
 # -------------------------------------------------------------------
-# $Id: XMI.pm,v 1.9 2003-10-01 17:17:24 grommit Exp $
+# $Id: XMI.pm,v 1.10 2003-10-03 13:17:28 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -30,7 +30,7 @@ Class diagrams stored in XMI format.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -128,7 +128,7 @@ sub classes2schema {
 			$data{default_value} = $attr->{initialValue}
 				if exists $attr->{initialValue};
 			$data{data_type} = $attr->{_map_taggedValues}{dataType}{dataValue}
-				|| $attr->{datatype};
+				|| $attr->{dataType}{name};
 			$data{size} = $attr->{_map_taggedValues}{size}{dataValue};
 			$data{is_nullable}=$attr->{_map_taggedValues}{nullable}{dataValue};
 
