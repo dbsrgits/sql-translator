@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.9 2003-06-09 01:59:21 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.10 2003-06-11 04:00:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -159,12 +159,12 @@ and table_constraint is:
 
 # -------------------------------------------------------------------
 sub produce {
-    my ( $translator, $data ) = @_;
-    $DEBUG                    = $translator->debug;
-    $WARN                     = $translator->show_warnings;
-    my $no_comments           = $translator->no_comments;
-    my $add_drop_table        = $translator->add_drop_table;
-    my $schema                = $translator->schema;
+    my $translator     = shift;
+    $DEBUG             = $translator->debug;
+    $WARN              = $translator->show_warnings;
+    my $no_comments    = $translator->no_comments;
+    my $add_drop_table = $translator->add_drop_table;
+    my $schema         = $translator->schema;
 
     my $output;
     $output .= header_comment unless ($no_comments);

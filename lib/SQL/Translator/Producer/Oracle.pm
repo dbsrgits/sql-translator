@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.12 2003-06-09 02:19:41 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.13 2003-06-11 04:00:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -125,12 +125,12 @@ my %truncated;
 
 # -------------------------------------------------------------------
 sub produce {
-    my ( $translator, $data ) = @_;
-    $DEBUG                    = $translator->debug;
-    $WARN                     = $translator->show_warnings;
-    my $no_comments           = $translator->no_comments;
-    my $add_drop_table        = $translator->add_drop_table;
-    my $schema                = $translator->schema;
+    my $translator     = shift;
+    $DEBUG             = $translator->debug;
+    $WARN              = $translator->show_warnings;
+    my $no_comments    = $translator->no_comments;
+    my $add_drop_table = $translator->add_drop_table;
+    my $schema         = $translator->schema;
     my $output;
 
     $output .= header_comment unless ($no_comments);

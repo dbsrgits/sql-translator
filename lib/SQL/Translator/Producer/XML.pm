@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.9 2003-06-09 02:01:23 kycl4rk Exp $
+# $Id: XML.pm,v 1.10 2003-06-11 04:00:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::XML;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
@@ -34,9 +34,9 @@ my $sqlf_ns = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 
 # -------------------------------------------------------------------
 sub produce {
-    my ( $translator, $data ) = @_;
-    my $schema                = $translator->schema;
-    my $args                  = $translator->producer_args;
+    my $translator = shift;
+    my $schema     = $translator->schema;
+    my $args       = $translator->producer_args;
 
     my $io          = IO::Scalar->new;
     my $xml         =  XML::Writer->new(

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.21 2003-06-09 01:56:51 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.22 2003-06-11 04:00:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -50,11 +50,11 @@ my %translate  = (
 );
 
 sub produce {
-    my ($translator, $data) = @_;
-    local $DEBUG            = $translator->debug;
-    my $no_comments         = $translator->no_comments;
-    my $add_drop_table      = $translator->add_drop_table;
-    my $schema              = $translator->schema;
+    my $translator     = shift;
+    local $DEBUG       = $translator->debug;
+    my $no_comments    = $translator->no_comments;
+    my $add_drop_table = $translator->add_drop_table;
+    my $schema         = $translator->schema;
 
     debug("PKG: Beginning production\n");
 

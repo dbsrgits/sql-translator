@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.4 2003-06-09 02:00:01 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.5 2003-06-11 04:00:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -39,12 +39,12 @@ my %global_names;
 my %truncated;
 
 sub produce {
-    my ($translator, $data) = @_;
-    local $DEBUG            = $translator->debug;
-    local $WARN             = $translator->show_warnings;
-    my $no_comments         = $translator->no_comments;
-    my $add_drop_table      = $translator->add_drop_table;
-    my $schema              = $translator->schema;
+    my $translator     = shift;
+    local $DEBUG       = $translator->debug;
+    local $WARN        = $translator->show_warnings;
+    my $no_comments    = $translator->no_comments;
+    my $add_drop_table = $translator->add_drop_table;
+    my $schema         = $translator->schema;
 
     debug("PKG: Beginning production\n");
 
@@ -147,7 +147,6 @@ sub produce {
 
     return $create;
 }
-
 
 # -------------------------------------------------------------------
 sub mk_name {
