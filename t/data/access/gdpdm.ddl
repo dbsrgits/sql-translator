@@ -315,27 +315,3 @@ CREATE TABLE qtl_treatment_ontology
 
 -- CREATE ANY Relationships ...
 
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
-relationships are not supported for access
