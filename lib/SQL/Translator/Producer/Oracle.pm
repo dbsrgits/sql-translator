@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.30 2004-02-09 23:02:15 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.31 2004-06-04 19:39:48 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -376,7 +376,8 @@ sub produce {
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq UNIQUE ) {
-                $name ||= mk_name( $table_name, 'u' );
+                $name = mk_name( $name || $table_name, 'u' );
+
                 for my $f ( $c->fields ) {
                     my $field_def = $table->get_field( $f ) or next;
                     my $dtype     = $translate{ $field_def->data_type } or next;
@@ -386,16 +387,17 @@ sub produce {
                              $field_def->name . ".'\n"
                     }
                 }
+
                 push @constraint_defs, "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq CHECK_C ) {
-                $name ||= mk_name( $table_name, 'ck' );
+                $name = mk_name( $name || $table_name, 'ck' );
                 my $expression = $c->expression || '';
                 push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                $name ||= mk_name( join('_', $table_name, $c->fields), 'fk' );
+                $name = mk_name( join('_', $table_name, $c->fields), 'fk' );
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
@@ -439,12 +441,14 @@ sub produce {
             next unless @fields;
 
             if ( $index_type eq PRIMARY_KEY ) {
-                $index_name ||= mk_name( $table_name, 'pk' );
+                $index_name = $index_name ? mk_name( $index_name ) 
+                    : mk_name( $table_name, 'pk' );
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $index_type eq NORMAL ) {
-                $index_name ||= mk_name( $table_name, $index_name || 'i' );
+                $index_name = $index_name ? mk_name( $index_name ) 
+                    : mk_name( $table_name, $index_name || 'i' );
                 push @index_defs, 
                     "CREATE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
