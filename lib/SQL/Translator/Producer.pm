@@ -1,35 +1,31 @@
 package SQL::Translator::Producer;
 
 #-----------------------------------------------------
-# $Id: Producer.pm,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
-#
-# File       : SQL/Translator/Producer.pm
-# Programmer : Ken Y. Clark, kclark@logsoft.com
-# Created    : 2002/02/27
-# Purpose    : base object for Producers
+# $Id: Producer.pm,v 1.1.1.1.2.1 2002-03-15 20:13:46 dlc Exp $
 #-----------------------------------------------------
+# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+#                    darren chamberlain <darren@cpan.org>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
 
 use strict;
-use vars qw( $VERSION );
-$VERSION = (qw$Revision: 1.1.1.1 $)[-1];
+use vars qw($VERSION);
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1.2.1 $ =~ /(\d+)\.(\d+)/;
 
-use SQL::Translator;
-use base qw[ SQL::Translator ];
-
-sub from { return shift()->{'from'} }
-
-sub header {
-    my $self = shift;
-    my $from = $self->from || '';
-    my $to   = $self->to   || '';
-    return <<"HEADER";
-#
-# $from-to-$to translator
-# Version: $SQL::Translator::VERSION
-#
-
-HEADER
-}
+sub produce { "" }
 
 1;
 
@@ -44,14 +40,14 @@ SQL::Translator::Producer - base object for Producers
 
 =head1 SYNOPSIS
 
-  package SQL::Translator::Producer::Foo;
-  use SQL::Translator::Producer;
-  use base( 'SQL::Translator::Producer' );
-  1;
 
 =head1 DESCRIPTION
 
-Intended to serve as a base class for all SQL Translator producers.
+Producer modules designed to be used with SQL::Translator need to
+implement a single function, called B<produce>.  B<produce> will be
+called with a data structure created by a SQL::Translator::Parser
+subclass.  It is expected to return a string containing a valid SQL
+create statement.
 
 =head1 AUTHOR
 
