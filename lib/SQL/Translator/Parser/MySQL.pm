@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.43 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.44 2004-03-01 17:39:22 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -121,7 +121,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -239,7 +239,7 @@ create_definition : constraint
 comment : /^\s*(?:#|-{2}).*\n/ 
     { 
         my $comment =  $item[1];
-        $comment    =~ s/^\s*(#|-{2})\s*//;
+        $comment    =~ s/^\s*(#|--)\s*//;
         $comment    =~ s/\s*$//;
         $return     = $comment;
         push @table_comments, $comment;
@@ -248,7 +248,7 @@ comment : /^\s*(?:#|-{2}).*\n/
 field_comment : /^\s*(?:#|-{2}).*\n/ 
     { 
         my $comment =  $item[1];
-        $comment    =~ s/^\s*(#|-{2})\s*//;
+        $comment    =~ s/^\s*(#|--)\s*//;
         $comment    =~ s/\s*$//;
         $return     = $comment;
     }
