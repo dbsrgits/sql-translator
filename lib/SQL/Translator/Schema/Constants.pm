@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constants;
 
 # ----------------------------------------------------------------------
-# $Id: Constants.pm,v 1.41 2003-11-07 16:53:31 kycl4rk Exp $
+# $Id: Constants.pm,v 1.42 2004-01-27 15:38:15 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -35,7 +35,27 @@ SQL::Translator::Schema::Constants - constants module
 
 =head1 DESCRIPTION
 
-This module exports a several constants to like "primary key," etc. 
+This module exports the following constants for Schema features;
+
+=over 4
+
+=item CHECK_C
+
+=item FOREIGN_KEY
+
+=item FULL_TEXT
+
+=item NOT_NULL
+
+=item NORMAL
+
+=item NULL
+
+=item PRIMARY_KEY
+
+=item UNIQUE
+
+=back
 
 =cut
 
@@ -43,7 +63,7 @@ use strict;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 
 @EXPORT = qw[ 
     CHECK_C
