@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.32 2003-11-17 19:09:33 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.33 2003-11-21 00:03:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -287,7 +287,7 @@ column_name : NAME '.' NAME
 
 comment_phrase : /'.*?'|NULL/ 
     { 
-        my $val = $item[1];
+        my $val = $item[1] || '';
         $val =~ s/^'|'$//g;
         $return = $val;
     }
