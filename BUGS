@@ -1,4 +1,1 @@
-Oracle producer produces duplicate sequences occasionally; need demonstrative tests
-datatype text needs default size in ::Parser::MySQL (comes out as size 0)
-MySQL parser misses double-quoted strings in DEFAULT sections (I think)
-MySQL parser misses primary key declarations that don't occur as part of a field definition line (I think)
+Please report via rt.cpan.org.
