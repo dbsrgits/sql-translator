@@ -1,4 +1,1472 @@
-2002-03-21 13:50  dlc
+2003-06-16 15:58  kycl4rk
+
+	* lib/SQL/Translator.pm: I was going to move the "format_*_name"
+	methods to the ClassDBI producer, but I just couldn't see the best
+	way to do it.  Besides, I can't necessarily decide what I don't
+	like about them being in this class.  Is there any way any other
+	producer could/would ever use them?  Also made aesthetic changes to
+	POD.
+
+2003-06-16 13:56  kycl4rk
+
+	* LICENSE: All the copyright notices say how the user should have
+	received a copy of the license, but we never make the effort to
+	include it, so I have.
+
+2003-06-16 13:55  kycl4rk
+
+	* MANIFEST: Added LICENSE.
+
+2003-06-16 13:45  kycl4rk
+
+	* TODO: Added some ideas for 0.03.
+
+2003-06-16 13:30  kycl4rk
+
+	* Makefile.PL: Fixed EXE_FILES filenames, decided to removed CGI
+	script.
+
+2003-06-16 13:26  kycl4rk
+
+	* bin/validator_test.pl: Removed this file as it uses the Validator
+	which has been removed.
+
+2003-06-16 13:25  kycl4rk
+
+	* bin/sqlt-graph.pl: Fixed script name in POD.
+
+2003-06-16 13:25  kycl4rk
+
+	* bin/sqlt-diagram.pl: Fixed script name in docs.
+
+2003-06-16 13:24  kycl4rk
+
+	* bin/: auto-viv.cgi, sql_translator.cgi: Renamed auto-viv.cgi to
+	sql_translator.cgi
+
+2003-06-16 13:23  kycl4rk
+
+	* bin/: auto-graph.pl, sqlt-graph.pl: Renamed auto-graph.pl to
+	sqlt-graph.pl
+
+2003-06-16 13:22  kycl4rk
+
+	* bin/: auto-dia.pl, sqlt-diagram.pl: Renamed auto-dia.pl to
+	sqlt-diagram.pl
+
+2003-06-16 13:17  kycl4rk
+
+	* lib/SQL/Translator/Validator.pm: Removed Validator class as
+	validation is now in the Schema object.
+
+2003-06-16 13:16  kycl4rk
+
+	* bin/sql_translator.pl: Removed some things that don't actually
+	work.
+
+2003-06-16 13:15  kycl4rk
+
+	* Makefile.PL: Changed getting of version from main module, added
+	exe file.
+
+2003-06-16 13:13  kycl4rk
+
+	* lib/SQL/Translator.pm: Altered POD description.
+
+2003-06-10 23:34  kycl4rk
+
+	* lib/SQL/Translator.pm: Upped the version in anticipation of
+	making a new release soon, removed some unused code, added a better
+	quote, updated POD, expanded the AUTHORS list to include all module
+	contributors, expanded on SEE ALSO list.
+
+2003-06-10 23:15  kycl4rk
+
+	* BUGS: Removed fixed bugs, either need to verify other bugs exist
+	(and fix) or remove.
+
+2003-06-10 23:14  kycl4rk
+
+	* TODO: Updated TODO.
+
+2003-06-10 23:03  kycl4rk
+
+	* MANIFEST: Added HTML and POD producers.
+
+2003-06-10 23:00  kycl4rk
+
+	* lib/SQL/Translator/Producer/: ClassDBI.pm, MySQL.pm, Oracle.pm,
+	PostgreSQL.pm, SQLite.pm, Sybase.pm, XML.pm: Modified producers to
+	quite looking for the data structure to be sent as an argument with
+	the translator object.
+
+2003-06-10 22:59  kycl4rk
+
+	* lib/SQL/Translator/Parser/: Excel.pm, MySQL.pm, Oracle.pm,
+	PostgreSQL.pm, xSV.pm: Modified all filed to quit returning the
+	data structure, now only return "1" to show success.
+
+2003-06-10 22:58  kycl4rk
+
+	* lib/SQL/Translator.pm: Added validation code.
+
+2003-06-10 22:58  kycl4rk
+
+	* t/: 04file,fh,string.t, 07p_args.t: These tests relied on now
+	deprecated action that the raw data structure was returned by the
+	parser.  The tests were updated to use the schema object.
+
+2003-06-10 22:12  kycl4rk
+
+	* t/02mysql-parser.t: Added "is_valid" tests.
+
+2003-06-10 10:06  kycl4rk
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: Mostly cosmetic changes
+	(Allen -- no tabs, indent = 4 spaces!), got rid of a map called in
+	void context.
+
+2003-06-09 22:49  kycl4rk
+
+	* lib/SQL/Translator/Producer/HTML.pm: Adding new HTML producer.
+
+2003-06-09 22:49  kycl4rk
+
+	* lib/SQL/Translator/Producer/POD.pm: Minor changes.
+
+2003-06-09 00:46  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: move over bacon
+
+2003-06-09 00:38  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: it was buggy
+
+2003-06-09 00:37  kycl4rk
+
+	* lib/SQL/Translator/Producer/POD.pm: A POD producer.
+
+2003-06-08 23:54  kycl4rk
+
+	* lib/SQL/Translator/Producer/GraphViz.pm: Changed to use schema
+	API.
+
+2003-06-08 23:40  kycl4rk
+
+	* lib/SQL/Translator/Producer/Diagram.pm: Changed to use schema,
+	refactored duplicated code (also in GraphViz) up into Schema API.
+
+2003-06-08 23:40  kycl4rk
+
+	* lib/SQL/Translator/Schema.pm: Some bug fixen.
+
+2003-06-08 23:18  kycl4rk
+
+	* lib/SQL/Translator/Schema.pm: Added "make_natural_joins."
+
+2003-06-08 23:11  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Added "is_unique" method to
+	determine if a field has a UNIQUE index.
+
+2003-06-08 22:38  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: supposedly hasa()is
+	deprecated in favor of has_a().
+
+2003-06-08 22:20  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: linktable traversal
+	seems to be working!  haven't tried the code yet, but it looks
+	good.
+
+2003-06-08 21:41  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Added rule to catch a
+	default value given just as "null."
+
+2003-06-08 21:19  kycl4rk
+
+	* lib/SQL/Translator/Producer/Oracle.pm: Removed debugging warning.
+
+2003-06-08 21:16  kycl4rk
+
+	* t/15oracle-parser.t: Minor change to affect context.
+
+2003-06-08 21:16  kycl4rk
+
+	* lib/SQL/Translator/Parser/Oracle.pm: Added "alter" to be able to
+	parse output of Oracle producer, other small changes.
+
+2003-06-08 21:10  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Small changes to comments and
+	size methods.
+
+2003-06-08 21:10  kycl4rk
+
+	* lib/SQL/Translator/Schema/Table.pm: Small change to comment.
+
+2003-06-08 21:03  kycl4rk
+
+	* MANIFEST: Removed "Raw" producer.
+
+2003-06-08 21:02  kycl4rk
+
+	* lib/SQL/Translator/Producer/Raw.pm: Removing "Raw" producer as
+	it's unnecessary now.
+
+2003-06-08 21:01  kycl4rk
+
+	* lib/SQL/Translator/Producer/XML.pm: Some cosmetic changes,
+	changed to use schema API.
+
+2003-06-08 21:00  kycl4rk
+
+	* lib/SQL/Translator/Producer/Sybase.pm: Expanded "translate" hash,
+	changed to use schema API.
+
+2003-06-08 21:00  kycl4rk
+
+	* lib/SQL/Translator/Producer/SQLite.pm: General cleanup, changed
+	to use schema API.
+
+2003-06-08 20:59  kycl4rk
+
+	* lib/SQL/Translator/Producer/PostgreSQL.pm: Changed to use schema
+	API.
+
+2003-06-08 20:58  kycl4rk
+
+	* lib/SQL/Translator/Producer/Oracle.pm: Cleaned up "translate"
+	hash a bit, changed to use schema objects now, some changed to
+	sub's to get rid of some warnings.
+
+2003-06-08 20:56  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Changed to use schema
+	objects.
+
+2003-06-08 20:55  kycl4rk
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: Removed unnecessary
+	backslash-escapes of single quotes, reformatted spacing to match
+	the style of the rest of the modules, using the schema API now,
+	removed "Chado" line, tried to make the "hasa"/FK stuff work
+	nicely.
+
+2003-06-06 17:52  kycl4rk
+
+	* MANIFEST: Added Oracle parser test.
+
+2003-06-06 17:48  kycl4rk
+
+	* t/12header_comment.t: General mods to make it like others.
+
+2003-06-06 17:47  kycl4rk
+
+	* t/11normalize.t: Added "use strict;"
+
+2003-06-06 17:46  kycl4rk
+
+	* t/04file,fh,string.t: General clean up to make it more like the
+	others.
+
+2003-06-06 17:45  kycl4rk
+
+	* t/03mysql-to-oracle.t: General clean up to make it more like
+	other tests.
+
+2003-06-06 17:40  kycl4rk
+
+	* t/: 15oracle-parser.t, 08postgres-to-mysql.t: Fixed test numbers.
+
+2003-06-06 17:39  kycl4rk
+
+	* t/10excel.t: Fixed test numbers, removed unnecessary code.
+
+2003-06-06 17:37  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Added sorting of tables,
+	other cosmetic changes.
+
+2003-06-06 17:36  kycl4rk
+
+	* lib/SQL/Translator/Schema/Table.pm: Added comments method and
+	parsing on init.
+
+2003-06-06 17:35  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Added parsing of comments on
+	init, added "comments" method.
+
+2003-06-06 17:35  kycl4rk
+
+	* lib/SQL/Translator/Schema/Constraint.pm: Changed constant to a
+	hash to avoid silly Perl errors about it being redefined; other
+	minor changes.
+
+2003-06-06 17:34  kycl4rk
+
+	* lib/SQL/Translator/Schema/Index.pm: Changed constant to a hash to
+	avoid silly Perl errors about it being redefined.
+
+2003-06-06 17:34  kycl4rk
+
+	* lib/SQL/Translator/Schema/Constants.pm: Changed "FULLTEXT."
+
+2003-06-06 17:32  kycl4rk
+
+	* MANIFEST: Removed Sybase parser because it's complete broken. 
+	When this works, we can add it back.
+
+2003-06-06 17:31  kycl4rk
+
+	* lib/SQL/Translator/Parser/Excel.pm: Cleaned up code (mostly
+	cosmetic), added normalization of column name, use Schema objects,
+	added a good quote.
+
+2003-06-06 17:30  kycl4rk
+
+	* lib/SQL/Translator/Parser/Oracle.pm: Quit putting PK defs as
+	indices, cosmetic changes to grammar, remove quotes around comment
+	values, quit pushing field constraints to table level, return
+	"varchar2" instead of "varchar" (keep it native), fixes to grammar
+	to bring it up to work with Parse::RecDescent 1.94, use of Schema
+	objects, added a good quote.
+
+2003-06-06 17:27  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Added a better quote;
+	quit putting FKs at field level (only at table); fixed bug with
+	field sizes (extra level of arrayref); got rid of "binary data"
+	data type (I swear this used to be legal), now only calling it
+	"bytea"; some cosmetic changes to the grammar;	added use of Schema
+	objects.
+
+2003-06-06 17:24  kycl4rk
+
+	* t/15oracle-parser.t: Added new Oracle parser test.
+
+2003-06-06 17:24  kycl4rk
+
+	* t/10excel.t: Added a lot more tests, now using the Schema object.
+
+2003-06-06 17:23  kycl4rk
+
+	* t/13schema.t: Changed $table->primary_key not to return an error
+	if there is no PK, added tests for "comments" on tables and fields.
+
+2003-06-06 17:22  kycl4rk
+
+	* t/08postgres-to-mysql.t: Now that the PG parser is using the
+	Schema object, a previously uncaught bug surfaced in that an index
+	was created on a table (cvterm_synonym) that isn't defined in the
+	SQL, so that creates a problem.  Commented out the line.
+
+2003-06-06 17:21  kycl4rk
+
+	* t/14postgres-parser.t: The test schema actually had incorrect
+	syntax, so I fixed that;  changed tests to use Schema object; added
+	a lot more.
+
+2003-06-05 19:13  kycl4rk
+
+	* t/06xsv.t: Changed tests to use Schema objects instead of data
+	structure, added more thorough tests.
+
+2003-06-05 19:13  kycl4rk
+
+	* t/13schema.t: Added tests for $field->extra.
+
+2003-06-05 19:12  kycl4rk
+
+	* t/02mysql-parser.t: Changed tests to use the Schema objects
+	instead of looking at the data structure, added many more thorough
+	tests, added parsing some more complicated SQL.
+
+2003-06-05 19:11  kycl4rk
+
+	* lib/SQL/Translator/Schema.pm: Fixed up some POD.
+
+2003-06-05 19:10  kycl4rk
+
+	* lib/SQL/Translator/Schema/Table.pm: Moved some code around, fixed
+	some POD, added checking of existing constraints when adding new
+	ones (to prevent dups).
+
+2003-06-05 19:09  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Added parsing of default
+	value on init, added "extra" method for misc field info, added
+	methods to determine if a field is a foreign key and to get the FK
+	constraint.
+
+2003-06-05 19:08  kycl4rk
+
+	* lib/SQL/Translator/Schema/Constraint.pm: Moved some code around
+	to fix ordering, convert "type" to match what's considered valid.
+
+2003-06-05 19:06  kycl4rk
+
+	* lib/SQL/Translator/Schema/Index.pm: Moved some code around to get
+	methods in alphabetical order.
+
+2003-06-05 19:05  kycl4rk
+
+	* lib/SQL/Translator/Parser/xSV.pm: Fixed parsing of field size for
+	float values.
+
+2003-06-05 19:05  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Changes to grammar to clean
+	up, moved primary key defs and unique keys in data structure from
+	"indices" to "constraints" where they belong, added code to fill
+	out schema objects with data structure.
+
+2003-06-04 20:57  kycl4rk
+
+	* lib/SQL/Translator/Producer/GraphViz.pm: Added better options for
+	accepting height and width, changed default node shape to "record,"
+	added option to show the fields of the table.
+
+2003-06-04 20:51  kycl4rk
+
+	* bin/auto-graph.pl: Added options for height, width, and showing
+	field names.
+
+2003-06-04 20:43  kycl4rk
+
+	* bin/auto-viv.cgi: Added ability to manipulate height, width, and
+	whether to show the field names for GraphViz output.
+
+2003-06-04 17:04  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Added rules to catch common
+	(but useless) statements.
+
+2003-06-04 10:35  kycl4rk
+
+	* t/02mysql-parser.t: Added a few more tests.
+
+2003-06-03 17:42  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: More work on default field
+	sizes for numerics.
+
+2003-06-03 17:38  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Added default field sizes for
+	numeric fields if not specified, removed unused rules.
+
+2003-06-03 17:37  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Fixed bug with
+	initialization.
+
+2003-06-03 17:12  kycl4rk
+
+	* t/02mysql-parser.t: Added more tests.
+
+2003-06-03 17:11  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Changed grammar to bring it
+	more inline with the official MySQL YACC grammar, added better
+	support for FK references.
+
+2003-05-26 17:29  allenday
+
+	* lib/SQL/Translator/Producer/GraphViz.pm: added width and height
+	options for graphviz out.  no docs
+
+2003-05-12 10:47  dlc
+
+	* lib/SQL/Translator/Utils.pm: Slightly more paranoid version of
+	parse_list_arg -- check length as well as definedness.
+
+2003-05-12 10:39  dlc
+
+	* lib/SQL/Translator/Utils.pm: Trim whitespace from arrayref
+	elements as well as array elements; see
+	<Pine.LNX.4.50.0305121004300.32235-100000@oakhill.homeip.net>.
+
+2003-05-12 10:00  kycl4rk
+
+	* lib/SQL/Translator/Producer/Sybase.pm: Addressed a few style
+	issues to make it like the other producers (use "header_comment,"
+	indentation style [4 spaces, no tabs]).  Added Sam's name as AUTHOR
+	and to copyright.
+
+2003-05-12 09:59  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Cosmetic change in POD.
+
+2003-05-12 09:50  kycl4rk
+
+	* MANIFEST: Added Sybase producer to MANIFEST.
+
+2003-05-12 09:49  kycl4rk
+
+	* lib/SQL/Translator/Utils.pm: Change to avoid warning of "use of
+	unitialized value."
+
+2003-05-12 09:48  kycl4rk
+
+	* bin/sql_translator.pl: Since "true" is the default for trimming
+	and scanning fields for the xSV parser, changed the args to turn
+	them off.
+
+2003-05-12 09:29  angiuoli
+
+	* lib/SQL/Translator/Producer/Sybase.pm: added Sybase producer code
+	was derived from existing producer for postgres functional with
+	RELEASE-0_01, updates to work with current API are coming
+
+2003-05-10 23:04  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: some fixes to fk method
+	name generation.  failed to add nice m-to-m mapping method b/c data
+	structure is to FUBAR to extract the info i need.
+
+2003-05-09 14:51  kycl4rk
+
+	* lib/SQL/Translator.pm: Don't pass schema, let others call for it.
+
+2003-05-09 14:51  kycl4rk
+
+	* lib/SQL/Translator/Parser/: MySQL.pm, xSV.pm: Modified to call
+	translator to get schema rather than passing.
+
+2003-05-09 12:15  kycl4rk
+
+	* lib/SQL/Translator/Parser/xSV.pm: Lots of changes to fix merge.
+
+2003-05-09 12:12  kycl4rk
+
+	* t/13schema.t: Lots of changes to reflect library mods.
+
+2003-05-09 12:12  kycl4rk
+
+	* lib/SQL/Translator/Schema/View.pm: Use "parse_list_args," added
+	"fields" method, changed validation, break ref to table in DESTROY.
+
+2003-05-09 12:11  kycl4rk
+
+	* lib/SQL/Translator/Schema/Table.pm: Use "parse_list_arg," put
+	field order into field object, added "order" method for table,
+	break all references to fields, constraints and indices in DESTROY.
+
+2003-05-09 12:09  kycl4rk
+
+	* lib/SQL/Translator/Schema/Index.pm: Use "parse_list_args," added
+	"options" (still vague on this), set a default for "type" of
+	"normal," break ref to table in DESTROY.
+
+2003-05-09 12:08  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Added use of
+	"parse_list_arg," changed "nullable" method to "is_nullable" so it
+	would be like "is_auto_increment" and "is_primary_key," added
+	"order" method, added DESTROY.
+
+2003-05-09 12:06  kycl4rk
+
+	* lib/SQL/Translator/Schema/Constants.pm: Playing with constants.
+
+2003-05-09 12:06  kycl4rk
+
+	* lib/SQL/Translator/Schema/Constraint.pm: Added "match_type," use
+	"parse_list_arg," added DESTROY.
+
+2003-05-09 12:04  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Removed warning.
+
+2003-05-09 12:03  kycl4rk
+
+	* t/06xsv.t: Added passing of schema arg.
+
+2003-05-09 11:55  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Playing around with new
+	schema object.
+
+2003-05-09 11:54  kycl4rk
+
+	* lib/SQL/Translator/Utils.pm: Added oft-used "parse_list_arg" sub
+	for Schema classes.
+
+2003-05-09 11:53  kycl4rk
+
+	* lib/SQL/Translator/Schema.pm: Made "order" a property of the
+	table and view objects, use a Schwatzian transform in sorting,
+	added DESTROY to break circular links among objects.
+
+2003-05-09 11:51  kycl4rk
+
+	* lib/SQL/Translator.pm: Passing schema object now as third
+	argument.
+
+2003-05-09 11:49  kycl4rk
+
+	* bin/sql_translator.pl: [no log message]
+
+2003-05-07 15:42  kycl4rk
+
+	* lib/SQL/Translator/Schema/Table.pm: Minor fixes to primary_key
+	method.
+
+2003-05-07 15:39  kycl4rk
+
+	* Makefile.PL: Added Text::RecordParser 0.02 pre-req.
+
+2003-05-07 15:37  kycl4rk
+
+	* t/06xsv.t: Updated tests to match new code.
+
+2003-05-07 15:36  kycl4rk
+
+	* lib/SQL/Translator/Parser/xSV.pm: Updated to use
+	Text::RecordParser and added scanning of fields, more
+	functionality.
+
+2003-05-07 15:36  kycl4rk
+
+	* bin/sql_translator.pl: Added mods to pass parser_args for xSV
+	parser.
+
+2003-05-06 07:47  dlc
+
+	* README: Updated README via perldoc -t lib/SQL/Translator.pm
+
+2003-05-06 07:47  dlc
+
+	* lib/SQL/Translator/Producer/XML.pm: Uses XML::Writer instead of
+	aggregate() and a global.  Uses sqlfairy namespace (without a DTD
+	yet, sorry).
+
+2003-05-06 07:45  dlc
+
+	* t/: 01load.t, 05bgep-re.t, 13schema.t: Updated XML test.
+
+2003-05-06 07:44  dlc
+
+	* lib/SQL/Translator.pm: Doc changes (use C<> instead of B<>)
+
+2003-05-06 07:44  dlc
+
+	* MANIFEST, MANIFEST.SKIP, Makefile.PL: Added Schema and some more
+	dependencies
+
+2003-05-04 23:33  kycl4rk
+
+	* t/13schema.t: More changes to keep up with code.
+
+2003-05-04 23:33  kycl4rk
+
+	* lib/SQL/Translator/Schema.pm: Too many changes.
+
+2003-05-04 23:32  kycl4rk
+
+	* lib/SQL/Translator/Schema/: Constants.pm, Constraint.pm,
+	Field.pm, Index.pm, Table.pm: Too many changes to mention.
+
+2003-05-03 10:42  kycl4rk
+
+	* lib/SQL/Translator/Schema/Field.pm: Fixed error 'Use of
+	uninitialized value in pattern match (m//) at
+	blib/lib/SQL/Translator/Schema/Field.pm line 144.'
+
+2003-05-03 10:40  kycl4rk
+
+	* t/08postgres-to-mysql.t: Changed to use Test::More, cleaned up
+	syntax.  Still pretty useless.
+
+2003-05-03 10:40  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: "size" of a field needs
+	to be an arrayref as it could be two numbers (e.g., for a float
+	"10,2").
+
+2003-05-03 10:21  kycl4rk
+
+	* lib/SQL/Translator/Producer/XML.pm: Fixed error 'Use of
+	uninitialized value in repeat (x) at
+	blib/lib/SQL/Translator/Producer/XML.pm line 110.'
+
+2003-05-03 10:17  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Fixed error 'Use of
+	uninitialized value in string eq at
+	blib/lib/SQL/Translator/Producer/MySQL.pm line 164.'
+
+2003-05-03 10:16  kycl4rk
+
+	* lib/SQL/Translator/Parser/Excel.pm: Fixed error '"my" variable
+	$wb_count masks earlier declaration in same scope at
+	blib/lib/SQL/Translator/Parser/Excel.pm line 68.'
+
+2003-05-03 10:11  kycl4rk
+
+	* MANIFEST: For some reason, "t.pl" was still in there.
+
+2003-05-03 10:02  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Fixed an error in default
+	value regex that disallowed a value like "00:18:00".
+
+2003-05-02 23:15  kycl4rk
+
+	* Makefile.PL: Added the requirement of Parse::RecDescent 1.94 or
+	later, added "auto-graph.pl" to the EXE_FILES.
+
+2003-05-02 23:12  kycl4rk
+
+	* t/14postgres-parser.t: Adding a new PG parser test.
+
+2003-05-02 23:11  kycl4rk
+
+	* t/13schema.t: Trying to add tests as I write methods, so lots of
+	new stuff to mirror development of the Schema::* classes.
+
+2003-05-02 23:09  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Using some of the rules
+	from the PG grammar to make mine better, cleaned up the handling of
+	datatypes (esp WRT auto-inc), only placing PK defs as table
+	constraints (not an index), getting ready to parse views.
+
+2003-05-02 23:07  kycl4rk
+
+	* lib/SQL/Translator/Schema.pm: Not much to say ... just trying to
+	get this working.
+
+2003-05-02 23:07  kycl4rk
+
+	* lib/SQL/Translator/Schema/: Constants.pm, Table.pm: More changes
+	to getting the schema to a working state.
+
+2003-04-30 23:24  kycl4rk
+
+	* lib/SQL/Translator/: Schema.pm, Schema/Constraint.pm,
+	Schema/Field.pm, Schema/Index.pm, Schema/Table.pm, Schema/View.pm:
+	Adding new objects for handing schema data.  Not being used while I
+	work out the tests and the general idea.
+
+2003-04-30 23:23  kycl4rk
+
+	* t/: 02mysql-parser.t, 13schema.t: Adding new schema test,
+	commiting fixes to MySQL parser test.
+
+2003-04-30 16:58  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Fixed error that was
+	preventing MySQL parser from working with Parse::RecDescent 1.94
+	(needed a "1;" at the end of the create rule); also made changes to
+	%item hash elements with repeat modifiers to match what they're now
+	called in Parse::RecDescent 1.94;  these changes now make the
+	parser incompatible with earlier versions of P::RD!
+
+2003-04-25 18:08  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: low hanging fruit,
+	please read the diff below
+
+2003-04-25 06:48  dlc
+
+	* MANIFEST, t/12header_comment.t: Test file for header_comment
+	function from SQL::Translator::Utils.
+
+2003-04-25 06:47  dlc
+
+	* lib/SQL/Translator/Producer/: ClassDBI.pm, MySQL.pm, Oracle.pm,
+	PostgreSQL.pm, SQLite.pm, XML.pm: Added refactored comment
+	producing using header_comment.
+	
+	Added 'omit_empty_tags' option to  XML producer.  Also added some
+	documentation.
+	
+	Made SQLite producer produce actual auto incremented fields (using
+	the INTEGER PRIMARY KEY hack) if the field is an auto-incremented
+	one.  This modifies slightly how indexes are produced.
+	
+	Also modified how mk_name is called in the SQLite producer; SQLite
+	doesn't accept index names that begin with numbers.
+
+2003-04-25 06:44  dlc
+
+	* lib/SQL/Translator/Utils.pm: Added header_comment function; see
+	docs for details.
+
+2003-04-24 17:15  allenday
+
+	* MANIFEST, t/data/pgsql/Chado-CV-PostGreSQL.sql: adding a pg src
+	file example
+
+2003-04-24 17:03  allenday
+
+	* Makefile.PL: adding graphviz dep
+
+2003-04-24 16:40  kycl4rk
+
+	* MANIFEST: Added new files.
+
+2003-04-24 15:02  kycl4rk
+
+	* lib/SQL/Translator/Producer/GraphViz.pm: Added defaults to
+	arguments.
+
+2003-04-24 14:58  kycl4rk
+
+	* bin/auto-viv.cgi: Adding new CGI script front-end for GraphViz
+	and Diagram producers.
+
+2003-04-24 14:40  kycl4rk
+
+	* lib/SQL/Translator/Producer/Diagram.pm: Fixed bug (illegal div by
+	0) if "no_columns" wasn't numeric, also fixed return of production
+	if not writing to a file.
+
+2003-04-24 11:36  kycl4rk
+
+	* lib/SQL/Translator/Producer/Diagram.pm: Adding new ER diagramming
+	producer.
+
+2003-04-24 11:33  kycl4rk
+
+	* bin/auto-dia.pl: Moved most of the code into a new "Diagram"
+	producer.
+
+2003-04-24 11:15  kycl4rk
+
+	* lib/SQL/Translator.pm: Cosmetic changes to keep the coding style
+	consistent.
+
+2003-04-24 11:15  kycl4rk
+
+	* lib/SQL/Translator/Producer/GraphViz.pm: Adding new GraphViz
+	producer.
+
+2003-04-24 11:14  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Minor cosmetic changes.
+
+2003-04-24 11:14  kycl4rk
+
+	* bin/auto-graph.pl: Moved all the real code into a module so this
+	script now just uses the new GraphViz producer.
+
+2003-04-19 18:44  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: cosmetic changes to
+	autogenerated code.
+
+2003-04-19 18:32  allenday
+
+	* lib/SQL/Translator.pm: adding capability to give 'filename'
+	constructor arg an arrayref.
+
+2003-04-19 17:58  allenday
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: asdf
+
+2003-04-18 20:32  kycl4rk
+
+	* lib/SQL/Translator/Producer/ClassDBI.pm: Fixed error for: "Use of
+	uninitialized value in string eq at
+	/usr/local/apache/lib/perl/SQL/Translator/Producer/ClassDBI.pm line
+	98." Also fixed some indentation problems in POD.
+
+2003-04-18 18:45  allenday
+
+	* MANIFEST, lib/SQL/Translator/Producer/ClassDBI.pm: adding
+	ClassDBI producer.
+
+2003-04-18 15:43  allenday
+
+	* lib/SQL/Translator/Producer/MySQL.pm: adding recognition of key
+	type "key" for table indices.
+
+2003-04-18 09:25  dlc
+
+	* t/11normalize.t: Forgot to add this yesterday.
+
+2003-04-17 18:16  allenday
+
+	* lib/SQL/: Translator.pm, Translator/Parser/PostgreSQL.pm: adding
+	callbacks to Translator.pm to allow mangling of PK/FK/table
+	names/package names (CDBI specific) for producer classes.
+
+2003-04-17 14:42  allenday
+
+	* lib/SQL/Translator/: Parser/PostgreSQL.pm, Producer/MySQL.pm:
+	workaround to get auto_increment working from PG "serial" datatype.
+	 i didn't do this right, someone fix it :|
+	
+	also added a fix to MySQL producer to not put () enclosed
+	attributes if values don't exist.  ie, don't put int() if there is
+	not a length defined for int.
+
+2003-04-17 08:42  dlc
+
+	* BUGS, MANIFEST, lib/SQL/Translator/Validator.pm,
+	lib/SQL/Translator/Parser/Excel.pm,
+	lib/SQL/Translator/Parser/xSV.pm,
+	lib/SQL/Translator/Producer/MySQL.pm, t/10excel.t,
+	t/data/Excel/t.xls: Attempt to be more
+	robust.lib/SQL/Translator/Validator.pm
+
+2003-04-17 08:41  dlc
+
+	* lib/SQL/Translator/Utils.pm: Added normalize_name function, which
+	normalizes names.  Primarily needed by the Excel parser.
+
+2003-04-17 08:40  dlc
+
+	* lib/SQL/Translator.pm: Let's check before we assume this is a
+	ref, eh?
+
+2003-04-14 14:20  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Fixes to help with Oracle
+	data types, also fixes with table constraints.
+
+2003-04-10 17:53  kycl4rk
+
+	* MANIFEST: Added Oracle parser to MANIFEST.
+
+2003-04-09 22:09  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Small fix.
+
+2003-04-09 22:09  kycl4rk
+
+	* lib/SQL/Translator/Parser/Oracle.pm: Hey, new Oracle parser!
+
+2003-04-08 07:59  dlc
+
+	* README: Updated README to reflect changes to SQL/Translator.pm
+	POD.
+
+2003-04-08 07:57  dlc
+
+	* t/: 03mysql-to-oracle.t, 04file,fh,string.t, 06xsv.t: Moving
+	tests to Test::More
+
+2003-04-08 07:56  dlc
+
+	* Makefile.PL: Added Spreadsheet::ParseExcel
+
+2003-04-08 07:55  dlc
+
+	* MANIFEST: Added missing stuff.  Remember folks, anything not in
+	MANIFEST will not be part of a distribution!
+
+2003-04-08 07:55  dlc
+
+	* t/10excel.t: Added stub test.
+
+2003-04-07 11:31  dlc
+
+	* lib/SQL/Translator/Producer/MySQL.pm: And again, with the
+	globals. Yeesh.
+
+2003-04-07 11:27  dlc
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Why make these globals?
+
+2003-04-07 11:18  dlc
+
+	* lib/SQL/Translator.pm: Hey, this could never have worked as
+	advertised. *blush*.
+
+2003-04-07 10:41  mmelillo
+
+	* t/data/Excel/t.xls: added a text spreadsheet, hopefully in the
+	right directory and such
+
+2003-04-06 14:08  kycl4rk
+
+	* lib/SQL/Translator/Parser/Excel.pm: Some syntax fixes, package
+	name was wrong, added Mikey's name to AUTHORS.	This parser is
+	still broken.  The data structure I see coming back from
+	Spreadsheet::ParseExcel is not the same that is being examined by
+	the code.
+
+2003-04-06 09:29  mmelillo
+
+	* lib/SQL/Translator/Parser/Excel.pm: Init Check in. This follows
+	closely along the lines of xSV.pm but its cooler because I used
+	map. Hsan't been tested yet becuase I won't have access to suitable
+	testing area til monday. Oh BTW, the map doesn't work syntactially.
+	 Someone want to tell me whats wrong with that line?
+
+2003-04-03 13:30  kycl4rk
+
+	* bin/auto-graph.pl: Adding "auto-graph.pl" to automatically create
+	graphs (via GraphViz) from schema definitions.
+
+2003-04-03 13:29  kycl4rk
+
+	* bin/auto-dia.pl: Shortened "natural-join-fk-only" option to
+	"natural-join-fk," accepting args to "image-type" now, added wider
+	left margin (+10 pixels), added pre-processing of fields to find if
+	the ones that acts as FKs in other tables in order to support the
+	"show-fk-only" option, added debug option and warn statements to
+	aid coding, added ability to make connecting lines directed when
+	established with proper FOREIGN KEY/REFERENCES statements, added
+	some colors.
+
+2003-04-01 19:46  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Added grammar for
+	"REFERENCES" (foreign keys).
+
+2003-04-01 19:46  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Got foreign key
+	references basically working now.
+
+2003-04-01 19:45  kycl4rk
+
+	* bin/auto-dia.pl: Added options for natual joins only, made code
+	work with proper FK references.
+
+2003-04-01 12:08  kycl4rk
+
+	* bin/auto-dia.pl: Added color option.
+
+2003-04-01 11:06  kycl4rk
+
+	* bin/auto-dia.pl: Added mark for unique constraint and legend to
+	explain extra markings.
+
+2003-04-01 10:43  kycl4rk
+
+	* bin/auto-dia.pl: Added font options, made default font size
+	'small' instead of 'tiny.'
+
+2003-03-27 13:07  mmelillo
+
+	* TODO: :)
+
+2003-03-27 12:03  mmelillo
+
+	* TODO: added need for Excel Spreadsheet parser module which I will
+	write in the near future per Darren's request
+
+2003-03-12 08:19  dlc
+
+	* lib/SQL/Translator.pm: 
+	  - load now sets $ERROR on failure.
+	
+	  - list_parsers and list_producers are a little more robust, and
+	look
+	    in every directory in @INC.
+
+2003-03-12 08:17  dlc
+
+	* MANIFEST: Added SQLite producer and Utils.
+
+2003-03-12 08:17  dlc
+
+	* lib/SQL/Translator/: Utils.pm, Producer/MySQL.pm,
+	Producer/SQLite.pm: Added Utils package with debug method, shared
+	between MySQL and SQLite producers.
+
+2003-03-07 10:08  kycl4rk
+
+	* lib/SQL/Translator/Producer/PostgreSQL.pm: Added code to kill
+	field qualifiers in index field declarations.
+
+2003-03-04 15:24  kycl4rk
+
+	* lib/SQL/Translator/Producer/: MySQL.pm, SQLite.pm: Added SQLite
+	producer, basic knock-off of MySQL producer, made some mods to
+	MySQL producer to add "DROP TABLE" statements, fixed POD a bit.
+
+2003-03-04 15:20  kycl4rk
+
+	* lib/SQL/Translator.pm: Some minor mods to POD.
+
+2003-03-03 14:52  allenday
+
+	* t/08postgres-to-mysql.t: turning off debugging in t/08
+
+2003-02-26 07:12  dlc
+
+	* README: A README, which is required by CPAN.
+
+2003-02-26 07:11  dlc
+
+	* t/09auto-dia.t, MANIFEST, Makefile.PL:     o Added
+	bin/auto-dia.pl to scripts list
+	
+	    o Added a test for auto-dia (which might be questionable).
+	
+	    o Added GD to module prerequisite list
+	
+	    o Changed VERSION number, in anticipation of an intial release.
+
+2003-02-26 07:08  dlc
+
+	* lib/SQL/Translator.pm: Some doc changes; added Allen to AUTHORS
+	section
+
+2003-02-25 23:17  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Handle "on [delete|update]
+	action" differently
+
+2003-02-25 23:17  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Added more rule (alter
+	table) to be able handle Chado schema.
+
+2003-02-25 15:58  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Deleted "index" rules,
+	allowed fore and aft comments in fields and table constraints
+	(unique, PK, etc.).
+
+2003-02-25 15:42  dlc
+
+	* MANIFEST: Added t/08postgres-to-mysql.t
+
+2003-02-25 15:25  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: Added production to
+	field rule to handle embedded comments.
+
+2003-02-25 08:55  kycl4rk
+
+	* lib/SQL/Translator/Parser/: MySQL.pm, PostgreSQL.pm: Added some
+	documentation to PG and MySQL; the "eofile" rule to MySQL.
+
+2003-02-24 23:02  kycl4rk
+
+	* lib/SQL/Translator/Producer/MySQL.pm: Mods to handles FK
+	references.
+
+2003-02-24 23:01  kycl4rk
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: A working PG parser!
+
+2003-02-24 21:24  allenday
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: i forget what i did, but
+	i found more bugs.  we need to be able to support 'varchar' as
+	implying 'varchar(255)' for both field and index declarations. 
+	also 'double precision' as a synonym for 'double'.  also, mysql
+	doesn't support boolean datatype, but postgres does, so we need to
+	find a way to deal with this.
+	
+	that's all for now.
+	
+	-ad
+
+2003-02-24 20:03  allenday
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm: BUG.  the parser cannot
+	handle 'precision' as a qualifier for 'double'.  this also applies
+	to the mysql parser.
+
+2003-02-24 19:01  allenday
+
+	* lib/SQL/Translator/Parser/PostgreSQL.pm, t/08postgres-to-mysql.t:
+	added a serial->int auto_increment fix, a varchar->varchar(255)
+	workaround.
+
+2003-02-21 13:35  allenday
+
+	* MANIFEST, lib/SQL/Translator/Parser/PostGreSQL.pm,
+	lib/SQL/Translator/Parser/PostgreSQL.pm: moving files around per
+	ky's request
+
+2003-02-21 11:56  allenday
+
+	* t/08postgres-to-mysql.t: here is the pgsql test script.  NOTE: it
+	will not work right now b/c i've just changed ::PostGreSQL to
+	::PostgreSQL, but haven't renamed the module itself yet.  will do
+	so later this morning, unless someone beats me to it :-)
+
+2003-02-21 09:19  dlc
+
+	* MANIFEST, Makefile.PL, t/01load.t, t/02mysql-parser.t,
+	t/07p_args.t: 
+	Added new files to MANIFEST.
+	
+	Started updating tests to use Test::More, rather than the homegrown
+	print stuff I'd started with (bad darren!).
+	
+	The load test uses SQL::Translator::load, to both exercise load()
+	and to perform the actual test (I've intentionally used load
+	instead of Test::More::use_ok).
+	
+	Added more dependencies to Makefile.PL.
+	
+	Sorted the dependencies in PREREQ_PM, and the file list in
+	MANIFEST, because I'm obsessive about those sorts of silly things.
+
+2003-02-21 02:42  allenday
+
+	* lib/SQL/Translator/Parser/PostGreSQL.pm: an adaptor for postgres.
+	 this works, but i think my primary key and foreign key parses are
+	hackish.  they require the pk/fk clause _right_after_ the field
+	declaration, which i don't think is how postgres requires it.
+	
+	also i've found a bug in the mysql parser that is in the postgres
+	parser as well that doesn't allow comments in the middle of table
+	create statements.  this will cause a failed parse:
+	
+	create table x (   x int, -- a comment );
+
+2003-02-20 21:23  allenday
+
+	* Makefile.PL: added Class::Base preq
+
+2003-02-15 17:38  kycl4rk
+
+	* bin/auto-dia.pl: Lots o' bug fixes.  Added "join-pk-only" option.
+
+2003-02-14 20:31  kycl4rk
+
+	* bin/auto-dia.pl: Made it better.
+
+2003-02-14 20:30  kycl4rk
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Added fulltext index.
+
+2003-02-14 14:29  kycl4rk
+
+	* bin/auto-dia.pl: Added "auto-dia.pl" script for generating ER
+	diagrams.
+
+2003-01-29 07:32  dlc
+
+	* lib/SQL/Translator/Producer/Raw.pm: Did you forget what year it
+	is, Ken?
+
+2003-01-29 07:29  dlc
+
+	* lib/SQL/Translator.pm: 
+	Moved all POD to the end of the module, to make it easier to modify
+	and find.
+	
+	Added a bunch of inline documentation.
+	
+	Refactored a few of the duplicated methods, such as producer_args
+	and parser_args.
+
+2003-01-29 07:28  dlc
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Set $DEBUG to 0 by default.
+
+2003-01-29 07:27  dlc
+
+	* bin/validator_test.pl: Removed extra unused junk.
+
+2003-01-29 07:27  dlc
+
+	* MANIFEST: Added SQL::Translator::Producer::Raw to MANIFEST.
+
+2003-01-28 20:43  kycl4rk
+
+	* lib/SQL/Translator/Producer/Raw.pm: Added "Raw" to be able to get
+	to raw parser output.
+
+2003-01-27 11:04  dlc
+
+	* lib/SQL/: Translator.pm, Translator/Parser.pm,
+	Translator/Producer.pm, Translator/Validator.pm,
+	Translator/Parser/MySQL.pm, Translator/Parser/Sybase.pm,
+	Translator/Parser/xSV.pm, Translator/Producer/MySQL.pm,
+	Translator/Producer/Oracle.pm, Translator/Producer/PostgreSQL.pm,
+	Translator/Producer/XML.pm: Documentation fixes; added Chris' name
+	to copyright notice; updated copyright year.
+
+2003-01-02 11:47  kycl4rk
+
+	* lib/SQL/Translator/Producer/PostgreSQL.pm: Fixed bug where it was
+	truncating table name needlessly.
+
+2002-12-10 19:44  kycl4rk
+
+	* lib/SQL/Translator/Producer/Oracle.pm: Fixed problem with
+	truncating an identifier when it was exactly the $max_id_length and
+	no "type" was supplied to "mk_name."
+
+2002-12-03 19:53  kycl4rk
+
+	* lib/SQL/Translator/Producer/: Oracle.pm, PostgreSQL.pm: Fixed a
+	bug in Oracle producer that allowed for identifiers longer than the
+	maximum allowed length, also there was a problem with not using the
+	unreserved table name.	Added decent amount of functionality to PG
+	producer.
+
+2002-12-03 10:20  dlc
+
+	* MANIFEST, MANIFEST.SKIP: MANIFEST.SKIP takes a regex, not a list.
+	 Some of the .pm files weren't in the MANIFESt.
+
+2002-12-03 10:17  dlc
+
+	* MANIFEST.SKIP, MANIFEST.skip: Moved MANIFEST.skip to
+	MANIFEST.SKIP
+
+2002-12-03 10:05  dlc
+
+	* Makefile.PL: More generic clean macro
+
+2002-11-27 22:21  kycl4rk
+
+	* lib/SQL/Translator/: Parser/MySQL.pm, Producer/XML.pm: Added a
+	rule to MySQL parser to disregard "DROP...;" statements, filled out
+	XML producer to generate hand-crafted XML.
+
+2002-11-25 21:59  kycl4rk
+
+	* bin/sql_translator.pl, lib/SQL/Translator.pm,
+	lib/SQL/Translator/Producer/Oracle.pm,
+	lib/SQL/Translator/Producer/PostgreSQL.pm: Added "show_warnings"
+	and "add_drop_table" options to sql_translator.pl and to
+	SQL::Translator/Oracle producer.  Fixed bug in Oracle producer that
+	duplicated identifiers.  Adding a lot of Oracle producer's logic to
+	new PostgreSQL producer.
+
+2002-11-25 08:49  dlc
+
+	* lib/SQL/Translator/Validator.pm: Updated an example to make it
+	happier.
+
+2002-11-25 08:48  dlc
+
+	* lib/SQL/Translator.pm: Added some comments (comments?)
+
+2002-11-22 19:26  kycl4rk
+
+	* bin/validator_test.pl, lib/SQL/Translator/Parser/MySQL.pm,
+	lib/SQL/Translator/Producer/Oracle.pm, t/02mysql-parser.t,
+	t/06xsv.t: Fixed spelling of "indices" in various files, finished
+	adding all of Tim Bunce's logic from his "mysql2ora" script, Oracle
+	producer is now a bit smarter, converting from MySQL to Oracle (or
+	back to MySQL) should all work really well now.
+
+2002-11-21 21:03  kycl4rk
+
+	* bin/sql_translator.pl, lib/SQL/Translator.pm,
+	lib/SQL/Translator/Parser.pm, lib/SQL/Translator/Producer.pm,
+	lib/SQL/Translator/Validator.pm,
+	lib/SQL/Translator/Parser/MySQL.pm,
+	lib/SQL/Translator/Parser/Sybase.pm,
+	lib/SQL/Translator/Parser/xSV.pm,
+	lib/SQL/Translator/Producer/MySQL.pm,
+	lib/SQL/Translator/Producer/Oracle.pm,
+	lib/SQL/Translator/Producer/PostgreSQL.pm,
+	lib/SQL/Translator/Producer/XML.pm: Rolled in Darren's new
+	list_[producers|parsers], lots of cosmetic changes, working in Tim
+	Bunce's "mysql2ora" grammar and producer logic into appropriate
+	modules, making output of producers more consistent, added table
+	order to MySQL parser, using it in Oracle producer to maintain
+	original ordering.
+
+2002-11-21 11:45  dlc
+
+	* lib/SQL/Translator.pm: Added list_parsers and list_producers
+	methods, in response to
+	<Pine.LNX.4.44.0211211124100.4042-100000@localhost.localdomain>
+
+2002-11-19 22:03  kycl4rk
+
+	* lib/SQL/Translator/Producer/PostgreSQL.pm: Added PostgreSQL
+	producer.
+
+2002-11-19 22:03  kycl4rk
+
+	* bin/sql_translator.pl, lib/SQL/Translator.pm,
+	lib/SQL/Translator/Parser.pm, lib/SQL/Translator/Producer.pm,
+	lib/SQL/Translator/Validator.pm,
+	lib/SQL/Translator/Parser/MySQL.pm,
+	lib/SQL/Translator/Parser/Sybase.pm,
+	lib/SQL/Translator/Parser/xSV.pm,
+	lib/SQL/Translator/Producer/MySQL.pm,
+	lib/SQL/Translator/Producer/Oracle.pm: Fixed a lot of little things
+	in modules, docs, etc.	Bugs in sql_translator.pl.
+
+2002-10-11 16:09  cmungall
+
+	* lib/SQL/Translator/Parser/MySQL.pm, t/05bgep-re.t: [no log
+	message]
+
+2002-07-23 14:22  dlc
+
+	* lib/SQL/Translator/Parser/MySQL.pm: Changed error_out usage to
+	error
+
+2002-07-23 14:21  dlc
+
+	* lib/SQL/Translator.pm: Subclasses Class::Base. Removed error_out,
+	error, in favor Class::Base::error.
+
+2002-07-08 09:42  dlc
+
+	* MANIFEST.skip, Makefile.PL, bin/sql_translator.pl,
+	lib/SQL/Translator.pm: Shitload of changes.  Still passes all
+	tests, such as they are.
+
+2002-06-11 07:09  dlc
+
+	* lib/SQL/: Translator.pm, Translator/Validator.pm: Fixed some
+	typos, added some basic re-logicing (is that even a word?)
+
+2002-03-29 07:08  dlc
+
+	* TODO, lib/SQL/Translator/Producer/MySQL.pm: Added generation of
+	PRIMARY KEY and KEY clauses to CREATE statements.  Reorganized
+	where CR are put.
+
+2002-03-27 06:41  dlc
+
+	* BUGS, Makefile.PL, TODO, bin/validator_test.pl,
+	lib/SQL/Translator.pm, lib/SQL/Translator/Validator.pm,
+	lib/SQL/Translator/Producer/MySQL.pm: Added MySQL producer (still
+	in a pretty alpha stage, only barely functional).  Updated
+	Validator.pm.  Added a few new bugs to BUGS.  Added file, filename,
+	and data methods to Translator.pm.  Silly change to Makefile.PL
+	that will most likely come out.
+
+2002-03-26 06:46  dlc
+
+	* MANIFEST, bin/validator_test.pl, lib/SQL/Translator.pm,
+	lib/SQL/Translator/Validator.pm, t/07p_args.t: Added support for
+	producer_args and parser_args.	Added test for producer_args and
+	parser_args.  Added t/07p_test.t to MANIFEST.  Added
+	validator_test.pl to bin (though not to MANIFEST).
+
+2002-03-25 08:27  dlc
+
+	* lib/SQL/Translator/Parser/xSV.pm, t/05bgep-re.t, t/06xsv.t: Added
+	CSV parser and a test.
+
+2002-03-25 08:26  dlc
+
+	* MANIFEST, MANIFEST.skip: Added extra files to MANIFEST.skip. 
+	Updated MANIFEST.
+
+2002-03-25 08:26  dlc
+
+	* t/03mysql-to-oracle.t: Added test structure.
+
+2002-03-25 08:25  dlc
+
+	* lib/SQL/Translator/Parser.pm: Added 'order' to data structure
+	description
+
+2002-03-21 12:55  dlc
+
+	* Changes: Automatically generated by cvs2cl.pl
+
+2002-03-21 12:50  dlc
 
 	* BUGS, Changes, MANIFEST, MANIFEST.skip, Makefile.PL, TODO,
 	bin/sql_translator.pl, lib/SQL/Translator.pm,
@@ -11,55 +1479,55 @@
 	t/data/mysql/BGEP-RE-create.sql: Merged changes from darren-1_0 tag
 	into HEAD branch (hopefully!).
 
-2002-03-21 13:48  dlc
+2002-03-21 12:48  dlc
 
 	* MANIFEST, MANIFEST.skip, Makefile.PL: Removed in anticipation of
 	a merge.
 
-2002-03-21 13:07  dlc
+2002-03-21 12:07  dlc
 
 	* t/: 05bgep-re.t, data/mysql/Apache-Session-MySQL.sql: Test
 	changes
 
-2002-03-21 12:52  dlc
+2002-03-21 11:52  dlc
 
 	* Makefile.PL: Accidentally PREREQ_PM'ed XML::Writer instead fo
 	XML::Dumper
 
-2002-03-21 12:48  dlc
+2002-03-21 11:48  dlc
 
 	* t/data/mysql/Apache-Session-MySQL.sql: Re-added
 
-2002-03-21 10:54  dlc
+2002-03-21 09:54  dlc
 
 	* MANIFEST: Updated filelist
 
-2002-03-21 10:53  dlc
-
-	* TODO: file TODO was initially added on branch darren-1_0.
-
-2002-03-21 10:53  dlc
-
-	* t/01load.t: file 01load.t was initially added on branch
-	darren-1_0.
-
-2002-03-21 10:53  dlc
-
-	* t/05bgep-re.t: file 05bgep-re.t was initially added on branch
-	darren-1_0.
-
-2002-03-21 10:53  dlc
-
-	* BUGS: file BUGS was initially added on branch darren-1_0.
-
-2002-03-21 10:53  dlc
+2002-03-21 09:53  dlc
 
 	* BUGS, TODO, t/01load.t, t/05bgep-re.t,
 	t/data/mysql/Apache-Session-MySQL.sql: Added some basic files,
 	removed unused data file (the contents were moved into the test
 	that used the data).
 
-2002-03-21 10:52  dlc
+2002-03-21 09:53  dlc
+
+	* t/01load.t: file 01load.t was initially added on branch
+	darren-1_0.
+
+2002-03-21 09:53  dlc
+
+	* t/05bgep-re.t: file 05bgep-re.t was initially added on branch
+	darren-1_0.
+
+2002-03-21 09:53  dlc
+
+	* BUGS: file BUGS was initially added on branch darren-1_0.
+
+2002-03-21 09:53  dlc
+
+	* TODO: file TODO was initially added on branch darren-1_0.
+
+2002-03-21 09:52  dlc
 
 	* t/data/mysql/BGEP-RE-create.sql: Removed comment lines (the
 	parser chokes on these, I think).  Changed DEFAULT x NOT NULL lines
@@ -67,67 +1535,67 @@
 	parser.  Removed references to FULLTEXT indexes, because the MySQL
 	grammar doesn't know about them.
 
-2002-03-21 10:50  dlc
+2002-03-21 09:50  dlc
 
 	* t/04file,fh,string.t: Removed warns and debugging, so this test
 	will actually pass when run as part of make test.
 
-2002-03-21 10:49  dlc
+2002-03-21 09:49  dlc
 
 	* t/03mysql-to-oracle.t: Turned off SQL::Translator::DEBUG.
 
-2002-03-21 10:49  dlc
+2002-03-21 09:49  dlc
 
 	* t/02mysql-parser.t: Broke the 1 test out into 11 different tests,
 	each one of which tests a specific part of the data structure
 	returned by parse.
 
-2002-03-21 10:48  dlc
+2002-03-21 09:48  dlc
 
 	* lib/SQL/Translator/Producer/XML.pm: Changed name of translate
 	method to produce, to be consistant with Producer API. Added
 	__END__ token.	Updated $VERSION to be CPAN-compliant.
 
-2002-03-21 10:47  dlc
+2002-03-21 09:47  dlc
 
 	* lib/SQL/Translator/Parser.pm: Modified POD to include a complex
 	description of the format of the data structure returned by parse. 
 	Added myself to the AUTHORS section.
 
-2002-03-21 10:45  dlc
+2002-03-21 09:45  dlc
 
 	* Makefile.PL: Added Pod::Usage as a prerequisite
 
-2002-03-20 13:22  dlc
+2002-03-20 12:22  dlc
 
 	* Changes: Automatically generated by cvs2cl.pl
 
-2002-03-20 11:37  dlc
+2002-03-20 10:37  dlc
 
 	* Makefile.PL: syncmail test.
 
-2002-03-20 11:31  dlc
+2002-03-20 10:31  dlc
 
 	* Makefile.PL: This was a synmail test.
 
-2002-03-19 08:26  dlc
+2002-03-19 07:26  dlc
 
 	* t/04file,fh,string.t: Changed some of the basic assumptions. 
 	Removed code to check filehandle reads.
 
-2002-03-18 15:39  dlc
+2002-03-18 14:39  dlc
 
 	* Changes: Automatically generated by cvs2cl.pl
 
-2002-03-18 15:39  dlc
+2002-03-18 14:39  dlc
 
 	* Changes: Changelog file.
 
-2002-03-18 15:39  dlc
+2002-03-18 14:39  dlc
 
 	* Changes: file Changes was initially added on branch darren-1_0.
 
-2002-03-18 15:35  dlc
+2002-03-18 14:35  dlc
 
 	* lib/SQL/Translator.pm: Updated docs, especially detailed internal
 	API docs.  Updated default sub to return the data structure (and
@@ -138,39 +1606,39 @@
 	parser to use a named class::function style of defining a function
 	to call, just like producer.
 
-2002-03-18 15:32  dlc
+2002-03-18 14:32  dlc
 
 	* t/04file,fh,string.t: Changed many assumptions about the test. 
 	Uses the default parser and producer (which is a pass through)
 
-2002-03-18 15:30  dlc
+2002-03-18 14:30  dlc
 
 	* lib/SQL/Translator/Producer/Oracle.pm: Added note of a bug
 
-2002-03-15 15:18  dlc
+2002-03-15 14:18  dlc
 
 	* MANIFEST, MANIFEST.skip, Makefile.PL: Added files.
 
-2002-03-15 15:14  dlc
-
-	* MANIFEST: file MANIFEST was initially added on branch darren-1_0.
-
-2002-03-15 15:14  dlc
+2002-03-15 14:14  dlc
 
 	* MANIFEST, MANIFEST.skip, Makefile.PL: Added MANIFEST,
 	MANIFEST.skip, and Makefile.PL
 
-2002-03-15 15:14  dlc
+2002-03-15 14:14  dlc
 
-	* Makefile.PL: file Makefile.PL was initially added on branch
-	darren-1_0.
+	* MANIFEST: file MANIFEST was initially added on branch darren-1_0.
 
-2002-03-15 15:14  dlc
+2002-03-15 14:14  dlc
 
 	* MANIFEST.skip: file MANIFEST.skip was initially added on branch
 	darren-1_0.
 
-2002-03-15 15:13  dlc
+2002-03-15 14:14  dlc
+
+	* Makefile.PL: file Makefile.PL was initially added on branch
+	darren-1_0.
+
+2002-03-15 14:13  dlc
 
 	* lib/SQL/: Translator.pm, Translator/Parser.pm,
 	Translator/Producer.pm, Translator/Parser/MySQL.pm,
@@ -185,73 +1653,64 @@
 	Class::Name (with the implicit function name), Name (relative to
 	SQL::Translator::{Parser,Producer}, and anonymous subroutines.
 
-2002-03-15 15:10  dlc
+2002-03-15 14:10  dlc
 
 	* t/: 02mysql-parser.t, 03mysql-to-oracle.t, 04file,fh,string.t,
 	data/mysql/Apache-Session-MySQL.sql, data/mysql/BGEP-RE-create.sql:
 	Added test data in groovy hierarchical directories.  Added some
 	basic tests, many of which don't do much yet.
 
-2002-03-15 15:10  dlc
-
-	* t/04file,fh,string.t: file 04file,fh,string.t was initially added
-	on branch darren-1_0.
-
-2002-03-15 15:10  dlc
-
-	* t/data/mysql/BGEP-RE-create.sql: file BGEP-RE-create.sql was
-	initially added on branch darren-1_0.
-
-2002-03-15 15:10  dlc
-
-	* t/03mysql-to-oracle.t: file 03mysql-to-oracle.t was initially
-	added on branch darren-1_0.
-
-2002-03-15 15:10  dlc
-
-	* t/data/mysql/Apache-Session-MySQL.sql: file
-	Apache-Session-MySQL.sql was initially added on branch darren-1_0.
-
-2002-03-15 15:10  dlc
+2002-03-15 14:10  dlc
 
 	* t/02mysql-parser.t: file 02mysql-parser.t was initially added on
 	branch darren-1_0.
 
-2002-03-15 15:09  dlc
+2002-03-15 14:10  dlc
+
+	* t/03mysql-to-oracle.t: file 03mysql-to-oracle.t was initially
+	added on branch darren-1_0.
+
+2002-03-15 14:10  dlc
+
+	* t/04file,fh,string.t: file 04file,fh,string.t was initially added
+	on branch darren-1_0.
+
+2002-03-15 14:10  dlc
+
+	* t/data/mysql/Apache-Session-MySQL.sql: file
+	Apache-Session-MySQL.sql was initially added on branch darren-1_0.
+
+2002-03-15 14:10  dlc
+
+	* t/data/mysql/BGEP-RE-create.sql: file BGEP-RE-create.sql was
+	initially added on branch darren-1_0.
+
+2002-03-15 14:09  dlc
 
 	* bin/sql_translator.pl: Updated to work with my updated API. 
 	Added license to beginning.  Updated  to be CPAN-compliant.
 
-2002-03-07 09:14  dlc
+2002-03-07 08:14  dlc
 
 	* lib/SQL/Translator.pm: Another attempt to check in a branch.
 
-2002-03-07 09:11  dlc
+2002-03-07 08:11  dlc
 
 	* lib/SQL/Translator.pm: Reverted to a version 1.1, due to botched
 	branch attempt.
 
-2002-03-07 09:06  dlc
+2002-03-07 08:06  dlc
 
 	* lib/SQL/Translator.pm: Many, many changes.  Changed the basic
 	assumptions about the module.  Parser and Producer packages no
 	longer need to be object oriented, they merely need to implement a
 	parse or translate function (respectively).
 
-2002-02-28 21:51  kycl4rk
+2002-02-28 20:51  kycl4rk
 
 	* lib/SQL/.Translator.pm.swp: Stupid vim backup file.
 
-2002-02-28 21:26  kycl4rk
-
-	* lib/SQL/.Translator.pm.swp, bin/sql_translator.pl,
-	lib/SQL/Translator.pm, lib/SQL/Translator/Parser.pm,
-	lib/SQL/Translator/Producer.pm, lib/SQL/Translator/Parser/MySQL.pm,
-	lib/SQL/Translator/Parser/Sybase.pm,
-	lib/SQL/Translator/Producer/Oracle.pm,
-	lib/SQL/Translator/Producer/XML.pm: Initial revision
-
-2002-02-28 21:26  kycl4rk
+2002-02-28 20:26  kycl4rk
 
 	* lib/SQL/.Translator.pm.swp, bin/sql_translator.pl,
 	lib/SQL/Translator.pm, lib/SQL/Translator/Parser.pm,
@@ -259,4 +1718,13 @@
 	lib/SQL/Translator/Parser/Sybase.pm,
 	lib/SQL/Translator/Producer/Oracle.pm,
 	lib/SQL/Translator/Producer/XML.pm: Initial checkin.
+
+2002-02-28 20:26  kycl4rk
+
+	* lib/SQL/.Translator.pm.swp, bin/sql_translator.pl,
+	lib/SQL/Translator.pm, lib/SQL/Translator/Parser.pm,
+	lib/SQL/Translator/Producer.pm, lib/SQL/Translator/Parser/MySQL.pm,
+	lib/SQL/Translator/Parser/Sybase.pm,
+	lib/SQL/Translator/Producer/Oracle.pm,
+	lib/SQL/Translator/Producer/XML.pm: Initial revision
 
