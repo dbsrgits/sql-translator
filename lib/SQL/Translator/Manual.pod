@@ -312,6 +312,34 @@ To create output like this:
 For more information on Template Toolkit, please install the
 "Template" module and read the POD.
 
+=head1 FINDING THE DIFFERENCES BETWEEN TWO SCHEMAS
+
+As mentioned above, the "sqlt-diff" schema examines two schemas and
+creates SQL schema modification statements that can be used to
+transform the first schema into the second.  The flag syntax is
+somewhat quirky:
+
+  $ sqlt-diff foo-v1.sql=MySQL foo-v2.sql=Oracle > diff.sql
+
+As demonstrated, the schemas need not even be from the same vendor,
+though this is likely to produce some spurious results as 
+datatypes are not currently viewed equivalent unless they match
+exactly, even if they would be converted to the same.  For example,
+MySQL's "integer" data type would be converted to Oracle's "number,"
+but the differ isn't quite smart enough yet to figure this out.  Also,
+as the SQL to ALTER a field definition varies from database vendor to
+vendor, these statements are made using just the keyword "CHANGE" and
+will likely need to be corrected for the target database. 
+
+=head1 A UNIFIED GRAPHICAL INTERFACE
+
+Seeing all the above options and scripts, you may be pining for a
+single, graphical interface to handle all these transformations and
+choices.  This is exactly what the "sqlt.cgi" script provides.  Simply
+drop this script into your web server's CGI directory and enable the
+execute bit and you can point your web browser to an HTML form which
+provides a simple interface to all the SQLFairy parsers and producers.
+
 =head1 PLUGIN YOUR OWN PARSERS AND PRODUCERS
 
 Now that you have seen how the parsers and producers interact via the
