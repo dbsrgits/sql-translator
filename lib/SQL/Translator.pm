@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.41 2003-08-20 22:19:14 kycl4rk Exp $
+# $Id: Translator.pm,v 1.42 2003-08-21 18:12:56 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,12 +29,13 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
 use Carp qw(carp);
 
+use Data::Dumper;
 use Class::Base;
 use File::Spec::Functions qw(catfile);
 use File::Basename qw(dirname);
@@ -564,6 +565,8 @@ sub translate {
         }
     }
 
+    $self->debug("Schema =\n", Dumper($self->schema), "\n");
+
     if ($self->validate) {
         my $schema = $self->schema;
         return $self->error('Invalid schema') unless $schema->is_valid;
@@ -1071,13 +1074,46 @@ producing.
 
 =head1 AUTHORS
 
-Ken Y. Clark, E<lt>kclark@cpan.orgE<gt>,
-darren chamberlain E<lt>darren@cpan.orgE<gt>, 
-Chris Mungall E<lt>cjm@fruitfly.orgE<gt>, 
-Allen Day E<lt>allenday@users.sourceforge.netE<gt>,
-Sam Angiuoli E<lt>angiuoli@users.sourceforge.netE<gt>,
-Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
-Mike Mellilo E<lt>mmelillo@users.sourceforge.netE<gt>.
+The following people have contributed to the SQLFairy project:
+
+=over 4
+
+=item * Mark Addison <grommit@users.sourceforge.net>
+
+=item * Sam Angiuoli <angiuoli@users.sourceforge.net>
+
+=item * Darren Chamberlain <dlc@users.sourceforge.net>
+
+=item * Ken Y. Clark <kclark@cpan.org>
+
+=item * Allen Day <allenday@users.sourceforge.net>
+
+=item * Paul Harrington <phrrngtn@users.sourceforge.net>
+
+=item * Mikey Melillo <mmelillo@users.sourceforge.net>
+
+=item * Chris Mungall <cjm@fruitfly.org>
+
+=item * Ross Smith II <rossta@users.sf.net>
+
+=item * Gudmundur A. Thorisson <mummi@cshl.org>
+
+=item * Chris To <christot@users.sourceforge.net>
+
+=item * Jason Williams <smdwilliams@users.sourceforge.net>
+
+=item * Ying Zhang <zyolive@yahoo.com>
+
+=back
+
+If you would like to contribute to the project, you can send patches
+to the developers mailing list:
+
+    sqlfairy-developers@lists.sourceforge.net
+
+Or send us a message (with your Sourceforge username) asking to be
+added to the project and what you'd like to contribute.
+
 
 =head1 COPYRIGHT
 
@@ -1097,7 +1133,12 @@ USA
 
 =head1 BUGS
 
-Please use http://rt.cpan.org/ for reporting bugs.
+Please use L<http://rt.cpan.org/> for reporting bugs.
+
+=head1 PRAISE
+
+If you find this module useful, please use 
+L<http://cpanratings.perl.org/rate/?distribution=SQL-Translator> to rate it.
 
 =head1 SEE ALSO
 
@@ -1108,5 +1149,5 @@ L<Parse::RecDescent>,
 L<GD>,
 L<GraphViz>,
 L<Text::RecordParser>,
-L<Class::DBI>
+L<Class::DBI>,
 L<XML::Writer>.
