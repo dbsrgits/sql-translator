@@ -6,13 +6,15 @@ use strict;
 use File::Spec::Functions qw(catfile updir tmpdir);
 use File::Temp qw(mktemp);
 use FindBin qw($Bin);
-use Test;
+use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(3,
+    maybe_plan(
+        3,
         'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::Diagram');
+        'SQL::Translator::Producer::Diagram'
+    );
 }
 
 my @script = qw(blib script sqlt-diagram);
