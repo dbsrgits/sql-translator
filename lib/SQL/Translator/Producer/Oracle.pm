@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.14 2003-07-18 22:55:18 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.15 2003-08-04 21:04:04 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -284,8 +284,13 @@ sub produce {
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
                 $name ||= mk_name( $table_name, ++$constraint_name_default );
-                my $def = "CONSTRAINT $name FOREIGN KEY REFERENCES ".
-                    $c->reference_table;
+                my $def = "CONSTRAINT $name FOREIGN KEY ";
+
+                if ( @fields ) {
+                    $def .= join( ', ', @fields );
+                }
+
+                $def .= ' REFERENCES ' . $c->reference_table;
 
                 if ( @rfields ) {
                     $def .= ' (' . join( ', ', @rfields ) . ')';
