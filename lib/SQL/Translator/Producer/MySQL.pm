@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.29 2004-01-25 18:11:42 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.30 2004-02-04 21:09:54 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -46,20 +46,23 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
 
+#
+# Use only lowercase for the keys (e.g. "long" and not "LONG")
+#
 my %translate  = (
     #
     # Oracle types
     #
     varchar2   => 'varchar',
     long       => 'text',
-    CLOB       => 'longtext',
+    clob       => 'longtext',
 
     #
     # Sybase types
@@ -131,8 +134,8 @@ sub produce {
                     $data_type = 'int';
                 }
             }
-            elsif ( exists $translate{ $data_type } ) {
-                $data_type = $translate{ $data_type };
+            elsif ( exists $translate{ lc $data_type } ) {
+                $data_type = $translate{ lc $data_type };
             }
 
             @size = () if $data_type =~ /(text|blob)/i;
