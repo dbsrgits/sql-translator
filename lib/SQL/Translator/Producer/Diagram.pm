@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.4 2003-07-18 22:54:17 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.5 2003-08-04 18:44:10 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -193,8 +193,8 @@ sub produce {
                     for my $fk_field ( $c->reference_fields ) {
                         next unless defined $schema->get_table( $fk_table );
                         push @fk_registry, [
-                            [ $table_name, $field_name ],
                             [ $fk_table  , $fk_field  ],
+                            [ $table_name, $field_name ],
                         ];
                     }
                 }
