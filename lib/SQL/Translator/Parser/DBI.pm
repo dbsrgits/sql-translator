@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI;
 
 # -------------------------------------------------------------------
-# $Id: DBI.pm,v 1.3 2003-10-03 20:58:18 kycl4rk Exp $
+# $Id: DBI.pm,v 1.4 2003-10-10 15:52:07 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -51,13 +51,11 @@ Or:
 =head1 DESCRIPTION
 
 This parser accepts an open database handle (or the arguments to create 
-one) and queries the database directly for the information.  The correct
-SQL::Translator::Parser::DBI class is determined automatically by 
-inspecting $dbh->{'Driver'}{'Name'}.
+one) and queries the database directly for the information.  
 
 The following are acceptable arguments:
 
-=over
+=over 4
 
 =item * dbh
 
@@ -77,6 +75,37 @@ The password to use for connecting to a database.
 
 =back
 
+There is no need to specify which type of database you are querying as
+this is determined automatically by inspecting $dbh->{'Driver'}{'Name'}.
+If a parser exists for your database, it will be used automatically;
+if not, the code will fail automatically (and you can write the parser
+and contribute it to the project!).  
+
+Currently parsers exist for the following databases:
+
+=over 4
+
+=item * MySQL
+
+=item * SQLite
+
+=item * Sybase
+
+=item * PostgreSQL (still experimental)
+
+=back
+
+Most of these parsers are able to query the database directly for the
+structure rather than parsing a text file.  For large schemas, this is
+probably orders of magnitude faster than traditional parsing (which
+uses Parse::RecDescent, an amazing module but really quite slow).
+
+Though no Oracle parser currently exists, it would be fairly easy to
+query an Oracle database directly by using DDL::Oracle to generate a
+DDL for the schema and then using the normal Oracle parser on this.
+Perhaps future versions of SQL::Translator will include the ability to
+query Oracle directly and skip the parsing of a text file, too.
+
 =cut
 
 # -------------------------------------------------------------------
@@ -84,19 +113,23 @@ The password to use for connecting to a database.
 use strict;
 use DBI;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use constant DRIVERS => {
-    mysql  => 'MySQL',
-    sqlite => 'SQLite',
-    sybase => 'Sybase',
+    mysql            => 'MySQL',
+    sqlite           => 'SQLite',
+    sybase           => 'Sybase',
+    pg               => 'PostgreSQL',
 };
 
 use Exporter;
-use SQL::Translator::Utils qw(debug normalize_name);
+
+use SQL::Translator::Utils qw(debug);
+
 use SQL::Translator::Parser::DBI::MySQL;
 use SQL::Translator::Parser::DBI::SQLite;
 use SQL::Translator::Parser::DBI::Sybase;
+use SQL::Translator::Parser::DBI::PostgreSQL;
 
 use base qw(Exporter);
 @EXPORT = qw(parse);
@@ -132,10 +165,20 @@ sub parse {
     my $pkg     = "SQL::Translator::Parser::DBI::$driver";
     my $sub     = $pkg.'::parse';
 
-    {
+    #
+    # I can't get this to work.  I seem to have to have the "use"
+    # statements above.
+    #
+#    $tr->load( $pkg );
+
+    eval {
         no strict 'refs';
         &{ $sub }( $tr, $dbh ) or die "No result from $pkg";
-    }
+    };
+
+    $dbh->disconnect if defined $dbh;
+
+    die $@ if $@;
 
     return 1;
 }
@@ -151,6 +194,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-DBI.
+DBI, SQL::Translator.
 
 =cut
