@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.1 2004-03-09 19:14:42 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.2 2004-03-09 19:35:40 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -30,7 +30,6 @@ SQL::Translator::Producer::Dumper - SQL Dumper producer for SQL::Translator
 
   Options:
 
-    add-truncate    Add "TRUNCATE TABLE" statements for each table
     db_user         Database username
     db_password     Database password
     dsn             DSN for DBI
@@ -62,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -201,7 +200,12 @@ FOREACH table IN schema.get_tables;
 END 
 -%]
 
-my $db     = DBI->connect('[% dsn %]', '[% db_user %]', '[% db_pass %]');
+my $db     = DBI->connect(
+    '[% dsn %]', 
+    '[% db_user %]', 
+    '[% db_pass %]', 
+    { RaiseError => 1 }
+);
 my %skip   = map { $_, 1 } map { s/^\s+|\s+$//; $_ } split (/,/, $skip);
 my @tables = (
 [%- FOREACH t IN table_defs %]
