@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.16 2003-09-04 15:33:24 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.17 2003-09-26 22:35:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -49,7 +49,7 @@ my %translate  = (
     mediumint  => 'integer',
     smallint   => 'smallint',
     tinyint    => 'smallint',
-    char       => 'char',
+    char       => 'character',
     varchar    => 'character varying',
     longtext   => 'text',
     mediumtext => 'text',
@@ -71,7 +71,7 @@ my %translate  = (
     # Oracle types
     #
     number     => 'integer',
-    char       => 'char',
+    char       => 'character',
     varchar2   => 'character varying',
     long       => 'text',
     CLOB       => 'bytea',
@@ -237,8 +237,8 @@ sub produce {
             }
 
             if ( $data_type =~ /timestamp/i ) {
-                if ( defined $size[0] && $size[0] > 13 ) {
-                    $size[0] = 13;
+                if ( defined $size[0] && $size[0] > 6 ) {
+                    $size[0] = 6;
                 }
             }
 
@@ -271,9 +271,10 @@ sub produce {
             }
 
             #
-            # Default value
+            # Default value -- disallow for timestamps
             #
-            my $default = $field->default_value;
+            my $default = $data_type =~ /(timestamp|date)/i
+                ? undef : $field->default_value;
             if ( defined $default ) {
                 $field_def .= sprintf( ' DEFAULT %s',
                     ( $field->is_auto_increment && $seq_name )
@@ -297,6 +298,11 @@ sub produce {
         my $idx_name_default;
         for my $index ( $table->get_indices ) {
             my $name = $index->name || '';
+            if ( $name ) {
+                $name = next_unused_name($name, \%used_index_names);
+                $used_index_names{$name} = $name;
+            }
+
             my $type = $index->type || NORMAL;
             my @fields     = 
                 map { $_ =~ s/\(.+\)//; $_ }
@@ -304,33 +310,21 @@ sub produce {
                 $index->fields;
             next unless @fields;
 
+            my $def_start = qq[Constraint "$name" ];
             if ( $type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name, 'pk' );
-                $name = next_unused_name($name, \%used_index_names);
-                # how do I get next_unused_name() to do: ?
-                $used_index_names{$name} = $name;
-                push @constraint_defs, 'Constraint "'.$name.'" PRIMARY KEY '.
+                push @constraint_defs, "${def_start}PRIMARY KEY ".
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $type eq UNIQUE ) {
-                $name ||= mk_name( 
-                    $table_name, $name || ++$idx_name_default
-                );
-                $name = next_unused_name($name, \%used_index_names);
-                $used_index_names{$name} = $name;
-                push @constraint_defs, 'Constraint "' . $name . '" UNIQUE ' .
+                push @constraint_defs, "${def_start}UNIQUE " .
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $type eq NORMAL ) {
-                $name ||= mk_name( 
-                    $table_name, $name || ++$idx_name_default
-                );
-                $name = next_unused_name($name, \%used_index_names);
-                $used_index_names{$name} = $name;
                 push @index_defs, 
-                    qq[CREATE INDEX "$name" on $table_name_ur ("].
-                        join( '", "', @fields ).  
-                    '");'; 
+                    'CREATE INDEX "' . $name . "\" on $table_name_ur (".
+                        join( ', ', map { qq["$_"] } @fields ).  
+                    ');'
+                ; 
             }
             else {
                 warn "Unknown index type ($type) on table $table_name.\n"
@@ -344,51 +338,44 @@ sub produce {
         my $c_name_default;
         for my $c ( $table->get_constraints ) {
             my $name = $c->name || '';
+            if ( $name ) {
+                $name = next_unused_name($name, \%used_index_names);
+                $used_index_names{$name} = $name;
+            }
+
             my @fields     = 
                 map { $_ =~ s/\(.+\)//; $_ }
                 map { unreserve( $_, $table_name ) }
                 $c->fields;
+
             my @rfields     = 
                 map { $_ =~ s/\(.+\)//; $_ }
                 map { unreserve( $_, $table_name ) }
                 $c->reference_fields;
+
             next if !@fields && $c->type ne CHECK_C;
 
+            my $def_start = $name ? qq[Constraint "$name" ] : '';
             if ( $c->type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name, 'pk' );
-                $name = next_unused_name($name, \%used_index_names);
-                $used_index_names{$name} = $name;
-                push @constraint_defs, qq[Constraint "$name" PRIMARY KEY ].
+                push @constraint_defs, "${def_start}PRIMARY KEY ".
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $c->type eq UNIQUE ) {
-                $name ||= mk_name( 
-                    $table_name, $name || ++$c_name_default
-                );
                 $name = next_unused_name($name, \%used_index_names);
                 $used_index_names{$name} = $name;
-                push @constraint_defs, qq[Constraint "$name" UNIQUE ] .
+                push @constraint_defs, "${def_start}UNIQUE " .
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $c->type eq CHECK_C ) {
-                my $s;
-                if ( $name ) {
-                    $name ||= mk_name( 
-                        $table_name, $name || ++$c_name_default
-                    );
-                    $name = next_unused_name($name, \%used_index_names);
-                    $used_index_names{$name} = $name;
-                    $s = 'Constraint "$name" ';
-                }
                 my $expression = $c->expression;
-                push @constraint_defs, "${s}CHECK ($expression)";
+                push @constraint_defs, "${def_start}CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                my $def = join(' ', 
-                    map { $_ || () } 'FOREIGN KEY', $c->name 
-                );
-
-                $def .= ' ("' . join( '", "', @fields ) . '")';
+#                my $def = join(' ', 
+#                    map { $_ || () } 'FOREIGN KEY', $c->name 
+#                );
+#
+                my $def .= 'FOREIGN KEY ("' . join( '", "', @fields ) . '")';
 
                 $def .= ' REFERENCES ' . $c->reference_table;
 
