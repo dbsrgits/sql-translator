@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.10 2003-10-19 17:01:25 grommit Exp $
+# $Id: sqlt,v 1.11 2004-02-03 13:27:21 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclar@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -113,7 +113,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -170,7 +170,7 @@ GetOptions(
 
 my @files = @ARGV; # source files
 unless ( @files ) {
-    if ( $from eq 'DBI' ) {
+    if ( defined($from) && $from eq 'DBI' ) {
         @files = ('!');
     }
     else {
