@@ -52,23 +52,23 @@ Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
 directory, you will find:
 
-*   sqlt-diagram.pl
-*   sqlt-graph.pl
-*   sqlt-dumper.pl
-*   sql_translator.cgi
-*   sql_translator.pl
+*   sqlt-diagram
+*   sqlt-graph
+*   sqlt-dumper
+*   sqlt
+*   sqlt.cgi
 
-All scripts ending in ".pl" are meant to be run from the command line
-with various switches to control the input and output of the scripts,
-while the ".cgi" script is a web-form frontend.  The script you'll
-probably find most useful is the "sql_translator.pl" script which is
-meant to be the main interface for translating from text-to-text.  The
-graphic producers, however, have many extra switches, so there are
-scripts specific for each of the the GraphViz and ER-diagram
-producers.  All scripts start with "sql" so it will be easier to
-identify them on your system.  All the "*.pl" scripts will be
-installed in the normal installation process, but you'll have to put
-the CGI script into your web CGI directory to use it.
+All scripts not ending in ".cgi" are meant to be run from the command
+line with various switches to control the input and output of the
+scripts, while the ".cgi" script is a web-form frontend.  The script
+you'll probably find most useful is "sqlt" which is meant to be the
+main interface for translating from text-to-text.  The graphic
+producers, however, have many extra switches, so there are scripts
+specific for each of the the GraphViz and ER-diagram producers.  All
+scripts start with "sqlt" so it will be easier to identify them on
+your system.  All the non-CGI scripts will be installed in a system
+path when you "make install," but you'll have to manually place the
+CGI script into your web CGI directory to use it.
 
 If you're more interested in using the SQL::Translator modules
 directly, then you might be more interested to examine some of the
