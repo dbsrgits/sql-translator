@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 196;
+use Test::More tests => 197;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -98,6 +98,7 @@ require_ok( 'SQL::Translator::Schema' );
         warn $person_table->error;
     isa_ok( $f1, 'SQL::Translator::Schema::Field', 'Field' );
     is( $f1->name, 'foo', 'Field name is "foo"' );
+    is( $f1->full_name, 'person.foo', 'Field full_name is "person.foo"' );
     is( "$f1", 'foo', 'Field stringifies to "foo"' );
     is( $f1->data_type, '', 'Field data type is blank' );
     is( $f1->size, 0, 'Field size is "0"' );

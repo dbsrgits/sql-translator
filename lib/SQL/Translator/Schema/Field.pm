@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.14 2004-03-23 21:05:19 grommit Exp $
+# $Id: Field.pm,v 1.15 2004-03-23 21:26:55 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -448,6 +448,19 @@ Errors ("No field name") if you try to set a blank name.
     }
 
     return $self->{'name'} || '';
+}
+
+sub full_name {
+
+=head2 full_name
+
+Read only method to return the fields name with its table name pre-pended.
+e.g. "person.foo".
+
+=cut
+
+    my $self = shift;
+    return $self->table.".".$self->name;
 }
 
 # ----------------------------------------------------------------------
