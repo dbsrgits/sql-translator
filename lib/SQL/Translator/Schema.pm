@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.15 2004-07-26 13:55:51 kycl4rk Exp $
+# $Id: Schema.pm,v 1.16 2004-10-13 23:14:06 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -49,12 +49,13 @@ use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
+use SQL::Translator::Schema::Graph;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {

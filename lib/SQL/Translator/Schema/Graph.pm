@@ -23,7 +23,6 @@ use Class::MakeMethods::Template::Hash (
 			 'translator' => {class => 'SQL::Translator'},
 			],
   'hash' => [ qw( node ) ],
-  'scalar' => [ qw( baseclass ) ],
   'number --counter' => [ qw( order ) ],
 );
 
@@ -45,7 +44,6 @@ sub init {
 
 	$node->order($self->order_incr());
 	$node->name( $self->translator->format_package_name($table->name) );
-	$node->base( $self->baseclass );
 	$node->table( $table );
 	$node->primary_key( ($table->primary_key->fields)[0] );
 
@@ -170,6 +168,85 @@ sub init {
 	  }
 	}
   }
+
+  my $graph = $self; #hack
+  my $log   = Log::Log4perl->get_logger('SQL.Translator.Schema.Graph');
+
+  #
+  # create methods
+  #
+  # this code needs to move to Graph.pm
+  foreach my $node_from ($graph->node_values) {
+
+    next unless $node_from->table->is_data or !$node_from->table->is_trivial_link;
+
+    foreach my $cedge ( $node_from->compoundedges ) {
+
+      my $hyperedge = SQL::Translator::Schema::Graph::HyperEdge->new();
+
+      my $node_to;
+      foreach my $edge ($cedge->edges) {
+        if ($edge->thisnode->name eq $node_from->name) {
+          $hyperedge->vianode($edge->thatnode);
+
+          if ($edge->thatnode->name ne $cedge->via->name) {
+            $node_to ||= $graph->node($edge->thatnode->table->name);
+          }
+
+          $hyperedge->push_thisnode($edge->thisnode);
+          $hyperedge->push_thisfield($edge->thisfield);
+          $hyperedge->push_thisviafield($edge->thatfield);
+
+        } else {
+          if ($edge->thisnode->name ne $cedge->via->name) {
+            $node_to ||= $graph->node($edge->thisnode->table->name);
+          }
+          $hyperedge->push_thatnode($edge->thisnode);
+          $hyperedge->push_thatfield($edge->thisfield);
+          $hyperedge->push_thatviafield($edge->thatfield);
+        }
+        $log->debug($edge->thisfield->name);
+        $log->debug($edge->thatfield->name);
+      }
+
+      if ($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode == 1) {
+        $hyperedge->type('one2one');
+      } elsif ($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode == 1) {
+        $hyperedge->type('many2one');
+      } elsif ($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode  > 1) {
+        $hyperedge->type('one2many');
+      } elsif ($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode  > 1) {
+        $hyperedge->type('many2many');
+      }
+
+      $log->debug($_) foreach sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
+
+      #node_to won't always be defined b/c of multiple edges to a single other node
+      if (defined($node_to)) {
+        $log->debug($node_from->name);
+        $log->debug($node_to->name);
+
+        if (scalar($hyperedge->thisnode) > 1) {
+          $log->debug($hyperedge->type ." via ". $hyperedge->vianode->name);
+          my $i = 0;
+          foreach my $thisnode ( $hyperedge->thisnode ) {
+            $log->debug($thisnode->name .' '.
+                        $hyperedge->thisfield_index(0)->name .' -> '.
+                        $hyperedge->thisviafield_index($i)->name .' '.
+                        $hyperedge->vianode->name .' '.
+                        $hyperedge->thatviafield_index(0)->name .' <- '.
+                        $hyperedge->thatfield_index(0)->name .' '.
+                        $hyperedge->thatnode_index(0)->name ."\n"
+                       );
+            $i++;
+          }
+        }
+        #warn Dumper($hyperedge) if $hyperedge->type eq 'many2many';
+        $node_from->push_hyperedges($hyperedge);
+      }
+    }
+  }
+
 }
 
 1;

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.60 2004-10-13 22:31:59 allenday Exp $
+# $Id: Turnkey.pm,v 1.61 2004-10-13 23:14:06 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.60 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.61 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -41,111 +41,43 @@ my %producer2dsn = (
 
 # -------------------------------------------------------------------
 sub produce {
-    my $log           = Log::Log4perl->get_logger('SQL.Translator.Producer.Turnkey');
 
-    my $t             = shift;
-	my $create        = undef;
-    my $args          = $t->producer_args;
-    my $no_comments   = $t->no_comments;
-	my $baseclass     = $args->{'main_pkg_name'} || $t->format_package_name('DBI');
-	my $graph         = SQL::Translator::Schema::Graph->new(translator => $t,
-															baseclass => $baseclass
-														   );
+  my $t             = shift;
+  my $create        = undef;
+  my $args          = $t->producer_args;
+  my $no_comments   = $t->no_comments;
+  my $baseclass     = $args->{'main_pkg_name'} || $t->format_package_name('DBI');
+  my $graph         = SQL::Translator::Schema::Graph->new(translator => $t);
 
-	my $parser_type   = (split /::/, $t->parser_type)[-1];
+  my $parser_type   = (split /::/, $t->parser_type)[-1];
 
-    local $DEBUG      = $t->debug;
+  local $DEBUG      = $t->debug;
 
-	my %meta          = (
-concat => $args->{'concat'} || '',
-						 format_fk => $t->format_fk_name,
-						 format_package => $t->format_package_name,
-						 format_table => $t->format_table_name,
-						 template  => $args->{'template'}      || '',
-						 baseclass => $baseclass,
-						 db_dsn    => $args->{'db_dsn'}       || '',
-						 db_user   => $args->{'db_user'}       || '',
-						 db_pass   => $args->{'db_pass'}       || '',
-						 db_str    => $args->{'db_str'}        || '',
-						 parser    => $t->parser_type,
-						 producer  => __PACKAGE__,
-						 dsn       => $args->{'dsn'} || sprintf( 'dbi:%s:_', $producer2dsn{ $parser_type }
-																 ? $producer2dsn{ $parser_type }
-																 : $parser_type
-															   )
-						 );
+  my %meta          = (
+                       concat => $args->{'concat'} || '',
+                       format_fk => $t->format_fk_name,
+                       format_package => $t->format_package_name,
+                       format_table => $t->format_table_name,
+                       template  => $args->{'template'}      || '',
+                       baseclass => $baseclass,
+                       db_dsn    => $args->{'db_dsn'}       || '',
+                       db_user   => $args->{'db_user'}       || '',
+                       db_pass   => $args->{'db_pass'}       || '',
+                       db_str    => $args->{'db_str'}        || '',
+                       parser    => $t->parser_type,
+                       producer  => __PACKAGE__,
+                       dsn       => $args->{'dsn'} || sprintf( 'dbi:%s:_', $producer2dsn{ $parser_type }
+                                                               ? $producer2dsn{ $parser_type }
+                                                               : $parser_type
+                                                             )
+                      );
 
-    #
-    # create methods
-    #
-    # this code needs to move to Graph.pm
-	foreach my $node_from ($graph->node_values){
+  foreach my $node ($graph->node()){
+    $node->base($baseclass);
+  }
 
-	  next unless $node_from->table->is_data or !$node_from->table->is_trivial_link;
-
-	  foreach my $cedge ( $node_from->compoundedges ){
-
-		my $hyperedge = SQL::Translator::Schema::Graph::HyperEdge->new();
-
-		my $node_to;
-		foreach my $edge ($cedge->edges){
-		  if($edge->thisnode->name eq $node_from->name){
-			$hyperedge->vianode($edge->thatnode);
-
-			if($edge->thatnode->name ne $cedge->via->name){
-			  $node_to ||= $graph->node($edge->thatnode->table->name);
-			}
-
-			$hyperedge->push_thisnode($edge->thisnode);
-			$hyperedge->push_thisfield($edge->thisfield);
-			$hyperedge->push_thisviafield($edge->thatfield);
-
-		  } else {
-			if($edge->thisnode->name ne $cedge->via->name){
-			  $node_to ||= $graph->node($edge->thisnode->table->name);
-			}
-			$hyperedge->push_thatnode($edge->thisnode);
-			$hyperedge->push_thatfield($edge->thisfield);
-			$hyperedge->push_thatviafield($edge->thatfield);
-		  }
-		  $log->debug($edge->thisfield->name);
-		  $log->debug($edge->thatfield->name);
-		}
-
-		   if($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode == 1){ $hyperedge->type('one2one')   }
-		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode == 1){ $hyperedge->type('many2one')  }
-		elsif($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('one2many')  }
-		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('many2many') }
-
-		$log->debug($_) foreach sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
-
-		#node_to won't always be defined b/c of multiple edges to a single other node
-		if(defined($node_to)){
-		  $log->debug($node_from->name);
-		  $log->debug($node_to->name);
-
-		  if(scalar($hyperedge->thisnode) > 1){
-			$log->debug($hyperedge->type ." via ". $hyperedge->vianode->name);
-			my $i = 0;
-			foreach my $thisnode ( $hyperedge->thisnode ){
-			  $log->debug($thisnode->name .' '.
-						  $hyperedge->thisfield_index(0)->name .' -> '.
-						  $hyperedge->thisviafield_index($i)->name .' '.
-						  $hyperedge->vianode->name .' '.
-						  $hyperedge->thatviafield_index(0)->name .' <- '.
-						  $hyperedge->thatfield_index(0)->name .' '.
-						  $hyperedge->thatnode_index(0)->name ."\n"
-						 );
-			  $i++;
-			}
-		  }
-#warn Dumper($hyperedge) if $hyperedge->type eq 'many2many';
-		  $node_from->push_hyperedges($hyperedge);
-		}
-	  }
- 	}
-	$meta{"nodes"} = $graph->node;
-	return(translateForm($t, \%meta));
+  $meta{"nodes"} = $graph->node;
+  return(translateForm($t, \%meta));
 }
 
 sub translateForm {
@@ -165,9 +97,9 @@ sub translateForm {
   $tt2 = template($type);
   my $result;
 
-  if($type eq 'atomtemplate'){
+  if ($type eq 'atomtemplate') {
     my %result;
-    foreach my $node (values %{ $meta->{'nodes'} }){
+    foreach my $node (values %{ $meta->{'nodes'} }) {
       $result = '';
       my $param = { node => $node };
       $template->process(\$tt2, $param, \$result) || die $template->error();
