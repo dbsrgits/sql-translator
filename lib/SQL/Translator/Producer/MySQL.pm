@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.32 2004-04-01 16:18:55 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.33 2004-04-19 16:38:37 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -70,6 +70,13 @@ my %translate  = (
     real       => 'double',
     comment    => 'text',
     bit        => 'tinyint',
+
+    #
+    # Access types
+    #
+    'long integer' => 'integer',
+    'text'         => 'text',
+    'datetime'     => 'datetime',
 );
 
 sub produce {
