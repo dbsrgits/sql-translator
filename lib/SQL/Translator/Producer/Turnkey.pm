@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.33 2004-04-03 04:01:13 allenday Exp $
+# $Id: Turnkey.pm,v 1.34 2004-04-06 00:27:02 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -148,6 +148,8 @@ sub translateForm {
   my $t = shift;
   my $meta = shift;
 
+  $meta->{_dumper} = \&_dumper;
+
   my $args = $t->producer_args;
   my $type = $meta->{'template'};
 
@@ -177,6 +179,15 @@ sub translateForm {
   }
 
   return($result);
+}
+
+sub _dumper($) {
+  my $s = shift;
+  warn $s;
+
+  my $d = Data::Dumper($s);
+  warn $d;
+  return $d;
 }
 
 1;
@@ -304,6 +315,7 @@ sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatv
     [% thisnode = h.thisnode_index(0) %]
     [% i = 0 %]
     [% FOREACH thatnode = h.thatnode %]
+      [% NEXT UNLESS h.thisviafield_index(i).name %]
 #[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
 sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
       [% i = i + 1 %]

@@ -74,17 +74,23 @@ sub init {
 						   thatfield => $self->translator->schema->get_table($field->foreign_key_reference->reference_table)->get_field(($field->foreign_key_reference->reference_fields)[0])
 						  );
 
+#	  $node->edgecount($that->name, $node->edgecount($that->name)+1);
 	  $node->edgecount($that->name, $node->edgecount($that->name)+1);
 
 	  $node->has($that->name, $node->has($that->name)+1);
 	  $that->many($node->name, $that->many($node->name)+1);
 
+#	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
 	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
-#warn $node->name . "\t" . $that->edgecount($node->name);
+
+      #warn "\t" . $node->name . "\t" . $node->edgecount($that->name);
 	  $node->push_edges( $edge );
 	  $that->push_edges( $edge->flip );
       }
 	}
+
+    #warn Dumper($node->edgecount());
+    #warn "*****";
   }
 
   #
