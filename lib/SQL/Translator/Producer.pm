@@ -1,7 +1,7 @@
 package SQL::Translator::Producer;
 
 # -------------------------------------------------------------------
-# $Id: Producer.pm,v 1.5 2003-01-27 17:04:45 dlc Exp $
+# $Id: Producer.pm,v 1.6 2003-08-22 22:51:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 sub produce { "" }
 
@@ -39,24 +39,23 @@ sub produce { "" }
 
 =head1 NAME
 
-SQL::Translator::Producer - base object for Producers
-
-=head1 SYNOPSIS
+SQL::Translator::Producer - describes how to write a producer
 
 =head1 DESCRIPTION
 
 Producer modules designed to be used with SQL::Translator need to
 implement a single function, called B<produce>.  B<produce> will be
-called with a data structure created by a SQL::Translator::Parser
-subclass.  It is expected to return a string containing a valid SQL
-create statement.
+called with the SQL::Translator object from which it is expected to 
+retrieve the SQL::Translator::Schema object which has been populated 
+by the parser.  It is expected to return a string.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1).
+perl(1), SQL::Translator, SQL::Translator::Schema.
 
 =cut

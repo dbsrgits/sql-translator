@@ -1,7 +1,7 @@
 package SQL::Translator::Parser;
 
 # ----------------------------------------------------------------------
-# $Id: Parser.pm,v 1.7 2003-08-22 22:48:20 kycl4rk Exp $
+# $Id: Parser.pm,v 1.8 2003-08-22 22:51:51 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Parser;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 sub parse { "" }
 
@@ -69,6 +69,6 @@ darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), SQL::Translator::Schema.
+perl(1), SQL::Translator, SQL::Translator::Schema.
 
 =cut

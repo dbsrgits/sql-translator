@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.14 2003-08-21 01:06:52 kycl4rk Exp $
+# $Id: XML.pm,v 1.15 2003-08-22 22:51:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
 #
@@ -26,11 +26,15 @@ package SQL::Translator::Producer::XML;
 
 SQL::Translator::Producer::XML - Alias to XML::SQLFairy producer
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 Previous versions of SQL::Translator included an XML producer, but the 
 namespace has since been further subdivided.  Therefore, this module is 
 now just just an alias to the XML::SQLFairy producer.
+
+=head1 SEE ALSO
+
+SQL::Translator::Producer::XML::SQLFairy.
 
 =head1 AUTHOR
 
@@ -38,9 +42,11 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
 
+# -------------------------------------------------------------------
+
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Producer::XML::SQLFairy;
