@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Table;
 
 # -------------------------------------------------------------------
-# $Id: Table.pm,v 1.2 2004-07-30 22:04:25 kycl4rk Exp $
+# $Id: Table.pm,v 1.3 2004-08-19 20:58:05 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -68,11 +68,11 @@ allows you to write the result for each table to a separate file.
 It needs one additional producer_arg of C<tt_table> which is the file
 name of the template to use.  This template will be passed a template
 var of C<table>, which is the current
-C<SQL::Translator::Producer::Table> table we are producing, which you
+L<SQL::Translator::Producer::Table> table we are producing, which you
 can then use to walk the schema via the methods documented in that
-module. You also get C<schema> as a shortcut to the
-C<SQL::Translator::Producer::Schema> for the table and C<translator>,
-the C<SQL::Translator> object for this parse in case you want to get
+module. You also get L<schema> as a shortcut to the
+L<SQL::Translator::Producer::Schema> for the table and C<translator>,
+the L<SQL::Translator> object for this parse in case you want to get
 access to any of the options etc set here.
 
 Here's a brief example of what the template could look like:
@@ -153,19 +153,19 @@ special comments (defined by the following options.) Any code between
 the comments will be overwritten (ie the results from a previous
 produce) but the rest of the file is left alone (your custom code).
 This is particularly useful for code generation as it allows you to
-generate schema derived code and then add your own custom code using
-it to file.  Then when the scheam changes you just re-produce and
+generate schema derived code and then add your own custom code
+to the file.  Then when the schema changes you just re-produce to
 insert the new code.
 
 =item insert_comment_start
 
-The comment to look for in the file when on_exists is insert. Default
+The comment to look for in the file when on_exists is C<insert>. Default
 is C<SQLF INSERT START>. Must appear on it own line, with only
 whitespace either side, to be recognised.
 
 =item insert_comment_end
 
-The end comment to look for in the file when on_exists is insert.
+The end comment to look for in the file when on_exists is C<insert>.
 Default is C<SQLF INSERT END>. Must appear on it own line, with only
 whitespace either side, to be recognised.
 
@@ -178,7 +178,7 @@ whitespace either side, to be recognised.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use File::Path;
@@ -310,14 +310,14 @@ Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
 
 =head1 TODO
 
-+ Some tests for the various on exists options (they have been tested
+- Some tests for the various on exists options (they have been tested
 implicitley through use in a project but need some proper tests).
 
-+ More docs code generation strategies.
+- More docs on code generation strategies.
 
-+ Better hooks for filename generation.
+- Better hooks for filename generation.
 
-+ Better integration with TTSchema.
+- Integrate with L<TT::Base> and L<TTSchema>.
 
 =head1 SEE ALSO
 
