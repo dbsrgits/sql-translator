@@ -1,7 +1,7 @@
-package SQL::Translator::Producer::MySQL;
+package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.8 2003-03-04 21:24:12 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.1 2003-03-04 21:24:13 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -23,11 +23,15 @@ package SQL::Translator::Producer::MySQL;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
-$DEBUG   = 1 unless defined $DEBUG;
-
 use Data::Dumper;
+
+use vars qw[ $VERSION $DEBUG $WARN ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+
+my %used_identifiers = ();
+my $max_id_length    = 30;
+my %global_names;
+my %truncated;
 
 sub import {
     warn "loading " . __PACKAGE__ . "...\n";
@@ -36,6 +40,7 @@ sub import {
 sub produce {
     my ($translator, $data) = @_;
     $DEBUG                  = $translator->debug;
+    $WARN                   = $translator->show_warnings;
     my $no_comments         = $translator->no_comments;
     my $add_drop_table      = $translator->add_drop_table;
 
@@ -74,20 +79,27 @@ sub produce {
             $create .= "\n";
 
             # data type and size
-            my $attr = uc $field_data->{'data_type'} eq 'SET' ? 'list' : 'size';
-            my @values = @{ $field_data->{ $attr } || [] };
-            push @fdata, sprintf "%s%s", 
-                $field_data->{'data_type'},
-                ( @values )
-                    ? '('.join(', ', @values).')'
-                    : '';
+            my $data_type = lc $field_data->{'data_type'};
+            my $list      = $field_data->{'list'} || [];
+            my $commalist = join ",", @$list;
+            my $size;
+
+            if ( $data_type eq 'set' ) {
+                $data_type = 'varchar';
+                $size      = length $commalist;
+            }
+            else {
+                $size = join( ', ', @{ $field_data->{'size'} || [] } );
+            }
+
+            push @fdata, sprintf "%s%s", $data_type, ($size) ? "($size)" : '';
 
             # MySQL qualifiers
-            for my $qual ( qw[ binary unsigned zerofill ] ) {
-                push @fdata, $qual 
-                    if $field_data->{ $qual } ||
-                       $field_data->{ uc $qual };
-            }
+#            for my $qual ( qw[ binary unsigned zerofill ] ) {
+#                push @fdata, $qual 
+#                    if $field_data->{ $qual } ||
+#                       $field_data->{ uc $qual };
+#            }
 
             # Null?
             push @fdata, "NOT NULL" unless $field_data->{'null'};
@@ -103,7 +115,7 @@ sub produce {
             }
 
             # auto_increment?
-            push @fdata, "auto_increment" if $field_data->{'is_auto_inc'};
+#            push @fdata, "auto_increment" if $field_data->{'is_auto_inc'};
 
             # primary key?
             # This is taken care of in the indices, could be duplicated here
@@ -113,88 +125,84 @@ sub produce {
             $create .= (join " ", '', @fdata);
             $create .= "," unless ($i == $#fields);
         }
-
         #
         # Indices
         #
         my @index_creates;
-        my @indices = @{ $table_data->{'indices'} || [] };
-        for (my $i = 0; $i <= $#indices; $i++) {
-            my $key  = $indices[$i];
-            my ($name, $type, $fields) = @{ $key }{ qw[ name type fields ] };
+        my $idx_name_default;
+        for my $index ( @{ $table_data->{'indices'} || [] } ) {
+            my ($name, $type, $fields) = @{ $index }{ qw[ name type fields ] };
             $name ||= '';
             my $index_type = 
                 $type eq 'primary_key' ? 'PRIMARY KEY' :
-                $type eq 'unique'      ? 'UNIQUE KEY'  : 'KEY';
-            push @index_creates, 
-                "  $index_type $name (" . join( ', ', @$fields ) . ')';
-        }
-
-        if ( @index_creates ) {
-            $create .= join(",\n", '', @index_creates);
-        }
-
-        #
-        # Constraints -- need to handle more than just FK. -ky
-        #
-        my @constraints;
-        for my $constraint ( @{ $table_data->{'constraints'} } ) {
-            my $name       = $constraint->{'name'} || '';
-            my $type       = $constraint->{'type'};
-            my $fields     = $constraint->{'fields'};
-            my $ref_table  = $constraint->{'reference_table'};
-            my $ref_fields = $constraint->{'reference_fields'};
-            my $match_type = $constraint->{'match_type'} || '';
-            my $on_delete  = $constraint->{'on_delete_do'};
-            my $on_update  = $constraint->{'on_update_do'};
-
-            if ( $type eq 'foreign_key' ) {
-                my $def = join(' ', map { $_ || () } '  FOREIGN KEY', $name );
-                if ( @$fields ) {
-                    $def .= ' (' . join( ', ', @$fields ) . ')';
-                }
-                $def .= " REFERENCES $ref_table";
-
-                if ( @$ref_fields ) {
-                    $def .= ' (' . join( ', ', @$ref_fields ) . ')';
-                }
-
-                if ( $match_type ) {
-                    $def .= ' MATCH ' . 
-                        ( $match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
-                }
-
-                if ( @{ $on_delete || [] } ) {
-                    $def .= ' ON DELETE '.join(' ', @$on_delete);
-                }
-
-                if ( @{ $on_update || [] } ) {
-                    $def .= ' ON UPDATE '.join(' ', @$on_update);
-                }
-
-                push @constraints, $def;
+                $type eq 'unique'      ? 'UNIQUE INDEX'  : 'INDEX';
+            if ( $type eq 'primary_key' ) {
+                $create .= join(",\n", '', 
+                    "  $index_type $name (" . join( ', ', @$fields ) . ')'
+                );
+            }
+            else {
+                $name = mk_name( 
+                    $table, $name || ++$idx_name_default
+                );
+                push @index_creates, 
+                    "CREATE $index_type $name on $table ".
+                    '(' . join( ', ', @$fields ) . ')';
             }
         }
 
-        $create .= join(",\n", '', @constraints) if @constraints;
+        $create .= "\n);\n";
 
-        #
-        # Footer
-        #
-        $create .= "\n)";
-        while ( my ( $key, $val ) = each %{ $table_data->{'table_options'} } ) {
-            $create .= " $key=$val" 
+        for my $index_create ( @index_creates ) {
+            $create .= "$index_create;\n";
         }
-        $create .= ";\n\n";
+
+        $create .= "\n";
     }
 
     return $create;
 }
 
+# -------------------------------------------------------------------
 sub debug {
     if ($DEBUG) {
         map { warn "[" . __PACKAGE__ . "] $_" } @_;
     }
+}
+
+# -------------------------------------------------------------------
+sub mk_name {
+    my ($basename, $type, $scope, $critical) = @_;
+    my $basename_orig = $basename;
+    my $max_name      = $type 
+                        ? $max_id_length - (length($type) + 1) 
+                        : $max_id_length;
+    $basename         = substr( $basename, 0, $max_name ) 
+                        if length( $basename ) > $max_name;
+    my $name          = $type ? "${type}_$basename" : $basename;
+
+    if ( $basename ne $basename_orig and $critical ) {
+        my $show_type = $type ? "+'$type'" : "";
+        warn "Truncating '$basename_orig'$show_type to $max_id_length ",
+            "character limit to make '$name'\n" if $WARN;
+        $truncated{ $basename_orig } = $name;
+    }
+
+    $scope ||= \%global_names;
+    if ( my $prev = $scope->{ $name } ) {
+        my $name_orig = $name;
+        $name        .= sprintf( "%02d", ++$prev );
+        substr($name, $max_id_length - 3) = "00" 
+            if length( $name ) > $max_id_length;
+
+        warn "The name '$name_orig' has been changed to ",
+             "'$name' to make it unique.\n" if $WARN;
+
+        $scope->{ $name_orig }++;
+    }
+
+    $scope->{ $name }++;
+    return $name;
 }
 
 1;
@@ -202,9 +210,8 @@ __END__
 
 =head1 NAME
 
-SQL::Translator::Producer::MySQL - MySQL-specific producer for SQL::Translator
+SQL::Translator::Producer::SQLite - SQLite-specific producer for SQL::Translator
 
 =head1 AUTHOR
 
-darren chamberlain E<lt>darren@cpan.orgE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
