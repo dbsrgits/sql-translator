@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.24 2003-08-27 02:28:21 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.25 2003-10-04 01:21:10 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -264,10 +264,11 @@ sub produce {
             # Not null constraint
             #
             unless ( $field->is_nullable ) {
-                my $constraint_name = mk_name( 
-                    join('_', $table_name_ur, $field_name_ur ), 'nn' 
-                );
-                $field_def .= ' CONSTRAINT ' . $constraint_name . ' NOT NULL';
+#                my $constraint_name = mk_name( 
+#                    join('_', $table_name_ur, $field_name_ur ), 'nn' 
+#                );
+#                $field_def .= ' CONSTRAINT ' . $constraint_name . ' NOT NULL';
+                $field_def .= ' NOT NULL';
             }
 
             $field_def .= " $check" if $check;
@@ -314,6 +315,29 @@ sub produce {
                 push @field_comments, 
                     "COMMENT ON COLUMN $table_name.$field_name_ur is\n  '".
                     $comment."';";
+            }
+        }
+
+        #
+        # Table options
+        #
+        my @table_options;
+        for my $opt ( $table->options ) {
+            if ( ref $opt eq 'HASH' ) {
+                my ( $key, $value ) = each %$opt;
+                if ( ref $value eq 'ARRAY' ) {
+                    push @table_options, "$key\n(\n".  join ("\n",
+                        map { "  $_->[0]\t$_->[1]" } 
+                        map { [ each %$_ ] }
+                        @$value
+                    )."\n)";
+                }
+                elsif ( !defined $value ) {
+                    push @table_options, $key;
+                }
+                else {
+                    push @table_options, "$key    $value";
+                }
             }
         }
 
@@ -416,9 +440,11 @@ sub produce {
             }
         }
 
+        my $table_options = @table_options 
+            ? "\n".join("\n", @table_options) : '';
         $create_statement .= "CREATE TABLE $table_name_ur (\n" .
             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ) .
-            "\n);"
+            "\n)$table_options;"
         ;
 
         $output .= join( "\n\n", 
