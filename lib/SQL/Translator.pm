@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.8 2002-07-08 14:42:56 dlc Exp $
+# $Id: Translator.pm,v 1.9 2002-07-23 19:21:16 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -49,9 +49,14 @@ would use the PostgreSQL parser and the Oracle producer.
 =cut
 
 use strict;
-use vars qw($VERSION $DEFAULT_SUB $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+use vars qw($VERSION $DEFAULT_SUB $DEBUG $ERROR);
+use base qw(Class::Base);
+
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
+$ERROR = "";
+
+use Carp qw(carp);
 
 # ----------------------------------------------------------------------
 # The default behavior is to "pass through" values (note that the
@@ -59,10 +64,6 @@ $DEBUG = 1 unless defined $DEBUG;
 # to be parsed is the second value ($_[1])
 # ----------------------------------------------------------------------
 $DEFAULT_SUB = sub { $_[1] } unless defined $DEFAULT_SUB;
-
-*isa = \&UNIVERSAL::isa;
-
-use Carp qw(carp);
 
 =head1 CONSTRUCTOR
 
@@ -94,7 +95,7 @@ advantage is gained by passing options to the constructor.
 =cut
 
 # ----------------------------------------------------------------------
-# new([ARGS])
+# init([ARGS])
 #   The constructor.
 #
 #   new takes an optional hash of arguments.  These arguments may
@@ -106,10 +107,8 @@ advantage is gained by passing options to the constructor.
 #   See the appropriate method description below for details about
 #   what each expects/accepts.
 # ----------------------------------------------------------------------
-sub new {
-    my $class = shift;
-    my $args  = $_[0] && isa($_[0], 'HASH') ? shift : { @_ };
-    my $self  = bless { } => $class;
+sub init {
+    my ($self, $config) = @_;
 
     # ------------------------------------------------------------------
     # Set the parser and producer.
@@ -118,37 +117,32 @@ sub new {
     # parser; if a 'producer' or 'to' parameter is passed in, use that
     # as the producer; both default to $DEFAULT_SUB.
     # ------------------------------------------------------------------
-    $self->parser(  $args->{'parser'}   || $args->{'from'} || $DEFAULT_SUB);
-    $self->producer($args->{'producer'} || $args->{'to'}   || $DEFAULT_SUB);
+    $self->parser(  $config->{'parser'}   || $config->{'from'} || $DEFAULT_SUB);
+    $self->producer($config->{'producer'} || $config->{'to'}   || $DEFAULT_SUB);
 
     # ------------------------------------------------------------------
     # Set the parser_args and producer_args
     # ------------------------------------------------------------------
     for my $pargs (qw(parser_args producer_args)) {
-        $self->$pargs($args->{$pargs}) if defined $args->{$pargs};
+        $self->$pargs($config->{$pargs}) if defined $config->{$pargs};
     }
 
     # ------------------------------------------------------------------
     # Set the data source, if 'filename' or 'file' is provided.
     # ------------------------------------------------------------------
-    $args->{'filename'} ||= $args->{'file'} || "";
-    $self->filename($args->{'filename'}) if $args->{'filename'};
+    $config->{'filename'} ||= $config->{'file'} || "";
+    $self->filename($config->{'filename'}) if $config->{'filename'};
 
     # ------------------------------------------------------------------
     # Finally, if there is a 'data' parameter, use that in preference
     # to filename and file
     # ------------------------------------------------------------------
-    if (my $data = $args->{'data'}) {
+    if (my $data = $config->{'data'}) {
         $self->data($data);
     }
 
     $self->{'debug'} = $DEBUG;
-    $self->{'debug'} = $args->{'debug'} if (defined $args->{'debug'});
-
-    # ------------------------------------------------------------------
-    # Clear the error
-    # ------------------------------------------------------------------
-    $self->error_out("");
+    $self->{'debug'} = $config->{'debug'} if (defined $config->{'debug'});
 
     return $self;
 }
@@ -494,16 +488,14 @@ sub filename {
         my $filename = shift;
         if (-d $filename) {
             my $msg = "Cannot use directory '$filename' as input source";
-            $self->error_out($msg);
-            return;
+            return $self->error($msg);
         } elsif (-f _ && -r _) {
             $self->{'filename'} = $filename;
             $self->debug("Got filename: $self->{'filename'}");
         } else {
             my $msg = "Cannot use '$filename' as input source: ".
                       "file does not exist or is not readable.";
-            $self->error_out($msg);
-            return;
+            return $self->error($msg);
         }
     }
 
@@ -536,16 +528,14 @@ sub data {
         my $data;
 
         unless (open FH, $filename) {
-            $self->error_out("Can't open $filename for reading: $!");
-            return;
+            return $self->error("Can't open $filename for reading: $!");
         }
 
         $data = <FH>;
         $self->{'data'} = \$data;
 
         unless (close FH) {
-            $self->error_out("Can't close $filename: $!");
-            return;
+            return $self->error("Can't close $filename: $!");
         }
     }
 
@@ -617,8 +607,7 @@ sub translate {
     # ----------------------------------------------------------------
     my $data = $self->data;
     unless (length $$data) {
-        $self->error_out("Empty data file!");
-        return "";
+        return $self->error("Empty data file!");
     }
 
     # ----------------------------------------------------------------
@@ -650,73 +639,17 @@ sub translate {
     if ($@ || ! $parser_output) {
         my $msg = sprintf "translate: Error with parser '%s': %s",
             $parser_type, ($@) ? $@ : " no results";
-        $self->error_out($msg);
-        return;
+        return $self->error($msg);
     }
 
     eval { $producer_output = $producer->($self, $parser_output) };
     if ($@ || ! $producer_output) {
         my $msg = sprintf "translate: Error with producer '%s': %s",
             $producer_type, ($@) ? $@ : " no results";
-        $self->error_out($msg);
-        return;
+        return $self->error($msg);
     }
 
     return $producer_output;
-}
-
-=head2 B<error>
-
-The error method returns the last error.
-
-=cut
-
-#-----------------------------------------------------
-sub error {
-#
-# Return the last error.
-#
-    return shift()->{'error'} || '';
-}
-
-=head2 B<error_out>
-
-Record the error and return undef.  The error can be retrieved by
-calling programs using $tr->error.
-
-For Parser or Producer writers, primarily.  
-
-=cut
-
-# error_out
-sub error_out {
-    my $self = shift;
-    if ( my $error = shift ) {
-        $self->{'error'} = $error;
-    }
-    return;
-}
-
-=head2 B<debug>
-
-If the global variable $SQL::Translator::DEBUG is set to a true value,
-then calls to $tr->debug($msg) will be carped to STDERR.  If $DEBUG is
-not set, then this method does nothing.
-
-=cut
-
-# debug
-sub debug {
-    my $self = shift;
-#    if (ref $self) {
-#        carp @_ if $self->{'debug'};
-#    }
-#    else {
-        if ($DEBUG) {
-            my $class = ref $self || $self;
-            carp "[$class] $_" for @_;
-        }
-#    }
 }
 
 sub load {
@@ -728,6 +661,8 @@ sub load {
     return if ($@);
     return 1;
 }
+
+sub isa { UNIVERSAL::isa($_[0], $_[1]) }
 
 1;
 
