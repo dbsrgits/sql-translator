@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.2 2003-04-17 13:41:36 dlc Exp $
+# $Id: Utils.pm,v 1.3 2003-04-25 11:44:20 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -22,12 +22,13 @@ package SQL::Translator::Utils;
 
 use strict;
 use base qw(Exporter);
-use vars qw($VERSION @EXPORT_OK);
+use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 
 use Exporter;
 
 $VERSION = 1.00;
-@EXPORT_OK = ('debug', 'normalize_name');
+$DEFAULT_COMMENT = '-- ';
+@EXPORT_OK = qw(debug normalize_name header_comment $DEFAULT_COMMENT);
 
 # ----------------------------------------------------------------------
 # debug(@msg)
@@ -48,7 +49,7 @@ $VERSION = 1.00;
 # If called from Translator.pm, on line 643.
 # ----------------------------------------------------------------------
 sub debug {
-    my ($pkg, $file, $line, $sub) = caller(1);
+    my ($pkg, $file, $line, $sub) = caller(0);
     {
         no strict qw(refs);
         return unless ${"$pkg\::DEBUG"};
@@ -88,6 +89,29 @@ sub normalize_name {
     return $name;
 }
 
+sub header_comment {
+    my $producer = shift || caller;
+    my $comment_char = shift;
+    my $now = scalar localtime;
+
+    $comment_char = $DEFAULT_COMMENT
+        unless defined $comment_char;
+
+    my $header_comment =<<"HEADER_COMMENT";
+${comment_char}
+${comment_char}Created by $producer
+${comment_char}Created on $now
+${comment_char}
+HEADER_COMMENT
+
+    # Any additional stuff passed in
+    for my $additional_comment (@_) {
+        $header_comment .= "${comment_char}${additional_comment}\n";
+    }
+
+    return $header_comment;
+}
+
 1;
 
 __END__
@@ -106,9 +130,9 @@ SQL::Translator::Utils - SQL::Translator Utility functions
 C<SQL::Translator::Utils> contains utility functions designed to be
 used from the other modules within the C<SQL::Translator> modules.
 
-No functions are exported by default.
+Nothing is exported by default.
 
-=head1 EXPORTED FUNCTIONS
+=head1 EXPORTED FUNCTIONS AND CONSTANTS
 
 =head2 debug
 
@@ -152,4 +176,37 @@ suite:
 returns:
 
   silly_field_with_random_characters
+
+=head2 header_comment
+
+Create the header comment.  Takes 1 mandatory argument (the producer
+classname), an optional comment character (defaults to $DEFAULT_COMMENT),
+and 0 or more additional comments, which will be appended to the header,
+prefixed with the comment character.  If additional comments are provided,
+then a comment string must be provided ($DEFAULT_COMMENT is exported for
+this use).  For example, this:
+
+  package My::Producer;
+
+  use SQL::Translator::Utils qw(header_comment $DEFAULT_COMMENT);
+
+  print header_comment(__PACKAGE__,
+                       $DEFAULT_COMMENT, 
+                       "Hi mom!");
+
+produces:
+
+  -- 
+  -- Created by My::Prodcuer
+  -- Created on Fri Apr 25 06:56:02 2003
+  -- 
+  -- Hi mom!
+  -- 
+
+Note the gratuitous spacing.
+
+=head2 $DEFAULT_COMMENT
+
+This is the default comment string, '-- ' by default.  Useful for
+C<header_comment>.
 
