@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.7 2002-11-23 01:26:56 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.8 2002-11-28 04:21:06 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -41,7 +41,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -66,8 +66,11 @@ $GRAMMAR = q!
 startrule : statement(s) { \%tables }
 
 statement : comment
+    | drop
     | create
     | <error>
+
+drop : /drop/i WORD(s) ';'
 
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     { 
@@ -75,7 +78,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
 
-        my $i = 0;
+        my $i = 1;
         for my $definition ( @{ $item[4] } ) {
             if ( $definition->{'type'} eq 'field' ) {
                 my $field_name = $definition->{'name'};

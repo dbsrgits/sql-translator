@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.3 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: XML.pm,v 1.4 2002-11-28 04:21:07 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -36,15 +36,85 @@ Meant to create some sort of usable XML output.
 =cut
 
 use strict;
-use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+use vars qw[ $VERSION $XML ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
-use XML::Dumper;
-
+# -------------------------------------------------------------------
 sub produce {
-    my ( $self, $data ) = @_;
-    my $dumper = XML::Dumper->new;
-    return $dumper->pl2xml( $data );
+    my ( $translator, $data ) = @_;
+    my $indent = 0;
+    aggregate( '<schema>', $indent );
+    
+    $indent++;
+    for my $table ( 
+        map  { $_->[1] }
+        sort { $a->[0] <=> $b->[0] }
+        map  { [ $_->{'order'}, $_ ] }
+        values %$data
+    ) { 
+        aggregate( '<table>', $indent );
+        $indent++;
+
+        aggregate( "<name>$table->{'table_name'}</name>", $indent );
+        aggregate( "<order>$table->{'order'}</order>", $indent );
+
+        #
+        # Fields
+        #
+        aggregate( '<fields>', $indent );
+        for my $field ( 
+            map  { $_->[1] }
+            sort { $a->[0] <=> $b->[0] }
+            map  { [ $_->{'order'}, $_ ] }
+            values %{ $table->{'fields'} }
+        ) {
+            aggregate( '<field>', ++$indent );
+            $indent++;
+
+            for my $key ( keys %$field ) {
+                my $val = defined $field->{ $key } ? $field->{ $key } : '';
+                   $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
+                aggregate( "<$key>$val</$key>", $indent );
+            }
+
+            $indent--;
+            aggregate( "</field>", $indent-- );
+        }
+        aggregate( "</fields>", $indent );
+
+        #
+        # Indices
+        #
+        aggregate( '<indices>', $indent );
+        for my $index ( @{ $table->{'indices'} } ) {
+            aggregate( '<index>', ++$indent );
+            $indent++;
+
+            for my $key ( keys %$index ) {
+                my $val = defined $index->{ $key } ? $index->{ $key } : '';
+                   $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
+                aggregate( "<$key>$val</$key>", $indent );
+            }
+
+            $indent--;
+            aggregate( "</index>", $indent-- );
+        }
+        aggregate( "</indices>", $indent );
+
+        $indent--;
+        aggregate( "</table>", $indent );
+    }
+
+    $indent--;
+    aggregate( '</schema>', $indent );
+
+    return $XML;
+}
+
+# -------------------------------------------------------------------
+sub aggregate {
+    my ( $text, $indent ) = @_;
+    $XML .= ('  ' x $indent) . "$text\n";
 }
 
 1;
