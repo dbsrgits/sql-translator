@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.32 2003-06-18 17:15:38 kycl4rk Exp $
+# $Id: Translator.pm,v 1.33 2003-06-19 20:44:26 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -43,7 +43,7 @@ use SQL::Translator::Schema;
 # SQL::Translator instance is the first value ($_[0]), and the stuff
 # to be parsed is the second value ($_[1])
 # ----------------------------------------------------------------------
-$DEFAULT_SUB = sub { $_[1] } unless defined $DEFAULT_SUB;
+$DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
 
 # ----------------------------------------------------------------------
 # init([ARGS])
