@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.26 2003-08-18 15:43:14 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.27 2003-09-29 14:55:26 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -113,11 +113,14 @@ sub produce {
                 $data_type = $translate{ $data_type };
             }
 
+            @size = () if $data_type eq 'text';
+
             $field_def .= " $data_type";
             
             if ( lc $data_type eq 'enum' ) {
                 $field_def .= '(' . $commalist . ')';
-			} elsif ( defined $size[0] && $size[0] > 0 ) {
+			} 
+            elsif ( defined $size[0] && $size[0] > 0 ) {
                 $field_def .= '(' . join( ', ', @size ) . ')';
             }
 
