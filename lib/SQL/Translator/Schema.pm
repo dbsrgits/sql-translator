@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.1 2003-05-01 04:24:59 kycl4rk Exp $
+# $Id: Schema.pm,v 1.2 2003-05-03 04:07:38 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -29,28 +29,9 @@ SQL::Translator::Schema - SQL::Translator schema object
 =head1 SYNOPSIS
 
   use SQL::Translator::Schema;
-  my $schema    = SQL::Translator::Schema->new;
-  my $foo_table = $schema->add_table( name => 'foo' );
-
-  $foo_table->add_field( 
-      name           => 'foo_id', 
-      data_type      => 'integer', 
-      size           => 11,
-      is_primary_key => 1,
-  );
-
-  $foo_table->add_field(
-      name           => 'foo_name', 
-      data_type      => 'char', 
-      size           => 10,
-  );
-
-  $foo_table->add_index(
-      name           => '',
-      fields         => [ 'foo_name' ],
-  );
-
-  my $view = $schema->add_view(...);
+  my $schema = SQL::Translator::Schema->new;
+  my $table  = $schema->add_table( name => 'foo' );
+  my $view   = $schema->add_view( name => 'bar', sql => '...' );
 
 =head1 DESCSIPTION
 
@@ -67,7 +48,7 @@ use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::View;
 
 use base 'Class::Base';
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER ];
 
 $VERSION = 1.00;
 
@@ -90,30 +71,6 @@ Object constructor.
 }
 
 # ----------------------------------------------------------------------
-sub add_constraint {
-
-=pod
-
-=head2 add_constraint
-
-Add a constraint object.  Returns the new 
-SQL::Translator::Schema::Constraint object.
-
-  my $constraint = $table->add_constraint( name => 'foo' );
-
-=cut
-
-    my $self  = shift;
-    my $table = SQL::Translator::Schema::Constraint->new( @_ ) or return
-                SQL::Translator::Schema::Constraint->error;
-
-    $self->{'tables'}{ $table->name } = $table;
-    $self->{'tables'}{ $table->name }{'order'} = ++$TABLE_COUNT;
-
-    return $table;
-}
-
-# ----------------------------------------------------------------------
 sub add_table {
 
 =pod
@@ -127,11 +84,13 @@ Add a table object.  Returns the new SQL::Translator::Schema::Table object.
 =cut
 
     my $self  = shift;
-    my $table = SQL::Translator::Schema::Table->new( @_ ) or return
+    my %args  = @_;
+    return $self->error('No table name') unless $args{'name'};
+    my $table = SQL::Translator::Schema::Table->new( \%args ) or return
                 SQL::Translator::Schema::Table->error;
 
     $self->{'tables'}{ $table->name } = $table;
-    $self->{'tables'}{ $table->name }{'order'} = ++$TABLE_COUNT;
+    $self->{'tables'}{ $table->name }{'order'} = ++$TABLE_ORDER;
 
     return $table;
 }
@@ -149,14 +108,133 @@ Add a view object.  Returns the new SQL::Translator::Schema::View object.
 
 =cut
 
-    my $self      = shift;
-    my $view      = SQL::Translator::Schema::View->new( @_ ) or return
-                    SQL::Translator::Schema::View->error;
+    my $self = shift;
+    my %args = @_;
+    return $self->error('No view name') unless $args{'name'};
+    my $view = SQL::Translator::Schema::View->new( @_ ) or return
+               SQL::Translator::Schema::View->error;
 
     $self->{'views'}{ $view->name } = $view;
-    $self->{'views'}{ $view->name }{'order'} = ++$VIEW_COUNT;
+    $self->{'views'}{ $view->name }{'order'} = ++$VIEW_ORDER;
 
     return $view;
+}
+
+# ----------------------------------------------------------------------
+sub is_valid {
+
+=pod
+
+=head2 is_valid
+
+Returns true if all the tables and views are valid.
+
+  my $ok = $schema->is_valid or die $schema->error;
+
+=cut
+
+    my $self = shift;
+
+    return $self->error('No tables') unless $self->get_tables;
+
+    for my $object ( $self->get_tables, $self->get_views ) {
+        return $object->error unless $object->is_valid;
+    }
+
+    return 1;
+}
+
+# ----------------------------------------------------------------------
+sub get_table {
+
+=pod
+
+=head2 get_table
+
+Returns a table by the name provided.
+
+  my $table = $schema->get_table('foo');
+
+=cut
+
+    my $self       = shift;
+    my $table_name = shift or return $self->error('No table name');
+    return $self->error('Table "$table_name" does not exist') unless
+        exists $self->{'tables'}{ $table_name };
+    return $self->{'tables'}{ $table_name };
+}
+
+# ----------------------------------------------------------------------
+sub get_tables {
+
+=pod
+
+=head2 get_tables
+
+Returns all the tables as an array or array reference.
+
+  my @tables = $schema->get_tables;
+
+=cut
+
+    my $self   = shift;
+    my @tables = 
+        sort { $a->{'order'} <=> $b->{'order'} } 
+        values %{ $self->{'tables'} };
+
+    if ( @tables ) {
+        return wantarray ? @tables : \@tables;
+    }
+    else {
+        $self->error('No tables');
+        return wantarray ? () : undef;
+    }
+}
+
+# ----------------------------------------------------------------------
+sub get_view {
+
+=pod
+
+=head2 get_view
+
+Returns a view by the name provided.
+
+  my $view = $schema->get_view('foo');
+
+=cut
+
+    my $self      = shift;
+    my $view_name = shift or return $self->error('No view name');
+    return $self->error('View "$view_name" does not exist') unless
+        exists $self->{'views'}{ $view_name };
+    return $self->{'views'}{ $view_name };
+}
+
+# ----------------------------------------------------------------------
+sub get_views {
+
+=pod
+
+=head2 get_views
+
+Returns all the views as an array or array reference.
+
+  my @views = $schema->get_views;
+
+=cut
+
+    my $self  = shift;
+    my @views = 
+        sort { $a->{'order'} <=> $b->{'order'} } values %{ $self->{'views'} };
+
+    if ( @views ) {
+        return wantarray ? @views : \@views;
+    }
+    else {
+        $self->error('No views');
+        return wantarray ? () : undef;
+    }
 }
 
 1;
