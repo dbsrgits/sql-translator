@@ -5,7 +5,7 @@
 use strict;
 
 use FindBin qw/$Bin/;
-use Test::More 'no_plan'; #tests => 1;
+use Test::More tests => 41;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::Sybase qw(parse);
