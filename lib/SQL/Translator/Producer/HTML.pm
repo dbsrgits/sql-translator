@@ -1,9 +1,10 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.9 2003-08-20 17:14:27 kycl4rk Exp $
+# $Id: HTML.pm,v 1.10 2003-10-17 19:51:57 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -22,12 +23,20 @@ package SQL::Translator::Producer::HTML;
 
 use strict;
 use Data::Dumper;
-use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
+
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$NAME = join ', ', __PACKAGE__, $VERSION;
+$NOWRAP = 0 unless defined $NOWRAP;
+$NOLINKTABLE = 0 unless defined $NOLINKTABLE;
+
+# Emit XHTML by default
+$CGI::XHTML = $CGI::XHTML = 42;
 
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(header_comment);
 
+# -------------------------------------------------------------------
+# Main entry point.  Returns a string containing HTML.
 # -------------------------------------------------------------------
 sub produce {
     my $t           = shift;
@@ -35,6 +44,16 @@ sub produce {
     my $schema      = $t->schema;
     my $schema_name = $schema->name || 'Schema';
     my $title       = $args->{'title'} || "Description of $schema_name";
+    my $wrap        = ! (defined $args->{'nowrap'}
+                               ? $args->{'nowrap'}
+                               : $NOWRAP);
+    my $linktable   = ! (defined $args->{'nolinktable'}
+                               ? $args->{'nolinktable'}
+                               : $NOLINKTABLE);
+    my %stylesheet  = defined $args->{'stylesheet'}
+                    ? ( -style => { src => $args->{'stylesheet'} } )
+                    : ( );
+    my @html;
     my $q           = defined $args->{'pretty'}
                     ? do { require CGI::Pretty;
                             import CGI::Pretty;
@@ -42,51 +61,94 @@ sub produce {
                     : do { require CGI;
                             import CGI; 
                                    CGI->new };
+    my ($table, @table_names);
 
-    my $html  = $q->start_html( 
-        { -title => $title, -bgcolor => 'lightgoldenrodyellow' } 
-    ) .  $q->h1( $title ) .  '<a name="top">', $q->hr;
-
-    if ( my @table_names = map {$_->name?$_->name:()} $schema->get_tables ) {
-        $html .= $q->start_table( { -width => '100%' } ).
-            $q->Tr( { -bgcolor => 'khaki' }, $q->td( $q->h2('Tables') ) );
-
-        for my $table ( @table_names ) {
-            $html .= $q->Tr( $q->td( qq[<a href="#$table">$table</a>] ) );
-        }
-        $html .= $q->end_table;
+    if ($wrap) {
+        push @html,
+            $q->start_html({
+                -title => $title,
+                %stylesheet,
+                -meta => { generator => $NAME },
+            });
+            $q->h1({ -class => 'SchemaDescription' }, $title),
+            $q->a({ -name => 'top' }),
+            $q->hr;
     }
 
-    for my $table ( $schema->get_tables ) {
+    @table_names = grep { length $_->name } $schema->get_tables; 
+
+    if ($linktable) {
+        # Generate top menu, with links to full table information
+        my $count = scalar(@table_names);
+        $count = sprintf "%d table%s", $count, $count == 1 ? '' : 's';
+
+        # Leading table of links
+        push @html, 
+            $q->comment("Table listing ($count)"),
+            $q->start_table({ -width => '100%', -class => 'LinkTable' }),
+
+            # XXX This needs to be colspan="$#{$table->fields}" class="LinkTableHeader"
+            $q->Tr(
+                $q->td({ -class => 'LinkTableCell' },
+                    $q->h2({ -class => 'LinkTableTitle' },
+                        'Tables'
+                    ),
+                ),
+            );
+
+        for my $table (sort @table_names) {
+            my $table_name = $table->name;
+            push @html, 
+                $q->comment("Start link to table '$table_name'"),
+                $q->Tr({ -class => 'LinkTableRow' },
+                    $q->td({ -class => 'LinkTableCell' },
+                        qq[<a id="${table_name}-link" href="#$table_name">$table_name</a>]
+                    )
+                ),
+                $q->comment("End link to table '$table_name'");
+        }
+        push @html, $q->end_table;
+    }
+
+    for my $table ($schema->get_tables) {
         my $table_name = $table->name       or next;
         my @fields     = $table->get_fields or next;
-        $html         .= $q->table( 
-            { -width => '100%' },
-            $q->Tr(
-                { -bgcolor => 'khaki' },
-                $q->td( $q->h3( $table_name ) ) . qq[<a name="$table_name">],
-                $q->td( { -align => 'right' }, qq[<a href="#top">Top</a>] )
-            )
-        );
+        push @html,
+            $q->comment("Starting table '$table_name'");
+            $q->table({ -class => 'TableHeader', -width => '100%' },
+                $q->Tr({ -class => 'TableHeaderRow' },
+                    $q->td({ -class => 'TableHeaderCell' }, $q->h3($table_name)),
+                        qq[<a name="$table_name">],
+                    $q->td({ -class => 'TableHeaderCell', -align => 'right' },
+                        qq[<a href="#top">Top</a>]
+                    )
+                )
+            );
 
         if ( my @comments = map { $_ ? $_ : () } $table->comments ) {
-            $html .= '<b>Comments:</b><br><em>'.join('<br>', @comments).'</em>';
+            push @html,
+                $q->b("Comments:"),
+                    $q->br,
+                    $q->em(map { $q->br, $_ } @comments);
         }
 
         #
         # Fields
         #
-        $html .= $q->start_table( { -border => 1 } ) . $q->Tr(
-            { -bgcolor => 'lightgrey' },
-            $q->th( [ 
-                'Field Name', 
-                'Data Type', 
-                'Size', 
-                'Default', 
-                'Other', 
-                'Foreign Key' 
-            ] ) 
-        );
+        push @html,
+            $q->start_table,
+                $q->Tr(
+                    $q->th({ -class => 'FieldHeader' },
+                           [ 
+                            'Field Name', 
+                            'Data Type', 
+                            'Size', 
+                            'Default Value', 
+                            'Other', 
+                            'Foreign Key' 
+                           ]
+                    ) 
+                );
 
         for my $field ( @fields ) {
             my $name      = $field->name      || '';
@@ -98,7 +160,7 @@ sub produce {
             my $comment   = $field->comments  || '';
             my $fk        = '';
 
-            if ( $field->is_foreign_key ) {
+            if ($field->is_foreign_key) {
                 my $c         = $field->foreign_key_reference;
                 my $ref_table = $c->reference_table       || '';
                 my $ref_field = ($c->reference_fields)[0] || '';
@@ -111,43 +173,54 @@ sub produce {
             push @other, 'UNIQUE'      if $field->is_unique;
             push @other, 'NOT NULL'    unless $field->is_nullable;
             push @other, $comment      if $comment;
-            $html .= $q->Tr( $q->td(
-                { -bgcolor => 'white' },
-                [ $name, $data_type, $size, $default, join(', ', @other), $fk ]
-            ) );
+            push @html,
+                $q->Tr(
+                    $q->td({ -class => "FieldCellName" }, $name),
+                    $q->td({ -class => "FieldCellType" }, $data_type),
+                    $q->td({ -class => "FieldCellSize" }, $size),
+                    $q->td({ -class => "FieldCellDefault" }, $default),
+                    $q->td({ -class => "FieldCellOther" }, join(', ', @other)),
+                    $q->td({ -class => "FieldCellFK" }, $fk),
+                );
         }
-        $html .= $q->end_table;
+        push @html, $q->end_table;
 
         #
         # Indices
         #
         if ( my @indices = $table->get_indices ) {
-            $html .= $q->h3('Indices');
-            $html .= $q->start_table( { -border => 1 } ) . $q->Tr(
-                { -bgcolor => 'lightgrey' }, 
-                $q->th( [ 'Name', 'Fields' ] ) 
-            );
+            push @html, 
+                $q->h3('Indices'),
+                $q->start_table({ -border => 1 }),
+                    $q->Tr({ -class => 'IndexRow' },
+                        $q->th([ 'Name', 'Fields' ]) 
+                    );
 
             for my $index ( @indices ) {
                 my $name   = $index->name || '';
                 my $fields = join( ', ', $index->fields ) || '';
 
-                $html .= $q->Tr( 
-                    { -bgcolor => 'white' },
-                    $q->td( [ $name, $fields ] )
-                );
+                push @html,
+                    $q->Tr({ -class => 'IndexCell' },
+                        $q->td( [ $name, $fields ] )
+                    );
             }
 
-            $html .= $q->end_table;
+            push @html, $q->end_table;
         }
 
-        $html .= $q->hr;
+        push @html, $q->hr;
     }
 
-    $html .= qq[Created by <a href="http://sqlfairy.sourceforge.net">].
-        qq[SQL::Translator</a>];
+    if ($wrap) {
+        push @html,
+            qq[Created by <a href="http://sqlfairy.sourceforge.net">],
+            qq[SQL::Translator</a>],
+            $q->end_html;
+    }
 
-    return $html;
+
+    return join "\n", @html;
 }
 
 1;
@@ -170,8 +243,67 @@ SQL::Translator::Producer::HTML - HTML producer for SQL::Translator
 
 Creates an HTML document describing the tables.
 
+The HTML produced is composed of a number of tables:
+
+=over 4
+
+=item Links
+
+A link table sits at the top of the output, and contains anchored
+links to elements in the rest of the document.
+
+If the I<nolinktable> producer arg is present, then this table is not
+produced.
+
+=item Tables
+
+Each table in the schema has its own HTML table.  The top row is a row
+of E<lt>thE<gt> elements, with a class of B<FieldHeader>; these
+elements are I<Field Name>, I<Data Type>, I<Size>, I<Default Value>,
+I<Other> and I<Foreign Key>.  Each successive row describes one field
+in the table, and has a class of B<FieldCell$item>, where $item id
+corresponds to the label of the column.  For example:
+
+    <tr>
+        <td class="FieldCellName"><a name="random-id">id</a></td>
+        <td class="FieldCellType">int</td>
+        <td class="FieldCellSize">11</td>
+        <td class="FieldCellDefault"></td>
+        <td class="FieldCellOther">PRIMARY KEY, NOT NULL</td>
+        <td class="FieldCellFK"></td>
+    </tr>
+
+    <tr>
+        <td class="FieldCellName"><a name="random-foo">foo</a></td>
+        <td class="FieldCellType">varchar</td>
+        <td class="FieldCellSize">255</td>
+        <td class="FieldCellDefault"></td>
+        <td class="FieldCellOther">NOT NULL</td>
+        <td class="FieldCellFK"></td>
+    </tr>
+
+    <tr>
+        <td class="FieldCellName"><a name="random-updated">updated</a></td>
+        <td class="FieldCellType">timestamp</td>
+        <td class="FieldCellSize">0</td>
+        <td class="FieldCellDefault"></td>
+        <td class="FieldCellOther"></td>
+        <td class="FieldCellFK"></td>
+    </tr>
+
+=back
+
+Unless the I<nowrap> producer arg is present, the HTML will be
+enclosed in a basic HTML header and footer.
+
+If the I<pretty> producer arg is present, the generated HTML will be
+nicely spaced and human-readable.  Otherwise, it will have very little
+insignificant whitespace and be generally smaller.
+
+
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Darren Chamberlain E<lt>darren@cpan.orgE<gt>
 
 =cut
