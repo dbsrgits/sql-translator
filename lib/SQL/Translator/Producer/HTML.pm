@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.5 2003-08-14 16:57:17 kycl4rk Exp $
+# $Id: HTML.pm,v 1.6 2003-08-19 15:43:52 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -22,8 +22,9 @@ package SQL::Translator::Producer::HTML;
 
 use strict;
 use CGI;
+use Data::Dumper;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -54,7 +55,7 @@ sub produce {
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
         my @fields     = $table->get_fields or next;
-        $html .= $q->table( 
+        $html         .= $q->table( 
             { -width => '100%' },
             $q->Tr(
                 { -bgcolor => 'khaki' },
@@ -62,6 +63,10 @@ sub produce {
                 $q->td( { -align => 'right' }, qq[<a href="#top">Top</a>] )
             )
         );
+
+        if ( my @comments = $table->comments ) {
+            $html .= '<b>Comments:</b><br><em>'.join('<br>', @comments).'</em>';
+        }
 
         #
         # Fields
