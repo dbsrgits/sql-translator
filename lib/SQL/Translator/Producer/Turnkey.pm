@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.1 2003-10-03 05:55:20 boconnor Exp $
+# $Id: Turnkey.pm,v 1.1.2.2 2003-10-09 23:29:47 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -340,7 +340,7 @@ sub _render_record {
 sub _render_list {
 	my $dbobject = shift;
 	my @output = ();
-	my @objects = $dbobject->[% package.key %]s;
+    my @objects = defined $dbobject ? $dbobject->[% package.key %]s : ();
 	foreach my $object (@objects)
     {
 		my $row = {};
@@ -542,6 +542,16 @@ my $turnkey_template_tt2 = <<'EOF';
   </table>
   <!-- end panel: [% panel.label %] -->
 [% END %]
+[% MACRO obj2link(obj) SWITCH ref(obj) %]
+  [% CASE '' %]
+    [% obj %]
+  [% CASE DEFAULT %]
+    <a href="[% obj2url(obj) %]">[% obj %]</a>
+[% END %]
+[% MACRO obj2url(obj) SWITCH obj %]
+  [% CASE DEFAULT %]
+    /?id=[% obj %];class=[% ref(obj) %]
+[% END %]
 [% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
   [- FOREACH package = linkable -]
     [% CASE '[- package.key FILTER ucfirst -]' %]
@@ -553,17 +563,23 @@ my $turnkey_template_tt2 = <<'EOF';
 [- FOREACH package = linkable -]
 [% MACRO render[- package.key FILTER ucfirst -]Atom(lstArr) BLOCK %]
   [% FOREACH record = lstArr %]
-    [% fields = record.data %]
+    [% field = record.data %]
     [- pname = package.key FILTER ucfirst -]
     [- pkey = "Turnkey::Model::${pname}" -]
+    [% id = record.id %]
+    [- first = 1 -]
     [- FOREACH field = packages.$pkey.columns_essential -]
-      <tr><td><b>[- field -]</b></td><td>[% fields.[- field -] %]</td></tr>
+      [- IF first -]
+      <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]
+      [- first = 0 -]
+      [- ELSE -]
+      <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
+      [- END -]
     [- END -]
     [- FOREACH field = packages.$pkey.columns_others -]
-      <tr><td><b>[- field -]</b></td><td>[% fields.[- field -] %]</td></tr>
+      <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
     [- END -]
-    [% id = record.id %]
-    <tr><td><a href="?id=[% id %];class=Turnkey::Model::[- package.key FILTER ucfirst -]">Link</a></td><td></td></tr>
+      <tr><td colspan="2"><hr></td></tr>
   [% END %]
 [% END %]
 [- END -]
