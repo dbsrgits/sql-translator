@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.10 2003-06-11 03:59:49 kycl4rk Exp $
+# $Id: xSV.pm,v 1.11 2003-10-09 16:38:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -42,6 +42,8 @@ Text::RecordParser manpage for arguments on how to parse the file
 (e.g., C<field_separator>, C<record_separator>).  Other arguments
 include:
 
+=head1 OPTIONS
+
 =over
 
 =item * scan_fields
@@ -66,7 +68,7 @@ C<SQL::Translator::Utils::normalize>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -89,7 +91,7 @@ sub parse {
         header_filter    => \&normalize_name,
     );
 
-    $parser->field_filter( sub { $_ = shift; s/^\s+|\s+$//g; $_ } ) 
+    $parser->field_filter( sub { $_ = shift || ''; s/^\s+|\s+$//g; $_ } ) 
         unless defined $args->{'trim_fields'} && $args->{'trim_fields'} == 0;
 
     my $schema = $tr->schema;
@@ -188,6 +190,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-Text::RecordParser.
+Text::RecordParser, SQL::Translator.
 
 =cut
