@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.4 2003-05-09 17:08:14 kycl4rk Exp $
+# $Id: Field.pm,v 1.5 2003-06-03 22:37:42 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -74,8 +74,9 @@ Object constructor.
         ] 
     ) {
         next unless defined $config->{ $arg };
-        $self->$arg( $config->{ $arg } ) or return;
+        defined $self->$arg( $config->{ $arg } ) or return;
     }
+
     return $self;
 }
 
