@@ -1,9 +1,9 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.5 2002-11-20 04:03:04 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.6 2002-11-22 03:03:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
@@ -21,234 +21,6 @@ package SQL::Translator::Parser::MySQL;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
-use strict;
-use vars qw($VERSION $GRAMMAR @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
-
-#use SQL::Translator::Parser;  # This is not necessary!
-use Parse::RecDescent;
-use Exporter;
-use base qw(Exporter);
-
-@EXPORT_OK = qw(parse);
-
-my $parser; # should we do this?  There's no programmic way to 
-            # change the grammar, so I think this is safe.
-sub parse {
-    my ( $translator, $data ) = @_;
-    $parser ||= Parse::RecDescent->new($GRAMMAR);
-
-    unless (defined $parser) {
-        return $translator->error("Error instantiating Parse::RecDescent ".
-            "instance: Bad grammer");
-    }
-
-    # Is this right?  It was $parser->parse before, but that didn't
-    # work; Parse::RecDescent appears to need the name of a rule
-    # with which to begin, so I chose the first rule in the grammar.
-    return $parser->file($data);
-}
-
-$GRAMMAR =
-    q!
-        { our ( %tables ) }
-
-        file         : statement(s) { \%tables }
-
-        statement    : comment
-                       | create
-                       | <error>
-
-        create       : create_table table_name '(' line(s /,/) ')' table_type(?) ';'
-                    { 
-                        my $i = 0;
-                        for my $line ( @{ $item[4] } ) {
-                            if ( $line->{'type'} eq 'field' ) {
-                                my $field_name = $line->{'name'};
-                                $tables{ $item{'table_name'} }
-                                    {'fields'}{$field_name} = 
-                                    { %$line, order => $i };
-                                $i++;
-                        
-                                if ( $line->{'is_primary_key'} ) {
-                                    push
-                                    @{ $tables{ $item{'table_name'} }{'indices'} },
-                                    {
-                                        type   => 'primary_key',
-                                        fields => [ $field_name ],
-                                    };
-                                }
-                            }
-                            else {
-                                push @{ $tables{ $item{'table_name'} }{'indices'} },
-                                    $line;
-                            }
-                            $tables{ $item{'table_name'} }{'type'} = 
-                                $item{'table_type'}[0];
-                        }
-                    }
-                       | <error>
-
-        create       : create_index index_name /on/i table_name '(' field_name(s /,/) ')' ';'
-#        create       : create_index index_name keyword_on table_name '(' field_name ')' ';'
-                       {
-			  # do nothing just now
-			  my $dummy = 0;
-                       }
-                        | <error>
-
-        keyword_on   : /on/i
-
-        line         : index
-                       | field
-                       | <error>
-
-        comment      : /^\s*[#-]+.*\n/
-
-        blank        : /\s*/
-
-
-        field        : field_name data_type field_qualifier(s?)
-                       { 
-			   my %qualifier_h =  
-			     map {%$_} @{$item{'field_qualifier'} || []};
-			   my $null = defined $item{'not_null'}
-			     ? $item{'not_null'} : 1 ;
-			   delete $qualifier_h{'not_null'};
-			   $return = { 
-                                type           => 'field',
-                                name           => $item{'field_name'}, 
-                                data_type      => $item{'data_type'}{'type'},
-				null           => $null,
-				%qualifier_h,
-                           } 
-                       }
-                    | <error>
-
-        field_qualifier : not_null
-            { 
-                $return = { 
-                     null => $item{'not_null'},
-                } 
-            }
-
-        field_qualifier : default_val
-            { 
-                $return = { 
-                     default => $item{default_val},
-                } 
-            }
-
-        field_qualifier : auto_inc
-            { 
-                $return = { 
-                     is_auto_inc => $item{auto_inc},
-                } 
-            }
-
-        field_qualifier : primary_key
-            { 
-                $return = { 
-                     is_primary_key => $item{primary_key},
-                } 
-            }
-
-        field_qualifier : unsigned
-            { 
-                $return = { 
-                     is_unsigned => $item{unsigned},
-                } 
-            }
-
-        index        : primary_key_index
-                       | unique_index
-                       | normal_index
-
-        table_name   : WORD
-
-        field_name   : WORD
-
-        index_name   : WORD
-
-        data_type    : WORD field_size(?) 
-            { 
-                $return = { 
-                    type => $item[1], 
-                    size => $item[2][0]
-                } 
-            }
-
-        field_type   : WORD
-
-        field_size   : '(' num_range ')' { $item{'num_range'} }
-
-        num_range    : DIGITS ',' DIGITS
-            { $return = $item[1].','.$item[3] }
-                       | DIGITS
-            { $return = $item[1] }
-
-
-        create_table : /create/i /table/i
-
-        create_index : /create/i /index/i
-
-        not_null     : /not/i /null/i { $return = 0 }
-
-        unsigned     : /unsigned/i { $return = 0 }
-
-        default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ { $item[2]=~s/'//g; $return=$item[2] }
-
-        auto_inc     : /auto_increment/i { 1 }
-
-        primary_key  : /primary/i /key/i { 1 }
-
-        primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
-            { 
-                $return = { 
-                    name   => $item{'index_name'}[0],
-                    type   => 'primary_key',
-                    fields => $item[4],
-                } 
-            }
-
-        normal_index      : key index_name(?) '(' field_name(s /,/) ')'
-            { 
-                $return = { 
-                    name   => $item{'index_name'}[0],
-                    type   => 'normal',
-                    fields => $item[4],
-                } 
-            }
-
-        unique_index      : /unique/i key(?) index_name(?) '(' field_name(s /,/) ')'
-            { 
-                $return = { 
-                    name   => $item{'index_name'}[0],
-                    type   => 'unique',
-                    fields => $item[5],
-                } 
-            }
-
-        key          : /key/i 
-                       | /index/i
-
-        table_type   : /TYPE=/i /\w+/ { $item[2] }
-
-        WORD         : /\w+/
-
-        DIGITS       : /\d+/
-
-        COMMA        : ','
-
-    !;
-
-1;
-
-#-----------------------------------------------------
-# Where man is not nature is barren.
-# William Blake
-#-----------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::MySQL - parser for MySQL
@@ -263,14 +35,311 @@ SQL::Translator::Parser::MySQL - parser for MySQL
 
 =head1 DESCRIPTION
 
-Blah blah blah.
+The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
+
+=cut
+
+use strict;
+use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 1 unless defined $DEBUG;
+
+use Data::Dumper;
+use Parse::RecDescent;
+use Exporter;
+use base qw(Exporter);
+
+@EXPORT_OK = qw(parse);
+
+# Enable warnings within the Parse::RecDescent module.
+$::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
+$::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
+$::RD_HINT   = 1; # Give out hints to help fix problems.
+
+my $parser; # should we do this?  There's no programmic way to 
+            # change the grammar, so I think this is safe.
+
+$GRAMMAR = q!
+
+{ our ( %tables, $table_order ) }
+
+startrule : statement(s) { \%tables }
+
+statement : comment
+    | create
+    | <error>
+
+create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
+    { 
+        my $table_name                       = $item{'table_name'};
+        $tables{ $table_name }{'order'}      = ++$table_order;
+        $tables{ $table_name }{'table_name'} = $table_name;
+
+        my $i = 0;
+        for my $definition ( @{ $item[4] } ) {
+            if ( $definition->{'type'} eq 'field' ) {
+                my $field_name = $definition->{'name'};
+                $tables{ $table_name }{'fields'}{ $field_name } = 
+                    { %$definition, order => $i };
+                $i++;
+        
+                if ( $definition->{'is_primary_key'} ) {
+                    push @{ $tables{ $table_name }{'indices'} },
+                        {
+                            type   => 'primary_key',
+                            fields => [ $field_name ],
+                        }
+                    ;
+                }
+            }
+            else {
+                push @{ $tables{ $table_name }{'indices'} },
+                    $definition;
+            }
+        }
+
+        for my $opt ( @{ $item{'table_option'} } ) {
+            if ( my ( $key, $val ) = each %$opt ) {
+                $tables{ $table_name }{'table_options'}{ $key } = $val;
+            }
+        }
+    }
+
+create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
+    {
+        push @{ $tables{ $item{'table_name'} }{'indices'} },
+            {
+                name   => $item[4],
+                type   => $item[2] ? 'unique' : 'normal',
+                fields => $item[8],
+            }
+        ;
+    }
+
+create_definition : index
+    | field
+    | <error>
+
+comment : /^\s*(?:#|-{2}).*\n/
+
+blank : /\s*/
+
+field : field_name data_type field_qualifier(s?)
+    { 
+        my %qualifiers = map { %$_ } @{ $item{'field_qualifier'} || [] };
+        my $null = defined $item{'not_null'} ? $item{'not_null'} : 1;
+        delete $qualifiers{'not_null'};
+        if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
+            $qualifiers{ $_ } = 1 for @type_quals;
+        }
+
+        $return = { 
+            type           => 'field',
+            name           => $item{'field_name'}, 
+            data_type      => $item{'data_type'}{'type'},
+            size           => $item{'data_type'}{'size'},
+            list           => $item{'data_type'}{'list'},
+            null           => $null,
+            %qualifiers,
+        } 
+    }
+    | <error>
+
+field_qualifier : not_null
+    { 
+        $return = { 
+             null => $item{'not_null'},
+        } 
+    }
+
+field_qualifier : default_val
+    { 
+        $return = { 
+             default => $item{'default_val'},
+        } 
+    }
+
+field_qualifier : auto_inc
+    { 
+        $return = { 
+             is_auto_inc => $item{'auto_inc'},
+        } 
+    }
+
+field_qualifier : primary_key
+    { 
+        $return = { 
+             is_primary_key => $item{'primary_key'},
+        } 
+    }
+
+field_qualifier : unsigned
+    { 
+        $return = { 
+             is_unsigned => $item{'unsigned'},
+        } 
+    }
+
+index : primary_key_index
+    | unique_index
+    | normal_index
+
+table_name   : WORD
+
+field_name   : WORD
+
+index_name   : WORD
+
+data_type    : WORD parens_value_list(s?) type_qualifier(s?)
+    { 
+        my $type = $item[1];
+        my $size; # field size, applicable only to non-set fields
+        my $list; # set list, applicable only to sets (duh)
+
+        if ( uc $type eq 'SET' ) {
+            $size = undef;
+            $list = $item[2][0];
+        }
+        else {
+            $size = $item[2][0];
+            $list = [];
+        }
+
+        $return        = { 
+            type       => $type,
+            size       => $size,
+            list       => $list,
+            qualifiers => $item[3],
+        } 
+    }
+
+parens_value_list : '(' VALUE(s /,/) ')'
+    { $item[2] }
+
+type_qualifier : /(BINARY|UNSIGNED|ZEROFILL)/i
+    { lc $item[1] }
+
+field_type   : WORD
+
+field_size   : '(' num_range ')' { $item{'num_range'} }
+
+num_range    : DIGITS ',' DIGITS
+    { $return = $item[1].','.$item[3] }
+    | DIGITS
+    { $return = $item[1] }
+
+create_table : /create/i /table/i
+
+create_index : /create/i /index/i
+
+not_null     : /not/i /null/i { $return = 0 }
+
+unsigned     : /unsigned/i { $return = 0 }
+
+default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ 
+    { 
+        $item[2] =~ s/'//g; 
+        $return  =  $item[2];
+    }
+
+auto_inc : /auto_increment/i { 1 }
+
+primary_key : /primary/i /key/i { 1 }
+
+primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
+    { 
+        $return    = { 
+            name   => $item{'index_name'}[0],
+            type   => 'primary_key',
+            fields => $item[4],
+        } 
+    }
+
+normal_index : key index_name(?) '(' name_with_opt_paren(s /,/) ')'
+    { 
+        $return    = { 
+            name   => $item{'index_name'}[0],
+            type   => 'normal',
+            fields => $item[4],
+        } 
+    }
+
+unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
+    { 
+        $return    = { 
+            name   => $item{'index_name'}[0],
+            type   => 'unique',
+            fields => $item[5],
+        } 
+    }
+
+name_with_opt_paren : NAME parens_value_list(s?)
+    { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
+
+unique : /unique/i { 1 }
+
+key : /key/i | /index/i
+
+table_option : /[^\s;]+/ 
+    { 
+        $return = { split /=/, $item[1] }
+    }
+
+WORD : /\w+/
+
+DIGITS : /\d+/
+
+COMMA : ','
+
+NAME    : "`" /\w+/ "`"
+    { $item[2] }
+    | /\w+/
+    { $item[1] }
+
+VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
+    { $item[1] }
+    | /'.*?'/   # XXX doesn't handle embedded quotes
+    { $item[1] }
+    | /NULL/
+    { 'NULL' }
+
+!;
+
+# -------------------------------------------------------------------
+sub parse {
+    my ( $translator, $data ) = @_;
+    $parser ||= Parse::RecDescent->new($GRAMMAR);
+
+    $::RD_TRACE  = $translator->trace ? 1 : undef;
+    $DEBUG       = $translator->debug;
+
+    unless (defined $parser) {
+        return $translator->error("Error instantiating Parse::RecDescent ".
+            "instance: Bad grammer");
+    }
+
+    my $result = $parser->startrule($data);
+    die "Parse failed.\n" unless defined $result;
+    warn Dumper($result) if $DEBUG;
+    return $result;
+}
+
+1;
+
+#-----------------------------------------------------
+# Where man is not nature is barren.
+# William Blake
+#-----------------------------------------------------
+
+=pod
 
 =head1 AUTHOR
 
-Ken Y. Clark, kclark@logsoft.com
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Chris Mungall
 
 =head1 SEE ALSO
 
-perl(1).
+perl(1), Parse::RecDescent.
 
 =cut

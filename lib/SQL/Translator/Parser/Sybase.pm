@@ -1,13 +1,40 @@
 package SQL::Translator::Parser::Sybase;
 
-#-----------------------------------------------------
-# $Id: Sybase.pm,v 1.2 2002-11-20 04:03:04 kycl4rk Exp $
+# -------------------------------------------------------------------
+# $Id: Sybase.pm,v 1.3 2002-11-22 03:03:40 kycl4rk Exp $
+# -------------------------------------------------------------------
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>
 #
-# File       : SQL/Translator/Parser/Sybase.pm
-# Programmer : Ken Y. Clark, kclark@logsoft.com
-# Created    : 2002/02/27
-# Purpose    : parser for Sybase (dbschema.pl)
-#-----------------------------------------------------
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
+
+=head1 NAME
+
+SQL::Translator::Parser::Sybase - parser for Sybase
+
+=head1 SYNOPSIS
+
+  use SQL::Translator::Parser::Sybase;
+
+=head1 DESCRIPTION
+
+Parses the output of "dbschema.pl," a Perl script freely available from
+www.midsomer.org.
+
+=cut
 
 my $grammar = q{
 
@@ -212,21 +239,11 @@ my $grammar = q{
 # Ralph Waldo Emerson
 #-----------------------------------------------------
 
-=head1 NAME
-
-SQL::Translator::Parser::Sybase - parser for Sybase
-
-=head1 SYNOPSIS
-
-  use SQL::Translator::Parser::Sybase;
-
-=head1 DESCRIPTION
-
-Blah blah blah.
+=pod
 
 =head1 AUTHOR
 
-Ken Y. Clark, kclark@logsoft.com
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 
 =head1 SEE ALSO
 

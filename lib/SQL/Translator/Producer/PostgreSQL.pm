@@ -1,9 +1,9 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.1 2002-11-20 04:03:56 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.2 2002-11-22 03:03:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
@@ -23,10 +23,46 @@ package SQL::Translator::Producer::PostgreSQL;
 
 use strict;
 use vars qw($VERSION $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
+
+my %translate  = (
+    #
+    # MySQL types
+    #
+    bigint     => 'bigint',
+    double     => 'double precision',
+    decimal    => 'decimal',
+    float      => 'double precision',
+    int        => 'integer',
+    mediumint  => 'integer',
+    smallint   => 'smallint',
+    tinyint    => 'smallint',
+    char       => 'char',
+    varchar    => 'varchar',
+    longtext   => 'text',
+    mediumtext => 'text',
+    text       => 'text',
+    tinytext   => 'text',
+    tinyblob   => 'bytea',
+    blob       => 'bytea',
+    mediumblob => 'bytea',
+    longblob   => 'bytea',
+    enum       => 'varchar',
+    set        => 'varchar',
+    date       => 'date',
+    datetime   => 'timestamp',
+    time       => 'date',
+    timestamp  => 'timestamp',
+    year       => 'date',
+
+    #
+    # Oracle types
+    #
+);
+
 
 sub import {
     warn "loading " . __PACKAGE__ . "...\n";
@@ -54,8 +90,7 @@ sub produce {
         # Fields
         #
         my @field_statements;
-        for ( my $i = 0; $i <= $#fields; $i++ ) {
-            my $field = $fields[$i];
+        for my $field ( @fields ) {
             debug("Looking at field '$field'\n");
             my $field_data = $table_data->{'fields'}->{ $field };
             my @fdata      = ("", $field);
@@ -70,7 +105,8 @@ sub produce {
             push @fdata, "NOT NULL" unless $field_data->{'null'};
 
             # Default?  XXX Need better quoting!
-            if (my $default = $field_data->{'default'}) {
+            my $default = $field_data->{'default'};
+            if ( defined $default ) {
                 push @fdata, "DEFAULT '$default'";
 #                if (int $default eq "$default") {
 #                    push @fdata, "DEFAULT $default";
@@ -93,7 +129,7 @@ sub produce {
         #
         # Other keys
         #
-        my @indices = @{ $table_data->{'indices'} };
+        my @indices = @{ $table_data->{'indices'} || [] };
         for ( my $i = 0; $i <= $#indices; $i++ ) {
             $create .= ",\n";
             my $key = $indices[$i];
@@ -118,7 +154,7 @@ sub produce {
 
 use Carp;
 sub debug {
-    if ($DEBUG) {
+    if ( $DEBUG ) {
         map { carp "[" . __PACKAGE__ . "] $_" } @_;
     }
 }

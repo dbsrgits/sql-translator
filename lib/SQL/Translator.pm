@@ -1,9 +1,9 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.11 2002-11-21 17:45:17 dlc Exp $
+# $Id: Translator.pm,v 1.12 2002-11-22 03:03:40 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
@@ -28,12 +28,20 @@ SQL::Translator - convert schema from one database to another
 =head1 SYNOPSIS
 
   use SQL::Translator;
-  my $translator = SQL::Translator->new;
+
+  my $translator = SQL::Translator->new(
+      xlate       => $xlate || {}, # Overrides for field translation
+      debug       => $debug,       # Print debug info
+      trace       => $trace,       # Print Parse::RecDescent trace
+      no_comments => $no_comments, # Don't include comments in output
+  );
+
   my $output     = $translator->translate(
       from       => "MySQL",
       to         => "Oracle",
       filename   => $file,
   ) or die $translator->error;
+
   print $output;
 
 =head1 DESCRIPTION
@@ -48,12 +56,13 @@ would use the PostgreSQL parser and the Oracle producer.
 =cut
 
 use strict;
-use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
+use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
-$DEBUG   = 0 unless defined $DEBUG;
-$ERROR   = "";
+$VERSION  = '0.01';
+$REVISION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$DEBUG    = 0 unless defined $DEBUG;
+$ERROR    = "";
 
 use Carp qw(carp);
 
@@ -144,13 +153,57 @@ sub init {
         $self->data( $data );
     }
 
+    #
+    # Set various other options.
+    #
     $self->{'debug'} = defined $config->{'debug'} ? $config->{'debug'} : $DEBUG;
+
+    $self->trace( $config->{'trace'} );
+    
+    $self->custom_translate( $config->{'xlate'} );
+
+    $self->no_comments( $config->{'no_comments'} );
 
     return $self;
 }
 
 =head1 METHODS
 
+# ----------------------------------------------------------------------
+=head2 B<custom_translate>
+
+Allows the user to override default translation of fields.  For example,
+if a MySQL "text" field would normally be converted to a "long" for Oracle,
+the user could specify to change it to a "CLOB."  Accepts a hashref where
+keys are the "from" value and values are the "to," returns the current
+value of the field.
+
+=cut
+
+sub custom_translate {
+    my $self = shift;
+    $self->{'custom_translate'} = shift if @_;
+    return $self->{'custom_translate'} || {};
+}
+
+# ----------------------------------------------------------------------
+=head2 B<no_comments>
+
+Toggles whether to print comments in the output.  Accepts a true or false
+value, returns the current value.
+
+=cut
+
+sub no_comments {
+    my $self = shift;
+    my $arg  = shift;
+    if ( defined $arg ) {
+        $self->{'no_comments'} = $arg ? 1 : 0;
+    }
+    return $self->{'no_comments'} || 0;
+}
+
+# ----------------------------------------------------------------------
 =head2 B<producer>
 
 The B<producer> method is an accessor/mutator, used to retrieve or
@@ -310,6 +363,7 @@ sub producer_args {
     $self->{'producer_args'};
 }
 
+# ----------------------------------------------------------------------
 =head2 B<parser>
 
 The B<parser> method defines or retrieves a subroutine that will be
@@ -400,9 +454,10 @@ sub parser {
     return $self->{'parser'};
 }
 
+# ----------------------------------------------------------------------
 sub parser_type { $_[0]->{'parser_type'} }
 
-# parser_args
+# ----------------------------------------------------------------------
 sub parser_args {
     my $self = shift;
     if (@_) {
@@ -412,6 +467,7 @@ sub parser_args {
     $self->{'parser_args'};
 } 
 
+# ----------------------------------------------------------------------
 =head2 B<translate>
 
 The B<translate> method calls the subroutines referenced by the
@@ -458,6 +514,7 @@ You get the idea.
 
 =back
 
+# ----------------------------------------------------------------------
 =head2 B<filename>, B<data>
 
 Using the B<filename> method, the filename of the data to be parsed
@@ -505,6 +562,7 @@ sub filename {
     $self->{'filename'};
 }
 
+# ----------------------------------------------------------------------
 # data - get or set the data
 # if $self->{'data'} is not set, but $self->{'filename'} is, then
 # $self->{'filename'} is opened and read, whith the results put into
@@ -545,7 +603,25 @@ sub data {
     return $self->{'data'};
 }
 
-# translate
+# ----------------------------------------------------------------------
+=pod
+
+=head2 B<trace>
+
+Turns on/off the tracing option of Parse::RecDescent.
+
+=cut
+
+sub trace {
+    my $self = shift;
+    my $arg  = shift;
+    if ( defined $arg ) {
+        $self->{'trace'} = $arg ? 1 : 0;
+    }
+    return $self->{'trace'} || 0;
+}
+
+# ----------------------------------------------------------------------
 sub translate {
     my $self = shift;
     my ($args, $parser, $parser_type, $producer, $producer_type);
@@ -655,6 +731,7 @@ sub translate {
     return $producer_output;
 }
 
+# ----------------------------------------------------------------------
 sub list_producers {
     require SQL::Translator::Producer;
     my $path = catfile(dirname($INC{'SQL/Translator/Producer.pm'}), "Producer");
@@ -666,7 +743,7 @@ sub list_producers {
     return @available;
 }
 
-
+# ----------------------------------------------------------------------
 sub list_parsers {
     require SQL::Translator::Parser;
     my $path = catfile(dirname($INC{'SQL/Translator/Parser.pm'}), "Parser");
@@ -678,7 +755,7 @@ sub list_parsers {
     return @available;
 }
 
-
+# ----------------------------------------------------------------------
 sub load {
     my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
     return 1 if $INC{$module};
@@ -689,6 +766,7 @@ sub load {
     return 1;
 }
 
+# ----------------------------------------------------------------------
 sub isa { UNIVERSAL::isa($_[0], $_[1]) }
 
 1;
@@ -702,8 +780,9 @@ sub isa { UNIVERSAL::isa($_[0], $_[1]) }
 
 =head1 AUTHORS
 
-Ken Y. Clark, E<lt>kclark@logsoft.comE<gt>,
-darren chamberlain E<lt>darren@cpan.orgE<gt>
+Ken Y. Clark, E<lt>kclark@cpan.org<gt>,
+darren chamberlain E<lt>darren@cpan.orgE<gt>,
+Chris Mungall E<lt>cjm@fruitfly.orgE<gt>
 
 =head1 COPYRIGHT
 

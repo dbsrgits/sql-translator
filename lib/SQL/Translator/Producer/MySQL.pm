@@ -1,9 +1,9 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.3 2002-11-20 04:03:04 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.4 2002-11-22 03:03:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
@@ -22,9 +22,9 @@ package SQL::Translator::Producer::MySQL;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw($VERSION $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
-$DEBUG = 1 unless defined $DEBUG;
+use vars qw[ $VERSION $DEBUG ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
 
@@ -34,33 +34,35 @@ sub import {
 
 sub produce {
     my ($translator, $data) = @_;
+    $DEBUG                  = $translator->debug;
+    my $no_comments         = $translator->no_comments;
+
     debug("Beginning production\n");
-    my $create = sprintf 
-"# ----------------------------------------------------------------------
-# Created by %s
-# Created on %s
-# ----------------------------------------------------------------------\n\n",
-        __PACKAGE__, scalar localtime;
+
+    my $create; 
+    unless ( $no_comments ) {
+        $create .= sprintf "--\n-- Created by %s\n-- Created on %s\n--\n\n",
+            __PACKAGE__, scalar localtime;
+    }
 
     for my $table (keys %{$data}) {
         debug("Looking at table '$table'\n");
         my $table_data = $data->{$table};
-        my @fields = sort { $table_data->{'fields'}->{$a}->{'order'} <=>
-                            $table_data->{'fields'}->{$b}->{'order'}
-                          } keys %{$table_data->{'fields'}};
+        my @fields = sort { 
+            $table_data->{'fields'}->{$a}->{'order'} 
+            <=>
+            $table_data->{'fields'}->{$b}->{'order'}
+        } keys %{$table_data->{'fields'}};
 
-        # --------------------------------------------------------------
+        #
         # Header.  Should this look like what mysqldump produces?
-        # --------------------------------------------------------------
-        $create .=
-"# ----------------------------------------------------------------------
-# Table: $table
-# ----------------------------------------------------------------------\n";
+        #
+        $create .= "--\n-- Table: $table\n--\n" unless $no_comments;
         $create .= "CREATE TABLE $table (";
 
-        # --------------------------------------------------------------
+        #
         # Fields
-        # --------------------------------------------------------------
+        #
         for (my $i = 0; $i <= $#fields; $i++) {
             my $field = $fields[$i];
             debug("Looking at field '$field'\n");
@@ -69,17 +71,29 @@ sub produce {
             $create .= "\n";
 
             # data type and size
-            push @fdata, sprintf "%s%s", $field_data->{'data_type'},
-                                         ($field_data->{'size'}) ?
-                                        "($field_data->{'size'})" : "";
+            my $attr = uc $field_data->{'data_type'} eq 'SET' ? 'list' : 'size';
+            my @values = @{ $field_data->{ $attr } || [] };
+            push @fdata, sprintf "%s%s", 
+                $field_data->{'data_type'},
+                ( @values )
+                    ? '('.join(', ', @values).')'
+                    : '';
+
+            # MySQL qualifiers
+            for my $qual ( qw[ binary unsigned zerofill ] ) {
+                push @fdata, $qual 
+                    if $field_data->{ $qual } ||
+                       $field_data->{ uc $qual };
+            }
 
             # Null?
             push @fdata, "NOT NULL" unless $field_data->{'null'};
 
             # Default?  XXX Need better quoting!
-            if (my $default = $field_data->{'default'}) {
-                if (int $default eq "$default") {
-                    push @fdata, "DEFAULT $default";
+            my $default = $field_data->{'default'};
+            if ( defined $default ) {
+                if ( uc $default eq 'NULL') {
+                    push @fdata, "DEFAULT NULL";
                 } else {
                     push @fdata, "DEFAULT '$default'";
                 }
@@ -89,51 +103,50 @@ sub produce {
             push @fdata, "auto_increment" if $field_data->{'is_auto_inc'};
 
             # primary key?
-            push @fdata, "PRIMARY KEY" if $field_data->{'is_primary_key'};
+            # This is taken care of in the indices, could be duplicated here
+            # push @fdata, "PRIMARY KEY" if $field_data->{'is_primary_key'};
 
 
-            $create .= (join " ", @fdata);
+            $create .= (join " ", '', @fdata);
             $create .= "," unless ($i == $#fields);
         }
 
-        # --------------------------------------------------------------
-        # Other keys
-        # --------------------------------------------------------------
-        my @indices = @{$table_data->{'indices'}};
+        #
+        # Indices
+        #
+        my @index_creates;
+        my @indices = @{ $table_data->{'indices'} || [] };
         for (my $i = 0; $i <= $#indices; $i++) {
-            $create .= ",\n";
-            my $key = $indices[$i];
-            my ($name, $type, $fields) = @{$key}{qw(name type fields)};
-            if ($type eq "primary_key") {
-                $create .= " PRIMARY KEY (@{$fields})"
-            } else {
-                local $" = ", ";
-                $create .= " KEY $name (@{$fields})"
-            }
+            my $key  = $indices[$i];
+            my ($name, $type, $fields) = @{ $key }{ qw[ name type fields ] };
+            $name ||= '';
+            my $index_type = 
+                $type eq 'primary_key' ? 'PRIMARY KEY' :
+                $type eq 'unique'      ? 'UNIQUE KEY'  : 'KEY';
+            push @index_creates, 
+                "  $index_type $name (" . join( ', ', @$fields ) . ')';
         }
 
-        # --------------------------------------------------------------
+        if ( @index_creates ) {
+            $create .= join(",\n", '', @index_creates);
+        }
+
+        #
         # Footer
-        # --------------------------------------------------------------
+        #
         $create .= "\n)";
-        $create .= " TYPE=$table_data->{'type'}"
-            if defined $table_data->{'type'};
+        while ( my ( $key, $val ) = each %{ $table_data->{'table_options'} } ) {
+            $create .= " $key=$val" 
+        }
         $create .= ";\n\n";
     }
-
-    # Global footer (with a vim plug)
-    $create .= "#
-#
-# vim: set ft=sql:
-";
 
     return $create;
 }
 
-use Carp;
 sub debug {
     if ($DEBUG) {
-        map { carp "[" . __PACKAGE__ . "] $_" } @_;
+        map { warn "[" . __PACKAGE__ . "] $_" } @_;
     }
 }
 

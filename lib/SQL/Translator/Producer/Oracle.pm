@@ -1,9 +1,9 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.3 2002-11-20 04:03:04 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.4 2002-11-22 03:03:40 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
@@ -23,13 +23,17 @@ package SQL::Translator::Producer::Oracle;
 
 
 use strict;
-use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+use vars qw[ $VERSION $DEBUG ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 0 unless defined $DEBUG;
 
-my $max_identifier_length = 30;
+my $max_id_length = 30;
 my %used_identifiers = ();
 
 my %translate  = (
+    #
+    # MySQL types
+    #
     bigint     => 'number',
     double     => 'number',
     decimal    => 'number',
@@ -38,63 +42,133 @@ my %translate  = (
     mediumint  => 'number',
     smallint   => 'number',
     tinyint    => 'number',
-
     char       => 'char',
-
     varchar    => 'varchar2',
-
     tinyblob   => 'CLOB',
     blob       => 'CLOB',
     mediumblob => 'CLOB',
     longblob   => 'CLOB',
-
     longtext   => 'long',
     mediumtext => 'long',
     text       => 'long',
     tinytext   => 'long',
-
     enum       => 'varchar2',
     set        => 'varchar2',
-
     date       => 'date',
     datetime   => 'date',
     time       => 'date',
     timestamp  => 'date',
     year       => 'date',
+
+    #
+    # PostgreSQL types
+    #
+    smallint            => '',
+    integer             => '',
+    bigint              => '',
+    decimal             => '',
+    numeric             => '',
+    real                => '',
+    'double precision'  => '',
+    serial              => '',
+    bigserial           => '',
+    money               => '',
+    character           => '',
+    'character varying' => '',
+    bytea               => '',
+    interval            => '',
+    boolean             => '',
+    point               => '',
+    line                => '',
+    lseg                => '',
+    box                 => '',
+    path                => '',
+    polygon             => '',
+    circle              => '',
+    cidr                => '',
+    inet                => '',
+    macaddr             => '',
+    bit                 => '',
+    'bit varying'       => '',
 );
 
-# This is for testing only, and probably needs to be removed
-*translate = *produce;
+#
+# Oracle reserved words from:
+# http://technet.oracle.com/docs/products/oracle8i/doc_library/\
+# 817_doc/server.817/a85397/ap_keywd.htm
+#
+my @ora_reserved = qw(
+    ACCESS ADD ALL ALTER AND ANY AS ASC AUDIT 
+    BETWEEN BY
+    CHAR CHECK CLUSTER COLUMN COMMENT COMPRESS CONNECT CREATE CURRENT
+    DATE DECIMAL DEFAULT DELETE DESC DISTINCT DROP
+    ELSE EXCLUSIVE EXISTS 
+    FILE FLOAT FOR FROM
+    GRANT GROUP 
+    HAVING
+    IDENTIFIED IMMEDIATE IN INCREMENT INDEX INITIAL INSERT
+    INTEGER INTERSECT INTO IS
+    LEVEL LIKE LOCK LONG 
+    MAXEXTENTS MINUS MLSLABEL MODE MODIFY 
+    NOAUDIT NOCOMPRESS NOT NOWAIT NULL NUMBER 
+    OF OFFLINE ON ONLINE OPTION OR ORDER
+    PCTFREE PRIOR PRIVILEGES PUBLIC
+    RAW RENAME RESOURCE REVOKE ROW ROWID ROWNUM ROWS
+    SELECT SESSION SET SHARE SIZE SMALLINT START 
+    SUCCESSFUL SYNONYM SYSDATE 
+    TABLE THEN TO TRIGGER 
+    UID UNION UNIQUE UPDATE USER
+    VALIDATE VALUES VARCHAR VARCHAR2 VIEW
+    WHENEVER WHERE WITH
+);
+
+my %ora_reserved = map { $_ => 1 } @ora_reserved;
+my %global_names;
+my %unreserve;
+my %truncated;
 
 sub produce {
     my ( $translator, $data ) = @_;
+    $DEBUG                    = $translator->debug;
+    my $no_comments           = $translator->no_comments;
 
     #print "got ", scalar keys %$data, " tables:\n";
     #print join(', ', keys %$data), "\n";
     #print Dumper( $data );
 
-    #
-    # Output
-    #
-    my $output = sprintf "
-#
-# Created by %s, version %s
-# Datasource: %s
-#
+    my $output;
+    unless ( $no_comments ) {
+        $output .=  sprintf 
+            "--\n-- Created by %s\n-- Created on %s\n--\n\n",
+            __PACKAGE__, scalar localtime;
+    }
 
-", __PACKAGE__, $VERSION, $translator->parser_type;
+    if ( $translator->parser_type =~ /mysql/i ) {
+        $output .= 
+        "-- We assume that default NLS_DATE_FORMAT has been changed\n".
+        "-- but we set it here anyway to be self-consistent.\n".
+        "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';\n\n";
+    }
 
     #
     # Print create for each table
     #
     my ( $index_i, $trigger_i ) = ( 1, 1 );
-    for my $table_name ( sort keys %$data ) { 
-        check_identifier( $table_name );
+    for my $table ( 
+        # sort keys %$data 
+        map  { $_->[1] }
+        sort { $a->[0] <=> $b->[0] }
+        map  { [ $_->{'order'}, $_ ] }
+        values %{ $data }
+    ) { 
+        my $table_name = $table->{'table_name'};
+#        check_identifier( $table_name );
+        $table_name = mk_name( $table_name, '', undef, 1 );
+#        my $tablename_ur = unreserve($table_name);
 
         my ( @comments, @field_decs, @trigger_decs );
 
-        my $table = $data->{ $table_name };
-        push @comments, "#\n# Table: $table_name\n#";
+        push @comments, "--\n-- Table: $table_name\n--" unless $no_comments;
 
         for my $field ( 
             map  { $_->[1] }
@@ -115,7 +189,8 @@ sub produce {
                              $translate{ $data_type } :
                              die "Unknown datatype: $data_type\n";
                $field_str .= ' '.$data_type;
-               $field_str .= '('.$field->{'size'}.')' if defined $field->{'size'};
+               $field_str .= '('.join(',', @{ $field->{'size'} }).')' 
+                if @{ $field->{'size'} || [] };
 
             #
             # Default value
@@ -148,15 +223,15 @@ sub produce {
                     join( '_', 'autoinc', $field->{'name'}, $trigger_no );
 
                 push @trigger_decs, 
-                    'CREATE SEQUENCE ' . $trigger_sequence . ";" .
-                    'CREATE OR REPLACE TRIGGER ' . $trigger_name .
-                    ' BEFORE INSERT ON ' . $table_name .
-                    ' FOR EACH ROW WHEN (new.' . $field->{'name'} . ' is null) ' .
-                    ' BEGIN ' .
-                        ' SELECT ' . $trigger_sequence . '.nextval ' .
-                        ' INTO :new.' . $field->{'name'} .
+                    "CREATE SEQUENCE $trigger_sequence;\n" .
+                    "CREATE OR REPLACE TRIGGER $trigger_name\n" .
+                    "BEFORE INSERT ON $table_name\n" .
+                    "FOR EACH ROW WHEN (new.".$field->{'name'}." is null)\n".
+                    "BEGIN\n" .
+                        " SELECT $trigger_sequence.nextval\n" .
+                        " INTO :new." . $field->{'name'}."\n" .
                         " FROM dual;\n" .
-                    ' END ' . $trigger_name . ";/"
+                    " END  $trigger_name;/"
                 ;
             }
 
@@ -242,7 +317,7 @@ sub produce {
         );
     }
 
-    $output .= "#\n# End\n#\n";
+    return $output;
 }
 
 #
@@ -257,12 +332,12 @@ sub make_identifier {
 
     if ( 
         length( $identifier ) + $length_of_mutations >
-        $max_identifier_length
+        $max_id_length
     ) {
         $identifier = substr( 
             $identifier, 
             0, 
-            $max_identifier_length - $length_of_mutations
+            $max_id_length - $length_of_mutations
         );
     }
 
@@ -300,16 +375,63 @@ sub make_identifier {
 sub check_identifier {
     my $identifier = shift;
     die "Identifier '$identifier' is too long, unrecoverable error.\n"
-        if length( $identifier ) > $max_identifier_length;
+        if length( $identifier ) > $max_id_length;
     return $identifier;
+}
+
+# -------------------------------------------------------------------
+sub mk_name {
+    my ($basename, $type, $scope, $critical) = @_;
+    my $basename_orig = $basename;
+    my $max_name      = $max_id_length - (length($type) + 1);
+    $basename         = substr($basename, 0, $max_name) 
+                        if length($basename) > $max_name;
+    my $name          = $type ? "${type}_$basename" : $basename;
+
+    if ( $basename ne $basename_orig and $critical ) {
+        my $show_type = $type ? "+'$type'" : "";
+        warn "Truncating '$basename_orig'$show_type to $max_id_length ",
+            "character limit to make '$name'\n" if $DEBUG;
+        $truncated{$basename_orig} = $name;
+    }
+
+    $scope ||= \%global_names;
+    return $name unless $scope->{$name}++;
+    my $name_orig = $name;
+    $name .= "02";
+    substr($name, $max_id_length - 3) = "00" if length($name) > $max_id_length;
+    ++$name while $scope->{$name};
+    warn "The name '$name_orig' has been changed to ",
+         "'$name' to make it unique\n" if $DEBUG;
+    return $name;
+}
+
+# -------------------------------------------------------------------
+sub unreserve {
+    my ($name, $schema_obj_name) = @_;
+    my ($suffix) = ($name =~ s/(\W.*)$//) ? $1 : '';
+
+    # also trap fields that don't begin with a letter
+    return $_[0] if !$ora_reserved{uc $name}
+        && $name =~ /^[a-z]/i; 
+
+    if ( $schema_obj_name ) {
+        ++$unreserve{"$schema_obj_name.$name"};
+    }
+    else {
+        ++$unreserve{"$name (table name)"};
+    }
+
+    my $unreserve = sprintf '%s_', $name;
+    return $unreserve.$suffix;
 }
 
 1;
 
-#-----------------------------------------------------
+# -------------------------------------------------------------------
 # All bad art is the result of good intentions.
 # Oscar Wilde
-#-----------------------------------------------------
+# -------------------------------------------------------------------
 
 =head1 NAME
 
@@ -347,10 +469,14 @@ creating multiple constraint lines, that look like:
 This is a very preliminary finding, and needs to be investigated more
 thoroughly, of course.
 
+=head1 CREDITS
+
+A hearty "thank-you" to Tim Bunce for much of the logic stolen from 
+his "mysql2ora" script.
 
 =head1 AUTHOR
 
-Ken Y. Clark, kclark@logsoft.com
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 
 =head1 SEE ALSO
 

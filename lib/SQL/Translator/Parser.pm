@@ -1,9 +1,9 @@
 package SQL::Translator::Parser;
 
 # ----------------------------------------------------------------------
-# $Id: Parser.pm,v 1.4 2002-11-20 04:03:03 kycl4rk Exp $
+# $Id: Parser.pm,v 1.5 2002-11-22 03:03:40 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ package SQL::Translator::Parser;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 sub parse { "" }
 
@@ -168,7 +168,7 @@ would be represented as:
 
 =head1 AUTHORS
 
-Ken Y. Clark, E<lt>kclark@logsoft.comE<gt>, 
+Ken Y. Clark, E<lt>kclark@cpan.org<gt>, 
 darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
