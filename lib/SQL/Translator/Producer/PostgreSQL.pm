@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.20 2003-10-15 19:07:13 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.21 2004-01-26 22:17:25 mummi Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -40,7 +40,7 @@ producer.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -120,7 +120,7 @@ my %reserved = map { $_, 1 } qw[
     UNION UNIQUE USER USING VERBOSE WHEN WHERE
 ];
 
-my $max_id_length    = 30;
+my $max_id_length    = 62;
 my %used_identifiers = ();
 my %global_names;
 my %unreserve;
