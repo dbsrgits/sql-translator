@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.20 2003-04-07 16:18:15 dlc Exp $
+# $Id: Translator.pm,v 1.21 2003-04-17 13:40:47 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -491,7 +491,7 @@ sub translate {
     # Get the data.
     # ----------------------------------------------------------------
     my $data = $self->data;
-    unless (length $$data) {
+    unless (ref($data) eq 'SCALAR' and length $$data) {
         return $self->error("Empty data file!");
     }
 
