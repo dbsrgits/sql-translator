@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.7 2003-08-16 13:23:07 rossta Exp $
+# $Id: GraphViz.pm,v 1.8 2003-08-21 02:52:40 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -84,7 +84,7 @@ sub produce {
     local $DEBUG   = $t->debug;
 
     my $out_file        = $args->{'out_file'}    || '';
-    my $layout          = $args->{'layout'}      || 'neato';
+    my $layout          = $args->{'layout'}      || 'dot';
     my $node_shape      = $args->{'node_shape'}  || 'record';
     my $output_type     = $args->{'output_type'} || 'png';
     my $width           = defined $args->{'width'} 
