@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.5 2003-04-01 17:06:22 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.6 2003-04-01 18:08:02 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -19,6 +19,7 @@ auto-dia.pl - Automatically create a diagram from a database schema
     -n|--no-lines   Don't draw lines
     -s|--skip       Fields to skip in natural joins
     -f|--font-size  "small," "medium," "large," or "huge" (default "medium")
+    --color         Add colors
     --join-pk-only  Perform natural joins from primary keys only
 
 =head1 DESCRIPTION
@@ -36,7 +37,7 @@ use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.5 $)[-1];
+my $VERSION = (qw$Revision: 1.6 $)[-1];
 
 use constant VALID_FONT_SIZE => {
     small  => 1,
@@ -49,17 +50,18 @@ use constant VALID_FONT_SIZE => {
 # Get arguments.
 #
 my ( $out_file, $image_type, $db_driver, $title, $no_columns, 
-    $no_lines, $skip_fields, $font_size, $join_pk_only );
+    $no_lines, $skip_fields, $font_size, $add_color, $join_pk_only );
 GetOptions(
-    'd|db=s'         => \$db_driver,
-    'o|output:s'     => \$out_file,
-    'i|image:s'      => \$image_type,
-    't|title:s'      => \$title,
-    'c|columns:i'    => \$no_columns,
-    'n|no-lines'     => \$no_lines,
-    's|skip:s'       => \$skip_fields,
-    'f|font-size:s'  => \$font_size,
-    '--join-pk-only' => \$join_pk_only,
+    'd|db=s'        => \$db_driver,
+    'o|output:s'    => \$out_file,
+    'i|image:s'     => \$image_type,
+    't|title:s'     => \$title,
+    'c|columns:i'   => \$no_columns,
+    'n|no-lines'    => \$no_lines,
+    's|skip:s'      => \$skip_fields,
+    'f|font-size:s' => \$font_size,
+    'color'         => \$add_color,
+    'join-pk-only'  => \$join_pk_only,
 ) or die pod2usage;
 my $file = shift @ARGV or pod2usage( -message => 'No input file' );
 
@@ -183,9 +185,17 @@ for my $table (
     $table_x{ $table_name } = $this_max_x + 5;
     push @shapes, [ 'line', $this_col_x - 5, $below_table_name, 
         $this_max_x, $below_table_name, 'black' ];
-    push @shapes, [ 
-        'rectangle', $this_col_x - 5, $top - 5, $this_max_x, $y + 5, 'black'
-    ];
+    my @bounds = ( $this_col_x - 5, $top - 5, $this_max_x, $y + 5 );
+    if ( $add_color ) {
+        unshift @shapes, [ 
+            'filledRectangle', 
+            $bounds[0], $bounds[1],
+            $this_max_x, $below_table_name,
+            'khaki' 
+        ];
+        unshift @shapes, [ 'filledRectangle', @bounds, 'white' ];
+    }
+    push @shapes, [ 'rectangle', @bounds, 'black' ];
     $max_x = $this_max_x if $this_max_x > $max_x;
     $y    += 25;
     
@@ -337,12 +347,16 @@ unless ( $gd->can( $image_type ) ) {
     die "GD can't create images of type '$image_type'\n";
 }
 my %colors = map { $_->[0], $gd->colorAllocate( @{$_->[1]} ) } (
-    [ white     => [ 255, 255, 255 ] ],
-    [ black     => [   0,   0,   0 ] ],
-    [ lightblue => [ 173, 216, 230 ] ],
+    [ white                => [ 255, 255, 255 ] ],
+    [ beige                => [ 245, 245, 220 ] ],
+    [ black                => [   0,   0,   0 ] ],
+    [ lightblue            => [ 173, 216, 230 ] ],
+    [ lightgoldenrodyellow => [ 250, 250, 210 ] ],
+    [ khaki                => [ 240, 230, 140 ] ],
 );
 $gd->interlaced( 'true' );
-$gd->fill( 0, 0, $colors{ 'white' } );
+my $background_color = $add_color ? 'lightgoldenrodyellow' : 'white';
+$gd->fill( 0, 0, $colors{ $background_color } );
 for my $shape ( @shapes ) {
     my $method = shift @$shape;
     my $color  = pop   @$shape;
