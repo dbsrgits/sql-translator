@@ -8,6 +8,7 @@
 -- Table: Basic
 --
 CREATE TABLE Basic (
+    -- comment on id field
     id integer(10) NOT NULL auto_increment
    ,title varchar(100) NOT NULL DEFAULT 'hello'
    ,description text DEFAULT ''
