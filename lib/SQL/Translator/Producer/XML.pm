@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.7 2003-05-03 15:21:12 kycl4rk Exp $
+# $Id: XML.pm,v 1.8 2003-05-06 12:47:27 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -23,92 +23,91 @@ package SQL::Translator::Producer::XML;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw[ $VERSION $XML ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+use vars qw[ $VERSION ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
+use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
+use XML::Writer;
+
+my $sqlf_ns = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 
 # -------------------------------------------------------------------
 sub produce {
     my ( $translator, $data ) = @_;
-    my $prargs = $translator->producer_args;
-    my $indent = 0;
-    aggregate('<?xml version="1.0"?>', $indent);
-    aggregate('<schema>', $indent);
-    aggregate('<!-- ' . header_comment('', '') . '-->');
+    #my $prargs = $translator->producer_args;
+    my $prargs = { };
+    my $io = IO::Scalar->new;
 
-    $indent++;
+    my $xml = XML::Writer->new(OUTPUT      => $io,
+                               NAMESPACES  => 1,
+                               PREFIX_MAP  => { $sqlf_ns => 'sqlf' },
+                               DATA_MODE   => 1,
+                               DATA_INDENT => 2);
+
+
+    $xml->xmlDecl("UTF-8");
+    $xml->comment(header_comment('', ''));
+    $xml->startTag([ $sqlf_ns => "schema" ]);
+
     for my $table ( 
         map  { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
         map  { [ $_->{'order'}, $_ ] }
         values %$data
-    ) { 
-        aggregate( '<table>', $indent );
-        $indent++;
+    ) {
+        $xml->startTag([ $sqlf_ns => "table" ]);
 
-        aggregate( "<name>$table->{'table_name'}</name>", $indent );
-        aggregate( "<order>$table->{'order'}</order>", $indent );
+        $xml->dataElement([ $sqlf_ns => "name" ], $table->{'table_name'});
+        $xml->dataElement([ $sqlf_ns => "order" ], $table->{'order'});
 
         #
         # Fields
         #
-        aggregate( '<fields>', $indent );
+        $xml->startTag([ $sqlf_ns => "fields" ]);
         for my $field ( 
             map  { $_->[1] }
             sort { $a->[0] <=> $b->[0] }
             map  { [ $_->{'order'}, $_ ] }
             values %{ $table->{'fields'} }
         ) {
-            aggregate( '<field>', ++$indent );
-            $indent++;
+            $xml->startTag([ $sqlf_ns => "field" ]);
 
             for my $key ( keys %$field ) {
                 my $val = defined $field->{ $key } ? $field->{ $key } : '';
                    $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                aggregate("<$key>$val</$key>", $indent)
+                $xml->dataElement([ $sqlf_ns => $key ], $val)
                     if ($val || (!$val && $prargs->{'emit_empty_tags'}));
             }
 
-            $indent--;
-            aggregate("</field>", $indent--);
+            $xml->endTag([ $sqlf_ns => "field" ]);
         }
-        aggregate( "</fields>", $indent );
+        $xml->endTag([ $sqlf_ns => "fields" ]);
 
         #
         # Indices
         #
-        aggregate( '<indices>', $indent );
-        for my $index ( @{ $table->{'indices'} } ) {
-            aggregate( '<index>', ++$indent );
-            $indent++;
+        $xml->startTag([ $sqlf_ns => "indices" ]);
+        for my $index (@{$table->{'indices'}}) {
+            $xml->startTag([ $sqlf_ns => "index" ]);
 
-            for my $key ( keys %$index ) {
+            for my $key (keys %$index) {
                 my $val = defined $index->{ $key } ? $index->{ $key } : '';
                    $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                aggregate( "<$key>$val</$key>", $indent );
+                $xml->dataElement([ $sqlf_ns => $key ], $val);
             }
 
-            $indent--;
-            aggregate( "</index>", $indent-- );
+            $xml->endTag([ $sqlf_ns => "index" ]);
         }
-        aggregate( "</indices>", $indent );
+        $xml->endTag([ $sqlf_ns => "indices" ]);
 
-        $indent--;
-        aggregate( "</table>", $indent );
+        $xml->endTag([ $sqlf_ns => "table" ]);
     }
 
-    $indent--;
-    aggregate( '</schema>', $indent );
+    $xml->endTag([ $sqlf_ns => "schema" ]);
+    $xml->end;
 
-    return $XML;
-}
-
-# -------------------------------------------------------------------
-sub aggregate {
-    my $text   = shift or return;
-    my $indent = shift || 0;
-    $XML .= ('  ' x $indent) . "$text\n";
+    return $io;
 }
 
 1;
