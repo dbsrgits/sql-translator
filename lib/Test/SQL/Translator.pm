@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.1 2004-02-29 18:26:53 grommit Exp $
+# $Id: Translator.pm,v 1.2 2004-02-29 20:10:35 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,8 +34,9 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 @EXPORT = qw( 
+    schema_ok
     table_ok
     field_ok
     constraint_ok
@@ -44,7 +45,6 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
     trigger_ok
     procedure_ok
 );
-# TODO schema_ok
 
 use Test::More;
 use Test::Exception;
@@ -93,6 +93,7 @@ $ATTRIBUTES{'view'} = {
     name => "",
     sql => "",
     fields => [],
+    is_valid  => 1,
 };
 $ATTRIBUTES{'trigger'} = {
     name                => '',
@@ -100,6 +101,7 @@ $ATTRIBUTES{'trigger'} = {
     database_event      => undef,
     on_table            => undef,
     action              => undef,
+    is_valid            => 1,
 };
 $ATTRIBUTES{'procedure'} = {
     name       => '',
@@ -117,6 +119,16 @@ $ATTRIBUTES{table} = {
     fields      => undef,
     constraints => undef,
     indices     => undef,
+    is_valid    => 1,
+};
+$ATTRIBUTES{schema} = {
+    name       => '',
+    database   => '',
+    procedures => undef, # [] when set
+    tables     => undef, # [] when set
+    triggers   => undef, # [] when set
+    views      => undef, # [] when set
+    is_valid   => 1,
 };
 
 
@@ -148,13 +160,17 @@ sub field_ok {
 
     unless ($f1) {
         fail " Field '$test->{name}' doesn't exist!";
+        # TODO Do a skip on the following tests. Currently the test counts wont
+        # match at the end. So at least it fails.
         return;
     }
 
-    is( $f1->name, $test->{name}, "${t_name}Field name '$test->{name}'" );
+    my $full_name = $f1->table->name.".".$test->{name};
+
+    is( $f1->name, $test->{name}, "${t_name}Field '$full_name'" );
 
     is( $f1->is_valid, $test->{is_valid},
-    "$t_name    is".($test->{is_valid} ? '' : 'not ').'valid' );
+    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
 
     is( $f1->data_type, $test->{data_type},
         "$t_name    type is '$test->{data_type}'" );
@@ -315,41 +331,53 @@ sub table_ok {
     my %arg = %$test;
 
     my $tbl_name = $arg{name} || die "Need a table name to test.";
-    is( $obj->{name}, $arg{name}, "${t_name}Table name '$arg{name}'" );
+    is( $obj->{name}, $arg{name}, "${t_name}Table '$arg{name}'" );
 
     is_deeply( [$obj->options], $test->{options},
     "$t_name    options are '".join(",",@{$test->{options}})."'" );
 
     # Fields
     if ( $arg{fields} ) {
-        my @fldnames = map { $_->{name} } @{$arg{fields}};
-        is_deeply( [ map {$_->name}   $obj->get_fields ],
-                   [ map {$_->{name}} @{$arg{fields}} ],
-                   "${t_name}Table $tbl_name fields match" );
+        my @fldnames = map {$_->{name}} @{$arg{fields}};
+        is_deeply( 
+            [ map {$_->name}   $obj->get_fields ],
+            [ @fldnames ],
+            "${t_name}    field names are ".join(", ",@fldnames)
+        );
         foreach ( @{$arg{fields}} ) {
             my $f_name = $_->{name} || die "Need a field name to test.";
-            field_ok( $obj->get_field($f_name), $_, $name );
+            next unless my $fld = $obj->get_field($f_name);
+            field_ok( $fld, $_, $name );
         }
     }
     else {
         is(scalar($obj->get_fields), undef,
-            "${t_name}Table $tbl_name has no fields.");
+            "${t_name}    has no fields.");
     }
 
-    # Constraints and indices
-    my %bits = (
+    # Constraints and Indices
+    _test_kids($obj, $test, $name, {
         constraint => "constraints",
         'index'    => "indices",
-    );
-    while ( my($foo,$plural) = each %bits ) {
-        next unless defined $arg{$plural};
-        if ( my @tfoo = @{$arg{$plural}} ) {
+    });
+}
+
+sub _test_kids {
+    my ($obj, $test, $name, $kids) = @_; 
+    my $t_name = t_name($name);
+    my $obj_name = ref $obj;
+    ($obj_name) = $obj_name =~ m/^.*::(.*)$/;
+
+    while ( my($foo,$plural) = each %$kids ) {
+        next unless defined $test->{$plural};
+        if ( my @tfoo = @{$test->{$plural}} ) {
             my $meth = "get_$plural";
             my @foo = $obj->$meth;
             is(scalar(@foo), scalar(@tfoo),
-            "${t_name}Table $tbl_name has ".scalar(@tfoo)." $plural");
+            "${t_name}$obj_name has ".scalar(@tfoo)." $plural");
             foreach ( @foo ) {
-                my $ans = { table => $obj->name, %{shift @tfoo}};
+                my $ans = { lc($obj_name) => $obj->name, %{shift @tfoo}};
+                #my $ans = shift @tfoo;
                 my $meth = "${foo}_ok";
                 { no strict 'refs';
                     $meth->( $_, $ans, $name  );
@@ -359,10 +387,42 @@ sub table_ok {
     }
 }
 
+
+    
 sub schema_ok {
     my ($obj,$test,$name) = @_;
     my $t_name = t_name($name);
     default_attribs($test,"schema");
+
+    is( $obj->name, $test->{name}, "${t_name}Schema name is '$test->{name}'" );
+
+    is( $obj->database, $test->{database},
+        "$t_name    database is '$test->{database}'" );
+
+    is( $obj->is_valid, $test->{is_valid},
+    "$t_name    is ".($test->{is_valid} ? '' : 'not ').'valid' );
+
+    # Tables
+    if ( $test->{tables} ) {
+        is_deeply( [ map {$_->name}   $obj->get_tables ],
+                   [ map {$_->{name}} @{$test->{tables}} ],
+                   "${t_name}    table names match" );
+        foreach ( @{$test->{tables}} ) {
+            my $t_name = $_->{name} || die "Need a table name to test.";
+            table_ok( $obj->get_table($t_name), $_, $name );
+        }
+    }
+    else {
+        is(scalar($obj->get_tables), undef,
+            "${t_name}    has no tables.");
+    }
+
+    # Procedures, Triggers, Views
+    _test_kids($obj, $test, $name, {
+        procedure  => "procedures",
+        trigger    => "triggers",
+        view       => "views",
+    });
 }
 
 1; # compile please ===========================================================
