@@ -25,7 +25,7 @@ WriteMakefile(
         'IO::Scalar'              => 0,
         'Parse::RecDescent'       => 1.94,
         'Pod::Usage'              => 0,
-        'Spreadsheet::ParseExcel' => 0,
+        'Spreadsheet::ParseExcel' => 0.2602,
         'Template'                => 2.10,
         'Test::More'              => 0,
         'Test::Exception'         => 0,
