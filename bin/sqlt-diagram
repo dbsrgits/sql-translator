@@ -1,14 +1,14 @@
 #!/usr/bin/perl
 
-# $Id: sqlt-diagram,v 1.1 2003-08-26 02:29:12 kycl4rk Exp $
+# $Id: sqlt-diagram,v 1.2 2003-08-26 03:55:33 kycl4rk Exp $
 
 =head1 NAME 
 
-sqlt-diagram.pl - Automatically create a diagram from a database schema
+sqlt-diagram - Automatically create a diagram from a database schema
 
 =head1 SYNOPSIS
 
-  ./sqlt-diagram.pl -d|--db=db_parser [options] schema.sql
+  ./sqlt-diagram -d|-f|--from|--db=db_parser [options] schema.sql
 
   Options:
 
@@ -36,7 +36,7 @@ name is given, then image will be printed to STDOUT, so you should
 redirect the output into a file.
 
 The default action is to assume the presence of foreign key
-relationships defined via "REFERNCES" or "FOREIGN KEY" constraints on
+relationships defined via "REFERENCES" or "FOREIGN KEY" constraints on
 the tables.  If you are parsing the schema of a file that does not
 have these, you will find the natural join options helpful.  With
 natural joins, like-named fields will be considered foreign keys.
@@ -56,7 +56,8 @@ use Getopt::Long;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.1 $)[-1];
+use vars '$VERSION';
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
@@ -68,7 +69,7 @@ my (
 );
 
 GetOptions(
-    'd|db=s'          => \$db_driver,
+    'd|db|f|from=s'   => \$db_driver,
     'o|output:s'      => \$out_file,
     'i|image:s'       => \$image_type,
     't|title:s'       => \$title,
