@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.12 2003-02-25 14:55:35 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.13 2003-04-02 01:46:36 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -217,7 +217,7 @@ comment : /^\s*(?:#|-{2}).*\n/
 
 blank : /\s*/
 
-field : field_name data_type field_qualifier(s?)
+field : field_name data_type field_qualifier(s?) reference_definition(?)
     { 
         my %qualifiers = map { %$_ } @{ $item{'field_qualifier'} || [] };
         my $null = defined $item{'not_null'} ? $item{'not_null'} : 1;
@@ -233,6 +233,7 @@ field : field_name data_type field_qualifier(s?)
             size           => $item{'data_type'}{'size'},
             list           => $item{'data_type'}{'list'},
             null           => $null,
+            constraints    => $item{'reference_definition'},
             %qualifiers,
         } 
     }
@@ -273,6 +274,35 @@ field_qualifier : unsigned
         } 
     }
 
+reference_definition : /references/i table_name parens_field_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+    {
+        $return              =  {
+            type             => 'foreign_key',
+            reference_table  => $item[2],
+            reference_fields => $item[3][0],
+            match_type       => $item[4][0],
+            on_delete_do     => $item[5][0],
+            on_update_do     => $item[6][0],
+        }
+    }
+
+match_type : /match full/i { 'match_full' }
+    |
+    /match partial/i { 'match_partial' }
+
+on_delete_do : /on delete/i reference_option
+    { $item[2] }
+
+on_update_do : /on update/i reference_option
+    { $item[2] }
+
+reference_option: /restrict/i | 
+    /cascade/i   | 
+    /set null/i  | 
+    /no action/i | 
+    /set default/i
+    { $item[1] }  
+
 index : primary_key_index
     | unique_index
     | fulltext_index
@@ -306,6 +336,9 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             qualifiers => $item[3],
         } 
     }
+
+parens_field_list : '(' field_name(s /,/) ')'
+    { $item[2] }
 
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
@@ -407,6 +440,12 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
     | /NULL/
     { 'NULL' }
+#    {
+#        {
+#            value     => $item[1],
+#            attribute => $item[2]
+#        }
+#    }
 
 !;
 
