@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.18 2003-05-09 19:51:04 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.19 2003-06-03 22:11:55 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -137,9 +137,6 @@ use base qw(Exporter);
 $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
-
-my $parser; # should we do this?  There's no programmic way to 
-            # change the grammar, so I think this is safe.
 
 $GRAMMAR = q!
 
@@ -164,14 +161,14 @@ statement : comment
 
 drop : /drop/i WORD(s) ';'
 
-create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
+create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     { 
         my $table_name                       = $item{'table_name'};
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
 
         my $i = 1;
-        for my $definition ( @{ $item[4] } ) {
+        for my $definition ( @{ $item[7] } ) {
             if ( $definition->{'type'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } = 
@@ -185,6 +182,14 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
                             fields => [ $field_name ],
                         }
                     ;
+                }
+            }
+            elsif ( $definition->{'type'} eq 'foreign_key' ) {
+                for my $field ( @{ $definition->{'fields'} } ) {
+                    push @{ 
+                        $tables{$table_name}{'fields'}{$field}{'constraints'}
+                    },
+                    $definition; 
                 }
             }
             else {
@@ -202,6 +207,8 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         1;
     }
 
+opt_if_not_exists : /if not exists/i
+
 create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
     {
         push @{ $tables{ $item{'table_name'} }{'indices'} },
@@ -214,6 +221,7 @@ create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' fiel
     }
 
 create_definition : index
+    | foreign_key 
     | field
     | <error>
 
@@ -280,7 +288,7 @@ field_qualifier : unsigned
 
 reference_definition : /references/i table_name parens_field_list(?) match_type(?) on_delete_do(?) on_update_do(?)
     {
-        $return              =  {
+        $return = {
             type             => 'foreign_key',
             reference_table  => $item[2],
             reference_fields => $item[3][0],
@@ -289,6 +297,7 @@ reference_definition : /references/i table_name parens_field_list(?) match_type(
             on_update_do     => $item[6][0],
         }
     }
+
 
 match_type : /match full/i { 'match_full' }
     |
@@ -360,8 +369,6 @@ num_range    : DIGITS ',' DIGITS
     | DIGITS
     { $return = $item[1] }
 
-create_table : /create/i /table/i
-
 create_index : /create/i /index/i
 
 not_null     : /not/i /null/i { $return = 0 }
@@ -377,6 +384,18 @@ default_val  : /default/i /(?:')?[\w\d:.-]*(?:')?/
 auto_inc : /auto_increment/i { 1 }
 
 primary_key : /primary/i /key/i { 1 }
+
+foreign_key : opt_constraint(?) /foreign key/i WORD(?) parens_field_list reference_definition
+    {
+        $return              =  {
+            type             => 'foreign_key',
+            name             => $item[3][0],
+            fields           => $item[4],
+            %{ $item{'reference_definition'} },
+        }
+    }
+
+opt_constraint : /constraint/i WORD
 
 primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
     { 
@@ -428,6 +447,12 @@ table_option : /[^\s;]*/
         $return = { split /=/, $item[1] }
     }
 
+CREATE : /create/i
+
+TEMPORARY : /temporary/i
+
+TABLE : /table/i
+
 WORD : /\w+/
 
 DIGITS : /\d+/
@@ -457,7 +482,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 # -------------------------------------------------------------------
 sub parse {
     my ( $translator, $data ) = @_;
-    $parser ||= Parse::RecDescent->new($GRAMMAR);
+    my $parser = Parse::RecDescent->new($GRAMMAR);
 
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
     local $DEBUG       = $translator->debug;
@@ -468,7 +493,7 @@ sub parse {
     }
 
     my $result = $parser->startrule($data);
-    die "Parse failed.\n" unless defined $result;
+    return $translator->error( "Parse failed." ) unless defined $result;
     warn Dumper( $result ) if $DEBUG;
 
     my $schema = $translator->schema;
@@ -476,7 +501,7 @@ sub parse {
         my $tdata =  $result->{ $table_name };
         my $table =  $schema->add_table( 
             name  => $tdata->{'table_name'},
-        );
+        ) or die $schema->error;
 
         my @fields = sort { 
             $tdata->{'fields'}->{$a}->{'order'} 
@@ -493,7 +518,7 @@ sub parse {
                 default_value     => $fdata->{'default'},
                 is_auto_increment => $fdata->{'is_auto_inc'},
                 is_nullable       => $fdata->{'null'},
-            );
+            ) or die $table->error;
         }
     }
 
