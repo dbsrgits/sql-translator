@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.4 2004-02-06 17:48:16 kycl4rk Exp $
+# $Id: sqlt-diff,v 1.5 2004-02-11 21:31:45 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -97,7 +97,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
@@ -170,8 +170,10 @@ for my $t1 ( $source_schema->get_tables ) {
     my $t1_name = $t1->name;
     my $t2      = $target_schema->get_table( $t1_name );
 
-    warn "Checking '$s1_name' table '$t1_name'\n" if $debug;
+    warn "TABLE '$s1_name.$t1_name'\n" if $debug;
     unless ( $t2 ) {
+        warn "Couldn't find table '$s1_name.$t1_name' in '$s2_name'\n" 
+            if $debug;
         push @new_tables, $t1;
         next;
     }
@@ -183,11 +185,13 @@ for my $t1 ( $source_schema->get_tables ) {
         my $t1_name      = $t1_field->name;
         my $t2_field     = $t2->get_field( $t1_name );
         my $f1_full_name = "$s1_name.$t1_name.$t1_name";
-        warn "Checking '$f1_full_name'\n" if $debug;
+        warn "FIELD '$f1_full_name'\n" if $debug;
 
         my $f2_full_name = "$s2_name.$t2_name.$t1_name";
 
         unless ( $t2_field ) {
+            warn "Couldn't find field '$f2_full_name' in '$t2_name'\n" 
+                if $debug;
             push @diffs, 
                 "ALTER TABLE $t1_name ADD $t1_name $t1_type($t1_size);";
             next;
@@ -196,7 +200,7 @@ for my $t1 ( $source_schema->get_tables ) {
         my $t2_type = $t2_field->data_type;
         my $t2_size = $t2_field->size;
 
-        if ( $t1_type ne $t2_type ||
+        if ( lc $t1_type ne lc $t2_type ||
            ( defined $t1_size && ( $t1_size ne $t2_size ) )
         ) {
             push @diffs, 
@@ -295,7 +299,7 @@ if ( @new_tables ) {
 
 if ( @diffs ) {
     print join( "\n", 
-        "-- Convert schema '$s2_name' to '$s1_name':", @diffs, '' 
+        "-- Convert schema '$s2_name' to '$s1_name':\n", @diffs, '' 
     );
 }
 else {
