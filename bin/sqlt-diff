@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.1 2003-10-17 16:42:14 kycl4rk Exp $
+# $Id: sqlt-diff,v 1.2 2004-01-25 18:16:57 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 The SQLFairy Authors
 #
@@ -37,7 +37,7 @@ For a list of all valid parsers:
 
 To diff two schemas:
 
-  sqlt-diff [options] file1=parser file2=parser
+  sqlt-diff [options] file_name1=parser file_name2=parser
 
 Options:
 
@@ -58,7 +58,7 @@ use Data::Dumper;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
