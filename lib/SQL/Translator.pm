@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.44 2003-08-22 22:26:41 kycl4rk Exp $
+# $Id: Translator.pm,v 1.45 2003-10-03 20:09:37 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.03';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -75,13 +75,13 @@ sub init {
     $self->parser  ($config->{'parser'}   || $config->{'from'} || $DEFAULT_SUB);
     $self->producer($config->{'producer'} || $config->{'to'}   || $DEFAULT_SUB);
 
-	#
-	# Set up callbacks for formatting of pk,fk,table,package names in producer
-	#
-	$self->format_table_name($config->{'format_table_name'});
-	$self->format_package_name($config->{'format_package_name'});
-	$self->format_fk_name($config->{'format_fk_name'});
-	$self->format_pk_name($config->{'format_pk_name'});
+        #
+        # Set up callbacks for formatting of pk,fk,table,package names in producer
+        #
+        $self->format_table_name($config->{'format_table_name'});
+        $self->format_package_name($config->{'format_package_name'});
+        $self->format_fk_name($config->{'format_fk_name'});
+        $self->format_pk_name($config->{'format_pk_name'});
 
     #
     # Set the parser_args and producer_args
@@ -334,9 +334,9 @@ sub filename {
         if (-d $filename) {
             my $msg = "Cannot use directory '$filename' as input source";
             return $self->error($msg);
-	} elsif (ref($filename) eq 'ARRAY') {
-	    $self->{'filename'} = $filename;
-	    $self->debug("Got array of files: ".join(', ',@$filename)."\n");
+        } elsif (ref($filename) eq 'ARRAY') {
+            $self->{'filename'} = $filename;
+            $self->debug("Got array of files: ".join(', ',@$filename)."\n");
         } elsif (-f _ && -r _) {
             $self->{'filename'} = $filename;
             $self->debug("Got filename: '$self->{'filename'}'\n");
@@ -389,21 +389,21 @@ sub data {
         local $/;
         my $data;
 
-	my @files = ref($filename) eq 'ARRAY' ? @$filename : ($filename);
+        my @files = ref($filename) eq 'ARRAY' ? @$filename : ($filename);
 
-	foreach my $file (@files) {
-	        unless (open FH, $file) {
-	            return $self->error("Can't read file '$file': $!");
-	        }
+        foreach my $file (@files) {
+                unless (open FH, $file) {
+                    return $self->error("Can't read file '$file': $!");
+                }
 
-	        $data .= <FH>;
+                $data .= <FH>;
 
-	        unless (close FH) {
-	            return $self->error("Can't close file '$file': $!");
-	        }
-	}
+                unless (close FH) {
+                    return $self->error("Can't close file '$file': $!");
+                }
+        }
 
-	$self->{'data'} = \$data;
+        $self->{'data'} = \$data;
     }
 
     return $self->{'data'};
