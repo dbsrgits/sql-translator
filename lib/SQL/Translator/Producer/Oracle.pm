@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.17 2003-08-15 16:26:44 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.18 2003-08-17 01:11:54 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -174,7 +174,8 @@ sub produce {
             my @size      = $field->size;
             my %extra     = $field->extra;
             my $list      = $extra{'list'} || [];
-            my $commalist = join ",", @$list;
+            # \todo deal with embedded quotes
+            my $commalist = "'" . (join "', '", @$list) . "'";
 
             if ( $data_type eq 'enum' ) {
                 $check = "CHECK ($field_name IN ($commalist))";

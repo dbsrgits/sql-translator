@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.4 2003-06-11 04:00:44 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.5 2003-08-17 01:11:54 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -31,7 +31,7 @@ SQL::Translator::Producer::Sybase - Sybase producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -171,7 +171,8 @@ sub produce {
             my $orig_data_type = $data_type;
             my %extra          = $field->extra;
             my $list           = $extra{'list'} || [];
-            my $commalist      = join ",", @$list;
+            # \todo deal with embedded quotes
+            my $commalist = "'" . join("','", @$list) . "'";
             my $seq_name;
 
             if ( $data_type eq 'enum' ) {
