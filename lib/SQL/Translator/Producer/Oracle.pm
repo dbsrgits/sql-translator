@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.1.1.1.2.1 2002-03-15 20:13:46 dlc Exp $
+# $Id: Oracle.pm,v 1.1.1.1.2.2 2002-03-18 20:30:37 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1.2.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1.2.2 $ =~ /(\d+)\.(\d+)/;
 
 my $max_identifier_length = 30;
 my %used_identifiers = ();
@@ -333,6 +333,20 @@ SQL::Translator::Producer::Oracle - Oracle SQL producer
 SQL::Translator::Producer::Oracle takes a parsed data structure,
 created by a SQL::Translator::Parser subclass, and turns it into a
 create string suitable for use with an Oracle database.
+
+=head1 BUGS
+
+Problem with SQL::Translator::Producer::Oracle: it is keeping track
+of the last sequence number used, so as not to duplicate them, which
+is reasonable.  However on runs past the first, it seems to be
+creating multiple constraint lines, that look like:
+
+    CONSTRAINT i_sessions_pk_2 PRIMARY KEY (id),
+    CONSTRAINT i_sessions_pk_3 PRIMARY KEY (id)
+
+This is a very preliminary finding, and needs to be investigated more
+thoroughly, of course.
+
 
 =head1 AUTHOR
 
