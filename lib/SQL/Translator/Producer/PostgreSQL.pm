@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.15 2003-08-21 18:10:14 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.16 2003-09-04 15:33:24 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -42,9 +42,9 @@ my %translate  = (
     # MySQL types
     #
     bigint     => 'bigint',
-    double     => 'double precision',
-    decimal    => 'decimal',
-    float      => 'double precision',
+    double     => 'numeric',
+    decimal    => 'numeric',
+    float      => 'numeric',
     int        => 'integer',
     mediumint  => 'integer',
     smallint   => 'smallint',
@@ -85,11 +85,11 @@ my %translate  = (
     varchar    => 'character varying',
     datetime   => 'timestamp',
     text       => 'text',
-    real       => 'double precision',
+    real       => 'numeric',
     comment    => 'text',
     bit        => 'bit',
     tinyint    => 'smallint',
-    float      => 'double precision',
+    float      => 'numeric',
 );
 
 my %reserved = map { $_, 1 } qw[
@@ -206,7 +206,8 @@ sub produce {
                 $len = ($len < length($_)) ? length($_) : $len for (@$list);
                 my $chk_name = mk_name( $table_name.'_'.$field_name, 'chk' );
                 push @constraint_defs, 
-                qq[CONSTRAINT $chk_name CHECK ("$field_name" IN ($commalist))];
+                    qq[Constraint "$chk_name" CHECK ("$field_name" ].
+                    qq[IN ($commalist))];
                 $data_type = 'character varying';
             }
             elsif ( $data_type eq 'set' ) {
@@ -218,10 +219,10 @@ sub produce {
             }
             elsif ( $field->is_auto_increment ) {
                 if ( defined $size[0] && $size[0] > 11 ) {
-                    $data_type = ' bigserial';
+                    $data_type = 'bigserial';
                 }
                 else {
-                    $data_type = ' serial';
+                    $data_type = 'serial';
                 }
                 undef @size;
 
@@ -243,26 +244,30 @@ sub produce {
 
             if ( $data_type eq 'integer' ) {
                 if ( defined $size[0] ) {
-                    if ( $size[0] > 10 ) { # 
-                        $data_type = ' bigint';
+                    if ( $size[0] > 10 ) {
+                        $data_type = 'bigint';
                     }
                     elsif ( $size[0] < 5 ) {
-                        $data_type = ' smallint';
+                        $data_type = 'smallint';
                     }
                     else {
-                        $data_type = ' integer';
+                        $data_type = 'integer';
                     }
                 }
                 else {
-                    $data_type = ' integer';
+                    $data_type = 'integer';
                 }
-                undef @size;
             }
+
+            #
+            # PG doesn't need a size for integers or text
+            #
+            undef @size if $data_type =~ m/(integer|smallint|bigint|text)/;
             
             $field_def .= " $data_type";
 
             if ( defined $size[0] && $size[0] > 0 ) {
-                $field_def .= '(' . join( ', ', @size ) . ')';
+                $field_def .= '(' . join( ',', @size ) . ')';
             }
 
             #
@@ -304,7 +309,7 @@ sub produce {
                 $name = next_unused_name($name, \%used_index_names);
                 # how do I get next_unused_name() to do: ?
                 $used_index_names{$name} = $name;
-                push @constraint_defs, 'CONSTRAINT '.$name.' PRIMARY KEY '.
+                push @constraint_defs, 'Constraint "'.$name.'" PRIMARY KEY '.
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $type eq UNIQUE ) {
@@ -313,7 +318,7 @@ sub produce {
                 );
                 $name = next_unused_name($name, \%used_index_names);
                 $used_index_names{$name} = $name;
-                push @constraint_defs, 'CONSTRAINT ' . $name . ' UNIQUE ' .
+                push @constraint_defs, 'Constraint "' . $name . '" UNIQUE ' .
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $type eq NORMAL ) {
@@ -353,7 +358,7 @@ sub produce {
                 $name ||= mk_name( $table_name, 'pk' );
                 $name = next_unused_name($name, \%used_index_names);
                 $used_index_names{$name} = $name;
-                push @constraint_defs, "CONSTRAINT $name PRIMARY KEY ".
+                push @constraint_defs, qq[Constraint "$name" PRIMARY KEY ].
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $c->type eq UNIQUE ) {
@@ -362,7 +367,7 @@ sub produce {
                 );
                 $name = next_unused_name($name, \%used_index_names);
                 $used_index_names{$name} = $name;
-                push @constraint_defs, "CONSTRAINT $name UNIQUE " .
+                push @constraint_defs, qq[Constraint "$name" UNIQUE ] .
                     '("' . join( '", "', @fields ) . '")';
             }
             elsif ( $c->type eq CHECK_C ) {
@@ -373,7 +378,7 @@ sub produce {
                     );
                     $name = next_unused_name($name, \%used_index_names);
                     $used_index_names{$name} = $name;
-                    $s = 'CONSTRAINT $name ';
+                    $s = 'Constraint "$name" ';
                 }
                 my $expression = $c->expression;
                 push @constraint_defs, "${s}CHECK ($expression)";
