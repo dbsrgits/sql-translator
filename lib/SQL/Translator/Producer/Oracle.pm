@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.15 2003-08-04 21:04:04 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.16 2003-08-15 16:16:05 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -39,6 +39,7 @@ my %translate  = (
     decimal    => 'number',
     float      => 'number',
     int        => 'number',
+    integer    => 'number',
     mediumint  => 'number',
     smallint   => 'number',
     tinyint    => 'number',
