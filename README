@@ -105,6 +105,11 @@ BUGS
 
 Please use http://rt.cpan.org/ for reporting bugs.
 
+PRAISE
+
+If you find this module useful, please use 
+"http://cpanratings.perl.org/rate/?distribution=SQL-Translator" to rate it.
+
 SEE ALSO
 
 Check out the SQLFairy homepage at Sourceforge for more information,
