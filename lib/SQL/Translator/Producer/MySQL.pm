@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.33 2004-04-19 16:38:37 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.34 2004-08-05 15:41:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -201,6 +201,7 @@ sub produce {
         # Constraints -- need to handle more than just FK. -ky
         #
         my @constraint_defs;
+        my $has_fk;
         for my $c ( $table->get_constraints ) {
             my @fields = $c->fields or next;
 
@@ -213,6 +214,7 @@ sub produce {
                     'UNIQUE (' . join(', ', @fields). ')';
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
+                $has_fk = 1;
                 my $def = join(' ', 
                     map { $_ || () } 'FOREIGN KEY', $c->name 
                 );
@@ -250,11 +252,9 @@ sub produce {
         # Footer
         #
         $create .= "\n)";
-#        while ( 
-#            my ( $key, $val ) = each %{ $table->options }
-#        ) {
-#            $create .= " $key=$val" 
-#        }
+        if ( $has_fk ) {
+            $create .= " Type=InnoDB";
+        }
         $create .= ";\n\n";
     }
 
