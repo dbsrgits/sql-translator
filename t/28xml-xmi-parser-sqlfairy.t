@@ -21,7 +21,7 @@ use SQL::Translator::Schema::Constants;
 # Testing 1,2,3,..
 #=============================================================================
 
-plan tests => 243;
+plan tests => 321;
 
 my $testschema = "$Bin/data/xmi/OrderDB.sqlfairy.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;
