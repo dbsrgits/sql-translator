@@ -13,11 +13,9 @@ use strict;
 
 use IO::File;
 use SQL::Translator;
+use Test::More;
 
-# How many tests
-BEGIN { print "1..3\n"; }
-
-$SQL::Translator::DEBUG = 0;
+plan tests => 3;
 
 # Our object; uses the default parser and producer
 my $tr = SQL::Translator->new;
@@ -29,18 +27,11 @@ my $fh = IO::File->new($datafile);
 
 # Pass filename: simplest way
 my $translated_datafile = $tr->translate($datafile);
-#warn "Data from filename method is\n$translated_datafile\n\n\n";
 
 # Pass string reference
 read($fh, $data, -s $datafile);
 my $translated_data = $tr->translate(\$data);
-#warn "Data from string is\n$translated_data\n\n\n";
 
-print "not " unless length $translated_datafile;
-print "ok 1 # passing string (filename) works\n";
-
-print "not " unless length $translated_data;
-print "ok 2 # passing string as SCALAR reference\n";
-
-print "not " unless ($translated_datafile eq $translated_data);
-print "ok 3 # from file == from string\n";
+ok(length $translated_datafile, "passing string (filename) works");
+ok(length $translated_data, "passing string as SCALAR reference");
+is($translated_datafile, $translated_data, "from file == from string");
