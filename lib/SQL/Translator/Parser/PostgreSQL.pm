@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.35 2003-12-17 22:36:41 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.36 2004-02-04 17:32:22 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -608,7 +608,7 @@ key_action : key_delete
 
 key_delete : /on delete/i key_mutation
     { 
-        $return => { 
+        $return = { 
             type   => 'delete',
             action => $item[2],
         };
@@ -616,7 +616,7 @@ key_delete : /on delete/i key_mutation
 
 key_update : /on update/i key_mutation
     { 
-        $return => { 
+        $return = { 
             type   => 'update',
             action => $item[2],
         };

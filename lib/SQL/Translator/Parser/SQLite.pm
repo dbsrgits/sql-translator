@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.4 2003-11-06 18:22:12 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.5 2004-02-04 17:32:42 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -154,7 +154,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -182,7 +182,7 @@ $GRAMMAR = q!
 # failed. -ky
 #
 startrule : statement(s) eofile { 
-    $return      => {
+    $return      = {
         tables   => \%tables, 
         views    => \@views,
         triggers => \@triggers,
