@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.4 2003-05-09 16:53:21 kycl4rk Exp $
+# $Id: Schema.pm,v 1.5 2003-06-06 00:11:06 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -85,10 +85,9 @@ The "name" parameter is required.  If you try to create a table with the
 same name as an existing table, you will get an error and the table will 
 not be created.
 
-  my $table_foo = $schema->add_table( name => 'foo' ) or die $schema->error;
-
-  my $table_bar = SQL::Translator::Schema::Table->new( name => 'bar' );
-  $table_bar    = $schema->add_table( $table_bar ) or die $schema->error;
+  my $t1 = $schema->add_table( name => 'foo' ) or die $schema->error;
+  my $t2 = SQL::Translator::Schema::Table->new( name => 'bar' );
+  $t2    = $schema->add_table( $table_bar ) or die $schema->error;
 
 =cut
 
@@ -132,10 +131,9 @@ The "name" parameter is required.  If you try to create a view with the
 same name as an existing view, you will get an error and the view will 
 not be created.
 
-  my $view_foo = $schema->add_view( name => 'foo' );
-
-  my $view_bar = SQL::Translator::Schema::View->new( name => 'bar' );
-  $view_bar    = $schema->add_view( $view_bar ) or die $schema->error;
+  my $v1 = $schema->add_view( name => 'foo' );
+  my $v2 = SQL::Translator::Schema::View->new( name => 'bar' );
+  $v2    = $schema->add_view( $view_bar ) or die $schema->error;
 
 =cut
 
