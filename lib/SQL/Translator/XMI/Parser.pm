@@ -4,7 +4,7 @@ package SQL::Translator::XMI::Parser;
 
 =head1 NAME
 
-SQL::Translator::XMI::Parser- Perl class for blah blah blah
+SQL::Translator::XMI::Parser
 
 =cut
 
@@ -35,8 +35,9 @@ my $SPECS = {};
 my $spec12 = $SPECS->{"1.2"} = {};
 
 $spec12->{class} = {
-    name   => "class",
-    plural => "classes",
+    name    => "class",
+    plural  => "classes",
+	isRoot  => 1,
     default_path => '//UML:Class[@xmi.id]',
     attrib_data => 
         [qw/name visibility isSpecification isRoot isLeaf isAbstract isActive/],
@@ -236,30 +237,30 @@ $spec10->{attribute} = {
     plural => "attributes",
     default_path => '//Foundation.Core.Attribute[@xmi.id]',
     path_data => [
-        { 
+        {
             name  => "name",
             path  => 'Foundation.Core.ModelElement.name/text()',
         },
-        { 
+        {
             name => "visibility",
             path => 'Foundation.Core.ModelElement.visibility/@xmi.value',
         },
-        { 
+        {
             name => "isSpecification",
             path => 'Foundation.Core.ModelElement.isSpecification/@xmi.value',
         },
-        { 
+        {
             name => "ownerScope",
             path => 'Foundation.Core.Feature.ownerScope/@xmi.value',
         },
-		{ 
+		{
             name  => "initialValue",
             path  => 'Foundation.Core.Attribute.initialValue/Foundation.Data_Types.Expression/Foundation.Data_Types.Expression.body/text()',
         },
-		#{ 
-        #    name  => "datatype",
-        #    path  => 'xmiDeref(Foundation.Core.StructuralFeature.type/Foundation.Core.Classifier)/Foundation.Core.DataType/Foundation.Core.ModelElement.name/text()',
-        #},
+		# {
+        #     name  => "datatype",
+        #     path  => 'xmiDeref(Foundation.Core.StructuralFeature.type/Foundation.Core.Classifier)/Foundation.Core.DataType/Foundation.Core.ModelElement.name/text()',
+        # },
     ],
 };
 
@@ -301,7 +302,7 @@ sub init_specs {
 		foreach ( @{$spec->{kids}} ) {
             $_->{get_method} = "get_".$specs->{$_->{class}}{plural};
         }
-		
+
 		# Add xmi.id ti all specs. Everything we want at the moment (in both
 		# versions) has an id. The tags that don't seem to be used for
 		# structure.
@@ -316,13 +317,12 @@ sub mk_get_dispatch {
     foreach ( values %{$SPECS->{"1.2"}} ) {
         my $name = $_->{plural};
         no strict "refs";
-        
+
         # get_ on parser
-        *{"get_$name"} = sub { 
-			#my $me = shift;
-            #$me->{xmi_get_}{$name}->($me,@_); 
+        my $code = sub { 
             $_[0]->{xmi_get_}{$name}->(@_); 
         };
+        *{"get_$name"} = $code;
     }
 }
 
@@ -362,8 +362,7 @@ sub mk_gets {
     my $specs = shift;
     my $gets;
     foreach ( values %$specs ) {
-        # Clone from specs and sort out the lookups into it so we get a
-        # self contained spec to use as a proper closure.
+        # Clone from specs so we get a proper closure.
         my $spec = dclone($_);
         
         # Add the sub
@@ -404,11 +403,22 @@ sub mk_get {
 #warn "Searching for $spec->{plural} using:$xpath\n";
 
     my @nodes = $xp->findnodes($xpath);
+#warn "None.\n" unless @nodes;
 	return unless @nodes;
 
 	for my $node (@nodes) {
+#warn "    Found $spec->{name} xmi.id=".$node->getAttribute("xmi.id")." name=".$node->getAttribute("name")."\n";
 		my $thing = {};
         # my $thing = { xpNode => $node };
+
+		# Have we seen this before? If so just use the ref we have.
+        if ( my $id = $node->getAttribute("xmi.id") ) {
+            if ( my $foo = $me->{model}{things}{$id} ) {
+#warn "    Reffing from model **********************\n";
+                push @$things, $foo; 
+				next;
+			}
+        }
 
 		# Get the Tag attributes
         foreach ( @{$spec->{attrib_data}} ) {
@@ -417,7 +427,7 @@ sub mk_get {
 
         # Add the path data
         foreach ( @{$spec->{path_data}} ) {
-#warn "Searching for $spec->{plural} - $_->{name} using:$_->{path}\n";
+#warn "          $spec->{name} - $_->{name} using:$_->{path}\n";
             my @nodes = $node->findnodes($_->{path});
             $thing->{$_->{name}} = @nodes ? $nodes[0]->getData
                 : (exists $_->{default} ? $_->{default} : undef);
@@ -432,12 +442,22 @@ sub mk_get {
             next unless $filter->($thing);
         }
 
+        # Add anything with an id to the things lookup
+        push @$things, $thing;
+		if ( exists $thing->{"xmi.id"} and defined $thing->{"xmi.id"}
+            and my $id = $thing->{"xmi.id"} 
+        ) {
+			$me->{model}{things}{$id} = $thing; }
+
         # Kids
         #
         foreach ( @{$spec->{kids}} ) {
 			my $data;
             my $meth = $_->{get_method};
             my $path = $_->{path};
+
+			# Variable subs on the path from thing
+			$path =~ s/\$\{(.*?)\}/$thing->{$1}/g;
 			$data = $me->$meth( _context => $node, _xpath => $path,
                 filter => $args{"filter_$_->{name}"} );
 
@@ -451,10 +471,12 @@ sub mk_get {
 				}
             }
         }
-
-        push @$things, $thing;
 	}
-	return wantarray ? @$things : $things;
+
+	if ( $spec->{isRoot} ) {
+		push(@{$me->{model}{$spec->{plural}}}, $_) foreach @$things;
+	}
+	return $things;
 } # /closure sub
 
 } # /mk_get
