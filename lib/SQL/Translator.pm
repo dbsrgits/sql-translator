@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.53 2004-02-11 21:37:11 kycl4rk Exp $
+# $Id: Translator.pm,v 1.54 2004-03-09 19:15:31 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.05';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -390,15 +390,15 @@ sub data {
         my @files = ref($filename) eq 'ARRAY' ? @$filename : ($filename);
 
         foreach my $file (@files) {
-                unless (open FH, $file) {
-                    return $self->error("Can't read file '$file': $!");
-                }
+            unless (open FH, $file) {
+                return $self->error("Can't read file '$file': $!");
+            }
 
-                $data .= <FH>;
+            $data .= <FH>;
 
-                unless (close FH) {
-                    return $self->error("Can't close file '$file': $!");
-                }
+            unless (close FH) {
+                return $self->error("Can't close file '$file': $!");
+            }
         }
 
         $self->{'data'} = \$data;
