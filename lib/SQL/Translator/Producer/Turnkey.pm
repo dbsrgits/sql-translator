@@ -1,80 +1,25 @@
-package Turnkey::Node;
-
-use strict;
-use Class::MakeMethods::Template::Hash (
-  new => [ 'new' ],
-  'array_of_objects -class Turnkey::Edge' => [ qw( edges ) ],
-  'array_of_objects -class Turnkey::CompoundEdge' => [ qw( compoundedges ) ],
-  'array_of_objects -class Turnkey::HyperEdge' => [ qw( hyperedges ) ],
-  'hash' => [ qw( many via has) ],
-  scalar => [ qw( base name order primary_key primary_key_accessor table) ],
-);
-
-
-package Turnkey::Edge;
-
-use strict;
-use Class::MakeMethods::Template::Hash (
-  new => ['new'],
-  scalar => [ qw( type ) ],
-  array => [ qw( traversals ) ],
-  object => [
-			 'thisfield'    => {class => 'SQL::Translator::Schema::Field'},
-			 'thatfield'    => {class => 'SQL::Translator::Schema::Field'},
-			 'thisnode'     => {class => 'Turnkey::Node'},
-			 'thatnode'     => {class => 'Turnkey::Node'},
-
-			],
-);
-
-sub flip {
-  my $self = shift;
-  return Turnkey::Edge->new( thisfield => $self->thatfield,
-							 thatfield => $self->thisfield,
-							 thisnode  => $self->thatnode,
-							 thatnode  => $self->thisnode,
-							 type => $self->type eq 'import' ? 'export' : 'import'
-						   );
-}
-
-
-package Turnkey::HyperEdge;
-
-use strict;
-use base qw(Turnkey::Edge);
-use Class::MakeMethods::Template::Hash (
-  'array_of_objects -class SQL::Translator::Schema::Field' => [ qw( thisviafield thatviafield thisfield thatfield) ],
-  'array_of_objects -class Turnkey::Node'                  => [ qw( thisnode thatnode ) ],
-  object => [ 'vianode' => {class => 'Turnkey::Node'} ],
-);
-
-
-package Turnkey::CompoundEdge;
-
-use strict;
-use base qw(Turnkey::Edge);
-use Class::MakeMethods::Template::Hash (
-  new => ['new'],
-  object => [
-			 'via'  => {class => 'Turnkey::Node'},
-			],
-  'array_of_objects -class Turnkey::Edge' => [ qw( edges ) ],
-);
-
-
 package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
+use SQL::Translator::Schema::Graph;
+use SQL::Translator::Schema::Graph::HyperEdge;
 use SQL::Translator::Utils qw(header_comment);
 use Data::Dumper;
 use Template;
 
-my %CDBI_auto_pkgs = (
+#{
+#  local $/;
+#  my $data = <SQL::Translator::Producer::Turnkey::DATA>;
+#  eval { $data };
+#  warn $@ if $@;
+#}
+
+my %producer2dsn = (
     MySQL      => 'mysql',
     PostgreSQL => 'Pg',
     Oracle     => 'Oracle',
@@ -84,9 +29,10 @@ my %CDBI_auto_pkgs = (
 sub produce {
     my $t             = shift;
 	my $create        = undef;
-    my $no_comments   = $t->no_comments;
-    my $schema        = $t->schema;
     my $args          = $t->producer_args;
+    my $no_comments   = $t->no_comments;
+	my $baseclass     = $args->{'main_pkg_name'} || $t->format_package_name('DBI');
+	my $graph         = SQL::Translator::Schema::Graph->new(translator => $t, baseclass => $baseclass);
 
 	my $parser_type   = (split /::/, $t->parser_type)[-1];
 
@@ -95,164 +41,74 @@ sub produce {
 	my %meta          = (
 						 format_fk => $t->format_fk_name,
 						 template  => $args->{'template'}      || '',
-						 baseclass => $args->{'main_pkg_name'} || $t->format_package_name('DBI'),
+						 baseclass => $baseclass,
 						 db_user   => $args->{'db_user'}       || '',
 						 db_pass   => $args->{'db_pass'}       || '',
 						 parser    => $t->parser_type,
 						 producer  => __PACKAGE__,
-						 dsn       => $args->{'dsn'} || sprintf( 'dbi:%s:_', $CDBI_auto_pkgs{ $parser_type }
-																 ? $CDBI_auto_pkgs{ $parser_type }
+						 dsn       => $args->{'dsn'} || sprintf( 'dbi:%s:_', $producer2dsn{ $parser_type }
+																 ? $producer2dsn{ $parser_type }
 																 : $parser_type
 															   )
 						 );
 
-
-	#
-	# build package objects
-	#
-	my %nodes;
-	my $order;
-	foreach my $table ($schema->get_tables){
-
-	  die __PACKAGE__." table ".$table->name." doesn't have a primary key!" unless $table->primary_key;
-	  die __PACKAGE__." table ".$table->name." can't have a composite primary key!" if ($table->primary_key->fields)[1];
-
-	  my $node = Turnkey::Node->new();
-	  $nodes{ $table->name } = $node;
-
-	  $node->order( ++$order );
-	  $node->name( $t->format_package_name($table->name) );
-	  $node->base( $meta{'baseclass'} );
-	  $node->table( $table );
-	  $node->primary_key( ($table->primary_key->fields)[0] );
-	  # Primary key may have a differenct accessor method name
-	  $node->primary_key_accessor(
-								  defined($t->format_pk_name)
-								  ? $t->format_pk_name->( $node->name, $node->primary_key )
-								  : undef
-								 );
-	}
-
-	foreach my $node (values %nodes){
-	  foreach my $field ($node->table->get_fields){
-		next unless $field->is_foreign_key;
-
-		my $that = $nodes{ $field->foreign_key_reference->reference_table };
-		#this means we have an incomplete schema
-		next unless $that;
-
-		my $edge = Turnkey::Edge->new(
-									  type => 'import',
-									  thisnode => $node,
-									  thisfield => $field,
-									  thatnode => $that,
-									  thatfield => ($field->foreign_key_reference->reference_fields)[0]
-									 );
-
-
-		$node->has($that->name, $node->has($that->name)+1);
-		$that->many($node->name, $that->many($node->name)+1);
-
-
-		$node->push_edges( $edge );
-		$that->push_edges( $edge->flip );
-	  }
-	}
-
-	#
-	# type MM relationships
-	#
-	foreach my $lnode (sort values %nodes){
-	  next if $lnode->table->is_data;
-	  foreach my $inode1 (sort values %nodes){
-		next if $inode1 eq $lnode;
-
-		my @inode1_imports = grep { $_->type eq 'import' and $_->thatnode eq $inode1 } $lnode->edges;
-		next unless @inode1_imports;
-
-		foreach my $inode2 (sort values %nodes){
-		  my %i = map {$_->thatnode->name => 1} grep { $_->type eq 'import'} $lnode->edges;
-		  if(scalar(keys %i) == 1) {
-		  } else {
-			last if $inode1 eq $inode2;
-		  }
-
-		  next if $inode2 eq $lnode;
-		  my @inode2_imports =  grep { $_->type eq 'import' and $_->thatnode eq $inode2 } $lnode->edges;
-		  next unless @inode2_imports;
-
- 		  my $cedge = Turnkey::CompoundEdge->new();
- 		  $cedge->via($lnode);
-
- 		  $cedge->push_edges( map {$_->flip} grep {$_->type eq 'import' and ($_->thatnode eq $inode1 or $_->thatnode eq $inode2)} $lnode->edges);
-
- 		  if(scalar(@inode1_imports) == 1 and scalar(@inode2_imports) == 1){
- 			$cedge->type('one2one');
-
-			$inode1->via($inode2->name,$inode1->via($inode2->name)+1);
-			$inode2->via($inode1->name,$inode2->via($inode1->name)+1);
- 		  }
- 		  elsif(scalar(@inode1_imports)  > 1 and scalar(@inode2_imports) == 1){
- 			$cedge->type('many2one');
-
-			$inode1->via($inode2->name,$inode1->via($inode2->name)+1);
-			$inode2->via($inode1->name,$inode2->via($inode1->name)+1);
- 		  }
- 		  elsif(scalar(@inode1_imports) == 1 and scalar(@inode2_imports)  > 1){
- 			#handled above
- 		  }
- 		  elsif(scalar(@inode1_imports)  > 1 and scalar(@inode2_imports)  > 1){
- 			$cedge->type('many2many');
-
-			$inode1->via($inode2->name,$inode1->via($inode2->name)+1);
-			$inode2->via($inode1->name,$inode2->via($inode1->name)+1);
- 		  }
-
- 		  $inode1->push_compoundedges($cedge);
- 		  $inode2->push_compoundedges($cedge) unless $inode1 eq $inode2;
-
-		}
-	  }
-	}
-
     #
     # create methods
     #
-	foreach my $node_from (values %nodes){
+	foreach my $node_from ($graph->node_values){
 	  next unless $node_from->table->is_data;
 	  foreach my $cedge ( $node_from->compoundedges ){
-		my $hyperedge = Turnkey::HyperEdge->new;
+
+		my $hyperedge = SQL::Translator::Schema::Graph::HyperEdge->new();
 
 		my $node_to;
-
 		foreach my $edge ($cedge->edges){
 		  if($edge->thisnode->name eq $node_from->name){
 			$hyperedge->vianode($edge->thatnode);
 
 			if($edge->thatnode->name ne $cedge->via->name){
-			  $node_to ||= $nodes{ $edge->thatnode->table->name };
+			  $node_to ||= $graph->node($edge->thatnode->table->name);
 			}
 
-			  $hyperedge->push_thisnode($edge->thisnode);
-			  $hyperedge->push_thisfield($edge->thisfield);
-			  $hyperedge->push_thisviafield($edge->thatfield);
+			$hyperedge->push_thisnode($edge->thisnode);
+			$hyperedge->push_thisfield($edge->thisfield);
+			$hyperedge->push_thisviafield($edge->thatfield);
 
 		  } else {
-
 			if($edge->thisnode->name ne $cedge->via->name){
-			  $node_to ||= $nodes{ $edge->thisnode->table->name };
+			  $node_to ||= $graph->node($edge->thisnode->table->name);
 			}
 
-			  $hyperedge->push_thatnode($edge->thisnode);
-			  $hyperedge->push_thatfield($edge->thisfield);
-			  $hyperedge->push_thatviafield($edge->thatfield);
+			$hyperedge->push_thatnode($edge->thisnode);
+			$hyperedge->push_thatfield($edge->thisfield);
+			$hyperedge->push_thatviafield($edge->thatfield);
 		  }
 		}
-
 		   if($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode == 1){ $hyperedge->type('one2one')   }
 		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode == 1){ $hyperedge->type('many2one')  }
 		elsif($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('one2many')  }
 		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('many2many') }
+
+		if(scalar($hyperedge->thisnode) > 1){
+warn $hyperedge;
+warn $hyperedge->type;
+		  foreach my $thisnode ( $hyperedge->thisnode ){
+#warn $thisnode;
+#warn $hyperedge->thatnode;
+warn $thisnode->name;
+
+eval { $hyperedge->thatnode->name }; warn $@ if $@;
+
+warn $hyperedge->thatnode if(defined($hyperedge->thatnode));
+
+
+#warn $hyperedge->thisfield->name;
+#warn $hyperedge->thatfield->name;
+#warn $hyperedge->thisviafield->name;
+#warn $hyperedge->thatviafield->name;
+		  }
+		}
+exit;
 
 #warn $node_from->name ."\t". $node_to->name ."\t". $hyperedge->type ."\t". $hyperedge->vianode->name;
 
@@ -260,15 +116,63 @@ sub produce {
 	  }
  	}
 
-	$meta{"nodes"} = \%nodes;
+	$meta{"nodes"} = $graph->node;
 	return(translateForm($t, \%meta));
 }
+
+sub translateForm {
+  my $t = shift;
+  my $meta = shift;
+  my $args = $t->producer_args;
+  my $type = $meta->{'template'};
+  my $tt2;
+  $tt2 = template($type);
+  my $template = Template->new({
+								EVAL_PERL => 1
+							   });
+
+  my $result;
+  # specify input filename, or file handle, text reference, etc.
+  # process input template, substituting variables
+  $template->process(\$tt2, $meta, \$result) || die $template->error();
+  return($result);
+}
+
+1;
+
+# -------------------------------------------------------------------
+
+=pod
+
+=head1 NAME
+
+SQL::Translator::Producer::Turnkey - create Turnkey classes from schema
+
+=head1 SYNOPSIS
+
+Creates output for use with the Turnkey project.
+
+=head1 SEE ALSO
+
+L<http://turnkey.sourceforge.net>.
+
+=head1 AUTHORS
+
+Allen Day E<lt>allenday@ucla.eduE<gt>
+Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
+Brian O\'Connor E<lt>brian.oconnor@excite.comE<gt>.
+
+=cut
+
+sub template {
+  my $type = shift;
 
 ###########################################
 # Here documents for the tt2 templates    #
 ###########################################
 
-my $turnkey_dbi_tt2 = <<EOF;
+  if($type eq 'classdbi'){
+	return <<EOF;
 [% MACRO printPackage(node) BLOCK %]
 # --------------------------------------------
 
@@ -281,6 +185,7 @@ use Class::DBI::Pager;
 [% printHasA(node.edges, node) %]
 [% printHasMany(node.edges, node) %]
 [% printHasCompound(node.compoundedges, node.hyperedges, node.name) %]
+[% printHasFriendly(node) %]
 [% END %]
 
 [% MACRO printPKAccessors(array, name) BLOCK %]
@@ -340,13 +245,27 @@ sub [% cedge.via.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfi
   [%- IF h.type == 'one2one' %]
 1sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
   [%- ELSIF h.type == 'one2many' %]
+    [% FOREACH thisnode = h.thisnode %]
 2
+ h.thatnode.name=[% h.thatnode.name %]
+ h.thatfield.name [% h.thatfield.name %]
+ h.thisnode.name=[% thisnode.name %]
+ h.thisfield.name=[% thisfield.name %]
+2
+    [% END %]
   [%- ELSIF h.type == 'many2one' %]
 3sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
   [%- ELSIF h.type == 'many2many' %]
 4
   [%- END %]
 [% END %]
+[% END %]
+
+[% MACRO printHasFriendly(node) BLOCK %]
+#
+# Has Friendly
+#
+hello, sailor!
 [% END %]
 
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
@@ -358,14 +277,15 @@ package [% baseclass %];
 use strict;
 use base qw(Class::DBI::Pg);
 
-Durian::Model::DBI->set_db('Main', '[% db_str  %]', '[% db_user %]', '[% db_pass %]');
+[% baseclass %]->set_db('Main', '[% db_str  %]', '[% db_user %]', '[% db_pass %]');
 
 [% FOREACH node = nodes %]
     [% printPackage(node.value) %]
 [% END %]
 EOF
 
-my $turnkey_atom_tt2 = <<'EOF';
+} elsif($type eq 'atom'){
+  return <<'EOF';
 [% ###### DOCUMENT START ###### %]
 
 [% FOREACH node = linkable %]
@@ -436,7 +356,8 @@ sub head {
 [% END %]
 EOF
 
-my $turnkey_xml_tt2 = <<EOF;
+} elsif($type eq 'xml'){
+  return <<EOF;
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Durian SYSTEM "Durian.dtd">
 <Durian>
@@ -488,7 +409,8 @@ my $turnkey_xml_tt2 = <<EOF;
 </Durian>
 EOF
 
-my $turnkey_template_tt2 = <<'EOF';
+} elsif($type eq 'template'){
+  return <<'EOF';
 [% TAGS [- -] %]
 [% MACRO renderpanel(panel,dbobject) BLOCK %]
   <!-- begin panel: [% panel.label %] -->
@@ -553,56 +475,7 @@ my $turnkey_template_tt2 = <<'EOF';
 [% END %]
 EOF
 
-
-sub translateForm
-{
-  my $t = shift;
-  my $meta = shift;
-#  my $output = shift;
-  my $args = $t->producer_args;
-  my $tt2     = $meta->{'template'};
-  my $tt2Ref;
-
-     if ($tt2 eq 'atom')     { $tt2Ref = \$turnkey_atom_tt2;     }
-  elsif ($tt2 eq 'classdbi') { $tt2Ref = \$turnkey_dbi_tt2;      }
-  elsif ($tt2 eq 'xml')      { $tt2Ref = \$turnkey_xml_tt2;      }
-  elsif ($tt2 eq 'template') { $tt2Ref = \$turnkey_template_tt2; }
-  else                       { die __PACKAGE__." didn't recognize your template option: $tt2" }
-
-  my $config = {
-      EVAL_PERL    => 1,               # evaluate Perl code blocks
-  };
-
-  # create Template object
-  my $template = Template->new($config);
-
-  my $result;
-  # specify input filename, or file handle, text reference, etc.
-  # process input template, substituting variables
-  $template->process($tt2Ref, $meta, \$result) || die $template->error();
-  return($result);
-}
-
 1;
 
-# -------------------------------------------------------------------
-
-=pod
-
-=head1 NAME
-
-SQL::Translator::Producer::Turnkey - create Turnkey classes from schema
-
-=head1 SYNOPSIS
-
-Creates output for use with the Turnkey project.
-
-=head1 SEE ALSO
-
-L<http://turnkey.sourceforge.net>.
-
-=head1 AUTHORS
-
-Allen Day E<lt>allenday@ucla.eduE<gt>
-Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
-Brian O'Connor E<lt>brian.oconnor@excite.comE<gt>.
+}
+}
