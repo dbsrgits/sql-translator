@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.15 2003-01-27 17:04:43 dlc Exp $
+# $Id: Translator.pm,v 1.16 2003-01-29 13:29:49 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -22,48 +22,12 @@ package SQL::Translator;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
-=head1 NAME
-
-SQL::Translator - convert schema from one database to another
-
-=head1 SYNOPSIS
-
-  use SQL::Translator;
-
-  my $translator     = SQL::Translator->new(
-      xlate          => $xlate || {},    # Overrides for field translation
-      debug          => $debug,          # Print debug info
-      trace          => $trace,          # Print Parse::RecDescent trace
-      no_comments    => $no_comments,    # Don't include comments in output
-      show_warnings  => $show_warnings,  # Print name mutations, conflicts
-      add_drop_table => $add_drop_table, # Add "drop table" statements
-  );
-
-  my $output     = $translator->translate(
-      from       => "MySQL",
-      to         => "Oracle",
-      filename   => $file,
-  ) or die $translator->error;
-
-  print $output;
-
-=head1 DESCRIPTION
-
-This module attempts to simplify the task of converting one database
-create syntax to another through the use of Parsers (which understand
-the source format) and Producers (which understand the destination
-format).  The idea is that any Parser can be used with any Producer in
-the conversion process.  So, if you wanted Postgres-to-Oracle, you
-would use the Postgres parser and the Oracle producer.
-
-=cut
-
 use strict;
 use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -79,35 +43,6 @@ use IO::Dir;
 # to be parsed is the second value ($_[1])
 # ----------------------------------------------------------------------
 $DEFAULT_SUB = sub { $_[1] } unless defined $DEFAULT_SUB;
-
-=head1 CONSTRUCTOR
-
-The constructor is called B<new>, and accepts a optional hash of options.
-Valid options are:
-
-=over 4
-
-=item parser (aka from)
-
-=item parser_args
-
-=item producer (aka to)
-
-=item producer_args
-
-=item filename (aka file)
-
-=item data
-
-=item debug
-
-=back
-
-All options are, well, optional; these attributes can be set via
-instance methods.  Internally, they are; no (non-syntactical)
-advantage is gained by passing options to the constructor.
-
-=cut
 
 # ----------------------------------------------------------------------
 # init([ARGS])
@@ -175,15 +110,9 @@ sub init {
     return $self;
 }
 
-=head1 METHODS
-
-=head2 B<add_drop_table>
-
-Toggles whether or not to add "DROP TABLE" statements just before the 
-create definitions.
-
-=cut
-
+# ----------------------------------------------------------------------
+# add_drop_table([$bool])
+# ----------------------------------------------------------------------
 sub add_drop_table {
     my $self = shift;
     if ( defined (my $arg = shift) ) {
@@ -193,29 +122,18 @@ sub add_drop_table {
 }
 
 
-=head2 B<custom_translate>
-
-Allows the user to override default translation of fields.  For example,
-if a MySQL "text" field would normally be converted to a "long" for Oracle,
-the user could specify to change it to a "CLOB."  Accepts a hashref where
-keys are the "from" value and values are the "to," returns the current
-value of the field.
-
-=cut
-
+# ----------------------------------------------------------------------
+# custom_translate([$bool])
+# ----------------------------------------------------------------------
 sub custom_translate {
     my $self = shift;
     $self->{'custom_translate'} = shift if @_;
     return $self->{'custom_translate'} || {};
 }
 
-=head2 B<no_comments>
-
-Toggles whether to print comments in the output.  Accepts a true or false
-value, returns the current value.
-
-=cut
-
+# ----------------------------------------------------------------------
+# no_comments([$bool])
+# ----------------------------------------------------------------------
 sub no_comments {
     my $self = shift;
     my $arg  = shift;
@@ -225,76 +143,12 @@ sub no_comments {
     return $self->{'no_comments'} || 0;
 }
 
-=head2 B<producer>
 
-The B<producer> method is an accessor/mutator, used to retrieve or
-define what subroutine is called to produce the output.  A subroutine
-defined as a producer will be invoked as a function (I<not a method>)
-and passed 2 parameters: its container SQL::Translator instance and a
-data structure.  It is expected that the function transform the data
-structure to a string.  The SQL::Transformer instance is provided for
-informational purposes; for example, the type of the parser can be
-retrieved using the B<parser_type> method, and the B<error> and
-B<debug> methods can be called when needed.
-
-When defining a producer, one of several things can be passed
-in:  A module name (e.g., My::Groovy::Producer), a module name
-relative to the SQL::Translator::Producer namespace (e.g., MySQL), a
-module name and function combination (My::Groovy::Producer::transmogrify),
-or a reference to an anonymous subroutine.  If a full module name is
-passed in (for the purposes of this method, a string containing "::"
-is considered to be a module name), it is treated as a package, and a
-function called "produce" will be invoked: $modulename::produce.  If
-$modulename cannot be loaded, the final portion is stripped off and
-treated as a function.  In other words, if there is no file named
-My/Groovy/Producer/transmogrify.pm, SQL::Translator will attempt to load
-My/Groovy/Producer.pm and use transmogrify as the name of the function,
-instead of the default "produce".
-
-  my $tr = SQL::Translator->new;
-
-  # This will invoke My::Groovy::Producer::produce($tr, $data)
-  $tr->producer("My::Groovy::Producer");
-
-  # This will invoke SQL::Translator::Producer::Sybase::produce($tr, $data)
-  $tr->producer("Sybase");
-
-  # This will invoke My::Groovy::Producer::transmogrify($tr, $data),
-  # assuming that My::Groovy::Producer::transmogrify is not a module
-  # on disk.
-  $tr->producer("My::Groovy::Producer::transmogrify");
-
-  # This will invoke the referenced subroutine directly, as
-  # $subref->($tr, $data);
-  $tr->producer(\&my_producer);
-
-There is also a method named B<producer_type>, which is a string
-containing the classname to which the above B<produce> function
-belongs.  In the case of anonymous subroutines, this method returns
-the string "CODE".
-
-Finally, there is a method named B<producer_args>, which is both an
-accessor and a mutator.  Arbitrary data may be stored in name => value
-pairs for the producer subroutine to access:
-
-  sub My::Random::producer {
-      my ($tr, $data) = @_;
-      my $pr_args = $tr->producer_args();
-
-      # $pr_args is a hashref.
-
-Extra data passed to the B<producer> method is passed to
-B<producer_args>:
-
-  $tr->producer("xSV", delimiter => ',\s*');
-
-  # In SQL::Translator::Producer::xSV:
-  my $args = $tr->producer_args;
-  my $delimiter = $args->{'delimiter'}; # value is ,\s*
-
-=cut
-
-# producer and producer_type
+# ----------------------------------------------------------------------
+# producer([$producer_spec])
+#
+# Get or set the producer for the current translator.
+# ----------------------------------------------------------------------
 sub producer {
     my $self = shift;
 
@@ -359,7 +213,7 @@ sub producer {
 };
 
 # ----------------------------------------------------------------------
-# producer_type
+# producer_type()
 #
 # producer_type is an accessor that allows producer subs to get
 # information about their origin.  This is poptentially important;
@@ -370,62 +224,25 @@ sub producer {
 sub producer_type { $_[0]->{'producer_type'} }
 
 # ----------------------------------------------------------------------
-# producer_args
+# producer_args([\%args])
 #
 # Arbitrary name => value pairs of paramters can be passed to a
 # producer using this method.
 #
-# XXX All calls to producer_args with a value clobbers old values!
-#     Should probably check if $_[0] is undef, and delete stored
-#     args if it is:
-#
-#     if (@_) {
-#         unless (defined $_[0]) {
-#             %{ $self->{'producer_args'} } = ();
-#         }
-#         my $args = isa($_[0], 'HASH') ? shift : { @_ };
-#         %{ $self->{'producer_args'} } = (
-#                                           %{ $self->{'producer_args'} },
-#                                           %{ $args }
-#                                         );
-#     }
+# If the first argument passed in is undef, then the hash of arguments
+# is cleared; all subsequent elements are added to the hash of name,
+# value pairs stored as producer_args.
 # ----------------------------------------------------------------------
 sub producer_args {
     my $self = shift;
-    if (@_) {
-        my $args = isa($_[0], 'HASH') ? shift : { @_ };
-        $self->{'producer_args'} = $args;
-    }
-    $self->{'producer_args'};
+    return $self->_args("producer", @_);
 }
 
-=head2 B<parser>
 
-The B<parser> method defines or retrieves a subroutine that will be
-called to perform the parsing.  The basic idea is the same as that of
-B<producer> (see above), except the default subroutine name is
-"parse", and will be invoked as $module_name::parse($tr, $data).
-Also, the parser subroutine will be passed a string containing the
-entirety of the data to be parsed.
 
-  # Invokes SQL::Translator::Parser::MySQL::parse()
-  $tr->parser("MySQL");
-
-  # Invokes My::Groovy::Parser::parse()
-  $tr->parser("My::Groovy::Parser");
-
-  # Invoke an anonymous subroutine directly
-  $tr->parser(sub {
-    my $dumper = Data::Dumper->new([ $_[1] ], [ "SQL" ]);
-    $dumper->Purity(1)->Terse(1)->Deepcopy(1);
-    return $dumper->Dump;
-  });
-
-There is also B<parser_type> and B<parser_args>, which perform
-analogously to B<producer_type> and B<producer_args>
-
-=cut
-
+# ----------------------------------------------------------------------
+# parser([$parser_spec])
+# ----------------------------------------------------------------------
 sub parser {
     my $self = shift;
 
@@ -492,26 +309,10 @@ sub parser {
 # ----------------------------------------------------------------------
 sub parser_type { $_[0]->{'parser_type'} }
 
-# ----------------------------------------------------------------------
-# XXX See notes on producer_args, above
 sub parser_args {
     my $self = shift;
-    if (@_) {
-        my $args = isa($_[0], 'HASH') ? shift : { @_ };
-        $self->{'parser_args'} = $args;
-    }
-    $self->{'parser_args'};
-} 
-
-=head2 B<show_warnings>
-
-Toggles whether to print warnings of name conflicts, identifier
-mutations, etc.  Probably only generated by producers to let the user
-know when something won't translate very smoothly (e.g., MySQL "enum"
-fields into Oracle).  Accepts a true or false value, returns the
-current value.
-
-=cut
+    return $self->_args("parser", @_);
+}
 
 sub show_warnings {
     my $self = shift;
@@ -522,77 +323,6 @@ sub show_warnings {
     return $self->{'show_warnings'} || 0;
 }
 
-=head2 B<translate>
-
-The B<translate> method calls the subroutines referenced by the
-B<parser> and B<producer> data members (described above).  It accepts
-as arguments a number of things, in key => value format, including
-(potentially) a parser and a producer (they are passed directly to the
-B<parser> and B<producer> methods).
-
-Here is how the parameter list to B<translate> is parsed:
-
-=over
-
-=item *
-
-1 argument means it's the data to be parsed; which could be a string
-(filename) or a refernce to a scalar (a string stored in memory), or a
-reference to a hash, which is parsed as being more than one argument
-(see next section).
-
-  # Parse the file /path/to/datafile
-  my $output = $tr->translate("/path/to/datafile");
-
-  # Parse the data contained in the string $data
-  my $output = $tr->translate(\$data);
-
-=item *
-
-More than 1 argument means its a hash of things, and it might be
-setting a parser, producer, or datasource (this key is named
-"filename" or "file" if it's a file, or "data" for a SCALAR reference.
-
-  # As above, parse /path/to/datafile, but with different producers
-  for my $prod ("MySQL", "XML", "Sybase") {
-      print $tr->translate(
-                producer => $prod,
-                filename => "/path/to/datafile",
-            );
-  }
-
-  # The filename hash key could also be:
-      datasource => \$data,
-
-You get the idea.
-
-=back
-
-=head2 B<filename>, B<data>
-
-Using the B<filename> method, the filename of the data to be parsed
-can be set. This method can be used in conjunction with the B<data>
-method, below.  If both the B<filename> and B<data> methods are
-invoked as mutators, the data set in the B<data> method is used.
-
-    $tr->filename("/my/data/files/create.sql");
-
-or:
-
-    my $create_script = do {
-        local $/;
-        open CREATE, "/my/data/files/create.sql" or die $!;
-        <CREATE>;
-    };
-    $tr->data(\$create_script);
-
-B<filename> takes a string, which is interpreted as a filename.
-B<data> takes a reference to a string, which is used as the data to be
-parsed.  If a filename is set, then that file is opened and read when
-the B<translate> method is called, as long as the data instance
-variable is not set.
-
-=cut
 
 # filename - get or set the filename
 sub filename {
@@ -616,20 +346,33 @@ sub filename {
 }
 
 # ----------------------------------------------------------------------
-# data - get or set the data
+# data([$data])
+#
 # if $self->{'data'} is not set, but $self->{'filename'} is, then
-# $self->{'filename'} is opened and read, whith the results put into
+# $self->{'filename'} is opened and read, with the results put into
 # $self->{'data'}.
+# ----------------------------------------------------------------------
 sub data {
     my $self = shift;
 
-    # Set $self->{'data'} to $_[0], if it is provided.
+    # Set $self->{'data'} based on what was passed in.  We will
+    # accept a number of things; do our best to get it right.
     if (@_) {
         my $data = shift;
         if (isa($data, "SCALAR")) {
             $self->{'data'} =  $data;
         }
-        elsif (! ref $data) {
+        else {
+            if (isa($data, 'ARRAY')) {
+                $data = join '', @$data;
+            }
+            elsif (isa($data, 'GLOB')) {
+                local $/;
+                $data = <$data>;
+            }
+            elsif (! ref $data && @_) {
+                $data = join '', $data, @_;
+            }
             $self->{'data'} = \$data;
         }
     }
@@ -656,13 +399,6 @@ sub data {
     return $self->{'data'};
 }
 
-=pod
-
-=head2 B<trace>
-
-Turns on/off the tracing option of Parse::RecDescent.
-
-=cut
 
 sub trace {
     my $self = shift;
@@ -674,10 +410,22 @@ sub trace {
 }
 
 # ----------------------------------------------------------------------
-sub translate {
-    my $self = shift;
-    my ($args, $parser, $parser_type, $producer, $producer_type);
-    my ($parser_output, $producer_output);
+# translate([source], [\%args])
+#
+# translate does the actual translation.  The main argument is the
+# source of the data to be translated, which can be a filename, scalar
+# reference, or glob reference.
+#
+# Alternatively, translate takes optional arguements, which are passed
+# to the appropriate places.  Most notable of these arguments are
+# parser and producer, which can be used to set the parser and
+# producer, respectively.  This is the applications last chance to set
+# these.
+#
+# translate returns a string.
+# ----------------------------------------------------------------------
+sub translate { my $self = shift; my ($args, $parser, $parser_type,
+$producer, $producer_type); my ($parser_output, $producer_output);
 
     # Parse arguments
     if (@_ == 1) { 
@@ -686,6 +434,12 @@ sub translate {
             # yep, a hashref
             $self->debug("translate: Got a hashref\n");
             $args = $_[0];
+        }
+
+        # Passed a GLOB reference, i.e., filehandle
+        elsif (isa($_[0], 'GLOB')) {
+            $self->debug("translate: Got a GLOB reference\n");
+            $self->data($_[0]);
         }
 
         # Passed a reference to a string containing the data
@@ -784,29 +538,93 @@ sub translate {
 }
 
 # ----------------------------------------------------------------------
-sub list_producers {
-    require SQL::Translator::Producer;
-    my $path = catfile(dirname($INC{'SQL/Translator/Producer.pm'}), "Producer");
-    my $dh = IO::Dir->new($path);
-
-    my @available = map { join "::", "SQL::Translator::Producer", $_ }
-                    grep /\.pm$/, $dh->read;
-
-    return @available;
+# list_parsers()
+#
+# Hacky sort of method to list all available parsers.  This has
+# several problems:
+#
+#   - Only finds things in the SQL::Translator::Parser namespace
+#
+#   - Only finds things that are located in the same directory
+#     as SQL::Translator::Parser.  Yeck.
+#
+# This method will fail in several very likely cases:
+#
+#   - Parser modules in different namespaces
+#
+#   - Parser modules in the SQL::Translator::Parser namespace that
+#     have any XS componenets will be installed in
+#     arch_lib/SQL/Translator.
+#
+# ----------------------------------------------------------------------
+sub list_parsers {
+    return _list("parsers");
 }
 
 # ----------------------------------------------------------------------
-sub list_parsers {
-    require SQL::Translator::Parser;
-    my $path = catfile(dirname($INC{'SQL/Translator/Parser.pm'}), "Parser");
-    my $dh = IO::Dir->new($path);
-
-    my @available = map { join "::", "SQL::Translator::Parser", $_ }
-                    grep /\.pm$/, $dh->read;
-
-    return @available;
+# list_producers()
+#
+# See notes for list_parsers(), above; all the problems apply to
+# list_producers as well.
+# ----------------------------------------------------------------------
+sub list_producers {
+    return _list("producers");
 }
 
+
+# ======================================================================
+# Private Methods
+# ======================================================================
+
+# ----------------------------------------------------------------------
+# _args($type, \%args);
+#
+# Gets or sets ${type}_args.  Called by parser_args and producer_args.
+# ----------------------------------------------------------------------
+sub _args {
+    my $self = shift;
+    my $type = shift;
+    $type = "${type}_args" unless $type =~ /_args$/;
+
+    unless (defined $self->{$type} && isa($self->{$type}, 'HASH')) {
+        $self->{$type} = { };
+    }
+
+    if (@_) {
+        # If the first argument is an explicit undef (remember, we
+        # don't get here unless there is stuff in @_), then we clear
+        # out the producer_args hash.
+        if (! defined $_[0]) {
+            shift @_;
+            %{$self->{$type}} = ();
+        }
+
+        my $args = isa($_[0], 'HASH') ? shift : { @_ };
+        %{$self->{$type}} = (%{$self->{$type}}, %$args);
+    }
+
+    $self->{$type};
+}
+
+
+# ----------------------------------------------------------------------
+# _list($type)
+# ----------------------------------------------------------------------
+sub _list {
+    my $type = ucfirst lc $_[0] || return ();
+
+    load("SQL::Translator::$type");
+    my $path = catfile(dirname($INC{'SQL/Translator/$type.pm'}), $type);
+    my $dh = IO::Dir->new($path);
+
+    return map { join "::", "SQL::Translator::$type", $_ }
+                 grep /\.pm$/, $dh->read;
+}
+
+# ----------------------------------------------------------------------
+# load($module)
+#
+# Loads a Perl module.  Short circuits if a module is already loaded.
 # ----------------------------------------------------------------------
 sub load {
     my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
@@ -819,14 +637,280 @@ sub load {
 }
 
 # ----------------------------------------------------------------------
-sub isa($$) { UNIVERSAL::isa($_[0], $_[1]) }
+# isa($ref, $type)
+#
+# Calls UNIVERSAL::isa($ref, $type).  I think UNIVERSAL::isa is ugly,
+# but I like function overhead.
+# ----------------------------------------------------------------------
+sub isa($$) {
+    my ($ref, $type) = @_;
+    return UNIVERSAL::isa($ref, $type);
+}
 
 1;
-
 #-----------------------------------------------------
 # Rescue the drowning and tie your shoestrings.
 # Henry David Thoreau 
 #-----------------------------------------------------
+
+__END__
+
+=head1 NAME
+
+SQL::Translator - convert schema from one database to another
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $translator     = SQL::Translator->new(
+      xlate          => $xlate || {},    # Overrides for field translation
+      debug          => $debug,          # Print debug info
+      trace          => $trace,          # Print Parse::RecDescent trace
+      no_comments    => $no_comments,    # Don't include comments in output
+      show_warnings  => $show_warnings,  # Print name mutations, conflicts
+      add_drop_table => $add_drop_table, # Add "drop table" statements
+  );
+
+  my $output     = $translator->translate(
+      from       => "MySQL",
+      to         => "Oracle",
+      filename   => $file,
+  ) or die $translator->error;
+
+  print $output;
+
+=head1 DESCRIPTION
+
+This module attempts to simplify the task of converting one database
+create syntax to another through the use of Parsers (which understand
+the source format) and Producers (which understand the destination
+format).  The idea is that any Parser can be used with any Producer in
+the conversion process.  So, if you wanted Postgres-to-Oracle, you
+would use the Postgres parser and the Oracle producer.
+
+=head1 CONSTRUCTOR
+
+The constructor is called B<new>, and accepts a optional hash of options.
+Valid options are:
+
+=over 4
+
+=item parser (aka from)
+
+=item parser_args
+
+=item producer (aka to)
+
+=item producer_args
+
+=item filename (aka file)
+
+=item data
+
+=item debug
+
+=back
+
+All options are, well, optional; these attributes can be set via
+instance methods.  Internally, they are; no (non-syntactical)
+advantage is gained by passing options to the constructor.
+
+=head1 METHODS
+
+=head2 B<add_drop_table>
+
+Toggles whether or not to add "DROP TABLE" statements just before the 
+create definitions.
+
+=head2 B<custom_translate>
+
+Allows the user to override default translation of fields.  For example,
+if a MySQL "text" field would normally be converted to a "long" for Oracle,
+the user could specify to change it to a "CLOB."  Accepts a hashref where
+keys are the "from" value and values are the "to," returns the current
+value of the field.
+
+=head2 B<no_comments>
+
+Toggles whether to print comments in the output.  Accepts a true or false
+value, returns the current value.
+
+=head2 B<producer>
+
+The B<producer> method is an accessor/mutator, used to retrieve or
+define what subroutine is called to produce the output.  A subroutine
+defined as a producer will be invoked as a function (I<not a method>)
+and passed 2 parameters: its container SQL::Translator instance and a
+data structure.  It is expected that the function transform the data
+structure to a string.  The SQL::Transformer instance is provided for
+informational purposes; for example, the type of the parser can be
+retrieved using the B<parser_type> method, and the B<error> and
+B<debug> methods can be called when needed.
+
+When defining a producer, one of several things can be passed
+in:  A module name (e.g., My::Groovy::Producer), a module name
+relative to the SQL::Translator::Producer namespace (e.g., MySQL), a
+module name and function combination (My::Groovy::Producer::transmogrify),
+or a reference to an anonymous subroutine.  If a full module name is
+passed in (for the purposes of this method, a string containing "::"
+is considered to be a module name), it is treated as a package, and a
+function called "produce" will be invoked: $modulename::produce.  If
+$modulename cannot be loaded, the final portion is stripped off and
+treated as a function.  In other words, if there is no file named
+My/Groovy/Producer/transmogrify.pm, SQL::Translator will attempt to load
+My/Groovy/Producer.pm and use transmogrify as the name of the function,
+instead of the default "produce".
+
+  my $tr = SQL::Translator->new;
+
+  # This will invoke My::Groovy::Producer::produce($tr, $data)
+  $tr->producer("My::Groovy::Producer");
+
+  # This will invoke SQL::Translator::Producer::Sybase::produce($tr, $data)
+  $tr->producer("Sybase");
+
+  # This will invoke My::Groovy::Producer::transmogrify($tr, $data),
+  # assuming that My::Groovy::Producer::transmogrify is not a module
+  # on disk.
+  $tr->producer("My::Groovy::Producer::transmogrify");
+
+  # This will invoke the referenced subroutine directly, as
+  # $subref->($tr, $data);
+  $tr->producer(\&my_producer);
+
+There is also a method named B<producer_type>, which is a string
+containing the classname to which the above B<produce> function
+belongs.  In the case of anonymous subroutines, this method returns
+the string "CODE".
+
+Finally, there is a method named B<producer_args>, which is both an
+accessor and a mutator.  Arbitrary data may be stored in name => value
+pairs for the producer subroutine to access:
+
+  sub My::Random::producer {
+      my ($tr, $data) = @_;
+      my $pr_args = $tr->producer_args();
+
+      # $pr_args is a hashref.
+
+Extra data passed to the B<producer> method is passed to
+B<producer_args>:
+
+  $tr->producer("xSV", delimiter => ',\s*');
+
+  # In SQL::Translator::Producer::xSV:
+  my $args = $tr->producer_args;
+  my $delimiter = $args->{'delimiter'}; # value is ,\s*
+
+=head2 B<parser>
+
+The B<parser> method defines or retrieves a subroutine that will be
+called to perform the parsing.  The basic idea is the same as that of
+B<producer> (see above), except the default subroutine name is
+"parse", and will be invoked as $module_name::parse($tr, $data).
+Also, the parser subroutine will be passed a string containing the
+entirety of the data to be parsed.
+
+  # Invokes SQL::Translator::Parser::MySQL::parse()
+  $tr->parser("MySQL");
+
+  # Invokes My::Groovy::Parser::parse()
+  $tr->parser("My::Groovy::Parser");
+
+  # Invoke an anonymous subroutine directly
+  $tr->parser(sub {
+    my $dumper = Data::Dumper->new([ $_[1] ], [ "SQL" ]);
+    $dumper->Purity(1)->Terse(1)->Deepcopy(1);
+    return $dumper->Dump;
+  });
+
+There is also B<parser_type> and B<parser_args>, which perform
+analogously to B<producer_type> and B<producer_args>
+
+=head2 B<show_warnings>
+
+Toggles whether to print warnings of name conflicts, identifier
+mutations, etc.  Probably only generated by producers to let the user
+know when something won't translate very smoothly (e.g., MySQL "enum"
+fields into Oracle).  Accepts a true or false value, returns the
+current value.
+
+=head2 B<translate>
+
+The B<translate> method calls the subroutines referenced by the
+B<parser> and B<producer> data members (described above).  It accepts
+as arguments a number of things, in key => value format, including
+(potentially) a parser and a producer (they are passed directly to the
+B<parser> and B<producer> methods).
+
+Here is how the parameter list to B<translate> is parsed:
+
+=over
+
+=item *
+
+1 argument means it's the data to be parsed; which could be a string
+(filename) or a refernce to a scalar (a string stored in memory), or a
+reference to a hash, which is parsed as being more than one argument
+(see next section).
+
+  # Parse the file /path/to/datafile
+  my $output = $tr->translate("/path/to/datafile");
+
+  # Parse the data contained in the string $data
+  my $output = $tr->translate(\$data);
+
+=item *
+
+More than 1 argument means its a hash of things, and it might be
+setting a parser, producer, or datasource (this key is named
+"filename" or "file" if it's a file, or "data" for a SCALAR reference.
+
+  # As above, parse /path/to/datafile, but with different producers
+  for my $prod ("MySQL", "XML", "Sybase") {
+      print $tr->translate(
+                producer => $prod,
+                filename => "/path/to/datafile",
+            );
+  }
+
+  # The filename hash key could also be:
+      datasource => \$data,
+
+You get the idea.
+
+=back
+
+=head2 B<filename>, B<data>
+
+Using the B<filename> method, the filename of the data to be parsed
+can be set. This method can be used in conjunction with the B<data>
+method, below.  If both the B<filename> and B<data> methods are
+invoked as mutators, the data set in the B<data> method is used.
+
+    $tr->filename("/my/data/files/create.sql");
+
+or:
+
+    my $create_script = do {
+        local $/;
+        open CREATE, "/my/data/files/create.sql" or die $!;
+        <CREATE>;
+    };
+    $tr->data(\$create_script);
+
+B<filename> takes a string, which is interpreted as a filename.
+B<data> takes a reference to a string, which is used as the data to be
+parsed.  If a filename is set, then that file is opened and read when
+the B<translate> method is called, as long as the data instance
+variable is not set.
+
+=pod
+
+=head2 B<trace>
+
+Turns on/off the tracing option of Parse::RecDescent.
 
 =pod
 
@@ -859,4 +943,3 @@ L<SQL::Translator::Parser>,
 L<SQL::Translator::Producer>,
 L<Parse::RecDescent>
 
-=cut
