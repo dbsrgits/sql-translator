@@ -1,9 +1,9 @@
 #!/usr/local/bin/perl
 # vim: set ft=perl:
 
-use Test::More;
-
-plan tests => 1;
+use strict;
+use Test::More tests => 1;
+use SQL::Translator;
 
 my $create = q|
 CREATE TABLE random (
@@ -13,12 +13,10 @@ CREATE TABLE random (
 );
 |;
 
-use SQL::Translator;
-use Data::Dumper;
+my $tr       = SQL::Translator->new(
+    parser   => "MySQL",
+    producer => "Oracle"
+);
 
-my $tr = SQL::Translator->new(parser   => "MySQL",
-                              producer => "Oracle"
-                             );
-
-ok($tr->translate(\$create));
+ok( $tr->translate(\$create), 'Translate MySQL to Oracle' );
 
