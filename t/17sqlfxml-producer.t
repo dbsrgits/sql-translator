@@ -284,19 +284,19 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <sqlt:schema database="" name="" xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlt:table order="3" name="Basic">
+  <sqlt:table name="Basic" order="3">
     <sqlt:fields>
-      <sqlt:field is_primary_key="1" is_foreign_key="0" name="id" comments="comment on id field" size="10" data_type="integer" is_auto_increment="1" order="9" is_nullable="0" />
-      <sqlt:field is_primary_key="0" is_foreign_key="0" name="title" comments="" size="100" is_auto_increment="0" data_type="varchar" order="10" default_value="hello" is_nullable="0" />
-      <sqlt:field is_primary_key="0" is_foreign_key="0" name="description" comments="" size="65535" is_auto_increment="0" data_type="text" order="11" default_value="" is_nullable="1" />
-      <sqlt:field is_primary_key="0" is_foreign_key="0" name="email" comments="" size="255" is_auto_increment="0" data_type="varchar" order="12" is_nullable="1" />
+      <sqlt:field comments="comment on id field" data_type="integer" is_auto_increment="1" is_foreign_key="0" is_nullable="0" is_primary_key="1" name="id" order="9" size="10" />
+      <sqlt:field comments="" data_type="varchar" default_value="hello" is_auto_increment="0" is_foreign_key="0" is_nullable="0" is_primary_key="0" name="title" order="10" size="100" />
+      <sqlt:field comments="" data_type="text" default_value="" is_auto_increment="0" is_foreign_key="0" is_nullable="1" is_primary_key="0" name="description" order="11" size="65535" />
+      <sqlt:field comments="" data_type="varchar" is_auto_increment="0" is_foreign_key="0" is_nullable="1" is_primary_key="0" name="email" order="12" size="255" />
     </sqlt:fields>
     <sqlt:indices>
-      <sqlt:index options="" name="titleindex" fields="title" type="NORMAL" />
+      <sqlt:index fields="title" name="titleindex" options="" type="NORMAL" />
     </sqlt:indices>
     <sqlt:constraints>
-      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="id" expression="" type="PRIMARY KEY" />
-      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="email" expression="" type="UNIQUE" />
+      <sqlt:constraint deferrable="1" expression="" fields="id" match_type="" name="" on_delete="" on_update="" options="" reference_table="" type="PRIMARY KEY" />
+      <sqlt:constraint deferrable="1" expression="" fields="email" match_type="" name="" on_delete="" on_update="" options="" reference_table="" type="UNIQUE" />
     </sqlt:constraints>
   </sqlt:table>
 </sqlt:schema>

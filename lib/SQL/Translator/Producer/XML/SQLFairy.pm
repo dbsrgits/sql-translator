@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.7 2003-10-20 13:15:23 grommit Exp $
+# $Id: SQLFairy.pm,v 1.8 2003-10-21 14:53:08 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -227,8 +227,11 @@ sub xml_obj {
 			($_ => ref($val) eq 'ARRAY' ? join(', ', @$val) : $val);
 		} @meths;
 		foreach ( keys %attr ) { delete $attr{$_} unless defined $attr{$_}; }
-		$empty_tag ? $xml->emptyTag( [ $Namespace => $tag ], %attr )
-		           : $xml->startTag( [ $Namespace => $tag ], %attr );
+        # Convert to array to ensure consistant (ie not hash) ordering of
+        # attribs
+        my @attr = map { ($_ => $attr{$_}) } sort keys %attr;
+        $empty_tag ? $xml->emptyTag( [ $Namespace => $tag ], @attr )
+		           : $xml->startTag( [ $Namespace => $tag ], @attr );
 	}
 	else {
 		$xml->startTag( [ $Namespace => $tag ] );
