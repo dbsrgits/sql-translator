@@ -1,296 +1,73 @@
 package SQL::Translator::XMI::Parser;
 
+# -------------------------------------------------------------------
+# $Id: Parser.pm,v 1.5 2003-09-29 12:02:35 grommit Exp $
+# -------------------------------------------------------------------
+# Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
+
 =pod
 
 =head1 NAME
 
-SQL::Translator::XMI::Parser
+SQL::Translator::XMI::Parser - XMI Parser class for use in SQL Fairy's XMI 
+parser.
 
 =cut
 
 use strict;
 use 5.006_001;
-our $VERSION = "0.01";
+use vars qw/$VERSION/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
+use Data::Dumper;
 use XML::XPath;
 use XML::XPath::XMLParser;
 use Storable qw/dclone/;
 
 # Spec
-#=============================================================================
+#------
+# See SQL::Translator::XMI::Parser::V12 and SQL::Translator::XMI::Parser:V10
+# for examples.
 #
-# Describes the 2 xmi formats 1.2 and 1.0. Neither is complete!
+# Hash ref used to describe the 2 xmi formats 1.2 and 1.0. Neither is complete!
 #
 # NB The names of the data keys MUST be the same for both specs so the
 # data structures returned are the same.
 #
-# There is currently no way to set the data key name for attrib_data, it just
+# TODO
+# 
+# * There is currently no way to set the data key name for attrib_data, it just
 # uses the attribute name from the XMI. This isn't a problem at the moment as
 # xmi1.0 names all these things with tags so we don't need the attrib data!
 # Also use of names seems to be consistant between the versions.
 #
-
-my $SPECS = {};
-
-my $spec12 = $SPECS->{"1.2"} = {};
-
-$spec12->{class} = {
-    name    => "class",
-    plural  => "classes",
-	isRoot  => 1,
-    default_path => '//UML:Class[@xmi.id]',
-    attrib_data => 
-        [qw/name visibility isSpecification isRoot isLeaf isAbstract isActive/],
-    path_data => [
-        { 
-            name  => "stereotype",
-            path  => 'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name',
-            default => "",
-        },
-    ],
-    kids => [
-        { 
-            name  => "attributes",
-            # name in data returned
-            path  => "UML:Classifier.feature/UML:Attribute",
-            class => "attribute", 
-            # Points to class in spec. get_attributes() called to parse it and
-            # adds filter_attributes to the args for get_classes().
-            multiplicity => "*",
-            # How many we get back. Use '1' for 1 and '*' for lots.
-			# TODO If not set then decide depening on the return?
-        },
-        {
-            name  => "operations",
-            path  => "UML:Classifier.feature/UML:Operation",
-            class => "operation", 
-            multiplicity => "*",
-        },
-        {
-            name  => "taggedValues",
-            path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
-            class => "taggedValue",
-            multiplicity => "*",
-			map => "name",
-        	# Add a _map_taggedValues to the data. Its a hash of the name data
-			# which refs the normal list of kids
-		},
-    ],
-};
-
-$spec12->{taggedValue} = {
-    name   => "taggedValue",
-    plural => "taggedValues",
-    default_path => '//UML:TaggedValue[@xmi.id]',
-    attrib_data  => [qw/isSpecification/],
-    path_data => [
-        { 
-            name  => "dataValue",
-            path  => 'UML:TaggedValue.dataValue/text()',
-        },
-        { 
-            name  => "name",
-            path  => 'xmiDeref(UML:TaggedValue.type/UML:TagDefinition)/@name',
-        },
-    ],
-};
-
-$spec12->{attribute} = {
-    name => "attribute",
-    plural => "attributes",
-    default_path => '//UML:Classifier.feature/UML:Attribute[@xmi.id]',
-    attrib_data => 
-        [qw/name visibility isSpecification ownerScope/],
-    path_data => [
-        { 
-            name  => "stereotype",
-            path  => 'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name',
-            default => "",
-        },
-        { 
-            name  => "datatype",
-            path  => 'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name',
-        },
-        { 
-            name  => "initialValue",
-            path  => 'UML:Attribute.initialValue/UML:Expression/@body',
-        },
-    ],
-    kids => [
-        { 
-            name  => "taggedValues",
-            path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
-            class => "taggedValue", 
-            multiplicity => "*",
-			map => "name",
-        },
-    ],
-};
-
-$spec12->{operation} = {
-    name => "operation",
-    plural => "operations",
-    default_path => '//UML:Classifier.feature/UML:Operation[@xmi.id]',
-    attrib_data => 
-        [qw/name visibility isSpecification ownerScope isQuery
-            concurrency isRoot isLeaf isAbstract/],
-    path_data => [
-        { 
-            name  => "stereotype",
-            path  => 'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name',
-            default => "",
-        },
-    ],
-    kids => [
-        { 
-            name  => "parameters",
-            path  => "UML:BehavioralFeature.parameter/UML:Parameter",
-            class => "parameter", 
-            multiplicity => "*",
-        },
-        { 
-            name  => "taggedValues",
-            path  => 'UML:ModelElement.taggedValue/UML:TaggedValue',
-            class => "taggedValue", 
-            multiplicity => "*",
-			map => "name",
-        },
-    ],
-};
-
-$spec12->{parameter} = {
-    name   => "parameter",
-    plural => "parameters",
-    default_path => '//UML:Parameter[@xmi.id]',
-    attrib_data  => [qw/name isSpecification kind/],
-    path_data => [
-        { 
-            name  => "stereotype",
-            path  => 'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name',
-            default => "",
-        },
-        { 
-            name  => "datatype",
-            path  => 'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name',
-        },
-    ],
-};
-
-#-----------------------------------------------------------------------------
-
-my $spec10 = $SPECS->{"1.0"} = {};
-
-$spec10->{class} = {
-    name   => "class",
-    plural => "classes",
-    default_path => '//Foundation.Core.Class[@xmi.id]',
-    attrib_data => [],
-    path_data => [
-        { 
-            name  => "name",
-            path  => 'Foundation.Core.ModelElement.name/text()',
-        },
-        { 
-            name => "visibility",
-            path => 'Foundation.Core.ModelElement.visibility/@xmi.value',
-        },
-        { 
-            name => "isSpecification",
-            path => 'Foundation.Core.ModelElement.isSpecification/@xmi.value',
-        },
-        { 
-            name => "isRoot",
-            path => 'Foundation.Core.GeneralizableElement.isRoot/@xmi.value',
-        },
-        { 
-            name => "isLeaf",
-            path => 'Foundation.Core.GeneralizableElement.isLeaf/@xmi.value',
-        },
-        { 
-            name => "isAbstract",
-            path => 'Foundation.Core.GeneralizableElement.isAbstract/@xmi.value',
-        },
-        { 
-            name => "isActive",
-            path => 'Foundation.Core.Class.isActive/@xmi.value',
-        },
-    ],
-    kids => [
-	    { 
-            name  => "attributes",
-            path  => 
-                'Foundation.Core.Classifier.feature/Foundation.Core.Attribute',
-            class => "attribute", 
-            multiplicity => "*",
-        },
-    #    { 
-    #        name  => "operations",
-    #        path  => "UML:Classifier.feature/UML:Operation",
-    #        class => "operation", 
-    #        multiplicity => "*",
-    #    },
-    ],
-};
-
-$spec10->{attribute} = {
-    name => "attribute",
-    plural => "attributes",
-    default_path => '//Foundation.Core.Attribute[@xmi.id]',
-    path_data => [
-        {
-            name  => "name",
-            path  => 'Foundation.Core.ModelElement.name/text()',
-        },
-        {
-            name => "visibility",
-            path => 'Foundation.Core.ModelElement.visibility/@xmi.value',
-        },
-        {
-            name => "isSpecification",
-            path => 'Foundation.Core.ModelElement.isSpecification/@xmi.value',
-        },
-        {
-            name => "ownerScope",
-            path => 'Foundation.Core.Feature.ownerScope/@xmi.value',
-        },
-		{
-            name  => "initialValue",
-            path  => 'Foundation.Core.Attribute.initialValue/Foundation.Data_Types.Expression/Foundation.Data_Types.Expression.body/text()',
-        },
-		# {
-        #     name  => "datatype",
-        #     path  => 'xmiDeref(Foundation.Core.StructuralFeature.type/Foundation.Core.Classifier)/Foundation.Core.DataType/Foundation.Core.ModelElement.name/text()',
-        # },
-    ],
-};
-
-#=============================================================================
-
 #
-# How this works!
-#=================
+# XmiSpec( $spec )
 #
-# The parser supports xmi1.0 and xmi1.2 based on the specs above. At new() time
-# the version is read from the XMI tag and picks out a spec e.g.
-# $SPECS->{"1.2"} and feeds it to mk_gets() which returns a hash ref of subs
-# (think strategy pattern), one for each entry in the specs hash. This is held
-# in $self->{xmi_get_}.
+# Call as class method to set up the parser from a spec (see above). This
+# generates the get_ methods for the version of XMI the spec is for. Called by
+# the sub-classes (e.g. V12 and V10) to create parsers for each version.
 #
-# When the class is use'd it sets dispatch methods with
-# mk_get_dispatch() that return the call using the corresponding sub in
-# $self->{xmi_get_}. e.g.
-#
-# sub get_classes    { $_[0]->{xmi_get_}{classes}->(@_); }
-# sub get_attributes { $_[0]->{xmi_get_}{attributes}->(@_); }
-# sub get_classes    { $_[0]->{xmi_get_}{classes}->(@_); }
-#
-# The names for the data keys in the specs must match up so that we get the
-# same data structure for each version.
-#
-
-# Class setup
-foreach ( values %$SPECS ) { init_specs($_) };
-mk_get_dispatch();
+sub XmiSpec {
+	my ($me,$spec) = @_;
+	init_specs($spec);
+	$me->mk_gets($spec);
+}
 
 # Build lookups etc. Its important that each spec item becomes self contained
 # so we can build good closures, therefore we do all the lookups 1st.
@@ -312,26 +89,43 @@ sub init_specs {
 
 }
 
-# Generate get_* subs to dispach the calls to the subs held in $me->{xmi_get_}
-sub mk_get_dispatch {
-    foreach ( values %{$SPECS->{"1.2"}} ) {
-        my $name = $_->{plural};
-        no strict "refs";
+# Create get methods from spec
+#
+sub mk_gets {
+    my ($proto,$specs) = @_;
+    my $class = ref($proto) || $proto;
+    foreach ( values %$specs ) {
+        # Clone from specs and sort out the lookups into it so we get a
+        # self contained spec to use as a proper closure.
+        my $spec = dclone($_);
 
-        # get_ on parser
-        my $code = sub { 
-            $_[0]->{xmi_get_}{$name}->(@_); 
-        };
-        *{"get_$name"} = $code;
+		# Create _get_* method with get_* as an alias unless the user has
+		# defined it. Allows for override. Note the alias is in this package
+		# so we can add overrides to both specs.
+		no strict "refs";
+		my $meth = "_get_$spec->{plural}";
+		*{$meth} = mk_get($spec);
+		*{__PACKAGE__."::get_$spec->{plural}"} = sub {shift->$meth(@_);}
+		 	unless $class->can("get_$spec->{plural}");
     }
 }
 
+# e.g. of overriding both versions.
+#sub get_classes {
+#	print "HELLO Both\n";
+#	return shift->_get_classes(@_);
+#}
+
+#
+# Sets up the XML::XPath object and then checks the version of the XMI file and
+# blesses its self into either the V10 or V12 class.
+#
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my %args = @_;
     my $me = {};
-    
+
     # Create the XML::XPath object
     # TODO Docs recommend we only use 1 XPath object per application
     my $xp;
@@ -343,44 +137,28 @@ sub new {
         }
     }
     $me = { xml_xpath => $xp };
-    
-    # Work out the version of XMI we have and generate the get subs to parse it
-    my $xmiv = $args{xmi_version}
+
+    # Work out the version of XMI we have and return as that sub class 
+	my $xmiv = $args{xmi_version}
 	    || "".$xp->findvalue('/XMI/@xmi.version')
         || die "Can't find XMI version";
-    $me->{xmi_get_} = mk_gets($SPECS->{$xmiv});
-    
-    return bless $me, $class;
+	$xmiv =~ s/[.]//g;
+	$class = __PACKAGE__."::V$xmiv";
+	eval "use $class;";
+	die "Failed to load version sub class $class : $@" if $@;
+
+	return bless $me, $class;
 }
 
-
-# Returns hashref of get subs from set of specs e.g. $SPECS->{"1.2"}
 #
-# TODO
-# * Add a memoize so we don't keep regenerating the subs for every use.
-sub mk_gets {
-    my $specs = shift;
-    my $gets;
-    foreach ( values %$specs ) {
-        # Clone from specs so we get a proper closure.
-        my $spec = dclone($_);
-        
-        # Add the sub
-        $gets->{$spec->{plural}} = mk_get($spec);
-    }
-    return $gets;
-}
-
-# 
 # mk_get
 #
-# Generates and returns a get_ sub for the spec given. e.g. give it
-# $SPECS->{"1.2"}->{classes} to get the code for xmi 1.2 get_classes. So, if
-# you want to change how the get methods work do it here!
+# Generates and returns a get_ sub for the spec given.
+# So, if you want to change how the get methods (e.g. get_classes) work do it
+# here!
 #
 # The get methods made have the args described in the docs and 2 private args
 # used internally, to call other get methods from paths in the spec.
-#
 # NB: DO NOT use publicly as you will break the version independance. e.g. When
 # using _xpath you need to know which version of XMI to use. This is handled by
 # the use of different paths in the specs.
@@ -389,7 +167,6 @@ sub mk_gets {
 #
 #  _xpath   => The xpath to use for finding stuff.
 #
-use Data::Dumper;
 sub mk_get {
     my $spec = shift;
 
@@ -636,7 +413,7 @@ Returns a perl data structure including all the kids. e.g.
 
 =head1 XMI XPath Functions
 
-The Parser adds the following extra XPath functions for use in the SPECS.
+The Parser adds the following extra XPath functions for use in the Specs.
 
 =head2 xmiDeref
 
@@ -677,18 +454,5 @@ perl(1).
 =head1 AUTHOR
 
 grommit <mark.addison@itn.co.uk>
-
-=head1 LICENSE
-
-This package is free software and is provided "as is" without express or
-implied warranty. It may be used, redistributed and/or modified under the
-terms of either;
-
-a) the Perl Artistic License.
-
-See F<http://www.perl.com/perl/misc/Artistic.html>
-
-b) the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 1, or (at your option) any later version.
 
 =cut
