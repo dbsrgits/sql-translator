@@ -5,6 +5,7 @@
 .*.old
 ^Makefile$
 ^blib/
+^blibdirs$
 _blib$
 (^|/)\.
 lib/SQL/Translator/Parser/XML/XMI.pm
