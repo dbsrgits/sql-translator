@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.4 2003-01-27 17:04:46 dlc Exp $
+# $Id: xSV.pm,v 1.5 2003-04-17 13:42:45 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Parser::xSV;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -60,7 +60,7 @@ sub parse {
             data_type      => "char",
 
             # default size is 8bits; something more reasonable?
-            size           => 255,
+            size           => [ 255 ],
             null           => 1,
             default        => "",
             is_auto_inc    => undef,

@@ -1,7 +1,7 @@
 package SQL::Translator::Validator;
 
 # ----------------------------------------------------------------------
-# $Id: Validator.pm,v 1.7 2003-01-27 17:04:45 dlc Exp $
+# $Id: Validator.pm,v 1.8 2003-04-17 13:42:44 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Validator;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -85,9 +85,11 @@ sub validate {
             $log .= "\n\tIndices:";
             if (@indices) {
                 for my $index (@indices) {
+                    next unless ref($index) eq 'HASH';
+                    next unless scalar keys %$index;
                     $log .= "\n\t\t" . ($index->{"name"} || "(unnamed)")
                          .  " on "
-                         .  join ", ", @{$index->{"fields"}};
+                         .  join ", ", @{$index->{"fields"} ||= []};
                 }
             } else {
                 $log .= " none defined";

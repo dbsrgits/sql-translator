@@ -41,70 +41,80 @@ turn the data into a database tables or graphs.
 =cut
 
 use strict;
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$DEBUG   = 0 unless defined $DEBUG;
+use vars qw($DEBUG $VERSION @EXPORT_OK);
+$DEBUG = 0 unless defined $DEBUG;
 
-use Data::Dumper;
 use Spreadsheet::ParseExcel;
 use Exporter;
+use SQL::Translator::Utils qw(debug normalize_name);
+
 use base qw(Exporter);
 
 @EXPORT_OK = qw(parse);
 
 # -------------------------------------------------------------------
+# parse($tr, $data)
+#
+# Note that $data, in the case of this parser, is unuseful.
+# Spreadsheet::ParseExcel works on files, not data streams.
+# -------------------------------------------------------------------
 sub parse {
-    my ( $translator, $data ) = @_;
-    my $parsed        =  {
-        table1        => {
-            "type"    => undef,
-            "indices" => [ { } ],
-            "fields"  => { },
-        },
-    };
+    my ($tr, $data) = @_;
+    my $filename = $tr->filename || return;
+    my $wb = Spreadsheet::ParseExcel::Workbook->Parse($filename);
+    my (%parsed, $wb_count, $num);
+    my $table_no = 0;
 
-    my $tr = Spreadsheet::ParseExcel->new;
-    $tr->Parse( $data ); 
-    my $r = 1; # For now we will assume all column names are in the first row 
-    my $c = 0; 
+    my $wb_count = $wb->{SheetCount};
+    for $num (0 .. $wb_count - 1) {
+        my $ws = $wb->Worksheet($num);
+        my $name = $ws->{Name} || ++$table_no;
 
-    #
-    # Mikey, what's going on here?
-    #
-    my @parsed = map { return $tr->{'Cells'}[$r][$c] } ( 
-        $c  = $tr->{'MinCol'}; 
-        $c <= $tr->{'MaxCol'}; # Is "<=" right?
-        $c++;
-    );
+        $name = normalize_name($name);
 
-    for ( my $i = 0; $i < @parsed; $i++ ) {
-        $parsed->{'table1'}->{'fields'}->{$parsed[$i]} = {
-            type           => 'field',
-            order          => $i,
-            name           => $parsed[$i],
+        my @cols = $ws->ColRange;
+        next unless $cols[1] > 0;
 
-            # Default datatype is 'char'
-            data_type      => 'char',
+        $parsed{$name} = {
+            table_name  => $name,
+            type        => undef,
+            indices     => [ {} ],
+            fields      => { },
+        };
 
-            # default size is 8bits; something more reasonable?
-            size           => 255,
-            null           => 1,
-            default        => '',
-            is_auto_inc    => undef,
+        for my $col ($cols[0] .. $cols[1]) {
+            my $cell = $ws->Cell(0, $col);
+            $parsed{$name}->{'fields'}->{$cell->{Val}} = {
+                type           => 'field',
+                order          => $col,
+                name           => $cell->{Val},
 
-            # field field is the primary key
-            is_primary_key => ($i == 0) ? 1 : undef,
+                # Default datatype is 'char'
+                data_type      => ET_to_ST($cell->{Type}),
+
+                # default size is 8bits; something more reasonable?
+                size           => [ 255 ],
+                null           => 1,
+                default        => '',
+                is_auto_inc    => undef,
+
+                # field field is the primary key
+                is_primary_key => ($col == 0) ? 1 : undef,
+            }
         }
     }
 
-   
-    # Field 0 is primary key, by default, so add an index
-    for ($parsed->{'table1'}->{'indices'}->[0]) {
-        $_->{'type'} = 'primary_key';
-        $_->{'name'} = undef;
-        $_->{'fields'} = [ $parsed[0] ];
-    }
+    return \%parsed;
+}
 
-   return $parsed;
+my %ET_to_ST = (
+    'Text'    => 'VARCHAR',
+    'Date'    => 'DATETIME',
+    'Numeric' => 'DOUBLE',
+);
+sub ET_to_ST {
+    my $et = shift;
+    $ET_to_ST{$et} || $ET_to_ST{'Text'};
 }
 
 1;
@@ -114,6 +124,7 @@ sub parse {
 =head1 AUTHORS
 
 Mike Mellilo <mmelillo@users.sourceforge.net>,
+darren chamberlain E<lt>dlc@users.sourceforge.netE<gt>
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 
 =head1 SEE ALSO
