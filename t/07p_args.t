@@ -3,12 +3,10 @@
 #
 #
 
-BEGIN { print "1..6\n"; }
-
 use strict;
 
 use SQL::Translator;
-$SQL::Translator::DEBUG = 0;
+use Test::More tests => 6;
 
 sub silly_parser {
     my ($tr, $data) = @_;
@@ -31,11 +29,10 @@ $tr->parser_args(delimiter => '\|');
 my $pargs = $tr->parser_args;
 my $parsed = $tr->translate(\$data);
 
-print "not " unless ($pargs->{'delimiter'} eq '\|');
-print "ok 1 # parser_args works when called directly\n";
-
-print "not " unless (scalar @{$parsed} == 4);
-print "ok 2 # right number of fields\n";
+is($pargs->{'delimiter'}, '\|',
+    "parser_args works when called directly");
+is(scalar @{$parsed}, 4,
+    "right number of fields");
 
 # Now, pass parser_args indirectly...
 $tr->parser(\&silly_parser, { delimiter => "\t" });
@@ -44,11 +41,11 @@ $data =~ s/\|/\t/g;
 $pargs = $tr->parser_args;
 $parsed = $tr->translate(\$data);
 
-print "not " unless ($pargs->{'delimiter'} eq "\t");
-print "ok 3 # parser_args works when called indirectly\n";
+is($pargs->{'delimiter'}, "\t",
+    "parser_args works when called indirectly");
 
-print "not " unless (scalar @{$parsed} == 4);
-print "ok 4 # right number of fields with new delimiter\n";
+is(scalar @{$parsed}, 4,
+    "right number of fields with new delimiter");
 
 undef $tr;
 $tr = SQL::Translator->new(parser => \&silly_parser,
@@ -57,9 +54,9 @@ $data =~ s/\t/:/g;
 $pargs = $tr->parser_args;
 $parsed = $tr->translate(\$data);
 
-print "not " unless ($pargs->{'delimiter'} eq ":");
-print "ok 5 # parser_args works when called as constructor arg\n";
+is($pargs->{'delimiter'}, ":",
+    "parser_args works when called as constructor arg");
 
-print "not " unless (scalar @{$parsed} == 4);
-print "ok 6 # right number of fields with new delimiter\n";
+is(scalar @{$parsed}, 4,
+    "right number of fields with new delimiter");
 

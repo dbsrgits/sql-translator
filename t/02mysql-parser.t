@@ -8,10 +8,10 @@
 #
 
 use strict;
+
+use Test::More tests => 11;
 use SQL::Translator;
 use SQL::Translator::Parser::MySQL qw(parse);
-
-$SQL::Translator::DEBUG = 0;
 
 my $tr = SQL::Translator->new;
 my $data = q|create table sessions (
@@ -19,47 +19,39 @@ my $data = q|create table sessions (
     a_session text
 );|;
 
-BEGIN { print "1..11\n"; }
-
 my $val = parse($tr, $data);
 
 # $val holds the processed data structure.
 
 # The data structure should have one key:
-print "not " if (scalar keys %{$val} != 1);
-print "ok 1\n";
+is(scalar keys %{$val}, 1);
 
 # The data structure should have a single key, named sessions
-print "not " unless (defined $val->{'sessions'});
-print qq(ok 2 # has a key named "sessions"\n);
+ok(defined $val->{'sessions'});
 
 # $val->{'sessions'} should have a single index (since we haven't
 # defined an index, but have defined a primary key)
 my $indices = $val->{'sessions'}->{'indices'};
-print "not " unless (scalar @{$indices} == 1);
-print "ok 3 # correct index number\n";
+is(scalar @{$indices}, 1, "correct index number");
 
-print "not " unless ($indices->[0]->{'type'} eq 'primary_key');
-print "ok 4 # correct index type\n";
-print "not " unless ($indices->[0]->{'fields'}->[0] eq 'id');
-print "ok 5 # correct index name\n";
+is($indices->[0]->{'type'}, 'primary_key', "correct index type");
+is($indices->[0]->{'fields'}->[0], 'id', "correct index name");
 
 # $val->{'sessions'} should have two fields, id and a_sessionn
 my $fields = $val->{'sessions'}->{'fields'};
-print "not " unless (scalar keys %{$fields} == 2);
-print "ok 6 # correct fields number\n";
+is(scalar keys %{$fields}, 2, "correct fields number");
 
-print "not " unless ($fields->{'id'}->{'data_type'} eq 'char');
-print "ok 7 # correct field type: id (char)\n";
+is($fields->{'id'}->{'data_type'}, 'char',
+    "correct field type: id (char)");
 
-print "not " unless ($fields->{'a_session'}->{'data_type'} eq 'text');
-print "ok 8 # correct field type: a_session (text)\n";
+is ($fields->{'a_session'}->{'data_type'}, 'text',
+    "correct field type: a_session (text)");
 
-print "not " unless ($fields->{'id'}->{'is_primary_key'} == 1);
-print "ok 9 # correct key identification (id == key)\n";
+is($fields->{'id'}->{'is_primary_key'}, 1, 
+    "correct key identification (id == key)");
 
-print "not " if (defined $fields->{'a_session'}->{'is_primary_key'});
-print "ok 10 # correct key identification (a_session != key)\n";
+ok(! defined $fields->{'a_session'}->{'is_primary_key'}, 
+    "correct key identification (a_session != key)");
 
 # Test that the order is being maintained by the internal order
 # data element
@@ -67,5 +59,5 @@ my @order = sort { $fields->{$a}->{'order'}
                              <=>
                    $fields->{$b}->{'order'}
                  } keys %{$fields};
-print "not " unless ($order[0] eq 'id' && $order[1] eq 'a_session');
-print "ok 11 # ordering of fields\n";
+
+ok($order[0] eq 'id' && $order[1] eq 'a_session', "ordering of fields");

@@ -6,31 +6,30 @@
 #
 
 my @perlmods;
-my $count = 0;
+
+use Test::More;
+use SQL::Translator;
 
 unless (open MANIFH, "MANIFEST") {
-    print "1..1\n";
-    print "not ok 1\n";
+    plan skip_all => "Can't open MANIFEST! ($!)";
     exit;
 }
+
 while (<MANIFH>) {
     chomp;
     if (s/\.pm$//) {
         s,/,::,g;
-        s/^lib:://;
         push @perlmods, $_
     }
 }
 
-print "1.." . scalar @perlmods . "\n";
-
 close MANIFH;
 
+@perlmods = sort { length $a <=> length $b } @perlmods; # aesthetics
+plan tests => scalar @perlmods;
+
 for my $mod (@perlmods) {
-    $count++;
-    $mod =~ s,/,::,g;
-    eval "use $mod;";
-    print "not " if ($@);
-    print "ok $count # $mod\n";
+    SQL::Translator::load($mod);
+    ok(!$@, "use $mod");
 }
 
