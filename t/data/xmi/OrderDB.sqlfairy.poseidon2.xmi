@@ -1,5 +1,5 @@
 <?xml version = '1.0' encoding = 'UTF-8' ?>
-<XMI xmi.version = '1.2' xmlns:UML = 'org.omg.xmi.namespace.UML' timestamp = 'Mon Oct 06 18:34:04 BST 2003'>
+<XMI xmi.version = '1.2' xmlns:UML = 'org.omg.xmi.namespace.UML' timestamp = 'Mon Oct 13 17:05:12 BST 2003'>
   <XMI.header>
     <XMI.documentation>
       <XMI.exporter>Netbeans XMI Writer</XMI.exporter>
@@ -34,6 +34,15 @@
           isSpecification = 'false' isRoot = 'false' isLeaf = 'false' isAbstract = 'false'
           isActive = 'false'>
           <UML:Classifier.feature>
+            <UML:Attribute xmi.id = '5539d8:f7b62bc3a2:-7ff3' name = 'invoiceNumber'
+              visibility = 'public' isSpecification = 'false' ownerScope = 'instance'>
+              <UML:ModelElement.stereotype>
+                <UML:Stereotype xmi.idref = '24d0fa:f8019a3e88:-7fbf'/>
+              </UML:ModelElement.stereotype>
+              <UML:StructuralFeature.type>
+                <UML:DataType xmi.idref = '24d0fa:f8019a3e88:-7ffb'/>
+              </UML:StructuralFeature.type>
+            </UML:Attribute>
             <UML:Attribute xmi.id = '5539d8:f7b62bc3a2:-7ff1' name = 'orderDate' visibility = 'public'
               isSpecification = 'false' ownerScope = 'instance'>
               <UML:ModelElement.taggedValue>
@@ -46,15 +55,6 @@
               </UML:ModelElement.taggedValue>
               <UML:StructuralFeature.type>
                 <UML:DataType xmi.idref = '24d0fa:f8019a3e88:-7ffa'/>
-              </UML:StructuralFeature.type>
-            </UML:Attribute>
-            <UML:Attribute xmi.id = '5539d8:f7b62bc3a2:-7ff3' name = 'orderID' visibility = 'public'
-              isSpecification = 'false' ownerScope = 'instance'>
-              <UML:ModelElement.stereotype>
-                <UML:Stereotype xmi.idref = '24d0fa:f8019a3e88:-7fbf'/>
-              </UML:ModelElement.stereotype>
-              <UML:StructuralFeature.type>
-                <UML:DataType xmi.idref = '24d0fa:f8019a3e88:-7ffb'/>
               </UML:StructuralFeature.type>
             </UML:Attribute>
           </UML:Classifier.feature>
@@ -89,7 +89,7 @@
                 <UML:TaggedValue xmi.id = '3a5a9c:f811ae8178:-7f6b' isSpecification = 'false'>
                   <UML:TaggedValue.dataValue>0</UML:TaggedValue.dataValue>
                   <UML:TaggedValue.type>
-                    <UML:TagDefinition xmi.idref = '24d0fa:f8019a3e88:-7fcb'/>
+                    <UML:TagDefinition xmi.idref = '3a5a9c:f811ae8178:-7f6e'/>
                   </UML:TaggedValue.type>
                 </UML:TaggedValue>
               </UML:ModelElement.taggedValue>
@@ -106,26 +106,6 @@
             <UML:Comment xmi.idref = '24d0fa:f8019a3e88:-7fa7'/>
           </UML:ModelElement.comment>
           <UML:Classifier.feature>
-            <UML:Attribute xmi.id = '5539d8:f7b62bc3a2:-7fe6' name = 'customerID' visibility = 'public'
-              isSpecification = 'false' ownerScope = 'instance'>
-              <UML:ModelElement.taggedValue>
-                <UML:TaggedValue xmi.id = '24d0fa:f8019a3e88:-7fa6' isSpecification = 'false'>
-                  <UML:TaggedValue.dataValue>20</UML:TaggedValue.dataValue>
-                  <UML:TaggedValue.type>
-                    <UML:TagDefinition xmi.idref = '24d0fa:f8019a3e88:-7fd3'/>
-                  </UML:TaggedValue.type>
-                </UML:TaggedValue>
-                <UML:TaggedValue xmi.id = '24d0fa:f8019a3e88:-7f98' isSpecification = 'false'>
-                  <UML:TaggedValue.dataValue>ZEROFILL</UML:TaggedValue.dataValue>
-                  <UML:TaggedValue.type>
-                    <UML:TagDefinition xmi.idref = '24d0fa:f8019a3e88:-7f97'/>
-                  </UML:TaggedValue.type>
-                </UML:TaggedValue>
-              </UML:ModelElement.taggedValue>
-              <UML:StructuralFeature.type>
-                <UML:DataType xmi.idref = '24d0fa:f8019a3e88:-7ffb'/>
-              </UML:StructuralFeature.type>
-            </UML:Attribute>
             <UML:Attribute xmi.id = '5539d8:f7b62bc3a2:-7fe5' name = 'name' visibility = 'public'
               isSpecification = 'false' ownerScope = 'instance'>
               <UML:StructuralFeature.type>
@@ -253,7 +233,7 @@
             <UML:TaggedValue xmi.id = '24d0fa:f8019a3e88:-7fcc' isSpecification = 'false'>
               <UML:TaggedValue.dataValue>0</UML:TaggedValue.dataValue>
               <UML:TaggedValue.type>
-                <UML:TagDefinition xmi.idref = '24d0fa:f8019a3e88:-7fcb'/>
+                <UML:TagDefinition xmi.idref = '3a5a9c:f811ae8178:-7f6e'/>
               </UML:TaggedValue.type>
             </UML:TaggedValue>
           </UML:ModelElement.taggedValue>

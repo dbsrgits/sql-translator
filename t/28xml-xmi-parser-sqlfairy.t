@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # vim:filetype=perl
 
 # Before `make install' is performed this script should be runnable with
@@ -30,34 +30,34 @@ sub test_field {
     }
 
 	is( $f1->name, $test->{name}, "  Field name '$test->{name}'" );
-    
+
 	is( $f1->data_type, $test->{data_type}, "    Type is '$test->{data_type}'" )
 	if exists $test->{data_type};
-    
+
 	is( $f1->size, $test->{size}, "    Size is '$test->{size}'" )
 	if exists $test->{size};
-    
+
 	is( $f1->default_value, $test->{default_value},
 	"    Default value is ".(defined($test->{default_value}) ? "'$test->{default_value}'" : "UNDEF" ) )
 	if exists $test->{default_value};
-	
-	is( $f1->is_nullable, $test->{is_nullable}, 
+
+	is( $f1->is_nullable, $test->{is_nullable},
 		"    ".($test->{is_nullable} ? 'can' : 'cannot').' be null' )
 	if exists $test->{is_nullable};
-    
-	is( $f1->is_unique, $test->{is_unique}, 
+
+	is( $f1->is_unique, $test->{is_unique},
 		"    ".($test->{is_unique} ? 'can' : 'cannot').' be unique' )
 	if exists $test->{is_unique};
-    
-	is( $f1->is_primary_key, $test->{is_primary_key}, 
+
+	is( $f1->is_primary_key, $test->{is_primary_key},
 		"    is ".($test->{is_primary_key} ? '' : 'not').' a primary_key' )
 	if exists $test->{is_primary_key};
-    
-	is( $f1->is_foreign_key, $test->{is_foreign_key}, 
+
+	is( $f1->is_foreign_key, $test->{is_foreign_key},
 		"    is ".($test->{is_foreign_key} ? '' : 'not').' a foreign_key' )
 	if exists $test->{is_foreign_key};
-    
-	is( $f1->is_auto_increment, $test->{is_auto_increment}, 
+
+	is( $f1->is_auto_increment, $test->{is_auto_increment},
 	"    is ".($test->{is_auto_increment} ?  '' : 'not').' an auto_increment' )
 	if exists $test->{is_auto_increment};
 }
@@ -72,33 +72,33 @@ sub constraint_ok {
 	else {
 		ok( $con, "  Constraint" );
 	}
-	
+
 	is( $con->type, $test->{type}, "    type is '$test->{type}'" )
 	if exists $test->{type};
-	
+
 	is( $con->table->name, $test->{table}, "    table is '$test->{table}'" )
 	if exists $test->{table};
-	
+
 	is( join(",",$con->fields), $test->{fields},
 	"    fields is '$test->{fields}'" )
 	if exists $test->{fields};
-	
+
 	is( $con->reference_table, $test->{reference_table},
 	"    reference_table is '$test->{reference_table}'" )
 	if exists $test->{reference_table};
-	
+
 	is( join(",",$con->reference_fields), $test->{reference_fields},
 	"    reference_fields is '$test->{reference_fields}'" )
 	if exists $test->{reference_fields};
-	
+
 	is( $con->match_type, $test->{match_type},
 	"    match_type is '$test->{match_type}'" )
 	if exists $test->{match_type};
-	
+
 	is( $con->on_delete_do, $test->{on_delete_do},
 	"    on_delete_do is '$test->{on_delete_do}'" )
 	if exists $test->{on_delete_do};
-	
+
 	is( $con->on_update_do, $test->{on_update_do},
 	"    on_update_do is '$test->{on_update_do}'" )
 	if exists $test->{on_update_do};
@@ -109,7 +109,7 @@ sub test_table {
     my %arg = @_;
 	$arg{constraints} ||= [];
     my $name = $arg{name} || die "Need a table name to test.";
-    
+
 	my @fldnames = map { $_->{name} } @{$arg{fields}};
 	is_deeply( [ map {$_->name}   $tbl->get_fields ],
                [ map {$_->{name}} @{$arg{fields}} ],
@@ -118,7 +118,7 @@ sub test_table {
         my $name = $_->{name} || die "Need a field name to test.";
         test_field( $tbl->get_field($name), $_ );
     }
-	
+
 	if ( my @tcons = @{$arg{constraints}} ) {
 		my @cons = $tbl->get_constraints;
 		is(scalar(@cons), scalar(@tcons),
@@ -133,7 +133,7 @@ sub test_table {
 # Testing 1,2,3,..
 #=============================================================================
 
-plan tests => 89;
+plan tests => 94;
 
 my $testschema = "$Bin/data/xmi/OrderDB.sqlfairy.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;
@@ -165,14 +165,6 @@ test_table( $scma->get_table("Customer"),
     name => "Customer",
     fields => [
     {
-        name => "customerID",
-        data_type => "INT",
-		size => 20,
-        default_value => undef,
-        is_nullable => 0,
-        is_primary_key => 1,
-    },
-    {
         name => "name",
         data_type => "VARCHAR",
 		size => 255,
@@ -188,11 +180,19 @@ test_table( $scma->get_table("Customer"),
         is_nullable => 1,
         is_primary_key => 0,
     },
+    {
+        name => "CustomerID",
+        data_type => "INT",
+		size => 10,
+        default_value => undef,
+        is_nullable => 0,
+        is_primary_key => 1,
+    },
     ],
 	constraints => [
 		{
 			type => "PRIMARY KEY",
-			fields => "customerID",
+			fields => "CustomerID",
 		},
         #{
 		#	name => "UniqueEmail",
@@ -206,14 +206,7 @@ test_table( $scma->get_table("Order"),
     name => "Order",
     fields => [
     {
-        name => "orderDate",
-        data_type => "DATE",
-        default_value => undef,
-        is_nullable => 0,
-        is_primary_key => 0,
-    },
-    {
-        name => "orderID",
+        name => "invoiceNumber",
         data_type => "INT",
 		size => 10,
         default_value => undef,
@@ -221,9 +214,16 @@ test_table( $scma->get_table("Order"),
         is_primary_key => 1,
     },
     {
-        name => "customerID",
+        name => "orderDate",
+        data_type => "DATE",
+        default_value => undef,
+        is_nullable => 0,
+        is_primary_key => 0,
+    },
+    {
+        name => "CustomerID",
         data_type => "INT",
-		size => 20,
+		size => 10,
         default_value => undef,
         is_nullable => 0,
         is_primary_key => 0,
@@ -233,13 +233,13 @@ test_table( $scma->get_table("Order"),
 	constraints => [
 		{
 			type => "PRIMARY KEY",
-			fields => "orderID",
+			fields => "invoiceNumber",
 		},
 		{
 			type => "FOREIGN KEY",
-			fields => "customerID",
+			fields => "CustomerID",
 			reference_table => "Customer",
-			reference_fields => "customerID",
+			reference_fields => "CustomerID",
 		},
 	],
 	# TODO
@@ -262,7 +262,7 @@ test_table( $scma->get_table("OrderLine"),
 		size => 255,
         default_value => 1,
         is_nullable => 0,
-        is_primary_key => 1,
+        is_primary_key => 0,
     },
     {
         name => "quantity",
@@ -273,25 +273,32 @@ test_table( $scma->get_table("OrderLine"),
         is_primary_key => 0,
     },
     {
-        name => "orderID",
+        name => "OrderLineID",
+        data_type => "INT",
+		size => 10,
+        default_value => undef,
+        is_nullable => 0,
+        is_primary_key => 1,
+    },
+    {
+        name => "invoiceNumber",
         data_type => "INT",
 		size => 10,
         default_value => undef,
         is_nullable => 1,
-        is_primary_key => 0,
-        is_foreign_key => 1,
+        is_primary_key => 1,
     },
     ],
 	constraints => [
 		{
 			type => "PRIMARY KEY",
-			fields => "lineNumber,orderID",
+			fields => "OrderLineID,invoiceNumber",
 		},
 		{
 			type => "FOREIGN KEY",
-			fields => "orderID",
+			fields => "invoiceNumber",
 			reference_table => "Order",
-			reference_fields => "orderID",
+			reference_fields => "invoiceNumber",
 		},
 	],
 );

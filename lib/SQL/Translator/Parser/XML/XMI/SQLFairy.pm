@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.1 2003-10-10 20:03:24 grommit Exp $
+# $Id: SQLFairy.pm,v 1.2 2003-10-13 17:05:55 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -29,7 +29,7 @@ SQL::Translator::Parser::XML::XMI::SQLFairy - Create Schema from UML Models.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 use Exporter;
 use base qw(Exporter);
@@ -39,13 +39,33 @@ use Data::Dumper;
 use SQL::Translator::Parser::XML::XMI;
 use SQL::Translator::Utils 'debug';
 
+# Globals for the subs to use, set in parse() and classes2schema()
+#
+# TODO Should we be giving classes2schema the schema or should they use their
+# parse() to get it. Obj parsers maybe?
+#our ($schema,$pargs);
+use vars qw[ $schema $pargs ];
+
 # Set the parg for the conversion sub then use the XMI parser
 sub parse {
     my ( $translator ) = @_;
     local $DEBUG  = $translator->debug;
-    my $pargs = $translator->parser_args;
+    local $pargs  = $translator->parser_args;
+    #local $schema = $translator->schema;
 	$pargs->{classes2schema} = \&classes2schema;
-	return SQL::Translator::Parser::XML::XMI::parse(@_);
+    $pargs->{derive_pkey} ||= "stereotype,auto,first";
+    $pargs->{auto_pkey} ||= {
+        name => sub {
+            my $class = shift;
+            $class->{name}."ID";
+        },
+        data_type => "INT",
+        size => 10,
+        is_nullable => 0,
+        is_auto_increment => 1,
+    };
+
+    return SQL::Translator::Parser::XML::XMI::parse(@_);
 }
 
 
@@ -75,8 +95,12 @@ sub _resolve_tag {
 
 
 sub classes2schema {
-	my ($schema, $classes) = @_;
+    local $schema = shift;
+	my $classes = shift;
 
+    #
+    # Create tablles from Classes and collect their associations
+    #
     my %associations;
 	foreach my $class (@$classes) {
 		# Add the table
@@ -101,18 +125,8 @@ sub classes2schema {
             $field->extra(%$extra) if $extra;
         }
 
-        #
-        # Primary key
-        #
-        my @pkeys;
-        @pkeys = map $_->{name},
-            grep($_->{stereotype} eq "PK", @{$class->{attributes}});
-        # if none set with steretype, use first attrib
-        @pkeys = $class->{attributes}[0]{name} unless @pkeys;
-        $table->add_constraint(
-            type   => "PRIMARY KEY",
-            fields => [@pkeys],
-        ) or die $schema->error;
+        # Add a pkey
+        add_pkey($class,$table);
     }
 
     #
@@ -121,29 +135,30 @@ sub classes2schema {
     foreach my $assoc (values %associations) {
         my @end = @{$assoc->{associationEnds}};
         if (
-            $end[0]->{multiplicity}{rangeUpper} == 1 
-            && $end[1]->{multiplicity}{rangeUpper} == 1 
+            $end[0]->{multiplicity}{rangeUpper} == 1
+            && $end[1]->{multiplicity}{rangeUpper} == 1
         ) {
             # 1:1 or 0:1
-            warn "Sorry, 1:1 associations not yet implimented for xmi.id".$assoc->{"xmi.id"}."\n";
+            warn "Sorry, 1:1 associations not yet implimented for xmi.id=".$assoc->{"xmi.id"}."\n";
         }
         elsif (
-            $end[0]->{multiplicity}{rangeUpper} == 1 
-            || $end[1]->{multiplicity}{rangeUpper} == 1 
+            $end[0]->{multiplicity}{rangeUpper} == 1
+            || $end[1]->{multiplicity}{rangeUpper} == 1
         ) {
             # 1:m or 0:m
-            one2many($schema,$assoc);
+            one2many($assoc);
         }
         else
         {
             # m:n
-            warn "Sorry, n:m associations not yet implimented for xmi.id".$assoc->{"xmi.id"}."\n";
+            warn "Sorry, n:m associations not yet implimented for xmi.id=".$assoc->{"xmi.id"}."\n";
         }
 
-    }    
+    }
 
 }
 
+# Take an attribute and return the field data for it
 sub attr2field {
     my $attr = shift;
     my $dataType = $attr->{dataType};
@@ -157,8 +172,8 @@ sub attr2field {
     $data{size} = _resolve_tag($TAGS{size},[$attr,$dataType]);
 
     $data{default_value} 
-        = $attr->{initialValue}
-        || _resolve_tag($TAGS{default_value},[$attr,$dataType]);
+        = _resolve_tag($TAGS{default_value},[$attr,$dataType])
+        || $attr->{initialValue};
 
     my $is_nullable = _resolve_tag($TAGS{is_nullable},[$attr,$dataType]);
     my $required    = _resolve_tag($TAGS{required},[$attr,$dataType]);
@@ -187,32 +202,61 @@ sub attr2field {
     return \%data;
 }
 
+# Add a pkey to a table for the class
+sub add_pkey {
+    my ($class,$table) = @_;
+
+    my @pkeys;
+    foreach ( split(",", $pargs->{derive_pkey}) ) {
+        if ( $_ eq "stereotype" ) {
+            @pkeys = map $_->{name},
+            grep($_->{stereotype} eq "PK", @{$class->{attributes}});
+        }
+        elsif( $_ eq "first" ) {
+            @pkeys = $class->{attributes}[0]{name} unless @pkeys;
+        }
+        elsif( $_ eq "auto" ) {
+            if ( my %data = %{$pargs->{auto_pkey}} ) {
+                $data{name} = $data{name}->($class,$table);
+                my $field = $table->add_field(%data) or die $table->error;
+                @pkeys = $field->name;
+            }
+        }
+        last if @pkeys;
+    }
+
+    $table->add_constraint(
+        type   => "PRIMARY KEY",
+        fields => [@pkeys],
+    ) or die $table->error;
+}
+
 # Maps a 1:M association into the schema
 sub one2many {
-    my ($scma,$assoc) = @_;
+    my ($assoc) = @_;
     my @ends = @{$assoc->{associationEnds}};
     my ($end1) = grep $_->{multiplicity}{rangeUpper} == 1, @ends;
     my $endm = $end1->{otherEnd};
-    my $table1 = $scma->get_table($end1->{participant}{name});
-    my $tablem = $scma->get_table($endm->{participant}{name});
+    my $table1 = $schema->get_table($end1->{participant}{name});
+    my $tablem = $schema->get_table($endm->{participant}{name});
 
     #
     # Export 1end pkey to many end
-    # 
-    my $con = $table1->primary_key;
+    #
+    my $con  = $table1->primary_key;
     my @flds = $con->fields;
     foreach (@flds) {
         my $fld = $table1->get_field($_);
         my %data;
         $data{$_} = $fld->$_()
-        foreach (qw/name size data_type default_value is_nullable/); 
+        foreach (qw/name size data_type default_value is_nullable/);
         $data{extra} = { $fld->extra }; # Copy extra hash
         $data{is_unique} = 0; # FKey on many join so not unique
         $data{is_nullable} = $end1->{multiplicity}{rangeLower} == 0 ? 1 : 0;
             # 0:m - allow nulluable on fkey
             # 1:m - dont allow nullable
 
-        $tablem->add_field(%data) or die $scma->error;
+        $tablem->add_field(%data) or die $tablem->error;
         # Export the pkey if full composite (ie identity) relationship
         $tablem->primary_key($_) if $end1->{aggregation} eq "composite";
     }
@@ -225,7 +269,7 @@ sub one2many {
         fields => [@flds],
         reference_table => $table1->{name},
         reference_fields => [@flds],
-    ) or die $scma->error;
+    ) or die $schema->error;
 }
 
 1; #---------------------------------------------------------------------------
@@ -254,7 +298,7 @@ as possible, with the minimum use of extension mechanisms (tagged values and
 stereotypes) for the database details. The idea is to treat the object model 
 like a logical database model and map that to a physical model (the sql). Also
 tries to make this mapping as configurable as possible and support all the
-schema features that SQLFairy does.
+schema features of SQLFairy.
 
 =head2 Tables
 
@@ -262,40 +306,83 @@ Classes, all of them! (TODO More control over which tables to do.)
 
 =head2 Fields
 
-=head3 Datatypes 
+The attributes of the class will be converted to fields of the same name.
+
+=head3 Datatypes
 
 Database datatypes are modeled using tagged values; sqlfDataType,
-sqlfSize, sqlfIsNullable and sqlfIsAutoIncrement. These can be added either
-to the UML datatype or directly on the attribute where they override the value
-from the datatype. If no sqlfDataType is given then the name of the UMLDataType
-is used. If no default value is found then the UML initialValue is used (even 
-if a tag is set on the UMLDataType - do we want to do it this way?.
+sqlfSize, sqlfIsNullable and sqlfIsAutoIncrement added to the attribute.
+The default value is the UML initial value of the attribute or can be overridden
+using a sqlfDefaultValue tagged value if you want to have a different default
+in the database then the object uses.
+
+For more advanced datatype modeling you can use UML data types by adding the
+tagged values to the UML data types in your model and then giving your
+attributes those datatypes. Any tagged values set on attributes will override
+any they get from their datatype. This allows you to use UML datatypes like
+domains.  If no sqlfDataType is given then the name of the UMLDataType is used.
 
 =head3 Primary Keys
 
-Primary keys are attributes marked with <<PK>>. Add to multiple attribs to make
-multi column keys. If none are marked will use the 1st attribute. 
+If no attribute is marked explicity on the Class as a pkey then one is added.
+The default is an INT(10) auto number named after the class with ID on the end.
+For many cases this is enough as you don't normally need to model pkeys
+explicitly in your object models as its a database thing.
+
+The pkey created can be controlled by setting the C<auto_pkey> parser arg to a
+hash ref describing the field. The name key is a sub that gets given a ref to
+the class (from the xmi) and the table it has been mapped to, and should return the pkey name. e.g. the defualt looks like;
+
+ {
+     name => sub {
+         my $class = shift;
+         $class->{name}."ID";
+     },
+     data_type => "INT",
+     size => 10,
+     is_nullable => 0,
+     is_auto_increment => 1,
+ }
+
+NB You need to return a unique name for the key if it will be used to build
+relationships as it will be exported to other tables (see Relationships).
+
+You can also set them explicitly by marking attributes with a <<PK>> stereotype.
+Add to multiple attribs to make multi column keys. Usefull when your object
+contains an attribute that makes a good candidate for a pkey, e.g. email.
 
 =head2 Relationships
 
 Modeled using UML associations. Currently only handles 0:m and 1:m joins. That
 is associations where one ends multiplicty is '1' or '0..1' and the other end's
-multplicity is '0..*' or '1..*' or >1 (e.g '0..3' '1..23' '4..42') etc. 
+multplicity is more than 1 e.g '*', '0..*', '1..*', '0..3', '4..42' etc.
 
-The pkey from the 1 end is added to the table for the class at the many end as
-a foreign key. is_unique is forced to false for the new field. 
+The pkey field from the 1 end is added to the table for the class at the many
+end as a foreign key with is_unique and auto number turned off.
 
 If the 1 end is multiplicity '0..1' (ie a 0:m join) then the the fkey is made
 nullable, if its multiplicity '1' (1:m) then its made not nullable.
 
-If the association is a composition then the created fkey is made part of the 
-many ends pkey. ie It exports the pkey to create an identity join. 
+If the association is a composition then the created fkey is made part of the
+many ends pkey. ie It exports the pkey to create an identity join.
+
+=head1 EXAMPLE
+
+TODO An example to help make sense of the above! Probably based on the test.
 
 =head1 ARGS
 
 =head1 BUGS
 
 =head1 TODO
+
+1:1 and m:m joins.
+
+Generalizations.
+
+Support for the format_X_name subs in the Translator.
+
+Lots more...
 
 =head1 AUTHOR
 
