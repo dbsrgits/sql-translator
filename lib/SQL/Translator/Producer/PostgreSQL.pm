@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.14 2003-08-18 15:43:15 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.15 2003-08-21 18:10:14 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -347,7 +347,7 @@ sub produce {
                 map { $_ =~ s/\(.+\)//; $_ }
                 map { unreserve( $_, $table_name ) }
                 $c->reference_fields;
-            next unless @fields;
+            next if !@fields && $c->type ne CHECK_C;
 
             if ( $c->type eq PRIMARY_KEY ) {
                 $name ||= mk_name( $table_name, 'pk' );
@@ -364,6 +364,19 @@ sub produce {
                 $used_index_names{$name} = $name;
                 push @constraint_defs, "CONSTRAINT $name UNIQUE " .
                     '("' . join( '", "', @fields ) . '")';
+            }
+            elsif ( $c->type eq CHECK_C ) {
+                my $s;
+                if ( $name ) {
+                    $name ||= mk_name( 
+                        $table_name, $name || ++$c_name_default
+                    );
+                    $name = next_unused_name($name, \%used_index_names);
+                    $used_index_names{$name} = $name;
+                    $s = 'CONSTRAINT $name ';
+                }
+                my $expression = $c->expression;
+                push @constraint_defs, "${s}CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
                 my $def = join(' ', 
