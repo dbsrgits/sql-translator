@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.10 2003-06-11 04:00:43 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.11 2003-06-23 21:47:30 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -223,7 +223,7 @@ sub produce {
             else {
                 $data_type  = defined $translate{ $data_type } ?
                               $translate{ $data_type } :
-                              die "Unknown datatype: $data_type\n";
+                              $data_type;
             }
 
             $field_def .= " $data_type";
