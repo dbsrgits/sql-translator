@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.1 2003-02-21 19:35:17 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.2 2003-02-25 01:01:29 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -42,7 +42,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -73,7 +73,7 @@ statement : comment
 
 drop : /drop/i WORD(s) ';'
 
-create : create_table table_name '(' comment(s?) create_definition(s /,/) ')' table_option(s?) ';'
+create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
   {
    my $table_name                       = $item{'table_name'};
    $tables{ $table_name }{'order'}      = ++$table_order;
@@ -184,7 +184,7 @@ field_qualifier : ',' foreign_key '(' field_name ')' foreign_key_reference forei
 			 foreign_table => $item{'foreign_table_name'},
 			 foreign_field => $item{'foreign_field_name'},
 			 name => $item{'field_name'},
-        } 
+        }
     }
 
 field_qualifier : unsigned
@@ -212,10 +212,14 @@ index_name   : WORD
 data_type    : WORD parens_value_list(s?) type_qualifier(s?)
     { 
         my $type = $item[1];
+
         my $size; # field size, applicable only to non-set fields
         my $list; # set list, applicable only to sets (duh)
 
-        if ( uc($type) =~ /^(SET|ENUM)$/ ) {
+
+        if(uc($type) =~ /^SERIAL$/){
+            $type = 'int';
+        } elsif ( uc($type) =~ /^(SET|ENUM)$/ ) {
             $size = undef;
             $list = $item[2][0];
         }
@@ -223,6 +227,8 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             $size = $item[2][0];
             $list = [];
         }
+
+        if(uc($type) =~ /^VARCHAR$/ and not defined($size)){ $size = [255] }
 
         $return        = { 
             type       => $type,
@@ -261,7 +267,7 @@ default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
         $return  =  $item[2];
     }
 
-auto_inc : /auto_increment/i { 1 }
+auto_inc : /auto_increment/i { 1 } #see data_type
 
 primary_key : /primary/i /key/i { 1 }
 
