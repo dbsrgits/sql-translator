@@ -33,19 +33,19 @@ is( $f2->is_primary_key, 0, 'Field is not PK' );
 
 my $f3 = shift @fields;
 is( $f3->name, 'number', 'Third field name is "number"' );
-is( lc $f3->data_type, 'varchar', 'Data type is "VARCHAR"' );
-is( $f3->size, 255, 'Size is "255"' );
+is( lc $f3->data_type, 'integer', 'Data type is "integer"' );
+is( $f3->size, 1, 'Size is "1"' );
 is( $f3->is_primary_key, 0, 'Field is not PK' );
 
 my $f4 = shift @fields;
 is( $f4->name, 'math', 'Fourth field name is "math"' );
-is( lc $f4->data_type, 'integer', 'Data type is "ingeger"' );
-is( $f4->size, 2, 'Size is "2"' );
+is( lc $f4->data_type, 'float', 'Data type is "float"' );
+is( $f4->size, '3,1', 'Size is "3,1"' );
 is( $f4->is_primary_key, 0, 'Field is not PK' );
 
 my $f5 = shift @fields;
 is( $f5->name, 'bitmap', 'Fifth field name is "bitmap"' );
-is( lc $f5->data_type, 'varchar', 'Data type is "VARCHAR"' );
+is( lc $f5->data_type, 'varchar', 'Data type is "varchar"' );
 is( $f5->size, 255, 'Size is "255"' );
 is( $f5->is_primary_key, 0, 'Field is not PK' );
 
