@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 
-#-----------------------------------------------------
-# $Id: sql_translator.pl,v 1.3 2002-07-08 14:42:56 dlc Exp $
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+# $Id: sql_translator.pl,v 1.4 2002-11-20 04:03:02 kycl4rk Exp $
+# -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
 #
@@ -25,8 +25,11 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 use SQL::Translator;
+
+use Data::Dumper;
+
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 my $from;        # the original database
 my $to;          # the destination database 
@@ -54,31 +57,31 @@ pod2usage(2) unless $from && $to && @files;
 #
 # If everything is OK, translate file(s).
 #
-my $translator = SQL::Translator->new;
+my $translator = SQL::Translator->new( debug => $verbose );
 $translator->parser($from);
 $translator->producer($to);
 
 for my $file (@files) {
-    my $output =  $translator->translate($file)
-                     or die "Error: " . $translator->error;
-    print "Output:\n", $output;
+    my $output = $translator->translate( $file ) or die
+        "Error: " . $translator->error;
+    print $output;
+    warn "parser = ", Dumper( $translator->parser );
 }
 
-__END__
-#-----------------------------------------------------
+# ----------------------------------------------------
 # It is not all books that are as dull as their readers.
 # Henry David Thoreau
-#-----------------------------------------------------
+# ----------------------------------------------------
 
 =head1 NAME
 
-sql_translator.pl - convert schema to Oracle syntax
+sql_translator.pl - convert an SQL database schema
 
 =head1 SYNOPSIS
 
   ./sql_translator.pl -h|--help
 
-  ./sql_translator.pl -f|--from mysql -t|--to oracle [options] file
+  ./sql_translator.pl -f|--from MySQL -t|--to Oracle [options] file
 
   Options:
 
@@ -89,14 +92,14 @@ sql_translator.pl - convert schema to Oracle syntax
 
 Part of the SQL Fairy project (sqlfairy.sourceforge.net), this script
 will try to convert any database syntax for which it has a grammar
-into some other format will accept.
+into some other format it knows about.
 
 =head1 AUTHOR
 
-Ken Y. Clark, kclark@logsoft.com
+Ken Y. Clark, E<lt>kclark@logsoft.comE<gt>
 
 =head1 SEE ALSO
 
-perl(1), SQL::Transport.
+perl(1), SQL::Translator.
 
 =cut

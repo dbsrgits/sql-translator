@@ -1,8 +1,8 @@
 package SQL::Translator::Parser::MySQL;
 
-#-----------------------------------------------------
-# $Id: MySQL.pm,v 1.4 2002-10-11 21:09:49 cmungall Exp $
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+# $Id: MySQL.pm,v 1.5 2002-11-20 04:03:04 kycl4rk Exp $
+# -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Parser::MySQL;
 
 use strict;
 use vars qw($VERSION $GRAMMAR @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 #use SQL::Translator::Parser;  # This is not necessary!
 use Parse::RecDescent;
@@ -72,7 +72,7 @@ $GRAMMAR =
                         
                                 if ( $line->{'is_primary_key'} ) {
                                     push
-                                    @{ $tables{ $item{'table_name'} }{'indeces'} },
+                                    @{ $tables{ $item{'table_name'} }{'indices'} },
                                     {
                                         type   => 'primary_key',
                                         fields => [ $field_name ],
@@ -80,7 +80,7 @@ $GRAMMAR =
                                 }
                             }
                             else {
-                                push @{ $tables{ $item{'table_name'} }{'indeces'} },
+                                push @{ $tables{ $item{'table_name'} }{'indices'} },
                                     $line;
                             }
                             $tables{ $item{'table_name'} }{'type'} = 
@@ -103,7 +103,7 @@ $GRAMMAR =
                        | field
                        | <error>
 
-        comment      : /^\s*#.*\n/
+        comment      : /^\s*[#-]+.*\n/
 
         blank        : /\s*/
 

@@ -1,8 +1,8 @@
 package SQL::Translator::Producer::MySQL;
 
-#-----------------------------------------------------
-# $Id: MySQL.pm,v 1.2 2002-03-29 13:08:19 dlc Exp $
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+# $Id: MySQL.pm,v 1.3 2002-11-20 04:03:04 kycl4rk Exp $
+# -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw($VERSION $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -34,7 +34,7 @@ sub import {
 
 sub produce {
     my ($translator, $data) = @_;
-    debug("Beginning");
+    debug("Beginning production\n");
     my $create = sprintf 
 "# ----------------------------------------------------------------------
 # Created by %s
@@ -43,7 +43,7 @@ sub produce {
         __PACKAGE__, scalar localtime;
 
     for my $table (keys %{$data}) {
-        debug("Looking a '$table'");
+        debug("Looking at table '$table'\n");
         my $table_data = $data->{$table};
         my @fields = sort { $table_data->{'fields'}->{$a}->{'order'} <=>
                             $table_data->{'fields'}->{$b}->{'order'}
@@ -63,7 +63,7 @@ sub produce {
         # --------------------------------------------------------------
         for (my $i = 0; $i <= $#fields; $i++) {
             my $field = $fields[$i];
-            debug("Looking at field: $field");
+            debug("Looking at field '$field'\n");
             my $field_data = $table_data->{'fields'}->{$field};
             my @fdata = ("", $field);
             $create .= "\n";
@@ -99,10 +99,10 @@ sub produce {
         # --------------------------------------------------------------
         # Other keys
         # --------------------------------------------------------------
-        my @indeces = @{$table_data->{'indeces'}};
-        for (my $i = 0; $i <= $#indeces; $i++) {
+        my @indices = @{$table_data->{'indices'}};
+        for (my $i = 0; $i <= $#indices; $i++) {
             $create .= ",\n";
-            my $key = $indeces[$i];
+            my $key = $indices[$i];
             my ($name, $type, $fields) = @{$key}{qw(name type fields)};
             if ($type eq "primary_key") {
                 $create .= " PRIMARY KEY (@{$fields})"
@@ -143,7 +143,6 @@ __END__
 =head1 NAME
 
 SQL::Translator::Producer::MySQL - mysql-specific producer for SQL::Translator
-
 
 =head1 AUTHOR
 

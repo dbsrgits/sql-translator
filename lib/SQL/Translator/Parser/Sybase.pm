@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Sybase;
 
 #-----------------------------------------------------
-# $Id: Sybase.pm,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.2 2002-11-20 04:03:04 kycl4rk Exp $
 #
 # File       : SQL/Translator/Parser/Sybase.pm
 # Programmer : Ken Y. Clark, kclark@logsoft.com
@@ -87,7 +87,7 @@ my $grammar = q{
                     
                             if ( $line->{'is_primary_key'} ) {
                                 push
-                                @{ $tables{ $item{'table_name'} }{'indeces'} },
+                                @{ $tables{ $item{'table_name'} }{'indices'} },
                                 {
                                     type   => 'primary_key',
                                     fields => [ $field_name ],
@@ -95,7 +95,7 @@ my $grammar = q{
                             }
                         }
                         else {
-                            push @{ $tables{ $item{'table_name'} }{'indeces'} },
+                            push @{ $tables{ $item{'table_name'} }{'indices'} },
                                 $line;
                         }
                         $tables{ $item{'table_name'} }{'type'} = 

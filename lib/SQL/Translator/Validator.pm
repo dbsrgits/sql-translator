@@ -1,7 +1,7 @@
 package SQL::Translator::Validator;
 
 # ----------------------------------------------------------------------
-# $Id: Validator.pm,v 1.3 2002-06-11 12:09:13 dlc Exp $
+# $Id: Validator.pm,v 1.4 2002-11-20 04:03:03 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Validator;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -66,7 +66,7 @@ sub validate {
                 "Table `$table' is not a HASH reference";
         }
 
-        # Table must contain three elements: type, indeces, and fields
+        # Table must contain three elements: type, indices, and fields
         # XXX If there are other keys, is this an error?
         unless (exists $table_data->{"type"}) {
             return by_context $wa, 0, "Missing type for table `$table'";
@@ -76,14 +76,14 @@ sub validate {
         }
 
         # Indices: array of hashes
-        unless (defined $table_data->{"indeces"} &&
-                UNIVERSAL::isa($table_data->{"indeces"}, "ARRAY")) {
+        unless (defined $table_data->{"indices"} &&
+                UNIVERSAL::isa($table_data->{"indices"}, "ARRAY")) {
             return by_context $wa, 0, "Indices is missing or is not an ARRAY";
         } else {
-            my @indeces = @{$table_data->{"indeces"}};
+            my @indices = @{$table_data->{"indices"}};
             $log .= "\n\tIndices:";
-            if (@indeces) {
-                for my $index (@indeces) {
+            if (@indices) {
+                for my $index (@indices) {
                     $log .= "\n\t\t" . ($index->{"name"} || "(unnamed)")
                          .  " on "
                          .  join ", ", @{$index->{"fields"}};

@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.9 2002-07-23 19:21:16 dlc Exp $
+# $Id: Translator.pm,v 1.10 2002-11-20 04:03:03 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,12 +29,11 @@ SQL::Translator - convert schema from one database to another
 
   use SQL::Translator;
   my $translator = SQL::Translator->new;
-
-  my $output = $translator->translate(
-                      from     => "MySQL",
-                      to       => "Oracle",
-                      filename => $file,
-               ) or die $translator->error;
+  my $output     = $translator->translate(
+      from       => "MySQL",
+      to         => "Oracle",
+      filename   => $file,
+  ) or die $translator->error;
   print $output;
 
 =head1 DESCRIPTION
@@ -49,12 +48,12 @@ would use the PostgreSQL parser and the Oracle producer.
 =cut
 
 use strict;
-use vars qw($VERSION $DEFAULT_SUB $DEBUG $ERROR);
-use base qw(Class::Base);
+use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
+use base 'Class::Base';
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
-$DEBUG = 1 unless defined $DEBUG;
-$ERROR = "";
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 0 unless defined $DEBUG;
+$ERROR   = "";
 
 use Carp qw(carp);
 
@@ -108,41 +107,40 @@ advantage is gained by passing options to the constructor.
 #   what each expects/accepts.
 # ----------------------------------------------------------------------
 sub init {
-    my ($self, $config) = @_;
+    my ( $self, $config ) = @_;
 
-    # ------------------------------------------------------------------
+    #
     # Set the parser and producer.
     #
     # If a 'parser' or 'from' parameter is passed in, use that as the
     # parser; if a 'producer' or 'to' parameter is passed in, use that
     # as the producer; both default to $DEFAULT_SUB.
-    # ------------------------------------------------------------------
-    $self->parser(  $config->{'parser'}   || $config->{'from'} || $DEFAULT_SUB);
+    #
+    $self->parser  ($config->{'parser'}   || $config->{'from'} || $DEFAULT_SUB);
     $self->producer($config->{'producer'} || $config->{'to'}   || $DEFAULT_SUB);
 
-    # ------------------------------------------------------------------
+    #
     # Set the parser_args and producer_args
-    # ------------------------------------------------------------------
-    for my $pargs (qw(parser_args producer_args)) {
-        $self->$pargs($config->{$pargs}) if defined $config->{$pargs};
+    #
+    for my $pargs ( qw[ parser_args producer_args ] ) {
+        $self->$pargs( $config->{$pargs} ) if defined $config->{ $pargs };
     }
 
-    # ------------------------------------------------------------------
+    #
     # Set the data source, if 'filename' or 'file' is provided.
-    # ------------------------------------------------------------------
+    #
     $config->{'filename'} ||= $config->{'file'} || "";
-    $self->filename($config->{'filename'}) if $config->{'filename'};
+    $self->filename( $config->{'filename'} ) if $config->{'filename'};
 
-    # ------------------------------------------------------------------
-    # Finally, if there is a 'data' parameter, use that in preference
-    # to filename and file
-    # ------------------------------------------------------------------
-    if (my $data = $config->{'data'}) {
-        $self->data($data);
+    #
+    # Finally, if there is a 'data' parameter, use that in 
+    # preference to filename and file
+    #
+    if ( my $data = $config->{'data'} ) {
+        $self->data( $data );
     }
 
-    $self->{'debug'} = $DEBUG;
-    $self->{'debug'} = $config->{'debug'} if (defined $config->{'debug'});
+    $self->{'debug'} = defined $config->{'debug'} ? $config->{'debug'} : $DEBUG;
 
     return $self;
 }
@@ -253,14 +251,14 @@ sub producer {
             # get code reference and assign
             $self->{'producer'} = \&{ "$producer\::$func_name" };
             $self->{'producer_type'} = $producer;
-            $self->debug("Got producer: $producer\::$func_name");
+            $self->debug("Got producer: $producer\::$func_name\n");
         } 
 
         # passed an anonymous subroutine reference
         elsif (isa($producer, 'CODE')) {
             $self->{'producer'} = $producer;
             $self->{'producer_type'} = "CODE";
-            $self->debug("Got producer: code ref");
+            $self->debug("Got producer: code ref\n");
         } 
 
         # passed a string containing no "::"; relative package name
@@ -269,7 +267,7 @@ sub producer {
             load($Pp) or die "Can't load $Pp: $@";
             $self->{'producer'} = \&{ "$Pp\::produce" };
             $self->{'producer_type'} = $Pp;
-            $self->debug("Got producer: $Pp");
+            $self->debug("Got producer: $Pp\n");
         }
 
         # At this point, $self->{'producer'} contains a subroutine
@@ -369,29 +367,30 @@ sub parser {
             # get code reference and assign
             $self->{'parser'} = \&{ "$parser\::$func_name" };
             $self->{'parser_type'} = $parser;
-            $self->debug("Got parser: $parser\::$func_name");
+            $self->debug("Got parser: $parser\::$func_name\n");
         }
 
         # passed an anonymous subroutine reference
-        elsif (isa($parser, 'CODE')) {
-            $self->{'parser'} = $parser;
+        elsif ( isa( $parser, 'CODE' ) ) {
+            $self->{'parser'}      = $parser;
             $self->{'parser_type'} = "CODE";
-            $self->debug("Got parser: code ref");
+            $self->debug("Got parser: code ref\n");
         } 
 
         # passed a string containing no "::"; relative package name
         else {
-            my $Pp = sprintf "SQL::Translator::Parser::$parser";
-            load($Pp) or die "Can't load $Pp: $@";
-            $self->{'parser'} = \&{ "$Pp\::parse" };
+            my $Pp = "SQL::Translator::Parser::$parser";
+            load( $Pp ) or die "Can't load $Pp: $@";
+            $self->{'parser'}      = \&{ "$Pp\::parse" };
             $self->{'parser_type'} = $Pp;
-            $self->debug("Got parser: $Pp");
+            $self->debug("Got parser: $Pp\n");
         } 
 
+        #
         # At this point, $self->{'parser'} contains a subroutine
         # reference that is ready to run
-
-        $self->parser_args(@_) if (@_);
+        #
+        $self->parser_args( @_ ) if (@_);
     }
 
     return $self->{'parser'};
@@ -491,7 +490,7 @@ sub filename {
             return $self->error($msg);
         } elsif (-f _ && -r _) {
             $self->{'filename'} = $filename;
-            $self->debug("Got filename: $self->{'filename'}");
+            $self->debug("Got filename: '$self->{'filename'}'\n");
         } else {
             my $msg = "Cannot use '$filename' as input source: ".
                       "file does not exist or is not readable.";
@@ -522,20 +521,20 @@ sub data {
 
     # If we have a filename but no data yet, populate.
     if (not $self->{'data'} and my $filename = $self->filename) {
-        $self->debug("Opening '$filename' to get contents...");
+        $self->debug("Opening '$filename' to get contents.\n");
         local *FH;
         local $/;
         my $data;
 
         unless (open FH, $filename) {
-            return $self->error("Can't open $filename for reading: $!");
+            return $self->error("Can't read file '$filename': $!");
         }
 
         $data = <FH>;
         $self->{'data'} = \$data;
 
         unless (close FH) {
-            return $self->error("Can't close $filename: $!");
+            return $self->error("Can't close file '$filename': $!");
         }
     }
 
@@ -553,21 +552,21 @@ sub translate {
         # Passed a reference to a hash?
         if (isa($_[0], 'HASH')) {
             # yep, a hashref
-            $self->debug("translate: Got a hashref");
+            $self->debug("translate: Got a hashref\n");
             $args = $_[0];
         }
 
         # Passed a reference to a string containing the data
         elsif (isa($_[0], 'SCALAR')) {
             # passed a ref to a string
-            $self->debug("translate: Got a SCALAR reference (string)");
+            $self->debug("translate: Got a SCALAR reference (string)\n");
             $self->data($_[0]);
         }
 
         # Not a reference; treat it as a filename
         elsif (! ref $_[0]) {
             # Not a ref, it's a filename
-            $self->debug("translate: Got a filename");
+            $self->debug("translate: Got a filename\n");
             $self->filename($_[0]);
         }
 
@@ -666,11 +665,12 @@ sub isa { UNIVERSAL::isa($_[0], $_[1]) }
 
 1;
 
-__END__
 #-----------------------------------------------------
 # Rescue the drowning and tie your shoestrings.
 # Henry David Thoreau 
 #-----------------------------------------------------
+
+=pod
 
 =head1 AUTHORS
 

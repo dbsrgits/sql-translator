@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
+# $Id: Oracle.pm,v 1.3 2002-11-20 04:03:04 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 my $max_identifier_length = 30;
 my %used_identifiers = ();
@@ -167,7 +167,7 @@ sub produce {
         # Index Declarations
         #
         my @index_decs = ();
-        for my $index ( @{ $table->{'indeces'} } ) {
+        for my $index ( @{ $table->{'indices'} } ) {
             my $index_name = $index->{'name'} || '';
             my $index_type = $index->{'type'} || 'normal';
             my @fields     = @{ $index->{'fields'} } or next;

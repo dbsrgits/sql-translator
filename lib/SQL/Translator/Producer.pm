@@ -1,8 +1,8 @@
 package SQL::Translator::Producer;
 
-#-----------------------------------------------------
-# $Id: Producer.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+# $Id: Producer.pm,v 1.3 2002-11-20 04:03:03 kycl4rk Exp $
+# -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
 #
@@ -23,23 +23,24 @@ package SQL::Translator::Producer;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 sub produce { "" }
 
 1;
 
-#-----------------------------------------------------
+# -------------------------------------------------------------------
 # A burnt child loves the fire.
 # Oscar Wilde
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+
+=pod
 
 =head1 NAME
 
 SQL::Translator::Producer - base object for Producers
 
 =head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 

@@ -1,8 +1,8 @@
 package SQL::Translator::Parser::xSV;
 
-#-----------------------------------------------------
-# $Id: xSV.pm,v 1.1 2002-03-25 14:27:23 dlc Exp $
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+# $Id: xSV.pm,v 1.2 2002-11-20 04:03:04 kycl4rk Exp $
+# -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Parser::xSV;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -39,7 +39,7 @@ sub parse {
     my $parsed = {
         table1 => {
             "type" => undef,
-            "indeces" => [ { } ],
+            "indices" => [ { } ],
             "fields" => { },
         },
     };
@@ -70,7 +70,7 @@ sub parse {
     }
 
     # Field 0 is primary key, by default, so add an index
-    for ($parsed->{"table1"}->{"indeces"}->[0]) {
+    for ($parsed->{"table1"}->{"indices"}->[0]) {
         $_->{"type"} = "primary_key";
         $_->{"name"} = undef;
         $_->{"fields"} = [ $parsed[0] ];
@@ -78,7 +78,6 @@ sub parse {
 
     return $parsed;
 }
-
 
 1;
 __END__

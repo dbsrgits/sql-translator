@@ -1,7 +1,7 @@
 package SQL::Translator::Parser;
 
 # ----------------------------------------------------------------------
-# $Id: Parser.pm,v 1.3 2002-03-25 14:25:58 dlc Exp $
+# $Id: Parser.pm,v 1.4 2002-11-20 04:03:03 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,17 +23,18 @@ package SQL::Translator::Parser;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 sub parse { "" }
 
 1;
 
-#-----------------------------------------------------
+# ----------------------------------------------------------------------
 # Enough! or Too much.
 # William Blake
-#-----------------------------------------------------
-__END__
+# ----------------------------------------------------------------------
+
+=pod
 
 =head1 NAME
 
@@ -75,9 +76,9 @@ This is the type of the table, if applicable, as a string, or undef if not (for
 example, if the database does not have multiple options).  For MySQL,
 this value might include MyISAM, HEAP, or similar.
 
-=item B<indeces>
+=item B<indices>
 
-The indeces keys is a reference to an array of hashrefs.  Each hashref
+The indices keys is a reference to an array of hashrefs.  Each hashref
 defines one index, and has the keys 'name' (if defined, it will be a
 string), 'type' (a string), and 'fields' (a reference to another
 array).  For example, a table in a MySQL database with two indexes,
@@ -87,7 +88,7 @@ created as:
   KEY foo_idx (foo),
   KEY foo_bar_idx (foo, bar),
 
-would be described in the indeces element as:
+would be described in the indices element as:
 
   [
     {
@@ -152,7 +153,7 @@ would be represented as:
       is_primary_key => undef,
     },
   },
-  'indeces' => [
+  'indices' => [
     {
       'name' => 'username_idx',
       'fields' => [
@@ -167,7 +168,8 @@ would be represented as:
 
 =head1 AUTHORS
 
-Ken Y. Clark, E<lt>kclark@logsoft.comE<gt>, darren chamberlain E<lt>darren@cpan.orgE<gt>
+Ken Y. Clark, E<lt>kclark@logsoft.comE<gt>, 
+darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
