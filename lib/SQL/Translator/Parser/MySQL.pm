@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.19 2003-06-03 22:11:55 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.20 2003-06-03 22:38:18 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -343,6 +343,33 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             $list = [];
         }
 
+        unless ( @{ $size || [] } ) {
+            if ( lc $type eq 'tinyint' ) {
+                $size = [4];
+            }
+            elsif ( lc $type eq 'smallint' ) {
+                $size = [6];
+            }
+            elsif ( lc $type eq 'mediumint' ) {
+                $size = [9];
+            }
+            elsif ( lc $type eq 'int' ) {
+                $size = [11];
+            }
+            elsif ( lc $type eq 'bigint' ) {
+                $size = [20];
+            }
+            elsif ( lc $type eq 'float' ) {
+                $size = [8,2];
+            }
+            elsif ( lc $type eq 'double' ) {
+                $size = [8,2];
+            }
+            elsif ( lc $type eq 'decimal' ) {
+                $size = [8,2];
+            }
+        }
+
         $return        = { 
             type       => $type,
             size       => $size,
@@ -361,13 +388,6 @@ type_qualifier : /(BINARY|UNSIGNED|ZEROFILL)/i
     { lc $item[1] }
 
 field_type   : WORD
-
-field_size   : '(' num_range ')' { $item{'num_range'} }
-
-num_range    : DIGITS ',' DIGITS
-    { $return = $item[1].','.$item[3] }
-    | DIGITS
-    { $return = $item[1] }
 
 create_index : /create/i /index/i
 
@@ -470,12 +490,6 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
     | /NULL/
     { 'NULL' }
-#    {
-#        {
-#            value     => $item[1],
-#            attribute => $item[2]
-#        }
-#    }
 
 !;
 
