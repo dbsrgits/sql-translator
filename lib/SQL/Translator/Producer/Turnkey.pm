@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.32 2004-04-03 03:50:05 allenday Exp $
+# $Id: Turnkey.pm,v 1.33 2004-04-03 04:01:13 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -587,7 +587,7 @@ EOF
 [% END %]
 [% MACRO obj2url(obj) SWITCH obj %]
   [% CASE DEFAULT %]
-    /?id=[% obj %];class=[% ref(obj) %]
+    /[% ref(obj) | replace('.+::','') %]/[% obj %]
 [% END %]
 [% MACRO obj2desc(obj) SWITCH ref(obj) %]
   [% CASE '' %]
