@@ -145,7 +145,6 @@ To convert a schema in SQLFairy's XML dialect to Oracle, do the following:
 
 =head1 SERIALIZING SCHEMAS
 
-via XML, YAML and Storable
 Parsing a schema is generally the most computationally expensive
 operation performed by SQLFairy, so it may behoove you to serialize a
 parsed schema if you need to perform repeated conversions.  For
