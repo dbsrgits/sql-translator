@@ -22,6 +22,7 @@ lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Parser/XML.pm
 lib/SQL/Translator/Parser/XML/SQLFairy.pm
+lib/SQL/Translator/Parser/XML/XMI.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/ClassDBI.pm
 lib/SQL/Translator/Producer/Diagram.pm
@@ -61,6 +62,7 @@ t/15oracle-parser.t
 t/16xml-parser.t
 t/17sqlfxml-producer.t
 t/18ttschema-producer.t
+t/21xml-xmi-parser.t
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
@@ -74,3 +76,5 @@ t/data/mysql/entire_syntax.sql
 t/data/pgsql/entire_syntax.sql
 t/data/sybase/create.sql
 t/data/xml/schema-basic-attribs.xml
+t/data/xmi/Foo.poseidon2.xmi
+t/data/xmi/Foo.poseidon2.zuml
