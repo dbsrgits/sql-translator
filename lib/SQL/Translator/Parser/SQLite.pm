@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.1 2003-10-03 00:20:51 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.2 2003-10-04 01:16:39 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -154,7 +154,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -172,7 +172,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 $GRAMMAR = q!
 
 { 
-    my ( %tables, $table_order, @table_comments );
+    my ( %tables, $table_order, @table_comments, @views, @triggers );
 }
 
 #
@@ -181,7 +181,13 @@ $GRAMMAR = q!
 # won't cause the failure needed to know that the parse, as a whole,
 # failed. -ky
 #
-startrule : statement(s) eofile { \%tables }
+startrule : statement(s) eofile { 
+    $return      => {
+        tables   => \%tables, 
+        views    => \@views,
+        triggers => \@triggers,
+    }
+}
 
 eofile : /^\Z/
 
@@ -407,7 +413,7 @@ sort_order : /(ASC|DESC)/i
 create : CREATE TEMPORARY(?) TRIGGER NAME before_or_after(?) database_event ON table_name trigger_action
     {
         my $table_name = $item[8]->{'name'};
-        push @{ $tables{ $table_name }{'triggers'} }, {
+        push @triggers, {
             name         => $item[4],
             is_temporary => $item[2][0] ? 1 : 0,
             when         => $item[5][0],
@@ -420,7 +426,7 @@ create : CREATE TEMPORARY(?) TRIGGER NAME before_or_after(?) database_event ON t
 create : CREATE TEMPORARY(?) TRIGGER NAME instead_of database_event ON view_name trigger_action
     {
         my $table_name = $item[8]->{'name'};
-        push @{ $tables{ $table_name }{'triggers'} }, {
+        push @triggers, {
             name         => $item[4],
             is_temporary => $item[2][0] ? 1 : 0,
             when         => undef,
@@ -459,6 +465,23 @@ instead_of : /instead of/i
 view_name : qualified_name
 
 #
+# Create View
+#
+create : CREATE TEMPORARY(?) VIEW view_name AS select_statement 
+    {
+        push @views, {
+            name         => $item[4]->{'name'},
+            sql          => $item[6], 
+            is_temporary => $item[2][0] ? 1 : 0,
+        }
+    }
+
+select_statement : SELECT /[^;]+/ SEMICOLON
+    {
+        $return = join( ' ', $item[1], $item[2] );
+    }
+
+#
 # Tokens
 #
 BEGIN_C : /begin/i
@@ -483,7 +506,13 @@ DEFAULT : /default/i
 
 TRIGGER : /trigger/i
 
+VIEW : /view/i
+
+SELECT : /select/i
+
 ON : /on/i
+
+AS : /as/i
 
 WORD : /\w+/
 
@@ -493,9 +522,9 @@ UNIQUE : /unique/i { 1 }
 
 SEMICOLON : ';'
 
-NAME    : /'?(\w+)'?/ { $return = $1 }
+NAME : /'?(\w+)'?/ { $return = $1 }
 
-VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
+VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
     | /'.*?'/   
     { 
@@ -529,10 +558,10 @@ sub parse {
     my $schema = $translator->schema;
     my @tables = sort { 
         $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
-    } keys %{ $result };
+    } keys %{ $result->{'tables'} };
 
     for my $table_name ( @tables ) {
-        my $tdata =  $result->{ $table_name };
+        my $tdata =  $result->{'tables'}{ $table_name };
         my $table =  $schema->add_table( 
             name  => $tdata->{'name'},
         ) or die $schema->error;
@@ -579,6 +608,22 @@ sub parse {
                 on_update        => $cdata->{'on_update_do'},
             ) or die $table->error;
         }
+    }
+
+    for my $def ( @{ $result->{'views'} || [] } ) {
+        my $view = $schema->add_view(
+            name => $def->{'name'},
+            sql  => $def->{'sql'},
+        );
+    }
+
+    for my $def ( @{ $result->{'triggers'} || [] } ) {
+        my $view                = $schema->add_trigger(
+            name                => $def->{'name'},
+            perform_action_when => $def->{'when'},
+            database_event      => $def->{'db_event'},
+            action              => $def->{'action'},
+        );
     }
 
     return 1;
