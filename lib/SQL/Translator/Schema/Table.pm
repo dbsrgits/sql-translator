@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.12 2003-08-20 16:08:13 kycl4rk Exp $
+# $Id: Table.pm,v 1.13 2003-08-21 18:10:47 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Schema::Index;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -118,16 +118,19 @@ C<SQL::Translator::Schema::Constraint> object.
     # If we're trying to add a PK when one is already defined,
     # then just add the fields to the existing definition.
     #
-    my $ok = 0;
+    my $ok = 1;
     my $pk = $self->primary_key;
     if ( $pk && $constraint->type eq PRIMARY_KEY ) {
         $self->primary_key( $constraint->fields );
         $constraint = $pk;
+        $ok         = 0;
     }
-    else {
+    #
+    # See if another constraint of the same type 
+    # covers the same fields.
+    #
+    elsif ( $constraint->type ne CHECK_C ) {
         my @field_names = $constraint->fields;
-        $ok = 1;
-
         for my $c ( 
             grep { $_->type eq $constraint->type } 
             $self->get_constraints 
