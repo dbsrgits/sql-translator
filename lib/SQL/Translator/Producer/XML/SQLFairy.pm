@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.11 2004-03-04 14:39:46 dlc Exp $
+# $Id: SQLFairy.pm,v 1.12 2004-07-08 19:05:26 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -43,42 +43,71 @@ SQL::Translator::Producer::XML::SQLFairy - SQLFairy's default XML format
 
   print $t->translate;
 
-=head1 ARGS
-
-Takes the following extra producer args.
-
-=over 4
-
-=item * emit_empty_tags
-
-Default is false, set to true to emit <foo></foo> style tags for undef values
-in the schema.
-
-=item * attrib_values
-
-Set true to use attributes for values of the schema objects instead of tags.
-
- <!-- attrib_values => 0 -->
- <table>
-   <name>foo</name>
-   <order>1</order>
- </table>
-
- <!-- attrib_values => 1 -->
- <table name="foo" order="1">
- </table>
-
-=back
-
 =head1 DESCRIPTION
 
-Creates XML output of a schema.
+Creates XML output of a schema, in SQLFairy format XML.
+
+The XML lives in the http://sqlfairy.sourceforge.net/sqlfairy.xml namespace.
+With a root element of <schema>.
+
+Objects in the schema are mapped to tags of the same name as the objects class.
+
+The attributes of the objects (e.g. $field->name) are mapped to attributes of
+the tag, except for sql, comments and action, which get mapped to child data
+elements.
+
+List valued attributes (such as the list of fields in an index)
+get mapped to a comma seperated list of values in the attribute.
+
+Child objects, such as a tables fields, get mapped to child tags wrapped in a
+set of container tags using the plural of their contained classes name.
+
+e.g.
+
+    <schema name="" database=""
+      xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+
+      <table name="Story" order="1">
+
+        <fields>
+          <field name="created" data_type="datetime" size="0"
+            is_nullable="1" is_auto_increment="0" is_primary_key="0"
+            is_foreign_key="0" order="1">
+            <comments></comments>
+          </field>
+          <field name="id" data_type="BIGINT" size="20"
+            is_nullable="0" is_auto_increment="1" is_primary_key="1"
+            is_foreign_key="0" order="3">
+            <comments></comments>
+          </field>
+          ...
+        </fields>
+
+        <indices>
+          <index name="foobar" type="NORMAL" fields="foo,bar" options="" />
+        </indices>
+
+      </table>
+
+      <view name="email_list" fields="email" order="1">
+        <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
+      </view>
+
+    </schema>
+
+To see a complete example of the XML translate one of your schema :)
+
+  $ sqlt -f MySQL -t XML-SQLFairy schema.sql
+
+=head1 ARGS
+
+Doesn't take any extra arguments.
 
 =cut
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -94,7 +123,7 @@ BEGIN {
 }
 
 my $Namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
-my $Name      = 'sqlt';
+my $Name      = 'sqlf';
 my $PArgs     = {};
 
 sub produce {
@@ -207,8 +236,14 @@ sub produce {
 
 # -------------------------------------------------------------------
 #
-# TODO 
-# - Doc this sub
+# Takes an XML Write, Schema::* object and list of method names
+# and writes the obect out as XML. All methods values are written as attributes
+# except for comments, sql and action which get written as child data elements.
+#
+# The attributes, tags are written in the same order as the method names are
+# passed.
+#
+# TODO
 # - Should the Namespace be passed in instead of global? Pass in the same
 #   as Writer ie [ NS => TAGNAME ]
 #
@@ -216,51 +251,27 @@ sub xml_obj {
     my ($xml, $obj, %args) = @_;
     my $tag                = $args{'tag'}              || '';
     my $end_tag            = $args{'end_tag'}          || '';
-    my $attrib_values      = $PArgs->{'attrib_values'} || '';
     my @meths              = @{ $args{'methods'} };
     my $empty_tag          = 0;
 
-    if ( $attrib_values and $end_tag ) {
-        $empty_tag = 1;
-        $end_tag   = 0;
-    }
-
-    if ( $attrib_values ) {
-        # Use array to ensure consistant (ie not hash) ordering of attribs
-        # The order comes from the meths list passes in.
-        my @attr = map {
-            my $val = $obj->$_;
-            ($_ => ref($val) eq 'ARRAY' ? join(', ', @$val) : $val);
-        } grep { defined $obj->$_ } @meths;
-        $empty_tag ? $xml->emptyTag( [ $Namespace => $tag ], @attr )
-                   : $xml->startTag( [ $Namespace => $tag ], @attr );
-    }
-    else {
-        $xml->startTag( [ $Namespace => $tag ] );
-        xml_objAttr( $xml, $obj, @meths );
-    }
-
-    $xml->endTag( [ $Namespace => $tag ] ) if $end_tag;
-}
-
-# -------------------------------------------------------------------
-# Takes an XML writer, a Schema::* object and a list of methods and
-# adds the XML for those methods.
-#
-sub xml_objAttr {
-    my ($xml, $obj, @methods) = @_;
-    my $emit_empty            = $PArgs->{'emit_empty_tags'};
-
-    for my $method ( @methods ) {
-        my $val = $obj->$method;
-        debug "        ".ref($obj)."->$method=",
-              (defined $val ? "'$val'" : "<UNDEF>");
-        next unless $emit_empty || defined $val;
-        $val = '' if not defined $val;
+    # Use array to ensure consistant (ie not hash) ordering of attribs
+    # The order comes from the meths list passed in.
+    my @tags;
+    my @attr;
+    foreach ( grep { defined $obj->$_ } @meths ) {
+        my $what = m/^sql|comments|action$/ ? \@tags : \@attr;
+        my $val = $obj->$_;
         $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-        debug "        Adding Attr:".$method."='",$val,"'";
-        $xml->dataElement( [ $Namespace => $method ], $val );
+        push @$what, $_ => $val;
+    };
+    my $child_tags = @tags;
+    $end_tag && !$child_tags
+        ? $xml->emptyTag( [ $Namespace => $tag ], @attr )
+        : $xml->startTag( [ $Namespace => $tag ], @attr );
+    while ( my ($name,$val) = splice @tags,0,2 ) {
+        $xml->dataElement( [ $Namespace => $name ], $val );
     }
+    $xml->endTag( [ $Namespace => $tag ] ) if $child_tags && $end_tag;
 }
 
 1;
