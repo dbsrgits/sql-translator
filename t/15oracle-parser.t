@@ -84,7 +84,7 @@ is( $f1->size, 11, 'Size is "11"' );
 is( $f1->is_nullable, 0, 'Field cannot be null' );
 is( $f1->default_value, undef, 'Default value is undefined' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
-is( $f1->comments, 'the primary key!', 'Comment = "the primary key!"' );
+is( join(',', $f1->comments), 'the primary key!', 'Comment = "the primary key!"' );
 
 my $f2 = shift @t1_fields;
 is( $f2->name, 'trait_category', 'Second field is "trait_category"' );
