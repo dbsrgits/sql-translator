@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.6 2004-07-14 19:37:41 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.7 2004-07-20 17:44:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -61,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -189,7 +189,7 @@ FOREACH table IN schema.get_tables;
         field_name = field.name;
         fname_len  = field.name.length;
         max_field  = fname_len > max_field ? fname_len : max_field;
-        types.$field_name = field.data_type.match( '(char|str|long|text|enum)' )
+        types.$field_name = field.data_type.match( '(char|str|long|text|enum|date)' )
             ? 'string' : 'number';
         field_names.push( field_name );
     END;
