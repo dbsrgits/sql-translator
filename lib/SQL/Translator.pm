@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.45 2003-10-03 20:09:37 dlc Exp $
+# $Id: Translator.pm,v 1.46 2003-10-03 20:17:48 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.03';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -528,9 +528,6 @@ sub translate {
     # Get the data.
     # ----------------------------------------------------------------
     my $data = $self->data;
-    unless (ref($data) eq 'SCALAR' and length $$data) {
-        return $self->error("Empty data file!");
-    }
 
     # ----------------------------------------------------------------
     # Local reference to the parser subroutine
