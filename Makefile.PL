@@ -15,6 +15,7 @@ WriteMakefile(
         'File::Basename'          => 0,
         'File::Spec'              => 0,
         'GD'                      => 0,
+        'GraphViz'                => 0,
         'IO::Dir'                 => 0,
         'Parse::RecDescent'       => 0,  # Is a particular version needed?
         'Pod::Usage'              => 0,
