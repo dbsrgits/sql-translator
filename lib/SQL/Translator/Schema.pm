@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.14 2004-03-23 21:12:22 grommit Exp $
+# $Id: Schema.pm,v 1.15 2004-07-26 13:55:51 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,7 +54,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -65,7 +65,7 @@ sub init {
 
 Object constructor.
 
-  my $schema   =  SQL::Translator->new(
+  my $schema   =  SQL::Translator::Schema->new(
       name     => 'Foo',
       database => 'MySQL',
   );
