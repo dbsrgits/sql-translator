@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More 'no_plan'; #tests => 180;
+use Test::More tests => 5;
 use FindBin qw/$Bin/;
 
 use SQL::Translator;
