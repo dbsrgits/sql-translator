@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1 2003-08-28 08:51:09 boconnor Exp $
+# $Id: Turnkey.pm,v 1.1.2.1 2003-10-03 05:55:20 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.1 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -297,12 +297,12 @@ my $turnkey_atom_tt2 = <<'EOF';
 
 ##############################################
 
-package Durian::Atom::[% package.key FILTER ucfirst %];
+package Turnkey::Atom::[% package.key FILTER ucfirst %];
 
 [% pname = package.key FILTER ucfirst%]
-[% pkey = "Durian::Model::${pname}" %]
+[% pkey = "Turnkey::Model::${pname}" %]
 
-use base qw(Durian::Atom);
+use base qw(Turnkey::Atom);
 use Data::Dumper;
 
 sub can_render {
@@ -314,7 +314,7 @@ sub render {
 	my $dbobject = shift;
     # Assumption here that if it's not rendering on it's own dbobject
     # then it's a list. This will be updated when AtomLists are implemented -boconnor
-	if(ref($dbobject) eq 'Durian::Model::[% package.key FILTER ucfirst %]') {
+	if(ref($dbobject) eq 'Turnkey::Model::[% package.key FILTER ucfirst %]') {
 		return(_render_record($dbobject));
 	}
 	else { return(_render_list($dbobject)); }
@@ -326,6 +326,9 @@ sub _render_record {
 	my $row = {};
 	my $field_hash = {};
 	[% FOREACH field = packages.$pkey.columns_essential %]
+	$field_hash->{[% field %]} = $dbobject->[% field %]();
+    [% END %]
+	[% FOREACH field = packages.$pkey.columns_others %]
 	$field_hash->{[% field %]} = $dbobject->[% field %]();
     [% END %]
 	$row->{data} = $field_hash;
@@ -344,7 +347,11 @@ sub _render_list {
 	    my $field_hash = {};
 	  [% FOREACH field = packages.$pkey.columns_essential %]
 		$field_hash->{[% field %]} = $object->[% field %]();
+	  [% END %]	 
+      [% FOREACH field = packages.$pkey.columns_others %]
+		$field_hash->{[% field %]} = $object->[% field %]();
 	  [% END %]
+
 		$row->{data} = $field_hash;
 	    $row->{id} = $object->id();
 	    push @output, $row;
@@ -433,7 +440,7 @@ sub [% arr.table_name -%]s {
 
 [% ###### DOCUMENT START ###### %]
 
-package Durian::Model::DBI;
+package Turnkey::Model::DBI;
 
 # Created by SQL::Translator::Producer::ClassDBI
 # Template used AutoDBI.tt2
@@ -441,7 +448,7 @@ package Durian::Model::DBI;
 use strict;
 use base qw(Class::DBI::Pg);
 
-Durian::Model::DBI->set_db('Main', '[% db_str  %]', '[% db_user %]', '[% db_pass %]');
+Turnkey::Model::DBI->set_db('Main', '[% db_str  %]', '[% db_user %]', '[% db_pass %]');
 
 [% FOREACH package = packages %]
     [% printPackage(package.value) %]
@@ -450,11 +457,11 @@ EOF
 
 my $turnkey_xml_tt2 = <<EOF;
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE Durian SYSTEM "Durian.dtd">
-<Durian>
+<!DOCTYPE Turnkey SYSTEM "Turnkey.dtd">
+<Turnkey>
 
 <!-- The basic layout is fixed -->
-  <container bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" height="90%" orientation="vertical" type="root" width="100%" xlink:label="RootContainer">
+  <container bgcolor="#dedbde" cellpadding="0" cellspacing="0" height="90%" orientation="vertical" type="root" width="100%" xlink:label="RootContainer">
 	<container cellpadding="3" cellspacing="0" orientation="horizontal" type="container" height="100%" width="100%" xlink:label="MiddleContainer">
 	  <container align="center" cellpadding="2" cellspacing="0" class="leftbar" orientation="vertical" type="minor" width="0%" xlink:label="MidLeftContainer"/>
 	  <container cellpadding="0" cellspacing="0" orientation="vertical" width="100%" type="major" xlink:label="MainContainer"/>
@@ -463,7 +470,7 @@ my $turnkey_xml_tt2 = <<EOF;
 
 <!-- Atom Classes -->
 [% FOREACH package = linkable %]
-  <atom class="Durian::Atom::[% package.key FILTER ucfirst %]"  name="[% package.key FILTER ucfirst %]" xlink:label="[% package.key FILTER ucfirst %]Atom"/>
+  <atom class="Turnkey::Atom::[% package.key FILTER ucfirst %]"  name="[% package.key FILTER ucfirst %]" xlink:label="[% package.key FILTER ucfirst %]Atom"/>
 [% END %]
 
 <!-- Atom Bindings -->
@@ -477,7 +484,7 @@ my $turnkey_xml_tt2 = <<EOF;
 
 <atomcontainerbindings>
 	[% FOREACH focus_atom = linkable %]
-	<atomcontainerbindingslayout xlink:label="Durian::Model::[% focus_atom.key FILTER ucfirst %]">
+	<atomcontainerbindingslayout xlink:label="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]">
 	  [% FOREACH link_atom = focus_atom.value %]
 	  <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.key FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.key FILTER ucfirst %]Atom"/>
 	  [% END %]
@@ -487,16 +494,16 @@ my $turnkey_xml_tt2 = <<EOF;
    </atomcontainerbindings>
 
   <uribindings>
-    <uribinding uri="/" class="Durian::Util::Frontpage"/>
+    <uribinding uri="/" class="Turnkey::Util::Frontpage"/>
   </uribindings>
 
   <classbindings>
 	[% FOREACH focus_atom = linkable %]
-     <classbinding class="Durian::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
+     <classbinding class="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
 	[% END %]
   </classbindings>
 
-</Durian>
+</Turnkey>
 EOF
 
 my $turnkey_template_tt2 = <<'EOF';
@@ -511,16 +518,16 @@ my $turnkey_template_tt2 = <<'EOF';
           [% IF p.type == 'Container' %]
             [% renderpanel(p,dbobject) %]
           [% ELSE %]
-            <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%">
+            <table cellpadding="2" cellspacing="0" align="left" height="100%" width="100%">
               [% IF p.name %]
-                <tr bgcolor="#4444FF" height="1">
-                  <td><font color="#FFFFFF">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</font></td>
+                <tr bgcolor="#5aa5e2" height="1">
+                  <td><font class="font" color="#FFFFFF">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</font></td>
                   <td align="right" width="0"><!--<nobr><img src="/images/v.gif"/><img src="/images/^.gif"/>[% IF p.delible == 'yes' %]<img src="/images/x.gif"/>[% END %]</nobr>--></td>
                 </tr>
               [% END %]
-              <tr><td colspan="2" bgcolor="#FFFFFF">
+              <tr><td colspan="2" class="font" bgcolor="#FFFFFF">
               <!-- begin atom: [% p.label %] -->
-              <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
+              <table cellpadding="2" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
                 [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
               </table>
             </table>
@@ -548,12 +555,15 @@ my $turnkey_template_tt2 = <<'EOF';
   [% FOREACH record = lstArr %]
     [% fields = record.data %]
     [- pname = package.key FILTER ucfirst -]
-    [- pkey = "Durian::Model::${pname}" -]
+    [- pkey = "Turnkey::Model::${pname}" -]
     [- FOREACH field = packages.$pkey.columns_essential -]
       <tr><td><b>[- field -]</b></td><td>[% fields.[- field -] %]</td></tr>
     [- END -]
+    [- FOREACH field = packages.$pkey.columns_others -]
+      <tr><td><b>[- field -]</b></td><td>[% fields.[- field -] %]</td></tr>
+    [- END -]
     [% id = record.id %]
-    <tr><td><a href="?id=[% id %];class=Durian::Model::[- package.key FILTER ucfirst -]">Link</a></td><td></td></tr>
+    <tr><td><a href="?id=[% id %];class=Turnkey::Model::[- package.key FILTER ucfirst -]">Link</a></td><td></td></tr>
   [% END %]
 [% END %]
 [- END -]
