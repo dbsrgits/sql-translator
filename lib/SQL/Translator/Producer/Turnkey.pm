@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.12 2003-12-31 23:40:01 boconnor Exp $
+# $Id: Turnkey.pm,v 1.13 2004-01-02 00:17:10 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -41,7 +41,7 @@ my %producer2dsn = (
 
 # -------------------------------------------------------------------
 sub produce {
-    my $log           = Log::Log4perl->get_logger('sql.translator');
+    my $log           = Log::Log4perl->get_logger('SQL.Translator.Producer.Turnkey');
 
     my $t             = shift;
 	my $create        = undef;
@@ -111,7 +111,7 @@ sub produce {
 		elsif($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('one2many')  }
 		elsif($hyperedge->count_thisnode  > 1 and $hyperedge->count_thatnode  > 1){ $hyperedge->type('many2many') }
 
-#warn join "\n", sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
+		$log->debug($_) foreach sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
 
 		#node_to won't always be defined b/c of multiple edges to a single other node
 		if(defined($node_to)){
@@ -146,8 +146,8 @@ sub translateForm {
   my $meta = shift;
 
 
-#print "Node Data:\n";
-#print Dumper $meta->{nodes};
+#"Node Data:\n";
+#warn Dumper $meta->{nodes};
 #exit;
 
   my $args = $t->producer_args;
