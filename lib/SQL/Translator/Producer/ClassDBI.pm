@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.2 2003-04-19 01:32:27 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.3 2003-04-19 22:58:12 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
 #                    Allen Day <allenday@ucla.edu>,
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -103,11 +103,8 @@ sub produce {
 	
 	$create .= "1;\n\n\n";
   }
-  
-  open( FILE, '>DBI.pm') or die( "Can't open file : $!");
-  print ( FILE $create);
-  close	( FILE ) or die( "Can't close file : $!");							   
-
+ 
+  return $create;
 }
 
 
@@ -121,9 +118,9 @@ sub _from {
   } elsif ( $from eq 'PostgreSQL') {
 	$from = 'Pg';
   } elsif ( $from eq 'Oracle') {
-
+	$from = 'Oracle';
   } else {
-	print "Eoorr\n";
+	die "__PACKAGE__ can't handle vendor $from";
   }
 
   return $from;
