@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.30 2003-08-12 23:21:54 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.31 2003-08-13 17:13:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,12 +23,12 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
-use Data::Dumper;
+use Text::Autoformat;
 
 my %CDBI_auto_pkgs = (
     MySQL          => 'mysql',
@@ -46,7 +46,8 @@ sub produce {
     my $args          = $t->producer_args;
     my $db_user       = $args->{'db_user'} || '';
     my $db_pass       = $args->{'db_pass'} || '';
-    my $main_pkg_name = $t->format_package_name('DBI');
+    my $main_pkg_name = $args->{'main_pkg_name'} || 
+                        $t->format_package_name('DBI');
     my $header        = header_comment( __PACKAGE__, "# " );
     my $parser_type   = ( split /::/, $t->parser_type )[-1];
     my $from          = $CDBI_auto_pkgs{$parser_type} || '';
@@ -99,7 +100,7 @@ sub produce {
     }
 
     #
-    # Iterate over all tables
+    # Iterate over all tables.
     #
     my ( %packages, $order );
     for my $table ( $schema->get_tables ) {
@@ -148,7 +149,6 @@ sub produce {
                 my $linkmethodname;
 
                 if ( my $fk_xform = $t->format_fk_name ) {
-
                     # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
                     $linkmethodname = $fk_xform->(
                         $linkable{$table_name}{$link}->name,
@@ -185,7 +185,9 @@ sub produce {
                       $table_name;
                 }
 
-                # if one possible traversal via link table
+                #
+                # If one possible traversal via link table.
+                #
                 if ( scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1 ) {
                     foreach my $rk_field (@rk_fields) {
                         push @{ $packages{$table_pkg_name}{'has_many'}{$link} },
@@ -201,12 +203,14 @@ sub produce {
                           . " }\n\n";
                     }
 
-                    # else there is more than one way to traverse it.
-                    # ack!  let's treat these types of link tables as
-                    # a many-to-one (easier)
                     #
-                    # NOTE: we need to rethink the link method name,
+                    # Else there is more than one way to traverse it.
+                    # ack!  Let's treat these types of link tables as
+                    # a many-to-one (easier).
+                    #
+                    # NOTE: We need to rethink the link method name,
                     # as the cardinality has shifted on us.
+                    #
                 }
                 elsif ( scalar(@rk_fields) == 1 ) {
                     foreach my $rk_field (@rk_fields) {
@@ -222,13 +226,15 @@ sub produce {
                     }
                 }
                 elsif ( scalar(@lk_fields) == 1 ) {
-                    # these will be taken care of on the other end...
+                    # These will be taken care of on the other end...
                 }
                 else {
-                    # many many many.  need multiple iterations here,
+                    #
+                    # Many many many.  Need multiple iterations here,
                     # data structure revision to handle N FK sources.
                     # This code has not been tested and likely doesn't
-                    # work here
+                    # work here.
+                    #
                     foreach my $rk_field (@rk_fields) {
 
                         # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
@@ -252,42 +258,46 @@ sub produce {
             if ( $field->is_foreign_key ) {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
-                my $fk_method  = $t->format_fk_name( $table_name, $field_name );
+                my $fk_method  = $t->format_fk_name( $table_name, $field_name )
+                                 || $field_name;
                 my $fk         = $field->foreign_key_reference;
                 my $ref_table  = $fk->reference_table;
                 my $ref_pkg    = $t->format_package_name($ref_table);
                 my $ref_field  = ( $fk->reference_fields )[0];
 
                 push @{ $packages{$table_pkg_name}{'has_a'} },
-                  "$table_pkg_name->has_a(\n"
-                  . "    $field_name => '$ref_pkg'\n);\n\n"
-                  . "sub $fk_method {\n"
-                  . "    return shift->$field_name\n}\n\n";
+                    "$table_pkg_name->has_a(\n"
+                    . "    $field_name => '$ref_pkg'\n);\n\n"
+                    . "sub $fk_method {\n"
+                    . "    return shift->$field_name\n}\n\n"
+                ;
 
                 #
                 # If this table "has a" to the other, then it follows 
                 # that the other table "has many" of this one, right?
                 #
                 # No... there is the possibility of 1-1 cardinality
-
-                # if there weren't M-M relationships via the has_many
+                #
+                # If there weren't M-M relationships via the has_many
                 # being set up here, create nice pluralized method alias
-                # rather for user as alt. to ugly tablename_fieldname name
+                # rather for user as alt. to ugly tablename_fieldname name.
+                #
                 if ( !$packages{$ref_pkg}{'has_many'}{$table_name} ) {
 
                     # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
                     push @{ $packages{$ref_pkg}{'has_many'}{$table_name} },
-"sub ${table_name}s {\n    return shift->$table_name\_$field_name\n}\n\n";
-
-                    #else ugly
+                        "sub ${table_name}s {\n    ".
+                        "return shift->$table_name\_$field_name\n}\n\n"
+                    ;
                 }
                 else {
+                    ; # nothing? why is this here? -ky
                 }
 
                 push @{ $packages{$ref_pkg}{'has_many'}{$table_name} },
-                  "$ref_pkg->has_many(\n    '${table_name}_${field_name}', "
-                  . "'$table_pkg_name' => '$field_name'\n);\n\n";
-
+                    "$ref_pkg->has_many(\n    '${table_name}_${field_name}',\n"
+                    . "    '$table_pkg_name' => '$field_name'\n);\n\n"
+                ;
             }
         }
     }
@@ -317,34 +327,20 @@ sub produce {
             "use Class::DBI::Pager;\n\n",
         );
 
-        #if ( $from ) {
-        #    $create .= 
-        #        $pkg->{'pkg_name'}."->set_up_table('".$pkg->{'table'}."');\n\n";
-        #}
-        #else {
-        #    my $table       = $schema->get_table( $pkg->{'table'} );
-        #    my @field_names = map { $_->name } $table->get_fields;
         #
-        #    $create .= join("\n",
-        #        $pkg_name."->table('".$pkg->{'table'}."');\n",
-        #        $pkg_name."->columns(All => qw/".
-        #        join(' ', @field_names)."/);\n\n",
-        #    );
-        #}
-
-        # the approach here is to do lazy loading on the expensive
+        # The approach here is to do lazy loading on the expensive
         # columns (expensive defined as those columns which require
         # construction of a referenced object) fields which are
         # strictly data (ie, not references) are treated as essential
         # b/c they don't require much time to set up.
-
-        $create .= $pkg_name . "->table('" . $pkg->{'table'} . "');\n";
+        #
+        $create .= $pkg_name . "->table('" . $pkg->{'table'} . "');\n\n";
 
         # set up primary key field
         if ( $pkg->{'_columns_primary'} ) {
             $create .= $pkg_name
-              . "->columns(Primary   => qw/"
-              . $pkg->{'_columns_primary'} . "/);\n";
+                . "->columns(\n    Primary   => qw/"
+                . $pkg->{'_columns_primary'} . "/\n);\n\n";
         }
         else {
             die "Class::DBI isn't going to like that you don't have".
@@ -352,21 +348,29 @@ sub produce {
                 " in package '$pkg_name'";
         }
 
-        # set up non-FK fields to be populated at construction
+        #
+        # Set up non-FK fields to be populated at construction.
+        #
         if ( $pkg->{'_columns_essential'} ) {
             $create .= $pkg_name
-              . "->columns(Essential => qw/"
-              . join ( ' ', @{ $pkg->{'_columns_essential'} } ) . "/);\n";
+                . "->columns(\n"
+                . autoformat( '    Essential => qw/' .
+                    join ( ' ', @{ $pkg->{'_columns_essential'} } ) . '/'
+                ) . ");\n\n"
+            ;
         }
 
-        # set up FK fields for lazy loading on request
+        #
+        # Set up FK fields for lazy loading on request.
+        #
         if ( $pkg->{'_columns_others'} ) {
             $create .= $pkg_name
-              . "->columns(Others    => qw/"
-              . join ( ' ', @{ $pkg->{'_columns_others'} } ) . "/);\n";
+                . "->columns(\n"
+                . autoformat( '    Others    => qw/' .
+                    join ( ' ', @{ $pkg->{'_columns_others'} } ) . '/'
+                ) . ");\n\n"
+            ;
         }
-
-        $create .= "\n";
 
         if ( my $pk = $pkg->{'pk_accessor'} ) {
             $create .= $pk;
