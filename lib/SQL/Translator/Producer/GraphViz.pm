@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.8 2003-08-21 02:52:40 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.9 2004-02-02 20:28:26 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -96,6 +96,9 @@ sub produce {
     my $add_color       = $args->{'add_color'};
     my $natural_join    = $args->{'natural_join'};
     my $show_fk_only    = $args->{'show_fk_only'};
+    my $show_datatypes  = $args->{'show_datatypes'};
+    my $show_sizes      = $args->{'show_sizes'};
+    my $show_constraints = $args->{'show_constraints'};
     my $join_pk_only    = $args->{'join_pk_only'};
     my $skip_fields     = $args->{'skip_fields'};
     my %skip            = map { s/^\s+|\s+$//g; $_, 1 }
@@ -147,7 +150,26 @@ sub produce {
             @fields = grep { $_->is_foreign_key } @fields;
         }
 
-        my $field_str = join('\l', map { $_->name } @fields);
+        my $field_str = join(
+            '\l',
+            map {
+                '-\ '
+                . $_->name
+                . ( $show_datatypes ? '\ ' . $_->data_type : '')
+                . ( $show_sizes && ! $show_datatypes ? '\ ' : '')
+                . ( $show_sizes && $_->data_type =~ /^(VARCHAR2?|CHAR)$/ ? '(' . $_->size . ')' : '')
+                . ( $show_constraints ?
+                    ( $_->is_primary_key || $_->is_foreign_key || $_->is_unique ? '\ [' : '' )
+                    . ( $_->is_primary_key ? 'PK' : '' )
+                    . ( $_->is_primary_key && ($_->is_foreign_key || $_->is_unique) ? ',' : '' )
+                    . ( $_->is_foreign_key ? 'FK' : '' )
+                    . ( $_->is_unique && ($_->is_primary_key || $_->is_foreign_key) ? ',' : '' )
+                    . ( $_->is_unique ? 'U' : '' )
+                    . ( $_->is_primary_key || $_->is_foreign_key || $_->is_unique ? ']' : '' )
+                : '' )
+                . '\ '
+            } @fields
+        ) . '\l';
         my $label = $show_fields ? "{$table_name|$field_str}" : $table_name;
         $gv->add_node( $table_name, label => $label );
 
