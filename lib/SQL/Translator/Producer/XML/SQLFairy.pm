@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.17 2004-08-19 14:09:00 grommit Exp $
+# $Id: SQLFairy.pm,v 1.18 2004-08-19 20:41:32 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -38,26 +38,27 @@ SQL::Translator::Producer::XML::SQLFairy - SQLFairy's default XML format
       to             => 'XML-SQLFairy',
       filename       => 'schema.sql',
       show_warnings  => 1,
-      add_drop_table => 1,
   );
 
   print $t->translate;
 
 =head1 DESCRIPTION
 
-Creates XML output of a schema, in SQLFairy format XML.
+Creates XML output of a schema, in the flavor of XML used natively by the
+SQLFairy project (L<SQL::Translator>). This format is detailed here.
 
-The XML lives in the http://sqlfairy.sourceforge.net/sqlfairy.xml namespace.
+The XML lives in the C<http://sqlfairy.sourceforge.net/sqlfairy.xml> namespace.
 With a root element of <schema>.
 
-Objects in the schema are mapped to tags of the same name as the objects class.
+Objects in the schema are mapped to tags of the same name as the objects class
+(all lowercase).
 
 The attributes of the objects (e.g. $field->name) are mapped to attributes of
 the tag, except for sql, comments and action, which get mapped to child data
 elements.
 
 List valued attributes (such as the list of fields in an index)
-get mapped to a comma seperated list of values in the attribute.
+get mapped to comma seperated lists of values in the attribute.
 
 Child objects, such as a tables fields, get mapped to child tags wrapped in a
 set of container tags using the plural of their contained classes name.
@@ -71,33 +72,34 @@ e.g.
     <schema name="" database=""
       xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
 
-      <table name="Story" order="1">
+      <tables>
+        <table name="Story" order="1">
+          <fields>
+            <field name="id" data_type="BIGINT" size="20"
+              is_nullable="0" is_auto_increment="1" is_primary_key="1"
+              is_foreign_key="0" order="3">
+              <extra ZEROFILL="1" />
+              <comments></comments>
+            </field>
+            <field name="created" data_type="datetime" size="0"
+              is_nullable="1" is_auto_increment="0" is_primary_key="0"
+              is_foreign_key="0" order="1">
+              <extra />
+              <comments></comments>
+            </field>
+            ...
+          </fields>
+          <indices>
+            <index name="foobar" type="NORMAL" fields="foo,bar" options="" />
+          </indices>
+        </table>
+      </tables>
 
-        <fields>
-          <field name="id" data_type="BIGINT" size="20"
-            is_nullable="0" is_auto_increment="1" is_primary_key="1"
-            is_foreign_key="0" order="3">
-            <extra ZEROFILL="1" />
-            <comments></comments>
-          </field>
-          <field name="created" data_type="datetime" size="0"
-            is_nullable="1" is_auto_increment="0" is_primary_key="0"
-            is_foreign_key="0" order="1">
-            <extra />
-            <comments></comments>
-          </field>
-          ...
-        </fields>
-
-        <indices>
-          <index name="foobar" type="NORMAL" fields="foo,bar" options="" />
-        </indices>
-
-      </table>
-
-      <view name="email_list" fields="email" order="1">
-        <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
-      </view>
+      <views>
+        <view name="email_list" fields="email" order="1">
+          <sql>SELECT email FROM Basic WHERE email IS NOT NULL</sql>
+        </view>
+      </views>
 
     </schema>
 
@@ -155,15 +157,15 @@ the result is a great many possible XML formats, not so good for DTD writing,
 XPathing etc! So we have moved to a fixed version described above.
 
 This version of the producer will now only produce the new style XML.
-To convert your old format files simply pass them through the translator;
+To convert your old format files simply pass them through the translator :)
 
- sqlt -f XML-SQLFairy -t XML-SQLFairy schema-old.xml > schema-new.xml
+ $ sqlt -f XML-SQLFairy -t XML-SQLFairy schema-old.xml > schema-new.xml
 
 =cut
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -389,7 +391,7 @@ Mark Addison E<lt>mark.addison@itn.co.ukE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), SQL::Translator, SQL::Translator::Parser::XML::SQLFairy,
-SQL::Translator::Schema, XML::Writer.
+L<perl(1)>, L<SQL::Translator>, L<SQL::Translator::Parser::XML::SQLFairy>,
+L<SQL::Translator::Schema>, L<XML::Writer>.
 
 =cut

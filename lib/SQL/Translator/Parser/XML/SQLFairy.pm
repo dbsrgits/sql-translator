@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.9 2004-08-19 14:08:59 grommit Exp $
+# $Id: SQLFairy.pm,v 1.10 2004-08-19 20:41:31 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -42,7 +42,7 @@ SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML.
 =head1 DESCRIPTION
 
 This parser handles the flavor of XML used natively by the SQLFairy
-project (SQL::Translator).  The XML must be in the namespace
+project (L<SQL::Translator>).  The XML must be in the namespace
 "http://sqlfairy.sourceforge.net/sqlfairy.xml."
 See L<SQL::Translator::Producer::XML::SQLFairy> for details of this format.
 
@@ -64,15 +64,14 @@ tags then the order the tags appear in the XML will be used.
 
 =head2 default_value
 
-Leave the tag out all together to use the default in Schema::Field.
-Use empty tags or 'EMPTY_STRING' for a zero lenth string. 'NULL' for an
+Leave the attribute out all together to use the default in L<Schema::Field>.
+Use empty quotes or 'EMPTY_STRING' for a zero lenth string. 'NULL' for an
 explicit null (currently sets default_value to undef in the
 Schema::Field obj).
 
-  <sqlf:default_value></sqlf:default_value>             <!-- Empty string -->
-  <sqlf:default_value>EMPTY_STRING</sqlf:default_value> <!-- Empty string -->
-  <sqlf:default_value/>                                 <!-- Empty string -->
-  <sqlf:default_value>NULL</sqlf:default_value>         <!-- NULL -->
+  <sqlf:field default_value="" />                <!-- Empty string -->
+  <sqlf:field default_value="EMPTY_STRING" />    <!-- Empty string -->
+  <sqlf:field default_value="NULL" />            <!-- NULL -->
 
 =head2 ARGS
 
@@ -88,13 +87,12 @@ XPathing etc! So we have moved to a fixed version described in
 L<SQL::Translator::Producer::XML::SQLFairy>.
 
 This version of the parser will still parse the old formats and emmit warnings
-when it sees them being used.
-The old format is B<heavily depreciated> and B<will not> be supported in future
-versions.
+when it sees them being used but they should be considered B<heavily
+depreciated>.
 
-To convert your old format files simply pass them through the translator;
+To convert your old format files simply pass them through the translator :)
 
- sqlt -f XML-SQLFairy -t XML-SQLFairy schema-old.xml > schema-new.xml
+ $ sqlt -f XML-SQLFairy -t XML-SQLFairy schema-old.xml > schema-new.xml
 
 =cut
 
@@ -103,7 +101,7 @@ To convert your old format files simply pass them through the translator;
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -311,6 +309,11 @@ Ignores the order attribute for Constraints, Views, Indices,
 Views, Triggers and Procedures, using the tag order instead. (This is the order
 output by the SQLFairy XML producer).
 
+=head1 SEE ALSO
+
+L<perl>, L<SQL::Translator>, L<SQL::Translator::Producer::XML::SQLFairy>,
+L<SQL::Translator::Schema>.
+
 =head1 TODO
 
 =over 4
@@ -325,17 +328,12 @@ Test foreign keys are parsed ok.
 
 =item *
 
-Control over defaulting of non-existant tags.
+Control over defaulting.
 
 =back
 
 =head1 AUTHOR
 
 Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>.
-
-=head1 SEE ALSO
-
-perl(1), SQL::Translator, SQL::Translator::Producer::XML::SQLFairy,
-SQL::Translator::Schema.
 
 =cut
