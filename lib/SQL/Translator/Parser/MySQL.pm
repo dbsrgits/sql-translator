@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.10 2003-01-29 13:28:28 dlc Exp $
+# $Id: MySQL.pm,v 1.11 2003-02-15 02:30:59 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -42,7 +42,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -186,6 +186,7 @@ field_qualifier : unsigned
 
 index : primary_key_index
     | unique_index
+    | fulltext_index
     | normal_index
 
 table_name   : WORD
@@ -277,8 +278,19 @@ unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
         } 
     }
 
+fulltext_index : fulltext key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
+    { 
+        $return    = { 
+            name   => $item{'index_name'}[0],
+            type   => 'fulltext',
+            fields => $item[5],
+        } 
+    }
+
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
+
+fulltext : /fulltext/i { 1 }
 
 unique : /unique/i { 1 }
 
