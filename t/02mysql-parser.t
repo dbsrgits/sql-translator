@@ -226,7 +226,7 @@ use SQL::Translator::Schema::Constants;
               KEY (billing_address_id),
               KEY (shipping_address_id),
               KEY (member_id, store_id),
-              FOREIGN KEY (status)              REFERENCES order_status(id),
+              FOREIGN KEY (status)              REFERENCES order_status(id) MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE,
               FOREIGN KEY (billing_address_id)  REFERENCES address(address_id),
               FOREIGN KEY (shipping_address_id) REFERENCES address(address_id)
             ) TYPE=INNODB;
