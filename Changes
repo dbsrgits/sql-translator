@@ -18,6 +18,11 @@
 
 *   Added schema filters.
 
+*   MySQL Producer
+    - Added 'mysql_table_type' extra attribute on tables.
+    - Works out InnoDB tables from constraints.
+
+
 # -----------------------------------------------------------
 # 0.06    2004-05-13
 # -----------------------------------------------------------

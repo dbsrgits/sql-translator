@@ -61,6 +61,7 @@ schema_ok( $scma, {
                 foo => "bar",
                 hello => "world",
                 bar => "baz",
+                mysql_table_type => "InnoDB",
             },
             fields => [
                 {

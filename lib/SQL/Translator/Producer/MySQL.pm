@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.41 2004-09-20 20:48:19 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.42 2005-01-13 11:50:23 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,11 +40,42 @@ There are still some issues to be worked out with syntax differences
 between MySQL versions 3 and 4 ("SET foreign_key_checks," character sets
 for fields, etc.).
 
+=head2 Table Types
+
+Normally the tables will be created without any explicit table type given and
+so will use the MySQL default.
+
+Any tables involved in foreign key constraints automatically get a table type
+of InnoDB, unless this is overridden by setting the C<mysql_table_type> extra
+attribute explicitly on the table.
+
+=head2 Extra attributes.
+
+The producer recognises the following extra attributes on the Schema objects.
+
+=over 4
+
+=item field.list
+
+Set the list of allowed values for Enum fields.
+
+=item field.binary field.unsigned field.zerofill
+
+Set the MySQL field options of the same name.
+
+=item mysql_table_type
+
+Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
+automatically set for tables involved in foreign key constraints if it is
+not already set explicitly. See L<"Table Types">.
+
+=back
+
 =cut
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -94,6 +125,21 @@ sub produce {
     # \todo Don't set if MySQL 3.x is set on command line
     $create .= "SET foreign_key_checks=0;\n\n";
 
+    #
+    # Work out which tables need to be InnoDB to support foreign key
+    # constraints. We do this first as we need InnoDB at both ends.
+    #
+    foreach ( map { $_->get_constraints } $schema->get_tables ) {
+        foreach my $meth (qw/table reference_table/) {
+            my $table = $schema->get_table($_->$meth) || next;
+            next if $table->extra('mysql_table_type');
+            $table->extra( 'mysql_table_type' => 'InnoDB');
+        }
+    }
+
+    #
+    # Generate sql
+    #
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name;
         debug("PKG: Looking at table '$table_name'\n");
@@ -215,7 +261,6 @@ sub produce {
         # Constraints -- need to handle more than just FK. -ky
         #
         my @constraint_defs;
-        my $has_fk;
         my @constraints = $table->get_constraints;
         for my $c ( @constraints ) {
             my @fields = $c->fields or next;
@@ -229,8 +274,6 @@ sub produce {
                     'UNIQUE (' . join(', ', @fields). ')';
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                $has_fk = 1;
-                
                 #
                 # Make sure FK field is indexed or MySQL complains.
                 #
@@ -293,9 +336,8 @@ sub produce {
         # Footer
         #
         $create .= "\n)";
-        if ( $has_fk ) {
-            $create .= " Type=InnoDB";
-        }
+        my $mysql_table_type = $table->extra('mysql_table_type');
+        $create .= " Type=$mysql_table_type" if $mysql_table_type;
         $create .= ";\n\n";
     }
 
