@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser;
 
 # -------------------------------------------------------------------
-# $Id: Parser.pm,v 1.6 2003-10-01 17:45:47 grommit Exp $
+# $Id: Parser.pm,v 1.7 2003-10-06 13:23:04 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -32,7 +32,7 @@ parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use Data::Dumper;
 use XML::XPath;
@@ -192,16 +192,19 @@ sub _mk_get {
         }
 
 		# Get the Tag attributes
+#warn "    getting attribs: ",join(" ",@{$spec->{attrib_data}}),"\n";
         foreach ( @{$spec->{attrib_data}} ) {
 			$thing->{$_} = $node->getAttribute($_);
 		}
+#warn "    got attribs: ",(map "$_=$thing->{$_}", keys %$thing),"\n";
 
         # Add the path data
         foreach ( @{$spec->{path_data}} ) {
-#warn "          $spec->{name} - $_->{name} using:$_->{path}\n";
+#warn "    getting path data $_->{name} : $_->{path}\n";
             my @nodes = $node->findnodes($_->{path});
             $thing->{$_->{name}} = @nodes ? $nodes[0]->getData
                 : (exists $_->{default} ? $_->{default} : undef);
+#warn "    got path data $_->{name}=$thing->{$_->{name}}\n";
         }
 
         # Run any filters set
@@ -231,7 +234,6 @@ sub _mk_get {
 			$path =~ s/\$\{(.*?)\}/$thing->{$1}/g;
 			$data = $me->$meth( _context => $node, _xpath => $path,
                 filter => $args{"filter_$_->{name}"} );
-
             if ( $_->{multiplicity} eq "1" ) {
                 $thing->{$_->{name}} = shift @$data;
             }
@@ -290,19 +292,21 @@ package XML::XPath::Function;
 sub xmiDeref {
     my $self = shift;
     my ($node, @params) = @_;
+    my $nodeset;
     if (@params > 1) {
         die "xmiDeref() function takes one or no parameters\n";
     }
     elsif (@params) {
-        my $nodeset = shift(@params);
+        $nodeset = shift(@params);
         return $nodeset unless $nodeset->size;
         $node = $nodeset->get_node(1);
     }
     die "xmiDeref() needs an Element node." 
     unless $node->isa("XML::XPath::Node::Element");
 
-    my $id = $node->getAttribute("xmi.idref") or return $node;
+    my $id = $node->getAttribute("xmi.idref") || return ($nodeset || $node);
     return $node->getRootNode->find('//*[@xmi.id="'.$id.'"]');
+    # TODO We should use the tag name to search from the source 
 }
 
 
