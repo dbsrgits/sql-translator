@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.25 2003-08-15 16:09:45 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.26 2003-08-15 22:29:16 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -617,7 +617,7 @@ create_table : /create/i TABLE
 
 create_index : /create/i /index/i
 
-default_val  : /default/i /(\d+|'[^']*'|\w+\(.*?\))/
+default_val  : /default/i /(\d+|'[^']*'|\w+\(.*?\))|\w+/
     { 
         my $val =  defined $item[2] ? $item[2] : '';
         $val    =~ s/^'|'$//g; 
@@ -705,7 +705,7 @@ sub parse {
         my $tdata =  $result->{ $table_name };
         my $table =  $schema->add_table( 
             name  => $tdata->{'table_name'},
-        ) or die $schema->error;
+        ) or die "Couldn't create table '$table_name': " . $schema->error;
 
         my @fields = sort { 
             $tdata->{'fields'}->{$a}->{'order'} 
