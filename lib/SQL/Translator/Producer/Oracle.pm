@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.18 2003-08-17 01:11:54 rossta Exp $
+# $Id: Oracle.pm,v 1.19 2003-08-17 07:51:33 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -45,14 +45,14 @@ my %translate  = (
     tinyint    => 'number',
     char       => 'char',
     varchar    => 'varchar2',
-    tinyblob   => 'CLOB',
-    blob       => 'CLOB',
-    mediumblob => 'CLOB',
-    longblob   => 'CLOB',
-    longtext   => 'long',
-    mediumtext => 'long',
-    text       => 'long',
-    tinytext   => 'long',
+    tinyblob   => 'blob',
+    blob       => 'blob',
+    mediumblob => 'blob',
+    longblob   => 'blob',
+    longtext   => 'clob',
+    mediumtext => 'clob',
+    text       => 'clob',
+    tinytext   => 'clob',
     enum       => 'varchar2',
     set        => 'varchar2',
     date       => 'date',
@@ -178,7 +178,7 @@ sub produce {
             my $commalist = "'" . (join "', '", @$list) . "'";
 
             if ( $data_type eq 'enum' ) {
-                $check = "CHECK ($field_name IN ($commalist))";
+                $check = "CHECK ($field_name_ur IN ($commalist))";
                 $data_type = 'varchar2';
             }
             elsif ( $data_type eq 'set' ) {
@@ -191,12 +191,23 @@ sub produce {
                               $translate{ $data_type } :
                               die "Unknown datatype: $data_type\n";
             }
+            
+            # Fixes ORA-02329: column of datatype LOB cannot be unique or a primary key
+            if ( $data_type eq 'clob' && $field->is_primary_key ) {
+                $data_type = 'varchar2';
+                $size[0] = 4000;
+            }
+
+            # Fixes ORA-00907: missing right parenthesis
+            if ($data_type eq 'date') {
+                undef @size;
+            }
 
             $field_def .= " $data_type";
             if ( defined $size[0] && $size[0] > 0 ) {
                 $field_def .= '(' . join( ', ', @size ) . ')';
             }
-        
+
             #
             # Default value
             #
