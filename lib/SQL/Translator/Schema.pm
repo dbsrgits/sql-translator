@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.6 2003-06-09 04:18:23 kycl4rk Exp $
+# $Id: Schema.pm,v 1.7 2003-06-09 04:40:08 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -46,6 +46,7 @@ use strict;
 use Class::Base;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Table;
+use SQL::Translator::Utils 'parse_list_arg';
 use SQL::Translator::Schema::View;
 
 use base 'Class::Base';
@@ -337,7 +338,9 @@ A list of fields to skip in the joins
     my $self         = shift;
     my %args         = @_;
     my $join_pk_only = $args{'join_pk_only'} || 0;
-    my %skip_fields  = map { $_, 1 } @{ parse_list_arg($args{'skip_fields'}) };
+    my %skip_fields  = map { s/^\s+|\s+$//g; $_, 1 } @{ 
+        parse_list_arg( $args{'skip_fields'} ) 
+    };
 
     my ( %common_keys, %pk );
     for my $table ( $self->get_tables ) {
