@@ -35,3 +35,9 @@
 
 *   Possibly write a basic ANSI-92 SQL parser which could be extended
     when writing other new parsers.
+
+*   Support for precompiled Parse::RecDescent grammars.
+
+*   More code generation producers, such as Java, PHP, and Python.
+
+*   Integrate Module::Pluggable as a replacement for the _list method.
