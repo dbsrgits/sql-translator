@@ -1,20 +1,32 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 
 #-----------------------------------------------------
-# $Id: sql_translator.pl,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
-#
-# File       : sql_translator.pl
-# Programmer : Ken Y. Clark, kclark@logsoft.com
-# Created    : 2002/02/27
-# Purpose    : invoke SQL::Translator
+# $Id: sql_translator.pl,v 1.1.1.1.2.1 2002-03-15 20:09:38 dlc Exp $
 #-----------------------------------------------------
+# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+#                    darren chamberlain <darren@cpan.org>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
 
 use strict;
 use Getopt::Long;
 use Pod::Usage;
 use SQL::Translator;
 use vars qw( $VERSION );
-$VERSION = (qw$Revision: 1.1.1.1 $)[-1];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.1.1.2.1 $ =~ /(\d+)\.(\d+)/;
 
 my $from;        # the original database
 my $to;          # the destination database 
@@ -27,11 +39,11 @@ my $verbose;     # whether to print progress/debug
 # Get options, explain how to use the script if necessary.
 #
 GetOptions(
-    'f|from=s'    => \$from,
-    't|to=s'      => \$to,
-    'h|help'      => \$help,
-    'v|verbose'   => \$verbose,
-    'no_comments' => \$no_comments,
+    'f|from|parser=s' => \$from,
+    't|to|producer=s' => \$to,
+    'h|help'          => \$help,
+    'v|verbose'       => \$verbose,
+    'no_comments'     => \$no_comments,
 ) or pod2usage(2);
 
 my @files = @ARGV; # the create script for the original db
@@ -42,16 +54,17 @@ pod2usage(2) unless $from && $to && @files;
 #
 # If everything is OK, translate file(s).
 #
-my $translator  =  SQL::Translator->new;
-my $output      =  $translator->translate(
-    from        => $from,
-    to          => $to,
-    input       => \@files,
-    verbose     => $verbose,
-    no_comments => $no_comments,
-) or die "Error: " . $translator->error;
-print "Output:\n", $output;
+my $translator = SQL::Translator->new;
+$translator->parser($from);
+$translator->producer($to);
 
+for my $file (@files) {
+    my $output =  $translator->translate($file)
+                     or die "Error: " . $translator->error;
+    print "Output:\n", $output;
+}
+
+__END__
 #-----------------------------------------------------
 # It is not all books that are as dull as their readers.
 # Henry David Thoreau
