@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.33 2003-08-18 15:46:22 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.34 2003-08-19 14:41:05 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -390,6 +390,19 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             ) {
                 $size = [8,2];
             }
+        }
+
+        if ( lc $type eq 'tinytext' ) {
+            $size = [255];
+        }
+        elsif ( lc $type eq 'text' ) {
+            $size = [65_000];
+        }
+        elsif ( lc $type eq 'mediumtext' ) {
+            $size = [16_000_000];
+        }
+        elsif ( lc $type eq 'longtext' ) {
+            $size = [4_000_000_000];
         }
 
         $return        = { 
