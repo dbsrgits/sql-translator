@@ -14,6 +14,7 @@ WriteMakefile(
         'Parse::RecDescent'  => 0,  # Is a particular version needed?
         'XML::Dumper'        => 0,
         'Pod::Usage'         => 0,
+        'Class::Base'        => 0,
     },
     clean => {
         FILES => '$(DISTNAME)-$(VERSION).tar.gz',
