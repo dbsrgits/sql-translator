@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser;
 
 # -------------------------------------------------------------------
-# $Id: Parser.pm,v 1.7 2003-10-06 13:23:04 grommit Exp $
+# $Id: Parser.pm,v 1.8 2003-10-06 15:03:07 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -32,7 +32,7 @@ parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use Data::Dumper;
 use XML::XPath;
@@ -266,8 +266,8 @@ sub _mk_map {
 sub get_associations {
 	my $assoc = shift->_get_associations(@_);
 	foreach (@$assoc) {
-		next unless defined $_->{ends}; # Wait until we get all of an association
-		my @ends = @{$_->{ends}};
+		next unless defined $_->{associationEnds}; # Wait until we get all of an association
+		my @ends = @{$_->{associationEnds}};
 		if (@ends != 2) {
 			warn "Sorry can't handle otherEnd associations with more than 2 ends"; 
 			return $assoc;
