@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.40 2004-09-20 20:32:18 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.41 2004-09-20 20:48:19 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -130,10 +130,10 @@ sub produce {
                 if ( scalar @size > 1 ) {
                     $data_type = 'double';
                 }
-                elsif ( $size[0] >= 12 ) {
+                elsif ( $size[0] && $size[0] >= 12 ) {
                     $data_type = 'bigint';
                 }
-                elsif ( $size[0] <= 1 ) {
+                elsif ( $size[0] && $size[0] <= 1 ) {
                     $data_type = 'tinyint';
                 }
                 else {
