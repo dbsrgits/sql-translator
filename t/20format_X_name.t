@@ -6,7 +6,7 @@ use strict;
 use SQL::Translator;
 use Test::More tests => 25;
 
-my (%format_X_name, $tr, $ret);
+my ($tr, $ret);
 
 my %format_X_name = (
     format_table_name   => sub { "table_$_[0]"   },
