@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.7 2003-02-25 21:25:14 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.8 2003-02-25 21:58:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -88,7 +88,7 @@ Index:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -213,13 +213,12 @@ using_method : /using/i WORD { $item[2] }
 where_predicate : /where/i /[^;]+/
 
 create_definition : field
-    | index
     | table_constraint
     | <error>
 
 comment : /^\s*(?:#|-{2}).*\n/
 
-field : comment(s?) field_name data_type field_meta(s?)
+field : comment(s?) field_name data_type field_meta(s?) comment(s?)
     {
         my ( $default, @constraints );
         for my $meta ( @{ $item[4] } ) {
@@ -228,6 +227,8 @@ field : comment(s?) field_name data_type field_meta(s?)
         }
 
         my $null = ( grep { $_->{'type'} eq 'not_null' } @constraints ) ? 0 : 1;
+
+        my @comments = ( @{ $item[1] }, @{ $item[5] } );
 
         $return = { 
             type           => 'field',
@@ -238,7 +239,7 @@ field : comment(s?) field_name data_type field_meta(s?)
             null           => $null,
             default        => $default->{'value'},
             constraints    => [ @constraints ],
-            comments       => $item[1],
+            comments       => [ @comments ],
         } 
     }
     | <error>
@@ -296,10 +297,6 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
             on_update_do     => $item[6][0],
         }
     }
-
-index : primary_key_index
-    | unique_index
-    | normal_index
 
 table_name : name_with_opt_quotes
 
@@ -376,12 +373,13 @@ num_range : DIGITS ',' DIGITS
     | DIGITS
     { $return = $item[1] }
 
-table_constraint : constraint_name(?) table_constraint_type deferrable(?) deferred(?)
+table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrable(?) deferred(?) comment(s?)
     {
         my $desc       = $item{'table_constraint_type'};
         my $type       = $desc->{'type'};
         my $fields     = $desc->{'fields'};
         my $expression = $desc->{'expression'};
+        my @comments   = ( @{ $item[1] }, @{ $item[-1] } );
 
         $return              =  {
             name             => $item{'constraint_name'}[0] || '',
@@ -396,6 +394,7 @@ table_constraint : constraint_name(?) table_constraint_type deferrable(?) deferr
             match_type       => $desc->{'match_type'}[0],
             on_delete_do     => $desc->{'on_delete_do'}[0],
             on_update_do     => $desc->{'on_update_do'}[0],
+            comments         => [ @comments ],
         } 
     }
 
@@ -470,33 +469,6 @@ default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
 auto_inc : /auto_increment/i { 1 }
 
 primary_key : /primary/i /key/i { 1 }
-
-primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
-    { 
-        $return    = { 
-            name   => $item{'index_name'}[0],
-            type   => 'primary_key',
-            fields => $item[4],
-        } 
-    }
-
-normal_index : key index_name(?) '(' name_with_opt_paren(s /,/) ')'
-    { 
-        $return    = { 
-            name   => $item{'index_name'}[0],
-            type   => 'normal',
-            fields => $item[4],
-        } 
-    }
-
-unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
-    { 
-        $return    = { 
-            name   => $item{'index_name'}[0],
-            type   => 'unique',
-            fields => $item[5],
-        } 
-    }
 
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
