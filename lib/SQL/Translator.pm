@@ -1,10 +1,11 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.14 2002-11-26 03:59:57 kycl4rk Exp $
+# $Id: Translator.pm,v 1.15 2003-01-27 17:04:43 dlc Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -50,10 +51,10 @@ SQL::Translator - convert schema from one database to another
 
 This module attempts to simplify the task of converting one database
 create syntax to another through the use of Parsers (which understand
-the sourced format) and Producers (which understand the destination
+the source format) and Producers (which understand the destination
 format).  The idea is that any Parser can be used with any Producer in
-the conversion process.  So, if you wanted PostgreSQL-to-Oracle, you
-would use the PostgreSQL parser and the Oracle producer.
+the conversion process.  So, if you wanted Postgres-to-Oracle, you
+would use the Postgres parser and the Oracle producer.
 
 =cut
 
@@ -62,7 +63,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -176,7 +177,6 @@ sub init {
 
 =head1 METHODS
 
-# ----------------------------------------------------------------------
 =head2 B<add_drop_table>
 
 Toggles whether or not to add "DROP TABLE" statements just before the 
@@ -193,7 +193,6 @@ sub add_drop_table {
 }
 
 
-# ----------------------------------------------------------------------
 =head2 B<custom_translate>
 
 Allows the user to override default translation of fields.  For example,
@@ -210,7 +209,6 @@ sub custom_translate {
     return $self->{'custom_translate'} || {};
 }
 
-# ----------------------------------------------------------------------
 =head2 B<no_comments>
 
 Toggles whether to print comments in the output.  Accepts a true or false
@@ -227,13 +225,12 @@ sub no_comments {
     return $self->{'no_comments'} || 0;
 }
 
-# ----------------------------------------------------------------------
 =head2 B<producer>
 
 The B<producer> method is an accessor/mutator, used to retrieve or
 define what subroutine is called to produce the output.  A subroutine
-defined as a producer will be invoked as a function (not a method) and
-passed 2 parameters: its container SQL::Translator instance and a
+defined as a producer will be invoked as a function (I<not a method>)
+and passed 2 parameters: its container SQL::Translator instance and a
 data structure.  It is expected that the function transform the data
 structure to a string.  The SQL::Transformer instance is provided for
 informational purposes; for example, the type of the parser can be
@@ -402,7 +399,6 @@ sub producer_args {
     $self->{'producer_args'};
 }
 
-# ----------------------------------------------------------------------
 =head2 B<parser>
 
 The B<parser> method defines or retrieves a subroutine that will be
@@ -507,7 +503,6 @@ sub parser_args {
     $self->{'parser_args'};
 } 
 
-# ----------------------------------------------------------------------
 =head2 B<show_warnings>
 
 Toggles whether to print warnings of name conflicts, identifier
@@ -527,7 +522,6 @@ sub show_warnings {
     return $self->{'show_warnings'} || 0;
 }
 
-# ----------------------------------------------------------------------
 =head2 B<translate>
 
 The B<translate> method calls the subroutines referenced by the
@@ -574,7 +568,6 @@ You get the idea.
 
 =back
 
-# ----------------------------------------------------------------------
 =head2 B<filename>, B<data>
 
 Using the B<filename> method, the filename of the data to be parsed
@@ -663,7 +656,6 @@ sub data {
     return $self->{'data'};
 }
 
-# ----------------------------------------------------------------------
 =pod
 
 =head2 B<trace>
@@ -827,7 +819,7 @@ sub load {
 }
 
 # ----------------------------------------------------------------------
-sub isa { UNIVERSAL::isa($_[0], $_[1]) }
+sub isa($$) { UNIVERSAL::isa($_[0], $_[1]) }
 
 1;
 
@@ -862,6 +854,9 @@ USA
 
 =head1 SEE ALSO
 
-L<perl>, L<Parse::RecDescent>
+L<perl>,
+L<SQL::Translator::Parser>,
+L<SQL::Translator::Producer>,
+L<Parse::RecDescent>
 
 =cut

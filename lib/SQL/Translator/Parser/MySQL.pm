@@ -1,10 +1,11 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.8 2002-11-28 04:21:06 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.9 2003-01-27 17:04:45 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -41,7 +42,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;

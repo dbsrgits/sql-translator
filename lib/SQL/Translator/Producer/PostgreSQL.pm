@@ -1,10 +1,11 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.5 2003-01-02 17:47:59 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.6 2003-01-27 17:04:48 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -29,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;

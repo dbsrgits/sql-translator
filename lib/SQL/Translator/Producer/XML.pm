@@ -1,10 +1,11 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.4 2002-11-28 04:21:07 kycl4rk Exp $
+# $Id: XML.pm,v 1.5 2003-01-27 17:04:48 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -37,7 +38,7 @@ Meant to create some sort of usable XML output.
 
 use strict;
 use vars qw[ $VERSION $XML ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 # -------------------------------------------------------------------
 sub produce {

@@ -1,10 +1,11 @@
 package SQL::Translator::Validator;
 
 # ----------------------------------------------------------------------
-# $Id: Validator.pm,v 1.6 2002-11-25 14:49:44 dlc Exp $
+# $Id: Validator.pm,v 1.7 2003-01-27 17:04:45 dlc Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -23,7 +24,7 @@ package SQL::Translator::Validator;
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -129,8 +130,7 @@ SQL::Translator::Validate - Validate that a data structure is correct
 
 =head1 SYNOPSIS
 
-  print "1..1\n";
-
+  use Test::More plan tests => 1;
   use SQL::Translator;
   use SQL::Translator::Validator;
 
@@ -139,8 +139,7 @@ SQL::Translator::Validate - Validate that a data structure is correct
   # Default producer passes the data structure through unchanged
   my $parsed = $tr->translate($datafile);
 
-  print "not " unless validate($parsed);
-  print "ok 1 # data structure looks OK\n";
+  ok(validate($parsed), "data structure conformance to definition");
 
 =head1 DESCRIPTION
 
@@ -157,13 +156,13 @@ testing tool (every SQL::Translator install will have this module),
 or, potentially, even as a runtime assertion for producers you don't
 trust:
 
-  $tr->producer(\&paranoid_producer);
+  $tr->producer(\&paranoid_producer, real_producer => "MySQL");
   sub paranoid_producer {
       my ($tr, $data) = @_;
       validate($data) or die "You gave me crap!" 
 
       # Load real producer, and execute it
-      $tr->producer("MySQL");
+      $tr->producer($tr->producer_args->{'real_producer'});
       return $tr->produce($data);
   }
 

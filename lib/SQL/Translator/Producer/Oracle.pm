@@ -1,10 +1,11 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.8 2002-12-11 01:44:54 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.9 2003-01-27 17:04:46 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -23,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 my %translate  = (

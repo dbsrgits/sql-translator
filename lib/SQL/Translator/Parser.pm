@@ -1,10 +1,11 @@
 package SQL::Translator::Parser;
 
 # ----------------------------------------------------------------------
-# $Id: Parser.pm,v 1.5 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: Parser.pm,v 1.6 2003-01-27 17:04:44 dlc Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -23,7 +24,7 @@ package SQL::Translator::Parser;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 sub parse { "" }
 

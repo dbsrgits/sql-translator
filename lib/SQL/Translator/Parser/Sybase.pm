@@ -1,10 +1,11 @@
 package SQL::Translator::Parser::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.3 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.4 2003-01-27 17:04:46 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
