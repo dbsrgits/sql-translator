@@ -16,28 +16,50 @@ CREATE TABLE random (
 
 my $yaml = q|--- #YAML:1.0
 schema:
-  random:
-    foo:
-      extra: {}
-      name: foo
-      order: 2
-      size:
-        - 255
-      type: varchar
-    id:
-      extra: {}
-      name: id
+  procedures: {}
+  tables:
+    random:
+      comments: ''
+      fields:
+        foo:
+          data_type: varchar
+          default_value: ''
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 0
+          name: foo
+          order: 2
+          size:
+            - 255
+        id:
+          data_type: int
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 0
+          name: id
+          order: 1
+          size:
+            - 11
+        updated:
+          data_type: timestamp
+          default_value: ~
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: updated
+          order: 3
+          size:
+            - 0
+      indices: {}
+      name: random
+      options: []
       order: 1
-      size:
-        - 11
-      type: int
-    updated:
-      extra: {}
-      name: updated
-      order: 3
-      size:
-        - 0
-      type: timestamp
+  triggers: {}
+  views: {}
 |;
 
 my $out;
