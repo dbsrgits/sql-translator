@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.17 2003-04-25 11:47:25 dlc Exp $
+# $Id: MySQL.pm,v 1.18 2003-05-03 15:17:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -161,6 +161,7 @@ sub produce {
         for my $key ( @indices, @constraints ) {
             my ($name, $type, $fields) = @{ $key }{ qw[ name type fields ] };
             $name ||= '';
+            $type ||= '';
             my $index_type = 
                 $type eq 'primary_key' ? 'PRIMARY KEY' :
                 $type eq 'unique'      ? 'UNIQUE KEY'  :
