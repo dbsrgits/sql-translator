@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.38 2004-03-01 17:39:22 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.39 2004-08-11 22:00:39 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -407,7 +407,9 @@ data_type : pg_data_type parens_value_list(?)
         #
         # We can deduce some sizes from the data type's name.
         #
-        $data_type->{'size'} ||= $item[2][0];
+        if ( my $size = $item[2][0] ) {
+            $data_type->{'size'} = $size;
+        }
 
         $return  = $data_type;
     }
