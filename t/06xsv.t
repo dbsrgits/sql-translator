@@ -6,17 +6,19 @@
 #
 use strict;
 use SQL::Translator;
+use SQL::Translator::Schema;
 use SQL::Translator::Parser::xSV qw(parse);
 use Test::More tests => 13;
 
 my $tr = SQL::Translator->new;
+my $s  = SQL::Translator::Schema->new;
 my $data = q|One, Two, Three, Four, Five, Six, Seven
 I, Am, Some, Data, Yo, -10, .04
 And, So, am, I, "you crazy, crazy bastard", 500982, 1.1
 |;
 
 $tr->parser_args( trim_fields => 1, scan_fields => 1 );
-my $val = parse($tr, $data);
+my $val = parse($tr, $data, $s);
 
 # $val holds the processed data structure.
 
