@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Storable;
 
 # $Source: /home/faga/work/sqlfairy_svn/sqlfairy-cvsbackup/sqlfairy/lib/SQL/Translator/Producer/Storable.pm,v $
-# $Id: Storable.pm,v 1.2 2003-10-08 20:33:31 phrrngtn Exp $
+# $Id: Storable.pm,v 1.3 2003-10-08 22:55:10 kycl4rk Exp $
 
 =head1 NAME
 
@@ -25,7 +25,7 @@ saved on disk or whatever.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use Storable;
 use Exporter;
@@ -51,10 +51,10 @@ sub produce {
 
 =head1 AUTHORS
 
-Paul Harrington <harringp@deshaw.com>
+Paul Harrington <harringp@deshaw.com>.
 
 =head1 SEE ALSO
 
-SQL::Translator::Parser::Excel;
+SQL::Translator.
 
 =cut
