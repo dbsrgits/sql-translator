@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.41 2004-04-16 09:08:44 boconnor Exp $
+# $Id: Turnkey.pm,v 1.42 2004-04-16 09:46:51 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -203,7 +203,7 @@ L<http://turnkey.sourceforge.net>.
 =head1 AUTHORS
 
 Allen Day E<lt>allenday@ucla.eduE<gt>
-Brian O\'Connor E<lt>brian.oconnor@excite.comE<gt>.
+Brian O\'Connor E<lt>boconnor@ucla.comE<gt>.
 
 =cut
 
@@ -549,33 +549,34 @@ EOF
 } elsif($type eq 'template'){
   return <<'EOF';
 [% TAGS [- -] %]
-[% MACRO renderpanel(panel,dbobject) BLOCK %]
+[% MACRO renderpanel(panel,name,dbobject) BLOCK %]
   <!-- begin panel: [% panel.label %] -->
     [% FOREACH p = panel.containers %]
       [% IF p.can_render(panel) %]
           [% IF p.type == 'Container' %]
-            [% renderpanel(p,dbobject) %]
+            [% renderpanel(p,name,dbobject) %]
           [% ELSE %]
-            [% IF panel.label == 'MainContainer' %]
+            [% IF p.type == 'major' %]
              <div class="middle"><div class="column-in">
-               [% IF p.name %]
-                   <div class="middle-header">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</div>
+               [% IF name %]
+                   <div class="middle-header">[% name %]</div>
                [% END %]
               <!-- begin atom: [% p.label %] -->
               <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
-                [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
+                [% renderatom(name,dbobject,p.containers[0]) %]
               </table>
               </div></div>
               <div class="cleaner"></div>
-            [% ELSE %]
+            [% ELSIF p.type == 'minor' %]
              <div class="left"><div class="column-in">
                <div class="left-item">
-               [% IF p.name %]
-                   <div class="box-header">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</div>
+               [% IF name %]
+                   [% linkname = ref(p.containers[0]) %]
+                   <div class="box-header">[% linkname | replace('Turnkey::Atom::', '') %]</div>
                [% END %]
               <!-- begin atom: [% p.label %] -->
               <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
-                [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
+                [% renderatom(name,dbobject,p.containers[0]) %]
               </table>
               </div></div></div>
             [% END %]
@@ -617,7 +618,7 @@ EOF
       [% obj %]
     [% END %]
 [% END %]
-[% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
+[% MACRO renderatom(name, dbobject, atom) SWITCH name %]
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
     [% CASE '[- format_table(node.key) -]' %]
@@ -643,12 +644,15 @@ EOF
   return <<'EOF';
 [%- TAGS [- -] -%]
 [-- IF !node.is_trivial_link --]
+[% records  = atom.render(dbobject) %]
 [% rowcount = 0 %]
 [% IF atom.focus == "yes" %]
+[% FOREACH record = records %]
+[% fields = record.data %]
   <table>
   [- FOREACH field = node.data_fields -]
   [- IF field != "1" -]
-    <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(dbobject.[- field -]) %]</td></tr>
+    <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field -]) %]</td></tr>
   [- END -]
   [- END -]
   [- FOREACH field = node.edges -]
@@ -658,6 +662,7 @@ EOF
   [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
   [% rowcount = rowcount + 1 %]
   </table>
+[% END %]
 [% ELSE %]
   <ul>
   [% FOREACH record = atom.render(dbobject) %]
