@@ -5,7 +5,6 @@ LICENSE
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
-META.yml
 README
 TODO
 bin/sql_translator.cgi
@@ -75,4 +74,3 @@ t/data/mysql/entire_syntax.sql
 t/data/pgsql/entire_syntax.sql
 t/data/sybase/create.sql
 t/data/xml/schema-basic-attribs.xml
-META.yml                                Module meta-data (added by MakeMaker)
