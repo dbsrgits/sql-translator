@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 160;
+use Test::More tests => 166;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -461,4 +461,32 @@ require_ok( 'SQL::Translator::Schema' );
     is( $v->name, $name, qq[Name is "$name"] );
     is( $v->sql, $sql, qq[Name is "$sql"] );
     is( join(':', $v->fields), 'name:age', qq[Fields are "$fields"] );
+}
+
+#
+# Trigger
+#
+{
+    my $name                = 'foo_trigger';
+    my $perform_action_when = 'after';
+    my $database_event      = 'insert';
+    my $on_table            = 'foo';
+    my $action              = 'update modified=timestamp();';
+    my $s                   = SQL::Translator::Schema->new;
+    my $t                   = $s->add_trigger(
+        name                => $name,
+        perform_action_when => $perform_action_when,
+        database_event      => $database_event,
+        on_table            => $on_table,
+        action              => $action,
+    ) or die $s->error;
+
+    isa_ok( $t, 'SQL::Translator::Schema::Trigger', 'Trigger' );
+    is( $t->name, $name, qq[Name is "$name"] );
+    is( $t->perform_action_when, $perform_action_when, 
+        qq[Perform action when is "$perform_action_when"] );
+    is( $t->database_event, $database_event, 
+        qq[Database event is "$database_event"] );
+    is( $t->on_table, $on_table, qq[Table is "$on_table"] );
+    is( $t->action, $action, qq[Action is "$action"] );
 }
