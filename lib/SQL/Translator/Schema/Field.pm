@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.6 2003-06-06 00:09:25 kycl4rk Exp $
+# $Id: Field.pm,v 1.7 2003-06-06 22:35:44 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -70,7 +70,7 @@ Object constructor.
     for my $arg ( 
         qw[ 
             table name data_type size is_primary_key is_nullable
-            is_auto_increment default_value
+            is_auto_increment default_value comments
         ] 
     ) {
         next unless defined $config->{ $arg };
@@ -79,6 +79,33 @@ Object constructor.
 
     return $self;
 }
+
+# ----------------------------------------------------------------------
+sub comments {
+
+=pod
+
+=head2 comments
+
+Get or set the comments on a field.  May be called several times to 
+set and it will accumulate the comments.  Called in an array context,
+returns each comment individually; called in a scalar context, returns
+all the comments joined on newlines.
+
+  $field->comments('foo');
+  $field->comments('bar');
+  print join( ', ', $field->comments ); # prints "foo, bar"
+
+=cut
+
+    my $self = shift;
+    push @{ $self->{'comments'} }, @_ if @_;
+
+    return wantarray 
+        ? @{ $self->{'comments'} || [] }
+        : join( "\n", @{ $self->{'comments'} || [] } );
+}
+
 
 # ----------------------------------------------------------------------
 sub data_type {
