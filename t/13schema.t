@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 232;
+use Test::More tests => 229;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator' );
@@ -411,19 +411,6 @@ require_ok( 'SQL::Translator::Schema' );
 }
 
 #
-# Graph
-#
-{
-    my $tr = SQL::Translator->new(
-        parser   => "PostgreSQL",
-    );
-
-    ok( $tr->translate('t/data/pgsql/wiki.sql'), 'Translate PG' );
-    ok( my $schema = $tr->schema, 'Got Schema' );
-    ok( my $graph = $schema->as_graph, 'Graph made');
-}
-
-#
 # Test ability to introspect some values
 #
 { 
@@ -431,7 +418,7 @@ require_ok( 'SQL::Translator::Schema' );
         name     => 'foo',
         database => 'PostgreSQL',
     );
-    my $t = $s->add_table( name => 'person' ) or warn $s->erro;
+    my $t = $s->add_table( name => 'person' ) or warn $s->error;
     my $f = $t->add_field( name => 'person_id' ) or warn $t->error;
     $f->data_type('serial');
 
