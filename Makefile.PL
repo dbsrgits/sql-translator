@@ -37,7 +37,7 @@ WriteMakefile(
         'Test::Differences'       => 0,
         'Text::ParseWords'        => 0,
         'Text::RecordParser'      => 0.02,
-        'XML::Writer'             => 0,
+        'XML::Writer'             => 0.500,
         'XML::XPath'              => 1.13,
         'YAML'                    => 0,
     },
@@ -46,7 +46,7 @@ WriteMakefile(
     },
 );
 
-package MY;
+ackage MY;
 use File::Basename qw(basename);
 
 sub libscan {
