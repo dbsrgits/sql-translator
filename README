@@ -22,9 +22,9 @@ As of version 0.03, parsers exist for the following:
         Sybase
 
     Other:
-        xSV    : arbitrarily delimited text files
-        Excel  : Microsoft Excel spreadsheets
-        SqlfXML: SQLFairy's XML format
+        xSV         : arbitrarily delimited text files
+        Excel       : Microsoft Excel spreadsheets
+        XML-SQLFairy: SQLFairy's XML format
 
 And the following producers exist:
 
@@ -40,13 +40,13 @@ And the following producers exist:
         ClassDBI: Class::DBI classes
 
     Documentation:
-        Diagram : quasi-ER diagrams using libgd
-        GraphViz: ER diagrams using GraphViz
-        HTML    : HTML documentation of schema
-        POD     : Plain Old Documenation of schema
+        Diagram     : quasi-ER diagrams using libgd
+        GraphViz    : ER diagrams using GraphViz
+        HTML        : HTML documentation of schema
+        POD         : Plain Old Documenation of schema
 
     Other:
-        SqlfXML: structure of the schema described in SQLFairy's XML
+        XML-SQLFairy: structure of the schema described in SQLFairy's XML
 
 Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
