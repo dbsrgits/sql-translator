@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More 'no_plan'; #tests => 117;
+use Test::More tests => 117;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::PostgreSQL qw(parse);
