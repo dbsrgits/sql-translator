@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.25 2004-03-23 21:05:20 grommit Exp $
+# $Id: Table.pm,v 1.26 2004-03-29 12:25:54 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -435,7 +435,9 @@ sub is_trivial_link {
 
 =pod
 
-=head2 is_data
+=head2 is_trivial_link
+
+True if table has no data (non-key) fields and only uses single key joins.
 
 =cut
 
@@ -468,6 +470,8 @@ sub is_data {
 =pod
 
 =head2 is_data
+
+Returns true if the table has some non-key fields.
 
 =cut
 
@@ -747,6 +751,128 @@ Get or set the table's order.
     }
 
     return $self->{'order'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub field_names {
+
+=head2 field_names
+
+Read-only method to return a list or array ref of the field names. Returns undef
+or an empty list if the table has no fields set. Usefull if you want to
+avoid the overload magic of the Field objects returned by the get_fields method.
+
+  my @names = $constraint->field_names;
+
+=cut
+
+    my $self = shift;
+    my @fields = 
+        map  { $_->name }
+        sort { $a->order <=> $b->order }
+        values %{ $self->{'fields'} || {} };
+
+    if ( @fields ) {
+        return wantarray ? @fields : \@fields;
+    }
+    else {
+        $self->error('No fields');
+        return wantarray ? () : undef;
+    }
+}
+
+# ----------------------------------------------------------------------
+
+=head1 LOOKUP METHODS
+
+The following are a set of shortcut methods for getting commonly used lists of 
+fields and constraints. They all return lists or array refs of Field or 
+Constraint objects.
+
+=over 4
+
+=item pkey_fields
+
+The primary key fields.
+
+=item fkey_fields
+
+All foreign key fields.
+
+=item nonpkey_fields
+
+All the fields except the primary key.
+
+=item data_fields
+
+All non key fields.
+
+=item unique_fields
+
+All fields with unique constraints.
+
+=item unique_constraints
+
+All this tables unique constraints.
+
+=item fkey_constraints
+
+All this tables foreign key constraints. (See primary_key method to get the
+primary key constraint)
+
+=back
+
+=cut
+
+sub pkey_fields {
+    my $me = shift;
+    my @fields = grep { $_->is_primary_key } $me->get_fields;
+    return wantarray ? @fields : \@fields;
+}
+
+# ----------------------------------------------------------------------
+sub fkey_fields {
+    my $me = shift;
+    my @fields;
+    push @fields, $_->fields foreach $me->fkey_constraints;
+    return wantarray ? @fields : \@fields;
+}
+
+# ----------------------------------------------------------------------
+sub nonpkey_fields {
+    my $me = shift;
+    my @fields = grep { !$_->is_primary_key } $me->get_fields;
+    return wantarray ? @fields : \@fields;
+}
+
+# ----------------------------------------------------------------------
+sub data_fields {
+    my $me = shift;
+    my @fields =
+        grep { !$_->is_foreign_key and !$_->is_primary_key } $me->get_fields;
+    return wantarray ? @fields : \@fields;
+}
+
+# ----------------------------------------------------------------------
+sub unique_fields {
+    my $me = shift;
+    my @fields;
+    push @fields, $_->fields foreach $me->unique_constraints;
+    return wantarray ? @fields : \@fields;
+}
+
+# ----------------------------------------------------------------------
+sub unique_constraints {
+    my $me = shift;
+    my @cons = grep { $_->type eq UNIQUE } $me->get_constraints;
+    return wantarray ? @cons : \@cons;
+}
+
+# ----------------------------------------------------------------------
+sub fkey_constraints {
+    my $me = shift;
+    my @cons = grep { $_->type eq FOREIGN_KEY } $me->get_constraints;
+    return wantarray ? @cons : \@cons;
 }
 
 # ----------------------------------------------------------------------
