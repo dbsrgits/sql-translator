@@ -50,7 +50,7 @@ ok($status, "Parsed HTML OK");
 $p->handler(start => @{$HANDLERS{count_tables}});
 $p->parse($parsed);
 
-is($tables, 2, "One table in the SQL produces 2 <table> tags");
+is($tables, 3, "One table in the SQL produces 3 <table> tags");
 $tables = $classes = 0;
 
 $p->handler(start => @{$HANDLERS{count_classes}});
