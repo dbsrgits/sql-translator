@@ -1,12 +1,11 @@
 package SQL::Translator::Producer::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.7 2003-10-04 00:06:39 phrrngtn Exp $
+# $Id: Sybase.pm,v 1.8 2003-10-15 19:16:32 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>,
-#                    Sam Angiuoli <angiuoli@users.sourceforge.net>
+#   Paul Harrington <harringp@deshaw.com>,
+#   Sam Angiuoli <angiuoli@users.sourceforge.net>.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -27,11 +26,22 @@ package SQL::Translator::Producer::Sybase;
 
 SQL::Translator::Producer::Sybase - Sybase producer for SQL::Translator
 
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $t = SQL::Translator->new( parser => '...', producer => 'Sybase' );
+  $t->translate;
+
+=head1 DESCRIPTION
+
+This module will produce text output of the schema suitable for Sybase.
+
 =cut
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -334,11 +344,13 @@ sub produce {
         my (@comments, $procedure_name);
 
         $procedure_name = $procedure->name();
-        push @comments, "--\n-- Procedure: $procedure_name\n--" unless $no_comments;
+        push @comments, 
+            "--\n-- Procedure: $procedure_name\n--" unless $no_comments;
 
-        # text of procedure  already has the 'create procedure' stuff so there
-        # is no need to do anything fancy. However, we should think about doing fancy stuff
-        # with granting permissions and so on.
+        # text of procedure  already has the 'create procedure' stuff
+        # so there is no need to do anything fancy. However, we should
+        # think about doing fancy stuff with granting permissions and
+        # so on.
 
         $output .= join("\n\n",
                        @comments,
@@ -427,9 +439,14 @@ sub unreserve {
 
 =pod
 
+=head1 SEE ALSO
+
+SQL::Translator.
+
 =head1 AUTHORS
 
 Sam Angiuoli E<lt>angiuoli@users.sourceforge.netE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Paul Harrington E<lt>harringp@deshaw.comE<gt>,
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.4 2003-10-09 21:51:08 kycl4rk Exp $
+# $Id: YAML.pm,v 1.5 2003-10-15 19:19:13 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
 #   Ken Y. Clark <kclark@cpan.org>.
@@ -21,9 +21,29 @@ package SQL::Translator::Producer::YAML;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=head1 NAME
+
+SQL::Translator::Producer::YAML - A YAML producer for SQL::Translator
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $translator = SQL::Translator->new;
+  $translator->producer('YAML');
+
+=head1 DESCRIPTION
+
+This module uses YAML to serialize a schema to a string so that it
+can be saved to disk.  Serializing a schema and then calling producers
+on the stored can realize significant performance gains when parsing
+takes a long time.
+
+=cut
+
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
@@ -127,9 +147,11 @@ sub view_view {
 
 1;
 
-=head1 NAME
+# -------------------------------------------------------------------
 
-SQL::Translator::Producer::YAML - A YAML producer for SQL::Translator
+=head1 SEE ALSO
+
+SQL::Translator, YAML, http://www.yaml.org/.
 
 =head1 AUTHORS
 
