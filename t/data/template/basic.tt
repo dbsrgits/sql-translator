@@ -2,12 +2,12 @@ Schema: [% schema.name %]
 Database: [% schema.database %]
 
 [%- FOREACH table = schema.get_tables %]
-Table: [% table.name %]
+Table: [% table %]
 ==========================================================================
 
 Fields
     [%- FOREACH field = table.get_fields %]
-    [% field.name %]
+    [% field %]
         data_type:             [% field.data_type %]
         size:                  [% field.size %]
         is_nullable:           [% field.is_nullable %]
@@ -20,13 +20,13 @@ Fields
         is_valid:              [% field.is_valid %]
         order:                 [% field.order %]
         extra:                 [% field.extra %]
-        table:                 [% field.table.name %]
+        table:                 [% field.table %]
     [% END %]
 
 Indices
     [%- FOREACH index = table.get_indices %]
     [% index.name %]
-        table:    [% index.table.name %]
+        table:    [% index.table %]
         fields:   [% index.fields.join(', ') %]
         type:     [% index.type %]
         options:  [% index.options %]
