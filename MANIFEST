@@ -13,7 +13,6 @@ bin/sqlt-diff
 bin/sqlt-dumper
 bin/sqlt-graph
 bin/sqlt.cgi
-images/sql-fairy.jpg
 lib/SQL/Translator.pm
 lib/SQL/Translator/Parser.pm
 lib/SQL/Translator/Parser/DBI.pm
