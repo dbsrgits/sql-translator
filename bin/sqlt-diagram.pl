@@ -1,14 +1,14 @@
 #!/usr/bin/perl
 
-# $Id: sqlt-diagram.pl,v 1.1 2003-06-16 18:22:17 kycl4rk Exp $
+# $Id: sqlt-diagram.pl,v 1.2 2003-06-16 18:25:36 kycl4rk Exp $
 
 =head1 NAME 
 
-auto-dia.pl - Automatically create a diagram from a database schema
+sqlt-diagram.pl - Automatically create a diagram from a database schema
 
 =head1 SYNOPSIS
 
-  ./auto-dia.pl -d|--db=db_parser [options] schema.sql
+  ./sqlt-diagram.pl -d|--db=db_parser [options] schema.sql
 
   Options:
 
@@ -56,7 +56,7 @@ use Getopt::Long;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.1 $)[-1];
+my $VERSION = (qw$Revision: 1.2 $)[-1];
 
 #
 # Get arguments.
