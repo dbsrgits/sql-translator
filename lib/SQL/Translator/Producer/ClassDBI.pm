@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.4 2003-04-19 23:44:06 allenday Exp $
+# $Id: ClassDBI.pm,v 1.5 2003-04-25 11:47:25 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
 #                    Allen Day <allenday@ucla.edu>,
@@ -23,9 +23,10 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
+use SQL::Translator::Utils qw(header_comment);
 use Data::Dumper;
 
 sub produce {
@@ -34,10 +35,7 @@ sub produce {
   my $no_comments         = $translator->no_comments;
 
   my $create; 
-  unless ( $no_comments ) {
-	$create .= sprintf "##\n## Created by %s\n## Created on %s\n##\n\n",
-	  __PACKAGE__, scalar localtime;
-  }
+  $create .= header_comment(__PACKAGE__, "## ") unless ($no_comments);
 
   $create .= "package " . $translator->format_package_name('DBI'). ";\n\n";
 

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.2 2003-03-12 14:17:11 dlc Exp $
+# $Id: SQLite.pm,v 1.3 2003-04-25 11:47:25 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,34 +24,30 @@ package SQL::Translator::Producer::SQLite;
 
 use strict;
 use Data::Dumper;
-use SQL::Translator::Utils qw(debug);
+use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$DEBUG = 0 unless defined $DEBUG;
+$WARN = 0 unless defined $WARN;
 
 my %used_identifiers = ();
 my $max_id_length    = 30;
 my %global_names;
 my %truncated;
 
-sub import {
-    warn "loading " . __PACKAGE__ . "...\n";
-}
-
 sub produce {
     my ($translator, $data) = @_;
-    $DEBUG                  = $translator->debug;
-    $WARN                   = $translator->show_warnings;
+    local $DEBUG            = $translator->debug;
+    local $WARN             = $translator->show_warnings;
     my $no_comments         = $translator->no_comments;
     my $add_drop_table      = $translator->add_drop_table;
 
     debug("PKG: Beginning production\n");
 
-    my $create; 
-    unless ( $no_comments ) {
-        $create .= sprintf "--\n-- Created by %s\n-- Created on %s\n--\n\n",
-            __PACKAGE__, scalar localtime;
-    }
+    my $create = ''; 
+    $create .= header_comment unless ($no_comments);
 
     for my $table ( keys %{ $data } ) {
         debug("PKG: Looking at table '$table'\n");
@@ -78,6 +74,7 @@ sub produce {
             my $field_data = $table_data->{'fields'}->{$field};
             my @fdata = ("", $field);
             $create .= "\n";
+            my $is_autoinc = 0;
 
             # data type and size
             my $data_type = lc $field_data->{'data_type'};
@@ -93,7 +90,15 @@ sub produce {
                 $size = join( ', ', @{ $field_data->{'size'} || [] } );
             }
 
-            push @fdata, sprintf "%s%s", $data_type, ($size) ? "($size)" : '';
+            # SQLite is generally typeless, but newer versions will
+            # make a field autoincrement if it is declared as (and
+            # *only* as) INTEGER PRIMARY KEY
+            if ($field_data->{'is_auto_inc'}) {
+                $data_type = 'INTEGER PRIMARY KEY';
+                $is_autoinc = 1;
+            }
+
+            push @fdata, sprintf "%s%s", $data_type, (!$is_autoinc && $size) ? "($size)" : '';
 
             # MySQL qualifiers
 #            for my $qual ( qw[ binary unsigned zerofill ] ) {
@@ -115,13 +120,6 @@ sub produce {
                 }
             }
 
-            # auto_increment?
-#            push @fdata, "auto_increment" if $field_data->{'is_auto_inc'};
-
-            # primary key?
-            # This is taken care of in the indices, could be duplicated here
-            # push @fdata, "PRIMARY KEY" if $field_data->{'is_primary_key'};
-
 
             $create .= (join " ", '', @fdata);
             $create .= "," unless ($i == $#fields);
@@ -130,26 +128,15 @@ sub produce {
         # Indices
         #
         my @index_creates;
-        my $idx_name_default;
+        my $idx_name_default = 'A';
         for my $index ( @{ $table_data->{'indices'} || [] } ) {
             my ($name, $type, $fields) = @{ $index }{ qw[ name type fields ] };
             $name ||= '';
-            my $index_type = 
-                $type eq 'primary_key' ? 'PRIMARY KEY' :
-                $type eq 'unique'      ? 'UNIQUE INDEX'  : 'INDEX';
-            if ( $type eq 'primary_key' ) {
-                $create .= join(",\n", '', 
-                    "  $index_type $name (" . join( ', ', @$fields ) . ')'
-                );
-            }
-            else {
-                $name = mk_name( 
-                    $table, $name || ++$idx_name_default
-                );
-                push @index_creates, 
-                    "CREATE $index_type $name on $table ".
-                    '(' . join( ', ', @$fields ) . ')';
-            }
+            my $index_type = $type eq 'unique' ? 'UNIQUE INDEX'  : 'INDEX';
+            $name = mk_name($table, $name || ++$idx_name_default);
+            push @index_creates, 
+                "CREATE $index_type $name on $table ".
+                '(' . join( ', ', @$fields ) . ')';
         }
 
         $create .= "\n);\n";

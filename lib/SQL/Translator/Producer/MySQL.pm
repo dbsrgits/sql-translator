@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.16 2003-04-24 16:14:54 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.17 2003-04-25 11:47:25 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,11 +24,11 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
-use SQL::Translator::Utils qw(debug);
+use SQL::Translator::Utils qw(debug header_comment);
 
 my %translate  = (
     #
@@ -57,10 +57,7 @@ sub produce {
     debug("PKG: Beginning production\n");
 
     my $create; 
-    unless ( $no_comments ) {
-        $create .= sprintf "--\n-- Created by %s\n-- Created on %s\n--\n\n",
-            __PACKAGE__, scalar localtime;
-    }
+    $create .= header_comment unless ($no_comments);
 
     for my $table ( keys %{ $data } ) {
 

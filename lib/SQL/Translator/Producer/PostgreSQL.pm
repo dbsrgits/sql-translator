@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.7 2003-03-07 16:08:22 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.8 2003-04-25 11:47:25 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,9 +30,10 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
+use SQL::Translator::Utils qw(header_comment);
 use Data::Dumper;
 
 my %translate  = (
@@ -164,11 +165,7 @@ sub produce {
     my $add_drop_table        = $translator->add_drop_table;
 
     my $output;
-    unless ( $no_comments ) {
-        $output .=  sprintf 
-            "--\n-- Created by %s\n-- Created on %s\n--\n\n",
-            __PACKAGE__, scalar localtime;
-    }
+    $output .= header_comment unless ($no_comments);
 
     for my $table ( 
         map  { $_->[1] }

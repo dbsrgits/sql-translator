@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.9 2003-01-27 17:04:46 dlc Exp $
+# $Id: Oracle.pm,v 1.10 2003-04-25 11:47:25 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,8 +24,10 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
+
+use SQL::Translator::Utils qw(header_comment);
 
 my %translate  = (
     #
@@ -134,11 +136,7 @@ sub produce {
     my $add_drop_table        = $translator->add_drop_table;
     my $output;
 
-    unless ( $no_comments ) {
-        $output .=  sprintf 
-            "--\n-- Created by %s\n-- Created on %s\n--\n\n",
-            __PACKAGE__, scalar localtime;
-    }
+    $output .= header_comment unless ($no_comments);
 
     if ( $translator->parser_type =~ /mysql/i ) {
         $output .= 
