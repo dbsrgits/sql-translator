@@ -26,7 +26,7 @@ my $file = "$Bin/data/mysql/sqlfxml-producer-basic.sql";
 
 eval { require XML::Writer; };
 if ($@ && $@ =~ m!locate XML::Writer.pm in!) {
-    plan skip_all => "You need XML::Writer to use SqlfXML.";
+    plan skip_all => "You need XML::Writer to use XML::SQLFairy.";
 }
 eval { require Test::Differences; };
 if ($@ && $@ =~ m!locate Test/Differences.pm in!) {
@@ -36,7 +36,7 @@ use Test::Differences;
 plan tests => 6;
     
 use SQL::Translator;
-use SQL::Translator::Producer::SqlfXML;
+use SQL::Translator::Producer::XML::SQLFairy;
 
 my ($obj,$ans,$xml);
 
@@ -80,7 +80,7 @@ $ans = <<EOXML;
         <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>3</sqlt:order>
-        <sqlt:size>65000</sqlt:size>
+        <sqlt:size>65535</sqlt:size>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>email</sqlt:name>
@@ -136,8 +136,8 @@ $obj = SQL::Translator->new(
     trace          => TRACE,
     show_warnings  => 1,
     add_drop_table => 1,
-    from           => "MySQL",
-    to             => "SqlfXML",
+    from           => 'MySQL',
+    to             => 'XML-SQLFairy',
 );
 lives_ok { $xml = $obj->translate($file); }  "Translate ran";
 ok("$xml" ne ""                             ,"Produced something!");
@@ -187,7 +187,7 @@ $ans = <<EOXML;
         <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>7</sqlt:order>
-        <sqlt:size>65000</sqlt:size>
+        <sqlt:size>65535</sqlt:size>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>email</sqlt:name>
@@ -247,8 +247,8 @@ $obj = SQL::Translator->new(
     trace          => TRACE,
     show_warnings  => 1,
     add_drop_table => 1,
-    from           => "MySQL",
-    to             => "SqlfXML",
+    from           => 'MySQL',
+    to             => 'XML-SQLFairy',
     producer_args  => { emit_empty_tags => 1 },
 );
 lives_ok { $xml = $obj->translate($file); }  "Translate ran";
