@@ -91,3 +91,5 @@ t/data/pgsql/entire_syntax.sql
 t/data/sqlite/create.sql
 t/data/sybase/create.sql
 t/data/template/basic.tt
+t/data/xml/schema-basic.xml
+META.yml                                Module meta-data (added by MakeMaker)
