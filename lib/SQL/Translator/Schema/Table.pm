@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.13 2003-08-21 18:10:47 kycl4rk Exp $
+# $Id: Table.pm,v 1.14 2003-08-21 20:27:04 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Schema::Index;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -124,6 +124,13 @@ C<SQL::Translator::Schema::Constraint> object.
         $self->primary_key( $constraint->fields );
         $constraint = $pk;
         $ok         = 0;
+    }
+    elsif ( $constraint->type eq PRIMARY_KEY ) {
+        for my $fname ( $constraint->fields ) {
+            if ( my $f = $self->get_field( $fname ) ) {
+                $f->is_primary_key( 1 );
+            }
+        }
     }
     #
     # See if another constraint of the same type 
