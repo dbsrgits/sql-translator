@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.35 2004-04-06 01:09:01 allenday Exp $
+# $Id: Turnkey.pm,v 1.36 2004-04-06 08:50:32 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -548,37 +548,42 @@ EOF
 [% TAGS [- -] %]
 [% MACRO renderpanel(panel,dbobject) BLOCK %]
   <!-- begin panel: [% panel.label %] -->
-  <table border="0" width="[% panel.width %]" height="[% panel.height %]" bgcolor="[% panel.bgcolor %]" valign="top" cellpadding="[% panel.cellpadding %]" cellspacing="[% panel.cellspacing %]" align="[% panel.align %]" valign="[% panel.valign %]">
-    <tr>
     [% FOREACH p = panel.containers %]
       [% IF p.can_render(panel) %]
-        <td valign="top" class="[% p.class %]" align="[% panel.align %]" height="[% p.height || 1 %]" width="[% p.width %]">
           [% IF p.type == 'Container' %]
             [% renderpanel(p,dbobject) %]
           [% ELSE %]
-            <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%">
-              [% IF p.name %]
-                <tr class="dbtabletitle" height="1">
-                  <td class="dbtabletitle">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</td>
-                  <td align="right" width="0"></td>
-                </tr>
-              [% END %]
-              <tr><td colspan="2" class="dbtablerow">
+            [% IF panel.label == 'MainContainer' %]
+             <div class="middle"><div class="column-in">
+               [% IF p.name %]
+                   <div class="middle-header">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</div>
+               [% END %]
               <!-- begin atom: [% p.label %] -->
               <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
                 [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
               </table>
-            </table>
+              </div></div>
+              <div class="cleaner"></div>
+            [% ELSE %]
+             <div class="left"><div class="column-in">
+               <div class="left-item">
+               [% IF p.name %]
+                   <div class="box-header">[% p.name %][% IF panel.type == 'major' %]: [% dbobject.name %][% END %]</div>
+               [% END %]
+              <!-- begin atom: [% p.label %] -->
+              <table cellpadding="0" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
+                [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
+              </table>
+              </div></div></div>
+            [% END %]
           [% END %]
-        </td>
         [% IF panel.orientation == 'vertical' %]
-          </tr><tr>
         [% END %]
       [% END %]
     [% END %]
-    </tr>
-  </table>
+
   <!-- end panel: [% panel.label %] -->
+
 [% END %]
 [% BLOCK make_linked_dbobject %]
     [% PERL %]
@@ -620,14 +625,14 @@ EOF
       [% renderlist(atom.render(dbobject)) %]
 [% END %]
 [% MACRO renderlist(lstArr) BLOCK %]
-   <tr><td><ul>
+   <div class="left-item"><ul>
   [% FOREACH item = lstArr %]
     [% class = ref(atom) | replace('::Atom::', '::Model::') %]
     [% id = item.id %]
     [% PROCESS make_linked_dbobject %]
     <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
   [% END %]
-   </ul></td></tr>
+   </ul></div>
 [% END %]
 EOF
 
@@ -637,6 +642,7 @@ EOF
 [-- IF !node.is_trivial_link --]
 [% rowcount = 0 %]
 [% IF atom.focus == "yes" %]
+  <table>
   [- FOREACH field = node.data_fields -]
   [- IF field != "1" -]
     <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(dbobject.[- field -]) %]</td></tr>
@@ -648,15 +654,16 @@ EOF
   [- END -]
   [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
   [% rowcount = rowcount + 1 %]
+  </table>
 [% ELSE %]
-  <tr><td><ul>
+  <ul>
   [% FOREACH record = atom.render(dbobject) %]
     [% class = ref(atom) | replace('::Atom::', '::Model::') %]
     [% id = record.id #needed by make_linked_dbobject macro %]
     [% PROCESS make_linked_dbobject %]
     <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
   [% END %]
-   </ul></td></tr>
+   </ul>
 [% END %]
 [- END -]
 EOF
