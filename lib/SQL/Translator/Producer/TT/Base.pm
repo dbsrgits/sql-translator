@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Base;
 
 # -------------------------------------------------------------------
-# $Id: Base.pm,v 1.1 2004-04-14 19:19:44 grommit Exp $
+# $Id: Base.pm,v 1.2 2004-05-13 22:52:00 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -43,13 +43,13 @@ SQL::Translator::Producer::TT::Base - TT based Producer base class.
 =head1 DESCRIPTION
 
 A base class producer designed to be sub-classed to create new TT base
-producers cheaply by simply giving the template to use and sprinkling in some 
+producers cheaply by simply giving the template to use and sprinkling in some
 extra template variables.
 
 See the synopsis above for an example of creating a simple producer using
 a single template stored in the producers DATA section.
 
-WARNING: This is currently WORK IN PROGRESS and so subject to change, 
+WARNING: This is currently WORK IN PROGRESS and so subject to change,
 but it does work ;-)
 
 =cut
@@ -59,7 +59,7 @@ but it does work ;-)
 use strict;
 
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use Template;
 use Data::Dumper;
@@ -89,18 +89,18 @@ sub new {
 sub translator { shift->{translator}; }
 sub schema     { shift->{translator}->schema(@_); }
 
-# Until args access method.
+# Util args access method.
 # No args - Return hashref (the actual hash in Translator) or hash of args.
 # 1 arg   - Return that named args value.
 # Args    - List of names. Return values of the given arg names in list context
 #           or return as hashref in scalar context. Any names given that don't
-#           exists in the args return undef.
+#           exist in the args are returned as undef.
 sub args {
     my $me = shift;
 
     # No args
     unless (@_) {
-        return wantarray 
+        return wantarray
             ? %{ $me->{translator}->producer_args }
             : $me->{translator}->producer_args
         ;
@@ -123,25 +123,29 @@ sub run {
 
     debug "Processing template $tmpl\n";
     my $out;
-    my $tt       = Template->new(
+    my $tt = Template->new(
         #DEBUG    => $me->translator->debug,
-        ABSOLUTE => 1, # Set so we can use from the command line sensibly
-        RELATIVE => 1, # Maybe the cmd line code should set it! Security!
-        %args,         # Allow any TT opts to be passed in the producer_args
+        ABSOLUTE => 1,  # Set so we can use from the command line sensibly
+        RELATIVE => 1,  # Maybe the cmd line code should set it! Security!
+        $me->tt_config, # Hook for sub-classes to add config
+        %args,          # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
 
-    $tt->process( $tmpl, { $me->tt_default_vars, $me->tt_vars, }, \$out )
+    $tt->process( $tmpl, {
+        $me->tt_default_vars,
+        $me->tt_vars,          # Sub-class hook for adding vars
+    }, \$out )
     or die "Error processing template '$tmpl': ".$tt->error;
 
     return $out;
 }
 
-# Returns template file to use, or a scalar ref of tt source, or io handle.
-# See L<Template>
+# Should returns a template file name to use, or a scalar ref of tt source, or
+# an io handle. See L<Template>
 sub tt_schema { shift->args("ttfile") };
 
-# Returns hash-ref of the defaults vars given to the template.
-# You wouldn't normally over-ride but here just in case.
+# Returns hash-ref of the default vars given to the template.
+# You wouldn't normally over-ride this but its here just in case.
 sub tt_default_vars {
     my $me = shift;
     return (
@@ -150,8 +154,12 @@ sub tt_default_vars {
     );
 }
 
-# Return hash of template vars to add to the default set.
-sub tt_vars { () };
+# Return hash of template vars to add to the default set. Override this!
+sub tt_vars   { () };
+
+# Return hash of Template config to add to the config given to the
+# Template->new method.
+sub tt_config { () };
 1;
 
 # -------------------------------------------------------------------
@@ -165,8 +173,6 @@ Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
 =head1 TODO
 
 Lots! But the next things include;
-
-- Hook to allow sub-class to set the options given to the C<Template> instance.
 
 - Add support for a sqlf template repository somewhere, set as an INCLUDE_PATH,
 so that sub-classes can easily include file based templates.
