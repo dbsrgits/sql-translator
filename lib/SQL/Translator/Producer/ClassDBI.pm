@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.25 2003-06-27 02:59:25 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.26 2003-07-09 05:59:24 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -39,6 +39,7 @@ my %CDBI_auto_pkgs = (
 # -------------------------------------------------------------------
 sub produce {
     my $t             = shift;
+	my $create        = undef;
     local $DEBUG      = $t->debug;
     my $no_comments   = $t->no_comments;
     my $schema        = $t->schema;
@@ -90,13 +91,13 @@ sub produce {
                 my $rr_field      = $rr_table->get_field($rr_field_name);
                 next unless $rr_field->is_primary_key;
         
-                $linkable{ $lr_table }{ $rr_table } = $table;
-                $linkable{ $rr_table }{ $lr_table } = $table;
+                $linkable{ $lr_table->name }{ $rr_table->name } = $table;
+                $linkable{ $rr_table->name }{ $lr_table->name } = $table;
                 $linktable{ $table->name } = $table;
             }
         }
     }
-    
+
     #
     # Iterate over all tables
     #
@@ -153,40 +154,85 @@ sub produce {
                 # If this table "has a" to the other, then it follows 
                 # that the other table "has many" of this one, right?
                 #
+				# No... there is the possibility of 1-1 cardinality
                 push @{ $packages{ $ref_pkg }{'has_many'} },
                     "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
                     "'$table_pkg_name' => '$field_name'\n);\n\n"
                 ;
             }
-        }
+		}
 
-        my %linked;
-        if ( $is_data ) {
-            foreach my $link ( keys %{ $linkable{ $table_name } } ) {
-                my $linkmethodname = 
-                    "_".$t->format_fk_name($table->name,$link)."_refs"
-                ;
+         my %linked;
+         if ( $is_data ) {
+             foreach my $link ( keys %{ $linkable{ $table_name } } ) {
+			   my $linkmethodname;
 
-                push @{ $packages{ $table_name }{'has_many'} },
-                    "$table_pkg_name->has_many(\n    ".
-                        "'$linkmethodname', ".
-                        $t->format_package_name(
-                            $linkable{ $table->name }{ $link }->name
-                        )."','".
-                       ($schema->get_table($link)->primary_key->fields)[0].
-                    "');\n\n"
-                ;
+			   # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+			   if ( my $fk_xform = $t->format_fk_name ){
+				 $linkmethodname = $fk_xform->($linkable{$table_name}{$link}->name,
+				   ($schema->get_table($link)->primary_key->fields)[0]).'s';
+			   } else {
+				 $linkmethodname = $linkable{$table_name}{$link}->name.'_'.
+				   ($schema->get_table($link)->primary_key->fields)[0].'s';
+			   }
 
-                #
-                # I'm not sure what to do with this code. - ky
-                #
+#$create .= $field->name. "\n";
+#$create .= $field->foreign_key_reference->reference_table. "\n";
+#$create .= $linkable{ $table_name }{ $link }->name. "\n";
+#$create .= $table_name. "\n";
+#$create .= $link. "\n";
+#$create .= "***\n\n";
 
-#                $create .= "sub ". $t->format_fk_name($table,$link).
-#                    # HARDCODED 's' HERE.  
-#                    # ADD CALLBACK FOR PLURALIZATION MANGLING
-#                    "s {\n    my \$self = shift; return map \$_->".$link.
-#                    ", \$self->".$linkmethodname.";\n}\n\n"
-#                ;
+			   my @rk_fields = ();
+			   my @lk_fields = ();
+			   foreach my $field ($linkable{$table_name}{$link}->get_fields){
+				 next unless $field->is_foreign_key;
+
+				 next unless(
+							 $field->foreign_key_reference->reference_table eq $table_name
+							 ||
+							 $field->foreign_key_reference->reference_table eq $link
+							);
+				 push @lk_fields, ($field->foreign_key_reference->reference_fields)[0]
+				   if $field->foreign_key_reference->reference_table eq $link;
+				 push @rk_fields, $field->name
+				   if $field->foreign_key_reference->reference_table eq $table_name;
+			   }
+
+			   #if one possible traversal via link table
+			   if(scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1){
+				 foreach my $rk_field (@rk_fields){
+				   push @{ $packages{ $table_pkg_name }{'has_many'} },
+					 "sub ".$linkmethodname." { my \$self = shift; ".
+					   "return map \$_->".
+						 ($schema->get_table($link)->primary_key->fields)[0].
+						   ", \$self->".$linkable{$table_name}{$link}->name.
+							 "_".$rk_field." }\n\n";
+				 }
+			   #else there is more than one way to traverse it.  ack!
+			   #let's treat these types of link tables as a many-to-one (easier)
+			   #
+			   #NOTE: we need to rethink the link method name, as the cardinality
+			   #has shifted on us.
+			   } elsif(scalar(@rk_fields) == 1){
+				 foreach my $rk_field (@rk_fields){
+				   push @{ $packages{ $table_pkg_name }{'has_many'} },
+					 "sub " . $linkable{$table_name}{$link}->name .
+					   "s { my \$self = shift; return \$self->" .
+						 $linkable{$table_name}{$link}->name . "_" .
+						   $rk_field . "(\@_) }\n\n";
+				 }
+			   } elsif(scalar(@lk_fields) == 1){
+				 #these will be taken care of on the other end...
+			   } else {
+				 foreach my $rk_field (@rk_fields){
+				   push @{ $packages{ $table_pkg_name }{'has_many'} },
+					 "sub " . $linkable{$table_name}{$link}->name . "_" . $rk_field .
+					   "s { my \$self = shift; return \$self->" .
+						 $linkable{$table_name}{$link}->name . "_" .
+						   $rk_field . "(\@_) }\n\n";
+				 }
+			   }
             }
         }
     }
@@ -195,12 +241,12 @@ sub produce {
     # Now build up text of package.
     #
     my $base_pkg = sprintf( 'Class::DBI%s', $from ? "::$from" : '' );
-    my $create = join("\n",
-        "package $main_pkg_name;\n",
-        $header,
-        "use strict;",
-        "use base '$base_pkg';\n",
-        "$main_pkg_name->set_db('Main', '$dsn', '$db_user', '$db_pass');\n\n",
+    $create .= join("\n",
+      "package $main_pkg_name;\n",
+      $header,
+      "use strict;",
+      "use base '$base_pkg';\n",
+      "$main_pkg_name->set_db('Main', '$dsn', '$db_user', '$db_pass');\n\n",
     ); 
 
     for my $pkg_name ( 
