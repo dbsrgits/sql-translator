@@ -46,7 +46,7 @@ WriteMakefile(
     },
 );
 
-ackage MY;
+package MY;
 use File::Basename qw(basename);
 
 sub libscan {
