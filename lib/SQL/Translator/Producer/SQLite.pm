@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.5 2003-06-11 04:00:44 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.6 2003-07-02 18:18:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -114,7 +114,9 @@ sub produce {
         for my $index ( $table->get_indices ) {
             my $name   = $index->name;
             $name      = mk_name($table_name, $name || ++$idx_name_default);
-            my @fields = $index->fields;
+
+            # strip any field size qualifiers as SQLite doesn't like these
+            my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
             push @index_defs, 
                 "CREATE INDEX $name on $table_name ".
                 '(' . join( ', ', @fields ) . ')';
