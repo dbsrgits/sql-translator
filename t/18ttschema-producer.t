@@ -13,7 +13,6 @@ use Data::Dumper;
 use vars '%opt';
 BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
-local $SIG{__WARN__} = sub { diag "[warn] ", @_; };
 
 use FindBin qw/$Bin/;
 
@@ -24,7 +23,7 @@ BEGIN {
     maybe_plan(3, 'Template', 'Test::Differences')
 }
 use Test::Differences;
-    
+
 use SQL::Translator;
 use SQL::Translator::Producer::TTSchema;
 
@@ -46,8 +45,6 @@ lives_ok { $out = $obj->translate; }  "Translate ran";
 ok $out ne ""                        ,"Produced something!";
 local $/ = undef; # slurp
 eq_or_diff $out, <DATA>              ,"Output looks right";
-# I'm not sure if this diff is the best test, it is probaly too sensitive. But 
-# it at least it will blow up if anything changes!
 
 print $out if DEBUG;
 #print "Debug:", Dumper($obj) if DEBUG;
