@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.12 2004-02-11 21:28:53 kycl4rk Exp $
+# $Id: HTML.pm,v 1.13 2004-02-11 21:54:39 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -24,7 +24,7 @@ use strict;
 use Data::Dumper;
 use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $NAME = join ', ', __PACKAGE__, $VERSION;
 $NOWRAP = 0 unless defined $NOWRAP;
 $NOLINKTABLE = 0 unless defined $NOLINKTABLE;
@@ -68,7 +68,7 @@ sub produce {
                 -title => $title,
                 %stylesheet,
                 -meta => { generator => $NAME },
-            });
+            }),
             $q->h1({ -class => 'SchemaDescription' }, $title),
             $q->hr;
     }
