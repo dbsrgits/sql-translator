@@ -1,10 +1,10 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.11 2003-06-09 05:38:11 allenday Exp $
+# $Id: ClassDBI.pm,v 1.12 2003-06-09 05:46:45 allenday Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
-#                    Allen Day <allenday@ucla.edu>,
+# Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
+#                    Ying Zhang <zyolive@yahoo.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -225,6 +225,6 @@ configuration.  See L<Class::DBI> for details on how this works.
 
 =head1 AUTHORS
 
-Ying Zhang E<lt>zyolive@yahoo.comE<gt>, 
 Allen Day E<lt>allenday@ucla.eduE<gt>
+Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.org<gt>.
