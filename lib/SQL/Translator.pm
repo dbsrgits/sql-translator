@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.16 2003-01-29 13:29:49 dlc Exp $
+# $Id: Translator.pm,v 1.17 2003-02-26 13:08:59 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -217,7 +217,7 @@ sub producer {
 #
 # producer_type is an accessor that allows producer subs to get
 # information about their origin.  This is poptentially important;
-# since all producer subs are called as subroutine refernces, there is
+# since all producer subs are called as subroutine references, there is
 # no way for a producer to find out which package the sub lives in
 # originally, for example.
 # ----------------------------------------------------------------------
@@ -424,8 +424,10 @@ sub trace {
 #
 # translate returns a string.
 # ----------------------------------------------------------------------
-sub translate { my $self = shift; my ($args, $parser, $parser_type,
-$producer, $producer_type); my ($parser_output, $producer_output);
+sub translate {
+    my $self = shift;
+    my ($args, $parser, $parser_type, $producer, $producer_type);
+    my ($parser_output, $producer_output);
 
     # Parse arguments
     if (@_ == 1) { 
@@ -696,19 +698,33 @@ Valid options are:
 
 =over 4
 
-=item parser (aka from)
+=item *
 
-=item parser_args
+parser / from
 
-=item producer (aka to)
+=item *
 
-=item producer_args
+parser_args
 
-=item filename (aka file)
+=item *
 
-=item data
+producer / to
 
-=item debug
+=item *
+
+producer_args
+
+=item *
+
+filename / file
+
+=item *
+
+data
+
+=item *
+
+debug
 
 =back
 
@@ -741,26 +757,26 @@ value, returns the current value.
 The B<producer> method is an accessor/mutator, used to retrieve or
 define what subroutine is called to produce the output.  A subroutine
 defined as a producer will be invoked as a function (I<not a method>)
-and passed 2 parameters: its container SQL::Translator instance and a
+and passed 2 parameters: its container C<SQL::Translator> instance and a
 data structure.  It is expected that the function transform the data
-structure to a string.  The SQL::Transformer instance is provided for
+structure to a string.  The C<SQL::Transformer> instance is provided for
 informational purposes; for example, the type of the parser can be
 retrieved using the B<parser_type> method, and the B<error> and
 B<debug> methods can be called when needed.
 
-When defining a producer, one of several things can be passed
-in:  A module name (e.g., My::Groovy::Producer), a module name
-relative to the SQL::Translator::Producer namespace (e.g., MySQL), a
-module name and function combination (My::Groovy::Producer::transmogrify),
+When defining a producer, one of several things can be passed in:  A
+module name (e.g., C<My::Groovy::Producer>, a module name relative to
+the C<SQL::Translator::Producer> namespace (e.g., MySQL), a module
+name and function combination (C<My::Groovy::Producer::transmogrify>),
 or a reference to an anonymous subroutine.  If a full module name is
 passed in (for the purposes of this method, a string containing "::"
 is considered to be a module name), it is treated as a package, and a
-function called "produce" will be invoked: $modulename::produce.  If
-$modulename cannot be loaded, the final portion is stripped off and
+function called "produce" will be invoked: C<$modulename::produce>.
+If $modulename cannot be loaded, the final portion is stripped off and
 treated as a function.  In other words, if there is no file named
-My/Groovy/Producer/transmogrify.pm, SQL::Translator will attempt to load
-My/Groovy/Producer.pm and use transmogrify as the name of the function,
-instead of the default "produce".
+F<My/Groovy/Producer/transmogrify.pm>, C<SQL::Translator> will attempt
+to load F<My/Groovy/Producer.pm> and use transmogrify as the name of
+the function, instead of the default "produce".
 
   my $tr = SQL::Translator->new;
 
@@ -808,7 +824,7 @@ B<producer_args>:
 The B<parser> method defines or retrieves a subroutine that will be
 called to perform the parsing.  The basic idea is the same as that of
 B<producer> (see above), except the default subroutine name is
-"parse", and will be invoked as $module_name::parse($tr, $data).
+"parse", and will be invoked as C<$module_name::parse($tr, $data)>.
 Also, the parser subroutine will be passed a string containing the
 entirety of the data to be parsed.
 
@@ -851,7 +867,7 @@ Here is how the parameter list to B<translate> is parsed:
 =item *
 
 1 argument means it's the data to be parsed; which could be a string
-(filename) or a refernce to a scalar (a string stored in memory), or a
+(filename) or a reference to a scalar (a string stored in memory), or a
 reference to a hash, which is parsed as being more than one argument
 (see next section).
 
@@ -916,9 +932,10 @@ Turns on/off the tracing option of Parse::RecDescent.
 
 =head1 AUTHORS
 
-Ken Y. Clark, E<lt>kclark@cpan.org<gt>,
-darren chamberlain E<lt>darren@cpan.orgE<gt>,
-Chris Mungall E<lt>cjm@fruitfly.orgE<gt>
+Ken Y. Clark, E<lt>kclark@cpan.orgE<gt>,
+darren chamberlain E<lt>darren@cpan.orgE<gt>, 
+Chris Mungall E<lt>cjm@fruitfly.orgE<gt>, 
+Allen Day E<lt>allenday@users.sourceforge.netE<gt>
 
 =head1 COPYRIGHT
 
