@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.40 2003-09-08 18:16:04 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.41 2004-01-23 03:34:32 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -211,10 +211,8 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
             }
         }
 
-        for my $opt ( @{ $item{'table_option(s?)'} } ) {
-            if ( my ( $key, $val ) = each %$opt ) {
-                $tables{ $table_name }{'table_options'}{ $key } = $val;
-            }
+        if ( my @options = @{ $item{'table_option(s?)'} } ) {
+            $tables{ $table_name }{'table_options'} = \@options;
         }
 
         1;
@@ -237,6 +235,7 @@ create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_n
 create_definition : constraint 
     | index
     | field
+    | comment
     | <error>
 
 comment : /^\s*(?:#|-{2}).*\n/ 
@@ -339,9 +338,9 @@ reference_definition : /references/i table_name parens_field_list(?) match_type(
         }
     }
 
-match_type : /match full/i { 'match_full' }
+match_type : /match full/i { 'full' }
     |
-    /match partial/i { 'match_partial' }
+    /match partial/i { 'partial' }
 
 on_delete_do : /on delete/i reference_option
     { $item[2] }
@@ -364,7 +363,7 @@ table_name   : NAME
 
 field_name   : NAME
 
-index_name   : WORD
+index_name   : NAME
 
 data_type    : WORD parens_value_list(s?) type_qualifier(s?)
     { 
@@ -458,19 +457,25 @@ constraint : primary_key_def
     | foreign_key_def
     | <error>
 
-foreign_key_def : opt_constraint(?) /foreign key/i parens_field_list reference_definition
+foreign_key_def : foreign_key_def_begin parens_field_list reference_definition
     {
         $return              =  {
             supertype        => 'constraint',
             type             => 'foreign_key',
-            name             => $item[1][0],
+            name             => $item[1],
             fields           => $item[3],
             %{ $item{'reference_definition'} },
         }
     }
 
-opt_constraint : /constraint/i NAME
-    { $item[2] }
+foreign_key_def_begin : /constraint/i /foreign key/i 
+    { $return = '' }
+    |
+    /constraint/i WORD /foreign key/i
+    { $return = $item[2] }
+    |
+    /foreign key/i
+    { $return = '' }
 
 primary_key_def : primary_key index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
@@ -519,9 +524,9 @@ UNIQUE : /unique/i { 1 }
 
 KEY : /key/i | /index/i
 
-table_option : /[^\s;]*/ 
+table_option : WORD /\s*=\s*/ WORD
     { 
-        $return = { split /=/, $item[1] }
+        $return = { $item[1] => $item[3] };
     }
 
 CREATE : /create/i
@@ -634,6 +639,10 @@ sub parse {
                 type   => uc $idata->{'type'},
                 fields => $idata->{'fields'},
             ) or die $table->error;
+        }
+
+        if ( my @options = @{ $tdata->{'table_options'} || [] } ) {
+            $table->options( \@options ) or die $table->error;
         }
 
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
