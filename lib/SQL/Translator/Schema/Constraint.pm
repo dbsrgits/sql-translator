@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.7 2003-06-27 16:47:40 kycl4rk Exp $
+# $Id: Constraint.pm,v 1.8 2003-08-21 18:11:45 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -51,7 +51,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -87,11 +87,12 @@ Object constructor.
     my ( $self, $config ) = @_;
     my @fields = qw[ 
         table name type fields reference_fields reference_table 
-        match_type on_delete on_update
+        match_type on_delete on_update expression
     ];
 
     for my $arg ( @fields ) {
         next unless $config->{ $arg };
+        next if ref $config->{ $arg } eq 'ARRAY' && ! @{ $config->{ $arg } };
         defined $self->$arg( $config->{ $arg } ) or return;
     }
 
@@ -245,7 +246,12 @@ names and keep them in order by the first occurrence of a field name.
         $self->{'fields'} = \@unique;
     }
 
-    return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
+    if ( @{ $self->{'fields'} || [] } ) {
+        return wantarray ? @{ $self->{'fields'} } : $self->{'fields'};
+    }
+    else {
+        return wantarray ? () : undef;
+    }
 }
 
 # ----------------------------------------------------------------------
