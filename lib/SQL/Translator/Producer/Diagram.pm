@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.6 2003-08-21 20:27:39 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.7 2003-08-27 03:44:08 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -51,7 +51,7 @@ sub produce {
     debug("Producer args =\n", Dumper( $args ));
 
     my $out_file     = $args->{'out_file'}     || '';
-    my $image_type   = $args->{'image_type'}   || 'png';
+    my $output_type  = $args->{'output_type'}   || 'png';
     my $title        = $args->{'title'}        || $t->filename;
     my $font_size    = $args->{'font_size'}    || 'medium';
     my $imap_file    = $args->{'imap_file'}    || '';
@@ -70,8 +70,8 @@ sub produce {
         skip_fields  => $args->{'skip_fields'},
     ) if $natural_join;
 
-    die "Invalid image type '$image_type'"
-        unless VALID_IMAGE_TYPE ->{ $image_type  };
+    die "Invalid image type '$output_type'"
+        unless VALID_IMAGE_TYPE ->{ $output_type  };
     die "Invalid font size '$font_size'"
         unless VALID_FONT_SIZE->{ $font_size };
 
@@ -433,8 +433,8 @@ sub produce {
     # Render the image.
     #
     my $gd = GD::Image->new( $max_x + 30, $max_y );
-    unless ( $gd->can( $image_type ) ) {
-        die "GD can't create images of type '$image_type'\n";
+    unless ( $gd->can( $output_type ) ) {
+        die "GD can't create images of type '$output_type'\n";
     }
     my %colors = map { $_->[0], $gd->colorAllocate( @{$_->[1]} ) } (
         [ white                => [ 255, 255, 255 ] ],
@@ -476,11 +476,11 @@ sub produce {
     #
     if ( $out_file ) {
         open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
-        print $fh $gd->$image_type;
+        print $fh $gd->$output_type;
         close $fh;
     }
     else {
-        return $gd->$image_type;
+        return $gd->$output_type;
     }
 }
 
