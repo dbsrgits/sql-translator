@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.9 2003-08-26 21:50:03 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.10 2003-08-27 02:26:16 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -194,6 +194,16 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         }
 
         1;
+    }
+
+create : /create/i /index/i WORD /on/i table_name parens_word_list ';'
+    {
+        my $table_name = $item[5];
+        push @{ $tables{ $table_name }{'indices'} }, {
+            name   => $item[3],
+            type   => 'normal',
+            fields => $item[6][0],
+        };
     }
 
 # Create anything else (e.g., domain, function, etc.)
@@ -380,8 +390,8 @@ field_meta : default_val
 
 default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ 
     { 
-        my $val =  $item[2] || '';
-        $val    =~ s/'//g; 
+        my $val =  $item[2];
+        $val    =~ s/'//g if defined $val; 
         $return =  {
             supertype => 'constraint',
             type      => 'default',
