@@ -69,6 +69,16 @@ currently as thorough as it should be, you will definitely get the
 idea of how to parse a file and manipulate the SQL::Translator::Schema
 objects.
 
+INSTALLATION
+
+The regular method:
+
+    $ perl Makefile.PL
+    $ make
+    $ make test
+    $ su -
+    # make install
+
 AUTHORS
 
 Ken Y. Clark, <kclark@cpan.org>, 
