@@ -3,6 +3,7 @@ Changes
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
+README
 TODO
 bin/auto-dia.pl
 bin/sql_translator.pl
@@ -28,5 +29,6 @@ t/05bgep-re.t
 t/06xsv.t
 t/07p_args.t
 t/08postgres-to-mysql.t
+t/09auto-dia.t
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
