@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.3 2003-10-08 22:37:59 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.4 2003-11-06 18:22:12 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -111,7 +111,7 @@ trigger-action ::=
 
 trigger-step ::=
     update-statement | insert-statement | 
-    delete-statement | select-statemen
+    delete-statement | select-statement
 
 CREATE VIEW
 
@@ -154,7 +154,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
