@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.8 2003-06-27 16:30:35 kycl4rk Exp $
+# $Id: Utils.pm,v 1.9 2003-09-26 21:04:32 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -26,7 +26,7 @@ use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 
 use Exporter;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg $DEFAULT_COMMENT
@@ -116,13 +116,31 @@ HEADER_COMMENT
 }
 
 # ----------------------------------------------------------------------
+# parse_list_arg
+#
+# Meant to accept a list, an array reference, or a string of 
+# comma-separated values.  Retuns an array reference of the 
+# arguments.  Modified to also handle a list of references.
+# ----------------------------------------------------------------------
 sub parse_list_arg {
     my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
 
-    return [ map { s/^\s+|\s+$//g; $_ }
-             map { split /,/ }
-             grep { defined && length } @$list
-           ];
+    #
+    # This protects stringification of references.
+    #
+    if ( @$list && ref $list->[0] ) {
+        return $list;
+    }
+    #
+    # This processes string-like arguments.
+    #
+    else {
+        return [ 
+            map { s/^\s+|\s+$//g; $_ }
+            map { split /,/ }
+            grep { defined && length } @$list
+        ];
+    }
 }
 
 1;
