@@ -52,6 +52,12 @@ use base qw(Exporter);
 
 @EXPORT_OK = qw(parse);
 
+my %ET_to_ST  = (
+    'Text'    => 'VARCHAR',
+    'Date'    => 'DATETIME',
+    'Numeric' => 'DOUBLE',
+);
+
 # -------------------------------------------------------------------
 # parse($tr, $data)
 #
@@ -60,46 +66,60 @@ use base qw(Exporter);
 # -------------------------------------------------------------------
 sub parse {
     my ($tr, $data) = @_;
-    my $filename = $tr->filename || return;
-    my $wb = Spreadsheet::ParseExcel::Workbook->Parse($filename);
-    my (%parsed, $wb_count, $num);
-    my $table_no = 0;
+    my $filename    = $tr->filename || return;
+    my $wb          = Spreadsheet::ParseExcel::Workbook->Parse( $filename );
+    my $schema      = $tr->schema;
+    my $table_no    = 0;
 
-    $wb_count = $wb->{'SheetCount'} || 0;
-    for $num (0 .. $wb_count - 1) {
-        my $ws = $wb->Worksheet($num);
-        my $name = $ws->{Name} || ++$table_no;
-
-        $name = normalize_name($name);
+    my %parsed;
+    my $wb_count = $wb->{'SheetCount'} || 0;
+    for my $num ( 0 .. $wb_count - 1 ) {
+        $table_no++;
+        my $ws         = $wb->Worksheet( $num );
+        my $table_name = normalize_name( $ws->{'Name'} || "Table$table_no" );
 
         my @cols = $ws->ColRange;
         next unless $cols[1] > 0;
 
-        $parsed{$name} = {
-            table_name  => $name,
+        $parsed{ $table_name } = {
+            table_name  => $table_name,
             type        => undef,
             indices     => [ {} ],
             fields      => { },
         };
+        my $table = $schema->add_table( name => $table_name );
 
-        for my $col ($cols[0] .. $cols[1]) {
-            my $cell = $ws->Cell(0, $col);
-            $parsed{$name}->{'fields'}->{$cell->{Val}} = {
+        for my $col ( $cols[0] .. $cols[1] ) {
+            my $cell      = $ws->Cell(0, $col);
+            my $col_name  = normalize_name( $cell->{'Val'} );
+            my $data_type = ET_to_ST( $cell->{'Type'} );
+
+            $parsed{ $table_name }{'fields'}{ $col_name } = {
                 type           => 'field',
                 order          => $col,
-                name           => $cell->{Val},
-
-                # Default datatype is 'char'
-                data_type      => ET_to_ST($cell->{Type}),
-
-                # default size is 8bits; something more reasonable?
+                name           => $col_name,
+                data_type      => $data_type,
                 size           => [ 255 ],
                 null           => 1,
                 default        => '',
                 is_auto_inc    => undef,
 
-                # field field is the primary key
+                # first field is the primary key
                 is_primary_key => ($col == 0) ? 1 : undef,
+            };
+
+            my $field = $table->add_field(
+                name              => $col_name,
+                data_type         => $data_type,
+                default_value     => '',
+                size              => 255,
+                is_nullable       => 1,
+                is_auto_increment => undef,
+            ) or die $table->error;
+
+            if ( $col == 0 ) {
+                $table->primary_key( $field->name );
+                $field->is_primary_key(1);
             }
         }
     }
@@ -107,17 +127,19 @@ sub parse {
     return \%parsed;
 }
 
-my %ET_to_ST = (
-    'Text'    => 'VARCHAR',
-    'Date'    => 'DATETIME',
-    'Numeric' => 'DOUBLE',
-);
 sub ET_to_ST {
     my $et = shift;
     $ET_to_ST{$et} || $ET_to_ST{'Text'};
 }
 
 1;
+
+# -------------------------------------------------------------------
+# Education is an admirable thing,
+# but it is as well to remember that
+# nothing that is worth knowing can be taught.
+# Oscar Wilde
+# -------------------------------------------------------------------
 
 =pod
 
