@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.17 2003-09-26 22:35:23 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.18 2003-09-26 22:48:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -170,6 +170,7 @@ sub produce {
     $output .= header_comment unless ($no_comments);
     my %used_index_names;
 
+    my @fks;
     for my $table ( $schema->get_tables ) {
         my $table_name    = $table->name or next;
         $table_name       = mk_name( $table_name, '', undef, 1 );
@@ -211,10 +212,6 @@ sub produce {
                 $data_type = 'character varying';
             }
             elsif ( $data_type eq 'set' ) {
-                # XXX add a CHECK constraint maybe 
-                # (trickier and slower, than enum :)
-#                my $len     = length $commalist;
-#                $field_def .= " character varying($len) /* set $commalist */";
                 $data_type = 'character varying';
             }
             elsif ( $field->is_auto_increment ) {
@@ -225,10 +222,6 @@ sub produce {
                     $data_type = 'serial';
                 }
                 undef @size;
-
-#                $seq_name   = mk_name( $table_name.'_'.$field_name, 'sq' );
-#                push @sequence_defs, qq[DROP SEQUENCE "$seq_name";];
-#                push @sequence_defs, qq[CREATE SEQUENCE "$seq_name";];
             }
             else {
                 $data_type  = defined $translate{ $data_type } ?
@@ -371,13 +364,9 @@ sub produce {
                 push @constraint_defs, "${def_start}CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-#                my $def = join(' ', 
-#                    map { $_ || () } 'FOREIGN KEY', $c->name 
-#                );
-#
-                my $def .= 'FOREIGN KEY ("' . join( '", "', @fields ) . '")';
-
-                $def .= ' REFERENCES ' . $c->reference_table;
+                my $def .= "ALTER TABLE $table_name ADD FOREIGN KEY (" . 
+                    join( ', ', map { qq["$_"] } @fields ) . ')' .
+                    "\n  REFERENCES " . $c->reference_table;
 
                 if ( @rfields ) {
                     $def .= ' ("' . join( '", "', @rfields ) . '")';
@@ -396,7 +385,7 @@ sub produce {
                     $def .= ' ON UPDATE '.join( ' ', $c->on_update );
                 }
 
-                push @constraint_defs, $def;
+                push @fks, "$def;";
             }
         }
 
@@ -416,6 +405,8 @@ sub produce {
             '' 
         );
     }
+
+    $output .= join( "\n\n", @fks );
 
     if ( $WARN ) {
         if ( %truncated ) {
