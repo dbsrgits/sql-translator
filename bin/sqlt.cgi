@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt.cgi,v 1.2 2003-08-27 04:01:14 kycl4rk Exp $
+# $Id: sqlt.cgi,v 1.3 2003-09-18 19:11:45 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -39,7 +39,7 @@ use CGI;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 my $q = CGI->new;
 
@@ -60,7 +60,7 @@ eval {
             ? $q->param('diagram_output_type')
             : $producer eq 'GraphViz'
             ? $q->param('graphviz_output_type') 
-            : 'png'
+            : ''
         ;
 
         my $t                    =  SQL::Translator->new( 
@@ -109,6 +109,9 @@ eval {
         }
         elsif ( $output_type eq 'ps' ) {
             $text_type = 'postscript';
+        }
+        elsif ( $producer eq 'HTML' ) {
+            $text_type = 'html';
         }
 
         my $header_type = $image_type ? "image/$image_type" : "text/$text_type";
