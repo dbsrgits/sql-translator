@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.41 2004-01-23 03:34:32 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.42 2004-01-25 18:09:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -442,9 +442,15 @@ not_null     : /not/i /null/i { $return = 0 }
 
 unsigned     : /unsigned/i { $return = 0 }
 
-default_val  : /default/i /(?:')?[\s\w\d:.-]*(?:')?/ 
-    { 
-        $item[2] =~ s/'//g; 
+#default_val  : /default/i /(?:')?[\s\w\d:.-]*(?:')?/ 
+#    { 
+#        $item[2] =~ s/'//g; 
+#        $return  =  $item[2];
+#    }
+
+default_val : /default/i /'(?:.*?\\')*.*?'|(?:')?[\w\d:.-]*(?:')?/
+    {
+        $item[2] =~ s/^\s*'|'\s*$//g;
         $return  =  $item[2];
     }
 
@@ -463,7 +469,7 @@ foreign_key_def : foreign_key_def_begin parens_field_list reference_definition
             supertype        => 'constraint',
             type             => 'foreign_key',
             name             => $item[1],
-            fields           => $item[3],
+            fields           => $item[2],
             %{ $item{'reference_definition'} },
         }
     }
