@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::Rational;
 
 # -------------------------------------------------------------------
-# $Id: Rational.pm,v 1.4 2003-10-06 13:29:45 grommit Exp $
+# $Id: Rational.pm,v 1.5 2003-10-06 15:05:17 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -102,7 +102,7 @@ sub classes2schema {
 			elsif ( $stereo eq "PK" ) {
 				$data{type} = "PRIMARY_KEY";
 			}
-			# TODO We need to work out the ref table
+			# Work out the ref table
 			elsif ( $stereo eq "FK" ) {
 				$data{type} = "FOREIGN_KEY";
 				_add_fkey_refs($class,$op,\%data);
