@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI;
 
 # -------------------------------------------------------------------
-# $Id: DBI.pm,v 1.2 2003-10-03 20:39:53 kycl4rk Exp $
+# $Id: DBI.pm,v 1.3 2003-10-03 20:58:18 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -84,17 +84,19 @@ The password to use for connecting to a database.
 use strict;
 use DBI;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use constant DRIVERS => {
     mysql  => 'MySQL',
     sqlite => 'SQLite',
+    sybase => 'Sybase',
 };
 
 use Exporter;
 use SQL::Translator::Utils qw(debug normalize_name);
 use SQL::Translator::Parser::DBI::MySQL;
 use SQL::Translator::Parser::DBI::SQLite;
+use SQL::Translator::Parser::DBI::Sybase;
 
 use base qw(Exporter);
 @EXPORT = qw(parse);
