@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.37 2004-08-11 21:55:34 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.38 2004-09-17 21:54:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -85,6 +85,7 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
+    my $show_warnings  = $translator->show_warnings || 0;
 
     debug("PKG: Beginning production\n");
 
@@ -215,7 +216,8 @@ sub produce {
         #
         my @constraint_defs;
         my $has_fk;
-        for my $c ( $table->get_constraints ) {
+        my @constraints = $table->get_constraints;
+        for my $c ( @constraints ) {
             my @fields = $c->fields or next;
 
             if ( $c->type eq PRIMARY_KEY ) {
@@ -234,6 +236,7 @@ sub produce {
                 #
                 unless ( $indexed_fields{ $fields[0] } ) {
                     push @index_defs, "INDEX ($fields[0])";
+                    $indexed_fields{ $fields[0] } = 1;
                 }
 
                 my $def = join(' ', 
@@ -244,8 +247,25 @@ sub produce {
 
                 $def .= ' REFERENCES ' . $c->reference_table;
 
-                if ( my @rfields = $c->reference_fields ) {
+                my @rfields = map { $_ || () } $c->reference_fields;
+                unless ( @rfields ) {
+                    my $rtable_name = $c->reference_table;
+                    if ( my $ref_table = $schema->get_table( $rtable_name ) ) {
+                        push @rfields, $ref_table->primary_key;
+                    }
+                    else {
+                        warn "Can't find reference table '$rtable_name' " .
+                            "in schema\n" if $show_warnings;
+                    }
+                }
+
+                if ( @rfields ) {
                     $def .= ' (' . join( ', ', @rfields ) . ')';
+                }
+                else {
+                    warn "FK constraint on " . $table->name . '.' .
+                        join('', @fields) . " has no reference fields\n" 
+                        if $show_warnings;
                 }
 
                 if ( $c->match_type ) {
