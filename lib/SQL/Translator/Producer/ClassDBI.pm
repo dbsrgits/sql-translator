@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.24 2003-06-27 02:28:11 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.25 2003-06-27 02:59:25 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -54,6 +54,48 @@ sub produce {
                             ? $CDBI_auto_pkgs{ $parser_type } : $parser_type
                         );
     my $sep           = '# ' . '-' x 67;
+
+    #
+    # Identify "link tables" (have only PK and FK fields).
+    #
+    my %linkable;
+    my %linktable;
+    foreach my $table ( $schema->get_tables ) {
+        my $is_link = 1;
+        foreach my $field ( $table->get_fields ) {
+            unless ( $field->is_primary_key or $field->is_foreign_key ) {
+                $is_link = 0; 
+                last;
+            }
+        }
+
+        next unless $is_link;
+      
+        foreach my $left ( $table->get_fields ) {
+            next unless $left->is_foreign_key;
+            my $lfk           = $left->foreign_key_reference or next;
+            my $lr_table      = $schema->get_table( $lfk->reference_table )
+                                 or next;
+            my $lr_field_name = ($lfk->reference_fields)[0];
+            my $lr_field      = $lr_table->get_field($lr_field_name);
+            next unless $lr_field->is_primary_key;
+
+            foreach my $right ( $table->get_fields ) {
+                next if $left->name eq $right->name;
+        
+                my $rfk      = $right->foreign_key_reference or next;
+                my $rr_table = $schema->get_table( $rfk->reference_table )
+                               or next;
+                my $rr_field_name = ($rfk->reference_fields)[0];
+                my $rr_field      = $rr_table->get_field($rr_field_name);
+                next unless $rr_field->is_primary_key;
+        
+                $linkable{ $lr_table }{ $rr_table } = $table;
+                $linkable{ $rr_table }{ $lr_table } = $table;
+                $linktable{ $table->name } = $table;
+            }
+        }
+    }
     
     #
     # Iterate over all tables
@@ -88,7 +130,9 @@ sub produce {
         #
         # Use foreign keys to set up "has_a/has_many" relationships.
         #
+        my $is_data = 0;
         foreach my $field ( $table->get_fields ) {
+            $is_data++ if !$field->is_foreign_key and !$field->is_primary_key;
             if ( $field->is_foreign_key ) {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
@@ -116,103 +160,40 @@ sub produce {
             }
         }
 
-        #
-        # Identify link tables, defined as tables that have 
-        # only PK and FK fields.
-        #
-#        my %linkable;
-#        my %linktable;
-#        foreach my $table ( $schema->get_tables ) {
-#            my $is_link = 1;
-#            foreach my $field ( $table->get_fields ) {
-#                unless ( $field->is_primary_key or $field->is_foreign_key ) {
-#                    $is_link = 0; 
-#                    last;
-#                }
-#            }
-#          
-#            if ( $is_link ) {
-#                foreach my $left ( $table->get_fields ) {
-#                    next unless $left->is_foreign_key and $schema->get_table(
-#                        $left->foreign_key_reference->reference_table
-#                    );
-#
-#                    next unless $left->is_foreign_key and $schema->get_table(
-#                        $left->foreign_key_reference->reference_table
-#                    )->get_field(
-#                        ($left->foreign_key_reference->reference_fields)[0]
-#                    )->is_primary_key;
-#              
-#                    foreach my $right ( $table->get_fields ) {
-#                        #skip the diagonal
-#                        next if $left->name eq $right->name;
-#
-#                        next unless $right->is_foreign_key and 
-#                            $schema->get_table(
-#                                $right->foreign_key_reference->reference_table
-#                            )
-#                        ;
-#                
-#                        next unless $right->is_foreign_key and
-#                            $schema->get_table(
-#                                $right->foreign_key_reference->reference_table
-#                            )->get_field(
-#                            ($right->foreign_key_reference->reference_fields)[0]
-#                            )->is_primary_key
-#                        ;
-#                
-#                
-#                        $linkable{
-#                            $left->foreign_key_reference->reference_table
-#                        }{
-#                            $right->foreign_key_reference->reference_table
-#                        } = $table;
-#
-#                        $linkable{
-#                            $right->foreign_key_reference->reference_table
-#                        }{
-#                            $left->foreign_key_reference->reference_table
-#                        } = $table;
-#
-#                        $linktable{ $table->name } = $table;
-#                    }
-#                }
-#            }
-#        }
-#
-#        #
-#        # Generate many-to-many linking methods for data tables
-#        #
-#        my $is_data = 0;
-#        for ( $table->get_fields ) {
-#            $is_data++ if !$_->is_foreign_key and !$_->is_primary_key;
-#        }
-#
-#        my %linked;
-#        if ( $is_data ) {
-#            foreach my $link ( keys %{ $linkable{ $table->name } } ) {
-#                my $linkmethodname = 
-#                    "_".$t->format_fk_name($table->name,$link)."_refs"
-#                ;
-#
-#                $create .= $t->format_package_name($table->name).
-#                    "->has_many('$linkmethodname','".
-#                    $t->format_package_name(
-#                        $linkable{$table->name}{$link}->name
-#                    )."','".
-#                    ($schema->get_table($link)->primary_key->fields)[0]."');\n"
-#                ;
-#
+        my %linked;
+        if ( $is_data ) {
+            foreach my $link ( keys %{ $linkable{ $table_name } } ) {
+                my $linkmethodname = 
+                    "_".$t->format_fk_name($table->name,$link)."_refs"
+                ;
+
+                push @{ $packages{ $table_name }{'has_many'} },
+                    "$table_pkg_name->has_many(\n    ".
+                        "'$linkmethodname', ".
+                        $t->format_package_name(
+                            $linkable{ $table->name }{ $link }->name
+                        )."','".
+                       ($schema->get_table($link)->primary_key->fields)[0].
+                    "');\n\n"
+                ;
+
+                #
+                # I'm not sure what to do with this code. - ky
+                #
+
 #                $create .= "sub ". $t->format_fk_name($table,$link).
 #                    # HARDCODED 's' HERE.  
 #                    # ADD CALLBACK FOR PLURALIZATION MANGLING
 #                    "s {\n    my \$self = shift; return map \$_->".$link.
 #                    ", \$self->".$linkmethodname.";\n}\n\n"
 #                ;
-#            }
-#        }
+            }
+        }
     }
 
+    #
+    # Now build up text of package.
+    #
     my $base_pkg = sprintf( 'Class::DBI%s', $from ? "::$from" : '' );
     my $create = join("\n",
         "package $main_pkg_name;\n",
