@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Base;
 
 # -------------------------------------------------------------------
-# $Id: Base.pm,v 1.3 2004-05-14 00:46:32 grommit Exp $
+# $Id: Base.pm,v 1.4 2004-05-14 03:37:37 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -32,10 +32,11 @@ class.
 use strict;
 
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use Template;
 use Data::Dumper;
+use IO::Handle;
 use Exporter;
 use base qw(Exporter);
 @EXPORT_OK = qw(produce);
@@ -119,15 +120,32 @@ sub run {
 
 sub tt_config { () };
 
-sub tt_schema { shift->args("ttfile") };
+sub tt_schema {
+    my $me = shift;
+    my $class = ref $me;
+
+    my $file = $me->args("ttfile");
+    return $file if $file;
+
+    no strict 'refs';
+    my $ref = *{"$class\:\:DATA"}{IO};
+    if ( $ref->opened ) {
+        local $/ = undef; # Slurp mode
+        return \<$ref>;
+    }
+
+    undef;
+};
 
 sub tt_default_vars {
     my $me = shift;
     return (
         translator => $me->translator,
-        schema     => $me->translator->schema,
+        schema     => $me->pre_process_schema($me->translator->schema),
     );
 }
+
+sub pre_process_schema { $_[1] }
 
 sub tt_vars   { () };
 
@@ -146,14 +164,19 @@ sub tt_vars   { () };
  # Convert produce call into an object of our new class
  sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
- # Return file name or template source
- sub tt_schema { local $/ = undef; \<DATA>; }
-
  # Configure the Template object.
  sub tt_config { ( INTERPOLATE => 1 ); }
 
  # Extra vars to add to the template
  sub tt_vars { ( foo => "bar" ); }
+
+ # Put template in DATA section (or use file with ttfile producer arg)
+ __DATA__
+ Schema
+ 
+ Database: [% schema.database %]
+ Foo: $foo
+ ...
 
 =head1 DESCRIPTION
 
@@ -211,7 +234,9 @@ an L<IO::Handle>. See L<Template> for details, as the return from this is passed
 on to the produce call.
 
 The default implimentation uses the producer arg C<ttfile> as a filename to read
-the template from.
+the template from. If the arg isn't there it will look for a __DATA__ section
+in the class, reading it as template source if found. Returns undef if both
+these fail, causing the produce call to fail with a 'no template!' error.
 
 =head2 tt_vars
 
@@ -240,6 +265,16 @@ The schema to template.
 The L<SQL::Translator> object.
 
 =back
+
+=head2 pre_process_schema
+
+WARNING: This method is Experimental so may change!
+
+Called with the Schema object and should return a Schema object (it doesn't have
+to be the same one) that will be used as the schema varibale used in the
+template.
+
+Gets called from tt_default_vars.
 
 =head1 PRODUCER OBJECT
 
