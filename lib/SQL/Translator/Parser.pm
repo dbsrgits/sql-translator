@@ -1,11 +1,11 @@
 package SQL::Translator::Parser;
 
 # ----------------------------------------------------------------------
-# $Id: Parser.pm,v 1.6 2003-01-27 17:04:44 dlc Exp $
+# $Id: Parser.pm,v 1.7 2003-08-22 22:48:20 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>
+#                    Chris Mungall <cjm@fruitfly.org>.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,7 +24,7 @@ package SQL::Translator::Parser;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 sub parse { "" }
 
@@ -39,7 +39,7 @@ sub parse { "" }
 
 =head1 NAME
 
-SQL::Translator::Parser - base object for parsers
+SQL::Translator::Parser - describes how to write a parser
 
 =head1 DESCRIPTION
 
@@ -50,122 +50,17 @@ $tr is a SQL::Translator instance.  Other than that, the classes are
 free to define any helper functions, or use any design pattern
 internally that make the most sense.
 
-=head1 FORMAT OF THE DATA STRUCTURE
+When the parser has determined what exists, it will communicate the
+structure to the producer through the SQL::Translator::Schema object.
+This object can be retrieved from the translator (the first argument
+pass to B<parse>) by calling the B<schema> method:
 
-The data structure returned from the B<parse> function has a very
-particular format.
+  my $schema = $tr->schema;
 
-=over 4
-
-=item o
-
-The data structure should be a reference to a hash, the keys of which
-are table names.
-
-=item o
-
-The values associated with each table should also be a reference to a
-hash.  This hash should have several keys, enumerated below.
-
-=back
-
-=over 15
-
-=item B<type>
-
-This is the type of the table, if applicable, as a string, or undef if not (for
-example, if the database does not have multiple options).  For MySQL,
-this value might include MyISAM, HEAP, or similar.
-
-=item B<indices>
-
-The indices keys is a reference to an array of hashrefs.  Each hashref
-defines one index, and has the keys 'name' (if defined, it will be a
-string), 'type' (a string), and 'fields' (a reference to another
-array).  For example, a table in a MySQL database with two indexes,
-created as:
-
-  PRIMARY KEY (id),
-  KEY foo_idx (foo),
-  KEY foo_bar_idx (foo, bar),
-
-would be described in the indices element as:
-
-  [
-    {
-      'type' => 'primary_key',
-      'fields' => [
-                    'id'
-                  ],
-      'name' => undef,
-    },
-    {
-      'type' => 'normal',
-      'fields' => [
-                    'foo'
-                  ],
-      'name' => 'foo_idx',
-    },
-    {
-      'type' => 'normal',
-      'fields' => [
-                    'foo',
-                    'bar',
-                  ],
-      'name' => 'foo_bar_idx',
-    },
-  ]
-
-=item B<fields>
-
-The fields element is a refernce to a hash; the keys of this hash are
-the row names from the table, and each value fills in this template:
-
-  { 
-    type           => 'field',
-    order          => 1,      # the order in the original table
-    name           => '',     # same as the key
-    data_type      => '',     # in the db's jargon,
-                              # i.e., MySQL => int, Oracale => INTEGER
-    size           => '',     # int
-    null           => 1 | 0,  # boolean
-    default        => '',
-    is_auto_inc    => 1 1 0,  # boolean
-    is_primary_key => 1 | 0,  # boolean
-  } 
-
-So a row defined as:
-
-  username CHAR(8) NOT NULL DEFAULT 'nobody',
-  KEY username_idx (username)
-
-would be represented as:
-
-  'fields => {
-    'username' => { 
-      type           => 'field',
-      order          => 1,
-      name           => 'username',
-      data_type      => 'char',
-      size           => '8',
-      null           => undef,
-      default        => 'nobody',
-      is_auto_inc    => undef,
-      is_primary_key => undef,
-    },
-  },
-  'indices' => [
-    {
-      'name' => 'username_idx',
-      'fields' => [
-                    'username'
-                  ],
-      'type' => 'normal',
-    },
-  ],
-
-=back
-
+The Schema object has methods for adding tables, fields, indices, etc.
+For more information, consult the docs for SQL::Translator::Schema and
+its related modules.  For examples of how this works, examine the
+source code for existing SQL::Translator::Parser::* modules.
 
 =head1 AUTHORS
 
@@ -174,6 +69,6 @@ darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1).
+perl(1), SQL::Translator::Schema.
 
 =cut
