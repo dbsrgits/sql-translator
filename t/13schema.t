@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More 'no_plan'; # plans => 1;
+use Test::More tests => 150;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -118,6 +118,12 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f1->data_type('varchar'), 'varchar', 'Field data type is "varchar"' );
     is( $f1->size('30'), '30', 'Field size is "30"' );
     is( $f1->is_primary_key(0), '0', 'Field is_primary_key is negative' );
+
+    $f1->extra( foo => 'bar' );
+    $f1->extra( { baz => 'quux' } );
+    my %extra = $f1->extra;
+    is( $extra{'foo'}, 'bar', 'Field extra "foo" is "bar"' );
+    is( $extra{'baz'}, 'quux', 'Field extra "baz" is "quux"' );
 
     #
     # New field with args
