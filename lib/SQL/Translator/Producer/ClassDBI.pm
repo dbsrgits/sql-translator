@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.17 2003-06-19 23:29:07 allenday Exp $
+# $Id: ClassDBI.pm,v 1.18 2003-06-24 03:50:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -97,7 +97,7 @@ sub produce {
                 my @fields     = $fk->fields;
 
               $create .= $translator->format_package_name($table_name). 
-                    "->hasa(\n    " .
+                    "->has_a(\n    " .
                     $translator->format_package_name($ref_table). 
                     " => '$field_name'\n);\n\n";
               $create .= "sub " .
