@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::Rational;
 
 # -------------------------------------------------------------------
-# $Id: Rational.pm,v 1.5 2003-10-06 15:05:17 grommit Exp $
+# $Id: Rational.pm,v 1.6 2003-10-06 15:43:41 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -28,12 +28,21 @@ Data Modeling Profile.
 =cut
 
 use strict;
+
+use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 0 unless defined $DEBUG;
+use Exporter;
+use base qw(Exporter);
+@EXPORT_OK = qw(parse);
+
 use SQL::Translator::Parser::XML::XMI;
 use SQL::Translator::Utils 'debug';
 
 # Set the parg for the conversion sub then use the XMI parser
 sub parse {
     my ( $translator ) = @_;
+    local $DEBUG  = $translator->debug;
     my $pargs = $translator->parser_args;
 	$pargs->{classes2schema} = \&classes2schema;
 	return SQL::Translator::Parser::XML::XMI::parse(@_);
