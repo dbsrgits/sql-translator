@@ -5,16 +5,11 @@ use strict;
 use Test::More;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
+use Test::SQL::Translator qw(maybe_plan);
 
-eval {
-    require SQL::Translator::Parser::PostgreSQL;
+BEGIN {
+    maybe_plan(119, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
-};
-if ($@) {
-    plan skip_all => "$@";
-}
-else {
-    plan tests => 119;
 }
 
 my $t   = SQL::Translator->new( trace => 0 );

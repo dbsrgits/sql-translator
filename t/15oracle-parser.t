@@ -5,17 +5,10 @@ use strict;
 use Test::More;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
+use Test::SQL::Translator qw(maybe_plan);
 
-eval {
-    require SQL::Translator::Parser::Oracle;
-    SQL::Translator::Parser::Oracle->import('parse');
-};
-if ($@) {
-    plan skip_all => "$@";
-}
-else {
-    plan tests => 76;
-}
+maybe_plan(76, 'SQL::Translator::Parser::Oracle');
+SQL::Translator::Parser::Oracle->import('parse');
 
 my $t   = SQL::Translator->new( trace => 0 );
 my $sql = q[

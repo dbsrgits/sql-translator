@@ -4,18 +4,13 @@
 use Test::More;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
+use Test::SQL::Translator qw(maybe_plan);
 
-eval {
-    require SQL::Translator::Parser::Excel;
+BEGIN {
+    maybe_plan(31, 'SQL::Translator::Parser::Excel');
     SQL::Translator::Parser::Excel->import('parse');
-};
-if ($@) {
-    plan skip_all => "$@";
 }
-else {
-    plan tests => 31;
-}
-
+ 
 my $tr     = SQL::Translator->new(parser => "Excel");
 my $t      = $tr->translate(filename => "t/data/Excel/t.xls");
 my $schema = $tr->schema;

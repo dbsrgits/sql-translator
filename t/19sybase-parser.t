@@ -5,10 +5,15 @@
 use strict;
 
 use FindBin qw/$Bin/;
-use Test::More tests => 41;
+use Test::More;
+use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Parser::Sybase qw(parse);
+
+BEGIN {
+    maybe_plan(41, 'SQL::Translator::Parser::Sybase');
+    SQL::Translator::Parser::Sybase->import('parse');
+}
 
 my $file = "$Bin/data/sybase/create.sql";
 

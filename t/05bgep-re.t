@@ -8,13 +8,20 @@ use File::Spec::Functions qw(catfile tmpdir);
 use File::Temp qw(tempfile);
 use FindBin qw($Bin);
 use SQL::Translator;
-use Test::More tests => 2;
+use Test::More;
+use Test::SQL::Translator qw(maybe_plan);
 
 # This aggravates me; XML::Writer produces tons of warnings.
 local $SIG{__WARN__} = sub {
     CORE::warn(@_)
         unless $_[0] =~ m#XML/Writer#;
 };
+
+BEGIN {
+    maybe_plan(2, 
+        'SQL::Translator::Parser::MySQL',
+        'SQL::Translator::Producer::XML::SQLFairy');
+}
 
 my @data = qw(data mysql BGEP-RE-create.sql);
 my $test_data = (-d "t")

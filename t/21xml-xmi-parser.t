@@ -19,6 +19,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 
 use Test::More;
 use Test::Exception;
+use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
@@ -78,7 +79,9 @@ sub test_table {
 # Testing 1,2,3,..
 #=============================================================================
 
-plan tests => 103;
+maybe_plan(103,
+    'SQL::Translator::Parser::XML::XMI',
+    'SQL::Translator::Producer::MySQL');
 
 my $testschema = "$Bin/data/xmi/Foo.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;

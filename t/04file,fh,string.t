@@ -16,7 +16,6 @@ use Storable 'freeze';
 use SQL::Translator;
 use Test::More tests => 3;
 
-
 # The filename, holder for all the data, and the filehandle
 my $datafile = "t/data/mysql/Apache-Session-MySQL.sql";
 my $data;

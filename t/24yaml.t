@@ -2,10 +2,17 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More tests => 2;
+use Test::More;
 use Test::Differences;
+use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 use FindBin '$Bin';
+
+BEGIN {
+    maybe_plan(2,
+        'SQL::Translator::Parser::SQLite',
+        'SQL::Translator::Producer::YAML');
+}
 
 my $yaml = q/--- #YAML:1.0
 schema:

@@ -9,17 +9,19 @@
 use strict;
 use vars qw(%HANDLERS);
 use Test::More;
+use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 
-my ($p, $tables, $classes);
-eval {
-    require HTML::Parser;
-    $p = HTML::Parser->new(api_version => 3);
-    $p->strict_names(1); 
-};
-if ($@) {
-    plan skip_all => "Missing HTML::Parser";
+BEGIN {
+    maybe_plan(5,
+        'HTML::Parser',
+        'SQL::Translator::Parser::MySQL',
+        'SQL::Translator::Producer::HTML');
 }
+
+my ($p, $tables, $classes);
+$p = HTML::Parser->new(api_version => 3);
+$p->strict_names(1); 
 
 my $create = q|
 CREATE TABLE foo (
@@ -36,12 +38,8 @@ eval {
     $status = $p->parse($parsed);    
 };
 if ($@) {
-    plan tests => 1;
     fail("Unable to parse the output!");
-    exit 1;
 }
-
-plan tests => 5;
 
 # General
 ok($parsed, "Parsed table OK");

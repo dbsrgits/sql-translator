@@ -6,6 +6,7 @@ use strict;
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
 use Test::More;
+use Test::SQL::Translator qw(maybe_plan);
 
 my @script = qw(blib script sqlt-diff);
 my @create1 = qw(data sqlite create.sql);
@@ -23,7 +24,12 @@ my $create2 = (-d "t")
     ? catfile($Bin, @create2)
     : catfile($Bin, "t", @create2);
 
-plan tests => 3;
+BEGIN {
+    maybe_plan(3,
+        'SQL::Translator::Parser::SQLite',
+        'SQL::Translator::Producer::YAML',
+        );
+}
 
 ok(-e $sqlt_diff, 'Found sqlt-diff script'); 
 my @cmd = ($sqlt_diff, "$create1=SQLite", "$create2=SQLite");

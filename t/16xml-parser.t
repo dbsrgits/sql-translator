@@ -25,8 +25,10 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 
 # Testing 1,2,3,4...
 #=============================================================================
-
-plan tests => 284;
+ 
+BEGIN {
+    maybe_plan(284, 'SQL::Translator::Parser::XML::SQLFairy');
+}
 
 foreach (
     "$Bin/data/xml/schema-basic.xml",

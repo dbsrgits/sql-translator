@@ -21,7 +21,11 @@ use SQL::Translator::Schema::Constants;
 # Testing 1,2,3,..
 #=============================================================================
 
-plan tests => 321;
+BEGIN {
+    maybe_plan(321,
+        'SQL::Translator::Parser::XML::XMI::SQLFairy',
+        'SQL::Translator::Producer::MySQL');
+}
 
 my $testschema = "$Bin/data/xmi/OrderDB.sqlfairy.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;

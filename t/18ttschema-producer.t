@@ -7,6 +7,7 @@
 use strict;
 use Test::More;
 use Test::Exception;
+use Test::SQL::Translator qw(maybe_plan);
 
 use Data::Dumper;
 use vars '%opt';
@@ -19,16 +20,10 @@ use FindBin qw/$Bin/;
 # Testing 1,2,3,4...
 #=============================================================================
 
-eval { require Template; };
-if ($@ && $@ =~ m!locate Template.pm in!) {
-    plan skip_all => "You need Template Toolkit to run this test.";
-}
-eval { require Test::Differences; };
-if ($@ && $@ =~ m!locate Test/Differences.pm in!) {
-    plan skip_all => "You need Test::Differences for this test.";
+BEGIN {
+    maybe_plan(3, 'Template', 'Test::Differences')
 }
 use Test::Differences;
-plan tests => 3;
     
 use SQL::Translator;
 use SQL::Translator::Producer::TTSchema;

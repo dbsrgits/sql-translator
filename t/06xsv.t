@@ -9,16 +9,11 @@ use SQL::Translator;
 use SQL::Translator::Schema;
 use SQL::Translator::Schema::Constants;
 use Test::More;
+use Test::SQL::Translator qw(maybe_plan);
 
-eval {
-    require SQL::Translator::Parser::xSV;
+BEGIN {
+    maybe_plan(25, 'SQL::Translator::Parser::xSV');
     SQL::Translator::Parser::xSV->import('parse');
-};
-if ($@) {
-    plan skip_all => "$@";
-}
-else {
-    plan tests => 25;
 }
 
 my $tr = SQL::Translator->new;

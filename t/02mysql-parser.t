@@ -7,16 +7,11 @@ use strict;
 use Test::More;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
+use Test::SQL::Translator qw(maybe_plan);
 
-eval {
-    require SQL::Translator::Parser::MySQL;
+BEGIN {
+    maybe_plan(180, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
-};
-if ($@) {
-    plan skip_all => "$@";
-}
-else {
-    plan tests => 180;
 }
 
 {

@@ -9,6 +9,7 @@ local $^W = 0;
 use strict;
 use Test::More;
 use Test::Exception;
+use Test::SQL::Translator qw(maybe_plan);
 
 use Data::Dumper;
 my %opt;
@@ -28,17 +29,14 @@ local $SIG{__WARN__} = sub {
 # Testing 1,2,3,4...
 #=============================================================================
 
-eval { require XML::Writer; };
-if ($@ && $@ =~ m!locate XML::Writer.pm in!) {
-    plan skip_all => "You need XML::Writer to use XML::SQLFairy.";
+BEGIN {
+    maybe_plan(18,
+        'XML::Writer',
+        'Test::Differences',
+        'SQL::Translator::Producer::XML::SQLFairy');
 }
-eval { require Test::Differences; };
-if ($@ && $@ =~ m!locate Test/Differences.pm in!) {
-    plan skip_all => "You need Test::Differences for this test.";
-}
-use Test::Differences;
-plan tests => 18;
 
+use Test::Differences;
 use SQL::Translator;
 use SQL::Translator::Producer::XML::SQLFairy;
 

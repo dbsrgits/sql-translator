@@ -2,8 +2,9 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More tests => 1;
+use Test::More;
 use SQL::Translator;
+use Test::SQL::Translator qw(maybe_plan);
 
 my $create = q|
 CREATE TABLE random (
@@ -12,6 +13,12 @@ CREATE TABLE random (
     updated timestamp
 );
 |;
+
+BEGIN {
+    maybe_plan(1, 
+        'SQL::Translator::Parser::MySQL',
+        'SQL::Translator::Producer::Oracle');
+}
 
 my $tr       = SQL::Translator->new(
     parser   => "MySQL",

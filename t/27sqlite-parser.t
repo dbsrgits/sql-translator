@@ -2,12 +2,18 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More tests => 5;
+use Test::More;
+use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 use SQL::Translator;
-use SQL::Translator::Parser::SQLite 'parse';
 use SQL::Translator::Schema::Constants;
+
+BEGIN {
+    maybe_plan(5,
+        'SQL::Translator::Parser::SQLite');
+}
+SQL::Translator::Parser::SQLite->import('parse');
 
 my $file = "$Bin/data/sqlite/create.sql";
 

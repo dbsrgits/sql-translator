@@ -15,8 +15,15 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 
 use Test::More;
 use Test::Exception;
+use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
+
+BEGIN {
+    maybe_plan(92,
+        'SQL::Translator::Parser::XML::XMI::Rational',
+        'SQL::Translator::Producer::MySQL');
+}
 
 # Usefull test subs for the schema objs
 #=============================================================================
@@ -127,8 +134,6 @@ sub test_table {
 
 # Testing 1,2,3,..
 #=============================================================================
-
-plan tests => 92;
 
 my $testschema = "$Bin/data/xmi/OrderDB.rationalprofile.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;

@@ -2,9 +2,16 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More tests => 1;
+use Test::More;
 use SQL::Translator;
 use Data::Dumper;
+use Test::SQL::Translator qw(maybe_plan);
+
+BEGIN {
+    maybe_plan(1, 
+        'SQL::Translator::Parser::MySQL',
+        'SQL::Translator::Producer::PostgreSQL');
+}
 
 my $create = q|
 
