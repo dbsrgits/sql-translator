@@ -6,10 +6,12 @@ Makefile.PL
 README
 TODO
 bin/auto-dia.pl
+bin/auto-graph.pl
 bin/sql_translator.pl
 bin/validator_test.pl
 lib/SQL/Translator.pm
 lib/SQL/Translator/Parser.pm
+lib/SQL/Translator/Parser/Excel.pm
 lib/SQL/Translator/Parser/MySQL.pm
 lib/SQL/Translator/Parser/PostgreSQL.pm
 lib/SQL/Translator/Parser/Sybase.pm
@@ -32,5 +34,7 @@ t/06xsv.t
 t/07p_args.t
 t/08postgres-to-mysql.t
 t/09auto-dia.t
+t/10excel.t
+t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
