@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.60 2004-11-09 02:09:52 grommit Exp $
+# $Id: Translator.pm,v 1.61 2004-11-09 05:27:45 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.60 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.61 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -543,45 +543,35 @@ sub _args {
 sub _tool {
     my ($self,$args) = (shift, shift);
     my $name = $args->{name};
-    return $self->{$name} unless @_;
+    return $self->{$name} unless @_; # get accessor
+
+    my $path = $args->{path};
+    my $default_sub = $args->{default_sub};
     my $tool = shift;
-    
+   
     # passed an anonymous subroutine reference
     if (isa($tool, 'CODE')) {
         $self->{$name} = $tool;
         $self->{"$name\_type"} = "CODE";
         $self->debug("Got $name: code ref\n");
-    } 
+    }
 
-    # Passed a module name or module and sub name 
+    # Module name was passed directly
+    # We try to load the name; if it doesn't load, there's a
+    # possibility that it has a function name attached to it,
+    # so we give it a go.
     else {
-        my $func_name;
-
-        # Module name was passed directly
-        # We try to load the name; if it doesn't load, there's a
-        # possibility that it has a function name attached to it.
         $tool =~ s/-/::/g if $tool !~ /::/;
-        if ( my $loaded = load($tool => $args->{path}) ) {
-            $tool = $loaded;
-            $func_name = $args->{default_sub};
-        } 
-
-        # Passed Module::Name::function; try to recover
-        else {
-            my @func_parts = split /::/, $tool;
-            $func_name = pop @func_parts;
-            $tool = join "::", @func_parts;
-
-            # If this doesn't work, then we have a legitimate
-            # problem.
-            load($tool) or die "Can't load $tool: $@";
-        }
-
+        my ($code,$sub);
+        ($code,$sub) = _load_sub("$tool\::$default_sub", $path);
+        ($code,$sub) = _load_sub("$tool", $path) unless $code;
+        
         # get code reference and assign
-        $self->{$name} = \&{ "$tool\::$func_name" };
-        $self->{"$name\_type"} = $tool;
-        $self->debug("Got $name: $tool\::$func_name\n");
-    } 
+        my (undef,$module,undef) = $sub =~ m/((.*)::)?(\w+)$/;
+        $self->{$name} = $code;
+        $self->{"$name\_type"} = $sub eq "CODE" ? "CODE" : $module;
+        $self->debug("Got $name: $sub\n");
+    }
 
     # At this point, $self->{$name} contains a subroutine
     # reference that is ready to run
@@ -686,7 +676,25 @@ sub load {
         return $module; # Module loaded ok
     }
 
-    return 0;
+    return __PACKAGE__->error("Can't find $name. Path:".join(",",@path));
+}
+
+# ----------------------------------------------------------------------
+# Load the sub name given (including package), optionally using a base package
+# path. Returns code ref and name of sub loaded, including its package.
+# (\&code, $sub) = load_sub( 'MySQL::produce', "SQL::Translator::Producer" );
+# (\&code, $sub) = load_sub( 'MySQL::produce', @path );
+# ----------------------------------------------------------------------
+sub _load_sub {
+    my ($tool, @path) = @_;
+    
+    # Passed a module name or module and sub name 
+    my (undef,$module,$func_name) = $tool =~ m/((.*)::)?(\w+)$/;
+    if ( my $module = load($module => @path) ) {
+        my $sub = "$module\::$func_name";
+        return ( \&{ $sub }, $sub );
+    } 
+    return undef;
 }
 
 # ----------------------------------------------------------------------
