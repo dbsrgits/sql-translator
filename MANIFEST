@@ -30,7 +30,6 @@ lib/SQL/Translator/Parser/SQLite.pm
 lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/XML.pm
 lib/SQL/Translator/Parser/XML/SQLFairy.pm
-lib/SQL/Translator/Parser/XML/XMI.pm
 lib/SQL/Translator/Parser/YAML.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
@@ -59,7 +58,6 @@ lib/SQL/Translator/Schema/Table.pm
 lib/SQL/Translator/Schema/Trigger.pm
 lib/SQL/Translator/Schema/View.pm
 lib/SQL/Translator/Utils.pm
-lib/SQL/Translator/XMI/Parser.pm
 t/01load.t
 t/02mysql-parser.t
 t/03mysql-to-oracle.t
@@ -80,7 +78,6 @@ t/17sqlfxml-producer.t
 t/18ttschema-producer.t
 t/19sybase-parser.t
 t/20format_X_name.t
-t/21xml-xmi-parser.t
 t/24yaml.t
 t/25storable.t
 t/26sybase.t
@@ -96,7 +93,3 @@ t/data/pgsql/entire_syntax.sql
 t/data/sqlite/create.sql
 t/data/sybase/create.sql
 t/data/template/basic.tt
-t/data/xmi/Foo.poseidon2.xmi
-t/data/xmi/Foo.poseidon2.zuml
-t/data/xml/schema-basic-attribs.xml
-t/data/xml/schema-basic.xml
