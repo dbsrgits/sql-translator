@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.9 2003-10-15 20:07:11 kycl4rk Exp $
+# $Id: sqlt,v 1.10 2003-10-19 17:01:25 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclar@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -113,7 +113,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -145,7 +145,7 @@ GetOptions(
     'add-drop-table'  => \$add_drop_table,
     'attrib-values'   => \$attrib_values,
     'd|debug'         => \$debug,
-    'emit_empty_tags' => \$emit_empty_tags,
+    'emit-empty-tags' => \$emit_empty_tags,
     'f|from|parser:s' => \$from,
     'fs:s'            => \$field_separator,
     'h|help'          => \$help,
