@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Base;
 
 # -------------------------------------------------------------------
-# $Id: Base.pm,v 1.4 2004-05-14 03:37:37 grommit Exp $
+# $Id: Base.pm,v 1.5 2004-08-19 19:55:36 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -32,7 +32,7 @@ class.
 use strict;
 
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use Template;
 use Data::Dumper;
@@ -157,11 +157,12 @@ sub tt_vars   { () };
 
 =head1 SYNOPSIS
 
+# Create a producer using a template in the __DATA__ section.
  package SQL::Translator::Producer::Foo;
 
  use base qw/SQL::Translator::Producer::TT::Base/;
 
- # Convert produce call into an object of our new class
+ # Convert produce call into a method call on our new class
  sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
  # Configure the Template object.
@@ -173,7 +174,7 @@ sub tt_vars   { () };
  # Put template in DATA section (or use file with ttfile producer arg)
  __DATA__
  Schema
- 
+
  Database: [% schema.database %]
  Foo: $foo
  ...
@@ -188,53 +189,46 @@ producers cheaply - by simply giving the template to use and sprinkling in some
 extra template variables and config.
 
 The 1st thing the module does is convert the produce sub routine call we get
-from SQL::Translator into a method call on an object, so we can sub-class it.
-This is done with the following code which B<must> appear in B<all> sub
-classes.
+from SQL::Translator into a method call on an object, which we can then
+sub-class. This is done with the following code which needs to appear in B<all>
+sub classes.
 
  # Convert produce call into an object method call
  sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
 See L<PRODUCER OBJECT> below for details.
 
-The upshot of this is we can make new template producers by writing a template,
-then creating a module that starts like this;
-
- package SQL::Translator::Producer::Foo;
-
- use base qw/SQL::Translator::Producer::TT::Base/;
-
- # Convert produce call into an object of our new class
- sub produce { return __PACKAGE__->new( translator => shift )->run; };
-
-And then over ride the hooks detailed below in L<SUB CLASS HOOKS>.
+The upshot of this is we can make new template producers by sub classing this
+base class, adding the above snippet and a template.
+The module also provides a number of hooks into the templating process,
+see L<SUB CLASS HOOKS> for details.
 
 See the L<SYNOPSIS> above for an example of creating a simple producer using
 a single template stored in the producers DATA section.
 
 =head1 SUB CLASS HOOKS
 
-Sub-classes should override these methods to control the templating by giving
+Sub-classes can override these methods to control the templating by giving
 the template source, adding variables and giving config to the Tempate object.
 
 =head2 tt_config
 
  sub tt_config { ( INTERPOLATE => 1 ); }
 
-Return hash of Template config to add to the config given to the
-C<< Template->new >> method.
+Return hash of Template config to add to that given to the L<Template> C<new>
+method.
 
 =head2 tt_schema
 
  sub tt_schema { "foo.tt"; }
  sub tt_schema { local $/ = undef; \<DATA>; }
 
-Should return a template file name to use, or a scalar ref of TT source, or
-an L<IO::Handle>. See L<Template> for details, as the return from this is passed
-on to the produce call.
+The template to use, return a file name or a scalar ref of TT
+source, or an L<IO::Handle>. See L<Template> for details, as the return from
+this is passed on to it's C<produce> method.
 
 The default implimentation uses the producer arg C<ttfile> as a filename to read
-the template from. If the arg isn't there it will look for a __DATA__ section
+the template from. If the arg isn't there it will look for a C<__DATA__> section
 in the class, reading it as template source if found. Returns undef if both
 these fail, causing the produce call to fail with a 'no template!' error.
 
@@ -242,7 +236,7 @@ these fail, causing the produce call to fail with a 'no template!' error.
 
  sub tt_vars { ( foo => "bar" ); }
 
-Return hash of template vars to use in the template. Doesn't add anything
+Return hash of template vars to use in the template. Nothing added here
 by default, but see L<tt_default_vars> for the variables you get for free.
 
 =head2 tt_default_vars
@@ -270,9 +264,9 @@ The L<SQL::Translator> object.
 
 WARNING: This method is Experimental so may change!
 
-Called with the Schema object and should return a Schema object (it doesn't have
-to be the same one) that will be used as the schema varibale used in the
-template.
+Called with the L<SQL::Translator::Schema> object and should return one (it
+doesn't have to be the same one) that will become the C<schema> varibale used 
+in the template.
 
 Gets called from tt_default_vars.
 
@@ -297,6 +291,11 @@ Return the L<SQL::Translator> object.
 Return the L<SQL::Translator::Schema> we are translating. This is equivilent
 to C<< $tt_producer->translator->schema >>.
 
+=head2 run
+
+Called to actually produce the output, calling the sub class hooks. Returns the
+produced text.
+
 =head2 args
 
 Util wrapper method around C<< TT::Base->translator->producer_args >> for
@@ -305,21 +304,18 @@ number of arguments you give it and the context.
 
  No args - Return hashref (the actual hash in Translator) or hash of args.
  1 arg   - Return value of the arg with the passed name.
- 2+ args - List of names. In list context returns values of the given arg names,
-           returns as a hashref in scalar context. Any names given that don't
-           exist in the args are returned as undef.
+ 2+ args - List of names. In list context returns values of the given arg
+           names, returns as a hashref in scalar context. Any names given
+           that don't exist in the args are returned as undef.
 
-This is still experimental but is a handy way to access the args when you use
-your own producer args to drive the templating.
+This is still a bit messy but is a handy way to access the producer args when
+you use your own to drive the templating.
 
-=head2 run
+=head1 SEE ALSO
 
-Called to actually produce the output, calling the sub class hooks. Returns the
-produced text.
-
-=head1 AUTHOR
-
-Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
+L<perl>,
+L<SQL::Translator>,
+L<Template>.
 
 =head1 TODO
 
@@ -327,12 +323,14 @@ Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
 so that sub-classes can easily include file based templates using relative
 paths.
 
+- Pass in template vars from the producer args and command line.
+
 - Merge in TT::Table.
 
 - Hooks to pre-process the schema and post-process the output.
 
-=head1 SEE ALSO
+=head1 AUTHOR
 
-SQL::Translator.
+Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
 
 =cut
