@@ -14,5 +14,3 @@ WriteMakefile(
         'XML::Writer'        => 0,
     },
 );
-
-# Blah, blah, blah --> To test syncmail!
