@@ -14,7 +14,8 @@ BEGIN {
         'SQL::Translator::Producer::YAML');
 }
 
-my $yaml = q/--- #YAML:1.0
+my $yaml = <<'YAML';
+--- #YAML:1.0
 schema:
   procedures: {}
   tables:
@@ -215,7 +216,18 @@ schema:
         select pr.person_id, pr.name as person_name, pt.name as pet_name
           from   person pr, pet pt
           where  person.person_id=pet.pet_id
-/;
+translator:
+  add_drop_table: 0
+  filename: '/work/sqlfairy/sqlfairy/t/data/sqlite/create.sql'
+  no_comments: 0
+  parser_args: {}
+  parser_type: SQL::Translator::Parser::SQLite
+  producer_args: {}
+  producer_type: SQL::Translator::Producer::YAML
+  show_warnings: 0
+  trace: 0
+  version: 0.05
+YAML
 
 my $tr = SQL::Translator->new(
     parser   => 'SQLite',
