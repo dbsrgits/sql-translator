@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.28 2003-08-20 18:58:54 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.29 2003-08-20 22:49:52 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -474,7 +474,15 @@ pg_data_type :
             $return = { type => 'timestamp' };
         }
     |
-    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|timetz|time|varchar)/i
+    /text/i
+        { 
+            $return = { 
+                type => 'text',
+                size => 64_000,
+            };
+        }
+    |
+    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar)/i
         { 
             $return = { type => $item[1] };
         }
@@ -597,9 +605,9 @@ key_mutation : /no action/i { $return = 'no_action' }
     |
     /cascade/i { $return = 'cascade' }
     |
-    /set null/i { $return = 'set_null' }
+    /set null/i { $return = 'set null' }
     |
-    /set default/i { $return = 'set_default' }
+    /set default/i { $return = 'set default' }
 
 alter : alter_table table_name /add/i table_constraint ';' 
     { 
