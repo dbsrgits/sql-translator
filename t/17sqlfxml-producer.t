@@ -59,6 +59,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>1</sqlt:order>
         <sqlt:size>10</sqlt:size>
+        <sqlt:comments>comment on id field</sqlt:comments>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>title</sqlt:name>
@@ -70,6 +71,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>2</sqlt:order>
         <sqlt:size>100</sqlt:size>
+        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>description</sqlt:name>
@@ -81,6 +83,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>3</sqlt:order>
         <sqlt:size>65535</sqlt:size>
+        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>email</sqlt:name>
@@ -91,6 +94,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>4</sqlt:order>
         <sqlt:size>255</sqlt:size>
+        <sqlt:comments></sqlt:comments>
       </sqlt:field>
     </sqlt:fields>
     <sqlt:indices>
@@ -166,6 +170,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>5</sqlt:order>
         <sqlt:size>10</sqlt:size>
+        <sqlt:comments>comment on id field</sqlt:comments>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>title</sqlt:name>
@@ -177,6 +182,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>6</sqlt:order>
         <sqlt:size>100</sqlt:size>
+        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>description</sqlt:name>
@@ -188,6 +194,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>7</sqlt:order>
         <sqlt:size>65535</sqlt:size>
+        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
         <sqlt:name>email</sqlt:name>
@@ -199,6 +206,7 @@ $ans = <<EOXML;
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
         <sqlt:order>8</sqlt:order>
         <sqlt:size>255</sqlt:size>
+        <sqlt:comments></sqlt:comments>
       </sqlt:field>
     </sqlt:fields>
     <sqlt:indices>
