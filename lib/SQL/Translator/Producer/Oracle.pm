@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.31 2004-06-04 19:39:48 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.32 2004-12-20 17:18:42 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -331,9 +331,10 @@ sub produce {
             push @field_defs, $field_def;
 
             if ( my $comment = $field->comments ) {
+                $comment =~ s/'/''/g;
                 push @field_comments, 
-                    "COMMENT ON COLUMN $table_name.$field_name_ur is\n  '".
-                    $comment."';" unless $no_comments;
+                    "COMMENT ON COLUMN $table_name_ur.$field_name_ur is\n '" .
+                    $comment . "';" unless $no_comments;
             }
         }
 
@@ -466,8 +467,9 @@ sub produce {
         if ( my @table_comments = $table->comments ) {
             for my $comment ( @table_comments ) {
                 next unless $comment;
-                push @field_comments, "COMMENT ON TABLE $table_name is\n  '".
-                    $comment."';" unless $no_comments
+                $comment =~ s/'/''/g;
+                push @field_comments, "COMMENT ON TABLE $table_name_ur is\n '".
+                    $comment . "';" unless $no_comments
                 ;
             }
         }
@@ -531,8 +533,9 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00" 
-            if length( $name ) > $max_id_length;
+        substr($name, $max_id_length - 2) = ""
+            if length( $name ) >= $max_id_length - 1;
+        $name        .= sprintf( "%02d", $prev++ );
 
         warn "The name '$name_orig' has been changed to ",
              "'$name' to make it unique.\n" if $WARN;
