@@ -13,28 +13,40 @@ via the built-in object model.  Presently only the definition parts of
 SQL are handled (CREATE, ALTER), not the manipulation of data (INSERT,
 UPDATE, DELETE).
 
-As of version 0.02, parsers exist for the following:
+As of version 0.03, parsers exist for the following:
 
-    Excel
-    MySQL
-    Oracle
-    PostgreSQL
-    Sybase
-    xSV (arbitrarily delimited text files)
+    Databases:
+        MySQL
+        Oracle
+        PostgreSQL
+        Sybase
+
+    Other:
+        xSV    : arbitrarily delimited text files
+        Excel  : Microsoft Excel spreadsheets
+        SqlfXML: SQLFairy's XML format
 
 And the following producers exist:
 
-    ClassDBI: Class::DBI classes
-    Diagram: quasi-ER diagrams using libgd
-    GraphViz: ER diagrams using GraphViz
-    HTML: HTML documentation of schema
-    MySQL: MySQL-specific schema
-    Oracle: Oracle-specific schema
-    POD: Plain Old Documenation of schema
-    PostgreSQL: PostgreSQL-specific schema
-    SQLite: SQLite-specific schema
-    Sybase: Sybase-specific schema
-    XML: structure of the schema described in XML
+    Databases:
+        MySQL
+        Oracle
+        PostgreSQL
+        SQLite
+        Sybase
+
+    
+    Code Generators:
+        ClassDBI: Class::DBI classes
+
+    Documentation:
+        Diagram : quasi-ER diagrams using libgd
+        GraphViz: ER diagrams using GraphViz
+        HTML    : HTML documentation of schema
+        POD     : Plain Old Documenation of schema
+
+    Other:
+        SqlfXML: structure of the schema described in SQLFairy's XML
 
 Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
@@ -42,6 +54,7 @@ directory, you will find:
 
 *   sqlt-diagram.pl
 *   sqlt-graph.pl
+*   sqlt-dumper.pl
 *   sql_translator.cgi
 *   sql_translator.pl
 
@@ -51,18 +64,17 @@ while the ".cgi" script is a web-form frontend.  The script you'll
 probably find most useful is the "sql_translator.pl" script which is
 meant to be the main interface for translating from text-to-text.  The
 graphic producers, however, have many extra switches, so there are
-scripts specific for each of the the GraphViz and ER-diagram producers.
-All scripts start with "sql" so it will be easier to identify them on
-your system.  All the "*.pl" scripts will be installed in the normal
-installation process, but you'll have to put the CGI script into your
-web CGI directory to use it.
+scripts specific for each of the the GraphViz and ER-diagram
+producers.  All scripts start with "sql" so it will be easier to
+identify them on your system.  All the "*.pl" scripts will be
+installed in the normal installation process, but you'll have to put
+the CGI script into your web CGI directory to use it.
 
 If you're more interested in using the SQL::Translator modules
 directly, then you might be more interested to examine some of the
-test scripts in the "t" directory.  While the test suite isn't
-currently as thorough as it should be, you will definitely get the
-idea of how to parse a file and manipulate the SQL::Translator::Schema
-objects.
+test scripts in the "t" directory.  The test suite is relatively
+thorough and should give you an idea of how to parse a file and
+manipulate the SQL::Translator::Schema objects.
 
 INSTALLATION
 
@@ -73,16 +85,6 @@ The regular method:
     $ make test
     $ su -
     # make install
-
-AUTHORS
-
-Ken Y. Clark, <kclark@cpan.org>, 
-darren chamberlain <darren@cpan.org>,
-Chris Mungall <cjm@fruitfly.org>, 
-Allen Day <allenday@users.sourceforge.net>, 
-Sam Angiuoli <angiuoli@users.sourceforge.net>, 
-Ying Zhang <zyolive@yahoo.com>, 
-Mike Mellilo <mmelillo@users.sourceforge.net>.
 
 COPYRIGHT
 
