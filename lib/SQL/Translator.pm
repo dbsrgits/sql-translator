@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.30 2003-06-16 18:13:59 kycl4rk Exp $
+# $Id: Translator.pm,v 1.31 2003-06-16 20:58:10 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -675,6 +675,7 @@ sub load {
     return 1;
 }
 
+# ----------------------------------------------------------------------
 sub format_table_name {
     my $self = shift;
     my $sub  = shift;
@@ -684,6 +685,7 @@ sub format_table_name {
     return $sub;
 }
 
+# ----------------------------------------------------------------------
 sub format_package_name {
     my $self = shift;
     my $sub  = shift;
@@ -693,6 +695,7 @@ sub format_package_name {
     return $sub;
 }
 
+# ----------------------------------------------------------------------
 sub format_fk_name {
     my $self = shift;
     my $sub  = shift;
@@ -702,6 +705,7 @@ sub format_fk_name {
     return $sub;
 }
 
+# ----------------------------------------------------------------------
 sub format_pk_name {
     my $self = shift;
     my $sub  = shift;
@@ -724,17 +728,6 @@ sub isa($$) {
 
 # ----------------------------------------------------------------------
 sub validate {
-
-=pod
-
-=head2 validate
-
-Get or set whether to validate the parsed data.
-
-  my $validate = $schema->validate(1);
-
-=cut
-
     my ( $self, $arg ) = @_;
     if ( defined $arg ) {
         $self->{'validate'} = $arg ? 1 : 0;
@@ -761,17 +754,21 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
 
   use SQL::Translator;
 
-  my $translator     = SQL::Translator->new(
-      debug          => 1, # Print debug info
-      trace          => 0, # Print Parse::RecDescent trace
-      no_comments    => 0, # Don't include comments in output
-      show_warnings  => 0, # Print name mutations, conflicts
-      add_drop_table => 1, # Add "drop table" statements
-      validate       => 1, # Validate schema object
-
+  my $translator          = SQL::Translator->new(
+      # Print debug info
+      debug               => 1,
+      # Print Parse::RecDescent trace
+      trace               => 0, 
+      # Don't include comments in output
+      no_comments         => 0, 
+      # Print name mutations, conflicts
+      show_warnings       => 0, 
+      # Add "drop table" statements
+      add_drop_table      => 1, 
+      # Validate schema object
+      validate            => 1, 
       # Make all table names CAPS in producers which support this option
-      format_table_name => sub {my $tablename = shift; return uc($tablename)},
-
+      format_table_name   => sub {my $tablename = shift; return uc($tablename)},
       # Null-op formatting, only here for documentation's sake
       format_package_name => sub {return shift},
       format_fk_name      => sub {return shift},
@@ -1042,8 +1039,6 @@ parsed.  If a filename is set, then that file is opened and read when
 the C<translate> method is called, as long as the data instance
 variable is not set.
 
-=pod
-
 =head2 schema
 
 Returns the SQL::Translator::Schema object.
@@ -1056,8 +1051,6 @@ Turns on/off the tracing option of Parse::RecDescent.
 
 Whether or not to validate the schema object after parsing and before
 producing.
-
-=pod
 
 =head1 AUTHORS
 
