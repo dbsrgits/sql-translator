@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::POD;
 
 # -------------------------------------------------------------------
-# $Id: POD.pm,v 1.2 2003-06-10 03:49:35 kycl4rk Exp $
+# $Id: POD.pm,v 1.3 2003-08-26 03:59:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::POD;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -33,8 +33,9 @@ sub produce {
     my $schema      = $t->schema;
     my $schema_name = $schema->name || 'Schema';
     my $args        = $t->producer_args;
+    my $title       = $args->{'title'} || $schema_name;
 
-    my $pod = "=pod\n\n=head1 DESCRIPTION\n\n$schema_name\n\n=head1 TABLES\n\n";
+    my $pod = "=pod\n\n=head1 DESCRIPTION\n\n$title\n\n=head1 TABLES\n\n";
 
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
