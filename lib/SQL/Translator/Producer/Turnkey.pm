@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.61 2004-10-13 23:14:06 allenday Exp $
+# $Id: Turnkey.pm,v 1.62 2004-12-21 01:28:38 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.61 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.62 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -30,7 +30,7 @@ use SQL::Translator::Schema::Graph;
 use SQL::Translator::Schema::Graph::HyperEdge;
 use Log::Log4perl; Log::Log4perl::init('/etc/log4perl.conf');
 use Data::Dumper;
-$Data::Dumper::Maxdepth = 3;
+local $Data::Dumper::Maxdepth = 3;
 use Template;
 
 my %producer2dsn = (
@@ -331,8 +331,8 @@ sub dump {
   my %arg  = %{shift @_};
   $arg{'indent'} ||= 1;
   $arg{'depth'} ||= 3;
-  $Data::Dumper::Maxdepth = $arg{'depth'} if defined $arg{'depth'};
-  $Data::Dumper::Indent = $arg{'indent'} if defined $arg{'indent'};
+  local $Data::Dumper::Maxdepth = $arg{'depth'} if defined $arg{'depth'};
+  local $Data::Dumper::Indent = $arg{'indent'} if defined $arg{'indent'};
   return(Dumper($arg{'object'}));
 }
 

@@ -3,7 +3,7 @@ package SQL::Translator::Schema::Graph;
 use strict;
 
 use Data::Dumper;
-$Data::Dumper::Maxdepth = 3;
+local $Data::Dumper::Maxdepth = 3;
 
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
