@@ -4,7 +4,7 @@
 
 use strict;
 
-use Test::More tests => 177;
+use Test::More tests => 180;
 use SQL::Translator;
 use SQL::Translator::Parser::MySQL qw(parse);
 use SQL::Translator::Schema::Constants;
@@ -19,6 +19,7 @@ use SQL::Translator::Schema::Constants;
     my $val = parse($tr, $data);
 
     my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
     my @tables = $schema->get_tables;
     is( scalar @tables, 1, 'Right number of tables (1)' );
     my $table  = shift @tables;
@@ -77,6 +78,7 @@ use SQL::Translator::Schema::Constants;
     );
     
     my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
     my @tables = $schema->get_tables;
     is( scalar @tables, 1, 'Right number of tables (1)' );
     my $table  = shift @tables;
@@ -244,6 +246,7 @@ use SQL::Translator::Schema::Constants;
     ) or die $tr->error;
 
     my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
     my @tables = $schema->get_tables;
     is( scalar @tables, 2, 'Right number of tables (2)' );
 
