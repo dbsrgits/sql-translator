@@ -5,22 +5,22 @@
 # `make test'. After `make install' it should work as `perl test.pl'
 
 #
-# basic.t
-# -------
-# Tests that;
+# Tests basic functionality and the default xmi2schema
 #
 
 use strict;
-use Test::More;
-use Test::Exception;
-
-use strict;
+use FindBin qw/$Bin/;
 use Data::Dumper;
+
+# run test with -d for debug
 my %opt;
 BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 
-use FindBin qw/$Bin/;
+use Test::More;
+use Test::Exception;
+use SQL::Translator;
+use SQL::Translator::Schema::Constants;
 
 # Usefull test subs for the schema objs
 #=============================================================================
@@ -80,23 +80,9 @@ sub test_table {
 
 plan tests => 103;
 
-use SQL::Translator;
-use SQL::Translator::Schema::Constants;
-
 my $testschema = "$Bin/data/xmi/Foo.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;
-my %base_translator_args = ( 
-    filename => $testschema,
-    from     => 'XML-XMI',
-    to       => 'MySQL',
-    debug          => DEBUG,
-    show_warnings  => 1,
-    add_drop_table => 1,
-);
 
-#
-# Basic tests
-#
 my $obj;
 $obj = SQL::Translator->new(
     filename => $testschema,
@@ -104,12 +90,9 @@ $obj = SQL::Translator->new(
     to       => 'MySQL',
     debug          => DEBUG,
     show_warnings  => 1,
-    add_drop_table => 1,
 );
 my $sql = $obj->translate;
 print $sql if DEBUG;
-#print "Debug: translator", Dumper($obj) if DEBUG;
-#print "Debug: schema", Dumper($obj->schema) if DEBUG;
 
 #
 # Test the schema
@@ -118,8 +101,6 @@ my $scma = $obj->schema;
 my @tblnames = map {$_->name} $scma->get_tables;
 is_deeply( \@tblnames, [qw/Foo PrivateFoo Recording CD Track ProtectedFoo/]
     ,"tables");
-
-# 
 
 #
 # Tables
