@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.5 2004-03-05 12:12:33 grommit Exp $
+# $Id: Translator.pm,v 1.6 2004-07-08 17:29:56 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,8 +34,8 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
-@EXPORT = qw( 
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+@EXPORT = qw(
     schema_ok
     table_ok
     field_ok
@@ -387,8 +387,6 @@ sub _test_kids {
     }
 }
 
-
-    
 sub schema_ok {
     my ($obj,$test,$name) = @_;
     my $t_name = t_name($name);
@@ -471,11 +469,11 @@ __END__
  my $sqlt = SQL::Translator->new(
      parser => "Magic",
      filename => "$Bin/data/magic/test.magic",
-     ... 
+     ...
  );
  ...
  my $schema = $sqlt->schema;
- 
+
  # Test the table it produced.
  table_ok( $schema->get_table("Customer"), {
      name => "Customer",
@@ -511,24 +509,25 @@ __END__
 
 =head1 DESCSIPTION
 
-Provides a set of Test::More tests for Schema objects. Tesing a parsed
+Provides a set of Test::More tests for Schema objects. Testing a parsed
 schema is then as easy as writing a perl data structure describing how you
-expect the schema to look.
+expect the schema to look. Also provides maybe_plan for conditionally running
+tests based on their dependencies.
 
-The data structures given to the test subs don't have to include all the 
+The data structures given to the test subs don't have to include all the
 possible values, only the ones you expect to have changed. Any left out will be
 tested to make sure they are still at their default value. This is a usefull
 check that you your parser hasn't accidentally set schema values you didn't
-expect it to. (And makes tests look nice and long ;-)
+expect it to.
 
 For an example of the output run the t/16xml-parser.t test.
 
 =head1 Tests
 
-All the tests take a first arg of the schema object to test, followed by a 
+All the tests take a first arg of the schema object to test, followed by a
 hash ref describing how you expect that object to look (you only need give the
 attributes you expect to have changed from the default).
-The 3rd arg is an optional test name to pre-pend to all the generated test 
+The 3rd arg is an optional test name to pre-pend to all the generated test
 names.
 
 =head2 table_ok
@@ -571,13 +570,9 @@ maybe_plan
 
 =item Test the tests!
 
-=item schema_ok()
-
-Test whole schema.
-
 =item Test Count Constants
 
-Constants to give the number of tests each *_ok sub uses. e.g. How many tests 
+Constants to give the number of tests each *_ok sub uses. e.g. How many tests
 does field_ok run? Can then use these to set up the test plan easily.
 
 =item Test skipping
@@ -600,7 +595,7 @@ schema file and test yaml file to compare it against.
 
 =head1 AUTHOR
 
-Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>.
+Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>, Darren Chamberlain <darren@cpan.org>.
 
 Thanks to Ken Y. Clark for the original table and field test code taken from
 his mysql test.
