@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.5 2003-08-19 21:05:47 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.6 2003-08-21 02:39:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -40,7 +40,7 @@ www.midsomer.org.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -58,7 +58,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 $GRAMMAR = q{
 
 { 
-    our ( %tables, @table_comments );
+    my ( %tables, @table_comments );
 }
 
 startrule : statement(s) eofile { \%tables }

@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.6 2003-08-16 13:42:35 rossta Exp $
+# $Id: Oracle.pm,v 1.7 2003-08-21 02:39:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -114,7 +114,7 @@ my $parser;
 
 $GRAMMAR = q!
 
-{ our ( %tables, $table_order ) }
+{ my ( %tables, $table_order ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
