@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 157;
+use Test::More tests => 160;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -242,8 +242,17 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $constraint2, 'SQL::Translator::Schema::Constraint', 'Constraint' );
     is( $constraint2->name, 'bar', 'Constraint name is "bar"' );
 
+    my $constraint3 = $person_table->add_constraint(
+        type       => 'check',
+        expression => 'foo bar',
+    ) or die $person_table->error;
+    isa_ok( $constraint3, 'SQL::Translator::Schema::Constraint', 'Constraint' );
+    is( $constraint3->type, CHECK_C, 'Constraint type is "CHECK"' );
+    is( $constraint3->expression, 'foo bar', 
+        'Constraint expression is "foo bar"' );
+
     my $constraints = $person_table->get_constraints;
-    is( scalar @$constraints, 2, 'Two constraints' );
+    is( scalar @$constraints, 3, 'Three constraints' );
     is( $constraints->[0]->name, 'foo', '"foo" constraint' );
     is( $constraints->[1]->name, 'bar', '"bar" constraint' );
 
