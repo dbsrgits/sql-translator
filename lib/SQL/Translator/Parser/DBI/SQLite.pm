@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.3 2003-10-03 19:47:19 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.4 2003-10-15 16:37:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
 #
@@ -30,7 +30,12 @@ See SQL::Translator::Parser::DBI.
 
 =head1 DESCRIPTION
 
-Queries the "sqlite_master" table for schema definition.
+Queries the "sqlite_master" table for schema definition.  The schema
+is held in this table simply as CREATE statements for the database
+objects, so it really just builds up a string of all these and passes
+the result to the regular SQLite parser.  Therefore there is no gain 
+(at least in performance) to using this module over simply dumping the 
+schema to a text file and parsing that.
 
 =cut
 
@@ -40,7 +45,7 @@ use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -75,6 +80,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), Parse::RecDescent, SQL::Translator::Schema.
+SQL::Translator::Parser::SQLite.
 
 =cut
