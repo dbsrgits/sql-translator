@@ -21,7 +21,7 @@ sub init {
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.3 2003-08-29 08:00:51 allenday Exp $
+# $Id: Turnkey.pm,v 1.4 2003-08-29 08:25:31 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Brian O'Connor <boconnor@ucla.edu>,
@@ -44,7 +44,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -96,7 +96,7 @@ sub produce {
 
 
 	  my $package = Turnkey::Package->new();
-	  $packages{ $package->name } = $package;
+	  $packages{ $table->name } = $package;
 
 	  $package->order( ++$order );
 	  $package->name( $t->format_package_name($table->name) );
@@ -128,8 +128,8 @@ sub produce {
 		  my $lpackage = $packages{$left->name};
 		  my $rpackage = $packages{$right->name};
 
-warn $left->name, "\t", $right->name;
 		  my($link,$lconstraints,$rconstraints) = @{ $maylink->can_link($left,$right) };
+warn $left->name, "\t", $maylink->name, "\t", $right->name if $link ne '0';
 
 		  #one FK to one FK
 		  if( $link eq 'one2one'){
@@ -152,6 +152,8 @@ warn "\tmany2one";
 		  #many FK to many FK
 		  } elsif( $link eq 'many2many'){
 warn "\tmany2many";
+warn $left->name;
+warn $right->name;
 			$lpackage->many2many_push($rpackage->name, [$rpackage, $maylink]);
 			$rpackage->many2many_push($lpackage->name, [$lpackage, $maylink]);
 
