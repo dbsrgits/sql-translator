@@ -32,7 +32,7 @@ ok(defined $val->{'sessions'});
 # $val->{'sessions'} should have a single index (since we haven't
 # defined an index, but have defined a primary key)
 my $indices = $val->{'sessions'}->{'indices'};
-is(scalar @{$indices}, 1, "correct index number");
+is(scalar @{$indices || []}, 1, "correct index number");
 
 is($indices->[0]->{'type'}, 'primary_key', "correct index type");
 is($indices->[0]->{'fields'}->[0], 'id', "correct index name");
