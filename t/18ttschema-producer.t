@@ -45,12 +45,12 @@ $obj = SQL::Translator->new(
     },
 );
 my $out;
-lives_ok { $out = $obj->translate; }  "Produced template";
-ok $out ne ""                        ,"Output has some content";
+lives_ok { $out = $obj->translate; }  "Translate ran";
+ok $out ne ""                        ,"Produced something!";
 local $/ = undef; # slurp
 eq_or_diff $out, <DATA>              ,"Output looks right";
-# I'm sure if this diff is the best test, it is probaly too sensitive. But it
-# at least it will blow up if anything changes!
+# I'm not sure if this diff is the best test, it is probaly too sensitive. But 
+# it at least it will blow up if anything changes!
 
 print $out if DEBUG;
 #print "Debug:", Dumper($obj) if DEBUG;
