@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.7 2003-05-07 20:36:15 kycl4rk Exp $
+# $Id: sql_translator.pl,v 1.8 2003-05-09 16:49:41 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -161,11 +161,12 @@ To translate a schema:
 
   xSV Options:
 
-    --trim-fields         Trim whitespace on fields
-    --scan-fields         Scan fields for data types and sizes
     --fs                  The field separator
     --rs                  The record separator
-
+    --trim-fields         Trim whitespace on fields 
+                          (true by default)
+    --scan-fields         Scan fields for data types and sizes 
+                          (true by default)
 =head1 DESCRIPTION
 
 This script is part of the SQL Fairy project
