@@ -150,7 +150,7 @@ isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
 is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my @t1_constraints = $t1->get_constraints;
-is( scalar @t1_constraints, 7, '7 constraints on t_test1' );
+is( scalar @t1_constraints, 8, '8 constraints on t_test1' );
 
 my $c1 = $t1_constraints[0];
 is( $c1->type, PRIMARY_KEY, 'First constraint is PK' );
