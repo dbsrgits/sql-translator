@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt.cgi,v 1.3 2003-09-18 19:11:45 kycl4rk Exp $
+# $Id: sqlt.cgi,v 1.4 2004-02-06 17:48:16 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -39,7 +39,7 @@ use CGI;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 my $q = CGI->new;
 
@@ -547,7 +547,7 @@ sub show_form {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

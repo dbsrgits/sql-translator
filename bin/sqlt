@@ -2,10 +2,9 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.11 2004-02-03 13:27:21 dlc Exp $
+# $Id: sqlt,v 1.12 2004-02-06 17:48:16 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclar@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -113,7 +112,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
