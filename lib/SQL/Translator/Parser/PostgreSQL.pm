@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.11 2003-04-17 19:42:33 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.12 2003-04-17 23:16:29 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -107,7 +107,7 @@ Alter table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -202,7 +202,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
 
                 for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
                     $constraint->{'fields'} = [ $field_name ];
-                    push @{ $tables{ $table_name }{'constraints'} }, 
+                    push @{ $tables{ $table_name }{'constraints'} },
                         $constraint;
                 }
             }
