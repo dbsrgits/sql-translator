@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 #
 
-#BEGIN { print "0..0\n"; }
+BEGIN { print "1..1\n"; }
 
 use strict;
 use Data::Dumper;
