@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-graph.pl,v 1.2 2003-04-24 16:14:07 kycl4rk Exp $
+# $Id: auto-graph.pl,v 1.3 2003-06-05 01:51:29 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -23,7 +23,12 @@ auto-graph.pl - Automatically create a graph from a database schema
                        "pcl," "mif," "pic," "gd," "gd2," "gif," "jpeg,"
                        "png," "wbmp," "cmap," "ismap," "imap," "vrml,"
                        "vtx," "mp," "fig," "svg," "plain," default "png")
-    --color            Add colors
+    -c|--color         Add colors
+    --no-fields        Don't show field names
+    --height           Image height (in inches, default "11",
+                       set to "0" to undefine)
+    --width            Image width (in inches, default "8.5", 
+                       set to "0" to undefine)
     --natural-join     Perform natural joins
     --natural-join-pk  Perform natural joins from primary keys only
     -s|--skip          Fields to skip in natural joins
@@ -62,14 +67,15 @@ use GraphViz;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.2 $)[-1];
+my $VERSION = (qw$Revision: 1.3 $)[-1];
 
 #
 # Get arguments.
 #
 my ( 
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
-    $natural_join, $join_pk_only, $skip_fields, $debug, $help
+    $natural_join, $join_pk_only, $skip_fields, $debug, $help, $height, 
+    $width, $no_fields
 );
 
 GetOptions(
@@ -78,7 +84,10 @@ GetOptions(
     'l|layout:s'       => \$layout,
     'n|node-shape:s'   => \$node_shape,
     't|output-type:s'  => \$output_type,
-    'color'            => \$add_color,
+    'height:i'         => \$height,
+    'width:i'          => \$width,
+    'c|color'          => \$add_color,
+    'no-fields'        => \$no_fields,
     'natural-join'     => \$natural_join,
     'natural-join-pk'  => \$join_pk_only,
     's|skip:s'         => \$skip_fields,
@@ -104,6 +113,9 @@ my $translator          =  SQL::Translator->new(
         natural_join    => $natural_join,
         natural_join_pk => $join_pk_only,
         skip_fields     => $skip_fields,
+        height          => $height || 0,
+        width           => $width  || 0,
+        show_fields     => $no_fields ? 0 : 1,
     },
 ) or die SQL::Translator->error;
 
