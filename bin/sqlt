@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.7 2003-10-10 16:44:27 dlc Exp $
+# $Id: sqlt,v 1.8 2003-10-14 17:03:45 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclar@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -113,7 +113,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -216,7 +216,8 @@ if ( $list ) {
     exit(0);
 }
 
-pod2usage( msg => 'Please supply "from" and "to" arguments' ) unless $from && $to;
+pod2usage( msg => 'Please supply "from" and "to" arguments' ) 
+    unless $from && $to;
 
 $translator->parser($from);
 $translator->producer($to);
@@ -237,11 +238,11 @@ for my $file (@files) {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl, SQL::Translator, Parse::RecDescent, 
-L<http://sqlfairy.sourceforge.net>.
+SQL::Translator, L<http://sqlfairy.sourceforge.net>.
 
 =cut
