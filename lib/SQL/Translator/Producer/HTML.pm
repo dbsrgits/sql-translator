@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.8 2003-08-20 14:32:49 dlc Exp $
+# $Id: HTML.pm,v 1.9 2003-08-20 17:14:27 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::HTML;
 use strict;
 use Data::Dumper;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -31,9 +31,10 @@ use SQL::Translator::Utils qw(header_comment);
 # -------------------------------------------------------------------
 sub produce {
     my $t           = shift;
+    my $args        = $t->producer_args;
     my $schema      = $t->schema;
     my $schema_name = $schema->name || 'Schema';
-    my $args        = $t->producer_args;
+    my $title       = $args->{'title'} || "Description of $schema_name";
     my $q           = defined $args->{'pretty'}
                     ? do { require CGI::Pretty;
                             import CGI::Pretty;
@@ -41,13 +42,12 @@ sub produce {
                     : do { require CGI;
                             import CGI; 
                                    CGI->new };
-    my $title       = $args->{'title'} || "Description of $schema_name";
 
     my $html  = $q->start_html( 
         { -title => $title, -bgcolor => 'lightgoldenrodyellow' } 
-    ) .  $q->h1( $title ).  '<a name="top">', $q->hr;
+    ) .  $q->h1( $title ) .  '<a name="top">', $q->hr;
 
-    if ( my @table_names = map { $_->name } $schema->get_tables ) {
+    if ( my @table_names = map {$_->name?$_->name:()} $schema->get_tables ) {
         $html .= $q->start_table( { -width => '100%' } ).
             $q->Tr( { -bgcolor => 'khaki' }, $q->td( $q->h2('Tables') ) );
 
@@ -58,7 +58,7 @@ sub produce {
     }
 
     for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name or next;
+        my $table_name = $table->name       or next;
         my @fields     = $table->get_fields or next;
         $html         .= $q->table( 
             { -width => '100%' },
@@ -69,7 +69,7 @@ sub produce {
             )
         );
 
-        if ( my @comments = $table->comments ) {
+        if ( my @comments = map { $_ ? $_ : () } $table->comments ) {
             $html .= '<b>Comments:</b><br><em>'.join('<br>', @comments).'</em>';
         }
 
@@ -89,23 +89,24 @@ sub produce {
         );
 
         for my $field ( @fields ) {
-            my $name      = $field->name;
+            my $name      = $field->name      || '';
                $name      = qq[<a name="$table_name-$name">$name</a>];
-            my $data_type = $field->data_type;
-            my $size      = $field->size;
-            my $default   = $field->default_value;
-            my $comment   = $field->comments || '';
+            my $data_type = $field->data_type || '';
+            my $size      = defined $field->size ? $field->size : '';
+            my $default   = defined $field->default_value 
+                            ? $field->default_value : '';
+            my $comment   = $field->comments  || '';
+            my $fk        = '';
 
-            my $fk;
             if ( $field->is_foreign_key ) {
-                my $c = $field->foreign_key_reference;
-                my $ref_table = $c->reference_table || '';
-                my $ref_field = ($c->reference_fields)[0];
-                $fk = 
+                my $c         = $field->foreign_key_reference;
+                my $ref_table = $c->reference_table       || '';
+                my $ref_field = ($c->reference_fields)[0] || '';
+                $fk           = 
                 qq[<a href="#$ref_table-$ref_field">$ref_table.$ref_field</a>];
             }
 
-            my @other;
+            my @other = ();
             push @other, 'PRIMARY KEY' if $field->is_primary_key;
             push @other, 'UNIQUE'      if $field->is_unique;
             push @other, 'NOT NULL'    unless $field->is_nullable;
@@ -128,9 +129,12 @@ sub produce {
             );
 
             for my $index ( @indices ) {
+                my $name   = $index->name || '';
+                my $fields = join( ', ', $index->fields ) || '';
+
                 $html .= $q->Tr( 
                     { -bgcolor => 'white' },
-                    $q->td( [ $index->name, join( ', ', $index->fields ) ] )
+                    $q->td( [ $name, $fields ] )
                 );
             }
 
