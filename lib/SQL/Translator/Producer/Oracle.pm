@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.11 2003-06-09 01:58:23 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.12 2003-06-09 02:19:41 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -147,7 +147,6 @@ sub produce {
     #
     for my $table ( $schema->get_tables ) { 
         my $table_name    = $table->name or next;
-        warn "table name = '$table_name'\n";
         $table_name       = mk_name( $table_name, '', undef, 1 );
         my $table_name_ur = unreserve($table_name) or next;
 
