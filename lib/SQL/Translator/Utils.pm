@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.1 2003-03-12 14:17:11 dlc Exp $
+# $Id: Utils.pm,v 1.2 2003-04-17 13:41:36 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -27,7 +27,7 @@ use vars qw($VERSION @EXPORT_OK);
 use Exporter;
 
 $VERSION = 1.00;
-@EXPORT_OK = ('debug');
+@EXPORT_OK = ('debug', 'normalize_name');
 
 # ----------------------------------------------------------------------
 # debug(@msg)
@@ -65,6 +65,27 @@ sub debug {
         #warn '[' . $x . "]\n";
         print STDERR '[' . $x . "]\n";
     }
+}
+
+
+sub normalize_name {
+    my $name = shift;
+
+    # The name can only begin with a-zA-Z_; if there's anything
+    # else, prefix with _
+    $name =~ s/^([^a-zA-Z_])/_$1/;
+
+    # anything other than a-zA-Z0-9_ in the non-first position
+    # needs to be turned into _
+    $name =~ tr/[a-zA-Z0-9_]/_/c;
+
+    # All duplicated _ need to be squashed into one.
+    $name =~ tr/_/_/s;
+
+    # Trim a trailing _
+    $name =~ s/_$//;
+
+    return $name;
 }
 
 1;
@@ -106,3 +127,29 @@ Will warn
 
 The entire message is enclosed within C<[> and C<]> for visual clarity
 when STDERR is intermixed with STDOUT.
+
+=head2 normalize_name
+
+C<normalize_name> takes a string and ensures that it is suitable for
+use as an identifier.  This means: ensure that it starts with a letter
+or underscore, and that the rest of the string consists of only
+letters, numbers, and underscores.  A string that begins with
+something other than [a-zA-Z] will be prefixer with an underscore, and
+all other characters in the string will be replaced with underscores.
+Finally, a trailing underscore will be removed, because that's ugly.
+
+  normalize_name("Hello, world");
+
+Produces:
+
+  Hello_world
+
+A more useful example, from the C<SQL::Translator::Parser::Excel> test
+suite:
+
+  normalize_name("silly field (with random characters)");
+
+returns:
+
+  silly_field_with_random_characters
+
