@@ -35,13 +35,13 @@ print qq(ok 2 # has a key named "sessions"\n);
 
 # $val->{'sessions'} should have a single index (since we haven't
 # defined an index, but have defined a primary key)
-my $indeces = $val->{'sessions'}->{'indeces'};
-print "not " unless (scalar @{$indeces} == 1);
+my $indices = $val->{'sessions'}->{'indices'};
+print "not " unless (scalar @{$indices} == 1);
 print "ok 3 # correct index number\n";
 
-print "not " unless ($indeces->[0]->{'type'} eq 'primary_key');
+print "not " unless ($indices->[0]->{'type'} eq 'primary_key');
 print "ok 4 # correct index type\n";
-print "not " unless ($indeces->[0]->{'fields'}->[0] eq 'id');
+print "not " unless ($indices->[0]->{'fields'}->[0] eq 'id');
 print "ok 5 # correct index name\n";
 
 # $val->{'sessions'} should have two fields, id and a_sessionn

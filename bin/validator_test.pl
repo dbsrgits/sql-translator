@@ -4,7 +4,7 @@ use SQL::Translator::Validator;
 my $data = {
     random => {
         type => undef,
-        indeces => [ ],
+        indices => [ ],
         fields => {
             id => {
                 name => "id",
@@ -27,7 +27,7 @@ my $data = {
     },
     session => {
         type => "HEAP",
-        indeces => [
+        indices => [
             {
                 name => undef,
                 primary_key => 1,

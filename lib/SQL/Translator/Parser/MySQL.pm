@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.6 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.7 2002-11-23 01:26:56 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -41,7 +41,7 @@ The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -196,7 +196,7 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
         my $size; # field size, applicable only to non-set fields
         my $list; # set list, applicable only to sets (duh)
 
-        if ( uc $type eq 'SET' ) {
+        if ( uc($type) =~ /^(SET|ENUM)$/ ) {
             $size = undef;
             $list = $item[2][0];
         }
@@ -280,7 +280,7 @@ unique : /unique/i { 1 }
 
 key : /key/i | /index/i
 
-table_option : /[^\s;]+/ 
+table_option : /[^\s;]*/ 
     { 
         $return = { split /=/, $item[1] }
     }

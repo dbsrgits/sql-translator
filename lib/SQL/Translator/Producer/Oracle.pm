@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.4 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.5 2002-11-23 01:26:56 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -21,10 +21,9 @@ package SQL::Translator::Producer::Oracle;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
-
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 my $max_id_length = 30;
@@ -131,12 +130,8 @@ sub produce {
     my ( $translator, $data ) = @_;
     $DEBUG                    = $translator->debug;
     my $no_comments           = $translator->no_comments;
-
-    #print "got ", scalar keys %$data, " tables:\n";
-    #print join(', ', keys %$data), "\n";
-    #print Dumper( $data );
-
     my $output;
+
     unless ( $no_comments ) {
         $output .=  sprintf 
             "--\n-- Created by %s\n-- Created on %s\n--\n\n",
@@ -153,23 +148,21 @@ sub produce {
     #
     # Print create for each table
     #
-    my ( $index_i, $trigger_i ) = ( 1, 1 );
     for my $table ( 
-        # sort keys %$data 
         map  { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
         map  { [ $_->{'order'}, $_ ] }
         values %{ $data }
     ) { 
-        my $table_name = $table->{'table_name'};
-#        check_identifier( $table_name );
-        $table_name = mk_name( $table_name, '', undef, 1 );
-#        my $tablename_ur = unreserve($table_name);
+        my $table_name    = $table->{'table_name'};
+        $table_name       = mk_name( $table_name, '', undef, 1 );
+        my $table_name_ur = unreserve($table_name);
 
         my ( @comments, @field_decs, @trigger_decs );
 
-        push @comments, "--\n-- Table: $table_name\n--" unless $no_comments;
+        push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
 
+        my %field_name_scope;
         for my $field ( 
             map  { $_->[1] }
             sort { $a->[0] <=> $b->[0] }
@@ -179,24 +172,45 @@ sub produce {
             #
             # Field name
             #
-            my $field_str  = check_identifier( $field->{'name'} );
+            my $field_name    = mk_name(
+                $field->{'name'}, '', \%field_name_scope, 1 
+            );
+            my $field_name_ur = unreserve( $field_name, $table_name );
+            my $field_str     = $field_name_ur;
 
             #
             # Datatype
             #
-            my $data_type  = $field->{'data_type'};
-               $data_type  = defined $translate{ $data_type } ?
-                             $translate{ $data_type } :
-                             die "Unknown datatype: $data_type\n";
-               $field_str .= ' '.$data_type;
-               $field_str .= '('.join(',', @{ $field->{'size'} }).')' 
-                if @{ $field->{'size'} || [] };
+            my $check;
+            my $data_type = lc $field->{'data_type'};
+            my $list      = $field->{'list'} || [];
+            my $commalist = join ",", @$list;
+
+            if ( $data_type eq 'enum' ) {
+                my $len = 0;
+                $len = ($len < length($_)) ? length($_) : $len for (@$list);
+                $check = "CHECK ($field_name IN ($commalist))";
+                $field_str .= " varchar2($len)";
+            }
+            elsif ( $data_type eq 'set' ) {
+                # XXX add a CHECK constraint maybe 
+                # (trickier and slower, than enum :)
+                my $len     = length $commalist;
+                $field_str .= " varchar2($len) /* set $commalist */ ";
+            }
+            else {
+                $data_type  = defined $translate{ $data_type } ?
+                              $translate{ $data_type } :
+                              die "Unknown datatype: $data_type\n";
+                $field_str .= ' '.$data_type;
+                $field_str .= '('.join(',', @{ $field->{'size'} }).')' 
+                    if @{ $field->{'size'} || [] };
+            }
 
             #
             # Default value
             #
             if ( $field->{'default'} ) {
-    #            next if $field->{'default'} eq 'NULL';
                 $field_str .= sprintf(
                     ' DEFAULT %s',
                     $field->{'default'} =~ m/null/i ? 'NULL' : 
@@ -208,31 +222,46 @@ sub produce {
             # Not null constraint
             #
             unless ( $field->{'null'} ) {
-                my $constraint_name = make_identifier($field->{'name'}, '_nn');
+                my $constraint_name = mk_name($field_name_ur, 'nn');
                 $field_str .= ' CONSTRAINT ' . $constraint_name . ' NOT NULL';
             }
+
+            $field_str .= " $check" if $check;
 
             #
             # Auto_increment
             #
             if ( $field->{'is_auto_inc'} ) {
-                my $trigger_no       = $trigger_i++;
-                my $trigger_sequence = 
-                    join( '_', 'seq'    , $field->{'name'}, $trigger_no );
-                my $trigger_name     = 
-                    join( '_', 'autoinc', $field->{'name'}, $trigger_no );
+                my $base_name    = $table_name . "_". $field_name;
+                my $seq_name     = mk_name( $base_name, 'sq' );
+                my $trigger_name = mk_name( $base_name, 'ai' );
 
                 push @trigger_decs, 
-                    "CREATE SEQUENCE $trigger_sequence;\n" .
+                    "CREATE SEQUENCE $seq_name;\n" .
                     "CREATE OR REPLACE TRIGGER $trigger_name\n" .
                     "BEFORE INSERT ON $table_name\n" .
-                    "FOR EACH ROW WHEN (new.".$field->{'name'}." is null)\n".
+                    "FOR EACH ROW WHEN (\n" .
+                        " new.$field_name_ur IS NULL".
+                        " OR new.$field_name_ur = 0\n".
+                    ")\n".
                     "BEGIN\n" .
-                        " SELECT $trigger_sequence.nextval\n" .
+                        " SELECT $seq_name.nextval\n" .
                         " INTO :new." . $field->{'name'}."\n" .
                         " FROM dual;\n" .
-                    " END  $trigger_name;/"
+                    "END;\n/";
                 ;
+            }
+
+            if ( uc $field->{'data_type'} eq 'TIMESTAMP' ) {
+                my $base_name = $table_name . "_". $field_name_ur;
+                my $trig_name = mk_name($base_name,'ts');
+                push @trigger_decs, 
+                    "CREATE OR REPLACE TRIGGER $trig_name\n".
+                    "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
+                    "FOR EACH ROW WHEN (new.$field_name_ur} IS NULL)\n".
+                    "BEGIN \n".
+                    " SELECT sysdate INTO :new.$field_name_ur} FROM dual;\n".
+                    "END;\n/";
             }
 
             push @field_decs, $field_str;
@@ -242,70 +271,42 @@ sub produce {
         # Index Declarations
         #
         my @index_decs = ();
+        my $idx_name_default;
         for my $index ( @{ $table->{'indices'} } ) {
             my $index_name = $index->{'name'} || '';
             my $index_type = $index->{'type'} || 'normal';
-            my @fields     = @{ $index->{'fields'} } or next;
+            my @fields     = map { unreserve( $_, $table_name ) }
+                             @{ $index->{'fields'} };
+            next unless @fields;
 
             if ( $index_type eq 'primary_key' ) {
-                if ( !$index_name ) {
-                    $index_name = make_identifier( $table_name, 'i_', '_pk' );
-                }
-                elsif ( $index_name !~ m/^i_/ ) {
-                    $index_name = make_identifier( $table_name, 'i_' );
-                }
-                elsif ( $index_name !~ m/_pk$/ ) {
-                    $index_name = make_identifier( $table_name, '_pk' );
-                }
-                else {
-                    $index_name = make_identifier( $index_name );
-                }
-
-                push @field_decs, 'CONSTRAINT ' . $index_name . ' PRIMARY KEY ' .
+                $index_name = mk_name( $table_name, 'pk' );
+                push @field_decs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
-
             elsif ( $index_type eq 'unique' ) {
-                if ( !$index_name ) {
-                    $index_name = make_identifier( join( '_', @fields ), 'u_' );
-                }
-                elsif ( $index_name !~ m/^u_/ ) {
-                    $index_name = make_identifier( $index_name, 'u_' );
-                }
-                else {
-                    $index_name = make_identifier( $index_name );
-                }
-
+                $index_name = mk_name( 
+                    $table_name, $index_name || ++$idx_name_default
+                );
                 push @field_decs, 'CONSTRAINT ' . $index_name . ' UNIQUE ' .
                     '(' . join( ', ', @fields ) . ')';
             }
 
             elsif ( $index_type eq 'normal' ) {
-                if ( !$index_name ) {
-                    $index_name = 
-                        make_identifier($table_name, 'i_', '_'.$index_i++ );
-                }
-                elsif ( $index_name !~ m/^i_/ ) {
-                    $index_name = make_identifier( $index_name, 'i_' );
-                }
-                else {
-                    $index_name = make_identifier( $index_name );
-                }
-
+                $index_name = mk_name( 
+                    $table_name, $index_name || ++$idx_name_default
+                );
                 push @index_decs, "CREATE INDEX $index_name on $table_name (".
-                    join( ', ', @{ $index->{'fields'} } ).
-                    ");"
-                ; 
+                    join( ', ', @fields ).  ");"; 
             }
-
             else {
-                warn "On table $table_name, unknown index type: $index_type\n";
+                warn "Unknown index type ($index_type) on table $table_name.\n";
             }
         }
 
-        my $create_statement = "CREATE TABLE $table_name (\n".
+        my $create_statement = "CREATE TABLE $table_name_ur (\n".
             join( ",\n", map { "  $_" } @field_decs ).
-             "\n);"
+            "\n);"
         ;
 
         $output .= join( "\n\n", 
@@ -318,65 +319,6 @@ sub produce {
     }
 
     return $output;
-}
-
-#
-# Used to make index names
-#
-sub make_identifier {
-    my ( $identifier, @mutations ) = @_;
-    my $length_of_mutations;
-    for my $mutation ( @mutations ) {
-        $length_of_mutations += length( $mutation );
-    }
-
-    if ( 
-        length( $identifier ) + $length_of_mutations >
-        $max_id_length
-    ) {
-        $identifier = substr( 
-            $identifier, 
-            0, 
-            $max_id_length - $length_of_mutations
-        );
-    }
-
-    for my $mutation ( @mutations ) {
-        if ( $mutation =~ m/.+_$/ ) {
-            $identifier = $mutation.$identifier;
-        }
-        elsif ( $mutation =~ m/^_.+/ ) {
-            $identifier = $identifier.$mutation;
-        }
-    }
-
-    if ( $used_identifiers{ $identifier } ) {
-        my $index = 1;
-        if ( $identifier =~ m/_(\d+)$/ ) {
-            $index = $1;
-            $identifier = substr( 
-                $identifier, 
-                0, 
-                length( $identifier ) - ( length( $index ) + 1 )
-            );
-        }
-        $index++;
-        return make_identifier( $identifier, '_'.$index );
-    }
-
-    $used_identifiers{ $identifier } = 1;
-
-    return $identifier;
-}
-
-#
-# Checks to see if an identifier is not too long
-#
-sub check_identifier {
-    my $identifier = shift;
-    die "Identifier '$identifier' is too long, unrecoverable error.\n"
-        if length( $identifier ) > $max_id_length;
-    return $identifier;
 }
 
 # -------------------------------------------------------------------
@@ -483,3 +425,65 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 perl(1).
 
 =cut
+
+__END__
+!!!!!Code Graveyard!!!!!
+#
+# Used to make index names
+#
+sub make_identifier {
+    my ( $identifier, @mutations ) = @_;
+    my $length_of_mutations;
+    for my $mutation ( @mutations ) {
+        $length_of_mutations += length( $mutation );
+    }
+
+    if ( 
+        length( $identifier ) + $length_of_mutations >
+        $max_id_length
+    ) {
+        $identifier = substr( 
+            $identifier, 
+            0, 
+            $max_id_length - $length_of_mutations
+        );
+    }
+
+    for my $mutation ( @mutations ) {
+        if ( $mutation =~ m/.+_$/ ) {
+            $identifier = $mutation.$identifier;
+        }
+        elsif ( $mutation =~ m/^_.+/ ) {
+            $identifier = $identifier.$mutation;
+        }
+    }
+
+    if ( $used_identifiers{ $identifier } ) {
+        my $index = 1;
+        if ( $identifier =~ m/_(\d+)$/ ) {
+            $index = $1;
+            $identifier = substr( 
+                $identifier, 
+                0, 
+                length( $identifier ) - ( length( $index ) + 1 )
+            );
+        }
+        $index++;
+        return make_identifier( $identifier, '_'.$index );
+    }
+
+    $used_identifiers{ $identifier } = 1;
+
+    return $identifier;
+}
+
+#
+# Checks to see if an identifier is not too long
+#
+sub check_identifier {
+    my $identifier = shift;
+    die "Identifier '$identifier' is too long, unrecoverable error.\n"
+        if length( $identifier ) > $max_id_length;
+    return $identifier;
+}
+
