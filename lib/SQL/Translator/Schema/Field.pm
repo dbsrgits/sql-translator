@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.3 2003-05-05 04:32:39 kycl4rk Exp $
+# $Id: Field.pm,v 1.4 2003-05-09 17:08:14 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -45,6 +45,7 @@ C<SQL::Translator::Schema::Field> is the field object.
 use strict;
 use Class::Base;
 use SQL::Translator::Schema::Constants;
+use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
@@ -66,7 +67,12 @@ Object constructor.
 
     my ( $self, $config ) = @_;
 
-    for my $arg ( qw[ name data_type size is_primary_key nullable table ] ) {
+    for my $arg ( 
+        qw[ 
+            table name data_type size is_primary_key is_nullable
+            is_auto_increment
+        ] 
+    ) {
         next unless defined $config->{ $arg };
         $self->$arg( $config->{ $arg } ) or return;
     }
@@ -147,13 +153,45 @@ Get or set the field's C<is_auto_increment> attribute.
 }
 
 # ----------------------------------------------------------------------
+sub is_nullable {
+
+=pod
+
+=head2 is_nullable
+
+Get or set the whether the field can be null.  If not defined, then 
+returns "1" (assumes the field can be null).  The argument is evaluated
+by Perl for True or False, so the following are eqivalent:
+
+  $is_nullable = $field->is_nullable(0);
+  $is_nullable = $field->is_nullable('');
+  $is_nullable = $field->is_nullable('0');
+
+While this is technically a field constraint, it's probably easier to
+represent this as an attribute of the field.  In order keep things
+consistent, any other constraint on the field (unique, primary, and
+foreign keys; checks) are represented as table constraints.
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    if ( defined $arg ) {
+        $self->{'is_nullable'} = $arg ? 1 : 0;
+    }
+
+    return defined $self->{'is_nullable'} ? $self->{'is_nullable'} : 1;
+}
+
+# ----------------------------------------------------------------------
 sub is_primary_key {
 
 =pod
 
 =head2 is_primary_key
 
-Get or set the field's C<is_primary_key> attribute.
+Get or set the field's C<is_primary_key> attribute.  Does not create
+a table constraint (should it?).
 
   my $is_pk = $field->is_primary_key(1);
 
@@ -178,6 +216,26 @@ Get or set the field's C<is_primary_key> attribute.
     }
 
     return $self->{'is_primary_key'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub is_valid {
+
+=pod
+
+=head2 is_valid
+
+Determine whether the field is valid or not.
+
+  my $ok = $field->is_valid;
+
+=cut
+
+    my $self = shift;
+    return $self->error('No name')         unless $self->name;
+    return $self->error('No data type')    unless $self->data_type;
+    return $self->error('No table object') unless $self->table;
+    return 1;
 }
 
 # ----------------------------------------------------------------------
@@ -208,29 +266,25 @@ Get or set the field's name.
 }
 
 # ----------------------------------------------------------------------
-sub nullable {
+sub order {
 
 =pod
 
-=head2 nullable
+=head2 order
 
-Get or set the whether the field can be null.  If not defined, then 
-returns "1" (assumes the field can be null).  The argument is evaluated
-by Perl for True or False, so the following are eqivalent:
+Get or set the field's order.
 
-  $nullable = $field->nullable(0);
-  $nullable = $field->nullable('');
-  $nullable = $field->nullable('0');
+  my $order = $field->order(3);
 
 =cut
 
     my ( $self, $arg ) = @_;
 
-    if ( defined $arg ) {
-        $self->{'nullable'} = $arg ? 1 : 0;
+    if ( defined $arg && $arg =~ /^\d+$/ ) {
+        $self->{'order'} = $arg;
     }
 
-    return defined $self->{'nullable'} ? $self->{'nullable'} : 1;
+    return $self->{'order'} || 0;
 }
 
 # ----------------------------------------------------------------------
@@ -254,8 +308,7 @@ numbers and returns a string.
 =cut
 
     my $self    = shift;
-    my $numbers = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift : [ map { split /,/ } @_ ];
+    my $numbers = parse_list_arg( @_ );
 
     if ( @$numbers ) {
         my @new;
@@ -267,27 +320,10 @@ numbers and returns a string.
         $self->{'size'} = \@new if @new; # only set if all OK
     }
 
-    return join( ',', @{ $self->{'size'} || [0] } );
-}
-
-# ----------------------------------------------------------------------
-sub is_valid {
-
-=pod
-
-=head2 is_valid
-
-Determine whether the field is valid or not.
-
-  my $ok = $field->is_valid;
-
-=cut
-
-    my $self = shift;
-    return $self->error('No name')         unless $self->name;
-    return $self->error('No data type')    unless $self->data_type;
-    return $self->error('No table object') unless $self->table;
-    return 1;
+    return wantarray 
+        ? @{ $self->{'size'} }
+        : join( ',', @{ $self->{'size'} || [0] } )
+    ;
 }
 
 # ----------------------------------------------------------------------
@@ -311,6 +347,12 @@ Get or set the field's table object.
     }
 
     return $self->{'table'};
+}
+
+# ----------------------------------------------------------------------
+sub DESTROY {
+    my $self = shift;
+    undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
