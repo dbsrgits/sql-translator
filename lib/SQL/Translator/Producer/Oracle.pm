@@ -1,20 +1,30 @@
 package SQL::Translator::Producer::Oracle;
 
-#-----------------------------------------------------
-# $Id: Oracle.pm,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
+# -------------------------------------------------------------------
+# $Id: Oracle.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
+# -------------------------------------------------------------------
+# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+#                    darren chamberlain <darren@cpan.org>
 #
-# File       : SQL/Translator/Producer/Oracle.pm
-# Programmer : Ken Y. Clark, kclark@logsoft.com
-# Created    : 2002/02/27
-# Purpose    : Oracle SQL producer
-#-----------------------------------------------------
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
+
 
 use strict;
-use SQL::Translator::Producer;
 use vars qw( $VERSION );
-$VERSION = (qw$Revision: 1.1.1.1 $)[-1];
-
-use base qw[ SQL::Translator::Producer ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 my $max_identifier_length = 30;
 my %used_identifiers = ();
@@ -53,10 +63,11 @@ my %translate  = (
     year       => 'date',
 );
 
-sub to { 'Oracle' }
+# This is for testing only, and probably needs to be removed
+*translate = *produce;
 
-sub translate {
-    my ( $self, $data ) = @_;
+sub produce {
+    my ( $translator, $data ) = @_;
 
     #print "got ", scalar keys %$data, " tables:\n";
     #print join(', ', keys %$data), "\n";
@@ -65,7 +76,13 @@ sub translate {
     #
     # Output
     #
-    my $output = $self->header;
+    my $output = sprintf "
+#
+# Created by %s, version %s
+# Datasource: %s
+#
+
+", __PACKAGE__, $VERSION, $translator->parser_type;
 
     #
     # Print create for each table
@@ -300,11 +317,36 @@ SQL::Translator::Producer::Oracle - Oracle SQL producer
 
 =head1 SYNOPSIS
 
+  use SQL::Translator::Parser::MySQL;
   use SQL::Translator::Producer::Oracle;
+
+  my $original_create = ""; # get this from somewhere...
+  my $translator = SQL::Translator->new;
+
+  $translator->parser("SQL::Translator::Parser::MySQL");
+  $translator->producer("SQL::Translator::Producer::Oracle");
+
+  my $new_create = $translator->translate($original_create);
 
 =head1 DESCRIPTION
 
-Blah blah blah.
+SQL::Translator::Producer::Oracle takes a parsed data structure,
+created by a SQL::Translator::Parser subclass, and turns it into a
+create string suitable for use with an Oracle database.
+
+=head1 BUGS
+
+Problem with SQL::Translator::Producer::Oracle: it is keeping track
+of the last sequence number used, so as not to duplicate them, which
+is reasonable.  However on runs past the first, it seems to be
+creating multiple constraint lines, that look like:
+
+    CONSTRAINT i_sessions_pk_2 PRIMARY KEY (id),
+    CONSTRAINT i_sessions_pk_3 PRIMARY KEY (id)
+
+This is a very preliminary finding, and needs to be investigated more
+thoroughly, of course.
+
 
 =head1 AUTHOR
 

@@ -1,0 +1,8 @@
+Define structure of the data returned by parsers:
+  o Producers need to know what to expect
+  o For testing purposes, we need to know if parsers are returning
+    something reasonable
+
+cvs rm t/data/mysql/Apache-Session-MySQL.sql
+cvs add TODO
+cvs add t/01load.t

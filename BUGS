@@ -1,0 +1,2 @@
+MySQL parser chokes on DEFAULT x NOT NULL, but works with NOT NULL DEFAULT x
+MySQL parser chokes on FULLTEXT index creation.

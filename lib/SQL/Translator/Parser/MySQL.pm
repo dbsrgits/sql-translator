@@ -1,23 +1,57 @@
 package SQL::Translator::Parser::MySQL;
 
 #-----------------------------------------------------
-# $Id: MySQL.pm,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
-#
-# File       : SQL::Translator::Parser::MySQL
-# Programmer : Ken Y. Clark, kclark@logsoft.com
-# Created    : 2002/02/27
-# Purpose    : parser for MySQL
+# $Id: MySQL.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
 #-----------------------------------------------------
+# Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
+#                    darren chamberlain <darren@cpan.org>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; version 2.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+# 02111-1307  USA
+# -------------------------------------------------------------------
 
 use strict;
-use vars qw( $VERSION );
-$VERSION = (qw$Revision: 1.1.1.1 $)[-1];
+use vars qw($VERSION $GRAMMAR @EXPORT_OK);
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
-use SQL::Translator::Parser;
-use base qw[ SQL::Translator::Parser ];
+#use SQL::Translator::Parser;  # This is not necessary!
+use Parse::RecDescent;
+use Exporter;
+use base qw(Exporter);
 
-sub grammar {
-    q{
+@EXPORT_OK = qw(parse);
+
+my $parser; # should we do this?  There's no programmic way to 
+            # change the grammar, so I think this is safe.
+sub parse {
+    my ( $translator, $data ) = @_;
+    $parser ||= Parse::RecDescent->new($GRAMMAR);
+
+    unless (defined $parser) {
+        $translator->error_out("Error instantiating Parse::RecDescent ".
+            "instance: Bad grammer");
+        return;
+    }
+
+    # Is this right?  It was $parser->parse before, but that didn't
+    # work; Parse::RecDescent appears to need the name of a rule
+    # with which to begin, so I chose the first rule in the grammar.
+    return $parser->file($data);
+}
+
+$GRAMMAR =
+    q!
         { our ( %tables ) }
 
         file         : statement(s) { \%tables }
@@ -157,8 +191,7 @@ sub grammar {
 
         COMMA        : ','
 
-    };
-}
+    !;
 
 1;
 
@@ -173,7 +206,11 @@ SQL::Translator::Parser::MySQL - parser for MySQL
 
 =head1 SYNOPSIS
 
+  use SQL::Translator;
   use SQL::Translator::Parser::MySQL;
+
+  my $translator = SQL::Translator->new;
+  $translator->parser("SQL::Translator::Parser::MySQL");
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 #-----------------------------------------------------
-# $Id: XML.pm,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
+# $Id: XML.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
 #
 # File       : SQL/Translator/Producer/XML.pm
 # Programmer : Ken Y. Clark, kclark@logsoft.com
@@ -10,29 +10,25 @@ package SQL::Translator::Producer::XML;
 #-----------------------------------------------------
 
 use strict;
-use SQL::Translator::Producer;
 use vars qw( $VERSION );
-$VERSION = (qw$Revision: 1.1.1.1 $)[-1];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use XML::Dumper;
 
-use base qw[ SQL::Translator::Producer ];
-
-sub to { 'XML' }
-
-sub translate {
+sub produce {
     my ( $self, $data ) = @_;
     my $dumper = XML::Dumper->new;
     return $dumper->pl2xml( $data );
 }
 
 1;
-
 #-----------------------------------------------------
 # The eyes of fire, the nostrils of air,
 # The mouth of water, the beard of earth.
 # William Blake
 #-----------------------------------------------------
+__END__
+
 
 =head1 NAME
 
