@@ -1,7 +1,7 @@
-package SQL::Translator::Parser::PostGreSQL;
+package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostGreSQL.pm,v 1.1 2003-02-21 08:42:29 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.1 2003-02-21 19:35:17 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,15 +24,15 @@ package SQL::Translator::Parser::PostGreSQL;
 
 =head1 NAME
 
-SQL::Translator::Parser::PostGreSQL - parser for PostGreSQL
+SQL::Translator::Parser::PostgreSQL - parser for PostgreSQL
 
 =head1 SYNOPSIS
 
   use SQL::Translator;
-  use SQL::Translator::Parser::PostGreSQL;
+  use SQL::Translator::Parser::PostgreSQL;
 
   my $translator = SQL::Translator->new;
-  $translator->parser("SQL::Translator::Parser::PostGreSQL");
+  $translator->parser("SQL::Translator::Parser::PostgreSQL");
 
 =head1 DESCRIPTION
 

@@ -10,7 +10,7 @@ bin/validator_test.pl
 lib/SQL/Translator.pm
 lib/SQL/Translator/Parser.pm
 lib/SQL/Translator/Parser/MySQL.pm
-lib/SQL/Translator/Parser/PostGreSQL.pm
+lib/SQL/Translator/Parser/PostgreSQL.pm
 lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
