@@ -100,7 +100,7 @@ The regular method:
     $ perl Makefile.PL
     $ make
     $ make test
-    $ su -
+    $ su
     # make install
 
 COPYRIGHT
