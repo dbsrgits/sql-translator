@@ -21,6 +21,7 @@ lib/SQL/Translator/Parser/PostgreSQL.pm
 lib/SQL/Translator/Parser/Sybase.pm
 lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Parser/XML.pm
+lib/SQL/Translator/Parser/YAML.pm
 lib/SQL/Translator/Parser/XML/SQLFairy.pm
 lib/SQL/Translator/Parser/XML/XMI.pm
 lib/SQL/Translator/Producer.pm
@@ -35,6 +36,7 @@ lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/Sybase.pm
 lib/SQL/Translator/Producer/TTSchema.pm
+lib/SQL/Translator/Producer/YAML.pm
 lib/SQL/Translator/Producer/XML/SQLFairy.pm
 lib/SQL/Translator/Schema.pm
 lib/SQL/Translator/Schema/Constants.pm
@@ -64,6 +66,7 @@ t/16xml-parser.t
 t/17sqlfxml-producer.t
 t/18ttschema-producer.t
 t/21xml-xmi-parser.t
+t/24yaml.t
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
