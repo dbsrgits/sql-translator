@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Object;
 
 # ----------------------------------------------------------------------
-# $Id: Object.pm,v 1.3 2004-11-05 15:03:10 grommit Exp $
+# $Id: Object.pm,v 1.4 2005-01-13 09:44:15 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -42,7 +42,7 @@ use base 'Class::Base';
 
 use vars qw[ $VERSION ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 
 =head1 Construction
@@ -121,21 +121,35 @@ have them.
 =head2 extra
 
 Get or set the objects "extra" attibutes (e.g., "ZEROFILL" for MySQL fields).
-Accepts a hash(ref) of name/value pairs to store;  returns a hash.
+Call with no args to get all the extra data.
+Call with a single name arg to get the value of the named extra attribute,
+returned as a scalar. Call with a hash or hashref to set extra attributes.
+Returns a hash or a hashref.
 
   $field->extra( qualifier => 'ZEROFILL' );
-  my %extra = $field->extra;
-
+  
+  $qualifier = $field->extra('qualifier');
+  
+  %extra = $field->extra;
+  $extra = $field->extra;
+  
 =cut
 
     my $self = shift;
-    my $args = ref $_[0] eq 'HASH' ? shift : { @_ };
+    @_ = %{$_[0]} if ref $_[0] eq "HASH";
+    my $extra = $self->{'extra'} ||= {};
 
-    while ( my ( $key, $value ) = each %$args ) {
-        $self->{'extra'}{ $key } = $value;
+    if (@_==1) { 
+        return exists($extra->{$_[0]}) ? $extra->{$_[0]} : undef ;
     }
-
-    return %{ $self->{'extra'} || {} };
+    elsif (@_) {
+        my %args = @_;
+        while ( my ( $key, $value ) = each %args ) {
+            $extra->{$key} = $value;
+        }
+    }
+    
+    return wantarray ? %$extra : $extra;
 }
 
 #=============================================================================
