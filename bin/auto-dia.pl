@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.7 2003-04-02 01:45:45 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.8 2003-04-03 19:29:08 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -12,18 +12,21 @@ auto-dia.pl - Automatically create a diagram from a database schema
 
   Options:
 
-    -o|--output             Output file name (default STDOUT)
-    -i|--image              Output image type (default PNG)
-    -t|--title              Title to give schema
-    -c|--cols               Number of columns
-    -n|--no-lines           Don't draw lines
-    -f|--font-size          "small," "medium," "large," or "huge" 
-                            (default "medium")
-    --color                 Add colors
+    -o|--output        Output file name (default STDOUT)
+    -i|--image         Output image type ("png" or "jpeg," default "png")
+    -t|--title         Title to give schema
+    -c|--cols          Number of columns
+    -n|--no-lines      Don't draw lines
+    -f|--font-size     Font size ("small," "medium," "large," or "huge,"
+                       default "medium")
+    --color            Add colors
+    --show-fk-only     Only show fields that act as primary 
+                       or foreign keys
 
-    --natural-join          Perform natural joins
-    --natural-join-pk-only  Perform natural joins from primary keys only
-    -s|--skip               Fields to skip in natural joins
+    --natural-join     Perform natural joins
+    --natural-join-pk  Perform natural joins from primary keys only
+    -s|--skip          Fields to skip in natural joins
+    --debug            Print debugging information
 
 =head1 DESCRIPTION
 
@@ -42,18 +45,19 @@ field called "name" to be considered a foreign key, so you could
 include it in the "skip" option, and all fields called "name" will be
 excluded from natural joins.  A more efficient method, however, might
 be to simply deduce the foriegn keys from primary keys to other fields
-named the same in other tables.  Use the "natural-join-pk-only" option
+named the same in other tables.  Use the "natural-join-pk" option
 to acheive this.
 
 =cut
 
 use strict;
+use Data::Dumper;
 use Getopt::Long;
 use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.7 $)[-1];
+my $VERSION = (qw$Revision: 1.8 $)[-1];
 
 use constant VALID_FONT_SIZE => {
     small  => 1,
@@ -62,33 +66,40 @@ use constant VALID_FONT_SIZE => {
     huge   => 1,
 };
 
+use constant VALID_IMAGE_TYPE => {
+    png  => 1, 
+    jpeg => 1, 
+};
+
 #
 # Get arguments.
 #
 my ( 
     $out_file, $image_type, $db_driver, $title, $no_columns, 
-    $no_lines, $font_size, $add_color, 
+    $no_lines, $font_size, $add_color, $debug, $show_fk_only,
     $natural_join, $join_pk_only, $skip_fields
 );
 
 GetOptions(
-    'd|db=s'                => \$db_driver,
-    'o|output:s'            => \$out_file,
-    'i|image:s'             => \$image_type,
-    't|title:s'             => \$title,
-    'c|columns:i'           => \$no_columns,
-    'n|no-lines'            => \$no_lines,
-    'f|font-size:s'         => \$font_size,
-    'color'                 => \$add_color,
-    'natural-join'          => \$natural_join,
-    'natural-join-pk-only'  => \$join_pk_only,
-    's|skip:s'              => \$skip_fields,
+    'd|db=s'          => \$db_driver,
+    'o|output:s'      => \$out_file,
+    'i|image:s'       => \$image_type,
+    't|title:s'       => \$title,
+    'c|columns:i'     => \$no_columns,
+    'n|no-lines'      => \$no_lines,
+    'f|font-size:s'   => \$font_size,
+    'color'           => \$add_color,
+    'show-fk-only'    => \$show_fk_only,
+    'natural-join'    => \$natural_join,
+    'natural-join-pk' => \$join_pk_only,
+    's|skip:s'        => \$skip_fields,
+    'debug'           => \$debug,
 ) or die pod2usage;
 my $file = shift @ARGV or pod2usage( -message => 'No input file' );
 
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
-$image_type     = $image_type ? lc $image_type : 'png';
 $title        ||= $file;
+$image_type     = 'png'    unless VALID_IMAGE_TYPE ->{ $image_type  };
 $font_size      = 'medium' unless VALID_FONT_SIZE->{ $font_size };
 my %skip        = map { $_, 1 } split ( /,/, $skip_fields );
 $natural_join ||= $join_pk_only;
@@ -96,8 +107,10 @@ $natural_join ||= $join_pk_only;
 #
 # Parse file.
 #
+warn "Parsing file '$file' with driver '$db_driver'\n" if $debug;
 my $t    = SQL::Translator->new( parser => $db_driver, producer => 'Raw' );
 my $data = $t->translate( $file ) or die $t->error;
+warn "Data =\n", Dumper( $data ), "\n" if $debug;
 
 #
 # Layout the image.
@@ -108,12 +121,13 @@ my $font         =
     $font_size eq 'large'  ? gdLargeFont : gdGiantFont;
 my $no_tables    = scalar keys %$data;
 $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
+$no_columns    ||= .5;
 my $no_per_col   = sprintf( "%.0f", $no_tables/$no_columns + .5 );
 
 my @shapes;            
 my ( $max_x, $max_y );           # the furthest x and y used
 my $orig_y      = 40;            # used to reset y for each column
-my ( $x, $y )   = (20, $orig_y); # where to start
+my ( $x, $y )   = (30, $orig_y); # where to start
 my $cur_col     = 1;             # the current column
 my $no_this_col = 0;             # number of tables in current column
 my $this_col_x  = $x;            # current column's x
@@ -123,6 +137,52 @@ my @fk_registry;                 # for locations of fields for foreign keys
 my %table_x;                     # for max x of each table
 my $field_no;                    # counter to give distinct no. to each field
 my %legend;
+
+#
+# If necessary, pre-process fields to find foreign keys.
+#
+if ( $show_fk_only && $natural_join ) {
+    my ( %common_keys, %pk );
+    for my $table ( values %$data ) {
+        for my $index ( 
+            @{ $table->{'indices'}     || [] },
+            @{ $table->{'constraints'} || [] },
+        ) {
+            my @fields = @{ $index->{'fields'} || [] } or next;
+            if ( $index->{'type'} eq 'primary_key' ) {
+                $pk{ $_ } = 1 for @fields;
+            }
+        }
+
+        for my $field ( values %{ $table->{'fields'} } ) {
+            push @{ $common_keys{ $field->{'name'} } }, $table->{'table_name'};
+        }
+    }
+
+    for my $field ( keys %common_keys ) {
+        my @tables = @{ $common_keys{ $field } };
+        next unless scalar @tables > 1;
+        for my $table ( @tables ) {
+            next if $join_pk_only and !defined $pk{ $field };
+            $data->{ $table }{'fields'}{ $field }{'is_fk'} = 1;
+        }
+    }
+}
+else {
+    for my $table ( values %$data ) {
+        for my $field ( values %{ $table->{'fields'} } ) {
+            for my $constraint ( 
+                grep { $_->{'type'} eq 'foreign_key' }
+                @{ $field->{'constraints'} }
+            ) {
+                my $ref_table  = $constraint->{'reference_table'} or next;
+                for my $ref_field ( @{ $constraint->{'reference_fields'} } ) {
+                    $data->{ $ref_table }{'fields'}{ $ref_field }{'is_fk'} = 1;
+                }
+            }
+        }
+    }
+}
 
 for my $table (
     map  { $_->[1] }
@@ -139,14 +199,21 @@ for my $table (
     $y                   += 2;
     my $this_max_x        = $this_col_x + ($font->width * length($table_name));
 
+    warn "Processing table '$table_name'\n" if $debug;
+
     my @fields = 
         map  { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
         map  { [ $_->{'order'}, $_ ] }
         values %{ $table->{'fields'} };
 
+    warn "Fields = ", join(', ', map { $_->{'name'} } @fields), "\n" if $debug;
+
     my ( %pk, %unique );
-    for my $index ( @{ $table->{'indices'} || [] } ) {
+    for my $index ( 
+        @{ $table->{'indices'}     || [] },
+        @{ $table->{'constraints'} || [] },
+    ) {
         my @fields = @{ $index->{'fields'} || [] } or next;
         if ( $index->{'type'} eq 'primary_key' ) {
             $pk{ $_ } = 1 for @fields;
@@ -156,11 +223,30 @@ for my $table (
         }
     }
 
+    warn "Primary keys = ", join(', ', sort keys %pk), "\n" if $debug;
+    warn "Unique = ", join(', ', sort keys %unique), "\n" if $debug;
+
     my ( @fld_desc, $max_name );
     for my $f ( @fields ) {
         my $name      = $f->{'name'} or next;
         my $is_pk     = $pk{ $name };
         my $is_unique = $unique{ $name };
+
+        #
+        # Decide if we should skip this field.
+        #
+        if ( $show_fk_only ) {
+            if ( $natural_join ) {
+                next unless $is_pk || $f->{'is_fk'};
+            }
+            else {
+                next unless $is_pk || $f->{'is_fk'} || 
+                    grep { $_->{'type'} eq 'foreign_key' }
+                    @{ $f->{'constraints'} }
+                ;
+            }
+        }
+
         if ( $is_pk ) {
             $name .= ' *';
             $legend{'Primary key'} = '*';
@@ -203,21 +289,24 @@ for my $table (
                 for my $fk_field ( 
                     @{ $constraint->{'reference_fields'} || [] }
                 ) {
+                    my $fk_table = $constraint->{'reference_table'};
+                    next unless defined $data->{ $fk_table };
                     push @fk_registry, [
-                        [ $constraint->{'reference_table'}, $fk_field ],
                         [ $table_name, $orig_name ],
+                        [ $fk_table  , $fk_field  ],
                     ];
                 }
             }
         }
 
-        my $y_link = $y - $font->height * .75;
+        my $y_link = $y - $font->height/2;
         $table->{'fields'}{ $orig_name }{'coords'} = {
-            left     => [ $this_col_x - 2, $y_link ],
-            right    => [ $length,         $y_link ],
+            left     => [ $this_col_x - 6, $y_link ],
+            right    => [ $length + 2    , $y_link ],
             table    => $table_name,
             field_no => ++$field_no,
             is_pk    => $is_pk,
+            fld_name => $orig_name,
         };
     }
 
@@ -273,22 +362,22 @@ unless ( $no_lines ) {
     }
     else {
         for my $pair ( @fk_registry ) {
-            my $c1 = 
-                $data->{ $pair->[0][0] }{'fields'}{ $pair->[0][1] }{'coords'};
-            my $c2 = 
-                $data->{ $pair->[1][0] }{'fields'}{ $pair->[1][1] }{'coords'};
-            next unless %{ $c1 || {} } && %{ $c1 || {} };
-            push @position_bunches, [ $c1, $c2 ];
+            push @position_bunches, [ 
+                $data->{ $pair->[0][0] }{'fields'}{ $pair->[0][1] }{'coords'},
+                $data->{ $pair->[1][0] }{'fields'}{ $pair->[1][1] }{'coords'},
+            ];
         }
     }
+
+    my $is_directed = $natural_join ? 0 : 1;
 
     for my $bunch ( @position_bunches ) {
         my @positions = @$bunch;
 
         for my $i ( 0 .. $#positions ) {
             my $pos1        = $positions[ $i ];
-            my ( $ax, $ay ) = @{ $pos1->{'left'}  };
-            my ( $bx, $by ) = @{ $pos1->{'right'} };
+            my ( $ax, $ay ) = @{ $pos1->{'left'}  || [] } or next;
+            my ( $bx, $by ) = @{ $pos1->{'right'} || [] } or next;
             my $table1      = $pos1->{'table'};
             my $fno1        = $pos1->{'field_no'};
             my $is_pk       = $pos1->{'is_pk'};
@@ -296,10 +385,11 @@ unless ( $no_lines ) {
 
             for my $j ( 0 .. $#positions ) {
                 my $pos2        = $positions[ $j ];
-                my ( $cx, $cy ) = @{ $pos2->{'left'}  };
-                my ( $dx, $dy ) = @{ $pos2->{'right'} };
+                my ( $cx, $cy ) = @{ $pos2->{'left'}  || [] } or next;
+                my ( $dx, $dy ) = @{ $pos2->{'right'} || [] } or next;
                 my $table2      = $pos2->{'table'};
                 my $fno2        = $pos2->{'field_no'};
+                next if $table1 eq $table2;
                 next if $done{ $fno1 }{ $fno2 };
                 next if $fno1 == $fno2;
 
@@ -355,9 +445,41 @@ unless ( $no_lines ) {
                     $end = $col2_right + $diff;
                 } 
 
-                push @shapes, [ 'line', $x1,    $y1, $start, $y1, 'lightblue' ];
-                push @shapes, [ 'line', $start, $y1, $end,   $y2, 'lightblue' ];
-                push @shapes, [ 'line', $end,   $y2, $x2,    $y2, 'lightblue' ];
+                push @shapes, [ 'line', $x1,    $y1, $start, $y1, 'cadetblue' ];
+                push @shapes, [ 'line', $start, $y1, $end,   $y2, 'cadetblue' ];
+                push @shapes, [ 'line', $end,   $y2, $x2,    $y2, 'cadetblue' ];
+
+                if ( $is_directed ) {
+                    if (
+                        $side1 eq 'right' && $side2 eq 'left'
+                        ||
+                        $side1 eq 'left' && $side2 eq 'left'
+                    ) {
+                        push @shapes, [ 
+                            'line', $x2 - 3, $y2 - 3, $x2, $y2, 'cadetblue' 
+                        ];
+                        push @shapes, [ 
+                            'line', $x2 - 3, $y2 + 3, $x2, $y2, 'cadetblue' 
+                        ];
+                        push @shapes, [ 
+                            'line', $x2 - 3, $y2 - 3, $x2 - 3, $y2 +3, 
+                            'cadetblue' 
+                        ];
+                    }
+                    else {
+                        push @shapes, [ 
+                            'line', $x2 + 3, $y2 - 3, $x2, $y2, 'cadetblue' 
+                        ];
+                        push @shapes, [ 
+                            'line', $x2 + 3, $y2 + 3, $x2, $y2, 'cadetblue' 
+                        ];
+                        push @shapes, [ 
+                            'line', $x2 + 3, $y2 - 3, $x2 + 3, $y2 +3, 
+                            'cadetblue' 
+                        ];
+                    }
+                }
+
                 $done{ $fno1 }{ $fno2 } = 1;
                 $done{ $fno2 }{ $fno1 } = 1;
             }
@@ -408,7 +530,7 @@ push @shapes, [
 #
 # Render the image.
 #
-my $gd = GD::Image->new( $max_x + 10, $max_y );
+my $gd = GD::Image->new( $max_x + 30, $max_y );
 unless ( $gd->can( $image_type ) ) {
     die "GD can't create images of type '$image_type'\n";
 }
@@ -417,8 +539,10 @@ my %colors = map { $_->[0], $gd->colorAllocate( @{$_->[1]} ) } (
     [ beige                => [ 245, 245, 220 ] ],
     [ black                => [   0,   0,   0 ] ],
     [ lightblue            => [ 173, 216, 230 ] ],
+    [ cadetblue            => [  95, 158, 160 ] ],
     [ lightgoldenrodyellow => [ 250, 250, 210 ] ],
     [ khaki                => [ 240, 230, 140 ] ],
+    [ red                  => [ 255,   0,   0 ] ],
 );
 $gd->interlaced( 'true' );
 my $background_color = $add_color ? 'lightgoldenrodyellow' : 'white';
