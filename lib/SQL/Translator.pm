@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.10 2002-11-20 04:03:03 kycl4rk Exp $
+# $Id: Translator.pm,v 1.11 2002-11-21 17:45:17 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -51,11 +51,15 @@ use strict;
 use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 $ERROR   = "";
 
 use Carp qw(carp);
+
+use File::Spec::Functions qw(catfile);
+use File::Basename qw(dirname);
+use IO::Dir;
 
 # ----------------------------------------------------------------------
 # The default behavior is to "pass through" values (note that the
@@ -650,6 +654,30 @@ sub translate {
 
     return $producer_output;
 }
+
+sub list_producers {
+    require SQL::Translator::Producer;
+    my $path = catfile(dirname($INC{'SQL/Translator/Producer.pm'}), "Producer");
+    my $dh = IO::Dir->new($path);
+
+    my @available = map { join "::", "SQL::Translator::Producer", $_ }
+                    grep /\.pm$/, $dh->read;
+
+    return @available;
+}
+
+
+sub list_parsers {
+    require SQL::Translator::Parser;
+    my $path = catfile(dirname($INC{'SQL/Translator/Parser.pm'}), "Parser");
+    my $dh = IO::Dir->new($path);
+
+    my @available = map { join "::", "SQL::Translator::Parser", $_ }
+                    grep /\.pm$/, $dh->read;
+
+    return @available;
+}
+
 
 sub load {
     my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
