@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.38 2004-04-08 01:24:08 allenday Exp $
+# $Id: Turnkey.pm,v 1.39 2004-04-10 03:01:37 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -365,7 +365,7 @@ use strict;
 no warnings 'redefine';
 use base qw(Class::DBI::Pg);
 
-[% baseclass %]->set_db('Main', '[% db_dsn  %]', '[% db_user %]', '[% db_pass %]', {AutoCommit=>1});
+[% baseclass %]->set_db('Main', '[% db_dsn  %]', '[% db_user %]', '[% db_pass %]');
 sub search_ilike { shift->_do_search(ILIKE => [% "\@\_" %] ) }
 
 
