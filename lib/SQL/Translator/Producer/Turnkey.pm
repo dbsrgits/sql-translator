@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.3 2003-10-10 02:29:16 allenday Exp $
+# $Id: Turnkey.pm,v 1.1.2.4 2003-10-10 21:32:41 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -570,7 +570,7 @@ my $turnkey_template_tt2 = <<'EOF';
     [- first = 1 -]
     [- FOREACH field = packages.$pkey.columns_essential -]
       [- IF first -]
-      <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]
+      <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
       [- first = 0 -]
       [- ELSE -]
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
