@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-dumper,v 1.4 2004-03-08 21:03:18 kycl4rk Exp $
+# $Id: sqlt-dumper,v 1.5 2004-03-09 19:33:20 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -32,24 +32,25 @@ sqlt-dumper - create a dumper script from a schema
 
   Options:
 
-    -h|--help       Show help and exit
-    --add-truncate  Add "TRUNCATE TABLE" statements for each table
-    --skip=t1[,t2]  Skip tables in comma-separated list
-    -u|--user       Database username
-    -p|--password   Database password
-    --dsn           DSN for DBI
+    -h|--help         Show help and exit
+    --skip=t1[,t2]    Skip tables in comma-separated list
+    --skiplike=regex  Skip tables matching the regular expression
+    -u|--user         Database username
+    -p|--password     Database password
+    --dsn             DSN for DBI
 
 =head1 DESCRIPTION
 
 This script uses SQL::Translator to parse the SQL schema and create a
 Perl script that can connect to the database and dump the data as
-INSERT statements a la mysqldump.  If you enable "add-truncate" or
-specify tables to "skip," then the generated dumper script will have
-those hardcoded.  However, these will also be options in the generated
-dumper, so you can wait to specify these options when you dump your
-database.  The database username, password, and DSN can be hardcoded
-into the generated script, or part of the DSN can be intuited from the
-"database" argument.
+INSERT statements (a la mysqldump) or MySQL's LOAD FILE syntax.  You may
+specify tables to "skip" (also using a "skiplike" regular expression)
+and the generated dumper script will not have those tables.  However,
+these will also be options in the generated dumper, so you can wait to
+specify these options when you dump your database.  The database
+username, password, and DSN can be hardcoded into the generated
+script, or part of the DSN can be intuited from the "database"
+argument.
 
 =cut
 
@@ -62,14 +63,14 @@ use SQL::Translator;
 use File::Basename qw(basename);
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
-my ( $help, $db, $add_truncate, $skip, $db_user, $db_pass, $dsn );
+my ( $help, $db, $skip, $skiplike, $db_user, $db_pass, $dsn );
 GetOptions(
     'h|help'        => \$help,
     'd|f|from|db=s' => \$db,
-    'add-truncate'  => \$add_truncate,
     'skip:s'        => \$skip,
+    'skiplike:s'    => \$skiplike,
     'u|user:s'      => \$db_user,
     'p|password:s'  => \$db_pass,
     'dsn:s'         => \$dsn,
@@ -81,118 +82,21 @@ $db_user ||= 'username';
 $db_pass ||= 'password';
 $dsn     ||= "dbi:$db:_";
 
-my $file = shift @ARGV or pod2usage( -msg => 'No input file' );
-
-my $t = SQL::Translator->new;
-$t->parser( $db ) or die $t->error, "\n";
-$t->filename( $file ) or die $t->error, "\n";
-
-my %skip = map { $_, 1 } map { s/^\s+|\s+$//; $_ } split (/,/, $skip);
-my $parser = $t->parser or die $t->error;
-$parser->($t, $t->data);
-my $schema = $t->schema;
-my $now    = localtime;
-my $prog   = basename $0;
-
-my $out = <<"EOF";
-#!/usr/bin/perl
-
-#
-# Generated $now
-# By $prog, part of the SQLFairy project
-# For more info, see http://sqlfairy.sourceforge.net/
-#
-
-use strict;
-use DBI;
-use Getopt::Long;
-
-my ( \$help, \$add_truncate, \$skip );
-GetOptions(
-    'h|help'        => \\\$help,
-    'add-truncate'  => \\\$add_truncate,
-    'skip:s'        => \\\$skip,
+my $file            = shift @ARGV or pod2usage( -msg => 'No input file' );
+my $t               = SQL::Translator->new(
+    from            => $db,
+    to              => 'Dumper',
+    producer_args   => {
+        skip        => $skip,
+        skiplike    => $skiplike,
+        db_user     => $db_user,
+        db_password => $db_pass,
+        dsn         => $dsn,
+    }
 );
 
-if ( \$help ) {
-    print <<"USAGE";
-Usage:
-  \$0 [options]
+print $t->translate( $file );
 
-  Options:
-    -h|--help       Show help and exit
-    --add-truncate  Add "TRUNCATE TABLE" statements
-    --skip=t1[,t2]  Comma-separated list of tables to skip
-
-USAGE
-    exit(0);
-}
-
-my \%skip = map { \$_, 1 } map { s/^\\s+|\\s+\$//; \$_ } split (/,/, \$skip);
-my \$db = DBI->connect('$dsn', '$db_user', '$db_pass');
-
-EOF
-
-for my $table ( $schema->get_tables ) {
-    my $table_name  = $table->name;
-    next if $skip{ $table_name };
-    my ( @field_names, %types );
-    for my $field ( $table->get_fields ) {
-        $types{ $field->name } = $field->data_type =~ m/(char|str|long|text)/
-            ? 'string' : 'number';
-        push @field_names, $field->name;
-    }
-
-    $out .= join('',
-        "#\n# Table: $table_name\n#\n{\n",
-        "    next if \$skip{'$table_name'};\n",
-        "    print \"--\\n-- Data for table '$table_name'\\n--\\n\";\n\n",
-        "    if ( \$add_truncate ) {\n",
-        "        print \"TRUNCATE TABLE $table_name;\\n\";\n",
-        "    }\n\n",
-    );
-
-    my $insert = "INSERT INTO $table_name (". join(', ', @field_names).
-            ') VALUES (';
-
-    if ( $add_truncate ) {
-        $out .= "    print \"TRUNCATE TABLE $table_name;\\n\";\n";
-    }
-
-    $out .= join('',
-        "    my \%types = (\n",
-        join("\n", map { "        $_ => '$types{ $_ }'," } @field_names), 
-        "\n    );\n\n",
-        "    my \$data  = \$db->selectall_arrayref(\n",
-        "        'select ", join(', ', @field_names), " from $table_name',\n",
-        "        { Columns => {} },\n",
-        "    );\n\n",
-        "    for my \$rec ( \@{ \$data } ) {\n",
-        "        my \@vals;\n",
-        "        for my \$fld ( qw[", join(' ', @field_names), "] ) {\n",
-        "            my \$val = \$rec->{ \$fld };\n",
-        "            if ( \$types{ \$fld } eq 'string' ) {\n",
-        "                if ( defined \$val ) {\n",
-        "                    \$val =~ s/'/\\\\'/g;\n",
-        "                    \$val = qq['\$val']\n",
-        "                }\n",
-        "                else {\n",
-        "                    \$val = qq[''];\n",
-        "                }\n",
-        "            }\n",
-        "            else {\n",
-        "                \$val = defined \$val ? \$val : 'NULL';\n",
-        "            }\n",
-        "            push \@vals, \$val;\n",
-        "        }\n",
-        "        print \"$insert\", join(', ', \@vals), \");\\n\";\n",
-        "    }\n",
-        "    print \"\\n\";\n",
-        "}\n\n",
-    );
-}
-
-print $out;
 exit(0);
 
 # -------------------------------------------------------------------
@@ -205,6 +109,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl, SQL::Translator.
+perl, SQL::Translator, SQL::Translator::Producer::Dumper.
 
 =cut
