@@ -1,7 +1,7 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.4 2004-03-04 14:41:49 dlc Exp $
+# $Id: Translator.pm,v 1.5 2004-03-05 12:12:33 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
@@ -34,7 +34,7 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 @EXPORT = qw( 
     schema_ok
     table_ok
@@ -48,7 +48,6 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 );
 
 use Test::More;
-use Test::Exception;
 use SQL::Translator::Schema::Constants;
 
 # $ATTRIBUTES{ <schema_object_name> } = { <attribname> => <default>, ... }
