@@ -375,7 +375,8 @@ use SQL::Translator::Schema::Constants;
     is( $c5->type, FOREIGN_KEY, 'Constraint is a FK' );
     is( join(',', $c5->fields), 'store_id', 'Constraint is on "store_id"' );
     is( $c5->reference_table, 'store', 'To table "store"' );
-    is( join(',', $c5->reference_fields), '', 'No reference fields defined' );
+    is( join(',', map { $_ || '' } $c5->reference_fields), '', 
+        'No reference fields defined' );
 
     my $t2  = shift @tables;
     is( $t2->name, 'address', 'Found "address" table' );
