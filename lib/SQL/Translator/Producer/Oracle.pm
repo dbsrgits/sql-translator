@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.20 2003-08-18 15:41:53 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.21 2003-08-19 14:44:00 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -49,10 +49,10 @@ my %translate  = (
     blob       => 'blob',
     mediumblob => 'blob',
     longblob   => 'blob',
+    tinytext   => 'varchar2',
+    text       => 'clob',
     longtext   => 'clob',
     mediumtext => 'clob',
-    text       => 'clob',
-    tinytext   => 'clob',
     enum       => 'varchar2',
     set        => 'varchar2',
     date       => 'date',
@@ -198,13 +198,15 @@ sub produce {
             #
             if ( $data_type eq 'clob' && $field->is_primary_key ) {
                 $data_type = 'varchar2';
-                $size[0] = 4000;
+                $size[0]   = 4000;
                 warn "CLOB cannot be a primary key, changing to VARCHAR2\n"
                     if $WARN;
             }
 
+            #
             # Fixes ORA-00907: missing right parenthesis
-            if ($data_type eq 'date') {
+            #
+            if ( $data_type =~ /(date|clob)/i ) {
                 undef @size;
             }
 
@@ -373,9 +375,17 @@ sub produce {
 
         my $create_statement;
         $create_statement  = "DROP TABLE $table_name_ur;\n" if $add_drop_table;
-        $create_statement .= 
-            join( ",\n", map { "-- $_" } $table->comments ) .
-            "CREATE TABLE $table_name_ur (\n" .
+
+        if ( my @table_comments = $table->comments ) {
+            for my $comment ( @table_comments ) {
+                next unless $comment;
+                push @field_comments, "COMMENT ON TABLE $table_name is\n  '".
+                    $comment."';"
+                ;
+            }
+        }
+
+        $create_statement .= "CREATE TABLE $table_name_ur (\n" .
             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ) .
             "\n);"
         ;
