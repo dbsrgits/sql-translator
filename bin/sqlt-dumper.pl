@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-dumper.pl,v 1.1 2003-06-24 03:24:02 kycl4rk Exp $
+# $Id: sqlt-dumper.pl,v 1.2 2003-06-24 21:00:24 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -22,12 +22,6 @@
 
 =head1 sqlt-dumper.pl - create a dumper script from a schema
 
-=head1 DESCRIPTION
-
-This script uses SQL::Translator to parse the SQL schema and
-create a Perl script that can connect to the database and dump the 
-data as INSERT statements a la mysqldump.
-
 =head1 SYNOPSIS
 
   ./sqlt-dumper.pl -d Oracle [options] schema.sql > dumper.pl
@@ -35,7 +29,24 @@ data as INSERT statements a la mysqldump.
 
   Options:
 
+    -h|--help       Show help and exit
     --add-truncate  Add "TRUNCATE TABLE" statements for each table
+    --skip=t1[,t2]  Skip tables in comma-separated list
+    -u|--user       Database username
+    -p|--password   Database password
+    --dsn           DSN for DBI
+
+=head1 DESCRIPTION
+
+This script uses SQL::Translator to parse the SQL schema and create a
+Perl script that can connect to the database and dump the data as
+INSERT statements a la mysqldump.  If you enable "add-truncate" or
+specify tables to "skip," then the generated dumper script will have
+those hardcoded.  However, these will also be options in the generated
+dumper, so you can wait to specify these options when you dump your
+database.  The database username, password, and DSN can be hardcoded
+into the generated script, or part of the DSN can be intuited from the
+"database" argument.
 
 =cut
 
@@ -44,35 +55,77 @@ use Pod::Usage;
 use Getopt::Long;
 use SQL::Translator;
 
-my ( $db, $add_truncate );
+my ( $help, $db, $add_truncate, $skip, $db_user, $db_pass, $dsn );
 GetOptions(
-    'd:s'          => \$db,
-    'add-truncate' => \$add_truncate,
-);
+    'h|help'        => \$help,
+    'd|f|from|db=s' => \$db,
+    'add-truncate'  => \$add_truncate,
+    'skip:s'        => \$skip,
+    'u|user:s'      => \$db_user,
+    'p|password:s'  => \$db_pass,
+    'dsn:s'         => \$dsn,
+) or pod2usage;
+
+pod2usage(0) if $help;
+pod2usage( 'No database driver specified' ) unless $db;
+$db_user ||= 'username';
+$db_pass ||= 'password';
+$dsn     ||= "dbi:$db:_";
 
 my $file = shift @ARGV or pod2usage( -msg => 'No input file' );
 
-my $t = SQL::Translator->new(
-    from     => $db,
-    filename => $file,
-);
+my $t = SQL::Translator->new;
+$t->parser( $db ) or die $t->error, "\n";
+$t->filename( $file ) or die $t->error, "\n";
 
+my %skip = map { $_, 1 } map { s/^\s+|\s+$//; $_ } split (/,/, $skip);
 my $parser = $t->parser or die $t->error;
 $parser->($t, $t->data);
 my $schema = $t->schema;
+my $now    = localtime;
 
 my $out = <<"EOF";
 #!/usr/bin/perl
 
+#
+# Generated $now
+# By sqlt-dumper.pl, part of the SQLFairy project
+# For more info, see http://sqlfairy.sourceforge.net/
+#
+
 use strict;
 use DBI;
+use Getopt::Long;
 
-my \$db = DBI->connect('dbi:$db:', 'user', 'passwd');
+my ( \$help, \$add_truncate, \$skip );
+GetOptions(
+    'h|help'        => \\\$help,
+    'add-truncate'  => \\\$add_truncate,
+    'skip:s'        => \\\$skip,
+);
+
+if ( \$help ) {
+    print <<"USAGE";
+Usage:
+  \$0 [options]
+
+  Options:
+    -h|--help       Show help and exit
+    --add-truncate  Add "TRUNCATE TABLE" statements
+    --skip=t1[,t2]  Comma-separated list of tables to skip
+
+USAGE
+    exit(0);
+}
+
+my \%skip = map { \$_, 1 } map { s/^\\s+|\\s+\$//; \$_ } split (/,/, \$skip);
+my \$db = DBI->connect('$dsn', '$db_user', '$db_pass');
 
 EOF
 
 for my $table ( $schema->get_tables ) {
     my $table_name  = $table->name;
+    next if $skip{ $table_name };
     my ( @field_names, %types );
     for my $field ( $table->get_fields ) {
         $types{ $field->name } = $field->data_type =~ m/(char|str|long|text)/
@@ -81,8 +134,12 @@ for my $table ( $schema->get_tables ) {
     }
 
     $out .= join('',
-        "#\n# Data for table '$table_name'\n#\n{\n",
-        "    print \"#\\n# Data for table '$table_name'\\n#\\n\";\n",
+        "#\n# Table: $table_name\n#\n{\n",
+        "    next if \$skip{'$table_name'};\n",
+        "    print \"--\\n-- Data for table '$table_name'\\n--\\n\";\n\n",
+        "    if ( \$add_truncate ) {\n",
+        "        print \"TRUNCATE TABLE $table_name;\\n\";\n",
+        "    }\n\n",
     );
 
     my $insert = "INSERT INTO $table_name (". join(', ', @field_names).
@@ -115,7 +172,7 @@ for my $table ( $schema->get_tables ) {
         "        }\n",
         "        print \"$insert\", join(', ', \@vals), \");\\n\";\n",
         "    }\n",
-        "    print \"\\n\\n\";\n",
+        "    print \"\\n\";\n",
         "}\n\n",
     );
 }
