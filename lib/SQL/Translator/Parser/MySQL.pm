@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.16 2003-05-03 15:02:15 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.17 2003-05-09 16:55:07 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -143,7 +143,9 @@ my $parser; # should we do this?  There's no programmic way to
 
 $GRAMMAR = q!
 
-{ our ( %tables, $table_order ) }
+{ 
+    our ( %tables, $table_order );
+}
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -454,7 +456,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 
 # -------------------------------------------------------------------
 sub parse {
-    my ( $translator, $data ) = @_;
+    my ( $translator, $data, $schema ) = @_;
     $parser ||= Parse::RecDescent->new($GRAMMAR);
 
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
@@ -467,26 +469,52 @@ sub parse {
 
     my $result = $parser->startrule($data);
     die "Parse failed.\n" unless defined $result;
-    warn Dumper($result) if $DEBUG;
+    warn Dumper( $result ) if $DEBUG;
+
+    for my $table_name ( keys %{ $result } ) {
+        my $tdata =  $result->{ $table_name };
+        my $table =  $schema->add_table( 
+            name  => $tdata->{'table_name'},
+        );
+
+        my @fields = sort { 
+            $tdata->{'fields'}->{$a}->{'order'} 
+            <=>
+            $tdata->{'fields'}->{$b}->{'order'}
+        } keys %{ $tdata->{'fields'} };
+
+        for my $fname ( @fields ) {
+            my $fdata = $tdata->{'fields'}{ $fname };
+            my $field = $table->add_field(
+                name              => $fdata->{'name'},
+                data_type         => $fdata->{'data_type'},
+                size              => $fdata->{'size'},
+                default_value     => $fdata->{'default'},
+                is_auto_increment => $fdata->{'is_auto_inc'},
+                is_nullable       => $fdata->{'null'},
+            );
+        }
+    }
+
     return $result;
 }
 
 1;
 
-#-----------------------------------------------------
+# ----------------------------------------------------
 # Where man is not nature is barren.
 # William Blake
-#-----------------------------------------------------
+# ----------------------------------------------------
 
 =pod
 
 =head1 AUTHOR
 
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Chris Mungall
+Chris Mungall E<lt>cjm@fruitfly.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), Parse::RecDescent.
+perl(1), Parse::RecDescent, SQL::Translator::Schema.
 
 =cut
