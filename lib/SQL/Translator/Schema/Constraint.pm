@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.2 2003-05-05 04:32:39 kycl4rk Exp $
+# $Id: Constraint.pm,v 1.3 2003-05-09 17:06:11 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -46,6 +46,7 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 use strict;
 use Class::Base;
 use SQL::Translator::Schema::Constants;
+use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
@@ -83,8 +84,10 @@ Object constructor.
 =cut
 
     my ( $self, $config ) = @_;
-#        match_type on_delete_do on_update_do
-    my @fields = qw[ name type fields reference_fields reference_table table ];
+    my @fields = qw[ 
+        table name type fields reference_fields reference_table 
+        match_type on_delete on_update
+    ];
 
     for my $arg ( @fields ) {
         next unless $config->{ $arg };
@@ -228,8 +231,7 @@ names and keep them in order by the first occurrence of a field name.
 =cut
 
     my $self   = shift;
-    my $fields = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+    my $fields = parse_list_arg( @_ );
 
     if ( @$fields ) {
         my ( %unique, @unique );
@@ -243,6 +245,31 @@ names and keep them in order by the first occurrence of a field name.
     }
 
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
+}
+
+# ----------------------------------------------------------------------
+sub match_type {
+
+=pod
+
+=head2 match_type
+
+Get or set the constraint's match_type.  Only valid values are "full"
+or "partial."
+
+  my $match_type = $constraint->match_type('FULL');
+
+=cut
+
+    my $self = shift;
+    
+    if ( my $arg = lc shift ) {
+        return $self->error("Invalid match type: $arg")
+            unless $arg eq 'full' || $arg eq 'partial';
+        $self->{'match_type'} = $arg;
+    }
+
+    return $self->{'match_type'} || '';
 }
 
 # ----------------------------------------------------------------------
@@ -330,8 +357,7 @@ arrayref; returns an array or array reference.
 =cut
 
     my $self   = shift;
-    my $fields = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+    my $fields = parse_list_arg( @_ );
 
     if ( @$fields ) {
         $self->{'reference_fields'} = $fields;
@@ -449,8 +475,7 @@ Returns an array or array reference.
 =cut
 
     my $self    = shift;
-    my $options = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+    my $options = parse_list_arg( @_ );
 
     push @{ $self->{'options'} }, @$options;
 
@@ -460,6 +485,12 @@ Returns an array or array reference.
     else {
         return wantarray ? () : [];
     }
+}
+
+# ----------------------------------------------------------------------
+sub DESTROY {
+    my $self = shift;
+    undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
