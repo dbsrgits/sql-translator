@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More 'no_plan'; # tests => 1;
+use Test::More tests => 1;
 use SQL::Translator;
 use Data::Dumper;
 

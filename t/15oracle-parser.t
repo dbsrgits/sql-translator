@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More 'no_plan'; #tests => 105;
+use Test::More tests => 72;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::Oracle qw(parse);
@@ -61,9 +61,6 @@ $| = 1;
 
 my $data   = parse( $t, $sql );
 my $schema = $t->schema;
-
-#use Data::Dumper;
-#print Dumper($schema), "\n";
 
 isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
 my @tables = $schema->get_tables;
