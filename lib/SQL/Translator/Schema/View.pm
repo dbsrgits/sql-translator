@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id: View.pm,v 1.1 2003-05-01 04:25:00 kycl4rk Exp $
+# $Id: View.pm,v 1.2 2003-05-09 17:12:15 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -44,6 +44,7 @@ C<SQL::Translator::Schema::View> is the view object.
 
 use strict;
 use Class::Base;
+use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
@@ -64,8 +65,72 @@ Object constructor.
 =cut
 
     my ( $self, $config ) = @_;
-    $self->params( $config, qw[ name sql ] );
+
+    for my $arg ( qw[ name sql fields ] ) {
+        next unless $config->{ $arg };
+        $self->$arg( $config->{ $arg } ) or return;
+    }
+
     return $self;
+}
+
+# ----------------------------------------------------------------------
+sub fields {
+
+=pod
+
+=head2 fields
+
+Gets and set the fields the constraint is on.  Accepts a string, list or
+arrayref; returns an array or array reference.  Will unique the field
+names and keep them in order by the first occurrence of a field name.
+
+  $view->fields('id');
+  $view->fields('id', 'name');
+  $view->fields( 'id, name' );
+  $view->fields( [ 'id', 'name' ] );
+  $view->fields( qw[ id name ] );
+
+  my @fields = $view->fields;
+
+=cut
+
+    my $self   = shift;
+    my $fields = parse_list_arg( @_ );
+
+    if ( @$fields ) {
+        my ( %unique, @unique );
+        for my $f ( @$fields ) {
+            next if $unique{ $f };
+            $unique{ $f } = 1;
+            push @unique, $f;
+        }
+
+        $self->{'fields'} = \@unique;
+    }
+
+    return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
+}
+
+# ----------------------------------------------------------------------
+sub is_valid {
+
+=pod
+
+=head2 is_valid
+
+Determine whether the view is valid or not.
+
+  my $ok = $view->is_valid;
+
+=cut
+
+    my $self = shift;
+
+    return $self->error('No name') unless $self->name;
+    return $self->error('No sql')  unless $self->sql;
+
+    return 1;
 }
 
 # ----------------------------------------------------------------------
@@ -87,6 +152,28 @@ Get or set the view's name.
 }
 
 # ----------------------------------------------------------------------
+sub order {
+
+=pod
+
+=head2 order
+
+Get or set the view's order.
+
+  my $order = $view->order(3);
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    if ( defined $arg && $arg =~ /^\d+$/ ) {
+        $self->{'order'} = $arg;
+    }
+
+    return $self->{'order'} || 0;
+}
+
+# ----------------------------------------------------------------------
 sub sql {
 
 =pod
@@ -105,20 +192,9 @@ Get or set the view's SQL.
 }
 
 # ----------------------------------------------------------------------
-sub is_valid {
-
-=pod
-
-=head2 is_valid
-
-Determine whether the view is valid or not.
-
-  my $ok = $view->is_valid;
-
-=cut
-
+sub DESTROY {
     my $self = shift;
-    return 1 if $self->name && $self->sql;
+    undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
