@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.4 2003-06-05 01:57:48 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.5 2003-06-09 04:54:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -23,10 +23,11 @@ package SQL::Translator::Producer::GraphViz;
 use strict;
 use GraphViz;
 use Data::Dumper;
+use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -77,11 +78,10 @@ use constant VALID_OUTPUT => {
 };
 
 sub produce {
-    my ($t, $data) = @_;
+    my $t          = shift;
+    my $schema     = $t->schema;
     my $args       = $t->producer_args;
     local $DEBUG   = $t->debug;
-    debug("Data =\n", Dumper( $data ));
-    debug("Producer args =\n", Dumper( $args ));
 
     my $out_file        = $args->{'out_file'}    || '';
     my $layout          = $args->{'layout'}      || 'neato';
@@ -95,11 +95,17 @@ sub produce {
                           ? $args->{'show_fields'} : 1;
     my $add_color       = $args->{'add_color'};
     my $natural_join    = $args->{'natural_join'};
+    my $show_fk_only    = $args->{'show_fk_only'};
     my $join_pk_only    = $args->{'join_pk_only'};
     my $skip_fields     = $args->{'skip_fields'};
     my %skip            = map { s/^\s+|\s+$//g; $_, 1 }
                           split ( /,/, $skip_fields );
     $natural_join     ||= $join_pk_only;
+
+    $schema->make_natural_joins(
+        join_pk_only => $join_pk_only,
+        skip_fields  => $args->{'skip_fields'},
+    ) if $natural_join;
 
     die "Invalid layout '$layout'" unless VALID_LAYOUT->{ $layout };
     die "Invalid output type: '$output_type'"
@@ -134,124 +140,31 @@ sub produce {
     my %nj_registry; # for locations of fields for natural joins
     my @fk_registry; # for locations of fields for foreign keys
 
-    #
-    # If necessary, pre-process fields to find foreign keys.
-    #
-    if ( $natural_join ) {
-        my ( %common_keys, %pk );
-        for my $table ( values %$data ) {
-            for my $index ( 
-                @{ $table->{'indices'}     || [] },
-                @{ $table->{'constraints'} || [] },
-            ) {
-                my @fields = @{ $index->{'fields'} || [] } or next;
-                if ( $index->{'type'} eq 'primary_key' ) {
-                    $pk{ $_ } = 1 for @fields;
-                }
-            }
-
-            for my $field ( values %{ $table->{'fields'} } ) {
-                push @{ $common_keys{ $field->{'name'} } }, 
-                    $table->{'table_name'};
-            }
+    for my $table ( $schema->get_tables ) {
+        my $table_name = $table->name;
+        my @fields     = $table->get_fields;
+        if ( $show_fk_only ) {
+            @fields = grep { $_->is_foreign_key } @fields;
         }
 
-        for my $field ( keys %common_keys ) {
-            my @tables = @{ $common_keys{ $field } };
-            next unless scalar @tables > 1;
-            for my $table ( @tables ) {
-                next if $join_pk_only and !defined $pk{ $field };
-                $data->{ $table }{'fields'}{ $field }{'is_fk'} = 1;
-            }
-        }
-    }
-    else {
-        for my $table ( values %$data ) {
-            for my $field ( values %{ $table->{'fields'} } ) {
-                for my $constraint ( 
-                    grep { $_->{'type'} eq 'foreign_key' }
-                    @{ $field->{'constraints'} }
-                ) {
-                    my $ref_table  = $constraint->{'reference_table'} or next;
-                    my @ref_fields = @{ $constraint->{'reference_fields'}||[] };
-
-                    unless ( @ref_fields ) {
-                        for my $field ( 
-                            values %{ $data->{ $ref_table }{'fields'} } 
-                        ) {
-                            for my $pk (
-                                grep { $_->{'type'} eq 'primary_key' }
-                                @{ $field->{'constraints'} }
-                            ) {
-                                push @ref_fields, @{ $pk->{'fields'} };
-                            }
-                        }
-
-                        $constraint->{'reference_fields'} = [ @ref_fields ];
-                    }
-
-                    for my $ref_field (@{$constraint->{'reference_fields'}}) {
-                        $data->{$ref_table}{'fields'}{$ref_field}{'is_fk'} = 1;
-                    }
-                }
-            }
-        }
-    }
-
-    for my $table (
-        map  { $_->[1] }
-        sort { $a->[0] <=> $b->[0] }
-        map  { [ $_->{'order'}, $_ ] }
-        values %$data 
-    ) {
-        my $table_name = $table->{'table_name'};
-        my @fields = 
-            map  { $_->[1] }
-            sort { $a->[0] <=> $b->[0] }
-            map  { [ $_->{'order'}, $_ ] }
-            values %{ $table->{'fields'} };
-
-        my $field_str = join('\l', map { $_->{'name'} } @fields);
+        my $field_str = join('\l', map { $_->name } @fields);
         my $label = $show_fields ? "{$table_name|$field_str}" : $table_name;
         $gv->add_node( $table_name, label => $label );
 
         debug("Processing table '$table_name'");
 
-        debug("Fields = ", join(', ', map { $_->{'name'} } @fields));
-
-        my ( %pk, %unique );
-        for my $index ( 
-            @{ $table->{'indices'}     || [] },
-            @{ $table->{'constraints'} || [] },
-        ) {
-            my @fields = @{ $index->{'fields'} || [] } or next;
-            if ( $index->{'type'} eq 'primary_key' ) {
-                $pk{ $_ } = 1 for @fields;
-            }
-            elsif ( $index->{'type'} eq 'unique' ) {
-                $unique{ $_ } = 1 for @fields;
-            }
-        }
-
-        debug("Primary keys = ", join(', ', sort keys %pk));
-        debug("Unique = ", join(', ', sort keys %unique));
+        debug("Fields = ", join(', ', map { $_->name } @fields));
 
         for my $f ( @fields ) {
-            my $name      = $f->{'name'} or next;
-            my $is_pk     = $pk{ $name };
-            my $is_unique = $unique{ $name };
+            my $name      = $f->name or next;
+            my $is_pk     = $f->is_primary_key;
+            my $is_unique = $f->is_unique;
 
             #
             # Decide if we should skip this field.
             #
             if ( $natural_join ) {
-                next unless $is_pk || $f->{'is_fk'};
-            }
-            else {
-                next unless $is_pk ||
-                    grep { $_->{'type'} eq 'foreign_key' }
-                    @{ $f->{'constraints'} }
-                ;
+                next unless $is_pk || $f->is_foreign_key;
             }
 
             my $constraints = $f->{'constraints'};
@@ -259,14 +172,16 @@ sub produce {
             if ( $natural_join && !$skip{ $name } ) {
                 push @{ $nj_registry{ $name } }, $table_name;
             }
-            elsif ( @{ $constraints || [] } ) {
-                for my $constraint ( @$constraints ) {
-                    next unless $constraint->{'type'} eq 'foreign_key';
-                    for my $fk_field ( 
-                        @{ $constraint->{'reference_fields'} || [] }
-                    ) {
-                        my $fk_table = $constraint->{'reference_table'};
-                        next unless defined $data->{ $fk_table };
+        }
+
+        unless ( $natural_join ) {
+            for my $c ( $table->get_constraints ) {
+                next unless $c->type eq FOREIGN_KEY;
+                my $fk_table = $c->reference_table or next;
+
+                for my $field_name ( $c->fields ) {
+                    for my $fk_field ( $c->reference_fields ) {
+                        next unless defined $schema->get_table( $fk_table );
                         push @fk_registry, [ $table_name, $fk_table ];
                     }
                 }
