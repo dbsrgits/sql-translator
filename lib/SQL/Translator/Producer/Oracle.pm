@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.25 2003-10-04 01:21:10 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.26 2003-10-15 19:00:35 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -22,9 +22,26 @@ package SQL::Translator::Producer::Oracle;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=head1 NAME
+
+SQL::Translator::Producer::Oracle - Oracle SQL producer
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $t = SQL::Translator->new( parser => '...', producer => 'Oracle' );
+  print $translator->translate( $file );
+
+=head1 DESCRIPTION
+
+Creates an SQL DDL suitable for Oracle.
+
+=cut
+
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -540,40 +557,19 @@ sub unreserve {
 # Oscar Wilde
 # -------------------------------------------------------------------
 
-=head1 NAME
-
-SQL::Translator::Producer::Oracle - Oracle SQL producer
-
-=head1 SYNOPSIS
-
-  use SQL::Translator::Parser::MySQL;
-  use SQL::Translator::Producer::Oracle;
-
-  my $original_create = ""; # get this from somewhere...
-  my $translator = SQL::Translator->new;
-
-  $translator->parser("SQL::Translator::Parser::MySQL");
-  $translator->producer("SQL::Translator::Producer::Oracle");
-
-  my $new_create = $translator->translate($original_create);
-
-=head1 DESCRIPTION
-
-SQL::Translator::Producer::Oracle takes a parsed data structure,
-created by a SQL::Translator::Parser subclass, and turns it into a
-create string suitable for use with an Oracle database.
+=pod
 
 =head1 CREDITS
 
-A hearty "thank-you" to Tim Bunce for much of the logic stolen from 
-his "mysql2ora" script.
+Mad props to Tim Bunce for much of the logic stolen from his "mysql2ora"
+script.
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1).
+SQL::Translator, DDL::Oracle, mysql2ora.
 
 =cut
