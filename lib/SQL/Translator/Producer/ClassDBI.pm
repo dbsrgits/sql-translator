@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.6 2003-04-25 23:08:01 allenday Exp $
+# $Id: ClassDBI.pm,v 1.7 2003-05-11 04:04:17 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
 #                    Allen Day <allenday@ucla.edu>,
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Utils qw(header_comment);
@@ -49,10 +49,13 @@ sub produce {
   $create .= $translator->format_package_name('DBI'). "->set_db(\'Main', \'dbi:" .$from. ":_\', \$USER,\$PASS,);\n\n";
   $create .= "1;\n\n\n";
 
+  #
+  # Iterate over all tables
+  #
   for my $table (keys %{$data}) {
 	my $table_data = $data->{$table};
 	my @fields =  keys %{$table_data->{'fields'}};
-
+	my %pk;
 
 	$create .= "##\n## Package: " .$translator->format_package_name($table). "\n##\n" unless $no_comments;
 	$create .= "package ". $translator->format_package_name($table). ";\n";
@@ -66,41 +69,97 @@ sub produce {
 	#
 	# Primary key?
 	#
-	my @constraints;
-	
-	for my $constraint ( @{ $table_data->{'constraints'} } ) {
-	  #my $name       = $constraint->{'name'} || '';
+	foreach my $constraint ( @{ $table_data->{'constraints'} } ) {
+	  my $name       = $constraint->{'name'} || '';
 	  my $type       = $constraint->{'type'};
-	  my $fields     = $constraint->{'fields'};
 	  my $ref_table  = $constraint->{'reference_table'};
 	  my $ref_fields = $constraint->{'reference_fields'};
 
 	  if ( $type eq 'primary_key') {
-		$create .= "sub " .$translator->format_pk_name($translator->format_package_name($table), $fields[0]). "{ shift->$fields[0] }\n\n";
+		$pk{$table} = $constraint->{'fields'}->[0];
+		$create .= "sub " .$translator->format_pk_name(
+													   $translator->format_package_name($table),
+													   $constraint->{'fields'}->[0]
+													  ) . " { shift->".$constraint->{'fields'}->[0]." }\n\n";
 	  }
-			
 	}
 
 	#
 	# Foreign key?
 	#
-	for (my $i = 0; $i < scalar(@fields); $i++) {
-	  my $field = $fields[$i];
+	foreach my $field (@fields){
 	  my $field_data = $table_data->{'fields'}->{$field}->{'constraints'};
 	  my $type = $field_data->[1]->{'type'} || '';
 	  my $ref_table = $field_data->[1]->{'reference_table'};
-	  my $ref_fields = $field_data->[1]->{'reference_fields'};
+	  my $ref_field = $field_data->[1]->{'reference_fields'}->[0];
+	  my $field = $field_data->[1]->{'fields'}->[0];
 
-#there is a bug here.  the method name is being created based on the field name in the foreign table.  if this
-#differs from the field name in the local table (maybe called "x_fk" here, but "x" there), the method "x" will
-#be created, and WILL NOT WORK.  this can be resolved, but i don't know the tabledata structure well enough to
-#easily fix it... ken?  darren?
 	  if ($type eq 'foreign_key') {
-		$create .= $translator->format_package_name($table). "->hasa(" .$translator->format_package_name($ref_table). " => \'@$ref_fields\');\n";
-		$create .= "sub " .$translator->format_fk_name($ref_table, @$ref_fields). "{ return shift->@$ref_fields }\n\n";
+
+#THIS IS IMPOSSIBLE UNTIL WE HAVE A BETTER DATA MODEL.  THIS GIANT HASH SUCKS !!!
+# 		my $r_link     = 0; #not a link table (yet)
+# 		my $r_linkthis = 0;
+# 		my $r_linkthat = 0;
+# 		my $r_linkdata = 0;
+# 		my $r_table = $data->{$ref_table};
+# 		my @r_fields = keys %{$r_table->{'fields'}};
+# 		foreach my $r_field ( keys %{$r_table->{'fields'}} ){
+# 		  $r_linkthis++ and next if $r_field eq $ref_field; #remote table links to local table
+# 		  if($r_table->{'fields'}->{$r_field}->{'constraints'}){
+
+# 			foreach my $r_constraint ($r_table->{'fields'}->{$r_field}->{'constraints'}){
+# 			  $create .= Dumper($r_constraint);
+# 			}
+
+# 		  } else {
+# 			$r_linkdata++; #if not constraints, assume it's data (safe?)
+# 		  }
+# 		  foreach my $r_constraint ( @{ $r_table->{'fields'}->{$r_field}->{'constraints'} } ) {
+# 			next unless $r_constraint->{'constraint_type'} eq 'foreign_key';
+
+# 			$r_linkthat++ unless $r_constraint->{'reference_table'} eq $table; #remote table links to non-local table
+# 		  }
+# 		}
+
+#		my $link = $r_linkthis && $r_linkthat && !$r_linkdata ? '_link' : '';
+		$create .= $translator->format_package_name($table). "->hasa(" .$translator->format_package_name($ref_table). " => \'$field\');\n";
+		$create .= "sub " .$translator->format_fk_name($ref_table, $field)." { return shift->$field }\n\n";
 	  }
 	}
 	
+#THIS IS IMPOSSIBLE UNTIL WE HAVE A BETTER DATA MODEL.  THIS GIANT HASH SUCKS !!!
+# 	#
+# 	# Remote foreign key?
+# 	#
+# 	print "****$table\n";
+# 	# find tables that refer to this table
+# 	my %refers = ();
+# 	for my $remote_table (keys %{$data}){
+# 	  next if $remote_table eq $table;
+# #	  print "********".$remote_table."\n";
+# 	  my $remote_table_data = $data->{$remote_table};
+
+# 	  foreach my $remote_field ( keys %{$remote_table_data->{'fields'}} ){
+# 		foreach my $remote_constraint ( @{ $remote_table_data->{'fields'}->{$remote_field}->{'constraints'} } ) {
+# 		  next unless $remote_constraint->{'constraint_type'} eq 'foreign_key'; #only interested in foreign keys...
+
+# 		  $refers{$remote_table} = 1 if $pk{$remote_constraint->{'reference_table'}} ;#eq $remote_constraint->{'reference_fields'}->[0];
+#    		}
+# 	  }
+# 	}
+
+# 	foreach my $refer (keys %refers){
+# 	  foreach my $refer_field ( keys %{$data->{$refer}->{'fields'}} ){
+# 		foreach my $refer_constraint ( @{ $data->{$refer}->{'fields'}->{$refer_field}->{'constraints'} } ) {
+# 		  next unless $refer_constraint->{'constraint_type'} eq 'foreign_key'; #only interested in foreign keys...
+# 		  next if $refer_constraint->{'reference_table'} eq $table; #don't want to consider the current table vs itself
+# 		  print "********".$refer."\t".$refer_field."\t****\t".$refer_constraint->{'reference_table'}."\t".$refer_constraint->{'reference_fields'}->[0]."\n";
+
+# 		  $create .= "****sub " .$translator->format_fk_name($refer_constraint->{'reference_table'}, $refer_constraint->{'reference_fields'}->[0]). " { return shift->".$refer_constraint->{'reference_fields'}->[0]." }\n\n";
+# 		}
+# 	  }
+# 	}
+
 	$create .= "1;\n\n\n";
   }
  
