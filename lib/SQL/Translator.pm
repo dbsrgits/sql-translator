@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.52 2004-02-06 17:51:26 kycl4rk Exp $
+# $Id: Translator.pm,v 1.53 2004-02-11 21:37:11 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -26,8 +26,8 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.04';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
+$VERSION  = '0.05';
+$REVISION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -775,6 +775,16 @@ sub isa($$) {
 }
 
 # ----------------------------------------------------------------------
+# version
+#
+# Returns the $VERSION of the main SQL::Translator package.
+# ----------------------------------------------------------------------
+sub version {
+    my $self = shift;
+    return $VERSION;
+}
+
+# ----------------------------------------------------------------------
 sub validate {
     my ( $self, $arg ) = @_;
     if ( defined $arg ) {
@@ -1102,6 +1112,10 @@ Turns on/off the tracing option of Parse::RecDescent.
 
 Whether or not to validate the schema object after parsing and before
 producing.
+
+=head2 version
+
+Returns the version of the SQL::Translator release.
 
 =head1 AUTHORS
 
