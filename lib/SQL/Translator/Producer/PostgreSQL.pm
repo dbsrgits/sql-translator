@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.6 2003-01-27 17:04:48 dlc Exp $
+# $Id: PostgreSQL.pm,v 1.7 2003-03-07 16:08:22 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -280,8 +280,10 @@ sub produce {
         for my $index ( @{ $table->{'indices'} } ) {
             my $index_name = $index->{'name'} || '';
             my $index_type = $index->{'type'} || 'normal';
-            my @fields     = map { unreserve( $_, $table_name ) }
-                             @{ $index->{'fields'} };
+            my @fields     = 
+                map { $_ =~ s/\(.+\)//; $_ }
+                map { unreserve( $_, $table_name ) }
+                @{ $index->{'fields'} };
             next unless @fields;
 
             if ( $index_type eq 'primary_key' ) {
