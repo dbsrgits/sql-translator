@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.8 2003-10-13 22:22:17 boconnor Exp $
+# $Id: Turnkey.pm,v 1.1.2.9 2003-12-26 22:35:14 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -310,11 +310,10 @@ my $turnkey_atom_tt2 = <<'EOF';
 [% FOREACH package = linkable %]
 
 ##############################################
+[%- pkey = format_package_name(package.key) -%]
+[%- pname = pkey | replace('::Model::','::Atom::'); pname = pname FILTER ucfirst -%]
 
-package Turnkey::Atom::[% package.key FILTER ucfirst %];
-
-[% pname = package.key FILTER ucfirst%]
-[% pkey = "Turnkey::Model::${pname}" %]
+package [% pname %];
 
 use base qw(Turnkey::Atom);
 use Data::Dumper;
@@ -328,7 +327,7 @@ sub render {
 	my $dbobject = shift;
     # Assumption here that if it's not rendering on it's own dbobject
     # then it's a list. This will be updated when AtomLists are implemented -boconnor
-	if(ref($dbobject) eq 'Turnkey::Model::[% package.key FILTER ucfirst %]') {
+	if(ref($dbobject) eq '[% pkey %]') {
         $self->focus("yes");
 		return(_render_record($dbobject));
 	}
@@ -488,41 +487,42 @@ my $turnkey_xml_tt2 = <<EOF;
 
 <!-- Atom Classes -->
 [% FOREACH package = linkable %]
-  [% class = package.key | replace('Turnkey::Model::',''); class = class FILTER ucfirst; %]
-  <atom class="Turnkey::Atom::[% class %]"  name="[% class %]" xlink:label="[% class %]Atom"/>
+  [%- k = package.key; k = format_package_name(k) -%]
+  [%- class = k | replace('Turnkey::Model::',''); class = class FILTER ucfirst; -%]
+<atom class="Turnkey::Atom::[% class %]"  name="[% class %]" xlink:label="[% class %]Atom"/>
 [% END %]
 
 <!-- Atom Bindings -->
 <atomatombindings>
-[% FOREACH focus_atom = linkable %]
-  [% FOREACH link_atom = focus_atom.value %]
-  [% class = focus_atom.key | replace('Turnkey::Model::',''); class = class FILTER ucfirst; %]  
+[% FOREACH focus_atom = linkable -%]
+  [%- FOREACH link_atom = focus_atom.value -%]
+  [%- class = focus_atom.key | replace('Turnkey::Model::',''); class = class FILTER ucfirst; -%]
   <atomatombinding xlink:from="#[% class %]Atom" xlink:to="#[% link_atom.key FILTER ucfirst %]Atom" xlink:label="[% class %]Atom2[% link_atom.key FILTER ucfirst %]Atom"/>
   [% END %]
-[% END %]
+[%- END -%]
 </atomatombindings>
 
 <atomcontainerbindings>
-	[% FOREACH focus_atom = linkable %]
-	<atomcontainerbindingslayout xlink:label="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]">
-	  [% FOREACH link_atom = focus_atom.value %]
-	  <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.key FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.key FILTER ucfirst %]Atom"/>
-	  [% END %]
-	  <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% focus_atom.key FILTER ucfirst %]Atom"    xlink:to="#[% focus_atom.key FILTER ucfirst %]Atom"/>
-    </atomcontainerbindingslayout>
-	[% END %]
-   </atomcontainerbindings>
+[%- FOREACH focus_atom = linkable %]
+  <atomcontainerbindingslayout xlink:label="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]">
+  [% FOREACH link_atom = focus_atom.value -%]
+  <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% link_atom.key FILTER ucfirst %]Atom"  xlink:to="#[% link_atom.key FILTER ucfirst %]Atom"/>
+  [% END -%]
+  <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% focus_atom.key FILTER ucfirst %]Atom"    xlink:to="#[% focus_atom.key FILTER ucfirst %]Atom"/>
+  </atomcontainerbindingslayout>
+[% END -%]
+</atomcontainerbindings>
 
-  <uribindings>
-    <uribinding uri="/" class="Turnkey::Util::Frontpage"/>
-  </uribindings>
+<uribindings>
+  <uribinding uri="/" class="Turnkey::Util::Frontpage"/>
+</uribindings>
 
-  <classbindings>
-	[% FOREACH focus_atom = linkable %]
-    [% class = focus_atom.key | replace('Turnkey::Model::','') ; class = class FILTER ucfirst %]
-     <classbinding class="Turnkey::Model::[% class %]" plugin="#[% class %]Atom" rank="0"/>
-	[% END %]
-  </classbindings>
+<classbindings>
+[% FOREACH focus_atom = linkable %]
+  [%- class = focus_atom.key | replace('Turnkey::Model::','') ; class = class FILTER ucfirst -%]
+  <classbinding class="Turnkey::Model::[% class %]" plugin="#[% class %]Atom" rank="0"/>
+[% END -%]
+</classbindings>
 
 </Turnkey>
 EOF
@@ -603,7 +603,7 @@ my $turnkey_template_tt2 = <<'EOF';
     [- pkey = "Turnkey::Model::${pname}" -]
     [% id = record.id %]
     [- first = 1 -]
-    [- FOREACH field = packages.$pkey.columns_essential.sort -]
+    [- FOREACH field = packages.$pkey.columns_essential -]
       [- IF first -]
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
       [- first = 0 -]
@@ -611,7 +611,7 @@ my $turnkey_template_tt2 = <<'EOF';
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
       [- END -]
     [- END -]
-    [- FOREACH field = packages.$pkey.columns_others.sort -]
+    [- FOREACH field = packages.$pkey.columns_others -]
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
     [- END -]
     [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
@@ -656,6 +656,7 @@ sub translateForm
 			    db_str    => $args->{db_str},
 			    db_user   => $args->{db_user},
 			    db_pass   => $args->{db_pass},
+			    format_package_name => \&{$t->format_package_name()},
   };
   my $config = {
       EVAL_PERL    => 1,               # evaluate Perl code blocks
