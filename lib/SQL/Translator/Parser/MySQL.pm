@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.23 2003-06-06 00:05:09 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.24 2003-06-06 22:37:25 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -526,7 +526,11 @@ sub parse {
     warn Dumper( $result ) if $DEBUG;
 
     my $schema = $translator->schema;
-    for my $table_name ( keys %{ $result } ) {
+    my @tables = sort { 
+        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
+    } keys %{ $result };
+
+    for my $table_name ( @tables ) {
         my $tdata =  $result->{ $table_name };
         my $table =  $schema->add_table( 
             name  => $tdata->{'table_name'},
@@ -607,10 +611,10 @@ sub parse {
 
 1;
 
-# ----------------------------------------------------
+# -------------------------------------------------------------------
 # Where man is not nature is barren.
 # William Blake
-# ----------------------------------------------------
+# -------------------------------------------------------------------
 
 =pod
 
