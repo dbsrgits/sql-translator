@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.6 2003-02-25 14:55:36 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.7 2003-02-25 21:25:14 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -88,7 +88,7 @@ Index:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -219,10 +219,10 @@ create_definition : field
 
 comment : /^\s*(?:#|-{2}).*\n/
 
-field : field_name data_type field_meta(s?)
+field : comment(s?) field_name data_type field_meta(s?)
     {
         my ( $default, @constraints );
-        for my $meta ( @{ $item[3] } ) {
+        for my $meta ( @{ $item[4] } ) {
             $default = $meta if $meta->{'meta_type'} eq 'default';
             push @constraints, $meta if $meta->{'meta_type'} eq 'constraint';
         }
@@ -238,6 +238,7 @@ field : field_name data_type field_meta(s?)
             null           => $null,
             default        => $default->{'value'},
             constraints    => [ @constraints ],
+            comments       => $item[1],
         } 
     }
     | <error>
