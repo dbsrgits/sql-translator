@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Table;
 
 # -------------------------------------------------------------------
-# $Id: Table.pm,v 1.1 2004-04-01 19:02:39 grommit Exp $
+# $Id: Table.pm,v 1.2 2004-07-30 22:04:25 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -61,18 +61,19 @@ SQL::Translator::Producer::TT::Table -
 
 =head1 DESCRIPTION
 
-Produces schema output using a given Template Tookit template, processing that
-template for each table in the schema. Optionally allows you to write the result
-for each table to a seperate file.
+Produces schema output using a given Template Tookit template,
+processing that template for each table in the schema. Optionally
+allows you to write the result for each table to a separate file.
 
 It needs one additional producer_arg of C<tt_table> which is the file
-name of the template to use.  This template will be passed a template var of
-C<table>, which is the current C<SQL::Translator::Producer::Table> table we are
-producing, which you can then use to walk the schema via the methods documented
-in that module. You also get C<schema> as a shortcut to the
-C<SQL::Translator::Producer::Schema> for the table and C<translator>, the
-C<SQL::Translator> object for this parse in case you want to get access to any
-of the options etc set here.
+name of the template to use.  This template will be passed a template
+var of C<table>, which is the current
+C<SQL::Translator::Producer::Table> table we are producing, which you
+can then use to walk the schema via the methods documented in that
+module. You also get C<schema> as a shortcut to the
+C<SQL::Translator::Producer::Schema> for the table and C<translator>,
+the C<SQL::Translator> object for this parse in case you want to get
+access to any of the options etc set here.
 
 Here's a brief example of what the template could look like:
 
@@ -84,9 +85,9 @@ Here's a brief example of what the template could look like:
 
 See F<t/data/template/table.tt> for a more complete example.
 
-You can also set any of the options used to initiallize the Template object by
-adding them to your producer_args. See Template Toolkit docs for details of
-the options.
+You can also set any of the options used to initiallize the Template
+object by adding them to your producer_args. See Template Toolkit docs
+for details of the options.
 
   $translator          = SQL::Translator->new(
       to               => 'TT',
@@ -97,11 +98,12 @@ the options.
       },
   );
 
-If you set C<mk_files> and its additional options the producer will write a
-seperate file for each table in the schema. This is usefull for producing
-things like HTML documentation where every table gets its own page (you could
-also use TTSchema producer to add an index page). Its also particulary good
-for code generation where you want to produce a class file per table.
+If you set C<mk_files> and its additional options the producer will
+write a separate file for each table in the schema. This is useful for
+producing things like HTML documentation where every table gets its
+own page (you could also use TTSchema producer to add an index page).
+Its also particulary good for code generation where you want to
+produce a class file per table.
 
 =head1 OPTIONS
 
@@ -113,10 +115,10 @@ File name of the template to run for each table.
 
 =item mk_files
 
-Set to true to output a file for each table in the schema (as well as returning
-the whole lot back to the Translalor and hence STDOUT). The file will be named
-after the table, with the optional C<mk_files_ext> added and placed in the
-directory C<mk_files_base>.
+Set to true to output a file for each table in the schema (as well as
+returning the whole lot back to the Translalor and hence STDOUT). The
+file will be named after the table, with the optional C<mk_files_ext>
+added and placed in the directory C<mk_files_base>.
 
 =item mk_files_ext
 
@@ -124,47 +126,48 @@ Extension (without the dot) to add to the filename when using mk_files.
 
 =item mk_files_base = DIR
 
-Dir to build the table files into when using mk_files. Defaults to the current
-directory.
+Dir to build the table files into when using mk_files. Defaults to the
+current directory.
 
 =item mk_file_dir
 
-Set true and if the file needs to written to a directory that doesn't exist,
-it will be created first.
+Set true and if the file needs to written to a directory that doesn't
+exist, it will be created first.
 
 =item on_exists [Default:replace]
 
-What to do if we are running with mk_files and a file already exists where we
-want to write our output. One of "skip", "die", "replace", "insert".
-The default is die.
+What to do if we are running with mk_files and a file already exists
+where we want to write our output. One of "skip", "die", "replace",
+"insert".  The default is die.
 
-B<replace> - Over-write the existing file with the new one, clobbering anything
-already there.
+B<replace> - Over-write the existing file with the new one, clobbering
+anything already there.
 
-B<skip> - Leave the origional file as it was and don't write the new version
-anywhere.
+B<skip> - Leave the origional file as it was and don't write the new
+version anywhere.
 
 B<die> - Die with an existing file error.
 
-B<insert> - Insert the generated output into the file bewteen a set of special
-comments (defined by the following options.) Any code between the comments will
-be overwritten (ie the results from a previous produce) but the rest of the file
-is left alone (your custom code).
-This is particularly usefull for code generation as it allows you to
-generate schema derived code and then add your own custom code using it to file.
-Then when the scheam changes you just re-produce and insert the new code.
+B<insert> - Insert the generated output into the file bewteen a set of
+special comments (defined by the following options.) Any code between
+the comments will be overwritten (ie the results from a previous
+produce) but the rest of the file is left alone (your custom code).
+This is particularly useful for code generation as it allows you to
+generate schema derived code and then add your own custom code using
+it to file.  Then when the scheam changes you just re-produce and
+insert the new code.
 
 =item insert_comment_start
 
-The comment to look for in the file when on_exists is insert. Default is
-C<SQLF INSERT START>. Must appear on it own line, with only whitespace either
-side, to be recognised.
+The comment to look for in the file when on_exists is insert. Default
+is C<SQLF INSERT START>. Must appear on it own line, with only
+whitespace either side, to be recognised.
 
 =item insert_comment_end
 
-The end comment to look for in the file when on_exists is insert. Default is
-C<SQLF INSERT END>. Must appear on it own line, with only whitespace either
-side, to be recognised.
+The end comment to look for in the file when on_exists is insert.
+Default is C<SQLF INSERT END>. Must appear on it own line, with only
+whitespace either side, to be recognised.
 
 =back
 
@@ -175,7 +178,7 @@ side, to be recognised.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use File::Path;
