@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.18 2004-08-19 20:41:32 grommit Exp $
+# $Id: SQLFairy.pm,v 1.19 2004-11-05 16:37:00 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -63,7 +63,7 @@ get mapped to comma seperated lists of values in the attribute.
 Child objects, such as a tables fields, get mapped to child tags wrapped in a
 set of container tags using the plural of their contained classes name.
 
-L<SQL::Translator::Schema::Field>'s extra attribute (a hash of arbitary data) is
+An objects's extra attribute (a hash of arbitary data) is
 mapped to a tag called extra, with the hash of data as attributes, sorted into
 alphabetical order.
 
@@ -165,7 +165,7 @@ To convert your old format files simply pass them through the translator :)
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -214,7 +214,7 @@ sub produce {
     $xml->xmlDecl('UTF-8');
     $xml->comment(header_comment('', ''));
     xml_obj($xml, $schema,
-        tag => "schema", methods => [qw/name database/], end_tag => 0 );
+        tag => "schema", methods => [qw/name database extra/], end_tag => 0 );
 
     #
     # Table
@@ -224,7 +224,7 @@ sub produce {
         debug "Table:",$table->name;
         xml_obj($xml, $table,
              tag => "table",
-             methods => [qw/name order/],
+             methods => [qw/name order extra/],
              end_tag => 0
          );
 
@@ -245,7 +245,7 @@ sub produce {
         xml_obj_children( $xml, $table,
             tag   => 'index',
             collection_tag => "indices",
-            methods => [qw/name type fields options/],
+            methods => [qw/name type fields options extra/],
         );
 
         #
@@ -256,6 +256,7 @@ sub produce {
             methods => [qw/
                 name type fields reference_table reference_fields
                 on_delete on_update match_type expression options deferrable
+                extra
             /],
         );
 
@@ -268,7 +269,7 @@ sub produce {
     #
     xml_obj_children( $xml, $schema,
         tag   => 'view',
-        methods => [qw/name sql fields order/],
+        methods => [qw/name sql fields order extra/],
     );
 
     #
@@ -277,7 +278,7 @@ sub produce {
     xml_obj_children( $xml, $schema,
         tag    => 'trigger',
         methods => [qw/name database_event action on_table perform_action_when
-            fields order/],
+            fields order extra/],
     );
 
     #
@@ -285,7 +286,7 @@ sub produce {
     #
     xml_obj_children( $xml, $schema,
         tag   => 'procedure',
-        methods => [qw/name sql parameters owner comments order/],
+        methods => [qw/name sql parameters owner comments order extra/],
     );
 
     $xml->endTag([ $Namespace => 'schema' ]);

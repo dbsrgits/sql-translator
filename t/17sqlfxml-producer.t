@@ -48,8 +48,10 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <extra />
   <tables>
     <table name="Basic" order="1">
+      <extra />
       <fields>
         <field name="id" data_type="integer" size="10" is_nullable="0" is_auto_increment="1" is_primary_key="1" is_foreign_key="0" order="1">
           <extra />
@@ -69,11 +71,17 @@ $ans = <<EOXML;
         </field>
       </fields>
       <indices>
-        <index name="titleindex" type="NORMAL" fields="title" options="" />
+        <index name="titleindex" type="NORMAL" fields="title" options="">
+          <extra />
+        </index>
       </indices>
       <constraints>
-        <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
-        <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+        <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1">
+          <extra />
+        </constraint>
+        <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1">
+          <extra />
+        </constraint>
       </constraints>
     </table>
   </tables>
@@ -109,10 +117,12 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <extra />
   <tables></tables>
   <views>
     <view name="foo_view" fields="name,age" order="1">
       <sql>select name, age from person</sql>
+      <extra hello="world" />
     </view>
   </views>
   <triggers></triggers>
@@ -136,6 +146,7 @@ EOXML
         name   => $name,
         sql    => $sql,
         fields => $fields,
+        extra  => { hello => "world" },
         schema => $s,
     ) or die $s->error;
 
@@ -158,11 +169,13 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <extra />
   <tables></tables>
   <views></views>
   <triggers>
     <trigger name="foo_trigger" database_event="insert" on_table="foo" perform_action_when="after" order="1">
       <action>update modified=timestamp();</action>
+      <extra hello="world" />
     </trigger>
   </triggers>
   <procedures></procedures>
@@ -189,6 +202,7 @@ EOXML
         database_event      => $database_event,
         on_table            => $on_table,
         action              => $action,
+        extra               => { hello => "world" },
     ) or die $s->error;
 
     # As we have created a Schema we give translate a dummy string so that
@@ -210,6 +224,7 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <extra />
   <tables></tables>
   <views></views>
   <triggers></triggers>
@@ -217,6 +232,7 @@ $ans = <<EOXML;
     <procedure name="foo_proc" parameters="foo,bar" owner="Nomar" order="1">
       <sql>select foo from bar</sql>
       <comments>Go Sox!</comments>
+      <extra hello="world" />
     </procedure>
   </procedures>
 </schema>
@@ -242,6 +258,7 @@ EOXML
         parameters => $parameters,
         owner      => $owner,
         comments   => $comments,
+        extra      => { hello => "world" },
     ) or die $s->error;
 
     # As we have created a Schema we give translate a dummy string so that
@@ -262,8 +279,10 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+  <extra />
   <tables>
     <table name="Basic" order="2">
+      <extra />
       <fields>
         <field name="foo" data_type="integer" size="10" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="5">
           <extra ZEROFILL="1" />
