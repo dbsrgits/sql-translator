@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.34 2004-04-06 00:27:02 allenday Exp $
+# $Id: Turnkey.pm,v 1.35 2004-04-06 01:09:01 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -148,8 +148,6 @@ sub translateForm {
   my $t = shift;
   my $meta = shift;
 
-  $meta->{_dumper} = \&_dumper;
-
   my $args = $t->producer_args;
   my $type = $meta->{'template'};
 
@@ -179,15 +177,6 @@ sub translateForm {
   }
 
   return($result);
-}
-
-sub _dumper($) {
-  my $s = shift;
-  warn $s;
-
-  my $d = Data::Dumper($s);
-  warn $d;
-  return $d;
 }
 
 1;
@@ -238,9 +227,6 @@ use Class::DBI::Pager;
 [% printHasCompound(node.compoundedges, node.hyperedges, node.name) %]
 [% #printHasFriendly(node) %]
 [% END %]
-
-# MACRO
-
 [% MACRO printPKAccessors(array, name) BLOCK %]
 #
 # Primary key accessors
@@ -252,13 +238,14 @@ use Class::DBI::Pager;
 [% END %]
 
 [% END %]
-
 [% MACRO printHasA(edges, name) BLOCK %]
+[% FOREACH edge = edges %]
+[% IF loop.first() %]
 #
 # Has A
 #
 
-[% FOREACH edge = edges %]
+[% END %]
   [% IF edge.type == 'import' %]
 [% node.name %]->has_a([% edge.thisfield.name %] => '[% edge.thatnode.name %]');
     [% IF node.has(edge.thatnode.name) < 2 %]
@@ -266,18 +253,19 @@ sub [% edge.thatnode.table.name %] { return shift->[% edge.thisfield.name %] }
     [% ELSE %]
 sub [% format_fk(edge.thisnode.table.name,edge.thisfield.name) %] { return shift->[% edge.thisfield.name %] }
     [% END %]
-
   [% END %]
 [% END %]
 
 [% END %]
 
 [% MACRO printHasMany(edges, node) BLOCK %]
+[% FOREACH edge = edges %]
+[% IF loop.first() %]
 #
 # Has Many
 #
 
-[% FOREACH edge = edges %]
+[% END %]
   [% IF edge.type == 'export' %]
 [% node.name %]->has_many('[% edge.thatnode.table.name %]_[% edge.thatfield.name %]', '[% edge.thatnode.name %]' => '[% edge.thatfield.name %]');
     [% IF node.via(edge.thatnode.name) >= 1 %]
@@ -289,71 +277,81 @@ sub [% edge.thatnode.table.name %]_[% format_fk(edge.thatnode.name,edge.thatfiel
 sub [% edge.thatnode.table.name %]s { return shift->[% edge.thatnode.table.name %]_[% edge.thatfield.name %] }
       [% END %]
     [% END %]
-
   [% END %]
 [% END %]
 
 [% END %]
-
 [% MACRO printHasCompound(cedges,hedges,name) BLOCK %]
+[% FOREACH cedge = cedges %]
+[% IF loop.first() %]
 #
 # Has Compound Many
 #
-[% FOREACH cedge = cedges %]
+[% END %]
 [% FOREACH edge = cedge.edges %]
   [% NEXT IF edge.thisnode.name != name %]
 sub [% cedge.via.table.name %]_[% format_fk(edge.thatnode.table.name,edge.thatfield.name) %]s { return shift->[% cedge.via.table.name %]_[% edge.thatfield.name %] }
 [% END %]
 [% END %]
 
+[% seen = 0 %]
 [% FOREACH h = hedges %]
-########## [% h.type %] ##########
-  [% IF h.type == 'one2one' %]
+  [% NEXT UNLESS h.type == 'one2one' %]
+[% IF seen == 0 ; seen = 1 %]########## one2one ###########[% END %]
 sub [% h.thatnode.table.name %]s { my \$self = shift; return map \$_->[% h.thatviafield.name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield.name %] }
+[% END %]
 
-  [% ELSIF h.type == 'one2many' %]
-    [% thisnode = h.thisnode_index(0) %]
-    [% i = 0 %]
-    [% FOREACH thatnode = h.thatnode %]
-      [% NEXT UNLESS h.thisviafield_index(i).name %]
+[% seen = 0 %]
+[% FOREACH h = hedges %]
+  [% NEXT UNLESS h.type == 'one2many' %]
+[% IF seen == 0 ; seen = 1 %]########## one2many ##########[% END %]
+  [% thisnode = h.thisnode_index(0) %]
+  [% i = 0 %]
+  [% FOREACH thatnode = h.thatnode %]
+    [% NEXT UNLESS h.thisviafield_index(i).name %]
 #[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
 sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
-      [% i = i + 1 %]
-    [% END %]
+    [% i = i + 1 %]
+  [% END %]
+[% END %]
 
-  [% ELSIF h.type == 'many2one' %]
-    [% i = 0 %]
-    [% FOREACH thisnode = h.thisnode %]
+[% seen = 0 %]
+[% FOREACH h = hedges %]
+  [% NEXT UNLESS h.type == 'many2one' %]
+[% IF seen == 0 ; seen = 1 %]########## many2one ##########[% END %]
+  [% i = 0 %]
+  [% FOREACH thisnode = h.thisnode %]
 #[% thisnode.name %]::[% h.thisfield_index(0).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(0).name %] <- [% h.thatnode_index(0).name %]::[% h.thatfield_index(0).name %]
 sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(0).name) %]s { my \$self = shift; return map \$_->[% h.thatviafield_index(0).name %], \$self->[% h.vianode.table.name %]_[% h.thisviafield_index(i).name %] }
-      [% i = i + 1 %]
+    [% i = i + 1 %]
+  [% END %]
+[% END %]
 
-    [% END %]
-
-  [% ELSIF h.type == 'many2many' %]
-    [% i = 0 %]
-    [% FOREACH thisnode = h.thisnode %]
-      [% j = 0 %]
-      [% FOREACH thatnode = h.thatnode %]
+[% seen = 0 %]
+[% FOREACH h = hedges %]
+  [% NEXT UNLESS h.type == 'many2many' %]
+[% IF seen == 0 ; seen = 1 %]########## many2many #########[% END %]
+  [% i = 0 %]
+  [% FOREACH thisnode = h.thisnode %]
+    [% j = 0 %]
+    [% FOREACH thatnode = h.thatnode %]
 #[% thisnode.name %]::[% h.thisfield_index(i).name %] -> [% h.vianode.name %]::[% h.thisviafield_index(i).name %] ... [% h.vianode.name %]::[% h.thatviafield_index(j).name %] <- [% h.thatnode_index(j).name %]::[% h.thatfield_index(j).name %]
 sub [% h.vianode.table.name %]_[% format_fk(h.vianode,h.thisviafield_index(i).name) %]_[% format_fk(h.vianode,h.thatviafield_index(j).name) %]s { my \$self = shift; return map \$_->[% %], \$self->[% %] }
-        [% j = j + 1 %]
+      [% j = j + 1 %]
 
-      [% END %]
-      [% i = i + 1 %]
     [% END %]
+    [% i = i + 1 %]
   [% END %]
 [% END %]
 
 [% END %]
-
 [% MACRO printHasFriendly(node) BLOCK %]
 #
 # Has Friendly
 #
+#FIXME, why aren't these being generated?
 
 [% END %]
-
 [% MACRO printList(array) BLOCK %][% FOREACH item = array %][% item %] [% END %][% END %]
 package [% baseclass %];
 
