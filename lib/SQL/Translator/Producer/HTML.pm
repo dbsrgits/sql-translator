@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.7 2003-08-20 13:50:47 dlc Exp $
+# $Id: HTML.pm,v 1.8 2003-08-20 14:32:49 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -21,10 +21,9 @@ package SQL::Translator::Producer::HTML;
 # -------------------------------------------------------------------
 
 use strict;
-use CGI;
 use Data::Dumper;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -36,8 +35,12 @@ sub produce {
     my $schema_name = $schema->name || 'Schema';
     my $args        = $t->producer_args;
     my $q           = defined $args->{'pretty'}
-                    ? do { require CGI::Pretty; CGI::Pretty->new }
-                    : CGI->new;
+                    ? do { require CGI::Pretty;
+                            import CGI::Pretty;
+                                   CGI::Pretty->new }
+                    : do { require CGI;
+                            import CGI; 
+                                   CGI->new };
     my $title       = $args->{'title'} || "Description of $schema_name";
 
     my $html  = $q->start_html( 

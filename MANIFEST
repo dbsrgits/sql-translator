@@ -73,4 +73,3 @@ t/data/mysql/entire_syntax.sql
 t/data/pgsql/entire_syntax.sql
 t/data/sybase/create.sql
 t/data/xml/schema-basic-attribs.xml
-t/data/xml/schema-basic-no_ns.xml
