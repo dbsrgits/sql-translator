@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.6 2003-08-04 18:41:45 kycl4rk Exp $
+# $Id: GraphViz.pm,v 1.7 2003-08-16 13:23:07 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -27,7 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -227,6 +227,7 @@ sub produce {
     my $output_method = "as_$output_type";
     if ( $out_file ) {
         open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
+        binmode $fh;
         print $fh $gv->$output_method;
         close $fh;
     }
