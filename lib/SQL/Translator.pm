@@ -1,11 +1,9 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.50 2004-02-02 20:30:35 allenday Exp $
+# $Id: Translator.pm,v 1.51 2004-02-04 17:51:00 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>,
-#                    Chris Mungall <cjm@fruitfly.org>
+# Copyright (C) 2003 The SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -29,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.04';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.51 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -848,6 +846,10 @@ plug in custom parsers or producers, or to manipulate the parsed data
 via the built-in object model.  Presently only the definition parts of
 SQL are handled (CREATE, ALTER), not the manipulation of data (INSERT,
 UPDATE, DELETE).
+
+This documentation covers the API for SQL::Translator.  For a more general
+discussion of how to use the modules and scripts, please see
+L<SQL::Translator::Manual>.
 
 =head1 CONSTRUCTOR
 
