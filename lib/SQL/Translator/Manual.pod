@@ -1,0 +1,61 @@
+=head1 NAME
+
+SQL::Translator::Manual
+
+=head1 SYNOPSIS
+
+Wherein we discuss how a user might use SQL::Translator.
+
+=head1 Converting SQL dialects
+
+E.g., MySQL to Oracle
+
+=head1 Extract SQL schemas directly from database
+
+Using DBI parsers.
+
+=head1 Convert non-SQL data to SQL
+
+xSV, Excel, XML/XMI parsers.
+
+=head1 Serializing schemas
+
+via XML, YAML and Storable
+
+=head1 Visualizing SQL schemas
+
+via GraphViz and Diagram.
+
+=head1 Automated code-generation 
+
+via ClassDBI and Turnkey producers.
+
+=head1 Documenting with SQL::Translator
+
+via HTML and POD (and visualizers).
+
+=head1 Template-based manipulation of Schema objects
+
+Discuss Schema objects, how to navigate using Template Toolkit. 
+
+=head1 Plugin Your Own Parsers and Producers
+
+=head1 Included scripts
+
+=head2 sqlt
+
+=head2 sqlt-diagram
+
+=head2 sqlt-diff
+
+=head2 sqlt-dumper
+
+=head2 sqlt-graph
+
+=head2 sqlt.cgi
+
+=head2 sqltsh
+
+=head1 AUTHOR
+
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
