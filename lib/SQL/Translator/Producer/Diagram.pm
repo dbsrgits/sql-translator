@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.7 2003-08-27 03:44:08 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.8 2003-11-05 22:27:25 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -20,6 +20,30 @@ package SQL::Translator::Producer::Diagram;
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
+=head1 NAME
+
+SQL::Translator::Producer::Diagram - ER diagram producer for SQL::Translator
+
+=head1 SYNOPSIS
+
+Use via SQL::Translator:
+
+  use SQL::Translator;
+
+  my $t = SQL::Translator->new( parser => 'MySQL', '...' );
+  $t->translate;
+
+Or use more directly:
+
+  use SQL::Translator;
+  use SQL::Translator::MySQL 'parse';
+
+  my $t = SQL::Translator->new( filename => '...' );;
+  parse( $t, 
+
+
+=cut
+
 use strict;
 use GD;
 use Data::Dumper;
@@ -27,7 +51,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -488,12 +512,8 @@ sub produce {
 
 =pod
 
-=head1 NAME
-
-SQL::Translator::Producer::Diagram - ER diagram producer for SQL::Translator
-
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
