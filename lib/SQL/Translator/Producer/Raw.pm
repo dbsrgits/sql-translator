@@ -1,10 +1,11 @@
 package SQL::Translator::Producer::Raw;
 
 # -------------------------------------------------------------------
-# $Id: Raw.pm,v 1.1 2003-01-29 02:43:44 kycl4rk Exp $
+# $Id: Raw.pm,v 1.2 2003-01-29 13:32:44 dlc Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
-#                    darren chamberlain <darren@cpan.org>
+# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    darren chamberlain <darren@cpan.org>,
+#                    Chris Mungall <cjm@fruitfly.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -37,7 +38,7 @@ Returns a raw data structure from whatever parser was used.
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 # -------------------------------------------------------------------
 sub produce {
