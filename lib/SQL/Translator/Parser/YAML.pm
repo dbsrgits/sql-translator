@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.3 2003-10-09 21:48:55 kycl4rk Exp $
+# $Id: YAML.pm,v 1.4 2004-01-25 18:10:55 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
 #   Ken Y. Clark <kclark@cpan.org>.
@@ -23,7 +23,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -65,6 +65,14 @@ sub parse {
             $table->add_field( %$fdata ) or die $table->error;
             $table->primary_key( $fdata->{'name'} ) 
                 if $fdata->{'is_primary_key'};
+        }
+
+        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
+            $table->add_index( %$idata ) or die $table->error;
+        }
+
+        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
+            $table->add_constraint( %$cdata ) or die $table->error;
         }
     }
 
