@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.26 2003-10-15 19:00:35 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.27 2003-10-15 20:39:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -41,7 +41,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -162,8 +162,11 @@ sub produce {
 
     if ( $translator->parser_type =~ /mysql/i ) {
         $output .= 
-        "-- We assume that default NLS_DATE_FORMAT has been changed\n".
-        "-- but we set it here anyway to be self-consistent.\n".
+            "-- We assume that default NLS_DATE_FORMAT has been changed\n".
+            "-- but we set it here anyway to be self-consistent.\n"
+            unless $no_comments;
+
+        $output .= 
         "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';\n\n";
     }
 
@@ -331,7 +334,7 @@ sub produce {
             if ( my $comment = $field->comments ) {
                 push @field_comments, 
                     "COMMENT ON COLUMN $table_name.$field_name_ur is\n  '".
-                    $comment."';";
+                    $comment."';" unless $no_comments;
             }
         }
 
@@ -452,7 +455,7 @@ sub produce {
             for my $comment ( @table_comments ) {
                 next unless $comment;
                 push @field_comments, "COMMENT ON TABLE $table_name is\n  '".
-                    $comment."';"
+                    $comment."';" unless $no_comments
                 ;
             }
         }
