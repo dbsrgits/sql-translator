@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.5 2003-08-12 22:02:33 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.6 2003-08-16 13:42:35 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -335,6 +335,8 @@ ora_data_type :
     |
     /n?char/i { $return = 'character' }
     |
+	/n?dec/i { $return = 'decimal' }
+	|
     /number/i { $return = 'number' }
     |
     /(pls_integer|binary_integer)/i { $return = 'integer' }
