@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.12 2002-11-22 03:03:40 kycl4rk Exp $
+# $Id: Translator.pm,v 1.13 2002-11-25 14:48:34 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -60,7 +60,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -353,6 +353,21 @@ sub producer_type { $_[0]->{'producer_type'} }
 #
 # Arbitrary name => value pairs of paramters can be passed to a
 # producer using this method.
+#
+# XXX All calls to producer_args with a value clobbers old values!
+#     Should probably check if $_[0] is undef, and delete stored
+#     args if it is:
+#
+#     if (@_) {
+#         unless (defined $_[0]) {
+#             %{ $self->{'producer_args'} } = ();
+#         }
+#         my $args = isa($_[0], 'HASH') ? shift : { @_ };
+#         %{ $self->{'producer_args'} } = (
+#                                           %{ $self->{'producer_args'} },
+#                                           %{ $args }
+#                                         );
+#     }
 # ----------------------------------------------------------------------
 sub producer_args {
     my $self = shift;
@@ -371,7 +386,7 @@ called to perform the parsing.  The basic idea is the same as that of
 B<producer> (see above), except the default subroutine name is
 "parse", and will be invoked as $module_name::parse($tr, $data).
 Also, the parser subroutine will be passed a string containing the
-entirety of the data to be parsed (or possibly a reference to a string?).
+entirety of the data to be parsed.
 
   # Invokes SQL::Translator::Parser::MySQL::parse()
   $tr->parser("MySQL");
@@ -458,6 +473,7 @@ sub parser {
 sub parser_type { $_[0]->{'parser_type'} }
 
 # ----------------------------------------------------------------------
+# XXX See notes on producer_args, above
 sub parser_args {
     my $self = shift;
     if (@_) {
