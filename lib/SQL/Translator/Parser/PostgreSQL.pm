@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.14 2003-05-03 15:40:18 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.15 2003-06-06 22:27:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -206,17 +206,17 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
             elsif ( $definition->{'type'} eq 'constraint' ) {
                 $definition->{'type'} = $definition->{'constraint_type'};
                 # group FKs at the field level
-                if ( $definition->{'type'} eq 'foreign_key' ) {
-                    for my $fld ( @{ $definition->{'fields'} || [] } ) {
-                        push @{ 
-                            $tables{$table_name}{'fields'}{$fld}{'constraints'}
-                        }, $definition;
-                    }
-                }
-                else {
+#                if ( $definition->{'type'} eq 'foreign_key' ) {
+#                    for my $fld ( @{ $definition->{'fields'} || [] } ) {
+#                        push @{ 
+#                            $tables{$table_name}{'fields'}{$fld}{'constraints'}
+#                        }, $definition;
+#                    }
+#                }
+#                else {
                     push @{ $tables{ $table_name }{'constraints'} }, 
                         $definition;
-                }
+#                }
             }
             else {
                 push @{ $tables{ $table_name }{'indices'} }, $definition;
@@ -264,13 +264,22 @@ comment : /^\s*(?:#|-{2}).*\n/
 field : comment(s?) field_name data_type field_meta(s?) comment(s?)
     {
         my ( $default, @constraints, $is_pk );
+        my $null = 1;
         for my $meta ( @{ $item[4] } ) {
-            $default = $meta if $meta->{'meta_type'} eq 'default';
-            push @constraints, $meta if $meta->{'meta_type'} eq 'constraint';
-            $is_pk = $meta->{'type'} eq 'primary_key';
-        }
+            if ( $meta->{'type'} eq 'default' ) {
+                $default = $meta;
+                next;
+            }
+            elsif ( $meta->{'type'} eq 'not_null' ) {
+                $null = 0;
+                next;
+            }
+            elsif ( $meta->{'type'} eq 'primary_key' ) {
+                $is_pk = 1;
+            }
 
-        my $null = ( grep { $_->{'type'} eq 'not_null' } @constraints ) ? 0 : 1;
+            push @constraints, $meta if $meta->{'supertype'} eq 'constraint';
+        }
 
         my @comments = ( @{ $item[1] }, @{ $item[5] } );
 
@@ -289,8 +298,7 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
     | <error>
 
 field_meta : default_val
-    |
-    column_constraint
+    | column_constraint
 
 column_constraint : constraint_name(?) column_constraint_type deferrable(?) deferred(?)
     {
@@ -300,7 +308,7 @@ column_constraint : constraint_name(?) column_constraint_type deferrable(?) defe
         my $expression = $desc->{'expression'} || '';
 
         $return              =  {
-            meta_type        => 'constraint',
+            supertype        => 'constraint',
             name             => $item{'constraint_name'}[0] || '',
             type             => $type,
             expression       => $type eq 'check' ? $expression : '',
@@ -365,7 +373,7 @@ data_type : pg_data_type parens_value_list(?)
         #
         # We can deduce some sizes from the data type's name.
         #
-        $data_type->{'size'} ||= $item[2];
+        $data_type->{'size'} ||= $item[2][0];
 
         $return  = $data_type;
     }
@@ -450,9 +458,9 @@ pg_data_type :
             $return = { type => 'boolean' };
         }
     |
-    /(bytea|binary data)/ 
+    /bytea/ 
         { 
-            $return = { type => 'binary' };
+            $return = { type => 'bytea' };
         }
     |
     /timestampz?/ 
@@ -608,7 +616,8 @@ default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
         my $val =  $item[2] || '';
         $val    =~ s/'//g; 
         $return =  {
-            meta_type => 'default',
+            supertype => 'constraint',
+            type      => 'default',
             value     => $val,
         }
     }
@@ -670,15 +679,75 @@ sub parse {
     my $result = $parser->startrule($data);
     die "Parse failed.\n" unless defined $result;
     warn Dumper($result) if $DEBUG;
+
+    my $schema = $translator->schema;
+    my @tables = sort { 
+        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
+    } keys %{ $result };
+
+    for my $table_name ( @tables ) {
+        my $tdata =  $result->{ $table_name };
+        my $table =  $schema->add_table( 
+            name  => $tdata->{'table_name'},
+        ) or die $schema->error;
+
+        my @fields = sort { 
+            $tdata->{'fields'}->{$a}->{'order'} 
+            <=>
+            $tdata->{'fields'}->{$b}->{'order'}
+        } keys %{ $tdata->{'fields'} };
+
+        for my $fname ( @fields ) {
+            my $fdata = $tdata->{'fields'}{ $fname };
+            my $field = $table->add_field(
+                name              => $fdata->{'name'},
+                data_type         => $fdata->{'data_type'},
+                size              => $fdata->{'size'},
+                default_value     => $fdata->{'default'},
+                is_auto_increment => $fdata->{'is_auto_inc'},
+                is_nullable       => $fdata->{'null'},
+            ) or die $table->error;
+
+            $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
+
+            for my $cdata ( @{ $fdata->{'constraints'} } ) {
+                next unless $cdata->{'type'} eq 'foreign_key';
+                $cdata->{'fields'} ||= [ $field->name ];
+                push @{ $tdata->{'constraints'} }, $cdata;
+            }
+        }
+
+        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
+            my $index  =  $table->add_index(
+                name   => $idata->{'name'},
+                type   => uc $idata->{'type'},
+                fields => $idata->{'fields'},
+            ) or die $table->error;
+        }
+
+        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
+            my $constraint       =  $table->add_constraint(
+                name             => $cdata->{'name'},
+                type             => $cdata->{'type'},
+                fields           => $cdata->{'fields'},
+                reference_table  => $cdata->{'reference_table'},
+                reference_fields => $cdata->{'reference_fields'},
+                match_type       => $cdata->{'match_type'} || '',
+                on_delete        => $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update_do'},
+            ) or die $table->error;
+        }
+    }
+
     return $result;
 }
 
 1;
 
-#-----------------------------------------------------
-# Where man is not nature is barren.
-# William Blake
-#-----------------------------------------------------
+# -------------------------------------------------------------------
+# Rescue the drowning and tie your shoestrings.
+# Henry David Thoreau 
+# -------------------------------------------------------------------
 
 =pod
 
