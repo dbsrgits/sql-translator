@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id: View.pm,v 1.4 2003-06-27 16:47:40 kycl4rk Exp $
+# $Id: View.pm,v 1.5 2003-10-08 17:32:16 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -29,9 +29,10 @@ SQL::Translator::Schema::View - SQL::Translator view object
 =head1 SYNOPSIS
 
   use SQL::Translator::Schema::View;
-  my $view = SQL::Translator::Schema::View->new(
-      name => 'foo',
-      sql  => 'select * from foo',
+  my $view   = SQL::Translator::Schema::View->new(
+      name   => 'foo',                      # name, required
+      sql    => 'select id, name from foo', # SQL for view
+      fields => 'id, name',                 # field names in view
   );
 
 =head1 DESCRIPTION
@@ -49,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -60,13 +61,13 @@ sub init {
 
 Object constructor.
 
-  my $schema = SQL::Translator::Schema::View->new;
+  my $view = SQL::Translator::Schema::View->new;
 
 =cut
 
     my ( $self, $config ) = @_;
 
-    for my $arg ( qw[ name sql fields ] ) {
+    for my $arg ( qw[ name sql fields schema ] ) {
         next unless $config->{ $arg };
         $self->$arg( $config->{ $arg } ) or return;
     }
@@ -192,9 +193,34 @@ Get or set the view's SQL.
 }
 
 # ----------------------------------------------------------------------
+sub schema {
+
+=pod
+
+=head2 schema
+
+Get or set the view's schema object.
+
+  $view->schema( $schema );
+  my $schema = $view->schema;
+
+=cut
+
+    my $self = shift;
+    if ( my $arg = shift ) {
+        return $self->error('Not a schema object') unless
+            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema' );
+        $self->{'schema'} = $arg;
+    }
+
+    return $self->{'schema'};
+}
+
+
+# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
-    undef $self->{'table'}; # destroy cyclical reference
+    undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
