@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constants;
 
 # ----------------------------------------------------------------------
-# $Id: Constants.pm,v 1.6 2003-10-08 16:03:01 kycl4rk Exp $
+# $Id: Constants.pm,v 1.41 2003-11-07 16:53:31 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -43,7 +43,7 @@ use strict;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 
 @EXPORT = qw[ 
     CHECK_C
