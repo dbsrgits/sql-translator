@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: sqlt-diagram.pl,v 1.2 2003-06-16 18:25:36 kycl4rk Exp $
+# $Id: sqlt-diagram,v 1.1 2003-08-26 02:29:12 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -56,7 +56,7 @@ use Getopt::Long;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.2 $)[-1];
+my $VERSION = (qw$Revision: 1.1 $)[-1];
 
 #
 # Get arguments.
