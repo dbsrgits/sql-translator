@@ -82,4 +82,29 @@ Created on Fri Aug  1 11:24:58 2003
     </sqlf:constraints>
   </sqlf:table>
   
+  <sqlf:view>
+    <sqlf:fields>email</sqlf:fields>
+    <sqlf:name>email_list</sqlf:name>
+    <sqlf:order>1</sqlf:order>
+    <sqlf:sql>SELECT email FROM Basic WHERE email IS NOT NULL</sqlf:sql>
+  </sqlf:view>
+  
+  <sqlf:trigger>
+    <sqlf:action>update modified=timestamp();</sqlf:action>
+    <sqlf:database_event>insert</sqlf:database_event>
+    <sqlf:name>foo_trigger</sqlf:name>
+    <sqlf:on_table>foo</sqlf:on_table>
+    <sqlf:order>1</sqlf:order>
+    <sqlf:perform_action_when>after</sqlf:perform_action_when>
+  </sqlf:trigger>
+  
+  <sqlf:procedure>
+    <sqlf:comments>Go Sox!</sqlf:comments>
+    <sqlf:name>foo_proc</sqlf:name>
+    <sqlf:order>1</sqlf:order>
+    <sqlf:owner>Nomar</sqlf:owner>
+    <sqlf:parameters>foo,bar</sqlf:parameters>
+    <sqlf:sql>select foo from bar</sqlf:sql>
+  </sqlf:procedure>
+
 </sqlf:schema>

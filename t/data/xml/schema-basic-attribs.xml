@@ -36,4 +36,30 @@ Created on Fri Aug 15 15:08:18 2003
       <sqlt:constraint options="" match_type="" deferrable="1" name="emailuniqueindex" on_update="" reference_table="" on_delete="" fields="email" expression="" type="UNIQUE" />
     </sqlt:constraints>
   </sqlt:table>
+
+  <sqlt:view 
+      name="email_list"
+      sql="SELECT email FROM Basic WHERE email IS NOT NULL"
+      fields="email"
+      order="1"
+  />
+
+  <sqlt:trigger
+    action="update modified=timestamp();"
+    database_event="insert"
+    name="foo_trigger"
+    on_table="foo"
+    order="1"
+    perform_action_when="after"
+  />
+  
+  <sqlt:procedure
+    comments="Go Sox!"
+    name="foo_proc"
+    order="1"
+    owner="Nomar"
+    parameters="foo,bar"
+    sql="select foo from bar"
+  />
+
 </sqlt:schema>

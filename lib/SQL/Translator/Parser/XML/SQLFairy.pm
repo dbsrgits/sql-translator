@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.3 2003-08-26 21:41:21 kycl4rk Exp $
+# $Id: SQLFairy.pm,v 1.4 2003-10-20 14:26:01 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -85,7 +85,7 @@ Doesn't take any extra parser args at the moment.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -151,7 +151,7 @@ sub parse {
                 }
             }
 
-            my $field = $table->add_field( %fdata ) or die $schema->error;
+            my $field = $table->add_field( %fdata ) or die $table->error;
 
             $table->primary_key( $field->name ) if $fdata{'is_primary_key'};
 
@@ -172,7 +172,7 @@ sub parse {
                 qw/name type table fields reference_fields reference_table
                 match_type on_delete_do on_update_do/
             );
-            $table->add_constraint( %data ) or die $schema->error;
+            $table->add_constraint( %data ) or die $table->error;
         }
 
         #
@@ -182,11 +182,44 @@ sub parse {
         foreach (@nodes) {
             my %data = get_tagfields($xp, $_, "sqlf:",
                 qw/name type fields options/);
-            $table->add_index( %data ) or die $schema->error;
+            $table->add_index( %data ) or die $table->error;
         }
 
     } # tables loop
 
+    #
+    # Views
+    #
+    @nodes = $xp->findnodes('/sqlf:schema/sqlf:view');
+    foreach (@nodes) {
+        my %data = get_tagfields($xp, $_, "sqlf:",
+            qw/name sql fields order/
+        );
+        $schema->add_view( %data ) or die $schema->error;
+    }
+    
+    #
+    # Triggers
+    #
+    @nodes = $xp->findnodes('/sqlf:schema/sqlf:trigger');
+    foreach (@nodes) {
+        my %data = get_tagfields($xp, $_, "sqlf:",
+        qw/name perform_action_when database_event fields on_table action order/
+        );
+        $schema->add_trigger( %data ) or die $schema->error;
+    }
+    
+    #
+    # Procedures
+    #
+    @nodes = $xp->findnodes('/sqlf:schema/sqlf:procedure');
+    foreach (@nodes) {
+        my %data = get_tagfields($xp, $_, "sqlf:",
+        qw/name sql parameters owner comments order/
+        );
+        $schema->add_procedure( %data ) or die $schema->error;
+    }
+    
     return 1;
 }
 
@@ -208,7 +241,7 @@ sub get_tagfields {
         my $thisns = (s/(^.*?:)// ? $1 : $ns);
 
         foreach my $path ( "\@$thisns$_", "$thisns$_" ) {
-            $data{ $_ } = $xp->findvalue( $path, $node ) 
+            $data{ $_ } = "".$xp->findvalue( $path, $node ) 
                 if $xp->exists( $path, $node );
 
             debug "Got $_=".( defined $data{ $_ } ? $data{ $_ } : 'UNDEF' );

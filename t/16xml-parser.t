@@ -49,11 +49,11 @@ sub test_field {
         if ( exists $test->{$attr} ) {
             my $ans = $test->{$attr};
             if ( $attr =~ m/^is_/ ) {
-                if ($ans) { ok $fld->$attr,  " $name - $attr true"; }
-                else      { ok !$fld->$attr, " $name - $attr false"; }
+                if ($ans) { ok $fld->$attr,  "$name - $attr true"; }
+                else      { ok !$fld->$attr, "$name - $attr false"; }
             }
             else {
-                is $fld->$attr, $ans, " $name - $attr = '"
+                is $fld->$attr, $ans, "$name - $attr = '"
                                      .(defined $ans ? $ans : "NULL" )."'";
             }
         }
@@ -68,7 +68,7 @@ sub test_field {
 # Testing 1,2,3,4...
 #=============================================================================
 
-plan tests => 162;
+plan tests => 198;
 
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
@@ -172,4 +172,58 @@ sub do_file {
     is $con->table, $tbl, "Constaints table right";
     is $con->type, UNIQUE, "Constaint UNIQUE";
     is_deeply [$con->fields], ["email"], "Constaint fields";
+
+    #
+    # View
+    # 
+    my @views = $scma->get_views;
+    is( scalar @views, 1, 'Number of views is 1' );
+    my $v = $views[0];
+    isa_ok( $v, 'SQL::Translator::Schema::View', 'View' );
+    is( $v->name, 'email_list', "View's Name is 'email_list'" );
+    is( $v->sql, "SELECT email FROM Basic WHERE email IS NOT NULL",
+    "View's sql" );
+    is( join(",",$v->fields), 'email', "View's Fields" );
+
+    #
+    # Trigger
+    #
+    {
+        my $name                = 'foo_trigger';
+        my $perform_action_when = 'after';
+        my $database_event      = 'insert';
+        my $on_table            = 'foo';
+        my $action              = 'update modified=timestamp();';
+        my @triggs = $scma->get_triggers;
+        is( scalar @triggs, 1, 'Number of triggers is 1' );
+        my $t = $triggs[0];
+        isa_ok( $t, 'SQL::Translator::Schema::Trigger', 'Trigger' );
+        is( $t->name, $name, qq[Name is "$name"] );
+        is( $t->perform_action_when, $perform_action_when, 
+            qq[Perform action when is "$perform_action_when"] );
+        is( $t->database_event, $database_event, 
+            qq[Database event is "$database_event"] );
+        is( $t->on_table, $on_table, qq[Table is "$on_table"] );
+        is( $t->action, $action, qq[Action is "$action"] );
+    }
+    
+    #
+    # Procedure
+    #
+    {
+        my $name       = 'foo_proc';
+        my $sql        = 'select foo from bar';
+        my $parameters = 'foo, bar';
+        my $owner      = 'Nomar';
+        my $comments   = 'Go Sox!';
+        my @procs = $scma->get_procedures;
+        is( scalar @procs, 1, 'Number of procedures is 1' );
+        my $p = $procs[0];
+        isa_ok( $p, 'SQL::Translator::Schema::Procedure', 'Procedure' );
+        is( $p->name, $name, qq[Name is "$name"] );
+        is( $p->sql, $sql, qq[SQL is "$sql"] );
+        is( join(',', $p->parameters), 'foo,bar', qq[Params = 'foo,bar'] );
+        is( $p->comments, $comments, qq[Comments = "$comments"] );
+    }
+
 } # /Test of schema
