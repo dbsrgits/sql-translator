@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.29 2003-08-08 22:22:51 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.30 2003-08-16 13:20:06 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -443,7 +443,7 @@ foreign_key_def : opt_constraint(?) /foreign key/i WORD(?) parens_field_list ref
 
 opt_constraint : /constraint/i WORD
 
-primary_key_def : primary_key index_name(?) '(' field_name(s /,/) ')'
+primary_key_def : primary_key index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
         $return       = { 
             supertype => 'constraint',
