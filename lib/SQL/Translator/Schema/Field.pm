@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.13 2004-02-09 22:15:15 kycl4rk Exp $
+# $Id: Field.pm,v 1.14 2004-03-23 21:05:19 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,16 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+
+# Stringify to our name, being careful not to pass any args through so we don't
+# accidentally set it to undef. We also have to tweak bool so the object is
+# still true when it doesn't have a name (which shouldn't happen!).
+use overload
+    '""'     => sub { shift->name },
+    'bool'   => sub { $_[0]->name || $_[0] },
+    fallback => 1,
+;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -416,15 +425,22 @@ sub name {
 
 Get or set the field's name.
 
-  my $name = $field->name('foo');
+ my $name = $field->name('foo');
+
+The field object will also stringify to its name.
+
+ my $setter_name = "set_$field";
+
+Errors ("No field name") if you try to set a blank name.
 
 =cut
 
     my $self = shift;
 
-    if ( my $arg = shift ) {
+    if ( @_ ) {
+        my $arg = shift || return $self->error( "No field name" );
         if ( my $table = $self->table ) {
-            return $self->error( qq[Can't use field name "$arg": table exists] )
+            return $self->error( qq[Can't use field name "$arg": field exists] )
                 if $table->get_field( $arg );
         }
 
