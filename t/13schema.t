@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 186;
+use Test::More tests => 196;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator::Schema' );
@@ -54,10 +54,21 @@ require_ok( 'SQL::Translator::Schema' );
     like( $schema->error, qr/can't use table name/i, 
         '... because "foo" exists' );
 
+    $redundant_table = $schema->add_table(name => '');
+    is( $redundant_table, undef, qq[Can't add an anonymouse table...] );
+    like( $schema->error, qr/No table name/i,
+        '... because if has no name ' );
+
+    $redundant_table = SQL::Translator::Schema::Table->new(name => '');
+    is( $redundant_table, undef, qq[Can't create an anonymouse table] );
+    like( SQL::Translator::Schema::Table->error, qr/No table name/i,
+        '... because if has no name ' );
+
     #
     # Table default new
     #
     is( $foo_table->name, 'foo', 'Table name is "foo"' );
+    is( "$foo_table", 'foo', 'Table stringifies to "foo"' );
     is( $foo_table->is_valid, undef, 'Table "foo" is not yet valid' );
 
     my $fields = $foo_table->get_fields;
@@ -87,6 +98,7 @@ require_ok( 'SQL::Translator::Schema' );
         warn $person_table->error;
     isa_ok( $f1, 'SQL::Translator::Schema::Field', 'Field' );
     is( $f1->name, 'foo', 'Field name is "foo"' );
+    is( "$f1", 'foo', 'Field stringifies to "foo"' );
     is( $f1->data_type, '', 'Field data type is blank' );
     is( $f1->size, 0, 'Field size is "0"' );
     is( $f1->is_primary_key, '0', 'Field is_primary_key is false' );
@@ -121,6 +133,16 @@ require_ok( 'SQL::Translator::Schema' );
     like( $person_table->error, qr/can't use field/i, 
         '... because it exists' );
 
+    $redundant_field = $person_table->add_field(name => '');
+    is( $redundant_field, undef, qq[Didn't add a "" field...] );
+    like( $person_table->error, qr/No field name/i,
+        '... because it has no name' );
+
+    $redundant_field = SQL::Translator::Schema::Field->new(name => '');
+    is( $redundant_field, undef, qq[Didn't create a "" field...] );
+    like( SQL::Translator::Schema::Field->error, qr/No field name/i,
+        '... because it has no name' );
+
     my @fields = $person_table->get_fields;
     is( scalar @fields, 2, 'Table "foo" has 2 fields' );
 
@@ -130,7 +152,7 @@ require_ok( 'SQL::Translator::Schema' );
     #
     # Field methods
     #
-    is( $f1->name('person_name'), 'person_name', 
+    is( $f1->name('person_name'), 'person_name',
         'Field name is "person_name"' );
     is( $f1->data_type('varchar'), 'varchar', 'Field data type is "varchar"' );
     is( $f1->size('30'), '30', 'Field size is "30"' );
