@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.2 2003-08-22 19:11:09 kycl4rk Exp $
+# $Id: SQLFairy.pm,v 1.3 2003-08-26 21:41:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -47,7 +47,7 @@ project (SQL::Translator).  The XML must be in the namespace
 
 To see an example of the XML translate one of your schema :) e.g.
 
-  $ sql_translator.pl -f MySQL -t XML-SQLFairy schema.sql
+  $ sqlt -f MySQL -t XML-SQLFairy schema.sql
 
 =head2 attrib_values
 
@@ -85,7 +85,7 @@ Doesn't take any extra parser args at the moment.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
