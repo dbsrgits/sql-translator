@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI;
 
 # -------------------------------------------------------------------
-# $Id: XMI.pm,v 1.8 2003-09-22 11:41:07 grommit Exp $
+# $Id: XMI.pm,v 1.9 2003-10-01 17:17:24 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -30,7 +30,7 @@ Class diagrams stored in XMI format.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -41,7 +41,6 @@ use base qw(Exporter);
 use base qw/SQL::Translator::Parser/;  # Doesnt do anything at the mo!
 use SQL::Translator::Utils 'debug';
 use SQL::Translator::XMI::Parser;
-
 
 # SQLFairy Parser
 #-----------------------------------------------------------------------------
@@ -74,7 +73,7 @@ sub parse {
 
     debug "Visibility Level:$pargs->{visibility}" if $DEBUG;
 
-    my $xmip = SQL::Translator::XMI::Parser->new(xml => $data);
+	my $xmip = SQL::Translator::XMI::Parser->new(xml => $data);
 
     # TODO
     # - Options to set the initial context node so we don't just
@@ -94,7 +93,7 @@ sub parse {
     );
     debug "Found ".scalar(@$classes)." Classes: ".join(", ",
         map {$_->{"name"}} @$classes) if $DEBUG;
-    debug "Classes:",Dumper($classes);
+	debug "Model:",Dumper($xmip->{model}) if $DEBUG;
 
 	#
 	# Turn the data from get_classes into a Schema
