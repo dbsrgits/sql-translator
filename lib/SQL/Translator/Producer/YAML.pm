@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.6 2003-10-17 19:48:38 dlc Exp $
+# $Id: YAML.pm,v 1.7 2004-01-25 18:13:46 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
 #   Ken Y. Clark <kclark@cpan.org>.
@@ -42,7 +42,7 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
@@ -78,18 +78,39 @@ sub view_table {
     my $table = shift;
 
     return {
-        'name'     => $table->name,
-        'order'    => $table->order,
-        'options'  => $table->options  || [],
-        'comments' => $table->comments || '',
-        'indices'  => {
-            map { ($_->name => view_index($_)) }
-                $table->get_indices
-        },
-        'fields'   => { 
+        'name'        => $table->name,
+        'order'       => $table->order,
+        'options'     => $table->options  || [],
+        'comments'    => $table->comments || '',
+        'constraints' => [
+            map { view_constraint($_) } $table->get_constraints
+        ],
+        'indices'     => [
+            map { view_index($_) } $table->get_indices
+        ],
+        'fields'      => { 
             map { ($_->name => view_field($_)) }
                 $table->get_fields 
         },
+    };
+}
+
+# -------------------------------------------------------------------
+sub view_constraint {
+    my $constraint = shift;
+
+    return {
+        'deferrable'       => scalar $constraint->deferrable,
+        'expression'       => scalar $constraint->expression,
+        'fields'           => scalar $constraint->fields,
+        'match_type'       => scalar $constraint->match_type,
+        'name'             => scalar $constraint->name,
+        'options'          => scalar $constraint->options,
+        'on_delete'        => scalar $constraint->on_delete,
+        'on_update'        => scalar $constraint->on_update,
+        'reference_fields' => scalar $constraint->reference_fields,
+        'reference_table'  => scalar $constraint->reference_table,
+        'type'             => scalar $constraint->type,
     };
 }
 
