@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.36 2004-08-05 21:13:03 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.37 2004-08-11 21:55:34 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -142,18 +142,26 @@ sub produce {
             #
             # Convert a large Oracle varchar to "text"
             #
-            elsif ( $data_type =~ /varchar/i && $size[0] > 255 ) {
+            elsif ( $data_type =~ /char/i && $size[0] > 255 ) {
                 $data_type = 'text';
                 @size      = ();
             }
             elsif ( $data_type =~ /char/i && ! $size[0] ) {
                 @size = (255);
             }
+            elsif ( $data_type =~ /boolean/i ) {
+                $data_type = 'enum';
+                $commalist = "'0','1'";
+            }
             elsif ( exists $translate{ lc $data_type } ) {
                 $data_type = $translate{ lc $data_type };
             }
 
             @size = () if $data_type =~ /(text|blob)/i;
+
+            if ( $data_type =~ /(double|float)/ && scalar @size == 1 ) {
+                push @size, '0';
+            }
 
             $field_def .= " $data_type";
             
