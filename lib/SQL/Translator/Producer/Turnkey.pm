@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.6 2003-10-13 19:44:33 allenday Exp $
+# $Id: Turnkey.pm,v 1.1.2.7 2003-10-13 22:05:44 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -186,6 +186,9 @@ sub produce {
 				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'one_one'} },
 				#  {link_method_name => $linkmethodname, primary_key_field => ($schema->get_table($link)->primary_key->fields)[0],
 				#   table_name => $linkable{$table_name}{$link}->name, rk_field => $rk_field};
+
+				if(!$linktable{$table_name} and !$linktable{$link}){ $linkable{$table_name}{$link} ||= 1; }
+
 			  }
 			  #else there is more than one way to traverse it.  ack!
 			  #let's treat these types of link tables as a many-to-one (easier)
@@ -205,6 +208,9 @@ sub produce {
 				#  {
 				#    table_name => $linkable{$table_name}{$link}->name, rk_field => $rk_field
 				#  };
+
+				if(!$linktable{$table_name} and !$linktable{$link}){ $linkable{$table_name}{$link} ||= 1; }
+
 			  }
 			} elsif (scalar(@lk_fields) == 1) {
 			  #these will be taken care of on the other end...
@@ -224,6 +230,9 @@ sub produce {
 				#  {
 				#   table_name => $linkable{$table_name}{$link}->name, rk_field => $rk_field
 				#  };
+
+				if(!$linktable{$table_name} and !$linktable{$link}){ $linkable{$table_name}{$link} ||= 1; }
+
 			  }
 			}
 		  }
@@ -250,6 +259,7 @@ sub produce {
                     "    return shift->$field_name\n}\n\n"
                 ;
 				
+				if(!$linktable{$ref_table} and !$linktable{$table_name}){ $linkable{$ref_table}{$table_name} ||= 1; }
 				
                 #
                 # If this table "has a" to the other, then it follows 
@@ -267,6 +277,8 @@ sub produce {
 				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name }{'fk_pluralized'} },
 					{ table_name => $table_name, field_name => $field_name };
 
+				if(!$linktable{$ref_table} and !$linktable{$table_name}){ $linkable{$ref_table}{$table_name} ||= 1; }
+
 				#else ugly
 				} else {
 				}
@@ -276,6 +288,8 @@ sub produce {
 				#  "'$table_pkg_name' => '$field_name'\n);\n\n";
 				push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name }{pluralized} },
 				  { ref_pkg => $ref_pkg, table_pkg_name => $table_pkg_name, table_name => $table_name, field_name => $field_name };
+
+				if(!$linktable{$ref_table} and !$linktable{$table_name}){ $linkable{$ref_table}{$table_name} ||= 1; }
             }
 		}
 	}
@@ -369,6 +383,7 @@ sub head {
 [% END %]
 EOF
 
+
 my $turnkey_dbi_tt2 = <<EOF;
 [% #######  MACRO START ###### %]
 
@@ -456,6 +471,7 @@ sub search_ilike { shift->_do_search(ILIKE => @_) }
 [% FOREACH package = packages %]
     [% printPackage(package.value) %]
 [% END %]
+EOF
 
 my $turnkey_xml_tt2 = <<EOF;
 <?xml version="1.0" encoding="UTF-8"?>
@@ -472,14 +488,16 @@ my $turnkey_xml_tt2 = <<EOF;
 
 <!-- Atom Classes -->
 [% FOREACH package = linkable %]
-  <atom class="Turnkey::Atom::[% package.key FILTER ucfirst %]"  name="[% package.key FILTER ucfirst %]" xlink:label="[% package.key FILTER ucfirst %]Atom"/>
+  [% class = package.key | replace('Turnkey::Model::',''); class = class FILTER ucfirst; %]
+  <atom class="Turnkey::Atom::[% class %]"  name="[% class %]" xlink:label="[% class %]Atom"/>
 [% END %]
 
 <!-- Atom Bindings -->
 <atomatombindings>
 [% FOREACH focus_atom = linkable %]
   [% FOREACH link_atom = focus_atom.value %]
-  <atomatombinding xlink:from="#[% focus_atom.key FILTER ucfirst %]Atom" xlink:to="#[% link_atom.key FILTER ucfirst %]Atom" xlink:label="[% focus_atom.key FILTER ucfirst %]Atom2[% link_atom.key FILTER ucfirst %]Atom"/>
+  [% class = focus_atom.key | replace('Turnkey::Model::',''); class = class FILTER ucfirst; %]  
+  <atomatombinding xlink:from="#[% class %]Atom" xlink:to="#[% link_atom.key FILTER ucfirst %]Atom" xlink:label="[% class %]Atom2[% link_atom.key FILTER ucfirst %]Atom"/>
   [% END %]
 [% END %]
 </atomatombindings>
@@ -501,7 +519,8 @@ my $turnkey_xml_tt2 = <<EOF;
 
   <classbindings>
 	[% FOREACH focus_atom = linkable %]
-     <classbinding class="Turnkey::Model::[% focus_atom.key FILTER ucfirst %]" plugin="#[% focus_atom.key FILTER ucfirst %]Atom" rank="0"/>
+    [% class = focus_atom.key | replace('Turnkey::Model::','') ; class = class FILTER ucfirst %]
+     <classbinding class="Turnkey::Model::[% class %]" plugin="#[% class %]Atom" rank="0"/>
 	[% END %]
   </classbindings>
 
