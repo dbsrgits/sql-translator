@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser;
 
 # -------------------------------------------------------------------
-# $Id: Parser.pm,v 1.5 2003-09-29 12:02:35 grommit Exp $
+# $Id: Parser.pm,v 1.6 2003-10-01 17:45:47 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -32,7 +32,7 @@ parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use Data::Dumper;
 use XML::XPath;
@@ -65,13 +65,13 @@ use Storable qw/dclone/;
 #
 sub XmiSpec {
 	my ($me,$spec) = @_;
-	init_specs($spec);
-	$me->mk_gets($spec);
+	_init_specs($spec);
+	$me->_mk_gets($spec);
 }
 
 # Build lookups etc. Its important that each spec item becomes self contained
 # so we can build good closures, therefore we do all the lookups 1st.
-sub init_specs {
+sub _init_specs {
 	my $specs = shift;
 
 	foreach my $spec ( values %$specs ) {
@@ -91,7 +91,7 @@ sub init_specs {
 
 # Create get methods from spec
 #
-sub mk_gets {
+sub _mk_gets {
     my ($proto,$specs) = @_;
     my $class = ref($proto) || $proto;
     foreach ( values %$specs ) {
@@ -104,17 +104,11 @@ sub mk_gets {
 		# so we can add overrides to both specs.
 		no strict "refs";
 		my $meth = "_get_$spec->{plural}";
-		*{$meth} = mk_get($spec);
+		*{$meth} = _mk_get($spec);
 		*{__PACKAGE__."::get_$spec->{plural}"} = sub {shift->$meth(@_);}
 		 	unless $class->can("get_$spec->{plural}");
     }
 }
-
-# e.g. of overriding both versions.
-#sub get_classes {
-#	print "HELLO Both\n";
-#	return shift->_get_classes(@_);
-#}
 
 #
 # Sets up the XML::XPath object and then checks the version of the XMI file and
@@ -151,7 +145,7 @@ sub new {
 }
 
 #
-# mk_get
+# _mk_get
 #
 # Generates and returns a get_ sub for the spec given.
 # So, if you want to change how the get methods (e.g. get_classes) work do it
@@ -167,7 +161,7 @@ sub new {
 #
 #  _xpath   => The xpath to use for finding stuff.
 #
-sub mk_get {
+sub _mk_get {
     my $spec = shift;
 
     # get_* closure using $spec
@@ -256,7 +250,7 @@ sub mk_get {
 	return $things;
 } # /closure sub
 
-} # /mk_get
+} # /_mk_get
 
 sub _mk_map {
 	my ($kids,$key) = @_;
@@ -265,6 +259,21 @@ sub _mk_map {
 		$map->{$_->{$key}} = $_ if exists $_->{$key};
 	}
 	return $map;
+}
+
+sub get_associations {
+	my $assoc = shift->_get_associations(@_);
+	foreach (@$assoc) {
+		next unless defined $_->{ends}; # Wait until we get all of an association
+		my @ends = @{$_->{ends}};
+		if (@ends != 2) {
+			warn "Sorry can't handle otherEnd associations with more than 2 ends"; 
+			return $assoc;
+		}
+		$ends[0]{otherEnd} = $ends[1];
+		$ends[1]{otherEnd} = $ends[0];
+	}
+	return $assoc;
 }
 
 1; #===========================================================================
