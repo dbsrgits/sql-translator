@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.5 2003-04-25 11:47:25 dlc Exp $
+# $Id: ClassDBI.pm,v 1.6 2003-04-25 23:08:01 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
 #                    Allen Day <allenday@ucla.edu>,
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Utils qw(header_comment);
@@ -63,8 +63,6 @@ sub produce {
 
 	$create .= $translator->format_package_name($table). "->set_up_table('$table');\n\n";
 
-	
-
 	#
 	# Primary key?
 	#
@@ -92,7 +90,11 @@ sub produce {
 	  my $type = $field_data->[1]->{'type'} || '';
 	  my $ref_table = $field_data->[1]->{'reference_table'};
 	  my $ref_fields = $field_data->[1]->{'reference_fields'};
-			
+
+#there is a bug here.  the method name is being created based on the field name in the foreign table.  if this
+#differs from the field name in the local table (maybe called "x_fk" here, but "x" there), the method "x" will
+#be created, and WILL NOT WORK.  this can be resolved, but i don't know the tabledata structure well enough to
+#easily fix it... ken?  darren?
 	  if ($type eq 'foreign_key') {
 		$create .= $translator->format_package_name($table). "->hasa(" .$translator->format_package_name($ref_table). " => \'@$ref_fields\');\n";
 		$create .= "sub " .$translator->format_fk_name($ref_table, @$ref_fields). "{ return shift->@$ref_fields }\n\n";
