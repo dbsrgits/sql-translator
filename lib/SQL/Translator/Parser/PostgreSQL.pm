@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.19 2003-06-23 21:44:32 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.20 2003-06-25 19:25:38 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -617,7 +617,7 @@ create_table : /create/i /table/i
 
 create_index : /create/i /index/i
 
-default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ 
+default_val  : /default/i /(?:')?[\w\d().-]*(?:')?/ 
     { 
         my $val =  $item[2] || '';
         $val    =~ s/'//g; 
