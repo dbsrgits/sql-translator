@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.1 2003-08-21 00:45:43 kycl4rk Exp $
+# $Id: SQLFairy.pm,v 1.2 2003-08-22 22:22:19 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ package SQL::Translator::Producer::XML::SQLFairy;
 
 =head1 NAME
 
-SQL::Translator::Producer::SqlfXML - SQLFairy's default XML format
+SQL::Translator::Producer::XML::SQLFairy - SQLFairy's default XML format
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ SQL::Translator::Producer::SqlfXML - SQLFairy's default XML format
 
   my $t              = SQL::Translator->new(
       from           => 'MySQL',
-      to             => 'SqlfXML',
+      to             => 'XML-SQLFairy',
       filename       => 'schema.sql',
       show_warnings  => 1,
       add_drop_table => 1,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -242,7 +242,7 @@ Mark Addison E<lt>mark.addison@itn.co.ukE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), SQL::Translator, SQL::Translator::Parser::SqlfXML,
+perl(1), SQL::Translator, SQL::Translator::Parser::XML::SQLFairy,
 SQL::Translator::Schema, XML::Writer.
 
 =cut
