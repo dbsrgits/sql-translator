@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.6 2003-08-21 02:39:21 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.7 2003-10-15 18:35:09 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -32,15 +32,17 @@ SQL::Translator::Parser::Sybase - parser for Sybase
 
 =head1 DESCRIPTION
 
-Parses the output of "dbschema.pl," a Perl script freely available from
-www.midsomer.org.
+Mostly parses the output of "dbschema.pl," a Perl script freely
+available from http://www.midsomer.org.  The parsing is not complete,
+however, and you would probably have much better luck using the
+DBI-Sybase parser included with SQL::Translator.
 
 =cut
 
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -50,10 +52,9 @@ use base qw(Exporter);
 
 @EXPORT_OK = qw(parse);
 
-# Enable warnings within the Parse::RecDescent module.
-$::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
-$::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
-$::RD_HINT   = 1; # Give out hints to help fix problems.
+$::RD_ERRORS = 1;
+$::RD_WARN   = 1;
+$::RD_HINT   = 1;
 
 $GRAMMAR = q{
 
@@ -422,6 +423,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1).
+SQL::Translator, SQL::Translator::Parser::DBI, L<http://www.midsomer.org/>.
 
 =cut
