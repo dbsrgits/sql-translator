@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: sqlt-graph.pl,v 1.2 2003-06-16 18:25:59 kycl4rk Exp $
+# $Id: sqlt-graph.pl,v 1.3 2003-08-21 02:48:04 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -17,7 +17,7 @@ sqlt-graph.pl - Automatically create a graph from a database schema
     -n|--node-shape    Shape of the nodes ("record," "plaintext," 
                        "ellipse," "circle," "egg," "triangle," "box," 
                        "diamond," "trapezium," "parallelogram," "house," 
-                       "hexagon," "octagon," default "ellipse")
+                       "hexagon," "octagon," default "record")
     -o|--output        Output file name (default STDOUT)
     -t|--output-type   Output file type ("canon", "text," "ps," "hpgl,"
                        "pcl," "mif," "pic," "gd," "gd2," "gif," "jpeg,"
@@ -67,7 +67,7 @@ use GraphViz;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.2 $)[-1];
+my $VERSION = (qw$Revision: 1.3 $)[-1];
 
 #
 # Get arguments.
