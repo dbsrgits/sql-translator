@@ -153,4 +153,4 @@ my $tr = SQL::Translator->new(
     producer => "MySQL"
 );
 
-ok( $tr->translate(\$create), 'Translate PG2My' );
+ok( $tr->translate(\$create), 'Translate PG2My' ) or diag($tr->error);
