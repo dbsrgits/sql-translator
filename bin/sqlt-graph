@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-graph,v 1.2 2004-02-06 17:45:53 kycl4rk Exp $
+# $Id: sqlt-graph,v 1.3 2004-02-11 21:32:25 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -49,6 +49,9 @@ sqlt-graph - Automatically create a graph from a database schema
                        set to "0" to undefine)
     --natural-join     Perform natural joins
     --natural-join-pk  Perform natural joins from primary keys only
+    --show-datatypes   Show datatype of each field
+    --show-sizes       Show field sizes for VARCHAR and CHAR fields
+    --show-constraints Show list of constraints for each field
     -s|--skip          Fields to skip in natural joins
     --debug            Print debugging information
 
@@ -88,7 +91,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
@@ -96,7 +99,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 my ( 
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
     $natural_join, $join_pk_only, $skip_fields, $debug, $help, $height, 
-    $width, $no_fields
+    $width, $no_fields, $show_datatypes, $show_sizes, $show_constraints
 );
 
 GetOptions(
@@ -105,13 +108,16 @@ GetOptions(
     'l|layout:s'       => \$layout,
     'n|node-shape:s'   => \$node_shape,
     't|output-type:s'  => \$output_type,
-    'height:i'         => \$height,
-    'width:i'          => \$width,
+    'height:f'         => \$height,
+    'width:f'          => \$width,
     'c|color'          => \$add_color,
     'no-fields'        => \$no_fields,
     'natural-join'     => \$natural_join,
     'natural-join-pk'  => \$join_pk_only,
     's|skip:s'         => \$skip_fields,
+    'show-datatypes'   => \$show_datatypes,
+    'show-sizes'       => \$show_sizes,
+    'show-constraints' => \$show_constraints,
     'debug'            => \$debug,
     'h|help'           => \$help,
 ) or die pod2usage;
@@ -121,22 +127,25 @@ pod2usage(1) if $help;
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
 pod2usage( -message => 'No input file'          ) unless @files;
 
-my $translator          =  SQL::Translator->new( 
-    from                => $db_driver,
-    to                  => 'GraphViz',
-    debug               => $debug || 0,
-    producer_args       => {
-        out_file        => $out_file,
-        layout          => $layout,
-        node_shape      => $node_shape,
-        output_type     => $output_type,
-        add_color       => $add_color,
-        natural_join    => $natural_join,
-        natural_join_pk => $join_pk_only,
-        skip_fields     => $skip_fields,
-        height          => $height || 0,
-        width           => $width  || 0,
-        show_fields     => $no_fields ? 0 : 1,
+my $translator           =  SQL::Translator->new( 
+    from                 => $db_driver,
+    to                   => 'GraphViz',
+    debug                => $debug || 0,
+    producer_args        => {
+        out_file         => $out_file,
+        layout           => $layout,
+        node_shape       => $node_shape,
+        output_type      => $output_type,
+        add_color        => $add_color,
+        natural_join     => $natural_join,
+        natural_join_pk  => $join_pk_only,
+        skip_fields      => $skip_fields,
+        show_datatypes   => $show_datatypes,
+        show_sizes       => $show_sizes,
+        show_constraints => $show_constraints,
+        height           => $height || 0,
+        width            => $width  || 0,
+        show_fields      => $no_fields ? 0 : 1,
     },
 ) or die SQL::Translator->error;
 
