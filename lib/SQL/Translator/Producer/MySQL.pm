@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.10 2003-04-07 16:31:55 dlc Exp $
+# $Id: MySQL.pm,v 1.11 2003-04-10 03:09:47 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -152,7 +152,7 @@ sub produce {
                 }
                 $def .= " REFERENCES $ref_table";
 
-                if ( @$ref_fields ) {
+                if ( @{ $ref_fields || [] } ) {
                     $def .= ' (' . join( ', ', @$ref_fields ) . ')';
                 }
 
