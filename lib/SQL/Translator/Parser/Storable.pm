@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Storable;
 
 # $Source: /home/faga/work/sqlfairy_svn/sqlfairy-cvsbackup/sqlfairy/lib/SQL/Translator/Parser/Storable.pm,v $
-# $Id: Storable.pm,v 1.1 2003-10-08 18:24:25 phrrngtn Exp $
+# $Id: Storable.pm,v 1.2 2003-10-08 20:35:52 phrrngtn Exp $
 
 =head1 NAME
 
@@ -25,7 +25,7 @@ the data into a database tables or graphs.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use Storable;
 use Exporter;
@@ -38,13 +38,15 @@ use base qw(Exporter);
 sub parse {
     my ($translator, $data) = @_;
 
-    $translator->{'schema'} = Storable::thaw($data)
-        if defined($data);
+    if (defined($data)) {
+        $translator->{'schema'} = Storable::thaw($data);
+        return 1;
+    } elsif (defined($translator->filename)) {
+        $translator->{'schema'} = Storable::retrieve($translator->filename);
+        return 1;
+    }
 
-    $translator->{'schema'} = Storable::retrieve($translator->filename)
-        if defined($translator->filename);
-
-    return 1;
+    return 0;
 }
 
 1;
