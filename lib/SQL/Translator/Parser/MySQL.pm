@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.36 2003-08-20 16:08:38 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.37 2003-08-21 02:38:34 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -141,7 +141,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 $GRAMMAR = q!
 
 { 
-    our ( %tables, $table_order, @table_comments );
+    my ( %tables, $table_order, @table_comments );
 }
 
 #
@@ -383,20 +383,20 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
 
         unless ( @{ $size || [] } ) {
             if ( lc $type eq 'tinyint' ) {
-                $size = [4];
+                $size = 4;
             }
             elsif ( lc $type eq 'smallint' ) {
-                $size = [6];
+                $size = 6;
             }
             elsif ( lc $type eq 'mediumint' ) {
-                $size = [9];
+                $size = 9;
             }
             elsif ( $type =~ /^int(eger)?$/ ) {
                 $type = 'int';
-                $size = [11];
+                $size = 11;
             }
             elsif ( lc $type eq 'bigint' ) {
-                $size = [20];
+                $size = 20;
             }
             elsif ( 
                 lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ 
@@ -405,17 +405,17 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             }
         }
 
-        if ( lc $type eq 'tinytext' ) {
-            $size = [255];
+        if ( $type =~ /^tiny(text|blob)$/i ) {
+            $size = 255;
         }
-        elsif ( lc $type eq 'text' ) {
-            $size = [65_000];
+        elsif ( $type =~ /^(blob|text)$/i ) {
+            $size = 65_535;
         }
-        elsif ( lc $type eq 'mediumtext' ) {
-            $size = [16_000_000];
+        elsif ( $type =~ /^medium(blob|text)$/i ) {
+            $size = 16_777_215;
         }
-        elsif ( lc $type eq 'longtext' ) {
-            $size = [4_000_000_000];
+        elsif ( $type =~ /^long(blob|text)$/i ) {
+            $size = 4_294_967_295;
         }
 
         $return        = { 
