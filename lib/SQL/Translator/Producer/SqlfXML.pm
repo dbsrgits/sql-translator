@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SqlfXML;
 
 # -------------------------------------------------------------------
-# $Id: SqlfXML.pm,v 1.3 2003-08-08 12:30:20 grommit Exp $
+# $Id: SqlfXML.pm,v 1.4 2003-08-14 12:03:00 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -25,7 +25,7 @@ package SQL::Translator::Producer::SqlfXML;
 use strict;
 use warnings;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -39,14 +39,14 @@ my $namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 my $name = 'sqlt';
 
 { 
-our ($translator,$args,$schema);
+our ($translator,$PArgs,$schema);
 
 sub debug { $translator->debug(@_,"\n"); } # Shortcut.
 
 sub produce {
     $translator = shift;
-    $args       = $translator->producer_args;
-    $schema  = $translator->schema;
+    $PArgs      = $translator->producer_args;
+    $schema     = $translator->schema;
 
     my $io       = IO::Scalar->new;
     my $xml         = XML::Writer->new(
@@ -66,21 +66,22 @@ sub produce {
     #
     for my $table ( $schema->get_tables ) {
         debug "Table:",$table->name;
-        $xml->startTag( [ $namespace => 'table' ] );
-        xml_objAttr($xml,$table, qw/name order/);
-        
+		xml_obj($xml, $table,
+		 	tag => "table", methods => [qw/name order/], end_tag => 0 );
+
         #
         # Fields
         #
         $xml->startTag( [ $namespace => 'fields' ] );
         for my $field ( $table->get_fields ) {
             debug "    Field:",$field->name;
-            $xml->startTag( [ $namespace => 'field' ] );
-            xml_objAttr($xml,$field, qw/ 
-                     name data_type default_value is_auto_increment 
+			xml_obj($xml, $field,
+				tag     =>"field",
+				end_tag => 1,
+				methods =>[qw/name data_type default_value is_auto_increment
                      is_primary_key is_nullable is_foreign_key order size
-            /);
-            $xml->endTag( [ $namespace => 'field' ] );
+				/],
+			);
         }
         $xml->endTag( [ $namespace => 'fields' ] );
 
@@ -90,9 +91,11 @@ sub produce {
         $xml->startTag( [ $namespace => 'indices' ] );
         for my $index ( $table->get_indices ) {
             debug "Index:",$index->name;
-            $xml->startTag( [ $namespace => 'index' ] );
-            xml_objAttr($xml,$index, qw/fields name options type/);
-            $xml->endTag( [ $namespace => 'index' ] );
+			xml_obj($xml, $index,
+				tag     => "index",
+				end_tag => 1,
+				methods =>[qw/fields name options type/],
+			);
         }
         $xml->endTag( [ $namespace => 'indices' ] );
 
@@ -102,13 +105,14 @@ sub produce {
         $xml->startTag( [ $namespace => 'constraints' ] );
         for my $index ( $table->get_constraints ) {
             debug "Constraint:",$index->name;
-            $xml->startTag( [ $namespace => 'constraint' ] );
-            xml_objAttr($xml,$index, qw/
+			xml_obj($xml, $index,
+				tag     => "constraint",
+				end_tag => 1,
+				methods =>[qw/
                     deferrable expression fields match_type name 
                     options on_delete on_update reference_fields
-                    reference_table type 
-            /);
-            $xml->endTag( [ $namespace => 'constraint' ] );
+                    reference_table type/], 
+			);
         }
         $xml->endTag( [ $namespace => 'constraints' ] );
 
@@ -121,22 +125,52 @@ sub produce {
     return $io;
 }
 
-# Takes an xml writer, a Schema:: object and a list of methods and adds the
+sub xml_obj {
+	my ($xml, $obj, %args) = @_;
+	my $tag   = $args{tag};
+	my @meths = @{$args{methods}};
+	my $attrib_values = $PArgs->{attrib_values};
+	my $empty_tag = 0;
+	my $end_tag   = $args{end_tag};
+	if ( $attrib_values and $end_tag ) {
+		$empty_tag = 1;
+		$end_tag   = 0;
+	}
+
+	if ( $attrib_values ) {
+		my %attr = map { 
+			my $val = $obj->$_;
+			($_ => ref($val) eq 'ARRAY' ? join(", ",@$val) : $val);
+		} @meths;
+		foreach (keys %attr) { delete $attr{$_} unless defined $attr{$_}; }
+		$empty_tag ? $xml->emptyTag( [ $namespace => $tag ], %attr )
+		           : $xml->startTag( [ $namespace => $tag ], %attr );
+	}
+	else {
+		$xml->startTag( [ $namespace => $tag ] );
+		xml_objAttr($xml,$obj, @meths);
+	}
+	$xml->endTag( [ $namespace => $tag ] ) if $end_tag;
+
+}
+
+# Takes an xml writer, a Schema::* object and a list of methods and adds the
 # XML for those methods.
 sub xml_objAttr {
     my ($xml, $obj, @methods) = @_;
-    for my $method (@methods) {
+    my $emit_empty = $PArgs->{emit_empty_tags};
+	for my $method (@methods) {
         my $val = $obj->$method;
         debug "        ".ref($obj)."->$method=",
               (defined $val ? "'$val'" : "<UNDEF>");
-        next unless $args->{emit_empty_tags} || defined $val;
+        next unless $emit_empty || defined $val;
         $val = "" if not defined $val;
         $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
         debug "        Adding Attr:".$method."='",$val,"'";
         $xml->dataElement( [ $namespace => $method ], $val );
     }
 }
-        
+
 } # End of our scoped bit
 
 1;
@@ -165,6 +199,29 @@ SQL::Translator::Producer::SqlfXML - XML output
       filename => "fooschema.sql",
   );
 
+=head1 ARGS
+
+Takes the following extra producer args.
+
+=item emit_empty_tags
+
+Default is false, set to true to emit <foo></foo> style tags for undef values
+in the schema.
+
+=item attrib_values
+
+Set true to use attributes for values of the schema objects instead of tags.
+
+ <!-- attrib_values => 0 -->
+ <table>
+   <name>foo</name>
+   <order>1</order>
+ </table>
+ 
+ <!-- attrib_values => 1 -->
+ <table name="foo" order="1">
+ </table>
+  
 =head1 DESCRIPTION
 
 Creates XML output of a schema.

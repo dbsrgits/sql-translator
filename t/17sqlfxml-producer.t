@@ -258,14 +258,14 @@ eq_or_diff $xml, $ans                       ,"XML looks right";
     # This diff probably isn't a very good test! Should really check the
     # result with XPath or something, but that would take ages to write ;-)
 
-#print "Debug:", Dumper($obj) if DEBUG;
-$obj = SQL::Translator->new(
-    debug          => DEBUG,
-    trace          => TRACE,
-    show_warnings  => 1,
-    add_drop_table => 1,
-    from           => "MySQL",
-    to             => "SqlfXML",
-    producer_args  => { emit_empty_tags => 0 },
-);
-print $obj->translate("/home/grommit/src/NADS-build/sql/document.mysql.sql");
+# TODO Make this a real test of attrib_values
+# $obj = SQL::Translator->new(
+#     debug          => DEBUG,
+#     trace          => TRACE,
+#     show_warnings  => 1,
+#     add_drop_table => 1,
+#     from           => "MySQL",
+#     to             => "SqlfXML",
+#     producer_args  => { attrib_values => 1 },
+# );
+# print $obj->translate($file);
