@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.16 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.17 2004-02-11 21:36:00 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -98,7 +98,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -117,7 +117,7 @@ my $parser;
 
 $GRAMMAR = q!
 
-{ my ( %tables, $table_order, @table_comments ) }
+{ my ( %tables, %indices, $table_order, @table_comments ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -125,11 +125,19 @@ $GRAMMAR = q!
 # won't cause the failure needed to know that the parse, as a whole,
 # failed. -ky
 #
-startrule : statement(s) eofile { \%tables }
+startrule : statement(s) eofile 
+    { 
+        $return = {
+            tables  => \%tables,
+            indices => \%indices,
+        };
+    }
 
 eofile : /^\Z/
 
-statement : create
+statement : remark
+    | prompt
+    | create
     | table_comment
     | comment_on_table
     | comment_on_column
@@ -145,9 +153,7 @@ drop : /drop/i TABLE ';'
 drop : /drop/i WORD(s) ';'
     { @table_comments = () }
 
-prompt : /prompt/i create_table table_name
-
-create : prompt(?) create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
+create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     {
         my $table_name                       = $item{'table_name'};
         $tables{ $table_name }{'order'}      = ++$table_order;
@@ -160,7 +166,7 @@ create : prompt(?) create_table table_name '(' create_definition(s /,/) ')' tabl
 
         my $i = 1;
         my @constraints;
-        for my $definition ( @{ $item[5] } ) {
+        for my $definition ( @{ $item[4] } ) {
             if ( $definition->{'type'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } = 
@@ -182,7 +188,7 @@ create : prompt(?) create_table table_name '(' create_definition(s /,/) ')' tabl
             }
         }
 
-        for my $option ( @{ $item[7] } ) {
+        for my $option ( @{ $item[6] } ) {
             push @{ $tables{ $table_name }{'table_options'} }, $option;
         }
 
@@ -192,7 +198,7 @@ create : prompt(?) create_table table_name '(' create_definition(s /,/) ')' tabl
 create : /create/i /index/i WORD /on/i table_name parens_word_list table_option(?) ';'
     {
         my $table_name = $item[5];
-        push @{ $tables{ $table_name }{'indices'} }, {
+        push @{ $indices{ $table_name } }, {
             name   => $item[3],
             type   => 'normal',
             fields => $item[6][0],
@@ -235,6 +241,12 @@ comment : /\/\*/ /[^\*]+/ /\*\//
         $comment    =~ s/^\s*|\s*$//g;
         $return = $comment;
     }
+
+remark : /^REM\s+.*\n/
+
+prompt : /prompt/i /(table|index|sequence|trigger)/i ';'
+
+prompt : /prompt\s+create\s+.*\n/i
 
 comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
     {
@@ -306,7 +318,6 @@ data_type : ora_data_type parens_value_list(?)
     }
 
 column_constraint : constraint_name(?) column_constraint_type 
-#constraint_state(s /,/)
     {
         my $desc       = $item{'column_constraint_type'};
         my $type       = $desc->{'type'};
@@ -374,6 +385,8 @@ ora_data_type :
 	/n?dec/i { $return = 'decimal' }
 	|
     /number/i { $return = 'number' }
+    |
+    /integer/i { $return = 'integer' }
     |
     /(pls_integer|binary_integer)/i { $return = 'integer' }
     |
@@ -522,17 +535,21 @@ sub parse {
             "instance: Bad grammer");
     }
 
-    my $result = $parser->startrule($data);
+    my $result = $parser->startrule( $data );
     die "Parse failed.\n" unless defined $result;
     warn Dumper($result) if $DEBUG;
 
-    my $schema = $translator->schema;
-    my @tables = sort { 
-        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
-    } keys %{ $result };
+    my $schema  = $translator->schema;
+    my $indices = $result->{'indices'};
+    my @tables  = sort { 
+        $result->{'tables'}{ $a }{'order'} 
+        <=> 
+        $result->{'tables'}{ $b }{'order'}
+    } keys %{ $result->{'tables'} };
 
     for my $table_name ( @tables ) {
-        my $tdata    =  $result->{ $table_name };
+        my $tdata    =  $result->{'tables'}{ $table_name };
+        next unless $tdata->{'table_name'};
         my $table    =  $schema->add_table( 
             name     => $tdata->{'table_name'},
             comments => $tdata->{'comments'},
@@ -564,6 +581,8 @@ sub parse {
                 push @{ $tdata->{'constraints'} }, $cdata;
             }
         }
+
+        push @{ $tdata->{'indices'} }, @{ $indices->{ $table_name } || [] };
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
             my $index  =  $table->add_index(
