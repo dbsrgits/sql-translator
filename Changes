@@ -1,3 +1,12 @@
+# -----------------------------------------------------------
+# 0.06    2004-05-13
+# -----------------------------------------------------------
+*   Added SQL::Translator::Manual
+
+*   Installation process now uses Module::Build
+
+*   Added new "Dumper" producer
+
 *   Changed the native SQL Fairy XML format to a fixed mapping.
     *NB:* You should convert your existing XML schema. See the
     SQL::Translator::Parser::XML::SQLFairy docs.

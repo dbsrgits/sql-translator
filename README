@@ -7,8 +7,8 @@ MySQL-to-Oracle), visualizations of schemas (pseudo-ER diagrams
 GraphViz or GD), automatic code generation (using Class::DBI),
 converting non-RDBMS files to SQL schemas (xSV text files, Excel
 spreadsheets), serializing parsed schemas (via Storable, YAML and
-XML), creating documentation (HTML and POD), and more.  New to version
-0.03 is the ability to talk directly to a database through DBI to
+XML), creating documentation (HTML and POD), and more.  We also
+have the ability to talk directly to a database through DBI to
 query for the structures of several databases.
 
 Through the separation of the code into parsers and producers with an
@@ -18,7 +18,7 @@ parsed data via the built-in object model.  Presently only the
 definition parts of SQL are handled (CREATE, ALTER), not the
 manipulation of data (INSERT, UPDATE, DELETE).
 
-As of version 0.05, parsers exist for the following:
+As of version 0.06, parsers exist for the following:
 
     Databases:
         MySQL
@@ -95,13 +95,17 @@ manipulate the SQL::Translator::Schema objects.
 
 INSTALLATION
 
-The regular method:
-
-    $ perl Makefile.PL
-    $ make
-    $ make test
+    $ perl Build.PL
+    $ ./Build
+    $ ./Build test
     $ su
-    # make install
+    # ./Build install
+
+MANUAL
+
+To read the manual:
+
+    $ perldoc SQL::Translator::Manual
 
 COPYRIGHT
 

@@ -1,4 +1,5 @@
 AUTHORS
+Build.PL
 BUGS
 Changes
 LICENSE
@@ -35,6 +36,7 @@ lib/SQL/Translator/Parser/xSV.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/ClassDBI.pm
 lib/SQL/Translator/Producer/Diagram.pm
+lib/SQL/Translator/Producer/Dumper.pm
 lib/SQL/Translator/Producer/GraphViz.pm
 lib/SQL/Translator/Producer/HTML.pm
 lib/SQL/Translator/Producer/MySQL.pm
@@ -84,6 +86,9 @@ t/25storable.t
 t/26sybase.t
 t/27sqlite-parser.t
 t/29html.t
+t/30sqlt-diff.t
+t/31dumper.t
+t/32schema-lookups.t
 t/33tt-table-producer.t
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
@@ -93,9 +98,10 @@ t/data/mysql/sqlfxml-producer-basic.sql
 t/data/pgsql/Chado-CV-PostGreSQL.sql
 t/data/pgsql/entire_syntax.sql
 t/data/sqlite/create.sql
+t/data/sqlite/create2.sql
 t/data/sybase/create.sql
 t/data/template/basic.tt
 t/data/xml/schema.xml
 t/data/template/table.tt
-META.yml                                Module meta-data (added by MakeMaker)
-SIGNATURE                                Public-key signature (added by MakeMaker)
+META.yml
+SIGNATURE
