@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.34 2003-12-10 23:09:19 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.35 2003-12-17 22:36:41 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -230,7 +230,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         1;
     }
 
-create : /create/i unique(?) /(index|key)/i index_name /on/i table_name using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
+create : CREATE unique(?) /(index|key)/i index_name /on/i table_name using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
     {
         push @{ $tables{ $item{'table_name'} }{'indices'} },
             {
@@ -245,9 +245,9 @@ create : /create/i unique(?) /(index|key)/i index_name /on/i table_name using_me
     }
 
 #
-# Create anything else (e.g., domain, function, etc.)
+# Create anything else (e.g., domain, etc.)
 #
-create : /create/i WORD /[^;]+/ ';'
+create : CREATE WORD /[^;]+/ ';'
     { @table_comments = (); }
 
 using_method : /using/i WORD { $item[2] }
@@ -761,9 +761,9 @@ restrict_or_cascade : /restrict/i |
 # End basically useless stuff. - ky
 #
 
-create_table : /create/i TABLE
+create_table : CREATE TABLE
 
-create_index : /create/i /index/i
+create_index : CREATE /index/i
 
 default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*?\))|\w+/
     { 
@@ -804,6 +804,8 @@ table_option : /inherits/i '(' name_with_opt_quotes(s /,/) ')'
 ADD : /add/i
 
 ALTER : /alter/i
+
+CREATE : /create/i
 
 ONLY : /only/i
 
