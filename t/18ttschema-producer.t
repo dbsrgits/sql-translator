@@ -153,7 +153,7 @@ Fields
         extra:                 
         table:                 Basic
     
-    singletagdef
+    emptytagdef
         data_type:             varchar
         size:                  0
         is_nullable:           1

@@ -100,7 +100,7 @@ is_deeply( \@tblnames, [qw/Basic/], "tables");
 my $tbl = $scma->get_table("Basic");
 is $tbl->order, 1, "Basic->order";
 is_deeply( [map {$_->name} $tbl->get_fields], [qw/
-    id title description email explicitnulldef explicitemptystring singletagdef
+    id title description email explicitnulldef explicitemptystring emptytagdef
 /] , "Table Basic's fields");
 test_field($tbl->get_field("id"),{
     name => "id",
@@ -150,8 +150,8 @@ test_field($tbl->get_field("explicitemptystring"),{
     default_value => "",
     is_nullable => 1,
 });
-test_field($tbl->get_field("singletagdef"),{
-    name => "singletagdef",
+test_field($tbl->get_field("emptytagdef"),{
+    name => "emptytagdef",
     order => 7,
     data_type => "varchar",
     default_value => "",
