@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.4 2003-10-14 23:29:19 grommit Exp $
+# $Id: SQLFairy.pm,v 1.5 2003-10-17 19:49:47 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -29,7 +29,7 @@ SQL::Translator::Parser::XML::XMI::SQLFairy - Create Schema from UML Models.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 use Exporter;
 use base qw(Exporter);
@@ -394,7 +394,7 @@ contains an attribute that makes a good candidate for a pkey, e.g. email.
 
 =head2 Relationships
 
-=head 1:m
+=head2 1:m
 
 Associations where one ends multiplicty is '1' or '0..1' and the other end's
 multplicity is more than 1 e.g '*', '0..*', '1..*', '0..3', '4..42' etc.
