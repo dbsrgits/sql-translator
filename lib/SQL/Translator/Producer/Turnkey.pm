@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.7 2003-10-13 22:05:44 allenday Exp $
+# $Id: Turnkey.pm,v 1.1.2.8 2003-10-13 22:22:17 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -603,7 +603,7 @@ my $turnkey_template_tt2 = <<'EOF';
     [- pkey = "Turnkey::Model::${pname}" -]
     [% id = record.id %]
     [- first = 1 -]
-    [- FOREACH field = packages.$pkey.columns_essential -]
+    [- FOREACH field = packages.$pkey.columns_essential.sort -]
       [- IF first -]
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
       [- first = 0 -]
@@ -611,7 +611,7 @@ my $turnkey_template_tt2 = <<'EOF';
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
       [- END -]
     [- END -]
-    [- FOREACH field = packages.$pkey.columns_others -]
+    [- FOREACH field = packages.$pkey.columns_others.sort -]
       <tr><td><b>[- field -]</b></td><td>[% obj2link(field.[- field -]) %]</td></tr>
     [- END -]
     [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
