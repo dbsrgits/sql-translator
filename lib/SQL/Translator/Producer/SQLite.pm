@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.1 2003-03-04 21:24:13 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.2 2003-03-12 14:17:11 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,9 +24,10 @@ package SQL::Translator::Producer::SQLite;
 
 use strict;
 use Data::Dumper;
+use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 my %used_identifiers = ();
 my $max_id_length    = 30;
@@ -44,7 +45,7 @@ sub produce {
     my $no_comments         = $translator->no_comments;
     my $add_drop_table      = $translator->add_drop_table;
 
-    debug("Beginning production\n");
+    debug("PKG: Beginning production\n");
 
     my $create; 
     unless ( $no_comments ) {
@@ -53,7 +54,7 @@ sub produce {
     }
 
     for my $table ( keys %{ $data } ) {
-        debug("Looking at table '$table'\n");
+        debug("PKG: Looking at table '$table'\n");
         my $table_data = $data->{$table};
         my @fields = sort { 
             $table_data->{'fields'}->{$a}->{'order'} 
@@ -73,7 +74,7 @@ sub produce {
         #
         for (my $i = 0; $i <= $#fields; $i++) {
             my $field = $fields[$i];
-            debug("Looking at field '$field'\n");
+            debug("PKG: Looking at field '$field'\n");
             my $field_data = $table_data->{'fields'}->{$field};
             my @fdata = ("", $field);
             $create .= "\n";
@@ -163,12 +164,6 @@ sub produce {
     return $create;
 }
 
-# -------------------------------------------------------------------
-sub debug {
-    if ($DEBUG) {
-        map { warn "[" . __PACKAGE__ . "] $_" } @_;
-    }
-}
 
 # -------------------------------------------------------------------
 sub mk_name {
