@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI;
 
 # -------------------------------------------------------------------
-# $Id: XMI.pm,v 1.2 2003-09-08 12:27:29 grommit Exp $
+# $Id: XMI.pm,v 1.3 2003-09-08 17:10:07 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -24,180 +24,6 @@ package SQL::Translator::Parser::XML::XMI;
 
 SQL::Translator::Parser::XML::XMI - Parser to create Schema from UML
 Class diagrams stored in XMI format.
-
-=cut
-
-# -------------------------------------------------------------------
-
-use strict;
-
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
-$DEBUG   = 0 unless defined $DEBUG;
-
-use Data::Dumper;
-use Exporter;
-use base qw(Exporter);
-@EXPORT_OK = qw(parse);
-
-use base qw/SQL::Translator::Parser/;  # Doesnt do anything at the mo!
-use SQL::Translator::Utils 'debug';
-use XML::XPath;
-use XML::XPath::XMLParser;
-
-
-# Custom XPath functions
-#-----------------------------------------------------------------------------
-
-#
-# Pass a nodeset. If the first node has an xmi.idref attrib then return
-# the nodeset for that id
-#
-sub XML::XPath::Function::xmideref {
-    my $self = shift;
-    my ($node, @params) = @_;
-    if (@params > 1) {
-        die "xmideref() function takes one or no parameters\n";
-    }
-    elsif (@params) {
-        my $nodeset = shift(@params);
-        return $nodeset unless $nodeset->size;
-        $node = $nodeset->get_node(1);
-    }
-    die "xmideref() needs an Element node." 
-    unless $node->isa("XML::XPath::Node::Element");
-
-    my $id = $node->getAttribute("xmi.idref") or return $node;
-    return $node->getRootNode->find('//*[@xmi.id="'.$id.'"]');
-}
-
-sub XML::XPath::Function::hello {
-    return XML::XPath::Literal->new("Hello World");
-}
-
-
-
-# Parser
-#-----------------------------------------------------------------------------
-
-#
-# is_visible( {ELEMENT|VIS_OF_THING}, VISLEVEL)
-#
-# Returns true or false for whether the visibility of something e.g. Class,
-# Attribute, is visible at the level given.
-#
-{
-    my %vislevel = (
-        public => 1,
-        protected => 2,
-        private => 3,
-    );
-
-    sub is_visible {
-        my ($arg, $vis) = @_;
-        return 1 unless $vis;
-        my $foo;
-        die "is_visible : Needs something to test" unless $arg;
-        if ( $arg->isa("XML::XPath::Node::Element") ) {
-            $foo = $arg->getAttribute("visibility");
-        }
-        else {
-            $foo = $arg;
-        }
-        return 1 if $vislevel{$vis} >= $vislevel{$foo};
-        return 0;
-    }
-}
-
-sub parse {
-    my ( $translator, $data ) = @_;
-    local $DEBUG    = $translator->debug;
-    my $schema      = $translator->schema;
-    my $pargs       = $translator->parser_args;
-
-    debug "Visibility Level:$pargs->{visibility}" if $DEBUG;
-
-    my $xp = XML::XPath->new(xml => $data);
-    $xp->set_namespace("UML", "org.omg.xmi.namespace.UML");
-    #
-    # TODO
-    # - Options to set the initial context node so we don't just
-    #   blindly do all the classes. e.g. Select a diag name to do.
-
-    #
-    # Work our way through the classes, creating tables. We only
-    # want class with xmi.id attributes and not the refs to them,
-    # which will have xmi.idref attributes.
-    #
-    my @nodes = $xp->findnodes('//UML:Class[@xmi.id]');
-
-    debug "Found ".scalar(@nodes)." Classes: ".join(", ",
-        map {$_->getAttribute("name")} @nodes) if $DEBUG;
-
-    for my $classnode (@nodes) {
-        # Only process classes with <<Table>> and name
-        next unless my $classname = $classnode->getAttribute("name");
-        next unless !$pargs->{visibility}
-            or is_visible($classnode, $pargs->{visibility});
-
-        my $stereotype = "".$classnode->find(
-            'xmideref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
-        next unless $stereotype eq "Table";
-
-        # Add the table
-        debug "Adding class: $classname as table:$classname" if $DEBUG;
-        my $table = $schema->add_table(name=>$classname)
-            or die "Schema Error: ".$schema->error;
-
-        #
-        # Fields from Class attributes
-        #
-        # name data_type size default_value is_nullable
-        # is_auto_increment is_primary_key is_foreign_key comments
-        #
-        foreach my $attrnode ( $classnode->findnodes(
-            'UML:Classifier.feature/UML:Attribute[@xmi.id]',)
-        ) {
-            next unless my $fieldname = $attrnode->getAttribute("name");
-            next unless !$pargs->{visibility}
-                or is_visible($attrnode, $pargs->{visibility});
-
-            my $stereotype = "".$attrnode->findvalue(
-                'xmideref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
-            my %data = (
-                name => $fieldname,
-                data_type => "".$attrnode->find(
-                  'xmideref(UML:StructuralFeature.type/UML:DataType)/@name'),
-                is_primary_key => $stereotype eq "PK" ? 1 : 0,
-                #is_foreign_key => $stereotype eq "FK" ? 1 : 0,
-            );
-            if ( my @body = $attrnode->findnodes(
-                'UML:Attribute.initialValue/UML:Expression/@body') 
-            ) {
-                $data{default_value} = $body[0]->getData;
-            }
-
-            debug "Adding field:",Dumper(\%data);
-            my $field = $table->add_field( %data ) or die $schema->error;
-
-            $table->primary_key( $field->name ) if $data{'is_primary_key'};
-            #
-            # TODO:
-            # - We should be able to make the table obj spot this when
-            #   we use add_field.
-            #
-        }
-
-    } # Classes loop
-
-    return 1;
-}
-
-1;
-
-# -------------------------------------------------------------------
-
-=pod
 
 =head1 SYNOPSIS
 
@@ -249,6 +75,303 @@ translated.
 
 =back
 
+=cut
+
+# -------------------------------------------------------------------
+
+use strict;
+
+use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$DEBUG   = 0 unless defined $DEBUG;
+
+use Data::Dumper;
+use Exporter;
+use base qw(Exporter);
+@EXPORT_OK = qw(parse);
+
+use base qw/SQL::Translator::Parser/;  # Doesnt do anything at the mo!
+use SQL::Translator::Utils 'debug';
+use XML::XPath;
+use XML::XPath::XMLParser;
+
+#
+# get_classes( XPATHOBJ, ARGS );
+#
+# XPATHOBJ - An XML::XPath object setup and ready to use. You can also use any
+#            Node to search from as this sub just calls findnodes() on the arg.
+#
+# ARGS     - Name/Value list of args.
+#
+# xpath  =>  The xpath to use for finding classes. Default is //UML:Classes
+#            which will find all the classes in the XMI.
+#
+# attribute_test => An XPath predicate (ie the bit between [] ) to test the
+#            attributes with to decide if we should parse them. ie
+#            attribute_test => '@name="foo"' would only pass out attribs
+#            with a name of foo.
+#
+sub get_classes {
+	my ($xp,%args) = @_;
+	my $classes = [];
+
+	my $xpath = $args{xpath} ||= '//UML:Class'; # Default: all classes
+	$xpath .= "[$args{class_test}]" if $args{class_test};
+
+	my @nodes = $xp->findnodes($xpath);
+	return unless @nodes;
+
+	for my $classnode (@nodes) {
+        my $class = {};
+
+		# <UML:Class> attributes
+		foreach (
+			qw/name visibility isSpecification
+			   isRoot isLeaf isAbstract isActive/
+		) {
+			$class->{$_} = $classnode->getAttribute($_);
+		}
+
+		# Stereotype
+		$class->{stereotype} = "".$classnode->find(
+            'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
+
+		#
+		# Class Attributes
+		#
+		my $xpath = 'UML:Classifier.feature/UML:Attribute';
+		$xpath .= "[$args{attribute_test}]" if $args{attribute_test};
+		foreach my $attrnode ( $classnode->findnodes($xpath) ) {
+			my $attr = {};
+			# <UML:Attributes> attributes
+			foreach (qw/name visibility isSpecification ownerScope/) {
+				$attr->{$_} = $attrnode->getAttribute($_);
+			}
+
+			$attr->{stereotype} = "".$attrnode->findvalue(
+                'xmiDeref(UML:ModelElement.stereotype/UML:Stereotype)/@name');
+
+			$attr->{datatype} = "".$attrnode->find(
+                  'xmiDeref(UML:StructuralFeature.type/UML:DataType)/@name');
+            if ( my @body = $attrnode->findnodes(
+                'UML:Attribute.initialValue/UML:Expression/@body') 
+            ) {
+                $attr->{initialValue} = $body[0]->getData;
+            }
+
+			push @{$class->{attributes}}, $attr;
+		}
+
+		push @$classes, $class;
+	}
+
+	return $classes;
+};
+
+sub parse {
+	eval {
+
+    my ( $translator, $data ) = @_;
+    local $DEBUG    = $translator->debug;
+    my $schema      = $translator->schema;
+    my $pargs       = $translator->parser_args;
+
+    debug "Visibility Level:$pargs->{visibility}" if $DEBUG;
+
+    my $xp = XML::XPath->new(xml => $data);
+    $xp->set_namespace("UML", "org.omg.xmi.namespace.UML");
+    #
+    # TODO
+    # - Options to set the initial context node so we don't just
+    #   blindly do all the classes. e.g. Select a diag name to do.
+
+	#
+    # Build an XPath for the classes and attributes we want...
+	#
+    my @tests = ('@xmi.id'); # Only classes with an id so we don't get any
+	                         #     refs to classes ie xmi.idref classes
+	push @tests, '@name';    # Only Classes with a name
+	push @tests, "xmiVisible('$pargs->{visibility}')" if $pargs->{visibility};
+	my $path = '//UML:Class['.join(' and ',@tests).']';
+
+	my $attrib_test = '@name';
+	$attrib_test .= " and xmiVisible('$pargs->{visibility}')"
+	    if $pargs->{visibility};
+
+	# ...and parse them out
+	debug "Searching for Classes using:$path";
+	my $classes = get_classes( $xp,
+		xpath => $path, attribute_test => $attrib_test);
+
+    debug "Found ".scalar(@$classes)." Classes: ".join(", ",
+        map {$_->{"name"}} @$classes) if $DEBUG;
+	debug "Classes:",Dumper($classes);
+
+	#
+	# Turn the data from get_classes into a Schema
+	#
+	foreach my $class (@$classes) {
+        next unless $class->{stereotype} eq "Table";
+
+        # Add the table
+        debug "Adding class: $class->{name}" if $DEBUG;
+        my $table = $schema->add_table( name => $class->{name} )
+            or die "Schema Error: ".$schema->error;
+
+        #
+        # Fields from Class attributes
+        #
+        # name data_type size default_value is_nullable
+        # is_auto_increment is_primary_key is_foreign_key comments
+        #
+        foreach my $attr ( @{$class->{attributes}} ) {
+			my %data = (
+                name           => $attr->{name},
+                data_type      => $attr->{datatype},
+                is_primary_key => $attr->{stereotype} eq "PK" ? 1 : 0,
+                #is_foreign_key => $stereotype eq "FK" ? 1 : 0,
+            );
+			$data{default_value} = $attr->{initialValue}
+				if exists $attr->{initialValue};
+
+            debug "Adding field:",Dumper(\%data);
+            my $field = $table->add_field( %data ) or die $schema->error;
+
+            $table->primary_key( $field->name ) if $data{'is_primary_key'};
+            #
+            # TODO:
+            # - We should be able to make the table obj spot this when
+            #   we use add_field.
+            #
+        }
+
+    } # Classes loop
+
+    return 1;
+
+	};
+	print "ERROR: $@\n" if $@;
+	return 1;
+}
+
+1;
+
+#=============================================================================
+#
+# XML::XPath extensions
+#
+#=============================================================================
+
+package XML::XPath::Function;
+
+=head1 XMI XPath Functions
+
+The Parser adds the following extra XPath functions.
+
+=head2 xmiDeref
+
+Deals with xmi.id/xmi.idref pairs of attributes. You give it an
+xPath e.g 'UML:ModelElement.stereotype/UML:stereotype' if the the
+tag it points at has an xmi.idref it looks up the tag with that
+xmi.id and returns it.
+
+If it doesn't have an xmi.id, the path is returned as normal.
+
+e.g. given
+
+ <UML:ModelElement.stereotype>
+     <UML:Stereotype xmi.idref = 'stTable'/>
+ </UML:ModelElement.stereotype>
+  ...
+ <UML:Stereotype xmi.id='stTable' name='Table' visibility='public'
+     isAbstract='false' isSpecification='false' isRoot='false' isLeaf='false'>
+     <UML:Stereotype.baseClass>Class</UML:Stereotype.baseClass>
+ </UML:Stereotype>
+
+Using xmideref(//UML:ModelElement.stereotype/UML:stereotype) would return the
+<UML:Stereotype xmi.id = '3b4b1e:f762a35f6b:-7fb6' ...> tag.
+
+Using xmideref(//UML:ModelElement.stereotype/UML:stereotype)/@name would give
+"Table".
+
+=head xmiVisible
+
+ is_visible( VISLEVEL )
+
+Returns true or false for whether the visibility of something e.g. a Class or
+Attribute, is visible at the level given. e.g.
+
+ //UML:Class[xmiVisible('public')]       - Find all public classes
+ //UML:Class[xmiVisible('protected')]    - Find all public and protected classes
+
+Supports the 3 UML visibility levels of public, protected and private.
+
+Note: Currently any element tested that doesn't have a visibility="" attribute
+is assumed to be visible and so xmiVisible will return true. This is probably
+the wrong thing to do and is very likley to change. It is probably best to
+throw an error if we try to test something that doesn't do visibility.
+
+=cut
+
+sub xmiDeref {
+    my $self = shift;
+    my ($node, @params) = @_;
+    if (@params > 1) {
+        die "xmiDeref() function takes one or no parameters\n";
+    }
+    elsif (@params) {
+        my $nodeset = shift(@params);
+        return $nodeset unless $nodeset->size;
+        $node = $nodeset->get_node(1);
+    }
+    die "xmiDeref() needs an Element node." 
+    unless $node->isa("XML::XPath::Node::Element");
+
+    my $id = $node->getAttribute("xmi.idref") or return $node;
+    return $node->getRootNode->find('//*[@xmi.id="'.$id.'"]');
+}
+
+{
+    my %vislevel = (
+        public => 1,
+        protected => 2,
+        private => 3,
+    );
+
+    sub xmiVisible {
+		my $self = shift;
+		my ($node, @params) = @_;
+		if (@params < 1 or @params > 2) {
+			die "xmiVisible() function takes 1 or 2 parameters\n";
+		}
+		elsif (@params == 2) {
+			my $nodeset = shift(@params);
+			return unless $nodeset->size;
+			$node = $nodeset->get_node(1);
+		}
+		die "xmiVisible() needs an Element node." 
+		unless $node->isa("XML::XPath::Node::Element");
+
+		my $vis = shift(@params) || return XML::XPath::Boolean->True;
+		my $nodevis = $node->getAttribute("visibility")
+			|| return XML::XPath::Boolean->True;
+        return XML::XPath::Boolean->True
+			if $vislevel{$vis} >= $vislevel{$nodevis};
+        return XML::XPath::Boolean->False;
+    }
+}
+
+# Test of custom xpath function.
+sub hello {
+    return XML::XPath::Literal->new("Hello World");
+}
+
+#=============================================================================
+package main;
+
+
+=pod
+
 =head1 BUGS
 
 Seems to be slow. I think this is because the XMI files can get pretty
@@ -274,3 +397,5 @@ perl(1), SQL::Translator, XML::XPath, SQL::Translator::Producer::XML::SQLFairy,
 SQL::Translator::Schema.
 
 =cut
+
+

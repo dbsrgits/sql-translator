@@ -254,13 +254,13 @@ my @testd = (
     );
     my $sql = $obj->translate;
     my $scma = $obj->schema;
-    
+
     my @tblnames = map {$_->name} $scma->get_tables;
     is_deeply( \@tblnames, $tables, "Tables with visibility => '$vis'");
-    
+
     my @fldnames = map {$_->name} $scma->get_table("Foo")->get_fields;
     is_deeply( \@fldnames, $foofields, "Foo fields with visibility => '$vis'");
-    
+
     #print "Debug: translator", Dumper($obj) if DEBUG;
     #print "Debug: schema", Dumper($obj->schema) if DEBUG;
 }
