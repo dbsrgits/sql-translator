@@ -19,7 +19,6 @@ Fields
         foreign_key_reference: [% field.foreign_key_reference %]
         is_valid:              [% field.is_valid %]
         order:                 [% field.order %]
-        extra:                 [% field.extra %]
         table:                 [% field.table %]
     [% END %]
 

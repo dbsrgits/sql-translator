@@ -69,7 +69,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 1
-        extra:                 
         table:                 Basic
     
     title
@@ -84,7 +83,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 2
-        extra:                 
         table:                 Basic
     
     description
@@ -99,7 +97,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 3
-        extra:                 
         table:                 Basic
     
     email
@@ -114,7 +111,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 4
-        extra:                 
         table:                 Basic
     
     explicitnulldef
@@ -129,7 +125,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 5
-        extra:                 
         table:                 Basic
     
     explicitemptystring
@@ -144,7 +139,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 6
-        extra:                 
         table:                 Basic
     
     emptytagdef
@@ -159,7 +153,6 @@ Fields
         foreign_key_reference: 
         is_valid:              1
         order:                 7
-        extra:                 
         table:                 Basic
     
 
