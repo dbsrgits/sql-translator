@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.18 2003-08-29 14:54:01 kycl4rk Exp $
+# $Id: Table.pm,v 1.19 2003-09-02 00:24:07 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -433,12 +433,20 @@ sub is_data {
 
     $self->{'is_data'} = 0;
 
+    my %fk = ();
+
     foreach my $field ( $self->get_fields ) {
         if ( !$field->is_primary_key and !$field->is_foreign_key ) {
             $self->{'is_data'} = 1;
             return $self->{'is_data'};
+#        } elsif($field->is_foreign_key) {
+#		  $fk{$field->foreign_key_reference->reference_table}++;
         }
     }
+
+#    foreach my $referenced (keys %fk){
+#	  $self->{'is_data'} = 1 and last if $fk{$referenced} > 1;
+#	}
 
     return $self->{'is_data'};
 }
