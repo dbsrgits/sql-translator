@@ -65,7 +65,7 @@ sub parse {
     my (%parsed, $wb_count, $num);
     my $table_no = 0;
 
-    my $wb_count = $wb->{SheetCount};
+    $wb_count = $wb->{'SheetCount'} || 0;
     for $num (0 .. $wb_count - 1) {
         my $ws = $wb->Worksheet($num);
         my $name = $ws->{Name} || ++$table_no;
