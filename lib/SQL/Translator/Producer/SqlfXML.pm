@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SqlfXML;
 
 # -------------------------------------------------------------------
-# $Id: SqlfXML.pm,v 1.1 2003-08-06 17:14:09 grommit Exp $
+# $Id: SqlfXML.pm,v 1.2 2003-08-07 16:53:40 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::SqlfXML;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
@@ -71,10 +71,10 @@ sub produce {
                     is_primary_key is_nullable is_foreign_key order size
                 ]
             ) {
-                my $val = $field->$method || '';
-                $xml->dataElement( [ $namespace => $method ], $val )
-                    if ( defined $val || 
-                        ( !defined $val && $args->{'emit_empty_tags'} ) );
+                my $val = $field->$method;
+                next unless $args->{emit_empty_tags} || defined $val;
+                $val = "" if not defined $val;
+                $xml->dataElement( [ $namespace => $method ], $val );
             }
 
             $xml->endTag( [ $namespace => 'field' ] );
@@ -90,11 +90,11 @@ sub produce {
             $xml->startTag( [ $namespace => 'index' ] );
 
             for my $method ( qw[ fields name options type ] ) {
-                my $val = $index->$method || '';
-                   $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
+                my $val = $index->$method;
+                next unless $args->{emit_empty_tags} || defined $val;
+                $val = "" if not defined $val;
+                $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
                 $xml->dataElement( [ $namespace => $method ], $val )
-                    if ( defined $val || 
-                        ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
             $xml->endTag( [ $namespace => 'index' ] );
@@ -115,11 +115,11 @@ sub produce {
                     reference_table type 
                 ] 
             ) {
-                my $val = $index->$method || '';
-                   $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
+                my $val = $index->$method;
+                next unless $args->{emit_empty_tags} || defined $val;
+                $val = "" if not defined $val;
+                $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
                 $xml->dataElement( [ $namespace => $method ], $val )
-                    if ( defined $val || 
-                        ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
             $xml->endTag( [ $namespace => 'constraint' ] );
