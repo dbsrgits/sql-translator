@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.3 2003-08-26 03:59:46 kycl4rk Exp $
+# $Id: SQLFairy.pm,v 1.4 2003-09-09 16:05:09 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -127,7 +127,8 @@ sub produce {
 				tag     =>"field",
 				end_tag => 1,
 				methods =>[qw/name data_type default_value is_auto_increment
-                     is_primary_key is_nullable is_foreign_key order size
+                    is_primary_key is_nullable is_foreign_key order size
+                    comments 
 				/],
 			);
         }
