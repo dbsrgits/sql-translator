@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.17 2003-02-26 13:08:59 dlc Exp $
+# $Id: Translator.pm,v 1.18 2003-03-04 21:20:17 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -237,8 +237,6 @@ sub producer_args {
     my $self = shift;
     return $self->_args("producer", @_);
 }
-
-
 
 # ----------------------------------------------------------------------
 # parser([$parser_spec])
@@ -666,12 +664,11 @@ SQL::Translator - convert schema from one database to another
   use SQL::Translator;
 
   my $translator     = SQL::Translator->new(
-      xlate          => $xlate || {},    # Overrides for field translation
-      debug          => $debug,          # Print debug info
-      trace          => $trace,          # Print Parse::RecDescent trace
-      no_comments    => $no_comments,    # Don't include comments in output
-      show_warnings  => $show_warnings,  # Print name mutations, conflicts
-      add_drop_table => $add_drop_table, # Add "drop table" statements
+      debug          => 1, # Print debug info
+      trace          => 0, # Print Parse::RecDescent trace
+      no_comments    => 0, # Don't include comments in output
+      show_warnings  => 0, # Print name mutations, conflicts
+      add_drop_table => 1, # Add "drop table" statements
   );
 
   my $output     = $translator->translate(
@@ -952,6 +949,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 USA
+
+=head1 BUGS
+
+Please use http://rt.cpan.org/ for reporting bugs.
 
 =head1 SEE ALSO
 
