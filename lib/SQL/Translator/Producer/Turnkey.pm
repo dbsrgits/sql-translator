@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.47 2004-04-20 02:25:56 boconnor Exp $
+# $Id: Turnkey.pm,v 1.48 2004-04-20 02:31:14 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -377,7 +377,7 @@ sub dump {
   $arg{depth} ||= 2;
   $Data::Dumper::Maxdepth = $arg{depth} if defined $arg{depth};
   $Data::Dumper::Indent = $arg{indent} if defined $arg{indent};
-  return(Dumper($obj));
+  return(Dumper($arg{object}));
 }
 
 [% FOREACH node = nodes %]
