@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.11 2003-10-09 16:38:51 kycl4rk Exp $
+# $Id: xSV.pm,v 1.12 2003-10-09 21:49:19 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -60,7 +60,7 @@ True by default.
 =back
 
 Field names will automatically be normalized by 
-C<SQL::Translator::Utils::normalize>.
+C<SQL::Translator::Utils::normalize_name>.
 
 =cut
 
@@ -68,7 +68,7 @@ C<SQL::Translator::Utils::normalize>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
