@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.37 2003-07-31 20:49:42 dlc Exp $
+# $Id: Translator.pm,v 1.38 2003-08-13 18:41:05 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -406,6 +406,17 @@ sub data {
 }
 
 # ----------------------------------------------------------------------
+sub reset {
+#
+# Deletes the existing Schema object so that future calls to translate
+# don't append to the existing.
+#
+    my $self = shift;
+    $self->{'schema'} = undef;
+    return 1;
+}
+
+# ----------------------------------------------------------------------
 sub schema {
 #
 # Returns the SQL::Translator::Schema object
@@ -542,11 +553,13 @@ sub translate {
     # the future, each of these might happen in a Safe environment,
     # depending on how paranoid we want to be.
     # ----------------------------------------------------------------
-    eval { $parser_output = $parser->($self, $$data) };
-    if ($@ || ! $parser_output) {
-        my $msg = sprintf "translate: Error with parser '%s': %s",
-            $parser_type, ($@) ? $@ : " no results";
-        return $self->error($msg);
+    unless ( defined $self->{'schema'} ) {
+        eval { $parser_output = $parser->($self, $$data) };
+        if ($@ || ! $parser_output) {
+            my $msg = sprintf "translate: Error with parser '%s': %s",
+                $parser_type, ($@) ? $@ : " no results";
+            return $self->error($msg);
+        }
     }
 
     if ($self->validate) {
@@ -702,24 +715,19 @@ sub format_fk_name {
     my $self = shift;
 
     if ( ref $_[0] eq 'CODE' ) {
-        $self->{'_format_pk_name'} = shift;
+        $self->{'_format_fk_name'} = shift;
     }
 
     if ( @_ ) {
-        if ( defined $self->{'_format_pk_name'} ) {
-            return $self->{'_format_pk_name'}->( @_ );
+        if ( defined $self->{'_format_fk_name'} ) {
+            return $self->{'_format_fk_name'}->( @_ );
         }
         else {
             return '';
         }
     }
 
-    return $self->{'_format_pk_name'};
-#    my $sub  = shift;
-#    $self->{'_format_fk_name'} = $sub if ref $sub eq 'CODE';
-#    return $self->{'_format_fk_name'}->( $sub, @_ ) 
-#        if defined $self->{'_format_fk_name'};
-#    return $sub;
+    return $self->{'_format_fk_name'};
 }
 
 # ----------------------------------------------------------------------
