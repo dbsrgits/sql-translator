@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.3 2003-05-26 22:29:48 allenday Exp $
+# $Id: GraphViz.pm,v 1.4 2003-06-05 01:57:48 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -26,7 +26,7 @@ use Data::Dumper;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -83,12 +83,16 @@ sub produce {
     debug("Data =\n", Dumper( $data ));
     debug("Producer args =\n", Dumper( $args ));
 
-    my $width           = $args->{'width'}       || 8.5;
-    my $height          = $args->{'height'}      || 11;
     my $out_file        = $args->{'out_file'}    || '';
     my $layout          = $args->{'layout'}      || 'neato';
-    my $node_shape      = $args->{'node_shape'}  || 'ellipse';
+    my $node_shape      = $args->{'node_shape'}  || 'record';
     my $output_type     = $args->{'output_type'} || 'png';
+    my $width           = defined $args->{'width'} 
+                          ? $args->{'width'} : 8.5;
+    my $height          = defined $args->{'height'}
+                          ? $args->{'height'} : 11;
+    my $show_fields     = defined $args->{'show_fields'} 
+                          ? $args->{'show_fields'} : 1;
     my $add_color       = $args->{'add_color'};
     my $natural_join    = $args->{'natural_join'};
     my $join_pk_only    = $args->{'join_pk_only'};
@@ -103,13 +107,16 @@ sub produce {
     die "Invalid node shape'$node_shape'" 
         unless VALID_NODE_SHAPE->{ $node_shape };
 
+    for ( $height, $width ) {
+        $_ = 0 unless $_ =~ /^\d+(.\d)?$/;
+        $_ = 0 if $_ < 0;
+    }
+
     #
     # Create GraphViz and see if we can produce the output type.
     #
-    my $gv            =  GraphViz->new(
+    my %args = (
         directed      => $natural_join ? 0 : 1,
-        width         => $width,
-        height        => $height,
         layout        => $layout,
         no_overlap    => 1,
         bgcolor       => $add_color ? 'lightgoldenrodyellow' : 'white',
@@ -117,8 +124,12 @@ sub produce {
             shape     => $node_shape, 
             style     => 'filled', 
             fillcolor => 'white' 
-        },
-    ) or die "Can't create GraphViz object\n";
+        }
+    );
+    $args{'width'}  = $width  if $width;
+    $args{'height'} = $height if $height;
+
+    my $gv =  GraphViz->new( %args ) or die "Can't create GraphViz object\n";
 
     my %nj_registry; # for locations of fields for natural joins
     my @fk_registry; # for locations of fields for foreign keys
@@ -194,15 +205,17 @@ sub produce {
         values %$data 
     ) {
         my $table_name = $table->{'table_name'};
-        $gv->add_node( $table_name );
-
-        debug("Processing table '$table_name'");
-
         my @fields = 
             map  { $_->[1] }
             sort { $a->[0] <=> $b->[0] }
             map  { [ $_->{'order'}, $_ ] }
             values %{ $table->{'fields'} };
+
+        my $field_str = join('\l', map { $_->{'name'} } @fields);
+        my $label = $show_fields ? "{$table_name|$field_str}" : $table_name;
+        $gv->add_node( $table_name, label => $label );
+
+        debug("Processing table '$table_name'");
 
         debug("Fields = ", join(', ', map { $_->{'name'} } @fields));
 
