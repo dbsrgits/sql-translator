@@ -1,7 +1,7 @@
 package SQL::Translator::Parser;
 
 # ----------------------------------------------------------------------
-# $Id: Parser.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
+# $Id: Parser.pm,v 1.3 2002-03-25 14:25:58 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Parser;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 sub parse { "" }
 
@@ -121,6 +121,7 @@ the row names from the table, and each value fills in this template:
 
   { 
     type           => 'field',
+    order          => 1,      # the order in the original table
     name           => '',     # same as the key
     data_type      => '',     # in the db's jargon,
                               # i.e., MySQL => int, Oracale => INTEGER
@@ -141,6 +142,7 @@ would be represented as:
   'fields => {
     'username' => { 
       type           => 'field',
+      order          => 1,
       name           => 'username',
       data_type      => 'char',
       size           => '8',
