@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.11 2003-04-10 03:09:47 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.12 2003-04-14 19:20:26 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,11 +24,29 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Translator::Utils qw(debug);
+
+my %translate  = (
+    #
+    # Oracle types
+    #
+    varchar2   => 'varchar',
+    long       => 'text',
+    CLOB       => 'longtext',
+
+    #
+    # Sybase types
+    #
+    int        => 'integer',
+    money      => 'float',
+    real       => 'double',
+    comment    => 'text',
+    bit        => 'tinyint',
+);
 
 sub produce {
     my ($translator, $data) = @_;
@@ -57,7 +75,7 @@ sub produce {
         # Header.  Should this look like what mysqldump produces?
         #
         $create .= "--\n-- Table: $table\n--\n" unless $no_comments;
-        $create .= qq[DROP TABLE $table;\n] if $add_drop_table;
+        $create .= qq[DROP TABLE IF EXISTS $table;\n] if $add_drop_table;
         $create .= "CREATE TABLE $table (";
 
         #
@@ -71,12 +89,34 @@ sub produce {
             $create .= "\n";
 
             # data type and size
-            my $attr = uc $field_data->{'data_type'} eq 'SET' ? 'list' : 'size';
-            my @values = @{ $field_data->{ $attr } || [] };
+            my $attr      = uc $field_data->{'data_type'} eq 'SET' 
+                            ? 'list' : 'size';
+            my @values    = @{ $field_data->{ $attr } || [] };
+            my $data_type = $field_data->{'data_type'};
+
+            if ( $data_type eq 'number' ) {
+                # not an integer
+                if ( scalar @values > 1 ) {
+                    $data_type = 'double';
+                }
+                elsif ( $values[0] >= 12 ) {
+                    $data_type = 'bigint';
+                }
+                elsif ( $values[0] <= 1 ) {
+                    $data_type = 'tinyint';
+                }
+                else {
+                    $data_type = 'int';
+                }
+            }
+            elsif ( exists $translate{ $data_type } ) {
+                $data_type = $translate{ $data_type };
+            }
+
             push @fdata, sprintf "%s%s", 
-                $field_data->{'data_type'},
+                $data_type,
                 ( @values )
-                    ? '('.join(', ', @values).')'
+                    ? '(' . join( ', ', @values ) . ')'
                     : '';
 
             # MySQL qualifiers
@@ -115,14 +155,16 @@ sub produce {
         # Indices
         #
         my @index_creates;
-        my @indices = @{ $table_data->{'indices'} || [] };
-        for (my $i = 0; $i <= $#indices; $i++) {
-            my $key  = $indices[$i];
+        my @indices     = @{ $table_data->{'indices'}     || [] };
+        my @constraints = @{ $table_data->{'constraints'} || [] };
+        for my $key ( @indices, @constraints ) {
             my ($name, $type, $fields) = @{ $key }{ qw[ name type fields ] };
             $name ||= '';
             my $index_type = 
                 $type eq 'primary_key' ? 'PRIMARY KEY' :
-                $type eq 'unique'      ? 'UNIQUE KEY'  : 'KEY';
+                $type eq 'unique'      ? 'UNIQUE KEY'  :
+                $type eq 'key'         ? 'KEY'         : '';
+            next unless $index_type;
             push @index_creates, 
                 "  $index_type $name (" . join( ', ', @$fields ) . ')';
         }
@@ -134,8 +176,8 @@ sub produce {
         #
         # Constraints -- need to handle more than just FK. -ky
         #
-        my @constraints;
-        for my $constraint ( @{ $table_data->{'constraints'} } ) {
+        my @constraint_defs;
+        for my $constraint ( @constraints ) {
             my $name       = $constraint->{'name'} || '';
             my $type       = $constraint->{'type'};
             my $fields     = $constraint->{'fields'};
@@ -169,11 +211,11 @@ sub produce {
                     $def .= ' ON UPDATE '.join(' ', @$on_update);
                 }
 
-                push @constraints, $def;
+                push @constraint_defs, $def;
             }
         }
 
-        $create .= join(",\n", '', @constraints) if @constraints;
+        $create .= join(",\n", '', @constraint_defs) if @constraint_defs;
 
         #
         # Footer
