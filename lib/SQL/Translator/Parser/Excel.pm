@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Excel;
 
 # -------------------------------------------------------------------
-# $Id: Excel.pm,v 1.12 2003-11-06 02:07:56 kycl4rk Exp $
+# $Id: Excel.pm,v 1.13 2003-11-06 16:54:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -54,7 +54,7 @@ and field sizes.  True by default.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 
 use Spreadsheet::ParseExcel;
 use Exporter;
@@ -176,7 +176,7 @@ sub parse {
             }
 
             for my $field ( keys %field_info ) {
-                my $size      = $field_info{ $field }{'size'} || [ 0 ];
+                my $size      = $field_info{ $field }{'size'} || [ 1 ];
                 my $data_type = 
                     $field_info{ $field }{'char'}    ? 'char'    : 
                     $field_info{ $field }{'float'}   ? 'float'   :
