@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.45 2004-04-20 01:59:07 boconnor Exp $
+# $Id: Turnkey.pm,v 1.46 2004-04-20 02:13:48 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -215,7 +215,7 @@ sub template {
 ###########################################
 
   if($type eq 'dbi'){
-	return <<EOF;
+	return <<'EOF';
 [% MACRO printPackage(node) BLOCK %]
 # --------------------------------------------
 
@@ -484,7 +484,7 @@ sub head {
 EOF
 
 } elsif($type eq 'xml'){
-  return <<EOF;
+  return <<'EOF';
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Turnkey SYSTEM "Turnkey.dtd">
 <Turnkey>
