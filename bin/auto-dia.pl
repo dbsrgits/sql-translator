@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.1 2003-02-14 20:29:12 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.2 2003-02-15 02:31:23 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -12,17 +12,19 @@ auto-dia.pl - Automatically create a diagram from a database schema
 
   Options:
 
-    -o|--output  Output file name (default STDOUT)
-    -i|--image   Output image type (default PNG)
-    -t|--title   Title to give schema
-    -c|--cols    Number of columns
+    -o|--output    Output file name (default STDOUT)
+    -i|--image     Output image type (default PNG)
+    -t|--title     Title to give schema
+    -c|--cols      Number of columns
+    -n|--no-lines  Don't draw lines
+    -s|--skip      Fields to skip in natural joins
 
 =head1 DESCRIPTION
 
 This script will create a picture of your schema.  Only the database
-driver argument is required.  If no output file name is given, then
-image will be printed to STDOUT, so you should redirect the output
-into a file.
+driver argument (for SQL::Translator) is required.  If no output file
+name is given, then image will be printed to STDOUT, so you should
+redirect the output into a file.
 
 =cut
 
@@ -32,30 +34,42 @@ use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.1 $)[-1];
+my $VERSION = (qw$Revision: 1.2 $)[-1];
 
-my ( $out_file, $image_type, $db_driver, $title, $no_columns );
+#
+# Get arguments.
+#
+my ( $out_file, $image_type, $db_driver, $title, $no_columns, 
+    $no_lines, $skip_fields );
 GetOptions(
     'd|db=s'      => \$db_driver,
     'o|output:s'  => \$out_file,
     'i|image:s'   => \$image_type,
     't|title:s'   => \$title,
     'c|columns:i' => \$no_columns,
+    'n|no-lines'  => \$no_lines,
+    's|skip:s'    => \$skip_fields,
 ) or die pod2usage;
 my $file = shift @ARGV or pod2usage( -message => 'No input file' );
 
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
 $image_type = $image_type ? lc $image_type : 'png';
 $title    ||= $file;
+my %skip    = map { $_, 1 } split ( /,/, $skip_fields );
 
+#
+# Parse file.
+#
 my $t    = SQL::Translator->new( parser => $db_driver, producer => 'Raw' );
 my $data = $t->translate( $file ) or die $t->error;
-my $font = gdTinyFont;
 
+#
+# Layout the image.
+#
+my $font         = gdTinyFont;
 my $no_tables    = scalar keys %$data;
 $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
 my $no_per_col   = sprintf( "%.0f", $no_tables/$no_columns + .5 );
-warn "no per col = '$no_per_col'\n";
 
 my ( @shapes, $max_x, $max_y );
 my $orig_y      = 40;
@@ -63,6 +77,9 @@ my ( $x, $y )   = ( 20, $orig_y );
 my $cur_col     = 1;
 my $no_this_col = 0;
 my $this_col_x  = $x;
+my %registry;  # for locations of fields
+my %table_x;   # for max x of each table
+my $field_no;
 
 for my $table (
     map  { $_->[1] }
@@ -72,7 +89,7 @@ for my $table (
 ) {
     my $table_name = $table->{'table_name'};
     my $top        = $y;
-    push @shapes, [ 'string', $font, $this_col_x, $y, $table_name ];
+    push @shapes, [ 'string', $font, $this_col_x, $y, $table_name, 'black' ];
 
     $y                   += $font->height + 2;
     my $below_table_name  = $y;
@@ -104,27 +121,38 @@ for my $table (
         
         my $nlen  = length $name;
         $max_name = $nlen if $nlen > $max_name;
-        push @fld_desc, [ $name, $desc ];
+        push @fld_desc, [ $name, $desc, $f->{'name'} ];
     }
 
     $max_name += 4;
     for my $fld_desc ( @fld_desc ) {
-        my ( $name, $desc ) = @$fld_desc;
+        my ( $name, $desc, $orig_name ) = @$fld_desc;
         my $diff = $max_name - length $name;
         $name   .= ' ' x $diff;
         $desc    = $name . $desc;
 
-        push @shapes, [ 'string', $font, $this_col_x, $y, $desc ];
+        push @shapes, [ 'string', $font, $this_col_x, $y, $desc, 'black' ];
         $y         += $font->height + 2;
         my $length  = $this_col_x + ( $font->width * length( $desc ) );
         $this_max_x = $length if $length > $this_max_x;
+
+        unless ( $skip{ $orig_name } ) {
+            my $y_link = $y - $font->height * .75;
+            push @{ $registry{ $orig_name } }, {
+                left     => [ $this_col_x - 2, $y_link ],
+                right    => [ $length,         $y_link ],
+                table    => $table_name,
+                field_no => ++$field_no,
+            };
+        }
     }
 
     $this_max_x += 5;
+    $table_x{ $table_name } = $this_max_x + 5;
     push @shapes, [ 'line', $this_col_x - 5, $below_table_name, 
-        $this_max_x, $below_table_name ];
+        $this_max_x, $below_table_name, 'black' ];
     push @shapes, [ 
-        'rectangle', $this_col_x - 5, $top - 5, $this_max_x, $y + 5 
+        'rectangle', $this_col_x - 5, $top - 5, $this_max_x, $y + 5, 'black'
     ];
     $max_x = $this_max_x if $this_max_x > $max_x;
     $y    += 25;
@@ -140,28 +168,131 @@ for my $table (
 }
 
 #
+# Connect the lines.
+#
+my %horz_taken;
+my %done;
+unless ( $no_lines ) {
+    for my $field_name ( keys %registry ) {
+        my @positions = @{ $registry{ $field_name } || [] } or next;
+        next if scalar @positions == 1;
+
+        for my $i ( 0 .. $#positions ) {
+            my $pos1        = $positions[ $i ];
+            my ( $ax, $ay ) = @{ $pos1->{'left'}  };
+            my ( $bx, $by ) = @{ $pos1->{'right'} };
+            my $table1      = $pos1->{'table'};
+            my $fno1        = $pos1->{'field_no'};
+
+            for my $j ( 1 .. $#positions ) {
+                my $pos2        = $positions[ $j ];
+                my ( $cx, $cy ) = @{ $pos2->{'left'}  };
+                my ( $dx, $dy ) = @{ $pos2->{'right'} };
+                my $table2      = $pos2->{'table'};
+                my $fno2        = $pos2->{'field_no'};
+                next if $done{ $fno1 }{ $fno2 };
+
+                my @distances = ();
+                push @distances, [
+                    abs ( $ax - $cx ) + abs ( $ay - $cy ),
+                    [ $ax, $ay, $cx, $cy ],
+                    [ 'left', 'left' ]
+                ];
+                push @distances, [
+                    abs ( $ax - $dx ) + abs ( $ay - $dy ),
+                    [ $ax, $ay, $dx, $dy ],
+                    [ 'left', 'right' ],
+                ];
+                push @distances, [
+                    abs ( $bx - $cx ) + abs ( $by - $cy ),
+                    [ $bx, $by, $cx, $cy ],
+                    [ 'right', 'left' ],
+                ];
+                push @distances, [
+                    abs ( $bx - $dx ) + abs ( $by - $dy ),
+                    [ $bx, $by, $dx, $dy ],
+                    [ 'right', 'right' ],
+                ];
+                @distances   = sort { $a->[0] <=> $b->[0] } @distances;
+                my $shortest = $distances[0];
+                my ( $x1, $y1, $x2, $y2 ) = @{ $shortest->[1] };
+                my ( $side1, $side2     ) = @{ $shortest->[2] };
+                my ( $start, $end );
+                my $offset     = 10;
+                my $col1_right = $table_x{ $table1 };
+                my $col2_right = $table_x{ $table2 };
+
+                my $diff = 0;
+                if ( $x1 == $x2 ) {
+                    while ( $horz_taken{ $x1 + $diff } ) {
+                        $diff = $side1 eq 'left' ? $diff - 2 : $diff + 2; 
+                    }
+                    $horz_taken{ $x1 + $diff } = 1;
+                }
+
+                if ( $side1 eq 'left' ) {
+                    $start = $x1 - $offset + $diff;
+                }
+                else {
+                    $start = $col1_right + $diff;
+                }
+
+                if ( $side2 eq 'left' ) {
+                    $end = $x2 - $offset + $diff;
+                } 
+                else {
+                    $end = $col2_right + $diff;
+                } 
+
+                push @shapes, [ 'line', $x1,    $y1, $start, $y1, 'lightblue' ];
+                push @shapes, [ 'line', $start, $y1, $end,   $y2, 'lightblue' ];
+                push @shapes, [ 'line', $end,   $y2, $x2,    $y2, 'lightblue' ];
+                $done{ $fno1 }{ $fno2 } = 1;
+                $done{ $fno2 }{ $fno1 } = 1;
+            }
+        }
+    }
+}
+
+#
 # Add the title and signature.
 #
 my $large_font = gdLargeFont;
 my $title_len  = $large_font->width * length $title;
-push @shapes, [ 'string', $large_font, $max_x/2 - $title_len/2, 10, $title ];
+push @shapes, [ 
+    'string', $large_font, $max_x/2 - $title_len/2, 10, $title, 'black' 
+];
 
-my $sig = "auto-dia.pl $VERSION";
-push @shapes, [ 'string', $font, $max_x/2 - $title_len/2, 10, $title ];
+my $sig     = "auto-dia.pl $VERSION";
+my $sig_len = $font->width * length $sig;
+push @shapes, [ 
+    'string', $font, $max_x - $sig_len, $max_y - $font->height - 4, 
+    $sig, 'black'
+];
 
+#
+# Render the image.
+#
 my $gd = GD::Image->new( $max_x + 10, $max_y );
 unless ( $gd->can( $image_type ) ) {
     die "GD can't create images of type '$image_type'\n";
 }
-my $white = $gd->colorAllocate(255,255,255);
-my $black = $gd->colorAllocate(00,00,00);
+my %colors = map { $_->[0], $gd->colorAllocate( @{$_->[1]} ) } (
+    [ white     => [ 255, 255, 255 ] ],
+    [ black     => [   0,   0,   0 ] ],
+    [ lightblue => [ 173, 216, 230 ] ],
+);
 $gd->interlaced( 'true' );
-$gd->fill( 0, 0, $white );
+$gd->fill( 0, 0, $colors{ 'white' } );
 for my $shape ( @shapes ) {
     my $method = shift @$shape;
-    $gd->$method( @$shape, $black );
+    my $color  = pop   @$shape;
+    $gd->$method( @$shape, $colors{ $color } );
 }
 
+#
+# Print the image.
+#
 if ( $out_file ) {
     open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
     print $fh $gd->$image_type;
