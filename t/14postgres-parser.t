@@ -14,12 +14,14 @@ if ($@) {
     plan skip_all => "$@";
 }
 else {
-    plan tests => 117;
+    plan tests => 119;
 }
 
 my $t   = SQL::Translator->new( trace => 0 );
 my $sql = q[
+    -- comment on t_test1
     create table t_test1 (
+        -- this is the primary key
         f_serial serial NOT NULL default '0' primary key,
         f_varchar character varying (255),
         f_double double precision,
@@ -86,6 +88,8 @@ is( scalar @tables, 2, 'Two tables' );
 my $t1 = shift @tables;
 is( $t1->name, 't_test1', 'Table t_test1 exists' );
 
+is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
+
 my @t1_fields = $t1->get_fields;
 is( scalar @t1_fields, 11, '11 fields in t_test1' );
 
@@ -96,6 +100,7 @@ is( $f1->is_nullable, 0, 'Field cannot be null' );
 is( $f1->size, 11, 'Size is "11"' );
 is( $f1->default_value, '0', 'Default value is "0"' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
+is( $f1->comments, 'this is the primary key', 'Comment' );
 is( $f1->is_auto_increment, 1, 'Field is auto increment' );
 
 my $f2 = shift @t1_fields;
