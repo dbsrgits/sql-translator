@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.26 2003-05-09 16:51:47 kycl4rk Exp $
+# $Id: Translator.pm,v 1.27 2003-05-09 19:51:28 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -550,15 +550,14 @@ sub translate {
     # the future, each of these might happen in a Safe environment,
     # depending on how paranoid we want to be.
     # ----------------------------------------------------------------
-    my $schema = $self->schema;
-    eval { $parser_output = $parser->($self, $$data, $schema) };
+    eval { $parser_output = $parser->($self, $$data) };
     if ($@ || ! $parser_output) {
         my $msg = sprintf "translate: Error with parser '%s': %s",
             $parser_type, ($@) ? $@ : " no results";
         return $self->error($msg);
     }
 
-    eval { $producer_output = $producer->($self, $parser_output, $schema) };
+    eval { $producer_output = $producer->($self, $parser_output) };
     if ($@ || ! $producer_output) {
         my $msg = sprintf "translate: Error with producer '%s': %s",
             $producer_type, ($@) ? $@ : " no results";
