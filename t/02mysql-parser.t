@@ -4,10 +4,20 @@
 
 use strict;
 
-use Test::More tests => 180;
+use Test::More;
 use SQL::Translator;
-use SQL::Translator::Parser::MySQL qw(parse);
 use SQL::Translator::Schema::Constants;
+
+eval {
+    require SQL::Translator::Parser::MySQL;
+    SQL::Translator::Parser::MySQL->import('parse');
+};
+if ($@) {
+    plan skip_all => "$@";
+}
+else {
+    plan tests => 180;
+}
 
 {
     my $tr = SQL::Translator->new;

@@ -8,8 +8,18 @@ use strict;
 use SQL::Translator;
 use SQL::Translator::Schema;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Parser::xSV qw(parse);
-use Test::More tests => 25;
+use Test::More;
+
+eval {
+    require SQL::Translator::Parser::xSV;
+    SQL::Translator::Parser::xSV->import('parse');
+};
+if ($@) {
+    plan skip_all => "$@";
+}
+else {
+    plan tests => 25;
+}
 
 my $tr = SQL::Translator->new;
 my $s  = SQL::Translator::Schema->new;

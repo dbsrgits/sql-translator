@@ -1,10 +1,21 @@
 #!/usr/bin/perl
+# vim: set ft=perl:
 
 use strict;
-use Test::More tests => 117;
+use Test::More;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Parser::PostgreSQL qw(parse);
+
+eval {
+    require SQL::Translator::Parser::PostgreSQL;
+    SQL::Translator::Parser::PostgreSQL->import('parse');
+};
+if ($@) {
+    plan skip_all => "$@";
+}
+else {
+    plan tests => 117;
+}
 
 my $t   = SQL::Translator->new( trace => 0 );
 my $sql = q[

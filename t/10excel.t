@@ -1,10 +1,20 @@
 #!/usr/bin/perl
 # vim: set ft=perl:
 
-use Test::More tests => 31;
+use Test::More;
 use SQL::Translator;
-use SQL::Translator::Parser::Excel 'parse';
 use SQL::Translator::Schema::Constants;
+
+eval {
+    require SQL::Translator::Parser::Excel;
+    SQL::Translator::Parser::Excel->import('parse');
+};
+if ($@) {
+    plan skip_all => "$@";
+}
+else {
+    plan tests => 31;
+}
 
 my $tr     = SQL::Translator->new(parser => "Excel");
 my $t      = $tr->translate(filename => "t/data/Excel/t.xls");

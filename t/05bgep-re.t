@@ -10,6 +10,12 @@ use FindBin qw($Bin);
 use SQL::Translator;
 use Test::More tests => 2;
 
+# This aggravates me; XML::Writer produces tons of warnings.
+local $SIG{__WARN__} = sub {
+    CORE::warn(@_)
+        unless $_[0] =~ m#XML/Writer#;
+};
+
 my @data = qw(data mysql BGEP-RE-create.sql);
 my $test_data = (-d "t")
     ? catfile($Bin, @data)

@@ -20,6 +20,10 @@ use FindBin qw/$Bin/;
 
 my $file = "$Bin/data/mysql/sqlfxml-producer-basic.sql";
 
+local $SIG{__WARN__} = sub {
+    CORE::warn(@_)
+        unless $_[0] =~ m#XML/Writer#;
+};
 
 # Testing 1,2,3,4...
 #=============================================================================
