@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.14 2004-01-02 08:15:09 allenday Exp $
+# $Id: Turnkey.pm,v 1.15 2004-01-02 10:04:37 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -386,11 +386,20 @@ sub _render_record {
 	my @output = ();
 	my $row = {};
 	my $field_hash = {};
+
+	#data
 	[% FOREACH value = node.value.data_fields %]
-	[% IF value != 1 %]
-    $field_hash->{[% value %]} = $dbobject->[% value %]();
-    [% END %]
-    [% END %]
+		[% IF value != 1 %]
+	$field_hash->{[% value %]} = $dbobject->[% value %]();
+		[% END %]
+	[% END %]
+
+	#keys
+	[% FOREACH value = node.value.edges %]
+	[% NEXT IF value.type != 'import' %]
+	$field_hash->{[% value.thisfield.name %]} = $dbobject->[% value.thisfield.name %]();
+	[% END %]
+
 	$row->{data} = $field_hash;
 	$row->{id} = $dbobject->id();
 	push @output, $row;
@@ -405,11 +414,20 @@ sub _render_list {
     {
 		my $row = {};
 	    my $field_hash = {};
-	    [% FOREACH value = node.value.data_fields %]
-	    [% IF value != 1 %]
-        $field_hash->{[% value %]} = $object->[% value %]();
-        [% END %]
-        [% END %]
+
+	#data
+	[% FOREACH value = node.value.data_fields %]
+		[% IF value != 1 %]
+	$field_hash->{[% value %]} = $object->[% value %]();
+		[% END %]
+	[% END %]
+
+	#keys
+	[% FOREACH value = node.value.edges %]
+	[% NEXT IF value.type != 'import' %]
+	$field_hash->{[% value.thisfield.name %]} = $dbobject->[% value.thisfield.name %]();
+	[% END %]
+
 		$row->{data} = $field_hash;
 	    $row->{id} = $object->id();
 	    push @output, $row;
@@ -537,6 +555,35 @@ EOF
   </table>
   <!-- end panel: [% panel.label %] -->
 [% END %]
+[% BLOCK make_linked_dbobject %]
+    [% PERL %]
+      $stash->set(linked_dbobject => [% class %]->retrieve([% id %]));
+    [% END %]
+[% END %]
+[% MACRO obj2link(obj) SWITCH ref(obj) %]
+  [% CASE '' %]
+    [% obj %]
+  [% CASE DEFAULT %]
+    [% IF obj.name %]
+      <a href="[% obj2url(obj) %]">[% obj.name %]</a>
+    [% ELSE %]
+        <a href="[% obj2url(obj) %]">[% obj %]</a>
+    [% END %]
+[% END %]
+[% MACRO obj2url(obj) SWITCH obj %]
+  [% CASE DEFAULT %]
+    /?id=[% obj %];class=[% ref(obj) %]
+[% END %]
+[% MACRO obj2desc(obj) SWITCH ref(obj) %]
+  [% CASE '' %]
+    [% obj %]
+  [% CASE DEFAULT %]
+    [% IF obj.value %]
+      [% obj.value %]
+    [% ELSE %]
+      [% obj %]
+    [% END %]
+[% END %]
 [% MACRO renderatom(atom, dbobject) SWITCH atom.name %]
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
@@ -556,19 +603,28 @@ EOF
     [- pkey = "Turnkey::Model::${pname}" -]
     [- FOREACH field = node.value.data_fields -]
     [- IF field != "1" -]
-      <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% fields.[- field -] %]</td></tr>
+      <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field -]) %]</td></tr>
     [- END -]
+    [- END -]
+    [- FOREACH field = node.value.edges -]
+    [- NEXT IF field.type != 'import' -]
+      <tr><td class="dbfieldname">[- field.thisfield.name -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field.thisfield.name -]) %]</td></tr>
     [- END -]
     [% id = record.id %]
-    <tr><td><a href="?id=[% id %];class=Durian::Model::[- node.key FILTER ucfirst -]">Link</a></td><td></td></tr>
+    <tr><td><a href="?id=[% id %];class=Turnkey::Model::[- node.key FILTER ucfirst -]">Link</a><hr/></td><td></td></tr>
   [% END %]
 [% END %]
 [- END -]
 [- END -]
 [% MACRO renderlist(lstArr) BLOCK %]
-  [%  FOREACH item = lstArr %]
-    <tr>[% item %]</tr>
+   <tr><td><ul>
+  [% FOREACH item = lstArr %]
+    [% class = ref(atom) | replace('::Atom::', '::Model::') %]
+    [% id = item.id %]
+    [% PROCESS make_linked_dbobject %]
+    <li style="margin-left: -20px; list-style: circle;">[% obj2link(linked_dbobject) %]</li>
   [% END %]
+   </ul></td></tr>
 [% END %]
 EOF
 
