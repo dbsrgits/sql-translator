@@ -1,6 +1,6 @@
 package SQL::Translator::Parser::DBI::Sybase;
 
-# $Id: Sybase.pm,v 1.1 2003-10-03 20:48:38 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.2 2003-10-03 20:56:40 kycl4rk Exp $
 
 =head1 NAME
 
@@ -22,7 +22,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -83,7 +83,7 @@ ORDER BY o.name,
 
     # View text
     # I had always thought there was something 'hard' about
-reconstructing text from syscomments ..
+    # reconstructing text from syscomments ..
     # this seems to work fine and is certainly not complicated!
 
     foreach (@{$h}) {
