@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.cgi,v 1.1 2003-06-16 18:24:21 kycl4rk Exp $
+# $Id: sql_translator.cgi,v 1.2 2003-08-04 20:55:45 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -41,7 +41,7 @@ my $q = CGI->new;
 eval {
     if ( $q->param ) {
         my $t                =  SQL::Translator->new( 
-            from             => $q->param('database'),
+            from             => $q->param('parser'),
             producer_args    => {
                 image_type   => $q->param('output_type') || 'png',
                 title        => $q->param('title')       || 'Schema',
@@ -67,14 +67,20 @@ eval {
             local $/;
             $data = <$fh>;
         }
-
         die "No schema provided!\n" unless $data;
+
+        my $producer    = $q->param('producer');
+        my $image_type  = $q->param('output_type') || 'png';
+        my $header_type = 
+            $producer =~ m/(GraphViz|Diagram)/ 
+            ? "image/$image_type"
+            : 'text/plain';
+
         $t->data( $data );
-        $t->producer( $q->param('do_graph') ? 'GraphViz' : 'Diagram' );
+        $t->producer( $producer );
         my $output = $t->translate or die $t->error;
 
-        my $image_type = $q->param('output_type') || 'png';
-        print $q->header( -type => "image/$image_type" ), $output;
+        print $q->header( -type => $header_type ), $output;
     }
     else {
         show_form( $q );
@@ -114,11 +120,24 @@ sub show_form {
             ),
             $q->Tr( 
                 $q->td( [
-                    'Database:',
+                    'Parser:',
                     $q->radio_group(
-                        -name    => 'database',
+                        -name    => 'parser',
                         -values  => [ 'MySQL', 'PostgreSQL', 'Oracle' ],
                         -default => 'MySQL',
+                        -rows    => 3,
+                    ),
+                ] ),
+            ),
+            $q->Tr( 
+                $q->td( [
+                    'Producer:',
+                    $q->radio_group(
+                        -name    => 'producer',
+                        -values  => [ qw[ ClassDBI Diagram GraphViz HTML
+                            MySQL Oracle POD PostgreSQL SQLite Sybase XML
+                        ] ],
+                        -default => 'GraphViz',
                         -rows    => 3,
                     ),
                 ] ),
@@ -269,12 +288,8 @@ sub show_form {
                 $q->td(
                     { -colspan => 2, -align => 'center' },
                     $q->submit( 
-                        -name  => 'do_diagram', 
-                        -value => 'Create ER Diagram' 
-                    ),
-                    $q->submit( 
-                        -name  => 'do_graph', 
-                        -value => 'Create Graph' 
+                        -name  => 'submit', 
+                        -value => 'Submit',
                     ),
                     $q->br,
                     q[
