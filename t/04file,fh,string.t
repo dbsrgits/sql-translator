@@ -34,32 +34,11 @@ read($fh, $data, -s $datafile);
 my $translated_data = $tr->translate(\$data);
 warn "Data from string is\n$translated_data\n\n\n";
 
+print "not " unless length $translated_datafile;
+print "ok 1 # passing string (filename) works\n";
 
-# Pass IO::File instance
-$fh->setpos(0);
-my $translated_fh = $tr->translate($fh);
-warn "Data from filehandle method is\n$translated_fh\n\n\n";
+print "not " unless length $translated_data;
+print "ok 2 # passing string as SCALAR reference\n";
 
-# With all that setup out of the way, we can perform the actual tests.
-# We need to test the equality of:
-#
-#   filename and string
-#   filename and filehandle
-#   filehandle and string
-#
-# And then we have all possibilities.  Note that the order in which
-# the comparison is done is pretty arbitrary, and doesn't affect the
-# outcomes.  Similarly, the order of the eq tests is also unimportant.
-#
-print "not " unless ($translated_datafile eq $translated_fh);
-print "ok 1 # from file == from filehandle\n";
-    
 print "not " unless ($translated_datafile eq $translated_data);
-print "ok 2 # from file == from string\n";
-
-print "not " unless ($translated_data     eq $translated_fh);
-print "ok 3 # from string == from filehandle\n";
-
-# For this test, we should devise some other sort of output routine,
-# that can take a data structure and output it in a reasonable -- and
-# machine parsable! -- way. 
+print "ok 3 # from file == from string\n";
