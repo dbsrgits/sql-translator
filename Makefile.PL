@@ -8,6 +8,7 @@ WriteMakefile(
     'VERSION'      => 0.01,
     'EXE_FILES'    => [
         'bin/auto-dia.pl',
+        'bin/auto-graph.pl',
         'bin/sql_translator.pl',
     ],
     'PREREQ_PM'    => {
@@ -17,7 +18,7 @@ WriteMakefile(
         'GD'                      => 0,
         'GraphViz'                => 0,
         'IO::Dir'                 => 0,
-        'Parse::RecDescent'       => 0,  # Is a particular version needed?
+        'Parse::RecDescent'       => 1.94,
         'Pod::Usage'              => 0,
         'Spreadsheet::ParseExcel' => 0,
         'Text::ParseWords'        => 0,
