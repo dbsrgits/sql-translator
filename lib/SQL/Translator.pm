@@ -1,9 +1,9 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.51 2004-02-04 17:51:00 kycl4rk Exp $
+# $Id: Translator.pm,v 1.52 2004-02-06 17:51:26 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 The SQLFairy Authors
+# Copyright (C) 2002-4 The SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.04';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.51 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
