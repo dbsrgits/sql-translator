@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.23 2003-08-07 18:15:51 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.24 2003-08-12 22:00:28 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -157,7 +157,7 @@ statement : create
 
 connect : /^\s*\\\connect.*\n/
 
-set : /SET/ /[^;]*/ ';'
+set : /set/i /[^;]*/ ';'
 
 revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_quotes(s /,/) ';'
     {
@@ -278,7 +278,7 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
             }
             elsif ( $meta->{'type'} eq 'not_null' ) {
                 $null = 0;
-                next;
+#                next;
             }
             elsif ( $meta->{'type'} eq 'primary_key' ) {
                 $is_pk = 1;
@@ -318,7 +318,7 @@ column_constraint : constraint_name(?) column_constraint_type deferrable(?) defe
             name             => $item{'constraint_name'}[0] || '',
             type             => $type,
             expression       => $type eq 'check' ? $expression : '',
-            deferreable      => $item{'deferrable'},
+            deferrable       => $item{'deferrable'},
             deferred         => $item{'deferred'},
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
@@ -332,10 +332,10 @@ constraint_name : /constraint/i name_with_opt_quotes { $item[2] }
 
 column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     |
-    /null/ 
+    /null/i
         { $return = { type => 'null' } }
     |
-    /unique/ 
+    /unique/i
         { $return = { type => 'unique' } }
     |
     /primary key/i 
@@ -506,7 +506,7 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
             constraint_type  => $type,
             fields           => $type ne 'check' ? $fields : [],
             expression       => $type eq 'check' ? $expression : '',
-            deferreable      => $item{'deferrable'},
+            deferrable       => $item{'deferrable'},
             deferred         => $item{'deferred'},
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
@@ -533,7 +533,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
     |
-    /check/ '(' /(.+)/ ')'
+    /check/i '(' /(.+)/ ')'
     {
         $return        =  {
             type       => 'check',
@@ -617,10 +617,10 @@ create_table : /create/i TABLE
 
 create_index : /create/i /index/i
 
-default_val  : /default/i /(?:')?[\w\d().-]*(?:')?/ 
+default_val  : /default/i /(\d+|'[^']+'|\w+\(.*?\))/
     { 
-        my $val =  $item[2] || '';
-        $val    =~ s/'//g; 
+        my $val =  defined $item[2] ? $item[2] : '';
+        $val    =~ s/^'|'$//g; 
         $return =  {
             supertype => 'constraint',
             type      => 'default',
@@ -674,7 +674,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
     | /'.*?'/   # XXX doesn't handle embedded quotes
     { $item[1] }
-    | /NULL/
+    | /null/i
     { 'NULL' }
 
 !;
