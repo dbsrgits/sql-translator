@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.33 2003-06-19 20:44:26 dlc Exp $
+# $Id: Translator.pm,v 1.34 2003-06-25 19:15:19 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -708,11 +708,21 @@ sub format_fk_name {
 # ----------------------------------------------------------------------
 sub format_pk_name {
     my $self = shift;
-    my $sub  = shift;
-    $self->{'_format_pk_name'} = $sub if ref $sub eq 'CODE';
-    return $self->{'_format_pk_name'}->( $sub, @_ ) 
-        if defined $self->{'_format_pk_name'};
-    return $sub;
+
+    if ( ref $_[0] eq 'CODE' ) {
+        $self->{'_format_pk_name'} = shift;
+    }
+
+    if ( @_ ) {
+        if ( defined $self->{'_format_pk_name'} ) {
+            return $self->{'_format_pk_name'}->( @_ );
+        }
+        else {
+            return '';
+        }
+    }
+
+    return $self->{'_format_pk_name'};
 }
 
 # ----------------------------------------------------------------------
