@@ -1,2 +1,9 @@
 .*CVS.*
 .#.*
+.*.bak
+.*.swp
+.*.old
+^Makefile$
+^blib/
+_blib$
+(^|/)\.
