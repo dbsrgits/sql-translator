@@ -133,7 +133,7 @@ sub test_table {
 # Testing 1,2,3,..
 #=============================================================================
 
-plan tests => 94;
+plan tests => 151;
 
 my $testschema = "$Bin/data/xmi/OrderDB.sqlfairy.poseidon2.xmi";
 die "Can't find test schema $testschema" unless -e $testschema;
@@ -158,8 +158,9 @@ my $scma = $obj->schema;
 is( $scma->is_valid, 1, 'Schema is valid' );
 my @tblnames = map {$_->name} $scma->get_tables;
 is(scalar(@{$scma->get_tables}), scalar(@tblnames), "Right number of tables");
-is_deeply( \@tblnames, [qw/Order OrderLine Customer/]
-    ,"tables");
+is_deeply( \@tblnames, 
+    [qw/Order OrderLine Customer ContactDetails ContactDetails_Customer/]
+,"tables");
 
 test_table( $scma->get_table("Customer"),
     name => "Customer",
@@ -199,6 +200,85 @@ test_table( $scma->get_table("Customer"),
 		#	type => "UNIQUE",
 		#	fields => "email",
 		#},
+	],
+);
+
+test_table( $scma->get_table("ContactDetails_Customer"),
+    name => "ContactDetails_Customer",
+    fields => [
+    {
+        name => "ContactDetailsID",
+        data_type => "INT",
+		size => 10,
+        default_value => undef,
+        is_nullable => 0,
+        is_primary_key => 1,
+        is_auto_increment => 0,
+    },
+    {
+        name => "CustomerID",
+        data_type => "INT",
+		size => 10,
+        default_value => undef,
+        is_nullable => 0,
+        is_primary_key => 1,
+        is_auto_increment => 0,
+    },
+    ],
+	constraints => [
+		{
+			type => "FOREIGN KEY",
+			fields => "ContactDetailsID",
+			reference_table => "ContactDetails",
+			reference_fields => "ContactDetailsID",
+		},
+		{
+			type => "FOREIGN KEY",
+			fields => "CustomerID",
+			reference_table => "Customer",
+			reference_fields => "CustomerID",
+		},
+		{
+			type => "PRIMARY KEY",
+			fields => "ContactDetailsID,CustomerID",
+		},
+	],
+);
+
+test_table( $scma->get_table("ContactDetails"),
+    name => "ContactDetails",
+    fields => [
+    {
+        name => "address",
+        data_type => "VARCHAR",
+        size => "255",
+        default_value => undef,
+        is_nullable => 1,
+        is_primary_key => 0,
+    },
+    {
+        name => "telephone",
+        data_type => "VARCHAR",
+        size => "255",
+        default_value => undef,
+        is_nullable => 1,
+        is_primary_key => 0,
+    },
+    {
+        name => "ContactDetailsID",
+        data_type => "INT",
+		size => 10,
+        default_value => undef,
+        is_nullable => 0,
+        is_primary_key => 1,
+        is_auto_increment => 1,
+    },
+    ],
+	constraints => [
+		{
+			type => "PRIMARY KEY",
+			fields => "ContactDetailsID",
+		},
 	],
 );
 

@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.2 2003-10-13 17:05:55 grommit Exp $
+# $Id: SQLFairy.pm,v 1.3 2003-10-14 23:19:43 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -29,7 +29,7 @@ SQL::Translator::Parser::XML::XMI::SQLFairy - Create Schema from UML Models.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 use Exporter;
 use base qw(Exporter);
@@ -151,7 +151,8 @@ sub classes2schema {
         else
         {
             # m:n
-            warn "Sorry, n:m associations not yet implimented for xmi.id=".$assoc->{"xmi.id"}."\n";
+            many2many($assoc);
+            #warn "Sorry, n:m associations not yet implimented for xmi.id=".$assoc->{"xmi.id"}."\n";
         }
 
     }
@@ -232,7 +233,8 @@ sub add_pkey {
 }
 
 # Maps a 1:M association into the schema
-sub one2many {
+sub one2many
+{
     my ($assoc) = @_;
     my @ends = @{$assoc->{associationEnds}};
     my ($end1) = grep $_->{multiplicity}{rangeUpper} == 1, @ends;
@@ -272,6 +274,48 @@ sub one2many {
     ) or die $schema->error;
 }
 
+# Maps m:n into schema by building a link table.
+sub many2many
+{
+    my ($assoc) = @_;
+    my @end = @{$assoc->{associationEnds}};
+
+    # Create the link table
+    my $name = $end[0]->{participant}{name}."_".$end[1]->{participant}{name};
+    my $link_table = $schema->add_table( name => $name )
+    or die "Schema Error: ".$schema->error;
+
+    # Export the pkey(s) from the ends into the link table
+    my @pkeys;
+    foreach (@end) {
+        my $table = $schema->get_table($_->{participant}{name});
+        my @fkeys = $table->primary_key->fields;
+        push @pkeys,@fkeys;
+        foreach ( @fkeys ) {
+            my $fld = $table->get_field($_);
+            my %data;
+            $data{$_} = $fld->$_()
+                foreach (
+                qw/name size data_type default_value is_nullable is_unique/);
+            $data{is_auto_increment} = 0;
+            $data{extra} = { $fld->extra }; # Copy
+            $link_table->add_field(%data) or die $table->error;
+        }
+        $link_table->add_constraint(
+            type   => "FOREIGN_KEY",
+            fields => [@fkeys],
+            reference_table => $table->{name},
+            reference_fields => [@fkeys],
+        ) or die $schema->error;
+
+    }
+    # Add pkey constraint
+    $link_table->add_constraint( type => "PRIMARY KEY", fields => [@pkeys] )
+    or die $link_table->error;
+
+
+    # Add fkeys to our participants
+}
 1; #---------------------------------------------------------------------------
 
 __END__

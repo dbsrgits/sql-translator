@@ -1,5 +1,5 @@
 <?xml version = '1.0' encoding = 'UTF-8' ?>
-<XMI xmi.version = '1.2' xmlns:UML = 'org.omg.xmi.namespace.UML' timestamp = 'Mon Oct 13 17:05:12 BST 2003'>
+<XMI xmi.version = '1.2' xmlns:UML = 'org.omg.xmi.namespace.UML' timestamp = 'Wed Oct 15 00:05:38 BST 2003'>
   <XMI.header>
     <XMI.documentation>
       <XMI.exporter>Netbeans XMI Writer</XMI.exporter>
@@ -25,6 +25,21 @@
     <UML:Multiplicity xmi.id = '5539d8:f7b62bc3a2:-7fec'>
       <UML:Multiplicity.range>
         <UML:MultiplicityRange xmi.id = '5539d8:f7b62bc3a2:-7feb' lower = '1' upper = '1'/>
+      </UML:Multiplicity.range>
+    </UML:Multiplicity>
+    <UML:Multiplicity xmi.id = '9f3e95:f83c9ca08d:-7ffb'>
+      <UML:Multiplicity.range>
+        <UML:MultiplicityRange xmi.id = '9f3e95:f83c9ca08d:-7ffa' lower = '1' upper = '1'/>
+      </UML:Multiplicity.range>
+    </UML:Multiplicity>
+    <UML:Multiplicity xmi.id = '9f3e95:f83c9ca08d:-7ff9'>
+      <UML:Multiplicity.range>
+        <UML:MultiplicityRange xmi.id = '9f3e95:f83c9ca08d:-7ff8' lower = '1' upper = '1'/>
+      </UML:Multiplicity.range>
+    </UML:Multiplicity>
+    <UML:Multiplicity xmi.id = '9f3e95:f83c9ca08d:-7ff7'>
+      <UML:Multiplicity.range>
+        <UML:MultiplicityRange xmi.id = '9f3e95:f83c9ca08d:-7ff6' lower = '0' upper = '-1'/>
       </UML:Multiplicity.range>
     </UML:Multiplicity>
     <UML:Model xmi.id = '5539d8:f7b62bc3a2:-7ff5' name = 'OrderDB' isSpecification = 'false'
@@ -271,7 +286,7 @@
           <UML:Stereotype.baseClass>ModelElement</UML:Stereotype.baseClass>
         </UML:Stereotype>
         <UML:Comment xmi.id = '24d0fa:f8019a3e88:-7fa7' name = '' visibility = 'public'
-          isSpecification = 'false' body = 'sqlfSize override&#10;on customerID&#10;&#10;Implied pkey&#10;- uses 1st field'>
+          isSpecification = 'false' body = 'sqlfSize override&#10;on customerID'>
           <UML:Comment.annotatedElement>
             <UML:Class xmi.idref = '5539d8:f7b62bc3a2:-7fe7'/>
           </UML:Comment.annotatedElement>
@@ -305,6 +320,57 @@
             </UML:TaggedValue>
           </UML:ModelElement.taggedValue>
         </UML:DataType>
+        <UML:Class xmi.id = '9f3e95:f83c9ca08d:-7ff5' name = 'ContactDetails' visibility = 'public'
+          isSpecification = 'false' isRoot = 'false' isLeaf = 'false' isAbstract = 'false'
+          isActive = 'false'>
+          <UML:Classifier.feature>
+            <UML:Attribute xmi.id = '9f3e95:f83c9ca08d:-7ff4' name = 'address' visibility = 'public'
+              isSpecification = 'false' ownerScope = 'instance'>
+              <UML:StructuralFeature.type>
+                <UML:DataType xmi.idref = '24d0fa:f8019a3e88:-7f93'/>
+              </UML:StructuralFeature.type>
+            </UML:Attribute>
+            <UML:Attribute xmi.id = '9f3e95:f83c9ca08d:-7ff3' name = 'telephone' visibility = 'public'
+              isSpecification = 'false' ownerScope = 'instance'>
+              <UML:StructuralFeature.type>
+                <UML:DataType xmi.idref = '24d0fa:f8019a3e88:-7f93'/>
+              </UML:StructuralFeature.type>
+            </UML:Attribute>
+          </UML:Classifier.feature>
+        </UML:Class>
+        <UML:Association xmi.id = '9f3e95:f83c9ca08d:-7ff2' isSpecification = 'false'
+          isRoot = 'false' isLeaf = 'false' isAbstract = 'false'>
+          <UML:Association.connection>
+            <UML:AssociationEnd xmi.id = '9f3e95:f83c9ca08d:-7ff1' visibility = 'public'
+              isSpecification = 'false' isNavigable = 'true' ordering = 'unordered' aggregation = 'none'
+              targetScope = 'instance' changeability = 'changeable'>
+              <UML:AssociationEnd.multiplicity>
+                <UML:Multiplicity xmi.id = '9f3e95:f83c9ca08d:-7ff0'>
+                  <UML:Multiplicity.range>
+                    <UML:MultiplicityRange xmi.id = '9f3e95:f83c9ca08d:-7fef' lower = '0' upper = '-1'/>
+                  </UML:Multiplicity.range>
+                </UML:Multiplicity>
+              </UML:AssociationEnd.multiplicity>
+              <UML:AssociationEnd.participant>
+                <UML:Class xmi.idref = '9f3e95:f83c9ca08d:-7ff5'/>
+              </UML:AssociationEnd.participant>
+            </UML:AssociationEnd>
+            <UML:AssociationEnd xmi.id = '9f3e95:f83c9ca08d:-7fee' name = '' visibility = 'public'
+              isSpecification = 'false' isNavigable = 'true' ordering = 'unordered' aggregation = 'none'
+              targetScope = 'instance' changeability = 'changeable'>
+              <UML:AssociationEnd.multiplicity>
+                <UML:Multiplicity xmi.id = '9f3e95:f83c9ca08d:-7fed'>
+                  <UML:Multiplicity.range>
+                    <UML:MultiplicityRange xmi.id = '9f3e95:f83c9ca08d:-7fec' lower = '1' upper = '-1'/>
+                  </UML:Multiplicity.range>
+                </UML:Multiplicity>
+              </UML:AssociationEnd.multiplicity>
+              <UML:AssociationEnd.participant>
+                <UML:Class xmi.idref = '5539d8:f7b62bc3a2:-7fe7'/>
+              </UML:AssociationEnd.participant>
+            </UML:AssociationEnd>
+          </UML:Association.connection>
+        </UML:Association>
       </UML:Namespace.ownedElement>
     </UML:Model>
     <UML:TagDefinition xmi.id = '1f5eb7f:f7bb15dc4a:-7ffa' name = 'size' isSpecification = 'false'
