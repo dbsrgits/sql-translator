@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.1 2003-05-01 04:25:00 kycl4rk Exp $
+# $Id: Field.pm,v 1.2 2003-05-03 15:42:59 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -141,7 +141,7 @@ Get or set the field's size.
 
     my ( $self, $arg ) = @_;
 
-    if ( $arg =~ m/^\d+(?:\.\d+)?$/ ) {
+    if ( $arg && $arg =~ m/^\d+(?:\.\d+)?$/ ) {
         $self->{'size'} = $arg;
     }
 
