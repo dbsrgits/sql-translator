@@ -25,6 +25,7 @@ WriteMakefile(
         'Spreadsheet::ParseExcel' => 0,
         'Test::More'              => 0,
         'Text::ParseWords'        => 0,
+        'Text::RecordParser'      => 0.02,
         'XML::Writer'             => 0,
     },
     clean => {
