@@ -17,12 +17,12 @@ my $test_data = (-d "t")
 
 my $tr       =  SQL::Translator->new(
     parser   => 'MySQL',
-    producer => 'SqlfXML',
+    producer => 'XML-SQLFairy',
     filename => $test_data
 );
 my $data = $tr->translate;
 
-ok($data, "MySQL->XML");
+ok($data, "MySQL->XML-SQLFairy");
 
 SKIP: {
     eval {
