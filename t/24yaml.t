@@ -13,6 +13,31 @@ schema:
   tables:
     person:
       comments: ''
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields:
+            - person_id
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: ~
+          reference_table: ''
+          type: PRIMARY KEY
+        - deferrable: 1
+          expression: ''
+          fields:
+            - name
+          match_type: ''
+          name: u_name
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: ~
+          reference_table: ''
+          type: UNIQUE
       fields:
         age:
           data_type: integer
@@ -81,12 +106,37 @@ schema:
           size:
             - 11
             - 2
-      indices: {}
+      indices: []
       name: person
       options: []
       order: 1
     pet:
       comments: ''
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields: ~
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: ~
+          reference_table: ''
+          type: CHECK
+        - deferrable: 1
+          expression: ''
+          fields:
+            - pet_id
+            - person_id
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: ~
+          reference_table: ''
+          type: PRIMARY KEY
       fields:
         age:
           data_type: int
@@ -132,7 +182,7 @@ schema:
           order: 7
           size:
             - 0
-      indices: {}
+      indices: []
       name: pet
       options: []
       order: 2
