@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser::V12;
 
 # -------------------------------------------------------------------
-# $Id: V12.pm,v 1.4 2003-10-03 18:07:13 grommit Exp $
+# $Id: V12.pm,v 1.5 2003-10-06 13:28:36 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -31,11 +31,28 @@ SQL::Translator::XMI::Parser::V12 - Version 1.2 parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use base qw(SQL::Translator::XMI::Parser);
 
 my $spec12 = {};
+
+$spec12->{taggedValue} = {
+    name   => "taggedValue",
+    plural => "taggedValues",
+    default_path => '//UML:TaggedValue[@xmi.id]',
+    attrib_data  => [qw/isSpecification/],
+    path_data => [
+        { 
+            name  => "dataValue",
+            path  => 'UML:TaggedValue.dataValue/text()',
+        },
+        { 
+            name  => "name",
+            path  => 'xmiDeref(UML:TaggedValue.type/UML:TagDefinition)/@name',
+        },
+    ],
+};
 
 $spec12->{class} = {
     name    => "class",
@@ -89,23 +106,6 @@ $spec12->{class} = {
     ],
 };
 
-$spec12->{taggedValue} = {
-    name   => "taggedValue",
-    plural => "taggedValues",
-    default_path => '//UML:TaggedValue[@xmi.id]',
-    attrib_data  => [qw/isSpecification/],
-    path_data => [
-        { 
-            name  => "dataValue",
-            path  => 'UML:TaggedValue.dataValue/text()',
-        },
-        { 
-            name  => "name",
-            path  => 'xmiDeref(UML:TaggedValue.type/UML:TagDefinition)/@name',
-        },
-    ],
-};
-
 $spec12->{attribute} = {
     name => "attribute",
     plural => "attributes",
@@ -143,6 +143,7 @@ $spec12->{attribute} = {
 $spec12->{dataType} = {
     name   => "datatype",
     plural => "datatypes",
+	isRoot => 1,
     default_path => '//UML:DataType[@xmi.id]',
     attrib_data  =>
         [qw/name visibility isSpecification isRoot isLeaf isAbstract/],
@@ -268,19 +269,36 @@ $spec12->{AssociationEnd} = {
             class => "class", 
             multiplicity => "1",
         },
+        {
+            name  => "multiplicity",
+            #path  => "xmiDeref(UML:AssociationEnd.multiplicity/UML:Multiplicity)",
+            path  => 'UML:AssociationEnd.multiplicity/UML:Multiplicity',
+            class => "multiplicity", 
+            multiplicity => "1",
+        },
+    ],
+};
+
+$spec12->{multiplicity} = {
+    name   => "multiplicity",
+    plural => "multiplicities",
+    default_path => '//UML:Multiplicity[@xmi.id]',
+    attrib_data  => [qw//],
+    path_data => [
+        { 
+            name  => "rangeLower",
+            path  => 'xmiDeref(UML:Multiplicity.range/UML:MultiplicityRange)/@lower',
+        },
+        { 
+            name  => "rangeUpper",
+            path  => 'xmiDeref(UML:Multiplicity.range/UML:MultiplicityRange)/@upper',
+        },
     ],
 };
 
 # Set the spec and have the get_* methods generated
 __PACKAGE__->XmiSpec($spec12);
 
-#-----------------------------------------------------------------------------
-
-# Test override
-# sub get_classes {
-# 	print "HELLO 1.2\n";
-# 	shift->SUPER::get_classes(@_);
-# }
 
 1; #===========================================================================
 
