@@ -1,14 +1,40 @@
--   Diagram producer could benefit from some real graphing algorithms to
-    better distribute the boxes.
-
--   Some way to deeply check to schema objects, e.g., for testing I
+*   Some way to deeply check to schema objects, e.g., for testing I
     parse a MySQL schema, translate to Oracle, then parse the created
     Oracle schema and want to check the two schema objects.
 
--   Add parsers and producers for Torque XML/DB schema
-    (http://db.apache.org/torque/)
+*   Explore some way to pass an open database handle instead of a
+    schema and then query through DBI methods to get the schema
+    definition, somewhat a la SQL::Schema (which only works with
+    Oracle right now)
 
--   Allow xSV/Excel parsers to produce INSERT statements of data in source
-    files, properly quoting strings
+*   Add "CREATE VIEW" support to existing parsers
 
--   Allow pass through of INSERT statements (e.g., default data)
+*   At least allow more pass-through of INSERT, DELETE, and UPDATE
+    statements
+
+*   Add INSERT statements for xSV, Excel parsers to automatically
+    create INSERTs for each row of data in the source file
+
+*   Fix Sybase parser (which means really figuring out the dump format
+    we want to parse -- Sam, can you recommend something?)
+
+*   Add more parsers (though I need some ideas -- probably at least
+    one for SQLite since we have that producer)
+
+*   Somehow merge ClassDBI producer with CGI::FormBuilder or Template
+    Toolkit and some sort of automated CGI builder to create
+    view/create/edit/delete forms for objects based on schema defs
+
+*   Embetter the Diagram producer to use some real graphing algorithms
+    to distribute the tables so that the lines don't overlap so badly
+
+*   Integrate more with some standard XML schema representations,
+    maybe like Torque DB (http://db.apache.org/torque/), add parsers
+    and producers
+
+*   Possibly write a basic ANSI-92 SQL parser which could be extended
+    when writing other new parsers -- can anyone help me nail down a
+    URL that describes in detail that spec?
+
+*   Expand sql_translator.cgi to be a frontend for all producer
+    formats, not just the graphical ones;  also improve the interface
