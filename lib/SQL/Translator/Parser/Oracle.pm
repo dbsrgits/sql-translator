@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.17 2004-02-11 21:36:00 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.18 2004-04-22 19:56:28 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -98,7 +98,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -117,7 +117,7 @@ my $parser;
 
 $GRAMMAR = q!
 
-{ my ( %tables, %indices, $table_order, @table_comments ) }
+{ my ( %tables, %indices, %constraints, $table_order, @table_comments ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -128,8 +128,9 @@ $GRAMMAR = q!
 startrule : statement(s) eofile 
     { 
         $return = {
-            tables  => \%tables,
-            indices => \%indices,
+            tables      => \%tables,
+            indices     => \%indices,
+            constraints => \%constraints,
         };
     }
 
@@ -195,14 +196,23 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         1;
     }
 
-create : /create/i /index/i WORD /on/i table_name parens_word_list table_option(?) ';'
+create : /create/i UNIQUE(?) /index/i WORD /on/i table_name parens_word_list table_option(?) ';'
     {
-        my $table_name = $item[5];
-        push @{ $indices{ $table_name } }, {
-            name   => $item[3],
-            type   => 'normal',
-            fields => $item[6][0],
-        };
+        my $table_name = $item[6];
+        if ( $item[2] ) {
+            push @{ $constraints{ $table_name } }, {
+                name   => $item[4],
+                type   => 'unique',
+                fields => $item[7][0],
+            };
+        }
+        else {
+            push @{ $indices{ $table_name } }, {
+                name   => $item[4],
+                type   => 'normal',
+                fields => $item[7][0],
+            };
+        }
     }
 
 # Create anything else (e.g., domain, function, etc.)
@@ -507,6 +517,8 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
 on_delete_do : /on delete/i WORD(s)
     { $item[2] }
 
+UNIQUE : /unique/i { $return = 1 }
+
 WORD : /\w+/
 
 NAME : /\w+/ { $item[1] }
@@ -539,9 +551,10 @@ sub parse {
     die "Parse failed.\n" unless defined $result;
     warn Dumper($result) if $DEBUG;
 
-    my $schema  = $translator->schema;
-    my $indices = $result->{'indices'};
-    my @tables  = sort { 
+    my $schema      = $translator->schema;
+    my $indices     = $result->{'indices'};
+    my $constraints = $result->{'constraints'};
+    my @tables      = sort { 
         $result->{'tables'}{ $a }{'order'} 
         <=> 
         $result->{'tables'}{ $b }{'order'}
@@ -583,6 +596,8 @@ sub parse {
         }
 
         push @{ $tdata->{'indices'} }, @{ $indices->{ $table_name } || [] };
+        push @{ $tdata->{'constraints'} }, 
+             @{ $constraints->{ $table_name } || [] };
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
             my $index  =  $table->add_index(
