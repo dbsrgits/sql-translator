@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.18 2003-06-24 03:50:43 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.19 2003-06-25 02:04:33 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -41,6 +41,7 @@ sub produce {
 	
     $create .= "package " . $translator->format_package_name('DBI'). ";\n\n";
 	
+	$create .= "use strict;\n\n";
     $create .= "my \$USER = '';\n";
     $create .= "my \$PASS = '';\n\n";
 	
@@ -64,8 +65,9 @@ sub produce {
                 "\n#\n"
         }
 
-        $create .= "package ".$translator->format_package_name($table_name).";\n";
-		$create .= "use base ".$translator->format_package_name('DBI').";\n";
+        $create .= "package ".$translator->format_package_name($table_name).";\n\n";
+		$create .= "use strict;\n";
+		$create .= "use base qw(".$translator->format_package_name('DBI').");\n";
         $create .= "use mixin 'Class::DBI::Join';\n";
         $create .= "use Class::DBI::Pager;\n\n";
 		
@@ -97,9 +99,9 @@ sub produce {
                 my @fields     = $fk->fields;
 
               $create .= $translator->format_package_name($table_name). 
-                    "->has_a(\n    " .
+                    "->hasa(\n    '" .
                     $translator->format_package_name($ref_table). 
-                    " => '$field_name'\n);\n\n";
+                    "' => '$field_name'\n);\n\n";
               $create .= "sub " .
                     $translator->format_fk_name($ref_table, $field_name).
                     " {\n    return shift->$field_name\n}\n\n";
