@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.4 2002-03-21 18:50:53 dlc Exp $
+# $Id: Translator.pm,v 1.5 2002-03-26 12:46:54 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -57,7 +57,7 @@ contributing their parsers or producers back to the project.
 
 use strict;
 use vars qw($VERSION $DEFAULT_SUB $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 # ----------------------------------------------------------------------
@@ -126,6 +126,13 @@ sub new {
     $self->producer($args->{'producer'} || $args->{'to'}   || $DEFAULT_SUB);
 
     # ------------------------------------------------------------------
+    # Set the parser_args and producer_args
+    # ------------------------------------------------------------------
+    for my $pargs (qw(parser_args producer_args)) {
+        $self->$pargs($args->{$pargs}) if defined $args->{$pargs};
+    }
+
+    # ------------------------------------------------------------------
     # Clear the error
     # ------------------------------------------------------------------
     $self->error_out("");
@@ -173,7 +180,7 @@ instead of the default "produce".
   # This will invoke My::Groovy::Producer::transmogrify($tr, $data),
   # assuming that My::Groovy::Producer::transmogrify is not a module
   # on disk.
-  # $tr->producer("My::Groovy::Producer::transmogrify);
+  $tr->producer("My::Groovy::Producer::transmogrify");
 
   # This will invoke the referenced subroutine directly, as
   # $subref->($tr, $data);
@@ -183,6 +190,25 @@ There is also a method named B<producer_type>, which is a string
 containing the classname to which the above B<produce> function
 belongs.  In the case of anonymous subroutines, this method returns
 the string "CODE".
+
+Finally, there is a method named B<producer_args>, which is both an
+accessor and a mutator.  Arbitrary data may be stored in name => value
+pairs for the producer subroutine to access:
+
+  sub My::Random::producer {
+      my ($tr, $data) = @_;
+      my $pr_args = $tr->producer_args();
+
+      # $pr_args is a hashref.
+
+Extra data passed to the B<producer> method is passed to
+B<producer_args>:
+
+  $tr->producer("xSV", delimiter => ',\s*');
+
+  # In SQL::Translator::Producer::xSV:
+  my $args = $tr->producer_args;
+  my $delimiter = $args->{'delimiter'}; # value is => ,\s*
 
 =cut
 
@@ -221,7 +247,7 @@ sub producer {
             # {{{ get code reference and assign
             $self->{'producer'} = \&{ "$producer\::$func_name" };
             $self->{'producer_type'} = $producer;
-            $self->debug("Got 'producer': $producer\::$func_name");
+            $self->debug("Got producer: $producer\::$func_name");
             # }}}
         } # }}}
 
@@ -243,12 +269,34 @@ sub producer {
 
         # At this point, $self->{'producer'} contains a subroutine
         # reference that is ready to run
+
+        # {{{ Anything left?  If so, it's producer_args
+        $self->produser_args(@_) if (@_);
+        # }}}
     } # }}}
 
     return $self->{'producer'};
 };
 
-sub producer_type { $_[0]->{'producer_type'} }
+# {{{ producer_type
+# producer_type is an accessor that allows producer subs to get
+# information about their origin.  This is poptentially important;
+# since all producer subs are called as subroutine refernces, there is
+# no way for a producer to find out which package the sub lives in
+# originally, for example.
+sub producer_type { $_[0]->{'producer_type'} } # }}}
+
+# {{{ producer_args
+# Arbitrary name => value pairs of paramters can be passed to a
+# producer using this method.
+sub producer_args {
+    my $self = shift;
+    if (@_) {
+        my $args = isa($_[0], 'HASH') ? shift : { @_ };
+        $self->{'producer_args'} = $args;
+    }
+    $self->{'producer_args'};
+} # }}}
 # }}}
 
 =head2 B<parser>
@@ -273,9 +321,12 @@ entirety of the data to be parsed (or possibly a reference to a string?).
     return $dumper->Dump;
   });
 
+There is also B<parser_type> and B<parser_args>, which perform
+analogously to B<producer_type> and B<producer_args>
+
 =cut
 
-# {{{ parser and parser_type
+# {{{ parser, parser_type, and parser_args
 sub parser {
     my $self = shift;
 
@@ -332,13 +383,24 @@ sub parser {
 
         # At this point, $self->{'parser'} contains a subroutine
         # reference that is ready to run
-    } # }}}
 
+        $self->parser_args(@_) if (@_);
+    } # }}}
 
     return $self->{'parser'};
 }
 
 sub parser_type { $_[0]->{'parser_type'} }
+
+# {{{ parser_args
+sub parser_args {
+    my $self = shift;
+    if (@_) {
+        my $args = isa($_[0], 'HASH') ? shift : { @_ };
+        $self->{'parser_args'} = $args;
+    }
+    $self->{'parser_args'};
+} # }}}
 # }}}
 
 =head2 B<translate>

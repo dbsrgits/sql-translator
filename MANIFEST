@@ -19,5 +19,6 @@ t/04file,fh,string.t
 t/03mysql-to-oracle.t
 t/05bgep-re.t
 t/06xsv.t
+t/07p_args.t
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
