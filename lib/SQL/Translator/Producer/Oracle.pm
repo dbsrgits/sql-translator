@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.7 2002-12-04 01:53:51 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.8 2002-12-11 01:44:54 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 my %translate  = (
@@ -344,7 +344,9 @@ sub produce {
 sub mk_name {
     my ($basename, $type, $scope, $critical) = @_;
     my $basename_orig = $basename;
-    my $max_name      = $max_id_length - (length($type) + 1);
+    my $max_name      = $type 
+                        ? $max_id_length - (length($type) + 1) 
+                        : $max_id_length;
     $basename         = substr( $basename, 0, $max_name ) 
                         if length( $basename ) > $max_name;
     my $name          = $type ? "${type}_$basename" : $basename;
