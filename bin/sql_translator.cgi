@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.cgi,v 1.3 2003-08-14 16:52:38 kycl4rk Exp $
+# $Id: sql_translator.cgi,v 1.4 2003-08-21 02:47:22 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -239,7 +239,7 @@ sub show_form {
                     $q->radio_group(
                         -name    => 'layout',
                         -values  => [ qw( dot neato twopi ) ],
-                        -default => 'neato',
+                        -default => 'dot',
                         -rows    => 3,
                     ),
                 ] ),
