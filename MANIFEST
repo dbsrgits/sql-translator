@@ -6,7 +6,6 @@ MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 README
-SIGNATURE
 TODO
 bin/sqlt
 bin/sqlt-diagram
