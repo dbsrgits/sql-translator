@@ -28,6 +28,13 @@ lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/Raw.pm
 lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/XML.pm
+lib/SQL/Translator/Schema.pm
+lib/SQL/Translator/Schema/Constants.pm
+lib/SQL/Translator/Schema/Constraint.pm
+lib/SQL/Translator/Schema/Field.pm
+lib/SQL/Translator/Schema/Index.pm
+lib/SQL/Translator/Schema/Table.pm
+lib/SQL/Translator/Schema/View.pm
 lib/SQL/Translator/Utils.pm
 lib/SQL/Translator/Validator.pm
 t/01load.t
@@ -42,7 +49,9 @@ t/09auto-dia.t
 t/10excel.t
 t/11normalize.t
 t/12header_comment.t
-t/data/pgsql/Chado-CV-PostGreSQL.sql
+t/13schema.t
+t/14postgres-parser.t
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
+t/data/pgsql/Chado-CV-PostGreSQL.sql

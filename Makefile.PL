@@ -14,15 +14,18 @@ WriteMakefile(
     'PREREQ_PM'    => {
         'Class::Base'             => 0,
         'File::Basename'          => 0,
-        'File::Spec'              => 0,
+        'File::Spec'              => 0,     # Version!
         'GD'                      => 0,
         'GraphViz'                => 0,
         'IO::Dir'                 => 0,
+        'IO::File'                => 0,
+        'IO::Scalar'              => 0,
         'Parse::RecDescent'       => 1.94,
         'Pod::Usage'              => 0,
         'Spreadsheet::ParseExcel' => 0,
+        'Test::More'              => 0,
         'Text::ParseWords'        => 0,
-        'XML::Dumper'             => 0,
+        'XML::Writer'             => 0,
     },
     clean => {
         FILES => '$(DISTNAME)-$(VERSION).tar.gz',
