@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.15 2004-07-08 23:39:38 grommit Exp $
+# $Id: SQLFairy.pm,v 1.16 2004-08-18 20:27:58 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -163,7 +163,7 @@ To convert your old format files simply pass them through the translator;
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -178,6 +178,12 @@ BEGIN {
     import XML::Writer;
 }
 
+# Which schema object attributes (methods) to write as xml elements rather than
+# as attributes. e.g. <comments>blah, blah...</comments>
+my @MAP_AS_ELEMENTS = qw/sql comments action extra/;
+
+
+
 my $Namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 my $Name      = 'sqlf';
 my $PArgs     = {};
@@ -190,6 +196,7 @@ sub produce {
     my $indent      = defined $PArgs->{indent}   ? $PArgs->{indent}   : 2;
     my $io          = IO::Scalar->new;
 
+    # Setup the XML::Writer and set the namespace
     my $prefix = "";
     $prefix    = $Name            if $PArgs->{add_prefix};
     $prefix    = $PArgs->{prefix} if $PArgs->{prefix};
@@ -201,9 +208,9 @@ sub produce {
         DATA_INDENT => $indent,
     );
 
+    # Start the document
     $xml->xmlDecl('UTF-8');
     $xml->comment(header_comment('', ''));
-    #$xml->startTag([ $Namespace => 'schema' ]);
     xml_obj($xml, $schema,
         tag => "schema", methods => [qw/name database/], end_tag => 0 );
 
@@ -298,17 +305,19 @@ sub produce {
 
 # -------------------------------------------------------------------
 #
-# Takes an XML Write, Schema::* object and list of method names
+# Takes an XML::Writer, Schema::* object and list of method names
 # and writes the obect out as XML. All methods values are written as attributes
 # except for comments, sql and action which get written as child data elements.
 #
-# The attributes, tags are written in the same order as the method names are
+# The attributes/tags are written in the same order as the method names are
 # passed.
 #
 # TODO
 # - Should the Namespace be passed in instead of global? Pass in the same
 #   as Writer ie [ NS => TAGNAME ]
 #
+my $elements_re = join("|", @MAP_AS_ELEMENTS);
+$elements_re = qr/^($elements_re)$/;
 sub xml_obj {
     my ($xml, $obj, %args) = @_;
     my $tag                = $args{'tag'}              || '';
@@ -321,7 +330,7 @@ sub xml_obj {
     my @tags;
     my @attr;
     foreach ( grep { defined $obj->$_ } @meths ) {
-        my $what = m/^(sql|comments|action|extra)$/ ? \@tags : \@attr;
+        my $what = m/$elements_re/ ? \@tags : \@attr;
         my $val = $_ eq 'extra'
             ? { $obj->$_ }
             : $obj->$_;
