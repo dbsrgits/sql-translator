@@ -123,7 +123,7 @@ create index cvterm_dbxref_idx2 on cvterm_dbxref (dbxref_id);
 use SQL::Translator;
 use Data::Dumper;
 
-$SQL::Translator::DEBUG = 1;
+$SQL::Translator::DEBUG = 0;
 
 my $tr = SQL::Translator->new(parser   => "PostgreSQL",
                               producer => "MySQL"
