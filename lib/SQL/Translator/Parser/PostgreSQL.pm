@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.40 2004-08-30 18:54:58 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.41 2004-09-17 21:53:35 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -431,6 +431,11 @@ pg_data_type :
             };
         }
     |
+    /interval/i
+        {
+            $return = { type => 'interval' };
+        }
+    |
     /(integer|int4?)/i # interval must come before this
         { 
             $return = {
@@ -498,6 +503,11 @@ pg_data_type :
             $return = { type => 'bytea' };
         }
     |
+    /(timestamptz|timestamp)( with time zone)?/i
+        { 
+            $return = { type => 'timestamp' };
+        }
+    |
     /(timestamptz|timestamp)( without time zone)?/i
         { 
             $return = { type => 'timestamp' };
@@ -511,7 +521,7 @@ pg_data_type :
             };
         }
     |
-    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar)/i
+    /(bit|box|cidr|circle|date|inet|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar)/i
         { 
             $return = { type => $item[1] };
         }
