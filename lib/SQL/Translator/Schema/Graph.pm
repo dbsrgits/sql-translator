@@ -3,6 +3,7 @@ package SQL::Translator::Schema::Graph;
 use strict;
 
 use Data::Dumper;
+$Data::Dumper::Maxdepth = 3;
 
 use SQL::Translator::Schema::Graph::Node;
 use SQL::Translator::Schema::Graph::Edge;
@@ -74,13 +75,11 @@ sub init {
 						   thatfield => $self->translator->schema->get_table($field->foreign_key_reference->reference_table)->get_field(($field->foreign_key_reference->reference_fields)[0])
 						  );
 
-#	  $node->edgecount($that->name, $node->edgecount($that->name)+1);
 	  $node->edgecount($that->name, $node->edgecount($that->name)+1);
 
 	  $node->has($that->name, $node->has($that->name)+1);
 	  $that->many($node->name, $that->many($node->name)+1);
 
-#	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
 	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
 
       #warn "\t" . $node->name . "\t" . $node->edgecount($that->name);
@@ -157,9 +156,17 @@ sub init {
 		  $inode1->via($inode2->name,$inode1->via($inode2->name)+1);
 		  $inode2->via($inode1->name,$inode2->via($inode1->name)+1);
 		}
+#warn Dumper($cedge);
 
 		$inode1->push_compoundedges($cedge);
 		$inode2->push_compoundedges($cedge) unless $inode1 eq $inode2;
+#        if($inode1->name ne $inode2->name){
+#          my $flipped_cedge = $cedge;
+#          foreach my $flipped_cedge_edge ($flipped_cedge->edges){
+#            warn Dumper $flipped_cedge_edge;
+#            warn "\t". Dumper $flipped_cedge_edge->flip;
+#          }
+#        }
 	  }
 	}
   }
