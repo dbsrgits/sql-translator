@@ -4,7 +4,6 @@
 use strict;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
-use File::Temp qw(tempfile);
 use FindBin qw($Bin);
 use Test::More;
 
