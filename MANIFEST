@@ -7,11 +7,11 @@ MANIFEST.SKIP
 Makefile.PL
 README
 TODO
-bin/sql_translator.cgi
-bin/sql_translator.pl
-bin/sqlt-diagram.pl
-bin/sqlt-dumper.pl
-bin/sqlt-graph.pl
+bin/sqlt
+bin/sqlt.cgi
+bin/sqlt-diagram
+bin/sqlt-dumper
+bin/sqlt-graph
 lib/SQL/Translator.pm
 lib/SQL/Translator/Parser.pm
 lib/SQL/Translator/Parser/Excel.pm
