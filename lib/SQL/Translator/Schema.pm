@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.3 2003-05-05 04:33:22 kycl4rk Exp $
+# $Id: Schema.pm,v 1.4 2003-05-09 16:53:21 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -107,6 +107,7 @@ not be created.
             $self->error( $table_class->error );
     }
 
+    $table->order( ++$TABLE_ORDER );
     my $table_name = $table->name or return $self->error('No table name');
 
     if ( defined $self->{'tables'}{ $table_name } ) {
@@ -114,7 +115,6 @@ not be created.
     }
     else {
         $self->{'tables'}{ $table_name } = $table;
-        $self->{'tables'}{ $table_name }{'order'} = ++$TABLE_ORDER;
     }
 
     return $table;
@@ -152,6 +152,7 @@ not be created.
         $view = $view_class->new( \%args ) or return $view_class->error;
     }
 
+    $view->order( ++$VIEW_ORDER );
     my $view_name = $view->name or return $self->error('No view name');
 
     if ( defined $self->{'views'}{ $view_name } ) { 
@@ -159,7 +160,6 @@ not be created.
     }
     else {
         $self->{'views'}{ $view_name } = $view;
-        $self->{'views'}{ $view_name }{'order'} = ++$VIEW_ORDER;
     }
 
     return $view;
@@ -241,7 +241,10 @@ Returns all the tables as an array or array reference.
 =cut
 
     my $self   = shift;
-    my @tables = sort { $a->{'order'} <=> $b->{'order'} } 
+    my @tables = 
+        map  { $_->[1] } 
+        sort { $a->[0] <=> $b->[0] } 
+        map  { [ $_->order, $_ ] }
         values %{ $self->{'tables'} };
 
     if ( @tables ) {
@@ -287,7 +290,10 @@ Returns all the views as an array or array reference.
 =cut
 
     my $self  = shift;
-    my @views = sort { $a->{'order'} <=> $b->{'order'} } 
+    my @views = 
+        map  { $_->[1] } 
+        sort { $a->[0] <=> $b->[0] } 
+        map  { [ $_->order, $_ ] }
         values %{ $self->{'views'} };
 
     if ( @views ) {
@@ -315,6 +321,13 @@ Get or set the schema's name.  (optional)
     my $self = shift;
     $self->{'name'} = shift if @_;
     return $self->{'name'} || '';
+}
+
+# ----------------------------------------------------------------------
+sub DESTROY {
+    my $self = shift;
+    undef $_ for values %{ $self->{'tables'} };
+    undef $_ for values %{ $self->{'views'}  };
 }
 
 1;
