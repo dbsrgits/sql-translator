@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.38 2004-09-17 21:54:43 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.39 2004-09-20 20:22:47 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -126,19 +126,19 @@ sub produce {
             # Oracle "number" type -- figure best MySQL type
             #
             if ( lc $data_type eq 'number' ) {
-                # not an integer
-                if ( scalar @size > 1 ) {
-                    $data_type = 'double';
+                if ( @size && $size[0] > 0 ) {
+                    # not an integer
+                    if ( scalar @size > 1 ) {
+                        $data_type = 'double';
+                    }
+                    elsif ( $size[0] >= 12 ) {
+                        $data_type = 'bigint';
+                    }
+                    elsif ( $size[0] <= 1 ) {
+                        $data_type = 'tinyint';
+                    }
                 }
-                elsif ( $size[0] >= 12 ) {
-                    $data_type = 'bigint';
-                }
-                elsif ( $size[0] <= 1 ) {
-                    $data_type = 'tinyint';
-                }
-                else {
-                    $data_type = 'int';
-                }
+                $data_type ||= 'int';
             }
             #
             # Convert a large Oracle varchar to "text"
