@@ -10,7 +10,6 @@ bin/sqlt-diagram.pl
 bin/sqlt-graph.pl
 bin/sql_translator.pl
 bin/sql_translator.cgi
-bin/sqltsh
 lib/SQL/Translator/Parser.pm
 lib/SQL/Translator/Parser/Excel.pm
 lib/SQL/Translator/Parser/MySQL.pm
@@ -36,7 +35,6 @@ lib/SQL/Translator/Schema/Field.pm
 lib/SQL/Translator/Schema/Index.pm
 lib/SQL/Translator/Schema/Table.pm
 lib/SQL/Translator/Schema/View.pm
-lib/SQL/Translator/Shell.pm
 lib/SQL/Translator/Utils.pm
 lib/SQL/Translator.pm
 t/01load.t
