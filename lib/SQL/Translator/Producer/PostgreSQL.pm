@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.11 2003-06-23 21:47:30 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.12 2003-08-16 20:12:09 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -196,7 +196,8 @@ sub produce {
             my $data_type = lc $field->data_type;
             my %extra     = $field->extra;
             my $list      = $extra{'list'} || [];
-            my $commalist = join ",", @$list;
+            # \todo deal with embedded quotes
+            my $commalist = "'" . join("','", @$list) . "'";
             my $seq_name;
 
             if ( $data_type eq 'enum' ) {
