@@ -6,6 +6,7 @@ MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 README
+SIGNATURE
 TODO
 bin/sqlt
 bin/sqlt-diagram
@@ -95,3 +96,4 @@ t/data/template/basic.tt
 t/data/xml/schema-basic.xml
 t/data/xml/schema-basic-attribs.xml
 META.yml                                Module meta-data (added by MakeMaker)
+SIGNATURE                                Public-key signature (added by MakeMaker)
