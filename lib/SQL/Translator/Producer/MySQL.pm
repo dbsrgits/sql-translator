@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.28 2003-10-15 18:55:11 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.29 2004-01-25 18:11:42 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -46,7 +46,7 @@ for fields, etc.).
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -135,7 +135,7 @@ sub produce {
                 $data_type = $translate{ $data_type };
             }
 
-            @size = () if $data_type eq 'text';
+            @size = () if $data_type =~ /(text|blob)/i;
 
             $field_def .= " $data_type";
             
