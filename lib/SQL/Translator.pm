@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.24 2003-04-24 16:15:58 kycl4rk Exp $
+# $Id: Translator.pm,v 1.25 2003-05-06 12:44:54 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -657,7 +657,10 @@ sub load {
     my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
     return 1 if $INC{$module};
 
-    eval { require $module };
+    eval {
+        require $module;
+        $module->import(@_);
+    };
 
     return __PACKAGE__->error($@) if ($@);
     return 1;
@@ -762,7 +765,7 @@ would use the Postgres parser and the Oracle producer.
 
 =head1 CONSTRUCTOR
 
-The constructor is called B<new>, and accepts a optional hash of options.
+The constructor is called C<new>, and accepts a optional hash of options.
 Valid options are:
 
 =over 4
@@ -803,12 +806,12 @@ advantage is gained by passing options to the constructor.
 
 =head1 METHODS
 
-=head2 B<add_drop_table>
+=head2 add_drop_table
 
 Toggles whether or not to add "DROP TABLE" statements just before the 
 create definitions.
 
-=head2 B<custom_translate>
+=head2 custom_translate
 
 Allows the user to override default translation of fields.  For example,
 if a MySQL "text" field would normally be converted to a "long" for Oracle,
@@ -816,26 +819,26 @@ the user could specify to change it to a "CLOB."  Accepts a hashref where
 keys are the "from" value and values are the "to," returns the current
 value of the field.
 
-=head2 B<no_comments>
+=head2 no_comments
 
 Toggles whether to print comments in the output.  Accepts a true or false
 value, returns the current value.
 
-=head2 B<producer>
+=head2 producer
 
-The B<producer> method is an accessor/mutator, used to retrieve or
+The C<producer> method is an accessor/mutator, used to retrieve or
 define what subroutine is called to produce the output.  A subroutine
 defined as a producer will be invoked as a function (I<not a method>)
 and passed 2 parameters: its container C<SQL::Translator> instance and a
 data structure.  It is expected that the function transform the data
 structure to a string.  The C<SQL::Transformer> instance is provided for
 informational purposes; for example, the type of the parser can be
-retrieved using the B<parser_type> method, and the B<error> and
-B<debug> methods can be called when needed.
+retrieved using the C<parser_type> method, and the C<error> and
+C<debug> methods can be called when needed.
 
 When defining a producer, one of several things can be passed in:  A
-module name (e.g., C<My::Groovy::Producer>, a module name relative to
-the C<SQL::Translator::Producer> namespace (e.g., MySQL), a module
+module name (e.g., C<My::Groovy::Producer>), a module name relative to
+the C<SQL::Translator::Producer> namespace (e.g., C<MySQL>), a module
 name and function combination (C<My::Groovy::Producer::transmogrify>),
 or a reference to an anonymous subroutine.  If a full module name is
 passed in (for the purposes of this method, a string containing "::"
@@ -844,8 +847,8 @@ function called "produce" will be invoked: C<$modulename::produce>.
 If $modulename cannot be loaded, the final portion is stripped off and
 treated as a function.  In other words, if there is no file named
 F<My/Groovy/Producer/transmogrify.pm>, C<SQL::Translator> will attempt
-to load F<My/Groovy/Producer.pm> and use transmogrify as the name of
-the function, instead of the default "produce".
+to load F<My/Groovy/Producer.pm> and use C<transmogrify> as the name of
+the function, instead of the default C<produce>.
 
   my $tr = SQL::Translator->new;
 
@@ -864,12 +867,12 @@ the function, instead of the default "produce".
   # $subref->($tr, $data);
   $tr->producer(\&my_producer);
 
-There is also a method named B<producer_type>, which is a string
-containing the classname to which the above B<produce> function
+There is also a method named C<producer_type>, which is a string
+containing the classname to which the above C<produce> function
 belongs.  In the case of anonymous subroutines, this method returns
 the string "CODE".
 
-Finally, there is a method named B<producer_args>, which is both an
+Finally, there is a method named C<producer_args>, which is both an
 accessor and a mutator.  Arbitrary data may be stored in name => value
 pairs for the producer subroutine to access:
 
@@ -879,8 +882,8 @@ pairs for the producer subroutine to access:
 
       # $pr_args is a hashref.
 
-Extra data passed to the B<producer> method is passed to
-B<producer_args>:
+Extra data passed to the C<producer> method is passed to
+C<producer_args>:
 
   $tr->producer("xSV", delimiter => ',\s*');
 
@@ -888,11 +891,11 @@ B<producer_args>:
   my $args = $tr->producer_args;
   my $delimiter = $args->{'delimiter'}; # value is ,\s*
 
-=head2 B<parser>
+=head2 parser
 
-The B<parser> method defines or retrieves a subroutine that will be
+The C<parser> method defines or retrieves a subroutine that will be
 called to perform the parsing.  The basic idea is the same as that of
-B<producer> (see above), except the default subroutine name is
+C<producer> (see above), except the default subroutine name is
 "parse", and will be invoked as C<$module_name::parse($tr, $data)>.
 Also, the parser subroutine will be passed a string containing the
 entirety of the data to be parsed.
@@ -910,10 +913,10 @@ entirety of the data to be parsed.
     return $dumper->Dump;
   });
 
-There is also B<parser_type> and B<parser_args>, which perform
-analogously to B<producer_type> and B<producer_args>
+There is also C<parser_type> and C<parser_args>, which perform
+analogously to C<producer_type> and C<producer_args>
 
-=head2 B<show_warnings>
+=head2 show_warnings
 
 Toggles whether to print warnings of name conflicts, identifier
 mutations, etc.  Probably only generated by producers to let the user
@@ -921,15 +924,15 @@ know when something won't translate very smoothly (e.g., MySQL "enum"
 fields into Oracle).  Accepts a true or false value, returns the
 current value.
 
-=head2 B<translate>
+=head2 translate
 
-The B<translate> method calls the subroutines referenced by the
-B<parser> and B<producer> data members (described above).  It accepts
+The C<translate> method calls the subroutines referenced by the
+C<parser> and C<producer> data members (described above).  It accepts
 as arguments a number of things, in key => value format, including
 (potentially) a parser and a producer (they are passed directly to the
-B<parser> and B<producer> methods).
+C<parser> and C<producer> methods).
 
-Here is how the parameter list to B<translate> is parsed:
+Here is how the parameter list to C<translate> is parsed:
 
 =over
 
@@ -967,12 +970,12 @@ You get the idea.
 
 =back
 
-=head2 B<filename>, B<data>
+=head2 filename, data
 
-Using the B<filename> method, the filename of the data to be parsed
-can be set. This method can be used in conjunction with the B<data>
-method, below.  If both the B<filename> and B<data> methods are
-invoked as mutators, the data set in the B<data> method is used.
+Using the C<filename> method, the filename of the data to be parsed
+can be set. This method can be used in conjunction with the C<data>
+method, below.  If both the C<filename> and C<data> methods are
+invoked as mutators, the data set in the C<data> method is used.
 
     $tr->filename("/my/data/files/create.sql");
 
@@ -985,15 +988,15 @@ or:
     };
     $tr->data(\$create_script);
 
-B<filename> takes a string, which is interpreted as a filename.
-B<data> takes a reference to a string, which is used as the data to be
+C<filename> takes a string, which is interpreted as a filename.
+C<data> takes a reference to a string, which is used as the data to be
 parsed.  If a filename is set, then that file is opened and read when
-the B<translate> method is called, as long as the data instance
+the C<translate> method is called, as long as the data instance
 variable is not set.
 
 =pod
 
-=head2 B<trace>
+=head2 trace
 
 Turns on/off the tracing option of Parse::RecDescent.
 
