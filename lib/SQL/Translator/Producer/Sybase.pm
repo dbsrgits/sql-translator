@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.6 2003-08-18 15:43:15 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.7 2003-10-04 00:06:39 phrrngtn Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -31,7 +31,7 @@ SQL::Translator::Producer::Sybase - Sybase producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -312,6 +312,38 @@ sub produce {
             @index_defs, 
             ''
         );
+    }
+
+    foreach my $view ( $schema->get_views ) {
+        my (@comments, $view_name);
+
+        $view_name = $view->name();
+        push @comments, "--\n-- View: $view_name\n--" unless $no_comments;
+
+        # text of view is already a 'create view' statement so no need
+        # to do anything fancy.
+
+        $output .= join("\n\n",
+                       @comments,
+                       $view->sql(),
+                       );
+    }
+
+
+    foreach my $procedure ( $schema->get_procedures ) {
+        my (@comments, $procedure_name);
+
+        $procedure_name = $procedure->name();
+        push @comments, "--\n-- Procedure: $procedure_name\n--" unless $no_comments;
+
+        # text of procedure  already has the 'create procedure' stuff so there
+        # is no need to do anything fancy. However, we should think about doing fancy stuff
+        # with granting permissions and so on.
+
+        $output .= join("\n\n",
+                       @comments,
+                       $procedure->sql(),
+                       );
     }
 
     if ( $WARN ) {
