@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.18 2004-01-03 04:03:56 allenday Exp $
+# $Id: Turnkey.pm,v 1.19 2004-01-09 02:41:35 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -339,6 +339,8 @@ use strict;
 use base qw(Class::DBI::Pg);
 
 [% baseclass %]->set_db('Main', '[% db_dsn  %]', '[% db_user %]', '[% db_pass %]', {AutoCommit=>1});
+sub search_ilike { shift->_do_search(ILIKE => [% "\@\_" %] ) }
+
 
 [% FOREACH node = nodes %]
     [% printPackage(node.value) %]
