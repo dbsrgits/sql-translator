@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Trigger;
 
 # ----------------------------------------------------------------------
-# $Id: Trigger.pm,v 1.1 2003-10-03 23:56:41 kycl4rk Exp $
+# $Id: Trigger.pm,v 1.2 2003-10-08 17:33:47 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -36,6 +36,7 @@ SQL::Translator::Schema::Trigger - SQL::Translator trigger object
       fields              => [],       # fields if event is "update"
       on_table            => 'foo',    # table name
       action              => '...',    # text of trigger
+      schema              => $schema,  # Schema object
   );
 
 =head1 DESCRIPTION
@@ -53,7 +54,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -71,7 +72,10 @@ Object constructor.
     my ( $self, $config ) = @_;
 
     for my $arg ( 
-        qw[ name perform_action_when database_event fields on_table action ] 
+        qw[ 
+            name perform_action_when database_event fields 
+            on_table action schema
+        ] 
     ) {
         next unless $config->{ $arg };
         $self->$arg( $config->{ $arg } );# or return;
@@ -287,6 +291,36 @@ Get or set the trigger's order.
     }
 
     return $self->{'order'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub schema {
+
+=pod
+
+=head2 schema
+
+Get or set the trigger's schema object.
+
+  $trigger->schema( $schema );
+  my $schema = $trigger->schema;
+
+=cut
+
+    my $self = shift;
+    if ( my $arg = shift ) {
+        return $self->error('Not a schema object') unless
+            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema' );
+        $self->{'schema'} = $arg;
+    }
+
+    return $self->{'schema'};
+}
+
+# ----------------------------------------------------------------------
+sub DESTROY {
+    my $self = shift;
+    undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
