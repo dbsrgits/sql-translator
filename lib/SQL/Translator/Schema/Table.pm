@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.29 2004-11-05 15:03:10 grommit Exp $
+# $Id: Table.pm,v 1.30 2004-11-27 16:32:46 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -167,6 +167,43 @@ C<SQL::Translator::Schema::Constraint> object.
 }
 
 # ----------------------------------------------------------------------
+sub drop_constraint {
+
+=pod
+
+=head2 drop_constraint
+
+Remove a constraint from the table. Returns the constraint object if the index
+was found and removed, an error otherwise. The single parameter can be either
+an index name or an C<SQL::Translator::Schema::Constraint> object.
+
+  $table->drop_constraint('myconstraint');
+
+=cut
+
+    my $self             = shift;
+    my $constraint_class = 'SQL::Translator::Schema::Constraint';
+    my $constraint_name;
+
+    if ( UNIVERSAL::isa( $_[0], $constraint_class ) ) {
+        $constraint_name = shift->name;
+    }
+    else {
+        $constraint_name = shift;
+    }
+
+    if ( ! grep { $_->name eq $constraint_name } @ { $self->{'constraints'} } ) { 
+        return $self->error(qq[Can't drop constraint: "$constraint_name" doesn't exist]);
+    }
+
+    my @cs = @{ $self->{'constraints'} };
+    my ($constraint_id) = grep { $cs[$_]->name eq  $constraint_name } (0..$#cs);
+    my $constraint = splice(@{$self->{'constraints'}}, $constraint_id, 1);
+
+    return $constraint;
+}
+
+# ----------------------------------------------------------------------
 sub add_index {
 
 =pod
@@ -203,6 +240,43 @@ C<SQL::Translator::Schema::Index> object.
     }
 
     push @{ $self->{'indices'} }, $index;
+    return $index;
+}
+
+# ----------------------------------------------------------------------
+sub drop_index {
+
+=pod
+
+=head2 drop_index
+
+Remove an index from the table. Returns the index object if the index was
+found and removed, an error otherwise. The single parameter can be either
+an index name of an C<SQL::Translator::Schema::Index> object.
+
+  $table->drop_index('myindex');
+
+=cut
+
+    my $self        = shift;
+    my $index_class = 'SQL::Translator::Schema::Index';
+    my $index_name;
+
+    if ( UNIVERSAL::isa( $_[0], $index_class ) ) {
+        $index_name = shift->name;
+    }
+    else {
+        $index_name = shift;
+    }
+
+    if ( ! grep { $_->name eq  $index_name } @{ $self->{'indices'} }) { 
+        return $self->error(qq[Can't drop index: "$index_name" doesn't exist]);
+    }
+
+    my @is = @{ $self->{'indices'} };
+    my ($index_id) = grep { $is[$_]->name eq  $index_name } (0..$#is);
+    my $index = splice(@{$self->{'indices'}}, $index_id, 1);
+
     return $index;
 }
 
@@ -256,6 +330,58 @@ existing field, you will get an error and the field will not be created.
     }
     else {
         $self->{'fields'}{ $field_name } = $field;
+    }
+
+    return $field;
+}
+# ----------------------------------------------------------------------
+sub drop_field {
+
+=pod
+
+=head2 drop_field
+
+Remove a field from the table. Returns the field object if the field was 
+found and removed, an error otherwise. The single parameter can be either 
+a field name or an C<SQL::Translator::Schema::Field> object.
+
+  $table->drop_field('myfield');
+
+=cut
+
+    my $self        = shift;
+    my $field_class = 'SQL::Translator::Schema::Field';
+    my $field_name;
+
+    if ( UNIVERSAL::isa( $_[0], $field_class ) ) {
+        $field_name = shift->name;
+    }
+    else {
+        $field_name = shift;
+    }
+    my %args = @_;
+    my $cascade = $args{'cascade'};
+
+    if ( ! exists $self->{'fields'}{ $field_name } ) {
+        return $self->error(qq[Can't drop field: "$field_name" doesn't exists]);
+    }
+
+    my $field = delete $self->{'fields'}{ $field_name };
+
+    if ( $cascade ) {
+        # Remove this field from all indices using it
+        foreach my $i ($self->get_indices()) {
+            my @fs = $i->fields();
+            @fs = grep { $_ ne $field->name } @fs;
+            $i->fields(@fs);
+        }
+
+        # Remove this field from all constraints using it
+        foreach my $c ($self->get_constraints()) {
+            my @cs = $c->fields();
+            @cs = grep { $_ ne $field->name } @cs;
+            $c->fields(@cs);
+        }
     }
 
     return $field;

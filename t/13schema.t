@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 206;
+use Test::More tests => 232;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator' );
@@ -56,15 +56,27 @@ require_ok( 'SQL::Translator::Schema' );
         '... because "foo" exists' );
 
     $redundant_table = $schema->add_table(name => '');
-    is( $redundant_table, undef, qq[Can't add an anonymouse table...] );
+    is( $redundant_table, undef, qq[Can't add an anonymous table...] );
     like( $schema->error, qr/No table name/i,
-        '... because if has no name ' );
+        '... because it has no name ' );
 
     $redundant_table = SQL::Translator::Schema::Table->new(name => '');
-    is( $redundant_table, undef, qq[Can't create an anonymouse table] );
+    is( $redundant_table, undef, qq[Can't create an anonymous table] );
     like( SQL::Translator::Schema::Table->error, qr/No table name/i,
-        '... because if has no name ' );
+        '... because it has no name ' );
 
+    #
+    # $schema-> drop_table
+    #
+    my $dropped_table = $schema->drop_table($foo_table->name, cascade => 1);
+    isa_ok($dropped_table, 'SQL::Translator::Schema::Table', 'Dropped table "foo"' );
+    $schema->add_table($foo_table);
+    my $dropped_table2 = $schema->drop_table($foo_table, cascade => 1);
+    isa_ok($dropped_table2, 'SQL::Translator::Schema::Table', 'Dropped table "foo" by object' );
+    my $dropped_table3 = $schema->drop_table($foo_table->name, cascade => 1);
+    like( $schema->error, qr/doesn't exist/, qq[Can't drop non-existant table "foo"] );
+
+    $schema->add_table($foo_table);
     #
     # Table default new
     #
@@ -156,6 +168,19 @@ require_ok( 'SQL::Translator::Schema' );
         'field_names is "foo,f2"' );
 
     #
+    # $table-> drop_field
+    #
+    my $dropped_field = $person_table->drop_field($f2->name, cascade => 1);
+    isa_ok($dropped_field, 'SQL::Translator::Schema::Field', 'Dropped field "f2"' );
+    $person_table->add_field($f2);
+    my $dropped_field2 = $person_table->drop_field($f2, cascade => 1);
+    isa_ok($dropped_field2, 'SQL::Translator::Schema::Field', 'Dropped field "f2" by object' );
+    my $dropped_field3 = $person_table->drop_field($f2->name, cascade => 1);
+    like( $person_table->error, qr/doesn't exist/, qq[Can't drop non-existant field "f2"] );
+
+    $person_table->add_field($f2);
+
+    #
     # Field methods
     #
     is( $f1->name('person_name'), 'person_name',
@@ -225,6 +250,20 @@ require_ok( 'SQL::Translator::Schema' );
     is( $indices->[1]->name, 'bar', '"bar" index' );
 
     #
+    # $table-> drop_index
+    #
+    my $dropped_index = $person_table->drop_index($index1->name);
+    isa_ok($dropped_index, 'SQL::Translator::Schema::Index', 'Dropped index "foo"' );
+    $person_table->add_index($index1);
+    my $dropped_index2 = $person_table->drop_index($index1);
+    isa_ok($dropped_index2, 'SQL::Translator::Schema::Index', 'Dropped index "foo" by object' );
+    is($dropped_index2->name, $index1->name, 'Dropped correct index "foo"');
+    my $dropped_index3 = $person_table->drop_index($index1->name);
+    like( $person_table->error, qr/doesn't exist/, qq[Can't drop non-existant index "foo"] );
+
+    $person_table->add_index($index1);
+
+    #
     # Constraint
     #
     my @constraints = $person_table->get_constraints;
@@ -292,6 +331,20 @@ require_ok( 'SQL::Translator::Schema' );
     is( $constraints->[1]->name, 'bar', '"bar" constraint' );
 
     #
+    # $table-> drop_constraint
+    #
+    my $dropped_con = $person_table->drop_constraint($constraint1->name);
+    isa_ok($dropped_con, 'SQL::Translator::Schema::Constraint', 'Dropped constraint "foo"' );
+    $person_table->add_constraint($constraint1);
+    my $dropped_con2 = $person_table->drop_constraint($constraint1);
+    isa_ok($dropped_con2, 'SQL::Translator::Schema::Constraint', 'Dropped constraint "foo" by object' );
+    is($dropped_con2->name, $constraint1->name, 'Dropped correct constraint "foo"');
+    my $dropped_con3 = $person_table->drop_constraint($constraint1->name);
+    like( $person_table->error, qr/doesn't exist/, qq[Can't drop non-existant constraint "foo"] );
+
+    $person_table->add_constraint($constraint1);
+
+    #
     # View
     #
     my $view = $schema->add_view( name => 'view1' ) or warn $schema->error;
@@ -307,6 +360,20 @@ require_ok( 'SQL::Translator::Schema' );
     my $redundant_view = $schema->add_view(name => 'view2');
     is( $redundant_view, undef, qq[Didn't create another "view2" view...] );
     like( $schema->error, qr/can't create view/i, '... because it exists' );
+
+    #
+    # $schema-> drop_view
+    #
+    my $dropped_view = $schema->drop_view($view->name);
+    isa_ok($dropped_view, 'SQL::Translator::Schema::View', 'Dropped view "view1"' );
+    $schema->add_view($view);
+    my $dropped_view2 = $schema->drop_view($view);
+    isa_ok($dropped_view2, 'SQL::Translator::Schema::View', 'Dropped view "view1" by object' );
+    is($dropped_view2->name, $view->name, 'Dropped correct view "view1"');
+    my $dropped_view3 = $schema->drop_view($view->name);
+    like( $schema->error, qr/doesn't exist/, qq[Can't drop non-existant view "view1"] );
+
+    $schema->add_view($view);
 
     #
     # $schema->get_*
@@ -557,8 +624,22 @@ require_ok( 'SQL::Translator::Schema' );
     my $t1 = $s->get_trigger( $name );
     isa_ok( $t1, 'SQL::Translator::Schema::Trigger', 'Trigger' );
     is( $t1->name, $name, qq[Name is "$name"] );
-}
 
+    #
+    # $schema-> drop_trigger
+    #
+    my $dropped_trig = $s->drop_trigger($t->name);
+    isa_ok($dropped_trig, 'SQL::Translator::Schema::Trigger', 'Dropped trigger "foo_trigger"' );
+    $s->add_trigger($t);
+    my $dropped_trig2 = $s->drop_trigger($t);
+    isa_ok($dropped_trig2, 'SQL::Translator::Schema::Trigger', 'Dropped trigger "foo_trigger" by object' );
+    is($dropped_trig2->name, $t->name, 'Dropped correct trigger "foo_trigger"');
+    my $dropped_trig3 = $s->drop_trigger($t->name);
+    like( $s->error, qr/doesn't exist/, qq[Can't drop non-existant trigger "foo_trigger"] );
+
+    $s->add_trigger($t);
+}
+ 
 #
 # Procedure
 #
@@ -591,4 +672,18 @@ require_ok( 'SQL::Translator::Schema' );
     my $p1 = $s->get_procedure( $name );
     isa_ok( $p1, 'SQL::Translator::Schema::Procedure', 'Procedure' );
     is( $p1->name, $name, qq[Name is "$name"] );
+
+    #
+    # $schema-> drop_procedure
+    #
+    my $dropped_proc = $s->drop_procedure($p->name);
+    isa_ok($dropped_proc, 'SQL::Translator::Schema::Procedure', 'Dropped procedure "foo_proc"' );
+    $s->add_procedure($p);
+    my $dropped_proc2 = $s->drop_procedure($p);
+    isa_ok($dropped_proc2, 'SQL::Translator::Schema::Procedure', 'Dropped procedure "foo_proc" by object' );
+    is($dropped_proc2->name, $p->name, 'Dropped correct procedure "foo_proc"');
+    my $dropped_proc3 = $s->drop_procedure($p->name);
+    like( $s->error, qr/doesn't exist/, qq[Can't drop non-existant procedure "foo_proc"] );
+
+    $s->add_procedure($p);
 }

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.20 2004-11-05 13:19:31 grommit Exp $
+# $Id: Schema.pm,v 1.21 2004-11-27 16:32:16 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,7 +54,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 
@@ -126,17 +126,61 @@ not be created.
 }
 
 # ----------------------------------------------------------------------
+sub drop_table {
+
+=pod
+
+=head2 drop_table
+
+Remove a table from the schema. Returns the table object if the table was found
+and removed, an error otherwise. The single parameter can be either a table
+name or an C<SQL::Translator::Schema::Table> object. The "cascade" parameter
+can be set to 1 to also drop all triggers on the table, default is 0.
+
+  $schema->drop_table('mytable');
+  $schema->drop_table('mytable', cascade => 1);
+
+=cut
+
+    my $self         = shift;
+    my $table_class  = 'SQL::Translator::Schema::Table';
+    my $table_name;
+
+    if ( UNIVERSAL::isa( $_[0], $table_class ) ) {
+        $table_name = shift->name;
+    }
+    else {
+        $table_name = shift;
+    }
+    my %args = @_;
+    my $cascade = $args{'cascade'};
+
+    if ( ! exists $self->{'tables'}{ $table_name } ) {
+        return $self->error(qq[Can't drop table: $table_name" doesn't exist]);
+    }
+
+    my $table = delete $self->{'tables'}{ $table_name };
+
+    if ( $cascade ) {
+        # Drop all triggers on this table
+        $self->drop_trigger() for (grep { $_->on_table eq $table_name }
+                                   @{ $self->{'triggers'}}
+                                  );
+    }
+    return $table;
+}
+
+# ----------------------------------------------------------------------
 sub add_procedure {
 
 =pod
 
 =head2 add_procedure
 
-Add a procedure object.  Returns the new
-SQL::Translator::Schema::Procedure object.  The "name" parameter is
-required.  If you try to create a procedure with the same name as an
-existing procedure, you will get an error and the procedure will not
-be created.
+Add a procedure object.  Returns the new SQL::Translator::Schema::Procedure
+object.  The "name" parameter is required.  If you try to create a procedure
+with the same name as an existing procedure, you will get an error and the
+procedure will not be created.
 
   my $p1 = $schema->add_procedure( name => 'foo' );
   my $p2 = SQL::Translator::Schema::Procedure->new( name => 'bar' );
@@ -174,6 +218,41 @@ be created.
     }
 
     return $procedure;
+}
+# ----------------------------------------------------------------------
+sub drop_procedure {
+
+=pod
+
+=head2 drop_procedure
+
+Remove a procedure from the schema. Returns the procedure object if the
+procedure was found and removed, an error otherwise. The single parameter
+can be either a procedure name or an C<SQL::Translator::Schema::Procedure>
+object.
+
+  $schema->drop_procedure('myprocedure');
+
+=cut
+
+    my $self         = shift;
+    my $proc_class  = 'SQL::Translator::Schema::Procedure';
+    my $proc_name;
+
+    if ( UNIVERSAL::isa( $_[0], $proc_class ) ) {
+        $proc_name = shift->name;
+    }
+    else {
+        $proc_name = shift;
+    }
+
+    if ( ! exists $self->{'procedures'}{ $proc_name } ) {
+        return $self->error(qq[Can't drop procedure: $proc_name" doesn't exist]);
+    }
+
+    my $proc = delete $self->{'procedures'}{ $proc_name };
+
+    return $proc;
 }
 
 # ----------------------------------------------------------------------
@@ -222,6 +301,40 @@ not be created.
 
     return $trigger;
 }
+# ----------------------------------------------------------------------
+sub drop_trigger {
+
+=pod
+
+=head2 drop_trigger
+
+Remove a trigger from the schema. Returns the trigger object if the trigger was
+found and removed, an error otherwise. The single parameter can be either a
+trigger name or an C<SQL::Translator::Schema::Trigger> object.
+
+  $schema->drop_trigger('mytrigger');
+
+=cut
+
+    my $self         = shift;
+    my $trigger_class  = 'SQL::Translator::Schema::Trigger';
+    my $trigger_name;
+
+    if ( UNIVERSAL::isa( $_[0], $trigger_class ) ) {
+        $trigger_name = shift->name;
+    }
+    else {
+        $trigger_name = shift;
+    }
+
+    if ( ! exists $self->{'triggers'}{ $trigger_name } ) {
+        return $self->error(qq[Can't drop trigger: $trigger_name" doesn't exist]);
+    }
+
+    my $trigger = delete $self->{'triggers'}{ $trigger_name };
+
+    return $trigger;
+}
 
 # ----------------------------------------------------------------------
 sub add_view {
@@ -265,6 +378,41 @@ not be created.
     else {
         $self->{'views'}{ $view_name } = $view;
     }
+
+    return $view;
+}
+
+# ----------------------------------------------------------------------
+sub drop_view {
+
+=pod
+
+=head2 drop_view
+
+Remove a view from the schema. Returns the view object if the view was found
+and removed, an error otherwise. The single parameter can be either a view
+name or an C<SQL::Translator::Schema::View> object.
+
+  $schema->drop_view('myview');
+
+=cut
+
+    my $self         = shift;
+    my $view_class  = 'SQL::Translator::Schema::View';
+    my $view_name;
+
+    if ( UNIVERSAL::isa( $_[0], $view_class ) ) {
+        $view_name = shift->name;
+    }
+    else {
+        $view_name = shift;
+    }
+
+    if ( ! exists $self->{'views'}{ $view_name } ) {
+        return $self->error(qq[Can't drop view: $view_name" doesn't exist]);
+    }
+
+    my $view = delete $self->{'views'}{ $view_name };
 
     return $view;
 }
@@ -519,7 +667,7 @@ tables.  Accepts the following arguments:
 
 =over 4
 
-=item * join_pk_only 
+=item * join_pk_only
 
 A True or False argument which determins whether or not to perform 
 the joins from primary keys to fields of the same name in other tables
@@ -573,9 +721,9 @@ A list of fields to skip in the joins
                     reference_table  => $table2->name,
                     reference_fields => $field,
                 );
-            }               
+            }
         }
-    } 
+    }
 
     return 1;
 }
