@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.36 2003-10-15 18:38:23 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.37 2003-10-15 19:46:15 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -330,20 +330,20 @@ sub produce {
             "use Class::DBI::Pager;\n\n",
         );
 
-        #        if ( $from ) {
-        #            $create .= 
-        #                $pkg->{'pkg_name'}."->set_up_table('".$pkg->{'table'}."');\n\n";
-        #        }
-        #        else {
-        #            my $table       = $schema->get_table( $pkg->{'table'} );
-        #            my @field_names = map { $_->name } $table->get_fields;
-        #
-        #            $create .= join("\n",
-        #                $pkg_name."->table('".$pkg->{'table'}."');\n",
-        #                $pkg_name."->columns(All => qw/".
-        #                join(' ', @field_names)."/);\n\n",
-        #            );
-        #        }
+                if ( $from ) {
+                    $create .= 
+                        $pkg->{'pkg_name'}."->set_up_table('".$pkg->{'table'}."');\n\n";
+                }
+                else {
+                    my $table       = $schema->get_table( $pkg->{'table'} );
+                    my @field_names = map { $_->name } $table->get_fields;
+        
+                    $create .= join("\n",
+                        $pkg_name."->table('".$pkg->{'table'}."');\n",
+                        $pkg_name."->columns(All => qw/".
+                        join(' ', @field_names)."/);\n\n",
+                    );
+                }
 
         #
         # The approach here is to do lazy loading on the expensive
@@ -352,38 +352,38 @@ sub produce {
         # strictly data (ie, not references) are treated as essential
         # b/c they don't require much time to set up.
         #
-        $create .= $pkg_name . "->table('" . $pkg->{'table'} . "');\n";
+#        $create .= $pkg_name . "->table('" . $pkg->{'table'} . "');\n";
 
         #
         # Set up primary key field.
         #
-        if ( $pkg->{'_columns_primary'} ) {
-            $create .= $pkg_name
-              . "->columns(Primary   => qw/"
-              . $pkg->{'_columns_primary'} . "/);\n";
-        }
-        else {
-            die "Class::DBI isn't going to like that you don't " .
-              "have a primary key field for table " . $pkg->{'table'};
-        }
+#        if ( $pkg->{'_columns_primary'} ) {
+#            $create .= $pkg_name
+#              . "->columns(Primary   => qw/"
+#              . $pkg->{'_columns_primary'} . "/);\n";
+#        }
+#        else {
+#            die "Class::DBI isn't going to like that you don't " .
+#              "have a primary key field for table " . $pkg->{'table'};
+#        }
 
         #
         # Set up non-FK fields to be populated at construction.
         #
-        if ( $pkg->{'_columns_essential'} ) {
-            $create .= $pkg_name
-              . "->columns(Essential => qw/"
-              . join ( ' ', @{ $pkg->{'_columns_essential'} } ) . "/);\n";
-        }
+#        if ( $pkg->{'_columns_essential'} ) {
+#            $create .= $pkg_name
+#              . "->columns(Essential => qw/"
+#              . join ( ' ', @{ $pkg->{'_columns_essential'} } ) . "/);\n";
+#        }
 
         #
         # Set up FK fields for lazy loading on request.
         #
-        if ( $pkg->{'_columns_others'} ) {
-            $create .= $pkg_name
-              . "->columns(Others    => qw/"
-              . join ( ' ', @{ $pkg->{'_columns_others'} } ) . "/);\n";
-        }
+#        if ( $pkg->{'_columns_others'} ) {
+#            $create .= $pkg_name
+#              . "->columns(Others    => qw/"
+#              . join ( ' ', @{ $pkg->{'_columns_others'} } ) . "/);\n";
+#        }
 
         $create .= "\n";
 
