@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.56 2004-04-22 19:57:29 kycl4rk Exp $
+# $Id: Translator.pm,v 1.57 2004-04-22 19:59:46 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.56 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.57 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -844,6 +844,10 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
 
 =head1 DESCRIPTION
 
+This documentation covers the API for SQL::Translator.  For a more general
+discussion of how to use the modules and scripts, please see
+L<SQL::Translator::Manual>.
+
 SQL::Translator is a group of Perl modules that converts
 vendor-specific SQL table definitions into other formats, such as
 other vendor-specific SQL, ER diagrams, documentation (POD and HTML),
@@ -856,10 +860,6 @@ plug in custom parsers or producers, or to manipulate the parsed data
 via the built-in object model.  Presently only the definition parts of
 SQL are handled (CREATE, ALTER), not the manipulation of data (INSERT,
 UPDATE, DELETE).
-
-This documentation covers the API for SQL::Translator.  For a more general
-discussion of how to use the modules and scripts, please see
-L<SQL::Translator::Manual>.
 
 =head1 CONSTRUCTOR
 
