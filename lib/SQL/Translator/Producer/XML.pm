@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.10 2003-06-11 04:00:44 kycl4rk Exp $
+# $Id: XML.pm,v 1.11 2003-07-31 20:48:23 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,13 +24,14 @@ package SQL::Translator::Producer::XML;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
 use XML::Writer;
 
-my $sqlf_ns = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
+my $namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
+my $name = 'sqlt';
 
 # -------------------------------------------------------------------
 sub produce {
@@ -39,30 +40,30 @@ sub produce {
     my $args       = $translator->producer_args;
 
     my $io          = IO::Scalar->new;
-    my $xml         =  XML::Writer->new(
+    my $xml         = XML::Writer->new(
         OUTPUT      => $io,
         NAMESPACES  => 1,
-        PREFIX_MAP  => { $sqlf_ns => 'sqlf' },
+        PREFIX_MAP  => { $namespace => $name },
         DATA_MODE   => 1,
         DATA_INDENT => 2,
     );
 
     $xml->xmlDecl('UTF-8');
     $xml->comment(header_comment('', ''));
-    $xml->startTag([ $sqlf_ns => 'schema' ]);
+    $xml->startTag([ $namespace => 'schema' ]);
 
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
-        $xml->startTag   ( [ $sqlf_ns => 'table' ] );
-        $xml->dataElement( [ $sqlf_ns => 'name'  ], $table_name );
-        $xml->dataElement( [ $sqlf_ns => 'order' ], $table->order );
+        $xml->startTag   ( [ $namespace => 'table' ] );
+        $xml->dataElement( [ $namespace => 'name'  ], $table_name );
+        $xml->dataElement( [ $namespace => 'order' ], $table->order );
 
         #
         # Fields
         #
-        $xml->startTag( [ $sqlf_ns => 'fields' ] );
+        $xml->startTag( [ $namespace => 'fields' ] );
         for my $field ( $table->get_fields ) {
-            $xml->startTag( [ $sqlf_ns => 'field' ] );
+            $xml->startTag( [ $namespace => 'field' ] );
 
             for my $method ( 
                 qw[ 
@@ -71,41 +72,41 @@ sub produce {
                 ]
             ) {
                 my $val = $field->$method || '';
-                $xml->dataElement( [ $sqlf_ns => $method ], $val )
+                $xml->dataElement( [ $namespace => $method ], $val )
                     if ( defined $val || 
                         ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
-            $xml->endTag( [ $sqlf_ns => 'field' ] );
+            $xml->endTag( [ $namespace => 'field' ] );
         }
 
-        $xml->endTag( [ $sqlf_ns => 'fields' ] );
+        $xml->endTag( [ $namespace => 'fields' ] );
 
         #
         # Indices
         #
-        $xml->startTag( [ $sqlf_ns => 'indices' ] );
+        $xml->startTag( [ $namespace => 'indices' ] );
         for my $index ( $table->get_indices ) {
-            $xml->startTag( [ $sqlf_ns => 'index' ] );
+            $xml->startTag( [ $namespace => 'index' ] );
 
             for my $method ( qw[ fields name options type ] ) {
                 my $val = $index->$method || '';
                    $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                $xml->dataElement( [ $sqlf_ns => $method ], $val )
+                $xml->dataElement( [ $namespace => $method ], $val )
                     if ( defined $val || 
                         ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
-            $xml->endTag( [ $sqlf_ns => 'index' ] );
+            $xml->endTag( [ $namespace => 'index' ] );
         }
-        $xml->endTag( [ $sqlf_ns => 'indices' ] );
+        $xml->endTag( [ $namespace => 'indices' ] );
 
         #
         # Constraints
         #
-        $xml->startTag( [ $sqlf_ns => 'constraints' ] );
+        $xml->startTag( [ $namespace => 'constraints' ] );
         for my $index ( $table->get_constraints ) {
-            $xml->startTag( [ $sqlf_ns => 'constraint' ] );
+            $xml->startTag( [ $namespace => 'constraint' ] );
 
             for my $method ( 
                 qw[ 
@@ -116,19 +117,19 @@ sub produce {
             ) {
                 my $val = $index->$method || '';
                    $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                $xml->dataElement( [ $sqlf_ns => $method ], $val )
+                $xml->dataElement( [ $namespace => $method ], $val )
                     if ( defined $val || 
                         ( !defined $val && $args->{'emit_empty_tags'} ) );
             }
 
-            $xml->endTag( [ $sqlf_ns => 'constraint' ] );
+            $xml->endTag( [ $namespace => 'constraint' ] );
         }
-        $xml->endTag( [ $sqlf_ns => 'constraints' ] );
+        $xml->endTag( [ $namespace => 'constraints' ] );
 
-        $xml->endTag( [ $sqlf_ns => 'table' ] );
+        $xml->endTag( [ $namespace => 'table' ] );
     }
 
-    $xml->endTag([ $sqlf_ns => 'schema' ]);
+    $xml->endTag([ $namespace => 'schema' ]);
     $xml->end;
 
     return $io;
@@ -152,72 +153,12 @@ SQL::Translator::Producer::XML - XML output
 
 =head1 DESCRIPTION
 
-Meant to create some sort of usable XML output.
-
-=head1 ARGS
-
-Takes the following optional C<producer_args>:
-
-=over 4
-
-=item emit_empty_tags
-
-If this is set to a true value, then tags corresponding to value-less
-elements will be emitted.  For example, take this schema:
-
-  CREATE TABLE random (
-    id int auto_increment PRIMARY KEY,
-    foo varchar(255) not null default '',
-    updated timestamp
-  );
-
-With C<emit_empty_tags> = 1, this will be dumped with XML similar to:
-
-  <table>
-    <name>random</name>
-    <order>1</order>
-    <fields>
-      <field>
-        <is_auto_inc>1</is_auto_inc>
-        <list></list>
-        <is_primary_key>1</is_primary_key>
-        <data_type>int</data_type>
-        <name>id</name>
-        <constraints></constraints>
-        <null>1</null>
-        <order>1</order>
-        <size></size>
-        <type>field</type>
-      </field>
-
-With C<emit_empty_tags> = 0, you'd get:
-
-  <table>
-    <name>random</name>
-    <order>1</order>
-    <fields>
-      <field>
-        <is_auto_inc>1</is_auto_inc>
-        <is_primary_key>1</is_primary_key>
-        <data_type>int</data_type>
-        <name>id</name>
-        <null>1</null>
-        <order>1</order>
-        <type>field</type>
-      </field>
-
-This can lead to dramatic size savings.
-
-=back
-
-=pod
+Creates XML output of a schema.
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>, darren chamberlain E<lt>darren@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-XML::Dumper;
-
-=cut
+L<XML::Writer>
