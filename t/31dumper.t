@@ -16,6 +16,7 @@ use Symbol qw(gensym);
 BEGIN {
     maybe_plan(
         5, 
+        'DBI',
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Producer::Dumper'
     );

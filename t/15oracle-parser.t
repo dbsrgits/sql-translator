@@ -19,7 +19,8 @@ my $sql = q[
         trait_category              VARCHAR2(100)   NOT NULL,
         UNIQUE ( trait_category )
     );
-    comment on table qtl_trait_category is 'hey, hey, hey, hey';
+    COMMENT ON TABLE qtl_trait_category IS 
+    'hey, hey, hey, hey';
     comment on column qtl_trait_category.qtl_trait_category_id 
         is 'the primary key!';
 
