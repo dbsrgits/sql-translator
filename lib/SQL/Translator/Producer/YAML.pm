@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.9 2004-03-09 19:19:49 kycl4rk Exp $
+# $Id: YAML.pm,v 1.10 2004-03-29 10:20:03 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -41,7 +41,7 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
@@ -113,7 +113,7 @@ sub view_constraint {
     return {
         'deferrable'       => scalar $constraint->deferrable,
         'expression'       => scalar $constraint->expression,
-        'fields'           => scalar $constraint->fields,
+        'fields'           => scalar $constraint->field_names,
         'match_type'       => scalar $constraint->match_type,
         'name'             => scalar $constraint->name,
         'options'          => scalar $constraint->options,
