@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.34 2003-08-19 14:41:05 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.35 2003-08-19 15:46:09 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -141,7 +141,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 $GRAMMAR = q!
 
 { 
-    our ( %tables, $table_order );
+    our ( %tables, $table_order, @table_comments );
 }
 
 #
@@ -162,12 +162,18 @@ statement : comment
     | <error>
 
 use : /use/i WORD ';'
+#    { @table_comments = () }
 
 set : /set/i /[^;]+/ ';'
+#    { @table_comments = () }
+
+drop : /drop/i TABLE ';'
 
 drop : /drop/i WORD(s) ';'
+#    { @table_comments = () }
 
 create : CREATE /database/i WORD ';'
+#    { @table_comments = () }
 
 create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     { 
@@ -175,10 +181,14 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
 
+        if ( @table_comments ) {
+            $tables{ $table_name }{'comments'} = [ @table_comments ];
+            @table_comments = ();
+        }
+
         my $i = 1;
         for my $definition ( @{ $item[7] } ) {
             if ( $definition->{'supertype'} eq 'field' ) {
-
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } = 
                     { %$definition, order => $i };
@@ -194,20 +204,10 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
                 }
             }
             elsif ( $definition->{'supertype'} eq 'constraint' ) {
-                # prob get rid of this?
-#                for my $field ( @{ $definition->{'fields'} } ) {
-#                    push @{ 
-#                        $tables{$table_name}{'fields'}{$field}{'constraints'}
-#                    },
-#                    $definition; 
-#                }
-
-                # this should be the only one needed
                 push @{ $tables{ $table_name }{'constraints'} }, $definition;
             }
             elsif ( $definition->{'supertype'} eq 'index' ) {
-                push @{ $tables{ $table_name }{'indices'} },
-                    $definition;
+                push @{ $tables{ $table_name }{'indices'} }, $definition;
             }
         }
 
@@ -224,6 +224,7 @@ opt_if_not_exists : /if not exists/i
 
 create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
     {
+        @table_comments = ();
         push @{ $tables{ $item{'table_name'} }{'indices'} },
             {
                 name   => $item[4],
@@ -238,19 +239,29 @@ create_definition : constraint
     | field
     | <error>
 
-comment : /^\s*(?:#|-{2}).*\n/ { 
-    my $comment =  $item[1];
-    $comment    =~ s/^\s*(#|-{2})\s*//;
-    $comment    =~ s/\s*$//;
-    $return     = $comment;
-}
+comment : /^\s*(?:#|-{2}).*\n/ 
+    { 
+        my $comment =  $item[1];
+        $comment    =~ s/^\s*(#|-{2})\s*//;
+        $comment    =~ s/\s*$//;
+        $return     = $comment;
+        push @table_comments, $comment;
+    }
+
+field_comment : /^\s*(?:#|-{2}).*\n/ 
+    { 
+        my $comment =  $item[1];
+        $comment    =~ s/^\s*(#|-{2})\s*//;
+        $comment    =~ s/\s*$//;
+        $return     = $comment;
+    }
 
 blank : /\s*/
 
-field : comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) comment(s?)
+field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) field_comment(s?)
     { 
-        my %qualifiers = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
-        my $null = defined $item{'not_null'} ? $item{'not_null'} : 1;
+        my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
+        my $null        = defined $item{'not_null'} ? $item{'not_null'} : 1;
         delete $qualifiers{'not_null'};
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
             $qualifiers{ $_ } = 1 for @type_quals;
@@ -569,11 +580,7 @@ sub parse {
             name  => $tdata->{'table_name'},
         ) or die $schema->error;
 
-#        for my $opt ( @{ $tdata->{'table_options'} } ) {
-#            if ( my ( $key, $val ) = each %$opt ) {
-#                $tables->options( 
-#            }
-#        }
+        $table->comments( $tdata->{'comments'} );
 
         my @fields = sort { 
             $tdata->{'fields'}->{$a}->{'order'} 
