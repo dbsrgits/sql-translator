@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-graph,v 1.4 2004-02-20 02:41:47 dlc Exp $
+# $Id: sqlt-graph,v 1.5 2004-03-15 22:47:23 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,10 +50,7 @@ sqlt-graph - Automatically create a graph from a database schema
     --natural-join     Perform natural joins
     --natural-join-pk  Perform natural joins from primary keys only
     --show_datatypes   Show datatype of each field
-    --show_col_sizes   Show column sizes for VARCHAR and CHAR fields
-    --show_constraints Show list of constraints for each field
-    --show-datatypes   Show datatype of each field
-    --show-sizes       Show field sizes for VARCHAR and CHAR fields
+    --show_sizes       Show column sizes for VARCHAR and CHAR fields
     --show-constraints Show list of constraints for each field
     -s|--skip          Fields to skip in natural joins
     --debug            Print debugging information
@@ -94,7 +91,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
@@ -102,7 +99,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 my ( 
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
     $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
-    $show_col_sizes, $show_constraints, $debug, $help, $height, $width,
+    $show_sizes, $show_constraints, $debug, $help, $height, $width,
     $no_fields
 );
 
