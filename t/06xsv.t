@@ -57,7 +57,7 @@ is( $f6->size, '6', 'Size is "6"' );
 my $f7 = $fields[6];
 is( $f7->name, 'Seven', 'Seventh field name is "Seven"' );
 is( $f7->data_type, 'float', 'Data type is "float"' );
-is( $f7->size, '1,2', 'Size is "1,2"' );
+is( $f7->size, '3,2', 'Size is "3,2"' );
 
 my @indices = $table->get_indices;
 is( scalar @indices, 0, 'Correct number of indices (0)' );
