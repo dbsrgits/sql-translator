@@ -1,9 +1,10 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.4 2003-02-25 03:24:56 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.5 2003-02-25 05:01:35 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
+#                    Allen Day <allenday@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>,
 #                    Chris Mungall <cjm@fruitfly.org>
 #
@@ -18,7 +19,7 @@ package SQL::Translator::Parser::PostgreSQL;
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
@@ -36,13 +37,56 @@ SQL::Translator::Parser::PostgreSQL - parser for PostgreSQL
 
 =head1 DESCRIPTION
 
-The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
+The grammar was started from the MySQL parsers.  Here is the description 
+from PostgreSQL:
+
+Table:
+
+    CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
+         { column_name data_type [ DEFAULT default_expr ] 
+            [ column_constraint [, ... ] ]
+         | table_constraint }  [, ... ]
+     )
+     [ INHERITS ( parent_table [, ... ] ) ]
+     [ WITH OIDS | WITHOUT OIDS ]
+     
+     where column_constraint is:
+     
+     [ CONSTRAINT constraint_name ]
+     { NOT NULL | NULL | UNIQUE | PRIMARY KEY |
+       CHECK (expression) |
+       REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL ]
+         [ ON DELETE action ] [ ON UPDATE action ] }
+     [ DEFERRABLE | NOT DEFERRABLE ] 
+     [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+     
+     and table_constraint is:
+     
+     [ CONSTRAINT constraint_name ]
+     { UNIQUE ( column_name [, ... ] ) |
+       PRIMARY KEY ( column_name [, ... ] ) |
+       CHECK ( expression ) |
+       FOREIGN KEY ( column_name [, ... ] ) 
+        REFERENCES reftable [ ( refcolumn [, ... ] ) ]
+         [ MATCH FULL | MATCH PARTIAL ] 
+         [ ON DELETE action ] [ ON UPDATE action ] }
+     [ DEFERRABLE | NOT DEFERRABLE ] 
+     [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+
+Index:
+
+    CREATE [ UNIQUE ] INDEX index_name ON table
+         [ USING acc_method ] ( column [ ops_name ] [, ...] )
+         [ WHERE predicate ]
+     CREATE [ UNIQUE ] INDEX index_name ON table
+         [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
+         [ WHERE predicate ]
 
 =cut
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -62,81 +106,120 @@ my $parser; # should we do this?  There's no programmic way to
 
 $GRAMMAR = q!
 
-{ our ( %tables, $table_order, $current_table ) }
+{ our ( %tables, $table_order ) }
 
-startrule : statement(s) { \%tables }
+startrule : statement(s) eofile { \%tables }
 
-statement : comment
+eofile : /^\Z/
+
+statement : create
+  | comment
+  | grant
+  | revoke
   | drop
-  | create
+  | connect
   | <error>
 
-drop : /drop/i WORD(s) ';'
+connect : /^\s*\\\connect.*\n/
+
+revoke : /revoke/i WORD(s /,/) /on/i table_name /from/i name_with_opt_quotes(s /,/) ';'
+    {
+        my $table_name = $item{'table_name'};
+        push @{ $tables{ $table_name }{'permissions'} }, {
+            type       => 'revoke',
+            actions    => $item[2],
+            users      => $item[6],
+        }
+    }
+
+grant : /grant/i WORD(s /,/) /on/i table_name /to/i name_with_opt_quotes(s /,/) ';'
+    {
+        my $table_name = $item{'table_name'};
+        push @{ $tables{ $table_name }{'permissions'} }, {
+            type       => 'grant',
+            actions    => $item[2],
+            users      => $item[6],
+        }
+    }
+
+drop : /drop/i /[^;]*/ ';'
 
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
-  {
-   my $table_name                       = $item{'table_name'};
-   $current_table                       = $item{'table_name'};
-   $tables{ $table_name }{'order'}      = ++$table_order;
-   $tables{ $table_name }{'table_name'} = $table_name;
+    {
+        my $table_name                       = $item{'table_name'};
+        $tables{ $table_name }{'order'}      = ++$table_order;
+        $tables{ $table_name }{'table_name'} = $table_name;
 
-   my $i = 1;
-   for my $definition ( @{ $item[4] } ) {
-	 if ( $definition->{'type'} eq 'field' ) {
-	   my $field_name = $definition->{'name'};
-	   $tables{ $table_name }{'fields'}{ $field_name } = 
-		 { %$definition, order => $i };
-	   $i++;
+        my $i = 1;
+        my @constraints;
+        for my $definition ( @{ $item[4] } ) {
+            if ( $definition->{'type'} eq 'field' ) {
+                my $field_name = $definition->{'name'};
+                $tables{ $table_name }{'fields'}{ $field_name } = 
+                    { %$definition, order => $i };
+                $i++;
 				
-	   if ( $definition->{'is_primary_key'} ) {
-		 push @{ $tables{ $table_name }{'indices'} },
-		   {
-			type   => 'primary_key',
-			fields => [ $field_name ],
-		   }
-			 ;
-	   }
-	 }
-	 else {
-	   push @{ $tables{ $table_name }{'indices'} },
-		 $definition;
-	 }
-   }
+                if ( $definition->{'is_primary_key'} ) {
+                    push @{ $tables{ $table_name }{'indices'} }, {
+                        type   => 'primary_key',
+                        fields => [ $field_name ],
+                    };
+                }
 
-   for my $opt ( @{ $item{'table_option'} } ) {
-	 if ( my ( $key, $val ) = each %$opt ) {
-	   $tables{ $table_name }{'table_options'}{ $key } = $val;
-	 }
-   }
-  }
+                for my $constraint ( @{ $definition->{'constaints'} || [] } ) {
+                    $constraint->{'fields' } = [ $field_name ];
+                    push @{$tables{ $table_name }{'constraints'}}, $constraint;
+                }
+            }
+            elsif ( $definition->{'type'} eq 'constraint' ) {
+                $definition->{'type'} = $definition->{'constraint_type'};
+                push @{ $tables{ $table_name }{'constraints'} }, $definition;
+            }
+            else {
+                push @{ $tables{ $table_name }{'indices'} }, $definition;
+            }
+        }
 
-  create : /CREATE/i unique(?) /(INDEX|KEY)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
+        for my $option ( @{ $item[6] } ) {
+            $tables{ $table_name }{'table_options'}{ $option->{'type'} } = 
+                $option;
+        }
+
+        1;
+    }
+
+create : /create/i unique(?) /(index|key)/i index_name /on/i table_name using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
     {
         push @{ $tables{ $item{'table_name'} }{'indices'} },
             {
-                name   => $item[4],
-                type   => $item[2] ? 'unique' : 'normal',
-                fields => $item[8],
+                name   => $item{'index_name'},
+                type   => $item{'unique'}[0] ? 'unique' : 'normal',
+                fields => $item[9],
+                method => $item{'using_method'}[0],
             }
         ;
     }
 
-create_definition : index
-    | field
+using_method : /using/i WORD { $item[2] }
+
+where_predicate : /where/i /[^;]+/
+
+create_definition : field
+    | index
+    | table_constraint
     | <error>
 
 comment : /^\s*(?:#|-{2}).*\n/
 
-blank : /\s*/
-
-field : field_name data_type field_qualifier(s?)
+field : field_name data_type field_meta(s?)
     {
-        my %qualifiers = map { %$_ } @{ $item{'field_qualifier'} || [] };
-        my $null = defined $item{'not_null'} ? $item{'not_null'} : 1;
-        delete $qualifiers{'not_null'};
-        if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
-            $qualifiers{ $_ } = 1 for @type_quals;
+        my ( $default, @constraints );
+        for my $meta ( @{ $item[3] } ) {
+            $default = $meta if $meta->{'meta_type'} eq 'default';
+            push @constraints, $meta if $meta->{'meta_type'} eq 'constraint';
         }
+
+        my $null = ( grep { $_->{'type'} eq 'not_null' } @constraints ) ? 0 : 1;
 
         $return = { 
             type           => 'field',
@@ -145,136 +228,239 @@ field : field_name data_type field_qualifier(s?)
             size           => $item{'data_type'}{'size'},
             list           => $item{'data_type'}{'list'},
             null           => $null,
-            %qualifiers,
+            default        => $default->{'value'},
+            constraints    => [ @constraints ],
         } 
     }
     | <error>
 
-field_qualifier : not_null
-    { 
-        $return = { 
-             null => $item{'not_null'},
+field_meta : default_val
+    |
+    column_constraint
+
+column_constraint : constraint_name(?) column_constraint_type deferrable(?) deferred(?)
+    {
+        my $desc       = $item{'column_constraint_type'};
+        my $type       = $desc->{'type'};
+        my $fields     = $desc->{'fields'}     || [];
+        my $expression = $desc->{'expression'} || '';
+
+        $return              =  {
+            meta_type        => 'constraint',
+            name             => $item{'constraint_name'}[0] || '',
+            type             => $type,
+            expression       => $type eq 'check' ? $expression : '',
+            deferreable      => $item{'deferrable'},
+            deferred         => $item{'deferred'},
+            reference_table  => $desc->{'reference_table'},
+            reference_fields => $desc->{'reference_fields'},
+            match_type       => $desc->{'match_type'},
+            on_delete_do     => $desc->{'on_delete_do'},
+            on_update_do     => $desc->{'on_update_do'},
         } 
     }
 
-field_qualifier : default_val
-    { 
-        $return = { 
-             default => $item{'default_val'},
-        } 
-    }
+constraint_name : /constraint/i name_with_opt_quotes { $item[2] }
 
-field_qualifier : auto_inc
-    { 
-        $return = { 
-             is_auto_inc => $item{'auto_inc'},
-        } 
-    }
-
-field_qualifier : ',' primary_key '(' field_name ')'
-    { 
-        $return = { 
-             is_primary_key => $item{'primary_key'},
-        } 
-    }
-
-field_qualifier : ',' foreign_key '(' field_name ')' foreign_key_reference foreign_table_name '(' foreign_field_name ')'
-    { 
-        $return = {
-             is_foreign_key => $item{'foreign_key'},
-			 foreign_table => $item{'foreign_table_name'},
-			 foreign_field => $item{'foreign_field_name'},
-			 name => $item{'field_name'},
+column_constraint_type : /not null/i { $return = { type => 'not_null' } }
+    |
+    /null/ 
+        { $return = { type => 'null' } }
+    |
+    /unique/ 
+        { $return = { type => 'unique' } }
+    |
+    /primary key/i 
+        { $return = { type => 'primary_key' } }
+    |
+    /check/i '(' /[^)]+/ ')' 
+        { $return = { type => 'check', expression => $item[2] } }
+    |
+    /references/i table_name parens_value_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+    {
+        $return              =  {
+            type             => 'foreign_key',
+            reference_table  => $item[2],
+            reference_fields => $item[3],
+            match_type       => $item[4][0],
+            on_delete_do     => $item[5][0],
+            on_update_do     => $item[6][0],
         }
-    }
-
-field_qualifier : unsigned
-    { 
-        $return = { 
-             is_unsigned => $item{'unsigned'},
-        } 
     }
 
 index : primary_key_index
     | unique_index
-    | fulltext_index
     | normal_index
 
-table_name   : WORD
+table_name : name_with_opt_quotes
 
-foreign_table_name   : WORD
+field_name : name_with_opt_quotes
 
-field_name   : WORD
+name_with_opt_quotes : double_quote(?) WORD double_quote(?) { $item[2] }
 
-foreign_field_name   : WORD
+double_quote: /"/
 
-index_name   : WORD
+index_name : WORD
 
-data_type    : WORD parens_value_list(s?) type_qualifier(s?)
+data_type : pg_data_type parens_value_list(?)
     { 
         my $type = $item[1];
 
-        my $size; # field size, applicable only to non-set fields
-        my $list; # set list, applicable only to sets (duh)
-
-
-        if(uc($type) =~ /^SERIAL$/){
-            $type = 'int';
-        } elsif ( uc($type) =~ /^(SET|ENUM)$/ ) {
-            $size = undef;
-            $list = $item[2][0];
+        #
+        # We can deduce some sizes from the data type's name.
+        #
+        my $size; 
+        if ( ref $type eq 'ARRAY' ) {
+            $size = [ $type->[1] ];
+            $type = $type->[0];
         }
         else {
-            $size = $item[2][0];
-            $list = [];
+            $size = $item[2][0] || '';
         }
 
-        if(uc($type) =~ /^VARCHAR$/ and not defined($size)){ $size = [255] }
-
-        $return        = { 
-            type       => $type,
-            size       => $size,
-            list       => $list,
-            qualifiers => $item[3],
+        $return  = { 
+            type => $type,
+            size => $size,
         } 
     }
+
+pg_data_type :
+    /(bigint|int8|bigserial|serial8)/ { $return = [ 'integer', 8 ] }
+    |
+    /(smallint|int2)/ { $return = [ 'integer', 2 ] }
+    |
+    /int(eger)?|int4/ { $return = [ 'integer', 4 ] }
+    |
+    /(double precision|float8?)/ { $return = [ 'float', 8 ] }
+    |
+    /(real|float4)/ { $return = [ 'real', 4 ] }
+    |
+    /serial4?/ { $return = [ 'serial', 4 ] }
+    |
+    /bigserial/ { $return = [ 'serial', 8 ] }
+    |
+    /(bit varying|varbit)/ { $return = 'varbit' }
+    |
+    /character varying/ { $return = 'varchar' }
+    |
+    /char(acter)?/ { $return = 'char' }
+    |
+    /bool(ean)?/ { $return = 'boolean' }
+    |
+    /(bytea|binary data)/ { $return = 'binary' }
+    |
+    /timestampz?/ { $return = 'timestamp' }
+    |
+    /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|time|varchar)/
+    { $item[1] }
 
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
 
-type_qualifier : /(BINARY|UNSIGNED|ZEROFILL)/i
-    { lc $item[1] }
+parens_word_list : '(' WORD(s /,/) ')'
+    { $item[2] }
 
-field_type   : WORD
+field_size : '(' num_range ')' { $item{'num_range'} }
 
-field_size   : '(' num_range ')' { $item{'num_range'} }
-
-num_range    : DIGITS ',' DIGITS
+num_range : DIGITS ',' DIGITS
     { $return = $item[1].','.$item[3] }
     | DIGITS
     { $return = $item[1] }
+
+table_constraint : constraint_name(?) table_constraint_type deferrable(?) deferred(?)
+    {
+        my $desc       = $item{'table_constraint_type'};
+        my $type       = $desc->{'type'};
+        my $fields     = $desc->{'fields'};
+        my $expression = $desc->{'expression'};
+
+        $return              =  {
+            name             => $item{'constraint_name'}[0] || '',
+            type             => 'constraint',
+            constraint_type  => $type,
+            fields           => $type ne 'check' ? $fields : [],
+            expression       => $type eq 'check' ? $expression : '',
+            deferreable      => $item{'deferrable'},
+            deferred         => $item{'deferred'},
+            reference_table  => $desc->{'reference_table'},
+            reference_fields => $desc->{'reference_fields'},
+            match_type       => $desc->{'match_type'}[0],
+            on_delete_do     => $desc->{'on_delete_do'}[0],
+            on_update_do     => $desc->{'on_update_do'}[0],
+        } 
+    }
+
+table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')' 
+    { 
+        $return = {
+            type   => 'primary_key',
+            fields => $item[3],
+        }
+    }
+    |
+    /unique/i '(' name_with_opt_quotes(s /,/) ')' 
+    { 
+        $return    =  {
+            type   => 'unique',
+            fields => $item[3],
+        }
+    }
+    |
+    /check/ '(' /(.+)/ ')'
+    {
+        $return        =  {
+            type       => 'check',
+            expression => $item[3],
+        }
+    }
+    |
+    /foreign key/i '(' name_with_opt_quotes(s /,/) ')' /references/i table_name parens_word_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+    {
+        $return              =  {
+            type             => 'foreign_key',
+            fields           => $item[3],
+            reference_table  => $item[6],
+            reference_fields => $item[7][0],
+            match_type       => $item[8][0],
+            on_delete_do     => $item[9][0],
+            on_update_do     => $item[10][0],
+        }
+    }
+
+deferrable : /not/i /deferrable/i 
+    { 
+        $return = ( $item[1] =~ /not/i ) ? 0 : 1;
+    }
+
+deferred : /initially/i /(deferred|immediate)/i { $item[2] }
+
+match_type : /match full/i { 'match_full' }
+    |
+    /match partial/i { 'match_partial' }
+
+on_delete_do : /on delete/i WORD 
+    { $item[2] }
+
+on_update_do : /on update/i WORD
+    { $item[2] }
 
 create_table : /create/i /table/i
 
 create_index : /create/i /index/i
 
-not_null     : /not/i /null/i { $return = 0 }
-
-unsigned     : /unsigned/i { $return = 0 }
-
 default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ 
     { 
-        $item[2] =~ s/'//g; 
-        $return  =  $item[2];
+        my $val =  $item[2] || '';
+        $val    =~ s/'//g; 
+        $return =  {
+            meta_type => 'default',
+            value     => $val,
+        }
     }
 
-auto_inc : /auto_increment/i { 1 } #see data_type
+auto_inc : /auto_increment/i { 1 }
 
 primary_key : /primary/i /key/i { 1 }
-
-foreign_key : /foreign/i /key/i { 1 }
-
-foreign_key_reference : /references/i { 1 }
 
 primary_key_index : primary_key index_name(?) '(' field_name(s /,/) ')'
     { 
@@ -303,34 +489,24 @@ unique_index : unique key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
         } 
     }
 
-fulltext_index : fulltext key(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
-    { 
-        $return    = { 
-            name   => $item{'index_name'}[0],
-            type   => 'fulltext',
-            fields => $item[5],
-        } 
-    }
-
 name_with_opt_paren : NAME parens_value_list(s?)
-    {
-        if($item[2][0]) {
-          "$item[1]($item[2][0][0])"
-        } else {
-          $item[1];
-        }
-    }
-
-fulltext : /fulltext/i { 1 }
+    { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
 
 unique : /unique/i { 1 }
 
 key : /key/i | /index/i
 
-table_option : /[^\s;]*/ 
+table_option : /inherits/i '(' name_with_opt_quotes(s /,/) ')'
     { 
-        $return = { split /=/, $item[1] }
+        $return = { type => 'inherits', table_name => $item[3] }
     }
+    |
+    /with(out)? oids/i
+    {
+        $return = { type => $item[1] =~ /out/i ? 'without_oids' : 'with_oids' }
+    }
+
+SEMICOLON : /\s*;\n?/
 
 WORD : /\w+/
 
@@ -351,8 +527,6 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { 'NULL' }
 
 !;
-
-#        $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1];
 
 # -------------------------------------------------------------------
 sub parse {
@@ -382,10 +556,10 @@ sub parse {
 
 =pod
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Chris Mungall
+Allen Day <allenday@users.sourceforge.net>.
 
 =head1 SEE ALSO
 
