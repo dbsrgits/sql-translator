@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 #-----------------------------------------------------
-# $Id: MySQL.pm,v 1.2 2002-03-21 18:50:53 dlc Exp $
+# $Id: MySQL.pm,v 1.3 2002-07-23 19:22:11 dlc Exp $
 #-----------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Parser::MySQL;
 
 use strict;
 use vars qw($VERSION $GRAMMAR @EXPORT_OK);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 #use SQL::Translator::Parser;  # This is not necessary!
 use Parse::RecDescent;
@@ -39,9 +39,8 @@ sub parse {
     $parser ||= Parse::RecDescent->new($GRAMMAR);
 
     unless (defined $parser) {
-        $translator->error_out("Error instantiating Parse::RecDescent ".
+        return $translator->error("Error instantiating Parse::RecDescent ".
             "instance: Bad grammer");
-        return;
     }
 
     # Is this right?  It was $parser->parse before, but that didn't
