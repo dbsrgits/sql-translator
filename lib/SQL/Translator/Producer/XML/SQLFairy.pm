@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.12 2004-07-08 19:05:26 grommit Exp $
+# $Id: SQLFairy.pm,v 1.13 2004-07-08 19:34:29 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -103,11 +103,25 @@ To see a complete example of the XML translate one of your schema :)
 
 Doesn't take any extra arguments.
 
+=head1 LEGACY FORMAT
+
+The previous version of the SQLFairy XML allowed the attributes of the the
+schema objects to be written as either xml attributes or as data elements, in
+any combination. The old producer could produce attribute only or data element
+only versions. While this allowed for lots of flexibility in writing the XML
+the result is a great many possible XML formats, not so good for DTD writing,
+XPathing etc! So we have moved to a fixed version described above.
+
+This version of the producer will now only produce the new style XML.
+To convert your old format files simply pass them through the translator;
+
+ sqlt -f XML-SQLFairy -t XML-SQLFairy schema-old.xml > schema-new.xml
+
 =cut
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
