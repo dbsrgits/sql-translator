@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.7 2003-10-04 01:21:36 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.8 2003-10-08 23:00:42 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -171,7 +171,7 @@ sub produce {
 
             push @constraint_defs, 
                 "CREATE UNIQUE INDEX $name on $table_name ".
-                '(' . join( ', ', @fields ) . ')';
+                '(' . join( ', ', @fields ) . ');';
         }
 
         $create .= join(",\n", map { "  $_" } @field_defs ) . "\n);\n";
