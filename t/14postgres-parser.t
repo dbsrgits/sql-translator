@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 117;
+use Test::More 'no_plan'; #tests => 117;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::PostgreSQL qw(parse);
@@ -13,13 +13,13 @@ my $sql = q[
         f_varchar character varying (255),
         f_double double precision,
         f_bigint bigint not null,
-        f_char character(10),
+        f_char character(10) default 'FOO',
         f_bool boolean,
         f_bin bytea,
         f_tz timestamp,
         f_text text,
         f_fk1 integer not null references t_test2 (f_id),
-        f_fk2 integer
+        f_dropped text
     );
 
     create table t_test2 (
@@ -30,10 +30,37 @@ my $sql = q[
         check (f_int between 1 and 5)
     );
 
+    alter table t_test1 add f_fk2 integer;
+
     alter table only t_test1 add constraint c_u1 unique (f_varchar);
 
-    alter table only t_test1 add constraint "c_fk2" foreign key (f_fk2)
+    alter table t_test1 add constraint "c_fk2" foreign key (f_fk2)
     references t_test2 (f_id) on update no action on delete cascade;
+
+    alter table t_test1 drop column f_dropped restrict;
+
+    alter table t_test1 alter column f_fk2 set default 'FOO';
+
+    alter table t_test1 alter column f_char drop default;
+
+    -- The following are allowed by the grammar 
+    -- but won't do anything... - ky
+
+    alter table t_text1 alter column f_char set not null;
+
+    alter table t_text1 alter column f_char drop not null;
+
+    alter table t_test1 alter f_char set statistics 10;
+
+    alter table t_test1 alter f_text set storage extended;
+    
+    alter table t_test1 rename column f_text to foo;
+
+    alter table t_test1 rename to foo;
+
+    alter table only t_test1 drop constraint foo cascade;
+
+    alter table t_test1 owner to foo;
 ];
 
 $| = 1;
@@ -142,7 +169,7 @@ is( $f11->name, 'f_fk2', 'Eleventh field is "f_fk2"' );
 is( $f11->data_type, 'integer', 'Field is an integer' );
 is( $f11->is_nullable, 1, 'Field can be null' );
 is( $f11->size, 10, 'Size is "10"' );
-is( $f11->default_value, undef, 'Default value is undefined' );
+is( $f11->default_value, 'FOO', 'Default value is "FOO"' );
 is( $f11->is_primary_key, 0, 'Field is not PK' );
 is( $f11->is_foreign_key, 1, 'Field is a FK' );
 my $fk_ref2 = $f11->foreign_key_reference;
