@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.61 2004-11-09 05:27:45 grommit Exp $
+# $Id: Translator.pm,v 1.62 2004-12-12 18:38:11 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.06';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.61 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.62 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -90,13 +90,21 @@ sub init {
     }
 
     #
+    # Initialize the filters.
+    #
+    if ( $config->{filters} && ref $config->{filters} eq "ARRAY" ) {
+        $self->filters( @{$config->{filters}} )
+        || return $self->error('Error inititializing filters: '.$self->error);
+    }
+
+    #
     # Set the data source, if 'filename' or 'file' is provided.
     #
     $config->{'filename'} ||= $config->{'file'} || "";
     $self->filename( $config->{'filename'} ) if $config->{'filename'};
 
     #
-    # Finally, if there is a 'data' parameter, use that in 
+    # Finally, if there is a 'data' parameter, use that in
     # preference to filename and file
     #
     if ( my $data = $config->{'data'} ) {
@@ -109,7 +117,7 @@ sub init {
     $self->{'debug'} = defined $config->{'debug'} ? $config->{'debug'} : $DEBUG;
 
     $self->add_drop_table( $config->{'add_drop_table'} );
-    
+
     $self->no_comments( $config->{'no_comments'} );
 
     $self->show_warnings( $config->{'show_warnings'} );
@@ -152,9 +160,9 @@ sub no_comments {
 # ----------------------------------------------------------------------
 sub producer {
     shift->_tool({
-            name => 'producer', 
+            name => 'producer',
             path => "SQL::Translator::Producer",
-            default_sub => "produce" 
+            default_sub => "produce",
     }, @_);
 }
 
@@ -186,15 +194,49 @@ sub producer_args { shift->_args("producer", @_); }
 # ----------------------------------------------------------------------
 sub parser {
     shift->_tool({
-        name => 'parser', 
+        name => 'parser',
         path => "SQL::Translator::Parser",
-        default_sub => "parse" 
+        default_sub => "parse",
     }, @_);
 }
 
 sub parser_type { $_[0]->{'parser_type'}; }
 
 sub parser_args { shift->_args("parser", @_); }
+
+# ----------------------------------------------------------------------
+# e.g.
+#   $sqlt->filters => [
+#       sub { },
+#       [ "NormalizeNames", field => "lc", tabel => "ucfirst" ],
+#       [
+#           "DataTypeMap",
+#           "TEXT" => "BIGTEXT",
+#       ],
+#   ],
+# ----------------------------------------------------------------------
+sub filters {
+    my $self = shift;
+    my $filters = $self->{filters} ||= [];
+    return @$filters unless @_;
+
+    # Set. Convert args to list of [\&code,\%args]
+    foreach (@_) {
+        $_ = [$_,{}] if not ref($_) eq "ARRAY";
+        my ($name,$args) = @$_;
+        if ( isa($name,"CODE") ) {
+            push @$filters, $_;
+            next;
+        }
+        else {
+            $self->debug("Adding $name filter. Args:".Dumper($args)."\n");
+            my $code = _load_sub("$name\::filter", "SQL::Translator::Filter");
+            return $self->error("ERROR:".$self->error) unless $code;
+            push @$filters, [$code,$args];
+        }
+    }
+    return @$filters;
+}
 
 # ----------------------------------------------------------------------
 sub show_warnings {
@@ -348,7 +390,7 @@ sub translate {
     my ($parser_output, $producer_output);
 
     # Parse arguments
-    if (@_ == 1) { 
+    if (@_ == 1) {
         # Passed a reference to a hash?
         if (isa($_[0], 'HASH')) {
             # yep, a hashref
@@ -431,12 +473,14 @@ sub translate {
     $producer_type = $self->producer_type;
 
     # ----------------------------------------------------------------
-    # Execute the parser, then execute the producer with that output.
+    # Execute the parser, the filters and then execute the producer.
     # Allowances are made for each piece to die, or fail to compile,
     # since the referenced subroutines could be almost anything.  In
     # the future, each of these might happen in a Safe environment,
     # depending on how paranoid we want to be.
     # ----------------------------------------------------------------
+
+    # Run parser
     unless ( defined $self->{'schema'} ) {
         eval { $parser_output = $parser->($self, $$data) };
         if ($@ || ! $parser_output) {
@@ -445,14 +489,25 @@ sub translate {
             return $self->error($msg);
         }
     }
-
     $self->debug("Schema =\n", Dumper($self->schema), "\n");
 
+    # Validate the schema if asked to.
     if ($self->validate) {
         my $schema = $self->schema;
         return $self->error('Invalid schema') unless $schema->is_valid;
     }
 
+    # Run filters
+    my $filt_num = 0;
+    foreach ($self->filters) {
+        $filt_num++;
+        my ($code,$args) = @$_;
+        eval { $code->($self->schema, $args) };
+        my $err = $@ || $self->error || 0;
+        return $self->error("Error with filter $filt_num : $err") if $err;
+    }
+
+    # Run producer
     eval { $producer_output = $producer->($self) };
     if ($@ || ! $producer_output) {
         my $err = $@ || $self->error || "no results";
@@ -565,7 +620,7 @@ sub _tool {
         my ($code,$sub);
         ($code,$sub) = _load_sub("$tool\::$default_sub", $path);
         ($code,$sub) = _load_sub("$tool", $path) unless $code;
-        
+
         # get code reference and assign
         my (undef,$module,undef) = $sub =~ m/((.*)::)?(\w+)$/;
         $self->{$name} = $code;
@@ -653,7 +708,7 @@ sub _list {
 #
 # Returns package name of the module actually loaded or false and sets error.
 #
-# Note, you can't load a name from the root namespace (ie one without '::' in 
+# Note, you can't load a name from the root namespace (ie one without '::' in
 # it), therefore a single word name without a path fails.
 # ----------------------------------------------------------------------
 sub load {
@@ -667,7 +722,7 @@ sub load {
         my $file = $module; $file =~ s[::][/]g; $file .= ".pm";
         __PACKAGE__->debug("Loading $name as $file\n");
         return $module if $INC{$file}; # Already loaded
-        
+
         eval { require $file };
         next if $@ =~ /Can't locate $file in \@INC/; 
         eval { $file->import(@_) } unless $@;
@@ -687,13 +742,13 @@ sub load {
 # ----------------------------------------------------------------------
 sub _load_sub {
     my ($tool, @path) = @_;
-    
-    # Passed a module name or module and sub name 
+
+    # Passed a module name or module and sub name
     my (undef,$module,$func_name) = $tool =~ m/((.*)::)?(\w+)$/;
     if ( my $module = load($module => @path) ) {
         my $sub = "$module\::$func_name";
-        return ( \&{ $sub }, $sub );
-    } 
+        return wantarray ? ( \&{ $sub }, $sub ) : \&$sub;
+    }
     return undef;
 }
 
@@ -718,7 +773,7 @@ sub format_pk_name {
 }
 
 # ----------------------------------------------------------------------
-# The other format_*_name methods rely on this one.  It optionally 
+# The other format_*_name methods rely on this one.  It optionally
 # accepts a subroutine ref as the first argument (or uses an identity
 # sub if one isn't provided or it doesn't already exist), and applies
 # it to the rest of the arguments (if any).
@@ -791,15 +846,15 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
       # Print debug info
       debug               => 1,
       # Print Parse::RecDescent trace
-      trace               => 0, 
+      trace               => 0,
       # Don't include comments in output
-      no_comments         => 0, 
+      no_comments         => 0,
       # Print name mutations, conflicts
-      show_warnings       => 0, 
+      show_warnings       => 0,
       # Add "drop table" statements
-      add_drop_table      => 1, 
+      add_drop_table      => 1,
       # Validate schema object
-      validate            => 1, 
+      validate            => 1,
       # Make all table names CAPS in producers which support this option
       format_table_name   => sub {my $tablename = shift; return uc($tablename)},
       # Null-op formatting, only here for documentation's sake
@@ -812,7 +867,7 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
       from       => 'MySQL',
       to         => 'Oracle',
       # Or an arrayref of filenames, i.e. [ $file1, $file2, $file3 ]
-      filename   => $file, 
+      filename   => $file,
   ) or die $translator->error;
 
   print $output;
@@ -858,6 +913,10 @@ producer / to
 =item *
 
 producer_args
+
+=item *
+
+filters
 
 =item *
 
@@ -998,6 +1057,53 @@ entirety of the data to be parsed.
 There is also C<parser_type> and C<parser_args>, which perform
 analogously to C<producer_type> and C<producer_args>
 
+=head2 filters
+
+Set or retreive the filters to run over the schema during the
+translation, before the producer creates its output. Filters are sub
+routines called, in order, with the schema object to filter as the 1st
+arg and a hashref of options as the 2nd. They are free to do whatever
+they want to the schema object, which will be handed to any following
+filters, then used by the producer.
+
+Filters are set as an array, which gives the order they run in.
+Like parsers and producers, they can be defined by a module name, a
+module name relative to the SQL::Translator::Filter namespace, a module
+name and function name together or a reference to an anonymous subroutine.
+When using a module name a function called C<filter> will be invoked in
+that package to do the work. To pass args to the filter set it as an array
+ref with the 1st value giving the filter and the rest being a hash of
+args.
+
+ $tr->filters(
+     sub {
+        my $schema = shift;
+        # Do stuff to schema here!
+     },
+     [ "Foo", foo => "bar", hello => "world" ],
+     [ "Filter3" ],
+ );
+
+Although you would normally set them in the constructor, which calls
+through to filters. i.e.
+
+  my $translator  = SQL::Translator->new(
+      ...
+      filters => [
+          sub { ... },
+          [ Foo, foo => "bar" ],
+      ],
+      ...
+  );
+
+See F<t/36-filters.t> for more examples.
+
+Multiple set calls to filters are cumulative with new filters added to
+the end of the current list.
+
+Returns the filters as a list of array refs, the 1st value being a
+reference to the filter sub routine and the 2nd a hashref its args.
+
 =head2 show_warnings
 
 Toggles whether to print warnings of name conflicts, identifier
@@ -1008,11 +1114,12 @@ current value.
 
 =head2 translate
 
-The C<translate> method calls the subroutines referenced by the
-C<parser> and C<producer> data members (described above).  It accepts
-as arguments a number of things, in key => value format, including
-(potentially) a parser and a producer (they are passed directly to the
-C<parser> and C<producer> methods).
+The C<translate> method calls the subroutine referenced by the
+C<parser> data member, then calls any C<filters> and finally calls
+the C<producer> sub routine (these members are described above).
+It accepts as arguments a number of things, in key => value format,
+including (potentially) a parser and a producer (they are passed
+directly to the C<parser> and C<producer> methods).
 
 Here is how the parameter list to C<translate> is parsed:
 
