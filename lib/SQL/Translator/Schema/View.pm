@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id: View.pm,v 1.2 2003-05-09 17:12:15 kycl4rk Exp $
+# $Id: View.pm,v 1.3 2003-06-18 23:14:00 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -49,7 +49,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = 1.00;
+$VERSION = (qw$Revision: 1.3 $)[-1];
 
 # ----------------------------------------------------------------------
 sub init {

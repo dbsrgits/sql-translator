@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.9 2003-06-09 04:11:57 kycl4rk Exp $
+# $Id: Field.pm,v 1.10 2003-06-18 23:14:00 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = 1.00;
+$VERSION = (qw$Revision: 1.10 $)[-1];
 
 # ----------------------------------------------------------------------
 sub init {
@@ -102,12 +102,17 @@ all the comments joined on newlines.
 
     for my $arg ( @_ ) {
         $arg = $arg->[0] if ref $arg;
-        push @{ $self->{'comments'} }, $arg;
+        push @{ $self->{'comments'} }, $arg if $arg;
     }
 
-    return wantarray 
-        ? @{ $self->{'comments'} || [] }
-        : join( "\n", @{ $self->{'comments'} || [] } );
+    if ( @{ $self->{'comments'} || [] } ) {
+        return wantarray 
+            ? @{ $self->{'comments'} || [] }
+            : join( "\n", @{ $self->{'comments'} || [] } );
+    }
+    else {
+        return wantarray ? () : '';
+    }
 }
 
 

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.8 2003-06-09 02:10:10 kycl4rk Exp $
+# $Id: Table.pm,v 1.9 2003-06-18 23:14:00 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Schema::Index;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = 1.00;
+$VERSION = (qw$Revision: 1.9 $)[-1];
 
 # ----------------------------------------------------------------------
 sub init {
