@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.14 2003-04-17 19:42:33 allenday Exp $
+# $Id: MySQL.pm,v 1.15 2003-04-18 20:43:05 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -63,8 +63,11 @@ sub produce {
     }
 
     for my $table ( keys %{ $data } ) {
+
+
         debug("PKG: Looking at table '$table'\n");
         my $table_data = $data->{$table};
+#warn Dumper($table_data);
         my @fields = sort { 
             $table_data->{'fields'}->{$a}->{'order'} 
             <=>
@@ -149,7 +152,7 @@ sub produce {
 
             $create .= (join " ", '', @fdata);
             $create .= "," unless ($i == $#fields);
-        }
+		}
 
         #
         # Indices
@@ -157,15 +160,18 @@ sub produce {
         my @index_creates;
         my @indices     = @{ $table_data->{'indices'}     || [] };
         my @constraints = @{ $table_data->{'constraints'} || [] };
+
         for my $key ( @indices, @constraints ) {
             my ($name, $type, $fields) = @{ $key }{ qw[ name type fields ] };
             $name ||= '';
             my $index_type = 
                 $type eq 'primary_key' ? 'PRIMARY KEY' :
                 $type eq 'unique'      ? 'UNIQUE KEY'  :
-                $type eq 'key'         ? 'KEY'         : '';
+                $type eq 'key'         ? 'KEY'         :
+				$type eq 'normal'      ? 'KEY'         : '';
+
             next unless $index_type;
-            push @index_creates, 
+            push @index_creates,
                 "  $index_type $name (" . join( ', ', @$fields ) . ')';
         }
 
