@@ -10,7 +10,6 @@ use strict;
 use vars qw(%HANDLERS);
 use Test::More;
 use SQL::Translator;
-use Data::Dump qw(dump);
 
 my ($p, $tables, $classes);
 eval {
