@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SqlfXML;
 
 # -------------------------------------------------------------------
-# $Id: SqlfXML.pm,v 1.2 2003-08-07 16:53:40 grommit Exp $
+# $Id: SqlfXML.pm,v 1.3 2003-08-08 12:30:20 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -23,8 +23,13 @@ package SQL::Translator::Producer::SqlfXML;
 # -------------------------------------------------------------------
 
 use strict;
+use warnings;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+
+use Exporter;
+use base qw(Exporter);
+our @EXPORT_OK = qw(produce);
 
 use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
@@ -33,13 +38,17 @@ use XML::Writer;
 my $namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 my $name = 'sqlt';
 
-# -------------------------------------------------------------------
-sub produce {
-    my $translator = shift;
-    my $schema     = $translator->schema;
-    my $args       = $translator->producer_args;
+{ 
+our ($translator,$args,$schema);
 
-    my $io          = IO::Scalar->new;
+sub debug { $translator->debug(@_,"\n"); } # Shortcut.
+
+sub produce {
+    $translator = shift;
+    $args       = $translator->producer_args;
+    $schema  = $translator->schema;
+
+    my $io       = IO::Scalar->new;
     my $xml         = XML::Writer->new(
         OUTPUT      => $io,
         NAMESPACES  => 1,
@@ -52,34 +61,27 @@ sub produce {
     $xml->comment(header_comment('', ''));
     $xml->startTag([ $namespace => 'schema' ]);
 
+    #
+    # Table
+    #
     for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name or next;
-        $xml->startTag   ( [ $namespace => 'table' ] );
-        $xml->dataElement( [ $namespace => 'name'  ], $table_name );
-        $xml->dataElement( [ $namespace => 'order' ], $table->order );
-
+        debug "Table:",$table->name;
+        $xml->startTag( [ $namespace => 'table' ] );
+        xml_objAttr($xml,$table, qw/name order/);
+        
         #
         # Fields
         #
         $xml->startTag( [ $namespace => 'fields' ] );
         for my $field ( $table->get_fields ) {
+            debug "    Field:",$field->name;
             $xml->startTag( [ $namespace => 'field' ] );
-
-            for my $method ( 
-                qw[ 
-                    name data_type default_value is_auto_increment 
-                    is_primary_key is_nullable is_foreign_key order size
-                ]
-            ) {
-                my $val = $field->$method;
-                next unless $args->{emit_empty_tags} || defined $val;
-                $val = "" if not defined $val;
-                $xml->dataElement( [ $namespace => $method ], $val );
-            }
-
+            xml_objAttr($xml,$field, qw/ 
+                     name data_type default_value is_auto_increment 
+                     is_primary_key is_nullable is_foreign_key order size
+            /);
             $xml->endTag( [ $namespace => 'field' ] );
         }
-
         $xml->endTag( [ $namespace => 'fields' ] );
 
         #
@@ -87,16 +89,9 @@ sub produce {
         #
         $xml->startTag( [ $namespace => 'indices' ] );
         for my $index ( $table->get_indices ) {
+            debug "Index:",$index->name;
             $xml->startTag( [ $namespace => 'index' ] );
-
-            for my $method ( qw[ fields name options type ] ) {
-                my $val = $index->$method;
-                next unless $args->{emit_empty_tags} || defined $val;
-                $val = "" if not defined $val;
-                $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                $xml->dataElement( [ $namespace => $method ], $val )
-            }
-
+            xml_objAttr($xml,$index, qw/fields name options type/);
             $xml->endTag( [ $namespace => 'index' ] );
         }
         $xml->endTag( [ $namespace => 'indices' ] );
@@ -106,22 +101,13 @@ sub produce {
         #
         $xml->startTag( [ $namespace => 'constraints' ] );
         for my $index ( $table->get_constraints ) {
+            debug "Constraint:",$index->name;
             $xml->startTag( [ $namespace => 'constraint' ] );
-
-            for my $method ( 
-                qw[ 
+            xml_objAttr($xml,$index, qw/
                     deferrable expression fields match_type name 
                     options on_delete on_update reference_fields
                     reference_table type 
-                ] 
-            ) {
-                my $val = $index->$method;
-                next unless $args->{emit_empty_tags} || defined $val;
-                $val = "" if not defined $val;
-                $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
-                $xml->dataElement( [ $namespace => $method ], $val )
-            }
-
+            /);
             $xml->endTag( [ $namespace => 'constraint' ] );
         }
         $xml->endTag( [ $namespace => 'constraints' ] );
@@ -134,6 +120,24 @@ sub produce {
 
     return $io;
 }
+
+# Takes an xml writer, a Schema:: object and a list of methods and adds the
+# XML for those methods.
+sub xml_objAttr {
+    my ($xml, $obj, @methods) = @_;
+    for my $method (@methods) {
+        my $val = $obj->$method;
+        debug "        ".ref($obj)."->$method=",
+              (defined $val ? "'$val'" : "<UNDEF>");
+        next unless $args->{emit_empty_tags} || defined $val;
+        $val = "" if not defined $val;
+        $val = ref $val eq 'ARRAY' ? join(',', @$val) : $val;
+        debug "        Adding Attr:".$method."='",$val,"'";
+        $xml->dataElement( [ $namespace => $method ], $val );
+    }
+}
+        
+} # End of our scoped bit
 
 1;
 
@@ -165,9 +169,13 @@ SQL::Translator::Producer::SqlfXML - XML output
 
 Creates XML output of a schema.
 
+=head1 TODO
+
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>, darren chamberlain E<lt>darren@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>, 
+darren chamberlain E<lt>darren@cpan.orgE<gt>, 
+mark addison E<lt>mark.addison@itn.co.ukE<gt>, 
 
 =head1 SEE ALSO
 
