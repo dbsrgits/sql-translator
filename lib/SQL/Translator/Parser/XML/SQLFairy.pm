@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.4 2003-10-20 14:26:01 grommit Exp $
+# $Id: SQLFairy.pm,v 1.5 2003-11-19 17:04:18 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -85,7 +85,7 @@ Doesn't take any extra parser args at the moment.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -112,9 +112,9 @@ sub parse {
     my @nodes = $xp->findnodes('/sqlf:schema/sqlf:table');
     for my $tblnode (
         sort { 
-            "".$xp->findvalue('sqlf:order',$a)
+            "".$xp->findvalue('sqlf:order|@order',$a)
             <=> 
-            "".$xp->findvalue('sqlf:order',$b) 
+            "".$xp->findvalue('sqlf:order|@order',$b) 
         } @nodes
     ) {
         debug "Adding table:".$xp->findvalue('sqlf:name',$tblnode);
