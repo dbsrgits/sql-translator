@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.38 2003-08-13 18:41:05 kycl4rk Exp $
+# $Id: Translator.pm,v 1.39 2003-08-18 16:53:16 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.38 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -1094,7 +1094,7 @@ Chris Mungall E<lt>cjm@fruitfly.orgE<gt>,
 Allen Day E<lt>allenday@users.sourceforge.netE<gt>,
 Sam Angiuoli E<lt>angiuoli@users.sourceforge.netE<gt>,
 Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
-Mike Mellilo <mmelillo@users.sourceforge.net>.
+Mike Mellilo E<lt>mmelillo@users.sourceforge.netE<gt>.
 
 =head1 COPYRIGHT
 
