@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.2 2003-08-20 21:26:02 kycl4rk Exp $
+# $Id: TTSchema.pm,v 1.3 2003-08-20 22:55:06 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <grommit@users.sourceforge.net>,
 #                    Ken Y. Clark <kclark@cpan.org>.
@@ -45,20 +45,23 @@ SQL::Translator::Producer::TTSchema -
 
 Produces schema output using a given Template Tookit template.
 
-It needs one additional producer_arg of C<ttfile> that is the file
-name of the template to use. This template has one var added to it
-called C<schema>, which is the SQL::Translator::Producer::Schema
-object so you can then template via its methods.
+It needs one additional producer_arg of C<ttfile> which is the file
+name of the template to use.  This template will be passed a single
+argument called C<schema>, which is the
+C<SQL::Translator::Producer::Schema> object, which you can then use to
+walk the schema via the methods documented in that module.  
 
-    database: [% schema.database %]
-    tables:
-    [% FOREACH table = schema.get_tables %]
-        [% table.name %]
-        ================
-        [% FOREACH field = table.get_fields %]
-            [% field.name %]   [% field.data_type %]([% field.size %])
-        [% END -%]
-    [% END %]
+Here's a brief example of what the template could look like:
+
+  database: [% schema.database %]
+  tables:
+  [% FOREACH table = schema.get_tables %]
+      [% table.name %]
+      ================
+      [% FOREACH field = table.get_fields %]
+          [% field.name %]   [% field.data_type %]([% field.size %])
+      [% END -%]
+  [% END %]
 
 See F<t/data/template/basic.tt> for a more complete example.
 
@@ -75,6 +78,13 @@ the options.
       },
   );
 
+You can use this producer to create any type of text output you like,
+even using it to create your own versions of what the other producers
+make.  For example, you could create a template that translates the
+schema into MySQL's syntax, your own HTML documentation, your own
+Class::DBI classes (or some other code) -- the opportunities are
+limitless!
+
 =cut
 
 # -------------------------------------------------------------------
@@ -82,7 +92,7 @@ the options.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -91,11 +101,7 @@ use Exporter;
 use base qw(Exporter);
 @EXPORT_OK = qw(produce);
 
-use base qw/SQL::Translator::Producer/;  # Doesn't do anything at the mo!
-
-sub debug {
-    warn @_,"\n" if $DEBUG;
-}
+use SQL::Translator::Utils 'debug';
 
 sub produce {
     my $translator = shift;
@@ -108,7 +114,7 @@ sub produce {
     my $out;
     my $tt       = Template->new(
         DEBUG    => $DEBUG,
-        ABSOLUTE => 1, # Set so we can use from the command line sensible.
+        ABSOLUTE => 1, # Set so we can use from the command line sensibly
         RELATIVE => 1, # Maybe the cmd line code should set it! Security!
         %$args,        # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
