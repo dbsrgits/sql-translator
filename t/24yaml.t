@@ -23,7 +23,7 @@ schema:
           on_delete: ''
           on_update: ''
           options: []
-          reference_fields: ~
+          reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
         - deferrable: 1
@@ -35,7 +35,7 @@ schema:
           on_delete: ''
           on_update: ''
           options: []
-          reference_fields: ~
+          reference_fields: []
           reference_table: ''
           type: UNIQUE
       fields:
@@ -121,7 +121,7 @@ schema:
           on_delete: ''
           on_update: ''
           options: []
-          reference_fields: ~
+          reference_fields: []
           reference_table: ''
           type: CHECK
         - deferrable: 1
@@ -134,7 +134,7 @@ schema:
           on_delete: ''
           on_update: ''
           options: []
-          reference_fields: ~
+          reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
       fields:

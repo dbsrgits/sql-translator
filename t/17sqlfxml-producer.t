@@ -117,6 +117,7 @@ $ans = <<EOXML;
         <sqlt:type>PRIMARY KEY</sqlt:type>
         <sqlt:fields>id</sqlt:fields>
         <sqlt:reference_table></sqlt:reference_table>
+        <sqlt:reference_fields></sqlt:reference_fields>
         <sqlt:on_delete></sqlt:on_delete>
         <sqlt:on_update></sqlt:on_update>
         <sqlt:match_type></sqlt:match_type>
@@ -129,6 +130,7 @@ $ans = <<EOXML;
         <sqlt:type>UNIQUE</sqlt:type>
         <sqlt:fields>email</sqlt:fields>
         <sqlt:reference_table></sqlt:reference_table>
+        <sqlt:reference_fields></sqlt:reference_fields>
         <sqlt:on_delete></sqlt:on_delete>
         <sqlt:on_update></sqlt:on_update>
         <sqlt:match_type></sqlt:match_type>
@@ -298,8 +300,8 @@ $ans = <<EOXML;
       <sqlt:index name="titleindex" type="NORMAL" fields="title" options="" />
     </sqlt:indices>
     <sqlt:constraints>
-      <sqlt:constraint name="" type="PRIMARY KEY" fields="id" reference_table="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
-      <sqlt:constraint name="" type="UNIQUE" fields="email" reference_table="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+      <sqlt:constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
+      <sqlt:constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1" />
     </sqlt:constraints>
   </sqlt:table>
 </sqlt:schema>
