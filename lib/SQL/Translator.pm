@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.25 2003-05-06 12:44:54 dlc Exp $
+# $Id: Translator.pm,v 1.26 2003-05-09 16:51:47 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -36,6 +36,7 @@ use Carp qw(carp);
 use File::Spec::Functions qw(catfile);
 use File::Basename qw(dirname);
 use IO::Dir;
+use SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
 # The default behavior is to "pass through" values (note that the
@@ -412,7 +413,21 @@ sub data {
     return $self->{'data'};
 }
 
+# ----------------------------------------------------------------------
+sub schema {
+#
+# Returns the SQL::Translator::Schema object
+#
+    my $self = shift;
 
+    unless ( defined $self->{'schema'} ) {
+        $self->{'schema'} = SQL::Translator::Schema->new;
+    }
+
+    return $self->{'schema'};
+}
+
+# ----------------------------------------------------------------------
 sub trace {
     my $self = shift;
     my $arg  = shift;
@@ -535,14 +550,15 @@ sub translate {
     # the future, each of these might happen in a Safe environment,
     # depending on how paranoid we want to be.
     # ----------------------------------------------------------------
-    eval { $parser_output = $parser->($self, $$data) };
+    my $schema = $self->schema;
+    eval { $parser_output = $parser->($self, $$data, $schema) };
     if ($@ || ! $parser_output) {
         my $msg = sprintf "translate: Error with parser '%s': %s",
             $parser_type, ($@) ? $@ : " no results";
         return $self->error($msg);
     }
 
-    eval { $producer_output = $producer->($self, $parser_output) };
+    eval { $producer_output = $producer->($self, $parser_output, $schema) };
     if ($@ || ! $producer_output) {
         my $msg = sprintf "translate: Error with producer '%s': %s",
             $producer_type, ($@) ? $@ : " no results";
@@ -995,6 +1011,10 @@ the C<translate> method is called, as long as the data instance
 variable is not set.
 
 =pod
+
+=head2 schema
+
+Returns the SQL::Translator::Schema object.
 
 =head2 trace
 
