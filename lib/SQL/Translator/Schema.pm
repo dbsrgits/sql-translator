@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.9 2003-10-03 23:56:21 kycl4rk Exp $
+# $Id: Schema.pm,v 1.10 2003-10-08 17:35:18 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -45,15 +45,16 @@ returns the database structure.
 use strict;
 use Class::Base;
 use SQL::Translator::Schema::Constants;
+use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
-use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER ];
+use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -123,6 +124,57 @@ not be created.
 }
 
 # ----------------------------------------------------------------------
+sub add_procedure {
+
+=pod
+
+=head2 add_procedure
+
+Add a procedure object.  Returns the new
+SQL::Translator::Schema::Procedure object.  The "name" parameter is
+required.  If you try to create a procedure with the same name as an
+existing procedure, you will get an error and the procedure will not
+be created.
+
+  my $p1 = $schema->add_procedure( name => 'foo' );
+  my $p2 = SQL::Translator::Schema::Procedure->new( name => 'bar' );
+  $p2    = $schema->add_procedure( $procedure_bar ) or die $schema->error;
+
+=cut
+
+    my $self            = shift;
+    my $procedure_class = 'SQL::Translator::Schema::Procedure';
+    my $procedure;
+
+    if ( UNIVERSAL::isa( $_[0], $procedure_class ) ) {
+        $procedure = shift;
+        $procedure->schema( $self );
+    }
+    else {
+        my %args = @_;
+        $args{'schema'} = $self;
+        return $self->error('No procedure name') unless $args{'name'};
+        $procedure = $procedure_class->new( \%args ) or 
+            return $self->error( $procedure_class->error );
+    }
+
+    $procedure->order( ++$PROC_ORDER );
+    my $procedure_name = $procedure->name or return 
+        $self->error('No procedure name');
+
+    if ( defined $self->{'procedures'}{ $procedure_name } ) { 
+        return $self->error(
+            qq[Can't create procedure: "$procedure_name" exists]
+        );
+    }
+    else {
+        $self->{'procedures'}{ $procedure_name } = $procedure;
+    }
+
+    return $procedure;
+}
+
+# ----------------------------------------------------------------------
 sub add_trigger {
 
 =pod
@@ -146,9 +198,11 @@ not be created.
 
     if ( UNIVERSAL::isa( $_[0], $trigger_class ) ) {
         $trigger = shift;
+        $trigger->schema( $self );
     }
     else {
         my %args = @_;
+        $args{'schema'} = $self;
         return $self->error('No trigger name') unless $args{'name'};
         $trigger = $trigger_class->new( \%args ) or 
             return $self->error( $trigger_class->error );
@@ -191,9 +245,11 @@ not be created.
 
     if ( UNIVERSAL::isa( $_[0], $view_class ) ) {
         $view = shift;
+        $view->schema( $self );
     }
     else {
         my %args = @_;
+        $args{'schema'} = $self;
         return $self->error('No view name') unless $args{'name'};
         $view = $view_class->new( \%args ) or return $view_class->error;
     }
@@ -254,6 +310,55 @@ Returns true if all the tables and views are valid.
 }
 
 # ----------------------------------------------------------------------
+sub get_procedure {
+
+=pod
+
+=head2 get_procedure
+
+Returns a procedure by the name provided.
+
+  my $procedure = $schema->get_procedure('foo');
+
+=cut
+
+    my $self       = shift;
+    my $procedure_name = shift or return $self->error('No procedure name');
+    return $self->error( qq[Table "$procedure_name" does not exist] ) unless
+        exists $self->{'procedures'}{ $procedure_name };
+    return $self->{'procedures'}{ $procedure_name };
+}
+
+# ----------------------------------------------------------------------
+sub get_procedures {
+
+=pod
+
+=head2 get_procedures
+
+Returns all the procedures as an array or array reference.
+
+  my @procedures = $schema->get_procedures;
+
+=cut
+
+    my $self   = shift;
+    my @procedures = 
+        map  { $_->[1] } 
+        sort { $a->[0] <=> $b->[0] } 
+        map  { [ $_->order, $_ ] }
+        values %{ $self->{'procedures'} };
+
+    if ( @procedures ) {
+        return wantarray ? @procedures : \@procedures;
+    }
+    else {
+        $self->error('No procedures');
+        return wantarray ? () : undef;
+    }
+}
+
+# ----------------------------------------------------------------------
 sub get_table {
 
 =pod
@@ -298,6 +403,55 @@ Returns all the tables as an array or array reference.
     }
     else {
         $self->error('No tables');
+        return wantarray ? () : undef;
+    }
+}
+
+# ----------------------------------------------------------------------
+sub get_trigger {
+
+=pod
+
+=head2 get_trigger
+
+Returns a trigger by the name provided.
+
+  my $trigger = $schema->get_trigger('foo');
+
+=cut
+
+    my $self       = shift;
+    my $trigger_name = shift or return $self->error('No trigger name');
+    return $self->error( qq[Table "$trigger_name" does not exist] ) unless
+        exists $self->{'triggers'}{ $trigger_name };
+    return $self->{'triggers'}{ $trigger_name };
+}
+
+# ----------------------------------------------------------------------
+sub get_triggers {
+
+=pod
+
+=head2 get_triggers
+
+Returns all the triggers as an array or array reference.
+
+  my @triggers = $schema->get_triggers;
+
+=cut
+
+    my $self   = shift;
+    my @triggers = 
+        map  { $_->[1] } 
+        sort { $a->[0] <=> $b->[0] } 
+        map  { [ $_->order, $_ ] }
+        values %{ $self->{'triggers'} };
+
+    if ( @triggers ) {
+        return wantarray ? @triggers : \@triggers;
+    }
+    else {
+        $self->error('No triggers');
         return wantarray ? () : undef;
     }
 }
