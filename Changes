@@ -4,6 +4,12 @@
 *   Refactoring: Added SQL::Translator::Schema::Object - base 
     class for all Schema objects.
 
+*   Changes to MySQL Parser (Dave Howorth)
+    - ignore INSERT statements
+    - permit ALTER TABLE ADD FOREIGN KEY
+    - allow trailing comma on last field in CREATE statements
+    - collect the database name
+
 # -----------------------------------------------------------
 # 0.06    2004-05-13
 # -----------------------------------------------------------

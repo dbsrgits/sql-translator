@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(180, "SQL::Translator::Parser::MySQL");
+    maybe_plan(199, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -389,3 +389,77 @@ BEGIN {
     my @t2_fields = $t2->get_fields;
     is( scalar @t2_fields, 8, 'Right number of fields (8)' );
 }
+
+# djh Tests for:
+#    USE database ;
+#    ALTER TABLE ADD FOREIGN KEY
+#    trailing comma on last create definition
+#    Ignoring INSERT statements
+#
+{
+    my $tr = SQL::Translator->new;
+    my $data = parse($tr, 
+        q[
+            USE database_name;
+
+            CREATE TABLE one (
+              id                     integer NOT NULL auto_increment,
+              two_id                 integer NOT NULL auto_increment,
+              some_data              text,
+              PRIMARY KEY (id),
+              INDEX (two_id),
+            ) TYPE=INNODB;
+
+            CREATE TABLE two (
+              id                     int NOT NULL auto_increment,
+              one_id                 int NOT NULL auto_increment,
+              some_data              text,
+              PRIMARY KEY (id),
+              INDEX (one_id),
+              FOREIGN KEY (one_id) REFERENCES one (id),
+            ) TYPE=INNODB;
+
+            ALTER TABLE one ADD FOREIGN KEY (two_id) REFERENCES two (id);
+
+            INSERT absolutely *#! any old $£ ? rubbish ;
+        ]
+    ) or die $tr->error;
+
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my $db_name = $schema->name;
+    is( $db_name, 'database_name', 'Database name extracted from USE' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 2, 'Right number of tables (2)' );
+    my $table1 = shift @tables;
+    is( $table1->name, 'one', 'Found "one" table' );
+    my $table2 = shift @tables;
+    is( $table2->name, 'two', 'Found "two" table' );
+
+    my @constraints = $table1->get_constraints;
+    is(scalar @constraints, 2, 'Right number of constraints (2) on table one');
+
+    my $t1c1 = shift @constraints;
+    is( $t1c1->type, PRIMARY_KEY, 'Constraint is a PK' );
+    is( join(',', $t1c1->fields), 'id', 'Constraint is on "id"' );
+
+    my $t1c2 = shift @constraints;
+    is( $t1c2->type, FOREIGN_KEY, 'Constraint is a FK' );
+    is( join(',', $t1c2->fields), 'two_id', 'Constraint is on "two_id"' );
+    is( $t1c2->reference_table, 'two', 'To table "two"' );
+    is( join(',', $t1c2->reference_fields), 'id', 'To field "id"' );
+
+    @constraints = $table2->get_constraints;
+    is(scalar @constraints, 2, 'Right number of constraints (2) on table two');
+
+    my $t2c1 = shift @constraints;
+    is( $t2c1->type, PRIMARY_KEY, 'Constraint is a PK' );
+    is( join(',', $t2c1->fields), 'id', 'Constraint is on "id"' );
+
+    my $t2c2 = shift @constraints;
+    is( $t2c2->type, FOREIGN_KEY, 'Constraint is a FK' );
+    is( join(',', $t2c2->fields), 'one_id', 'Constraint is on "one_id"' );
+    is( $t2c2->reference_table, 'one', 'To table "one"' );
+    is( join(',', $t2c2->reference_fields), 'id', 'To field "id"' );
+}
+
