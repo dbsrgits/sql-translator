@@ -17,7 +17,7 @@ unless (open MANIFH, "MANIFEST") {
 
 while (<MANIFH>) {
     chomp;
-    if (s/\.pm$//) {
+    if (s,^lib/,, && s/\.pm$//) {
         s,/,::,g;
         push @perlmods, $_
     }
