@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.15 2003-06-17 03:03:10 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.16 2003-06-19 01:18:07 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -66,7 +66,7 @@ sub produce {
 
         $create .= "package ".
             $translator->format_package_name($table_name).";\n";
-		$create .= "use base ".$translator->format_package_name('DBI').";\n";
+		$create .= "use base '".$translator->format_package_name('DBI')."';\n";
         $create .= "use mixin 'Class::DBI::Join';\n";
         $create .= "use Class::DBI::Pager;\n\n";
         $create .= $translator->format_package_name($table_name).
