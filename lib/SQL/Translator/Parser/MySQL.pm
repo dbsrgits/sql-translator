@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.30 2003-08-16 13:20:06 rossta Exp $
+# $Id: MySQL.pm,v 1.31 2003-08-16 20:10:39 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -589,7 +589,7 @@ sub parse {
 
             if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
                 my %extra = $field->extra;
-                my $longest;
+                my $longest = 0;
                 for my $len ( map { length } @{ $extra{'list'} || [] } ) {
                     $longest = $len if $len > $longest;
                 }
