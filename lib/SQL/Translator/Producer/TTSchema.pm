@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.7 2004-11-16 09:15:36 boconnor Exp $
+# $Id: TTSchema.pm,v 1.8 2004-11-16 21:06:35 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::TTSchema;
 
 =head1 NAME
 
-SQL::Translator::Producer::TTSchema - 
+SQL::Translator::Producer::TTSchema -
     Produces output using the Template Toolkit from a SQL schema
 
 =head1 SYNOPSIS
@@ -35,8 +35,12 @@ SQL::Translator::Producer::TTSchema -
       filename       => 'foo_schema.sql',
       to             => 'TTSchema',
       producer_args  => {
-          ttargs     => {},
-          ttfile     => 'foo_template.tt',
+          ttfile     => 'foo_template.tt',  # Template file to use
+
+          # Extra template variables
+          ttargs     => {
+              author => "Mr Foo",
+          },
       },
   );
   print $translator->translate;
@@ -46,10 +50,10 @@ SQL::Translator::Producer::TTSchema -
 Produces schema output using a given Template Tookit template.
 
 It needs one additional producer_arg of C<ttfile> which is the file
-name of the template to use.  This template will be passed a single
-argument called C<schema>, which is the
-C<SQL::Translator::Producer::Schema> object, which you can then use to
-walk the schema via the methods documented in that module.  
+name of the template to use.  This template will be passed a variable
+called C<schema>, which is the C<SQL::Translator::Producer::Schema> object
+created by the parser. You can then use it to walk the schema via the
+methods documented in that module.
 
 Here's a brief example of what the template could look like:
 
@@ -65,7 +69,10 @@ Here's a brief example of what the template could look like:
 
 See F<t/data/template/basic.tt> for a more complete example.
 
-You can also set any of the options used to initiallize the Template object by 
+The template will also get the set of extra variables given as a hashref via the
+C<ttvars> producer arg.
+
+You can set any of the options used to initiallize the Template object by
 adding them to your producer_args. See Template Toolkit docs for details of
 the options.
 
@@ -86,6 +93,20 @@ schema into MySQL's syntax, your own HTML documentation, your own
 Class::DBI classes (or some other code) -- the opportunities are
 limitless!
 
+=head2 Producer Args
+
+=over 4
+
+=item ttfile
+
+The template file to generate the output with.
+
+=item ttvars
+
+A hash ref of extra variables you want to add to the template.
+
+=back
+
 =cut
 
 # -------------------------------------------------------------------
@@ -93,7 +114,7 @@ limitless!
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -110,7 +131,9 @@ sub produce {
     my $scma       = $translator->schema;
     my $args       = $translator->producer_args;
     my $file       = delete $args->{'ttfile'} or die "No template file!";
-   
+    my $ttvars     = delete $args->{'ttargs'} || {};
+    # Any args left here get given to the Template object.
+
     debug "Processing template $file\n";
     my $out;
     my $tt       = Template->new(
@@ -120,10 +143,10 @@ sub produce {
         %$args,        # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
 
-    $tt->process( 
-        $file, 
-        { schema => $scma , %{ $args || {} } }, 
-        \$out 
+    $tt->process(
+        $file,
+        { schema => $scma , %$ttvars },
+        \$out
     ) or die "Error processing template '$file': ".$tt->error;
 
     return $out;

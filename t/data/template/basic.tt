@@ -1,6 +1,9 @@
 Schema: [% schema.name %]
 Database: [% schema.database %]
 
+Foo: [% foo %]
+Hello: [% hello %]
+
 [%- FOREACH table = schema.get_tables %]
 Table: [% table %]
 ==========================================================================

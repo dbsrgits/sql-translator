@@ -41,8 +41,12 @@ $obj = SQL::Translator->new(
     from           => "XML-SQLFairy",
     filename       => "$Bin/data/xml/schema.xml",
     to             => "TTSchema",
-     producer_args  => {
+    producer_args  => {
         ttfile => "$Bin/data/template/basic.tt",
+        ttargs => {
+            foo   => 'bar',
+            hello => 'world',
+        },
     },
 );
 my $out;
@@ -57,6 +61,9 @@ print $out if DEBUG;
 __DATA__
 Schema: 
 Database: 
+
+Foo: bar
+Hello: world
 
 Table: Basic
 ==========================================================================
