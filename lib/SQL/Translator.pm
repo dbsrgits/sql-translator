@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.29 2003-06-11 04:34:11 kycl4rk Exp $
+# $Id: Translator.pm,v 1.30 2003-06-16 18:13:59 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.02';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -755,7 +755,7 @@ Get or set whether to validate the parsed data.
 
 =head1 NAME
 
-SQL::Translator - convert schema from one database to another (and more)
+SQL::Translator - manipulate structured data definitions (SQL and more)
 
 =head1 SYNOPSIS
 
@@ -789,12 +789,19 @@ SQL::Translator - convert schema from one database to another (and more)
 
 =head1 DESCRIPTION
 
-This module attempts to simplify the task of converting one database
-create syntax to another through the use of Parsers (which understand
-the source format) and Producers (which understand the destination
-format).  The idea is that any Parser can be used with any Producer in
-the conversion process.  So, if you wanted Postgres-to-Oracle, you
-would use the Postgres parser and the Oracle producer.
+The SQLFairy project began with the idea of simplifying the task of
+converting one database create syntax to another through the use of
+Parsers (which understand the source format) and Producers (which
+understand the destination format).  The idea is that any Parser can
+be used with any Producer in the conversion process, so, if you
+wanted Postgres-to-Oracle, you would use the Postgres parser and the
+Oracle producer.  The project has since grown to include parsing
+structured data files like Excel spreadsheets and delimited text files
+and the production of various documentation aids, such as images,
+graphs, POD, and HTML descriptions of the schema, as well as automatic
+code generators through the use of Class::DBI.  Presently only the 
+definition parts of SQL are handled (CREATE, ALTER), not the 
+manipulation of data (INSERT, UPDATE, DELETE).
 
 =head1 CONSTRUCTOR
 
