@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.29 2003-08-20 22:49:52 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.30 2003-08-21 02:28:38 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -131,7 +131,7 @@ my $parser; # should we do this?  There's no programmic way to
 
 $GRAMMAR = q!
 
-{ our ( %tables, $table_order ) }
+{ my ( %tables, $table_order ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -390,7 +390,7 @@ pg_data_type :
         { 
             $return = { 
                 type => 'integer',
-                size => [8],
+                size => 20,
             };
         }
     |
@@ -398,7 +398,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'integer', 
-                size => [2],
+                size => 5,
             };
         }
     |
@@ -406,7 +406,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'integer', 
-                size => [4],
+                size => 10,
             };
         }
     |    
@@ -414,7 +414,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'real', 
-                size => [4],
+                size => 10,
             };
         }
     |
@@ -422,7 +422,7 @@ pg_data_type :
         { 
             $return = {
                 type => 'float', 
-                size => [8],
+                size => 20,
             }; 
         }
     |
@@ -430,7 +430,7 @@ pg_data_type :
         { 
             $return = { 
                 type              => 'integer', 
-                size              => [8], 
+                size              => 20, 
                 is_auto_increment => 1,
             };
         }
@@ -439,7 +439,7 @@ pg_data_type :
         { 
             $return = { 
                 type              => 'integer',
-                size              => [4], 
+                size              => 11, 
                 is_auto_increment => 1,
             };
         }
@@ -778,7 +778,7 @@ sub parse {
 =head1 AUTHORS
 
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Allen Day <allenday@ucla.edu>.
+Allen Day E<lt>allenday@ucla.eduE<gt>.
 
 =head1 SEE ALSO
 
