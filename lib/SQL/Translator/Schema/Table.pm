@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.4 2003-05-07 20:42:34 kycl4rk Exp $
+# $Id: Table.pm,v 1.5 2003-05-09 17:11:00 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -41,6 +41,7 @@ C<SQL::Translator::Schema::Table> is the table object.
 
 use strict;
 use Class::Base;
+use SQL::Translator::Utils 'parse_list_arg';
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Schema::Field;
@@ -227,6 +228,7 @@ existing field, you will get an error and the field will not be created.
             $self->error( $field_class->error );
     }
 
+    $field->order( ++$FIELD_ORDER );
     my $field_name = $field->name or return $self->error('No name');
 
     if ( exists $self->{'fields'}{ $field_name } ) { 
@@ -234,7 +236,6 @@ existing field, you will get an error and the field will not be created.
     }
     else {
         $self->{'fields'}{ $field_name } = $field;
-        $self->{'fields'}{ $field_name }{'order'} = ++$FIELD_ORDER;
     }
 
     return $field;
@@ -326,7 +327,9 @@ Returns all the field objects as an array or array reference.
 
     my $self = shift;
     my @fields = 
-        sort { $a->{'order'} <=> $b->{'order'} }
+        map  { $_->[1] }
+        sort { $a->[0] <=> $b->[0] }
+        map  { [ $_->order, $_ ] }
         values %{ $self->{'fields'} || {} };
 
     if ( @fields ) {
@@ -414,9 +417,8 @@ These are eqivalent:
 
 =cut
 
-    my $self = shift;
-    my $fields = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+    my $self   = shift;
+    my $fields = parse_list_arg( @_ );
 
     my $constraint;
     if ( @$fields ) {
@@ -469,8 +471,7 @@ an array or array reference.
 =cut
 
     my $self    = shift;
-    my $options = UNIVERSAL::isa( $_[0], 'ARRAY' ) 
-        ? shift : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ];
+    my $options = parse_list_arg( @_ );
 
     push @{ $self->{'options'} }, @$options;
 
@@ -480,6 +481,37 @@ an array or array reference.
     else {
         return wantarray ? () : [];
     }
+}
+
+# ----------------------------------------------------------------------
+sub order {
+
+=pod
+
+=head2 order
+
+Get or set the table's order.
+
+  my $order = $table->order(3);
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    if ( defined $arg && $arg =~ /^\d+$/ ) {
+        $self->{'order'} = $arg;
+    }
+
+    return $self->{'order'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub DESTROY {
+    my $self = shift;
+    undef $self->{'schema'}; # destroy cyclical reference
+    undef $_ for @{ $self->{'constraints'} };
+    undef $_ for @{ $self->{'indices'} };
+    undef $_ for values %{ $self->{'fields'} };
 }
 
 1;
