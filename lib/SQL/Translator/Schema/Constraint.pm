@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.3 2003-05-09 17:06:11 kycl4rk Exp $
+# $Id: Constraint.pm,v 1.4 2003-06-06 00:08:14 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -70,12 +70,12 @@ sub init {
 Object constructor.
 
   my $schema           =  SQL::Translator::Schema::Constraint->new(
-      table            => $table,        # the table to which it belongs
+      table            => $table,        # table to which it belongs
       type             => 'foreign_key', # type of table constraint
-      name             => 'fk_phone_id', # the name of the constraint
-      fields           => 'phone_id',    # the field in the referring table
-      reference_fields => 'phone_id',    # the referenced table
-      reference_table  => 'phone',       # the referenced fields
+      name             => 'fk_phone_id', # name of the constraint
+      fields           => 'phone_id',    # field in the referring table
+      reference_fields => 'phone_id',    # referenced table
+      reference_table  => 'phone',       # referenced fields
       match_type       => 'full',        # how to match
       on_delete_do     => 'cascade',     # what to do on deletes
       on_update_do     => '',            # what to do on updates
@@ -291,6 +291,35 @@ Get or set the constraint's name.
 }
 
 # ----------------------------------------------------------------------
+sub options {
+
+=pod
+
+=head2 options
+
+Gets or adds to the constraints's options (e.g., "INITIALLY IMMEDIATE").  
+Returns an array or array reference.
+
+  $constraint->options('NORELY');
+  my @options = $constraint->options;
+
+=cut
+
+    my $self    = shift;
+    my $options = parse_list_arg( @_ );
+
+    push @{ $self->{'options'} }, @$options;
+
+    if ( ref $self->{'options'} ) {
+        return wantarray ? @{ $self->{'options'} || [] } : $self->{'options'};
+    }
+    else {
+        return wantarray ? () : [];
+    }
+}
+
+
+# ----------------------------------------------------------------------
 sub on_delete {
 
 =pod
@@ -410,32 +439,6 @@ Get or set the table referred to by the constraint.
     return $self->{'reference_table'} || '';
 }
 
-
-# ----------------------------------------------------------------------
-sub type {
-
-=pod
-
-=head2 type
-
-Get or set the constraint's type.
-
-  my $type = $constraint->type( PRIMARY_KEY );
-
-=cut
-
-    my $self = shift;
-
-    if ( my $type = shift ) {
-        return $self->error("Invalid constraint type: $type") 
-            unless VALID_TYPE->{ $type };
-        $self->{'type'} = $type;
-    }
-
-    return $self->{'type'} || '';
-}
-
-
 # ----------------------------------------------------------------------
 sub table {
 
@@ -460,33 +463,29 @@ Get or set the field's table object.
 }
 
 # ----------------------------------------------------------------------
-sub options {
+sub type {
 
 =pod
 
-=head2 options
+=head2 type
 
-Gets or adds to the constraints's options (e.g., "INITIALLY IMMEDIATE").  
-Returns an array or array reference.
+Get or set the constraint's type.
 
-  $constraint->options('NORELY');
-  my @options = $constraint->options;
+  my $type = $constraint->type( PRIMARY_KEY );
 
 =cut
 
-    my $self    = shift;
-    my $options = parse_list_arg( @_ );
+    my $self = shift;
 
-    push @{ $self->{'options'} }, @$options;
+    if ( my $type = uc shift ) {
+        $type =~ s/_/ /g;
+        return $self->error("Invalid constraint type: $type") 
+            unless VALID_TYPE->{ $type };
+        $self->{'type'} = $type;
+    }
 
-    if ( ref $self->{'options'} ) {
-        return wantarray ? @{ $self->{'options'} || [] } : $self->{'options'};
-    }
-    else {
-        return wantarray ? () : [];
-    }
+    return $self->{'type'} || '';
 }
-
 # ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
