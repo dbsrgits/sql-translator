@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.3 2003-10-14 23:19:43 grommit Exp $
+# $Id: SQLFairy.pm,v 1.4 2003-10-14 23:29:19 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -29,7 +29,7 @@ SQL::Translator::Parser::XML::XMI::SQLFairy - Create Schema from UML Models.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 use Exporter;
 use base qw(Exporter);
@@ -145,14 +145,11 @@ sub classes2schema {
             $end[0]->{multiplicity}{rangeUpper} == 1
             || $end[1]->{multiplicity}{rangeUpper} == 1
         ) {
-            # 1:m or 0:m
             one2many($assoc);
         }
         else
         {
-            # m:n
             many2many($assoc);
-            #warn "Sorry, n:m associations not yet implimented for xmi.id=".$assoc->{"xmi.id"}."\n";
         }
 
     }
@@ -397,8 +394,9 @@ contains an attribute that makes a good candidate for a pkey, e.g. email.
 
 =head2 Relationships
 
-Modeled using UML associations. Currently only handles 0:m and 1:m joins. That
-is associations where one ends multiplicty is '1' or '0..1' and the other end's
+=head 1:m
+
+Associations where one ends multiplicty is '1' or '0..1' and the other end's
 multplicity is more than 1 e.g '*', '0..*', '1..*', '0..3', '4..42' etc.
 
 The pkey field from the 1 end is added to the table for the class at the many
@@ -410,6 +408,12 @@ nullable, if its multiplicity '1' (1:m) then its made not nullable.
 If the association is a composition then the created fkey is made part of the
 many ends pkey. ie It exports the pkey to create an identity join.
 
+=head2 m:n
+
+Model using a standard m:n association and the parser will automatically create
+a link table for you in the Schema by exporting pkeys from the tables at 
+each end.
+
 =head1 EXAMPLE
 
 TODO An example to help make sense of the above! Probably based on the test.
@@ -420,11 +424,15 @@ TODO An example to help make sense of the above! Probably based on the test.
 
 =head1 TODO
 
-1:1 and m:m joins.
+1:1 joins.
+
+Use Role names from associations as field names for exported keys when building
+relationships.
 
 Generalizations.
 
-Support for the format_X_name subs in the Translator.
+Support for the format_X_name subs in the Translator and format subs for 
+generating the link table name in m:n joins.
 
 Lots more...
 
