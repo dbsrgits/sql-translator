@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.2 2003-10-04 01:16:39 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.3 2003-10-08 22:37:59 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -154,7 +154,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -556,9 +556,11 @@ sub parse {
     warn Dumper( $result ) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = sort { 
-        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
-    } keys %{ $result->{'tables'} };
+    my @tables = 
+        map   { $_->[1] }
+        sort  { $a->[0] <=> $b->[0] } 
+        map   { [ $result->{'tables'}{ $_ }->{'order'}, $_ ] }
+        keys %{ $result->{'tables'} };
 
     for my $table_name ( @tables ) {
         my $tdata =  $result->{'tables'}{ $table_name };
