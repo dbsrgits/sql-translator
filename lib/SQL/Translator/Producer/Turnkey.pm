@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.42 2004-04-16 09:46:51 boconnor Exp $
+# $Id: Turnkey.pm,v 1.43 2004-04-16 22:20:14 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -652,7 +652,7 @@ EOF
   <table>
   [- FOREACH field = node.data_fields -]
   [- IF field != "1" -]
-    <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field -]) %]</td></tr>
+    <tr><td class="dbfieldname">[- field.key -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field.key -]) %]</td></tr>
   [- END -]
   [- END -]
   [- FOREACH field = node.edges -]
