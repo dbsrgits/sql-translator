@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.4 2003-07-18 22:54:41 kycl4rk Exp $
+# $Id: HTML.pm,v 1.5 2003-08-14 16:57:17 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::HTML;
 use strict;
 use CGI;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -35,8 +35,8 @@ sub produce {
     my $schema_name = $schema->name || 'Schema';
     my $args        = $t->producer_args;
     my $q           = CGI->new;
+    my $title       = $args->{'title'} || "Description of $schema_name";
 
-    my $title = "Description of $schema_name";
     my $html  = $q->start_html( 
         { -title => $title, -bgcolor => 'lightgoldenrodyellow' } 
     ) .  $q->h1( $title ).  '<a name="top">', $q->hr;
