@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.cgi,v 1.2 2003-08-04 20:55:45 kycl4rk Exp $
+# $Id: sql_translator.cgi,v 1.3 2003-08-14 16:52:38 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -53,6 +53,7 @@ eval {
                 font_size    => $q->param('font_size'),
                 no_columns   => $q->param('no_columns'),
                 node_shape   => $q->param('node_shape'),
+                layout       => $q->param('layout')      || '',
                 height       => $q->param('height')      || 0,
                 width        => $q->param('width')       || 0,
                 show_fields  => $q->param('show_fields') || 0,
