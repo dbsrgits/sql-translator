@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.5 2003-02-25 05:01:35 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.6 2003-02-25 14:55:36 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -41,52 +41,54 @@ The grammar was started from the MySQL parsers.  Here is the description
 from PostgreSQL:
 
 Table:
+(http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createtable.html)
 
-    CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
-         { column_name data_type [ DEFAULT default_expr ] 
-            [ column_constraint [, ... ] ]
-         | table_constraint }  [, ... ]
-     )
-     [ INHERITS ( parent_table [, ... ] ) ]
-     [ WITH OIDS | WITHOUT OIDS ]
-     
-     where column_constraint is:
-     
-     [ CONSTRAINT constraint_name ]
-     { NOT NULL | NULL | UNIQUE | PRIMARY KEY |
-       CHECK (expression) |
-       REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL ]
-         [ ON DELETE action ] [ ON UPDATE action ] }
-     [ DEFERRABLE | NOT DEFERRABLE ] 
-     [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
-     
-     and table_constraint is:
-     
-     [ CONSTRAINT constraint_name ]
-     { UNIQUE ( column_name [, ... ] ) |
-       PRIMARY KEY ( column_name [, ... ] ) |
-       CHECK ( expression ) |
-       FOREIGN KEY ( column_name [, ... ] ) 
-        REFERENCES reftable [ ( refcolumn [, ... ] ) ]
-         [ MATCH FULL | MATCH PARTIAL ] 
-         [ ON DELETE action ] [ ON UPDATE action ] }
-     [ DEFERRABLE | NOT DEFERRABLE ] 
-     [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+  CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
+      { column_name data_type [ DEFAULT default_expr ] 
+         [ column_constraint [, ... ] ]
+      | table_constraint }  [, ... ]
+  )
+  [ INHERITS ( parent_table [, ... ] ) ]
+  [ WITH OIDS | WITHOUT OIDS ]
+  
+  where column_constraint is:
+  
+  [ CONSTRAINT constraint_name ]
+  { NOT NULL | NULL | UNIQUE | PRIMARY KEY |
+    CHECK (expression) |
+    REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL ]
+      [ ON DELETE action ] [ ON UPDATE action ] }
+  [ DEFERRABLE | NOT DEFERRABLE ] 
+  [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+  
+  and table_constraint is:
+  
+  [ CONSTRAINT constraint_name ]
+  { UNIQUE ( column_name [, ... ] ) |
+    PRIMARY KEY ( column_name [, ... ] ) |
+    CHECK ( expression ) |
+    FOREIGN KEY ( column_name [, ... ] ) 
+     REFERENCES reftable [ ( refcolumn [, ... ] ) ]
+      [ MATCH FULL | MATCH PARTIAL ] 
+      [ ON DELETE action ] [ ON UPDATE action ] }
+  [ DEFERRABLE | NOT DEFERRABLE ] 
+  [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
 Index:
+(http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createindex.html)
 
-    CREATE [ UNIQUE ] INDEX index_name ON table
-         [ USING acc_method ] ( column [ ops_name ] [, ...] )
-         [ WHERE predicate ]
-     CREATE [ UNIQUE ] INDEX index_name ON table
-         [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
-         [ WHERE predicate ]
+  CREATE [ UNIQUE ] INDEX index_name ON table
+      [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ WHERE predicate ]
+  CREATE [ UNIQUE ] INDEX index_name ON table
+      [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
+      [ WHERE predicate ]
 
 =cut
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -108,6 +110,12 @@ $GRAMMAR = q!
 
 { our ( %tables, $table_order ) }
 
+#
+# The "eofile" rule makes the parser fail if any "statement" rule
+# fails.  Otherwise, the first successful match by a "statement" 
+# won't cause the failure needed to know that the parse, as a whole,
+# failed. -ky
+#
 startrule : statement(s) eofile { \%tables }
 
 eofile : /^\Z/

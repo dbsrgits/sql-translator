@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.11 2003-02-15 02:30:59 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.12 2003-02-25 14:55:35 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -38,11 +38,92 @@ SQL::Translator::Parser::MySQL - parser for MySQL
 
 The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
+Here's the word from the MySQL site
+(http://www.mysql.com/doc/en/CREATE_TABLE.html):
+
+  CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name [(create_definition,...)]
+  [table_options] [select_statement]
+  
+  or
+  
+  CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name LIKE old_table_name;
+  
+  create_definition:
+    col_name type [NOT NULL | NULL] [DEFAULT default_value] [AUTO_INCREMENT]
+              [PRIMARY KEY] [reference_definition]
+    or    PRIMARY KEY (index_col_name,...)
+    or    KEY [index_name] (index_col_name,...)
+    or    INDEX [index_name] (index_col_name,...)
+    or    UNIQUE [INDEX] [index_name] (index_col_name,...)
+    or    FULLTEXT [INDEX] [index_name] (index_col_name,...)
+    or    [CONSTRAINT symbol] FOREIGN KEY [index_name] (index_col_name,...)
+              [reference_definition]
+    or    CHECK (expr)
+  
+  type:
+          TINYINT[(length)] [UNSIGNED] [ZEROFILL]
+    or    SMALLINT[(length)] [UNSIGNED] [ZEROFILL]
+    or    MEDIUMINT[(length)] [UNSIGNED] [ZEROFILL]
+    or    INT[(length)] [UNSIGNED] [ZEROFILL]
+    or    INTEGER[(length)] [UNSIGNED] [ZEROFILL]
+    or    BIGINT[(length)] [UNSIGNED] [ZEROFILL]
+    or    REAL[(length,decimals)] [UNSIGNED] [ZEROFILL]
+    or    DOUBLE[(length,decimals)] [UNSIGNED] [ZEROFILL]
+    or    FLOAT[(length,decimals)] [UNSIGNED] [ZEROFILL]
+    or    DECIMAL(length,decimals) [UNSIGNED] [ZEROFILL]
+    or    NUMERIC(length,decimals) [UNSIGNED] [ZEROFILL]
+    or    CHAR(length) [BINARY]
+    or    VARCHAR(length) [BINARY]
+    or    DATE
+    or    TIME
+    or    TIMESTAMP
+    or    DATETIME
+    or    TINYBLOB
+    or    BLOB
+    or    MEDIUMBLOB
+    or    LONGBLOB
+    or    TINYTEXT
+    or    TEXT
+    or    MEDIUMTEXT
+    or    LONGTEXT
+    or    ENUM(value1,value2,value3,...)
+    or    SET(value1,value2,value3,...)
+  
+  index_col_name:
+          col_name [(length)]
+  
+  reference_definition:
+          REFERENCES tbl_name [(index_col_name,...)]
+                     [MATCH FULL | MATCH PARTIAL]
+                     [ON DELETE reference_option]
+                     [ON UPDATE reference_option]
+  
+  reference_option:
+          RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT
+  
+  table_options:
+          TYPE = {BDB | HEAP | ISAM | InnoDB | MERGE | MRG_MYISAM | MYISAM }
+  or      AUTO_INCREMENT = #
+  or      AVG_ROW_LENGTH = #
+  or      CHECKSUM = {0 | 1}
+  or      COMMENT = "string"
+  or      MAX_ROWS = #
+  or      MIN_ROWS = #
+  or      PACK_KEYS = {0 | 1 | DEFAULT}
+  or      PASSWORD = "string"
+  or      DELAY_KEY_WRITE = {0 | 1}
+  or      ROW_FORMAT= { default | dynamic | fixed | compressed }
+  or      RAID_TYPE= {1 | STRIPED | RAID0 } RAID_CHUNKS=#  RAID_CHUNKSIZE=#
+  or      UNION = (table_name,[table_name...])
+  or      INSERT_METHOD= {NO | FIRST | LAST }
+  or      DATA DIRECTORY="absolute path to directory"
+  or      INDEX DIRECTORY="absolute path to directory"
+
 =cut
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -64,7 +145,15 @@ $GRAMMAR = q!
 
 { our ( %tables, $table_order ) }
 
-startrule : statement(s) { \%tables }
+#
+# The "eofile" rule makes the parser fail if any "statement" rule
+# fails.  Otherwise, the first successful match by a "statement" 
+# won't cause the failure needed to know that the parse, as a whole,
+# failed. -ky
+#
+startrule : statement(s) eofile { \%tables }
+
+eofile : /^\Z/
 
 statement : comment
     | drop
