@@ -1,0 +1,5 @@
+Table: [% table %]
+  Primary Key:  [% table.pkey_fields.join(", ") %]
+  Foriegn Keys: [% table.key_fields.join(", ") %]
+  Data Fields:  [% table.data_fields.join(", ") %]
+

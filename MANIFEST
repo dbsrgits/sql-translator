@@ -45,6 +45,7 @@ lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/Storable.pm
 lib/SQL/Translator/Producer/Sybase.pm
 lib/SQL/Translator/Producer/TTSchema.pm
+lib/SQL/Translator/Producer/TT/Table.pm
 lib/SQL/Translator/Producer/XML.pm
 lib/SQL/Translator/Producer/XML/SQLFairy.pm
 lib/SQL/Translator/Producer/YAML.pm
@@ -83,6 +84,7 @@ t/25storable.t
 t/26sybase.t
 t/27sqlite-parser.t
 t/29html.t
+t/33tt-table-producer.t
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
@@ -95,5 +97,6 @@ t/data/sybase/create.sql
 t/data/template/basic.tt
 t/data/xml/schema-basic.xml
 t/data/xml/schema-basic-attribs.xml
+t/data/template/table.tt
 META.yml                                Module meta-data (added by MakeMaker)
 SIGNATURE                                Public-key signature (added by MakeMaker)
