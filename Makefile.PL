@@ -15,6 +15,9 @@ WriteMakefile(
         'XML::Dumper'        => 0,
         'Pod::Usage'         => 0,
     },
+    clean => {
+        FILES => 'SQL-Translator-$(VERSION).tar.gz',
+    },
 );
 
 

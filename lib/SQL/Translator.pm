@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.7 2002-06-11 12:09:13 dlc Exp $
+# $Id: Translator.pm,v 1.8 2002-07-08 14:42:56 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -40,24 +40,17 @@ SQL::Translator - convert schema from one database to another
 =head1 DESCRIPTION
 
 This module attempts to simplify the task of converting one database
-create syntax to another through the use of Parsers and Producers.
-The idea is that any Parser can be used with any Producer in the
-conversion process.  So, if you wanted PostgreSQL-to-Oracle, you would
-use the PostgreSQL parser and the Oracle producer.
-
-Currently, the existing parsers use Parse::RecDescent, but this not
-a requirement, or even a recommendation.  New parser modules don't
-necessarily have to use Parse::RecDescent, as long as the module
-implements the appropriate API.  With this separation of code, it is
-hoped that developers will find it easy to add more database dialects
-by using what's written, writing only what they need, and then
-contributing their parsers or producers back to the project.
+create syntax to another through the use of Parsers (which understand
+the sourced format) and Producers (which understand the destination
+format).  The idea is that any Parser can be used with any Producer in
+the conversion process.  So, if you wanted PostgreSQL-to-Oracle, you
+would use the PostgreSQL parser and the Oracle producer.
 
 =cut
 
 use strict;
 use vars qw($VERSION $DEFAULT_SUB $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 # ----------------------------------------------------------------------
@@ -100,7 +93,6 @@ advantage is gained by passing options to the constructor.
 
 =cut
 
-# {{{ new
 # ----------------------------------------------------------------------
 # new([ARGS])
 #   The constructor.
@@ -160,7 +152,6 @@ sub new {
 
     return $self;
 }
-# }}}
 
 =head1 METHODS
 
@@ -229,31 +220,31 @@ B<producer_args>:
 
   # In SQL::Translator::Producer::xSV:
   my $args = $tr->producer_args;
-  my $delimiter = $args->{'delimiter'}; # value is => ,\s*
+  my $delimiter = $args->{'delimiter'}; # value is ,\s*
 
 =cut
 
-# {{{ producer and producer_type
+# producer and producer_type
 sub producer {
     my $self = shift;
 
-    # {{{ producer as a mutator
+    # producer as a mutator
     if (@_) {
         my $producer = shift;
 
-        # {{{ Passed a module name (string containing "::")
+        # Passed a module name (string containing "::")
         if ($producer =~ /::/) {
             my $func_name;
 
-            # {{{ Module name was passed directly
+            # Module name was passed directly
             # We try to load the name; if it doesn't load, there's
             # a possibility that it has a function name attached to
             # it.
             if (load($producer)) {
                 $func_name = "produce";
-            } # }}}
+            } 
 
-            # {{{ Module::function was passed
+            # Module::function was passed
             else {
                 # Passed Module::Name::function; try to recover
                 my @func_parts = split /::/, $producer;
@@ -263,53 +254,57 @@ sub producer {
                 # If this doesn't work, then we have a legitimate
                 # problem.
                 load($producer) or die "Can't load $producer: $@";
-            } # }}}
+            }
 
-            # {{{ get code reference and assign
+            # get code reference and assign
             $self->{'producer'} = \&{ "$producer\::$func_name" };
             $self->{'producer_type'} = $producer;
             $self->debug("Got producer: $producer\::$func_name");
-            # }}}
-        } # }}}
+        } 
 
-        # {{{ passed an anonymous subroutine reference
+        # passed an anonymous subroutine reference
         elsif (isa($producer, 'CODE')) {
             $self->{'producer'} = $producer;
             $self->{'producer_type'} = "CODE";
             $self->debug("Got producer: code ref");
-        } # }}}
+        } 
 
-        # {{{ passed a string containing no "::"; relative package name
+        # passed a string containing no "::"; relative package name
         else {
             my $Pp = sprintf "SQL::Translator::Producer::$producer";
             load($Pp) or die "Can't load $Pp: $@";
             $self->{'producer'} = \&{ "$Pp\::produce" };
             $self->{'producer_type'} = $Pp;
             $self->debug("Got producer: $Pp");
-        } # }}}
+        }
 
         # At this point, $self->{'producer'} contains a subroutine
         # reference that is ready to run
 
-        # {{{ Anything left?  If so, it's producer_args
-        $self->produser_args(@_) if (@_);
-        # }}}
-    } # }}}
+        # Anything left?  If so, it's producer_args
+        $self->producer_args(@_) if (@_);
+    }
 
     return $self->{'producer'};
 };
 
-# {{{ producer_type
+# ----------------------------------------------------------------------
+# producer_type
+#
 # producer_type is an accessor that allows producer subs to get
 # information about their origin.  This is poptentially important;
 # since all producer subs are called as subroutine refernces, there is
 # no way for a producer to find out which package the sub lives in
 # originally, for example.
-sub producer_type { $_[0]->{'producer_type'} } # }}}
+# ----------------------------------------------------------------------
+sub producer_type { $_[0]->{'producer_type'} }
 
-# {{{ producer_args
+# ----------------------------------------------------------------------
+# producer_args
+#
 # Arbitrary name => value pairs of paramters can be passed to a
 # producer using this method.
+# ----------------------------------------------------------------------
 sub producer_args {
     my $self = shift;
     if (@_) {
@@ -317,8 +312,7 @@ sub producer_args {
         $self->{'producer_args'} = $args;
     }
     $self->{'producer_args'};
-} # }}}
-# }}}
+}
 
 =head2 B<parser>
 
@@ -347,27 +341,26 @@ analogously to B<producer_type> and B<producer_args>
 
 =cut
 
-# {{{ parser, parser_type, and parser_args
 sub parser {
     my $self = shift;
 
-    # {{{ parser as a mutator
+    # parser as a mutator
     if (@_) {
         my $parser = shift;
 
-        # {{{ Passed a module name (string containing "::")
+        # Passed a module name (string containing "::")
         if ($parser =~ /::/) {
             my $func_name;
 
-            # {{{ Module name was passed directly
+            # Module name was passed directly
             # We try to load the name; if it doesn't load, there's
             # a possibility that it has a function name attached to
             # it.
             if (load($parser)) {
                 $func_name = "parse";
-            } # }}}
+            }
 
-            # {{{ Module::function was passed
+            # Module::function was passed
             else {
                 # Passed Module::Name::function; try to recover
                 my @func_parts = split /::/, $parser;
@@ -377,43 +370,42 @@ sub parser {
                 # If this doesn't work, then we have a legitimate
                 # problem.
                 load($parser) or die "Can't load $parser: $@";
-            } # }}}
+            } 
 
-            # {{{ get code reference and assign
+            # get code reference and assign
             $self->{'parser'} = \&{ "$parser\::$func_name" };
             $self->{'parser_type'} = $parser;
             $self->debug("Got parser: $parser\::$func_name");
-            # }}}
-        } # }}}
+        }
 
-        # {{{ passed an anonymous subroutine reference
+        # passed an anonymous subroutine reference
         elsif (isa($parser, 'CODE')) {
             $self->{'parser'} = $parser;
             $self->{'parser_type'} = "CODE";
             $self->debug("Got parser: code ref");
-        } # }}}
+        } 
 
-        # {{{ passed a string containing no "::"; relative package name
+        # passed a string containing no "::"; relative package name
         else {
             my $Pp = sprintf "SQL::Translator::Parser::$parser";
             load($Pp) or die "Can't load $Pp: $@";
             $self->{'parser'} = \&{ "$Pp\::parse" };
             $self->{'parser_type'} = $Pp;
             $self->debug("Got parser: $Pp");
-        } # }}}
+        } 
 
         # At this point, $self->{'parser'} contains a subroutine
         # reference that is ready to run
 
         $self->parser_args(@_) if (@_);
-    } # }}}
+    }
 
     return $self->{'parser'};
 }
 
 sub parser_type { $_[0]->{'parser_type'} }
 
-# {{{ parser_args
+# parser_args
 sub parser_args {
     my $self = shift;
     if (@_) {
@@ -421,8 +413,7 @@ sub parser_args {
         $self->{'parser_args'} = $args;
     }
     $self->{'parser_args'};
-} # }}}
-# }}}
+} 
 
 =head2 B<translate>
 
@@ -496,24 +487,37 @@ variable is not set.
 
 =cut
 
-# {{{ filename - get or set the filename
+# filename - get or set the filename
 sub filename {
     my $self = shift;
     if (@_) {
-        $self->{'filename'} = shift;
-        $self->debug("Got filename: $self->{'filename'}");
+        my $filename = shift;
+        if (-d $filename) {
+            my $msg = "Cannot use directory '$filename' as input source";
+            $self->error_out($msg);
+            return;
+        } elsif (-f _ && -r _) {
+            $self->{'filename'} = $filename;
+            $self->debug("Got filename: $self->{'filename'}");
+        } else {
+            my $msg = "Cannot use '$filename' as input source: ".
+                      "file does not exist or is not readable.";
+            $self->error_out($msg);
+            return;
+        }
     }
-    $self->{'filename'};
-} # }}}
 
-# {{{ data - get or set the data
+    $self->{'filename'};
+}
+
+# data - get or set the data
 # if $self->{'data'} is not set, but $self->{'filename'} is, then
 # $self->{'filename'} is opened and read, whith the results put into
 # $self->{'data'}.
 sub data {
     my $self = shift;
 
-    # {{{ Set $self->{'data'} to $_[0], if it is provided.
+    # Set $self->{'data'} to $_[0], if it is provided.
     if (@_) {
         my $data = shift;
         if (isa($data, "SCALAR")) {
@@ -523,9 +527,8 @@ sub data {
             $self->{'data'} = \$data;
         }
     }
-    # }}}
 
-    # {{{ If we have a filename but no data yet, populate.
+    # If we have a filename but no data yet, populate.
     if (not $self->{'data'} and my $filename = $self->filename) {
         $self->debug("Opening '$filename' to get contents...");
         local *FH;
@@ -545,70 +548,67 @@ sub data {
             return;
         }
     }
-    # }}}
 
     return $self->{'data'};
-} # }}}
+}
 
-# {{{ translate
+# translate
 sub translate {
     my $self = shift;
-    my ($args, $parser, $producer);
+    my ($args, $parser, $parser_type, $producer, $producer_type);
+    my ($parser_output, $producer_output);
 
-    # {{{ Parse arguments
+    # Parse arguments
     if (@_ == 1) { 
-        # {{{ Passed a reference to a hash
+        # Passed a reference to a hash?
         if (isa($_[0], 'HASH')) {
-            # Passed a hashref
+            # yep, a hashref
             $self->debug("translate: Got a hashref");
             $args = $_[0];
         }
-        # }}}
 
-        # {{{ Passed a reference to a string containing the data
+        # Passed a reference to a string containing the data
         elsif (isa($_[0], 'SCALAR')) {
             # passed a ref to a string
             $self->debug("translate: Got a SCALAR reference (string)");
             $self->data($_[0]);
         }
-        # }}}
 
-        # {{{ Not a reference; treat it as a filename
+        # Not a reference; treat it as a filename
         elsif (! ref $_[0]) {
             # Not a ref, it's a filename
             $self->debug("translate: Got a filename");
             $self->filename($_[0]);
         }
-        # }}}
 
-        # {{{ Passed something else entirely.
+        # Passed something else entirely.
         else {
             # We're not impressed.  Take your empty string and leave.
             # return "";
 
-            # Actually, if data, parser, and producer are set, then be can
-            # continue.  Too bad, because I like my comment (above)...
+            # Actually, if data, parser, and producer are set, then we
+            # can continue.  Too bad, because I like my comment
+            # (above)...
             return "" unless ($self->data     &&
                               $self->producer &&
                               $self->parser);
         }
-        # }}}
     }
     else {
         # You must pass in a hash, or you get nothing.
         return "" if @_ % 2;
         $args = { @_ };
-    } # }}}
+    }
 
     # ----------------------------------------------------------------------
     # Can specify the data to be transformed using "filename", "file",
-    # or "data"
+    # "data", or "datasource".
     # ----------------------------------------------------------------------
-    if (my $filename = $args->{'filename'} || $args->{'file'}) {
+    if (my $filename = ($args->{'filename'} || $args->{'file'})) {
         $self->filename($filename);
     }
 
-    if (my $data = $self->{'data'}) {
+    if (my $data = ($self->{'data'} || $self->{'datasource'})) {
         $self->data($data);
     }
 
@@ -616,7 +616,7 @@ sub translate {
     # Get the data.
     # ----------------------------------------------------------------
     my $data = $self->data;
-    unless (defined $$data) {
+    unless (length $$data) {
         $self->error_out("Empty data file!");
         return "";
     }
@@ -627,7 +627,8 @@ sub translate {
     if ($parser = ($args->{'parser'} || $args->{'from'})) {
         $self->parser($parser);
     }
-    $parser = $self->parser;
+    $parser      = $self->parser;
+    $parser_type = $self->parser_type;
 
     # ----------------------------------------------------------------
     # Local reference to the producer subroutine
@@ -635,14 +636,34 @@ sub translate {
     if ($producer = ($args->{'producer'} || $args->{'to'})) {
         $self->producer($producer);
     }
-    $producer = $self->producer;
+    $producer      = $self->producer;
+    $producer_type = $self->producer_type;
 
     # ----------------------------------------------------------------
-    # Execute the parser, then execute the producer with that output
+    # Execute the parser, then execute the producer with that output.
+    # Allowances are made for each piece to die, or fail to compile,
+    # since the referenced subroutines could be almost anything.  In
+    # the future, each of these might happen in a Safe environment,
+    # depending on how paranoid we want to be.
     # ----------------------------------------------------------------
-    return $producer->($self, $parser->($self, $$data));
+    eval { $parser_output = $parser->($self, $$data) };
+    if ($@ || ! $parser_output) {
+        my $msg = sprintf "translate: Error with parser '%s': %s",
+            $parser_type, ($@) ? $@ : " no results";
+        $self->error_out($msg);
+        return;
+    }
+
+    eval { $producer_output = $producer->($self, $parser_output) };
+    if ($@ || ! $producer_output) {
+        my $msg = sprintf "translate: Error with producer '%s': %s",
+            $producer_type, ($@) ? $@ : " no results";
+        $self->error_out($msg);
+        return;
+    }
+
+    return $producer_output;
 }
-# }}}
 
 =head2 B<error>
 
@@ -650,7 +671,6 @@ The error method returns the last error.
 
 =cut
 
-# {{{ error
 #-----------------------------------------------------
 sub error {
 #
@@ -658,7 +678,6 @@ sub error {
 #
     return shift()->{'error'} || '';
 }
-# }}}
 
 =head2 B<error_out>
 
@@ -669,7 +688,7 @@ For Parser or Producer writers, primarily.
 
 =cut
 
-# {{{ error_out
+# error_out
 sub error_out {
     my $self = shift;
     if ( my $error = shift ) {
@@ -677,7 +696,6 @@ sub error_out {
     }
     return;
 }
-# }}}
 
 =head2 B<debug>
 
@@ -687,7 +705,7 @@ not set, then this method does nothing.
 
 =cut
 
-# {{{ debug
+# debug
 sub debug {
     my $self = shift;
 #    if (ref $self) {
@@ -700,9 +718,7 @@ sub debug {
         }
 #    }
 }
-# }}}
 
-# {{{ load
 sub load {
     my $module = do { my $m = shift; $m =~ s[::][/]g; "$m.pm" };
     return 1 if $INC{$module};
@@ -712,7 +728,6 @@ sub load {
     return if ($@);
     return 1;
 }
-# }}}
 
 1;
 
@@ -722,7 +737,7 @@ __END__
 # Henry David Thoreau 
 #-----------------------------------------------------
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Ken Y. Clark, E<lt>kclark@logsoft.comE<gt>,
 darren chamberlain E<lt>darren@cpan.orgE<gt>
