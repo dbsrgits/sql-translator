@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.8 2003-08-26 21:38:24 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.9 2003-08-26 21:50:03 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -213,6 +213,10 @@ create_definition : field
 
 comment : /^\s*(?:#|-{2}).*\n/
     {
+        my $comment =  $item[1];
+        $comment    =~ s/^\s*(#|-{2})\s*//;
+        $comment    =~ s/\s*$//;
+        $return     = $comment;
         push @table_comments, $comment;
     }
 
