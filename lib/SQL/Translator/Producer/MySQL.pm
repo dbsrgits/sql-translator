@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.13 2003-04-17 13:42:45 dlc Exp $
+# $Id: MySQL.pm,v 1.14 2003-04-17 19:42:33 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -113,9 +113,9 @@ sub produce {
                 $data_type = $translate{ $data_type };
             }
 
-            push @fdata, sprintf "%s%s", 
+            push @fdata, sprintf "%s%s",
                 $data_type,
-                ( @values )
+                defined( $values[0] )
                     ? '(' . join( ', ', @values ) . ')'
                     : '';
 

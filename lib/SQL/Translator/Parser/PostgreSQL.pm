@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.10 2003-04-02 01:46:16 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.11 2003-04-17 19:42:33 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -107,7 +107,7 @@ Alter table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -276,7 +276,7 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
 
         my @comments = ( @{ $item[1] }, @{ $item[5] } );
 
-        $return = { 
+        $return = {
             type           => 'field',
             name           => $item{'field_name'}, 
             data_type      => $item{'data_type'}{'type'},
@@ -377,7 +377,7 @@ data_type : pg_data_type parens_value_list(?)
     }
 
 pg_data_type :
-    /(bigint|int8|bigserial|serial8)/ { $return = [ 'integer', 8 ] }
+    /(bigint|int8|bigserial|serial8)/ { $return = [ 'integer(8) auto_increment'] }
     |
     /(smallint|int2)/ { $return = [ 'integer', 2 ] }
     |
@@ -387,9 +387,9 @@ pg_data_type :
     |
     /(real|float4)/ { $return = [ 'real', 4 ] }
     |
-    /serial4?/ { $return = [ 'serial', 4 ] }
+    /serial4?/ { $return = [ 'integer(4) auto_increment'] }
     |
-    /bigserial/ { $return = [ 'serial', 8 ] }
+    /bigserial/ { $return = [ 'integer(8) auto_increment'] }
     |
     /(bit varying|varbit)/ { $return = 'varbit' }
     |
@@ -596,7 +596,7 @@ sub parse {
 =head1 AUTHORS
 
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Allen Day <allenday@users.sourceforge.net>.
+Allen Day <allenday@ucla.edu>.
 
 =head1 SEE ALSO
 
