@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.31 2003-08-21 18:08:04 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.32 2003-11-17 19:09:33 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -111,7 +111,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -131,7 +131,7 @@ my $parser; # should we do this?  There's no programmic way to
 
 $GRAMMAR = q!
 
-{ my ( %tables, $table_order ) }
+{ my ( %tables, $table_order, @table_comments) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -144,6 +144,8 @@ startrule : statement(s) eofile { \%tables }
 eofile : /^\Z/
 
 statement : create
+  | comment_on_table
+  | comment_on_column
   | comment
   | alter
   | grant
@@ -194,6 +196,11 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
 
+        if ( @table_comments ) {
+            $tables{ $table_name }{'comments'} = [ @table_comments ];
+            @table_comments = ();
+        }
+
         my $i = 1;
         my @constraints;
         for my $definition ( @{ $item[4] } ) {
@@ -236,12 +243,14 @@ create : /create/i unique(?) /(index|key)/i index_name /on/i table_name using_me
                 method    => $item{'using_method'}[0],
             }
         ;
+
     }
 
 #
 # Create anything else (e.g., domain, function, etc.)
 #
 create : /create/i WORD /[^;]+/ ';'
+    { @table_comments = (); }
 
 using_method : /using/i WORD { $item[2] }
 
@@ -251,7 +260,37 @@ create_definition : field
     | table_constraint
     | <error>
 
+table_comment : comment
+    {
+        my $comment = $item[1];
+        $return     = $comment;
+        push @table_comments, $comment;
+    }
+
 comment : /^\s*(?:#|-{2}).*\n/
+
+comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
+    {
+        push @{ $tables{ $item{'table_name'} }{'comments'} }, $item{'comment_phrase'};
+    }
+
+comment_on_column : /comment/i /on/i /column/i column_name /is/i comment_phrase ';'
+    {
+        my $table_name = $item[4]->{'table'};
+        my $field_name = $item[4]->{'field'};
+        push @{ $tables{ $table_name }{'fields'}{ $field_name }{'comments'} }, 
+            $item{'comment_phrase'};
+    }
+
+column_name : NAME '.' NAME
+    { $return = { table => $item[1], field => $item[3] } }
+
+comment_phrase : /'.*?'|NULL/ 
+    { 
+        my $val = $item[1];
+        $val =~ s/^'|'$//g;
+        $return = $val;
+    }
 
 field : comment(s?) field_name data_type field_meta(s?) comment(s?)
     {
