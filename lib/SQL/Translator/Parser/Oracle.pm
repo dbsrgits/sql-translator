@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.1 2003-04-10 03:09:28 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.2 2003-06-06 22:30:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -147,13 +147,6 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
                     { %$definition, order => $i };
                 $i++;
 				
-                if ( $definition->{'is_primary_key'} ) {
-                    push @{ $tables{ $table_name }{'indices'} }, {
-                        type   => 'primary_key',
-                        fields => [ $field_name ],
-                    };
-                }
-
                 for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
                     $constraint->{'fields'} = [ $field_name ];
                     push @{ $tables{ $table_name }{'constraints'} }, 
@@ -163,17 +156,17 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
             elsif ( $definition->{'type'} eq 'constraint' ) {
                 $definition->{'type'} = $definition->{'constraint_type'};
                 # group FKs at the field level
-                if ( $definition->{'type'} eq 'foreign_key' ) {
-                    for my $fld ( @{ $definition->{'fields'} || [] } ) {
-                        push @{ 
-                            $tables{$table_name}{'fields'}{$fld}{'constraints'}
-                        }, $definition;
-                    }
-                }
-                else {
+#                if ( $definition->{'type'} eq 'foreign_key' ) {
+#                    for my $fld ( @{ $definition->{'fields'} || [] } ) {
+#                        push @{ 
+#                            $tables{$table_name}{'fields'}{$fld}{'constraints'}
+#                        }, $definition;
+#                    }
+#                }
+#                else {
                     push @{ $tables{ $table_name }{'constraints'} }, 
                         $definition;
-                }
+#                }
             }
             else {
                 push @{ $tables{ $table_name }{'indices'} }, $definition;
@@ -204,43 +197,61 @@ create_definition : field
 
 comment : /^\s*(?:#|-{2}).*\n/
 
-comment_on_table : /comment/i /on/i /table/i table_name /is/i phrase ';'
+comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
     {
-        push @{ $tables{ $item{'table_name'} }{'comments'} }, $item[7];
+        push @{ $tables{ $item{'table_name'} }{'comments'} }, $item{'comment_phrase'};
     }
 
-comment_on_column : /comment/i /on/i /column/i column_name /is/i phrase ';'
+comment_on_column : /comment/i /on/i /column/i column_name /is/i comment_phrase ';'
     {
         my $table_name = $item[4]->{'table'};
         my $field_name = $item[4]->{'field'};
         push @{ $tables{ $table_name }{'fields'}{ $field_name }{'comments'} }, 
-            $item[7];
+            $item{'comment_phrase'};
     }
 
 column_name : NAME '.' NAME
     { $return = { table => $item[1], field => $item[3] } }
 
-phrase : /'.*?'/ { $item[1] }
+comment_phrase : /'.*?'/ 
+    { 
+        my $val = $item[1];
+        $val =~ s/^'|'$//g;
+        $return = $val;
+    }
 
 field : comment(s?) field_name data_type field_meta(s?) comment(s?)
     {
-        my ( $default, @constraints );
+        my ( $is_pk, $default, @constraints );
+        my $null = 1;
         for my $meta ( @{ $item[4] } ) {
-            $default = $meta if $meta->{'meta_type'} eq 'default';
-            push @constraints, $meta if $meta->{'meta_type'} eq 'constraint';
+            if ( $meta->{'type'} eq 'default' ) {
+                $default = $meta;
+                next;
+            }
+            elsif ( $meta->{'type'} eq 'not_null' ) {
+                $null = 0;
+                next;
+            }
+            elsif ( $meta->{'type'} eq 'primary_key' ) {
+                $is_pk = 1;
+            }
+
+            push @constraints, $meta if $meta->{'supertype'} eq 'constraint';
         }
 
-        my $null = ( grep { $_->{'type'} eq 'not_null' } @constraints ) ? 0 : 1;
+        my @comments = ( @{ $item[1] }, @{ $item[5] } );
 
         $return = { 
             type           => 'field',
             name           => $item{'field_name'}, 
             data_type      => $item{'data_type'}{'type'},
             size           => $item{'data_type'}{'size'},
-            list           => $item{'data_type'}{'list'},
             null           => $null,
             default        => $default->{'value'},
+            is_primary_key => $is_pk,
             constraints    => [ @constraints ],
+            comments       => [ @comments ],
         } 
     }
     | <error>
@@ -264,8 +275,8 @@ column_constraint : constraint_name(?) column_constraint_type
         my $expression = $desc->{'expression'} || '';
 
         $return              =  {
-            meta_type        => 'constraint',
-            name             => $item{'constraint_name'}[0] || '',
+            supertype        => 'constraint',
+            name             => $item{'constraint_name(?)'}[0] || '',
             type             => $type,
             expression       => $type eq 'check' ? $expression : '',
             deferreable      => $item{'deferrable'},
@@ -280,20 +291,15 @@ column_constraint : constraint_name(?) column_constraint_type
 constraint_name : /constraint/i NAME { $item[2] }
 
 column_constraint_type : /not null/i { $return = { type => 'not_null' } }
-    |
-    /null/ 
+    | /null/ 
         { $return = { type => 'null' } }
-    |
-    /unique/ 
+    | /unique/ 
         { $return = { type => 'unique' } }
-    |
-    /primary key/i 
+    | /primary key/i 
         { $return = { type => 'primary_key' } }
-    |
-    /check/i '(' /[^)]+/ ')' 
+    | /check/i '(' /[^)]+/ ')' 
         { $return = { type => 'check', expression => $item[2] } }
-    |
-    /references/i table_name parens_word_list(?) on_delete_do(?) 
+    | /references/i table_name parens_word_list(?) on_delete_do(?) 
     {
         $return              =  {
             type             => 'foreign_key',
@@ -322,7 +328,7 @@ deferrable : /not/i /deferrable/i
 deferred : /initially/i /(deferred|immediate)/i { $item[2] }
 
 ora_data_type :
-    /(n?varchar2|varchar)/i { $return = 'varchar' }
+    /(n?varchar2|varchar)/i { $return = 'varchar2' }
     |
     /n?char/i { $return = 'character' }
     |
@@ -345,15 +351,15 @@ parens_word_list : '(' WORD(s /,/) ')'
     { $item[2] }
 
 field_meta : default_val
-    |
-    column_constraint
+    | column_constraint
 
 default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/ 
     { 
         my $val =  $item[2] || '';
         $val    =~ s/'//g; 
         $return =  {
-            meta_type => 'default',
+            supertype => 'constraint',
+            type      => 'default',
             value     => $val,
         }
     }
@@ -371,13 +377,13 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
         my @comments   = ( @{ $item[1] }, @{ $item[-1] } );
 
         $return              =  {
-            name             => $item{'constraint_name'}[0] || '',
+            name             => $item{'constraint_name(?)'}[0] || '',
             type             => 'constraint',
             constraint_type  => $type,
             fields           => $type ne 'check' ? $fields : [],
             expression       => $type eq 'check' ? $expression : '',
-            deferreable      => $item{'deferrable'},
-            deferred         => $item{'deferred'},
+            deferreable      => $item{'deferrable(?)'},
+            deferred         => $item{'deferred(?)'},
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
 #            match_type       => $desc->{'match_type'}[0],
@@ -456,10 +462,75 @@ sub parse {
     my $result = $parser->startrule($data);
     die "Parse failed.\n" unless defined $result;
     warn Dumper($result) if $DEBUG;
+
+    my $schema = $translator->schema;
+    my @tables = sort { 
+        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
+    } keys %{ $result };
+
+    for my $table_name ( @tables ) {
+        my $tdata    =  $result->{ $table_name };
+        my $table    =  $schema->add_table( 
+            name     => $tdata->{'table_name'},
+            comments => @{ $tdata->{'comments'} },
+        ) or die $schema->error;
+
+        my @fields = sort { 
+            $tdata->{'fields'}->{$a}->{'order'} 
+            <=>
+            $tdata->{'fields'}->{$b}->{'order'}
+        } keys %{ $tdata->{'fields'} };
+
+        for my $fname ( @fields ) {
+            my $fdata = $tdata->{'fields'}{ $fname };
+            my $field = $table->add_field(
+                name              => $fdata->{'name'},
+                data_type         => $fdata->{'data_type'},
+                size              => $fdata->{'size'},
+                default_value     => $fdata->{'default'},
+                is_auto_increment => $fdata->{'is_auto_inc'},
+                is_nullable       => $fdata->{'null'},
+                comments          => @{ $fdata->{'comments'} },
+            ) or die $table->error;
+
+            for my $cdata ( @{ $fdata->{'constraints'} } ) {
+                next unless $cdata->{'type'} eq 'foreign_key';
+                $cdata->{'fields'} ||= [ $field->name ];
+                push @{ $tdata->{'constraints'} }, $cdata;
+            }
+        }
+
+        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
+            my $index  =  $table->add_index(
+                name   => $idata->{'name'},
+                type   => uc $idata->{'type'},
+                fields => $idata->{'fields'},
+            ) or die $table->error;
+        }
+
+        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
+            my $constraint       =  $table->add_constraint(
+                name             => $cdata->{'name'},
+                type             => $cdata->{'type'},
+                fields           => $cdata->{'fields'},
+                reference_table  => $cdata->{'reference_table'},
+                reference_fields => $cdata->{'reference_fields'},
+                match_type       => $cdata->{'match_type'} || '',
+                on_delete        => $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update_do'},
+            ) or die $table->error;
+        }
+    }
+
     return $result;
 }
 
 1;
+
+# -------------------------------------------------------------------
+# Something there is that doesn't love a wall.
+# Robert Frost
+# -------------------------------------------------------------------
 
 =pod
 
