@@ -9,7 +9,7 @@
 
 use strict;
 
-use Test::More tests => 15;
+use Test::More tests => 19;
 use SQL::Translator;
 use SQL::Translator::Parser::MySQL qw(parse);
 
@@ -25,34 +25,34 @@ use SQL::Translator::Parser::MySQL qw(parse);
     # $val holds the processed data structure.
 
     # The data structure should have one key:
-    is(scalar keys %{$val}, 1);
+    is( scalar keys %{$val}, 1, 'Right number of tables' );
 
     # The data structure should have a single key, named sessions
-    ok(defined $val->{'sessions'});
+    ok( defined $val->{'sessions'}, 'Found "sessions" table' );
 
     # $val->{'sessions'} should have a single index (since we haven't
     # defined an index, but have defined a primary key)
     my $indices = $val->{'sessions'}->{'indices'};
-    is(scalar @{$indices || []}, 1, "correct index number");
+    is( scalar @{$indices || []}, 1, 'Correct index number' );
 
-    is($indices->[0]->{'type'}, 'primary_key', "correct index type");
-    is($indices->[0]->{'fields'}->[0], 'id', "correct index name");
+    is( $indices->[0]->{'type'}, 'primary_key', 'Correct index type' );
+    is( $indices->[0]->{'fields'}->[0], 'id', 'Correct index name' );
 
     # $val->{'sessions'} should have two fields, id and a_sessionn
     my $fields = $val->{'sessions'}->{'fields'};
-    is(scalar keys %{$fields}, 2, "correct fields number");
+    is( scalar keys %{$fields}, 2, 'Correct fields number' );
 
-    is($fields->{'id'}->{'data_type'}, 'char',
-        "correct field type: id (char)");
+    is( $fields->{'id'}->{'data_type'}, 'char',
+        'Correct field type: id (char)' );
 
-    is ($fields->{'a_session'}->{'data_type'}, 'text',
-        "correct field type: a_session (text)");
+    is ( $fields->{'a_session'}->{'data_type'}, 'text',
+        'Correct field type: a_session (text)' );
 
-    is($fields->{'id'}->{'is_primary_key'}, 1, 
-        "correct key identification (id == key)");
+    is( $fields->{'id'}->{'is_primary_key'}, 1, 
+        'Correct key identification (id == key)' );
 
-    ok(! defined $fields->{'a_session'}->{'is_primary_key'}, 
-        "correct key identification (a_session != key)");
+    ok( ! defined $fields->{'a_session'}->{'is_primary_key'}, 
+        'Correct key identification (a_session != key)' );
 
     # Test that the order is being maintained by the internal order
     # data element
@@ -61,7 +61,7 @@ use SQL::Translator::Parser::MySQL qw(parse);
                        $fields->{$b}->{'order'}
                      } keys %{$fields};
 
-    ok($order[0] eq 'id' && $order[1] eq 'a_session', "ordering of fields");
+    ok( $order[0] eq 'id' && $order[1] eq 'a_session', 'Ordering of fields' );
 }
 
 {
@@ -88,8 +88,20 @@ use SQL::Translator::Parser::MySQL qw(parse);
         ]
     );
     
-    is(scalar keys %{$data}, 1);
-    ok(defined $data->{'check'});
+    is( scalar keys %$data, 1, 'Right number of tables' );
+    ok( defined $data->{'check'}, 'Found "check" table' );
+
+    my $fields = $data->{'check'}{'fields'};
+    is( scalar keys %$fields, 10, 'Correct number of fields' );
+
+    is( $fields->{'i1'}{'data_type'}, 'int', 'i1 an int' );
+    is( join(',', @{$fields->{'i1'}{'size'}}), '11', 'i1 of size "11"' );
+
+    my @order = sort { 
+        $fields->{$a}->{'order'} <=> $fields->{$b}->{'order'}
+    } keys %$fields;
+
+    is( $order[3], 'i1', 'Found the "i1" field' );
 }
 
 {
@@ -97,7 +109,7 @@ use SQL::Translator::Parser::MySQL qw(parse);
     my $data = parse($tr, 
         q[
             CREATE TABLE orders (
-              order_id                  int NOT NULL auto_increment,
+              order_id                  integer NOT NULL auto_increment,
               member_id                 varchar(255),
               billing_address_id        int,
               shipping_address_id       int,
@@ -119,6 +131,6 @@ use SQL::Translator::Parser::MySQL qw(parse);
         ]
     ) or die $tr->error;
 
-    is(scalar keys %{$data}, 1);
-    ok(defined $data->{'orders'});
+    is( scalar keys %{$data}, 1, 'Parsed correct number of tables' );
+    ok( defined $data->{'orders'}, 'Found "orders" table' );
 }
