@@ -16,7 +16,7 @@ WriteMakefile(
         'Pod::Usage'         => 0,
     },
     clean => {
-        FILES => 'SQL-Translator-$(VERSION).tar.gz',
+        FILES => '$(DISTNAME)-$(VERSION).tar.gz',
     },
 );
 
