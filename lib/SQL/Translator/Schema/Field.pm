@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.17 2004-03-23 21:45:19 grommit Exp $
+# $Id: Field.pm,v 1.18 2004-03-29 09:57:50 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -486,6 +486,23 @@ Get or set the field's order.
     }
 
     return $self->{'order'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub schema {
+
+=head2 schema 
+
+Shortcut to get the fields schema ($field->table->schema) or undef if it
+doesn't have one.
+
+  my $schema = $field->schema;
+
+=cut
+
+    my $self = shift;
+    if ( my $table = $self->table ) { return $table->schema || undef; }
+    return undef;
 }
 
 # ----------------------------------------------------------------------
