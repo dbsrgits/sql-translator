@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.5 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.6 2004-07-30 16:13:52 phrrngtn Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -69,7 +69,7 @@ sub parse {
     # it is much quicker to slurp back everything all at once rather
     # than make repeated calls
 
-    $sth = $dbh->column_info();
+    $sth = $dbh->column_info(undef, undef, undef, undef);
 
 
     foreach my $c (@{$sth->fetchall_arrayref({})}) {
