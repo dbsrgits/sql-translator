@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.13 2003-06-11 04:00:43 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.14 2003-07-18 22:55:18 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -154,7 +154,7 @@ sub produce {
 
         push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
 
-        my %field_name_scope;
+        my ( %field_name_scope, @field_comments );
         for my $field ( $table->get_fields ) {
             #
             # Field name
@@ -253,6 +253,12 @@ sub produce {
             }
 
             push @field_defs, $field_def;
+
+            if ( my $comment = $field->comments ) {
+                push @field_comments, 
+                    "COMMENT ON COLUMN $table_name.$field_name_ur is\n  '".
+                    $comment."';";
+            }
         }
 
         #
@@ -356,6 +362,7 @@ sub produce {
             $create_statement, 
             @trigger_defs, 
             @index_defs, 
+            @field_comments, 
             '' 
         );
     }
