@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.1.2.2 2003-10-09 23:29:47 allenday Exp $
+# $Id: Turnkey.pm,v 1.1.2.3 2003-10-10 02:29:16 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1.2.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -527,8 +527,8 @@ my $turnkey_template_tt2 = <<'EOF';
               [% END %]
               <tr><td colspan="2" class="font" bgcolor="#FFFFFF">
               <!-- begin atom: [% p.label %] -->
-              <table cellpadding="2" cellspacing="0" align="left" height="100%" width="100%"><!-- [% ref(atom) %] [% ref(dbobject) %] -->
-                [% renderatom(p,dbobject) %] <!-- used to be renderplugin(p,panel) -->
+              <table cellpadding="2" cellspacing="0" align="left" height="100%" width="100%">
+                [% renderatom(p,dbobject) %]
               </table>
             </table>
           [% END %]
