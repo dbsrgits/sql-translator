@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.18 2003-09-26 22:48:53 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.19 2003-09-26 22:54:48 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -30,7 +30,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -406,7 +406,10 @@ sub produce {
         );
     }
 
-    $output .= join( "\n\n", @fks );
+    if ( @fks ) {
+        $output .= "--\n-- Foreign Key Definitions\n--\n\n" unless $no_comments;
+        $output .= join( "\n\n", @fks );
+    }
 
     if ( $WARN ) {
         if ( %truncated ) {
