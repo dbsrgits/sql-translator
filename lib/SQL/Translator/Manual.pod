@@ -358,6 +358,7 @@ learn the methods you can call.  Here is a very simple example:
 
   #!/usr/bin/perl
   
+  use strict;
   use SQL::Translator;
   
   my $input = q[
@@ -464,6 +465,9 @@ And here is the output produced by this script:
     bar_id number(11),
     bar_value varchar2(30)
   );
+
+If you create a useful parser or producer, you are encouraged to
+submit your work to the SQLFairy project!
 
 =head1 AUTHOR
 
