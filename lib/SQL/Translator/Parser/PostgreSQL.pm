@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.12 2003-04-17 23:16:29 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.13 2003-05-03 04:09:50 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    Allen Day <allenday@users.sourceforge.net>,
@@ -103,11 +103,15 @@ Alter table:
   ALTER TABLE table
           OWNER TO new_owner 
 
+View table:
+
+    CREATE [ OR REPLACE ] VIEW view [ ( column name list ) ] AS SELECT query
+
 =cut
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -193,13 +197,6 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
                     { %$definition, order => $i };
                 $i++;
 				
-                if ( $definition->{'is_primary_key'} ) {
-                    push @{ $tables{ $table_name }{'indices'} }, {
-                        type   => 'primary_key',
-                        fields => [ $field_name ],
-                    };
-                }
-
                 for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
                     $constraint->{'fields'} = [ $field_name ];
                     push @{ $tables{ $table_name }{'constraints'} },
@@ -227,7 +224,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         }
 
         for my $option ( @{ $item[6] } ) {
-            $tables{ $table_name }{'table_options'}{ $option->{'type'} } = 
+            $tables{ $table_name }{'table_options(s?)'}{ $option->{'type'} } = 
                 $option;
         }
 
@@ -266,10 +263,11 @@ comment : /^\s*(?:#|-{2}).*\n/
 
 field : comment(s?) field_name data_type field_meta(s?) comment(s?)
     {
-        my ( $default, @constraints );
+        my ( $default, @constraints, $is_pk );
         for my $meta ( @{ $item[4] } ) {
             $default = $meta if $meta->{'meta_type'} eq 'default';
             push @constraints, $meta if $meta->{'meta_type'} eq 'constraint';
+            $is_pk = $meta->{'type'} eq 'primary_key';
         }
 
         my $null = ( grep { $_->{'type'} eq 'not_null' } @constraints ) ? 0 : 1;
@@ -286,6 +284,7 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
             default        => $default->{'value'},
             constraints    => [ @constraints ],
             comments       => [ @comments ],
+            is_primary_key => $is_pk || 0,
         } 
     }
     | <error>
@@ -332,15 +331,21 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     /check/i '(' /[^)]+/ ')' 
         { $return = { type => 'check', expression => $item[2] } }
     |
-    /references/i table_name parens_word_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+    /references/i table_name parens_word_list(?) match_type(?) key_action(s?)
     {
+        my ( $on_delete, $on_update );
+        for my $action ( @{ $item[5] || [] } ) {
+            $on_delete = $action->{'action'} if $action->{'type'} eq 'delete';
+            $on_update = $action->{'action'} if $action->{'type'} eq 'update';
+        }
+
         $return              =  {
             type             => 'foreign_key',
             reference_table  => $item[2],
             reference_fields => $item[3][0],
             match_type       => $item[4][0],
-            on_delete_do     => $item[5][0],
-            on_update_do     => $item[6][0],
+            on_delete_do     => $on_delete,
+            on_update_do     => $on_update,
         }
     }
 
@@ -356,55 +361,110 @@ index_name : WORD
 
 data_type : pg_data_type parens_value_list(?)
     { 
-        my $type = $item[1];
+        my $data_type = $item[1];
 
         #
         # We can deduce some sizes from the data type's name.
         #
-        my $size; 
-        if ( ref $type eq 'ARRAY' ) {
-            $size = [ $type->[1] ];
-            $type = $type->[0];
-        }
-        else {
-            $size = $item[2][0] || '';
-        }
+        $data_type->{'size'} ||= $item[2][0];
 
-        $return  = { 
-            type => $type,
-            size => $size,
-        } 
+        $return  = $data_type;
     }
 
 pg_data_type :
-    /(bigint|int8|bigserial|serial8)/ { $return = [ 'integer(8) auto_increment'] }
+    /(bigint|int8|bigserial|serial8)/ 
+        { 
+            $return = { 
+                type           => 'integer',
+                size           => 8,
+                auto_increment => 1,
+            };
+        }
     |
-    /(smallint|int2)/ { $return = [ 'integer', 2 ] }
+    /(smallint|int2)/ 
+        { 
+            $return = {
+                type => 'integer', 
+                size => 2,
+            };
+        }
     |
-    /int(eger)?|int4/ { $return = [ 'integer', 4 ] }
+    /int(eger)?|int4/ 
+        { 
+            $return = {
+                type => 'integer', 
+                size => 4,
+            };
+        }
     |
-    /(double precision|float8?)/ { $return = [ 'float', 8 ] }
+    /(double precision|float8?)/ 
+        { 
+            $return = {
+                type => 'float', 
+                size => 8,
+            }; 
+        }
     |
-    /(real|float4)/ { $return = [ 'real', 4 ] }
+    /(real|float4)/ 
+        { 
+            $return = {
+                type => 'real', 
+                size => 4,
+            };
+        }
     |
-    /serial4?/ { $return = [ 'integer(4) auto_increment'] }
+    /serial4?/ 
+        { 
+            $return = { 
+                type           => 'integer',
+                size           => 4, 
+                auto_increment => 1,
+            };
+        }
     |
-    /bigserial/ { $return = [ 'integer(8) auto_increment'] }
+    /bigserial/ 
+        { 
+            $return = { 
+                type           => 'integer', 
+                size           => 8, 
+                auto_increment => 1,
+            };
+        }
     |
-    /(bit varying|varbit)/ { $return = 'varbit' }
+    /(bit varying|varbit)/ 
+        { 
+            $return = { type => 'varbit' };
+        }
     |
-    /character varying/ { $return = 'varchar' }
+    /character varying/ 
+        { 
+            $return = { type => 'varchar' };
+        }
     |
-    /char(acter)?/ { $return = 'char' }
+    /char(acter)?/ 
+        { 
+            $return = { type => 'char' };
+        }
     |
-    /bool(ean)?/ { $return = 'boolean' }
+    /bool(ean)?/ 
+        { 
+            $return = { type => 'boolean' };
+        }
     |
-    /(bytea|binary data)/ { $return = 'binary' }
+    /(bytea|binary data)/ 
+        { 
+            $return = { type => 'binary' };
+        }
     |
-    /timestampz?/ { $return = 'timestamp' }
+    /timestampz?/ 
+        { 
+            $return = { type => 'timestamp' };
+        }
     |
     /(bit|box|cidr|circle|date|inet|interval|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|text|time|varchar)/
-    { $item[1] }
+        { 
+            $return = { type => $item[1] };
+        }
 
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
@@ -468,16 +528,22 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
     |
-    /foreign key/i '(' name_with_opt_quotes(s /,/) ')' /references/i table_name parens_word_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+    /foreign key/i '(' name_with_opt_quotes(s /,/) ')' /references/i table_name parens_word_list(?) match_type(?) key_action(s?)
     {
+        my ( $on_delete, $on_update );
+        for my $action ( @{ $item[9] || [] } ) {
+            $on_delete = $action->{'action'} if $action->{'type'} eq 'delete';
+            $on_update = $action->{'action'} if $action->{'type'} eq 'update';
+        }
+        
         $return              =  {
             type             => 'foreign_key',
             fields           => $item[3],
             reference_table  => $item[6],
             reference_fields => $item[7][0],
             match_type       => $item[8][0],
-            on_delete_do     => $item[9][0],
-            on_update_do     => $item[10][0],
+            on_delete_do     => $on_delete || '',
+            on_update_do     => $on_update || '',
         }
     }
 
@@ -492,11 +558,35 @@ match_type : /match full/i { 'match_full' }
     |
     /match partial/i { 'match_partial' }
 
-on_delete_do : /on delete/i WORD(s)
-    { $item[2] }
+key_action : key_delete 
+    |
+    key_update
 
-on_update_do : /on update/i WORD(s)
-    { $item[2] }
+key_delete : /on delete/i key_mutation
+    { 
+        $return => { 
+            type   => 'delete',
+            action => $item[2],
+        };
+    }
+
+key_update : /on update/i key_mutation
+    { 
+        $return => { 
+            type   => 'update',
+            action => $item[2],
+        };
+    }
+
+key_mutation : /no action/i { $return = 'no_action' }
+    |
+    /restrict/i { $return = 'restrict' }
+    |
+    /cascade/i { $return = 'cascade' }
+    |
+    /set null/i { $return = 'set_null' }
+    |
+    /set default/i { $return = 'set_default' }
 
 alter : alter_table table_name /add/i table_constraint ';' 
     { 
