@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.13 2003-08-20 22:26:52 kycl4rk Exp $
+# $Id: sql_translator.pl,v 1.14 2003-08-21 02:47:43 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -196,8 +196,11 @@ knows about.
 If using "show-warnings," be sure to redirect STDERR to a separate file.  
 In bash, you could do this:
 
-    $ sql_translator.pl -f MySQL -t PostgreSQL --show-warnings file.sql \
-       1>out 2>err
+    $ sql_translator.pl -f MySQL -t PostgreSQL --show-warnings \
+       file.sql 1>out 2>err
+
+You can specify a parser or producer located in any module that Perl
+knows about, allowing you to easily substitute your own.
 
 =head1 AUTHOR
 
