@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.22 2004-02-09 23:02:17 kycl4rk Exp $
+# $Id: Turnkey.pm,v 1.23 2004-02-10 06:30:06 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -148,23 +148,36 @@ sub translateForm {
   my $t = shift;
   my $meta = shift;
 
-
-#"Node Data:\n";
-#warn Dumper $meta->{nodes};
-#exit;
-
   my $args = $t->producer_args;
   my $type = $meta->{'template'};
+
+  my $template = Template->new({
+                                PRE_CHOMP => 1,
+                                POST_CHOMP => 0,
+                                EVAL_PERL => 1
+                               });
+
   my $tt2;
   $tt2 = template($type);
-  my $template = Template->new({
-								PRE_CHOMP => 1,
-								POST_CHOMP => 0,
-								EVAL_PERL => 1
-							   });
-
   my $result;
-  $template->process(\$tt2, $meta, \$result) || die $template->error();
+
+  if($type eq 'atomtemplate'){
+    my %result;
+    foreach my $node (values %{ $meta->{'nodes'} }){
+      $result = '';
+      my $param = { node => $node };
+      $template->process(\$tt2, $param, \$result) || die $template->error();
+      $result =~ s/^\s*(.+)\s*$/$1/s;
+      next unless $result;
+warn "**********".$node->table->name;
+      $result{$node->table->name} = $result;
+warn $result;
+    }
+    return %result;
+  } else {
+    $template->process(\$tt2, $meta, \$result) || die $template->error();
+  }
+
   return($result);
 }
 
@@ -590,48 +603,12 @@ EOF
   [- FOREACH node = nodes -]
   [- IF !node.value.is_trivial_link -]
     [% CASE '[- format_table(node.key) -]' %]
-      [% render[- format_table(node.key) -]Atom(atom,dbobject) %]
+      [% INCLUDE [- format_table(node.key) -] %]
   [- END -]
   [- END -]
     [% CASE DEFAULT %]
       [% renderlist(atom.render(dbobject)) %]
 [% END %]
-[- FOREACH node = nodes -]
-[- IF !node.value.is_trivial_link -]
-[% MACRO render[- format_table(node.key) -]Atom(atom, dbobject) BLOCK %]
-  [% lstArr = atom.render(dbobject) %]
-  [% rowcount = 0 %]
-  [% IF atom.focus == "yes" %]
-  [% FOREACH record = lstArr %]
-    [% fields = record.data %]
-    [- pname = format_table(node.key) -]
-    [- pkey = "Turnkey::Model::${pname}" -]
-    [- FOREACH field = node.value.data_fields -]
-    [- IF field != "1" -]
-      <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field -]) %]</td></tr>
-    [- END -]
-    [- END -]
-    [- FOREACH field = node.value.edges -]
-    [- NEXT IF field.type != 'import' -]
-      <tr><td class="dbfieldname">[- field.thisfield.name -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field.thisfield.name -]) %]</td></tr>
-    [- END -]
-    [% id = record.id %]
-    [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
-    [% rowcount = rowcount + 1 %]
-  [% END %]
-  [% ELSE %]
-    <tr><td><ul>
-  [% FOREACH record = lstArr %]
-    [% class = ref(atom) | replace('::Atom::', '::Model::') %]
-    [% id = record.id %]
-    [% PROCESS make_linked_dbobject %]
-    <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
-  [% END %]
-   </ul></td></tr>
-  [% END %]
-[% END %]
-[- END -]
-[- END -]
 [% MACRO renderlist(lstArr) BLOCK %]
    <tr><td><ul>
   [% FOREACH item = lstArr %]
@@ -644,7 +621,41 @@ EOF
 [% END %]
 EOF
 
-1;
+} elsif($type eq 'atomtemplate') {
+  return <<'EOF';
+[%- TAGS [- -] -%]
+[-- IF !node.is_trivial_link --]
+[% records = atom.render(dbobject) %]
+[% rowcount = 0 %]
+[% IF atom.focus == "yes" %]
+  [% FOREACH record = records %]
+  [- FOREACH field = node.data_fields -]
+  [- IF field != "1" -]
+    <tr><td class="dbfieldname">[- field -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field -]) %]</td></tr>
+  [- END -]
+  [- END -]
+  [- FOREACH field = node.edges -]
+  [- NEXT IF field.type != 'import' -]
+    <tr><td class="dbfieldname">[- field.thisfield.name -]</td><td class="dbfieldvalue">[% obj2link(fields.[- field.thisfield.name -]) %]</td></tr>
+  [- END -]
+  [% id = record.id %]
+  [% IF (rowcount > 1) %] <tr><td colspan="2"><hr></td></tr> [% END %]
+  [% rowcount = rowcount + 1 %]
+  [% END %]
+[% ELSE %]
+  <tr><td><ul>
+  [% FOREACH record = records %]
+    [% class = ref(atom) | replace('::Atom::', '::Model::') %]
+    [% id = record.id %]
+    [% PROCESS make_linked_dbobject %]
+    <li class="minorfocus">[% obj2link(linked_dbobject) %]</li>
+  [% END %]
+   </ul></td></tr>
+[% END %]
+[- END -]
+EOF
 
 }
 }
+
+1;

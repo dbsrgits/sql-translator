@@ -80,7 +80,7 @@ sub init {
 	  $that->many($node->name, $that->many($node->name)+1);
 
 	  $that->edgecount($node->name, $that->edgecount($node->name)+1);
-warn $node->name . "\t" . $that->edgecount($node->name);
+#warn $node->name . "\t" . $that->edgecount($node->name);
 	  $node->push_edges( $edge );
 	  $that->push_edges( $edge->flip );
       }
