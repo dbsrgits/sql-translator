@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.5 2003-10-17 13:39:01 grommit Exp $
+# $Id: SQLFairy.pm,v 1.6 2003-10-20 11:50:38 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -78,7 +78,7 @@ Creates XML output of a schema.
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -221,7 +221,7 @@ sub xml_objAttr {
     my ($xml, $obj, @methods) = @_;
     my $emit_empty            = $PArgs->{'emit_empty_tags'};
 
-	for my $method ( @methods ) {
+	for my $method ( sort @methods ) {
         my $val = $obj->$method;
         debug "        ".ref($obj)."->$method=",
               (defined $val ? "'$val'" : "<UNDEF>");

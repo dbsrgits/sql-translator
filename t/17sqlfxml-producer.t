@@ -46,57 +46,57 @@ my ($obj,$ans,$xml);
 
 $ans = <<EOXML;
 <sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlt:name></sqlt:name>
   <sqlt:database></sqlt:database>
+  <sqlt:name></sqlt:name>
   <sqlt:table>
     <sqlt:name>Basic</sqlt:name>
     <sqlt:order>1</sqlt:order>
     <sqlt:fields>
       <sqlt:field>
-        <sqlt:name>id</sqlt:name>
+        <sqlt:comments>comment on id field</sqlt:comments>
         <sqlt:data_type>integer</sqlt:data_type>
         <sqlt:is_auto_increment>1</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>1</sqlt:is_primary_key>
-        <sqlt:is_nullable>0</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>0</sqlt:is_nullable>
+        <sqlt:is_primary_key>1</sqlt:is_primary_key>
+        <sqlt:name>id</sqlt:name>
         <sqlt:order>1</sqlt:order>
         <sqlt:size>10</sqlt:size>
-        <sqlt:comments>comment on id field</sqlt:comments>
       </sqlt:field>
       <sqlt:field>
-        <sqlt:name>title</sqlt:name>
+        <sqlt:comments></sqlt:comments>
         <sqlt:data_type>varchar</sqlt:data_type>
         <sqlt:default_value>hello</sqlt:default_value>
         <sqlt:is_auto_increment>0</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>0</sqlt:is_primary_key>
-        <sqlt:is_nullable>0</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>0</sqlt:is_nullable>
+        <sqlt:is_primary_key>0</sqlt:is_primary_key>
+        <sqlt:name>title</sqlt:name>
         <sqlt:order>2</sqlt:order>
         <sqlt:size>100</sqlt:size>
-        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
-        <sqlt:name>description</sqlt:name>
+        <sqlt:comments></sqlt:comments>
         <sqlt:data_type>text</sqlt:data_type>
         <sqlt:default_value></sqlt:default_value>
         <sqlt:is_auto_increment>0</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>0</sqlt:is_primary_key>
-        <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>1</sqlt:is_nullable>
+        <sqlt:is_primary_key>0</sqlt:is_primary_key>
+        <sqlt:name>description</sqlt:name>
         <sqlt:order>3</sqlt:order>
         <sqlt:size>65535</sqlt:size>
-        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
-        <sqlt:name>email</sqlt:name>
+        <sqlt:comments></sqlt:comments>
         <sqlt:data_type>varchar</sqlt:data_type>
         <sqlt:is_auto_increment>0</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>0</sqlt:is_primary_key>
-        <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>1</sqlt:is_nullable>
+        <sqlt:is_primary_key>0</sqlt:is_primary_key>
+        <sqlt:name>email</sqlt:name>
         <sqlt:order>4</sqlt:order>
         <sqlt:size>255</sqlt:size>
-        <sqlt:comments></sqlt:comments>
       </sqlt:field>
     </sqlt:fields>
     <sqlt:indices>
@@ -114,9 +114,9 @@ $ans = <<EOXML;
         <sqlt:fields>id</sqlt:fields>
         <sqlt:match_type></sqlt:match_type>
         <sqlt:name></sqlt:name>
-        <sqlt:options></sqlt:options>
         <sqlt:on_delete></sqlt:on_delete>
         <sqlt:on_update></sqlt:on_update>
+        <sqlt:options></sqlt:options>
         <sqlt:reference_table></sqlt:reference_table>
         <sqlt:type>PRIMARY KEY</sqlt:type>
       </sqlt:constraint>
@@ -126,9 +126,9 @@ $ans = <<EOXML;
         <sqlt:fields>email</sqlt:fields>
         <sqlt:match_type></sqlt:match_type>
         <sqlt:name></sqlt:name>
-        <sqlt:options></sqlt:options>
         <sqlt:on_delete></sqlt:on_delete>
         <sqlt:on_update></sqlt:on_update>
+        <sqlt:options></sqlt:options>
         <sqlt:reference_table></sqlt:reference_table>
         <sqlt:type>UNIQUE</sqlt:type>
       </sqlt:constraint>
@@ -158,59 +158,59 @@ eq_or_diff $xml, $ans                       ,"XML looks right";
 
 $ans = <<EOXML;
 <sqlt:schema xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-  <sqlt:name></sqlt:name>
   <sqlt:database></sqlt:database>
+  <sqlt:name></sqlt:name>
   <sqlt:table>
     <sqlt:name>Basic</sqlt:name>
     <sqlt:order>2</sqlt:order>
     <sqlt:fields>
       <sqlt:field>
-        <sqlt:name>id</sqlt:name>
+        <sqlt:comments>comment on id field</sqlt:comments>
         <sqlt:data_type>integer</sqlt:data_type>
         <sqlt:default_value></sqlt:default_value>
         <sqlt:is_auto_increment>1</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>1</sqlt:is_primary_key>
-        <sqlt:is_nullable>0</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>0</sqlt:is_nullable>
+        <sqlt:is_primary_key>1</sqlt:is_primary_key>
+        <sqlt:name>id</sqlt:name>
         <sqlt:order>5</sqlt:order>
         <sqlt:size>10</sqlt:size>
-        <sqlt:comments>comment on id field</sqlt:comments>
       </sqlt:field>
       <sqlt:field>
-        <sqlt:name>title</sqlt:name>
+        <sqlt:comments></sqlt:comments>
         <sqlt:data_type>varchar</sqlt:data_type>
         <sqlt:default_value>hello</sqlt:default_value>
         <sqlt:is_auto_increment>0</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>0</sqlt:is_primary_key>
-        <sqlt:is_nullable>0</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>0</sqlt:is_nullable>
+        <sqlt:is_primary_key>0</sqlt:is_primary_key>
+        <sqlt:name>title</sqlt:name>
         <sqlt:order>6</sqlt:order>
         <sqlt:size>100</sqlt:size>
-        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
-        <sqlt:name>description</sqlt:name>
+        <sqlt:comments></sqlt:comments>
         <sqlt:data_type>text</sqlt:data_type>
         <sqlt:default_value></sqlt:default_value>
         <sqlt:is_auto_increment>0</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>0</sqlt:is_primary_key>
-        <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>1</sqlt:is_nullable>
+        <sqlt:is_primary_key>0</sqlt:is_primary_key>
+        <sqlt:name>description</sqlt:name>
         <sqlt:order>7</sqlt:order>
         <sqlt:size>65535</sqlt:size>
-        <sqlt:comments></sqlt:comments>
       </sqlt:field>
       <sqlt:field>
-        <sqlt:name>email</sqlt:name>
+        <sqlt:comments></sqlt:comments>
         <sqlt:data_type>varchar</sqlt:data_type>
         <sqlt:default_value></sqlt:default_value>
         <sqlt:is_auto_increment>0</sqlt:is_auto_increment>
-        <sqlt:is_primary_key>0</sqlt:is_primary_key>
-        <sqlt:is_nullable>1</sqlt:is_nullable>
         <sqlt:is_foreign_key>0</sqlt:is_foreign_key>
+        <sqlt:is_nullable>1</sqlt:is_nullable>
+        <sqlt:is_primary_key>0</sqlt:is_primary_key>
+        <sqlt:name>email</sqlt:name>
         <sqlt:order>8</sqlt:order>
         <sqlt:size>255</sqlt:size>
-        <sqlt:comments></sqlt:comments>
       </sqlt:field>
     </sqlt:fields>
     <sqlt:indices>
@@ -228,9 +228,9 @@ $ans = <<EOXML;
         <sqlt:fields>id</sqlt:fields>
         <sqlt:match_type></sqlt:match_type>
         <sqlt:name></sqlt:name>
-        <sqlt:options></sqlt:options>
         <sqlt:on_delete></sqlt:on_delete>
         <sqlt:on_update></sqlt:on_update>
+        <sqlt:options></sqlt:options>
         <sqlt:reference_fields></sqlt:reference_fields>
         <sqlt:reference_table></sqlt:reference_table>
         <sqlt:type>PRIMARY KEY</sqlt:type>
@@ -241,9 +241,9 @@ $ans = <<EOXML;
         <sqlt:fields>email</sqlt:fields>
         <sqlt:match_type></sqlt:match_type>
         <sqlt:name></sqlt:name>
-        <sqlt:options></sqlt:options>
         <sqlt:on_delete></sqlt:on_delete>
         <sqlt:on_update></sqlt:on_update>
+        <sqlt:options></sqlt:options>
         <sqlt:reference_fields></sqlt:reference_fields>
         <sqlt:reference_table></sqlt:reference_table>
         <sqlt:type>UNIQUE</sqlt:type>
@@ -280,17 +280,17 @@ $ans = <<EOXML;
 <sqlt:schema database="" name="" xmlns:sqlt="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <sqlt:table order="3" name="Basic">
     <sqlt:fields>
-      <sqlt:field is_primary_key="1" is_foreign_key="0" name="id" comments="comment on id field" size="10" data_type="integer" is_auto_increment="1" order="9" is_nullable="0" />
-      <sqlt:field is_primary_key="0" is_foreign_key="0" name="title" comments="" size="100" is_auto_increment="0" data_type="varchar" order="10" default_value="hello" is_nullable="0" />
-      <sqlt:field is_primary_key="0" is_foreign_key="0" name="description" comments="" size="65535" is_auto_increment="0" data_type="text" order="11" default_value="" is_nullable="1" />
-      <sqlt:field is_primary_key="0" is_foreign_key="0" name="email" comments="" size="255" is_auto_increment="0" data_type="varchar" order="12" is_nullable="1" />
+      <sqlt:field comments="comment on id field" is_primary_key="1" data_type="integer" name="id" is_foreign_key="0" is_auto_increment="1" is_nullable="0" order="9" size="10" />
+      <sqlt:field comments="" is_primary_key="0" data_type="varchar" name="title" is_foreign_key="0" is_nullable="0" is_auto_increment="0" order="10" size="100" default_value="hello" />
+      <sqlt:field comments="" is_primary_key="0" data_type="text" name="description" is_foreign_key="0" is_nullable="1" is_auto_increment="0" order="11" size="65535" default_value="" />
+      <sqlt:field comments="" is_primary_key="0" data_type="varchar" name="email" is_foreign_key="0" is_nullable="1" is_auto_increment="0" order="12" size="255" />
     </sqlt:fields>
     <sqlt:indices>
       <sqlt:index options="" name="titleindex" fields="title" type="NORMAL" />
     </sqlt:indices>
     <sqlt:constraints>
-      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="id" expression="" type="PRIMARY KEY" />
-      <sqlt:constraint options="" match_type="" deferrable="1" name="" on_update="" reference_table="" on_delete="" fields="email" expression="" type="UNIQUE" />
+      <sqlt:constraint reference_table="" options="" deferrable="1" name="" fields="id" on_delete="" expression="" on_update="" match_type="" type="PRIMARY KEY" />
+      <sqlt:constraint reference_table="" options="" deferrable="1" name="" fields="email" on_delete="" expression="" on_update="" match_type="" type="UNIQUE" />
     </sqlt:constraints>
   </sqlt:table>
 </sqlt:schema>
