@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id: View.pm,v 1.8 2004-11-04 16:29:56 grommit Exp $
+# $Id: View.pm,v 1.9 2004-11-05 13:19:31 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,10 +50,13 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
-sub init {
+
+__PACKAGE__->_attributes( qw/
+    name sql fields schema order
+/);
 
 =pod
 
@@ -64,16 +67,6 @@ Object constructor.
   my $view = SQL::Translator::Schema::View->new;
 
 =cut
-
-    my ( $self, $config ) = @_;
-
-    for my $arg ( qw[ name sql fields schema ] ) {
-        next unless $config->{ $arg };
-        $self->$arg( $config->{ $arg } ) or return;
-    }
-
-    return $self;
-}
 
 # ----------------------------------------------------------------------
 sub fields {

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Trigger;
 
 # ----------------------------------------------------------------------
-# $Id: Trigger.pm,v 1.4 2004-11-04 16:29:56 grommit Exp $
+# $Id: Trigger.pm,v 1.5 2004-11-05 13:19:31 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,10 +54,14 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
-sub init {
+
+__PACKAGE__->_attributes( qw/
+    name perform_action_when database_event fields on_table action schema
+    order
+/);
 
 =pod
 
@@ -68,21 +72,6 @@ Object constructor.
   my $schema = SQL::Translator::Schema::Trigger->new;
 
 =cut
-
-    my ( $self, $config ) = @_;
-
-    for my $arg ( 
-        qw[ 
-            name perform_action_when database_event fields 
-            on_table action schema
-        ] 
-    ) {
-        next unless $config->{ $arg };
-        $self->$arg( $config->{ $arg } );# or return;
-    }
-
-    return $self;
-}
 
 # ----------------------------------------------------------------------
 sub perform_action_when {

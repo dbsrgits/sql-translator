@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.27 2004-11-04 16:29:56 grommit Exp $
+# $Id: Table.pm,v 1.28 2004-11-05 13:19:31 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -64,7 +64,8 @@ use overload
 ;
 
 # ----------------------------------------------------------------------
-sub init {
+
+__PACKAGE__->_attributes( qw/schema name comments options order/ );
 
 =pod
 
@@ -78,16 +79,6 @@ Object constructor.
   );
 
 =cut
-
-    my ( $self, $config ) = @_;
-    
-    for my $arg ( qw[ schema name comments ] ) {
-        next unless defined $config->{ $arg };
-        defined $self->$arg( $config->{ $arg } ) or return;
-    }
-
-    return $self;
-}
 
 # ----------------------------------------------------------------------
 sub add_constraint {

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.19 2004-11-04 16:29:56 grommit Exp $
+# $Id: Schema.pm,v 1.20 2004-11-05 13:19:31 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,10 +54,11 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
-sub init {
+
+__PACKAGE__->_attributes( qw/name database translator/ );
 
 =pod
 
@@ -71,12 +72,6 @@ Object constructor.
   );
 
 =cut
-
-    my ( $self, $config ) = @_;
-    $self->params( $config, qw[ name database translator ] )
-      || return undef;
-    return $self;
-}
 
 sub as_graph {
   my($self) = @_;

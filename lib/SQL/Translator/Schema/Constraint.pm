@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.14 2004-11-04 16:29:56 grommit Exp $
+# $Id: Constraint.pm,v 1.15 2004-11-05 13:19:31 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -62,8 +62,16 @@ my %VALID_CONSTRAINT_TYPE = (
 );
 
 # ----------------------------------------------------------------------
-sub init {
 
+__PACKAGE__->_attributes( qw/
+    table name type fields reference_fields reference_table 
+    match_type on_delete on_update expression deferrable
+/);
+
+# Override to remove empty arrays from args.
+# t/14postgres-parser breaks without this.
+sub init {
+    
 =pod
 
 =head2 new
@@ -84,19 +92,9 @@ Object constructor.
 
 =cut
 
-    my ( $self, $config ) = @_;
-    my @fields = qw[ 
-        table name type fields reference_fields reference_table 
-        match_type on_delete on_update expression
-    ];
-
-    for my $arg ( @fields ) {
-        next unless $config->{ $arg };
-        next if ref $config->{ $arg } eq 'ARRAY' && ! @{ $config->{ $arg } };
-        defined $self->$arg( $config->{ $arg } ) or return;
-    }
-
-    return $self;
+    my $self = shift;
+    foreach ( values %{$_[0]} ) { $_ = undef if ref($_) eq "ARRAY" && ! @$_; }
+    $self->SUPER::init(@_);
 }
 
 # ----------------------------------------------------------------------

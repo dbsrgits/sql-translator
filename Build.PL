@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.2 2004-10-15 03:52:50 allenday Exp $
+# $Id: Build.PL,v 1.3 2004-11-05 13:19:31 grommit Exp $
 
 use strict;
 use Module::Build;
@@ -19,12 +19,13 @@ my $builder           =  Module::Build->new(
         'bin/sqlt',
     ],
     requires          => {
-        'Class::Base'             => 0,
-        'IO::Dir'                 => 0,
-        'Log::Log4perl'           => 0,
-        'Template'                => 2.10,
-        'Parse::RecDescent'       => 1.94,
-        'Pod::Usage'              => 0,
+        'Class::Base'              => 0,
+        'Class::Data::Inheritable' => 0.02,
+        'IO::Dir'                  => 0,
+        'Log::Log4perl'            => 0,
+        'Template'                 => 2.10,
+        'Parse::RecDescent'        => 1.94,
+        'Pod::Usage'               => 0,
     },
     recommends        => {
         'GD'                      => 0,

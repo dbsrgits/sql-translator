@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.20 2004-11-04 16:29:56 grommit Exp $
+# $Id: Field.pm,v 1.21 2004-11-05 13:19:31 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -62,7 +62,12 @@ use overload
 ;
 
 # ----------------------------------------------------------------------
-sub init {
+
+__PACKAGE__->_attributes( qw/
+    table name data_type size is_primary_key is_nullable
+    is_auto_increment default_value comments extra is_foreign_key
+    is_unique order
+/);
 
 =pod
 
@@ -76,21 +81,6 @@ Object constructor.
   );
 
 =cut
-
-    my ( $self, $config ) = @_;
-
-    for my $arg (
-        qw[
-            table name data_type size is_primary_key is_nullable
-            is_auto_increment default_value comments extra
-        ]
-    ) {
-        next unless defined $config->{ $arg };
-        defined $self->$arg( $config->{ $arg } ) or return;
-    }
-
-    return $self;
-}
 
 # ----------------------------------------------------------------------
 sub comments {
