@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.5 2003-10-15 19:19:13 kycl4rk Exp $
+# $Id: YAML.pm,v 1.6 2003-10-17 19:48:38 dlc Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
 #   Ken Y. Clark <kclark@cpan.org>.
@@ -29,8 +29,7 @@ SQL::Translator::Producer::YAML - A YAML producer for SQL::Translator
 
   use SQL::Translator;
 
-  my $translator = SQL::Translator->new;
-  $translator->producer('YAML');
+  my $translator = SQL::Translator->new(producer => 'YAML');
 
 =head1 DESCRIPTION
 
@@ -43,7 +42,7 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
@@ -55,17 +54,20 @@ sub produce {
     return Dump({
         schema => {
             tables => { 
-                map { ($_->name => view_table($_)) } $schema->get_tables,
+                map { ($_->name => view_table($_)) }
+                    $schema->get_tables,
             },
             views => { 
-                map { ($_->name => view_view($_)) } $schema->get_views,
+                map { ($_->name => view_view($_)) }
+                    $schema->get_views,
             },
             triggers => { 
-                map { ($_->name => view_trigger($_)) } $schema->get_triggers,
+                map { ($_->name => view_trigger($_)) }
+                    $schema->get_triggers,
             },
             procedures => { 
                 map { ($_->name => view_procedure($_)) } 
-                $schema->get_procedures,
+                    $schema->get_procedures,
             },
         }
     });
@@ -74,15 +76,19 @@ sub produce {
 # -------------------------------------------------------------------
 sub view_table {
     my $table = shift;
-    my $name = $table->name;
 
     return {
         'name'     => $table->name,
         'order'    => $table->order,
         'options'  => $table->options  || [],
         'comments' => $table->comments || '',
+        'indices'  => {
+            map { ($_->name => view_index($_)) }
+                $table->get_indices
+        },
         'fields'   => { 
-            map { ($_->name => view_field($_)) } $table->get_fields 
+            map { ($_->name => view_field($_)) }
+                $table->get_fields 
         },
     };
 }
@@ -142,6 +148,18 @@ sub view_view {
         'name'   => scalar $view->name,
         'sql'    => scalar $view->sql,
         'fields' => scalar $view->fields,
+    };
+}
+
+# -------------------------------------------------------------------
+sub view_index {
+    my $index = shift;
+
+    return {
+        'name'      => scalar $index->name,
+        'type'      => scalar $index->type,
+        'fields'    => scalar $index->fields,
+        'options'   => scalar $index->options,
     };
 }
 
