@@ -27,6 +27,11 @@
 *   Possibly write a basic ANSI-92 SQL parser which could be extended
     when writing other new parsers.
 
+*   Make as many "required" modules as possible optional.  This will
+    require support in the Makefile, the tests, and the modules
+    themselves (they'll need to die gracefully if prerequisites are
+    not installed).
+
 *   Support for precompiled Parse::RecDescent grammars.
 
 *   More code generation producers, such as Java, PHP, and Python.
