@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.10 2003-08-27 02:26:16 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.11 2003-09-09 15:57:38 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -95,7 +95,7 @@ constrnt_state
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -127,7 +127,7 @@ startrule : statement(s) eofile { \%tables }
 eofile : /^\Z/
 
 statement : create
-    | comment
+    | table_comment
     | comment_on_table
     | comment_on_column
     | alter
@@ -170,18 +170,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
             }
             elsif ( $definition->{'type'} eq 'constraint' ) {
                 $definition->{'type'} = $definition->{'constraint_type'};
-                # group FKs at the field level
-#                if ( $definition->{'type'} eq 'foreign_key' ) {
-#                    for my $fld ( @{ $definition->{'fields'} || [] } ) {
-#                        push @{ 
-#                            $tables{$table_name}{'fields'}{$fld}{'constraints'}
-#                        }, $definition;
-#                    }
-#                }
-#                else {
-                    push @{ $tables{ $table_name }{'constraints'} }, 
-                        $definition;
-#                }
+                push @{ $tables{ $table_name }{'constraints'} }, $definition;
             }
             else {
                 push @{ $tables{ $table_name }{'indices'} }, $definition;
@@ -221,13 +210,26 @@ create_definition : field
     | table_constraint
     | <error>
 
+table_comment : comment
+    {
+        my $comment = $item[1];
+        $return     = $comment;
+        push @table_comments, $comment;
+    }
+
 comment : /^\s*(?:#|-{2}).*\n/
     {
         my $comment =  $item[1];
         $comment    =~ s/^\s*(#|-{2})\s*//;
         $comment    =~ s/\s*$//;
         $return     = $comment;
-        push @table_comments, $comment;
+    }
+
+comment : /\/\*/ /[^\*]+/ /\*\// 
+    {
+        my $comment = $item[2];
+        $comment    =~ s/^\s*|\s*$//g;
+        $return = $comment;
     }
 
 comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
