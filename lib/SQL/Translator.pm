@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 #-----------------------------------------------------
-# $Id: Translator.pm,v 1.1.1.1 2002-03-01 02:26:25 kycl4rk Exp $
+# $Id: Translator.pm,v 1.3 2002-03-07 14:11:40 dlc Exp $
 #
 # File       : SQL/Translator.pm
 # Programmer : Ken Y. Clark, kclark@logsoft.com
@@ -11,7 +11,7 @@ package SQL::Translator;
 
 use strict;
 use vars qw( $VERSION );
-$VERSION = (qw$Revision: 1.1.1.1 $)[-1];
+$VERSION = (qw$Revision: 1.3 $)[-1];
 
 use Data::Dumper;
 
