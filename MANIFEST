@@ -12,6 +12,7 @@ lib/SQL/Translator/Producer/Oracle.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/XML.pm
+lib/SQL/Translator/Producer/Raw.pm
 lib/SQL/Translator/Validator.pm
 Makefile.PL
 MANIFEST
