@@ -42,8 +42,8 @@ $obj = SQL::Translator->new(
     filename       => "$Bin/data/xml/schema.xml",
     to             => "TTSchema",
     producer_args  => {
-        ttfile => "$Bin/data/template/basic.tt",
-        ttargs => {
+        ttfile  => "$Bin/data/template/basic.tt",
+        tt_vars => {
             foo   => 'bar',
             hello => 'world',
         },

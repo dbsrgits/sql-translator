@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.8 2004-11-16 21:06:35 grommit Exp $
+# $Id: TTSchema.pm,v 1.9 2004-11-25 23:10:58 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -114,7 +114,7 @@ A hash ref of extra variables you want to add to the template.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -131,7 +131,12 @@ sub produce {
     my $scma       = $translator->schema;
     my $args       = $translator->producer_args;
     my $file       = delete $args->{'ttfile'} or die "No template file!";
-    my $ttvars     = delete $args->{'ttargs'} || {};
+    if ( exists $args->{ttargs} ) {
+        warn "Use of 'ttargs' producer arg is deprecated."
+            ." Please use 'tt_vars' instead.\n";
+        $args->{tt_vars} = delete $args->{ttargs};
+    }
+    my $ttvars     = delete $args->{'tt_vars'} || {};
     # Any args left here get given to the Template object.
 
     debug "Processing template $file\n";
