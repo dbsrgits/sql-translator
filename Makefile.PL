@@ -21,6 +21,7 @@ WriteMakefile(
     ],
     'PREREQ_PM'    => {
         'Class::Base'             => 0,
+        'Class::MakeMethods'      => 0,
         'File::Basename'          => 0,
         'File::Spec'              => 0,
         'GD'                      => 0,
