@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.10 2004-08-19 20:41:31 grommit Exp $
+# $Id: SQLFairy.pm,v 1.11 2004-08-20 11:01:48 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -27,17 +27,16 @@ SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML.
 =head1 SYNOPSIS
 
   use SQL::Translator;
-  use SQL::Translator::Parser::XML::SQLFairy;
 
-  my $translator     = SQL::Translator->new(
-      from           => 'XML-SQLFairy',
-      to             => 'MySQL',
-      filename       => 'schema.xml',
-      show_warnings  => 1,
-      add_drop_table => 1,
-  );
+  my $translator = SQL::Translator->new( show_warnings  => 1 );
 
-  print $obj->translate;
+  my $out = $obj->translate(
+      from     => 'XML-SQLFairy',
+      to       => 'MySQL',
+      filename => 'schema.xml',
+  ) or die $translator->error;
+
+  print $out;
 
 =head1 DESCRIPTION
 
@@ -101,7 +100,7 @@ To convert your old format files simply pass them through the translator :)
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
