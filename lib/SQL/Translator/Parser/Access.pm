@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Access;
 
 # -------------------------------------------------------------------
-# $Id: Access.pm,v 1.1 2004-04-19 16:38:17 kycl4rk Exp $
+# $Id: Access.pm,v 1.2 2004-07-30 21:56:18 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -41,7 +41,7 @@ something similar to the output of mdbtools (http://mdbtools.sourceforge.net/).
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -159,23 +159,12 @@ comment : /^\s*--(.*)\n/
 
 field : field_name data_type field_qualifier(s?) reference_definition(?)
     { 
-#        my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
-#        if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
-#            $qualifiers{ $_ } = 1 for @type_quals;
-#        }
-#
-#        my $null = defined $qualifiers{'not_null'} 
-#                   ? $qualifiers{'not_null'} : 1;
-#        delete $qualifiers{'not_null'};
-
         $return = { 
             supertype   => 'field',
             name        => $item{'field_name'}, 
             data_type   => $item{'data_type'}{'type'},
             size        => $item{'data_type'}{'size'},
-#            null        => $null,
             constraints => $item{'reference_definition(?)'},
-#            %qualifiers,
         } 
     }
     | <error>
@@ -460,19 +449,6 @@ sub parse {
             ) or die $table->error;
 
             $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
-
-#            for my $qual ( qw[ binary unsigned zerofill list ] ) {
-#                if ( my $val = $fdata->{ $qual } || $fdata->{ uc $qual } ) {
-#                    next if ref $val eq 'ARRAY' && !@$val;
-#                    $field->extra( $qual, $val );
-#                }
-#            }
-
-#            for my $cdata ( @{ $fdata->{'constraints'} } ) {
-#                next unless $cdata->{'type'} eq 'foreign_key';
-#                $cdata->{'fields'} ||= [ $field->name ];
-#                push @{ $tdata->{'constraints'} }, $cdata;
-#            }
         }
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
@@ -482,19 +458,6 @@ sub parse {
                 fields => $idata->{'fields'},
             ) or die $table->error;
         }
-
-#        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
-#            my $constraint       =  $table->add_constraint(
-#                name             => $cdata->{'name'},
-#                type             => $cdata->{'type'},
-#                fields           => $cdata->{'fields'},
-#                reference_table  => $cdata->{'reference_table'},
-#                reference_fields => $cdata->{'reference_fields'},
-#                match_type       => $cdata->{'match_type'} || '',
-#                on_delete        => $cdata->{'on_delete_do'},
-#                on_update        => $cdata->{'on_update_do'},
-#            ) or die $table->error;
-#        }
     }
 
     return 1;
