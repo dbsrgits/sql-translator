@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.3 2003-10-08 22:46:17 kycl4rk Exp $
+# $Id: YAML.pm,v 1.4 2003-10-09 21:51:08 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>,
 #   Ken Y. Clark <kclark@cpan.org>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
@@ -72,11 +72,15 @@ sub view_field {
     my $field = shift;
 
     return {
-        'order' => scalar $field->order,
-        'name'  => scalar $field->name,
-        'type'  => scalar $field->data_type,
-        'size'  => [ $field->size ],
-        'extra' => { $field->extra },
+        'order'          => scalar $field->order,
+        'name'           => scalar $field->name,
+        'data_type'      => scalar $field->data_type,
+        'size'           => [ $field->size ],
+        'default_value'  => scalar $field->default_value,
+        'is_nullable'    => scalar $field->is_nullable,
+        'is_primary_key' => scalar $field->is_primary_key,
+        'is_unique'      => scalar $field->is_unique,
+        'extra'          => { $field->extra },
     };
 }
 
