@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.1 2003-05-01 04:25:00 kycl4rk Exp $
+# $Id: Table.pm,v 1.2 2003-05-03 04:07:09 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -29,25 +29,7 @@ SQL::Translator::Schema::Table - SQL::Translator table object
 =head1 SYNOPSIS
 
   use SQL::Translator::Schema::Table;
-  my $foo_table    = SQL::Translator::Schema::Table->new('foo');
-
-  $foo_table->add_field( 
-      name           => 'foo_id', 
-      data_type      => 'integer', 
-      size           => 11,
-      is_primary_key => 1,
-  );
-
-  $foo_table->add_field(
-      name           => 'foo_name', 
-      data_type      => 'char', 
-      size           => 10,
-  );
-
-  $foo_table->add_index(
-      name           => '',
-      fields         => [ 'foo_name' ],
-  );
+  my $table = SQL::Translator::Schema::Table->new( name => 'foo' );
 
 =head1 DESCSIPTION
 
@@ -59,12 +41,13 @@ C<SQL::Translator::Schema::Table> is the table object.
 
 use strict;
 use Class::Base;
+use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Index;
 
 use base 'Class::Base';
-use vars qw($VERSION);
+use vars qw( $VERSION $FIELD_ORDER );
 
 $VERSION = 1.00;
 
@@ -111,12 +94,13 @@ sub add_constraint {
 
 =head2 add_constraint
 
-Add a constraint to the table.
+Add a constraint to the table.  Returns the newly created 
+C<SQL::Translator::Schema::Constraint> object.
 
-  $table->add_constraint(
+  my $constraint = $table->add_constraint(
       name   => 'pk',
+      type      => PRIMARY_KEY,
       fields => [ 'foo_id' ],
-      type   => 'primary_key',
   );
 
 =cut
@@ -135,9 +119,10 @@ sub add_index {
 
 =head2 add_index
 
-Add an index to the table.
+Add an index to the table.  Returns the newly created
+C<SQL::Translator::Schema::Index> object.
 
-  $table->add_index(
+  my $index  = $table->add_index(
       name   => 'name',
       fields => [ 'name' ],
       type   => 'normal',
@@ -159,40 +144,103 @@ sub add_field {
 
 =head2 add_field
 
-Add an field to the table.  Returns the SQL::Translator::Schema::Field 
-object.
+Add an field to the table.  Returns the newly created 
+C<SQL::Translator::Schema::Field> object.
 
-  my $field          =  $table->add_field(
-      name           => 'foo_id',
-      data_type      => 'integer',
-      size           => 11,
-      is_primary_key => 1,
+  my $field     =  $table->add_field(
+      name      => 'foo_id',
+      data_type => 'integer',
+      size      => 11,
   );
 
 =cut
 
     my $self  = shift;
-    my $field = SQL::Translator::Schema::Field->new( @_ ) or return;
+    my %args  = @_;
+    return $self->error('No name') unless $args{'name'};
+    my $field = SQL::Translator::Schema::Field->new( \%args ) or return;
                 SQL::Translator::Schema::Field->error;
     $self->{'fields'}{ $field->name } = $field;
+    $self->{'fields'}{ $field->name }{'order'} = ++$FIELD_ORDER;
     return $field;
 }
 
 # ----------------------------------------------------------------------
-sub fields {
+sub get_constraints {
 
 =pod
 
-=head2 fields
+=head2 get_constraints
 
-Returns all the fields.
+Returns all the constraint objects as an array or array reference.
 
-  my @fields = $table->fields;
+  my @constraints = $table->get_constraints;
 
 =cut
 
     my $self = shift;
-    return wantarray ? %{ $self->{'fields'} || {} } : $self->{'fields'};
+
+    if ( ref $self->{'constraints'} ) {
+        return wantarray 
+            ? @{ $self->{'constraints'} } : $self->{'constraints'};
+    }
+    else {
+        $self->error('No constraints');
+        return wantarray ? () : undef;
+    }
+}
+
+# ----------------------------------------------------------------------
+sub get_indices {
+
+=pod
+
+=head2 get_indices
+
+Returns all the index objects as an array or array reference.
+
+  my @indices = $table->get_indices;
+
+=cut
+
+    my $self = shift;
+
+    if ( ref $self->{'indices'} ) {
+        return wantarray 
+            ? @{ $self->{'indices'} } 
+            : $self->{'indices'};
+    }
+    else {
+        $self->error('No indices');
+        return wantarray ? () : undef;
+    }
+}
+
+# ----------------------------------------------------------------------
+sub get_fields {
+
+=pod
+
+=head2 get_fields
+
+Returns all the field objects as an array or array reference.
+
+  my @fields = $table->get_fields;
+
+=cut
+
+    my $self = shift;
+    my @fields = 
+        sort { $a->{'order'} <=> $b->{'order'} }
+        values %{ $self->{'fields'} || {} };
+
+    if ( @fields ) {
+        return wantarray ? @fields : \@fields;
+    }
+    else {
+        $self->error('No fields');
+        return wantarray ? () : undef;
+    }
 }
 
 # ----------------------------------------------------------------------
@@ -209,7 +257,16 @@ Determine whether the view is valid or not.
 =cut
 
     my $self = shift;
-    return ( $self->name && $self->fields ) ? 1 : 0;
+    return $self->error('No name') unless $self->name;
+    return $self->error('No fields') unless $self->get_fields;
+
+    for my $object ( 
+        $self->get_fields, $self->get_indices, $self->get_constraints 
+    ) {
+        return $object->error unless $object->is_valid;
+    }
+
+    return 1;
 }
 
 1;
