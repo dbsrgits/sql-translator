@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.19 2003-03-12 14:19:52 dlc Exp $
+# $Id: Translator.pm,v 1.20 2003-04-07 16:18:15 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -27,7 +27,7 @@ use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 $VERSION  = '0.01';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -483,7 +483,7 @@ sub translate {
         $self->filename($filename);
     }
 
-    if (my $data = ($self->{'data'} || $self->{'datasource'})) {
+    if (my $data = ($args->{'data'} || $args->{'datasource'})) {
         $self->data($data);
     }
 
