@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.41 2004-09-17 21:53:35 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.42 2004-10-23 19:58:19 cmungall Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -139,10 +139,12 @@ $GRAMMAR = q!
 startrule : statement(s) eofile { \%tables }
 
 eofile : /^\Z/
+   
 
 statement : create
   | comment_on_table
   | comment_on_column
+  | comment_on_other
   | comment
   | alter
   | grant
@@ -277,10 +279,46 @@ comment_on_column : /comment/i /on/i /column/i column_name /is/i comment_phrase 
             $item{'comment_phrase'};
     }
 
+comment_on_other : /comment/i /on/i /\w+/ /\w+/ /is/i comment_phrase ';'
+    {
+        push(@table_comments, $item{'comment_phrase'});
+    }
+
+# [added by cjm 20041019]
+# [TODO: other comment-on types]
+# for now we just have a general mechanism for handling other
+# kinds of comments than table/column; I'm not sure of the best
+# way to incorporate these into the datamodel
+#
+# this is the exhaustive list of types of comment:
+#COMMENT ON DATABASE my_database IS 'Development Database';
+#COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
+#COMMENT ON RULE my_rule IS 'Logs UPDATES of employee records';
+#COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
+#COMMENT ON TABLE my_table IS 'Employee Information';
+#COMMENT ON TYPE my_type IS 'Complex Number support';
+#COMMENT ON VIEW my_view IS 'View of departmental costs';
+#COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
+#COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
+#
+# this is tested by test 08
+
 column_name : NAME '.' NAME
     { $return = { table => $item[1], field => $item[3] } }
 
-comment_phrase : /'.*?'|NULL/ 
+comment_phrase : /null/i
+    { $return = 'NULL' }
+
+comment_phrase : /'/ comment_phrase_unquoted(s) /'/
+    { my $phrase = join(' ', @{ $item[2] });
+      $return = $phrase}
+
+# [cjm TODO: double-single quotes in a comment_phrase]
+comment_phrase_unquoted : /[^\']*/
+    { $return = $item[1] }
+
+
+xxxcomment_phrase : /'.*?'|NULL/ 
     { 
         my $val = $item[1] || '';
         $val =~ s/^'|'$//g;

@@ -52,6 +52,21 @@ create index cvterm_idx1 on cvterm (cv_id);
 -- unique within a given cv
 
 
+COMMENT ON TABLE cvterm IS
+ 'A term, class or concept within an ontology
+  or controlled vocabulary';
+COMMENT ON COLUMN cvterm.cv_id IS
+ 'The cv/ontology/namespace to which this cvterm belongs';
+COMMENT ON COLUMN cvterm.name IS
+ 'A concise human-readable name describing the meaning of the cvterm';
+COMMENT ON COLUMN cvterm.definition IS
+ 'A human-readable text definition';
+COMMENT ON COLUMN cvterm.dbxref_id IS
+ 'A human-readable text definition';
+COMMENT ON INDEX cvterm_c1 IS 
+ 'the OBO identifier is globally unique';
+
+
 -- ================================================
 -- TABLE: cvrelationship
 -- ================================================
