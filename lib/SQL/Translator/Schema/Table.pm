@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.20 2003-09-25 01:31:28 allenday Exp $
+# $Id: Table.pm,v 1.21 2003-09-25 17:28:37 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -442,7 +442,9 @@ sub is_trivial_link {
 	}
 
     foreach my $referenced (keys %fk){
-	  $self->{'is_trivial_link'} = 0 and last if $fk{$referenced} > 1;
+	if($fk{$referenced} > 1){
+	  $self->{'is_trivial_link'} = 0;
+	  last;
 	}
 
     return $self->{'is_trivial_link'};
