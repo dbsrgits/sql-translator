@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.46 2003-10-03 20:17:48 dlc Exp $
+# $Id: Translator.pm,v 1.47 2003-10-17 19:49:16 dlc Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -29,7 +29,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.03';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -572,8 +572,8 @@ sub translate {
 
     eval { $producer_output = $producer->($self) };
     if ($@ || ! $producer_output) {
-        my $msg = sprintf "translate: Error with producer '%s': %s",
-            $producer_type, ($@) ? $@ : " no results";
+        my $err = $@ || $self->error || "no results";
+        my $msg = "translate: Error with producer '$producer_type': $err";
         return $self->error($msg);
     }
 
