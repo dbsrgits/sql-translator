@@ -3,9 +3,14 @@ package SQL::Translator;
 use strict;
 use ExtUtils::MakeMaker;
 
+my @SIGN;
+if ($ExtUtils::MakeMaker::VERSION >= 6.18) {
+    @SIGN = (SIGN => 1);
+}
+
 WriteMakefile(
     'NAME'         => __PACKAGE__,
-    'SIGN'         => 1,
+    @SIGN,
     'VERSION_FROM' => 'lib/SQL/Translator.pm',
     'EXE_FILES'    => [
         'bin/sqlt-diagram',
