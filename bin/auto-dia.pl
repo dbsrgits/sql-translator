@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: auto-dia.pl,v 1.3 2003-02-15 23:38:35 kycl4rk Exp $
+# $Id: auto-dia.pl,v 1.4 2003-04-01 16:43:34 kycl4rk Exp $
 
 =head1 NAME 
 
@@ -18,6 +18,7 @@ auto-dia.pl - Automatically create a diagram from a database schema
     -c|--cols       Number of columns
     -n|--no-lines   Don't draw lines
     -s|--skip       Fields to skip in natural joins
+    -f|--font-size  "small," "medium," "large," or "huge" (default "medium")
     --join-pk-only  Perform natural joins from primary keys only
 
 =head1 DESCRIPTION
@@ -35,13 +36,20 @@ use GD;
 use Pod::Usage;
 use SQL::Translator;
 
-my $VERSION = (qw$Revision: 1.3 $)[-1];
+my $VERSION = (qw$Revision: 1.4 $)[-1];
+
+use constant VALID_FONT_SIZE => {
+    small  => 1,
+    medium => 1,
+    large  => 1,
+    huge   => 1,
+};
 
 #
 # Get arguments.
 #
 my ( $out_file, $image_type, $db_driver, $title, $no_columns, 
-    $no_lines, $skip_fields, $join_pk_only );
+    $no_lines, $skip_fields, $font_size, $join_pk_only );
 GetOptions(
     'd|db=s'         => \$db_driver,
     'o|output:s'     => \$out_file,
@@ -50,28 +58,30 @@ GetOptions(
     'c|columns:i'    => \$no_columns,
     'n|no-lines'     => \$no_lines,
     's|skip:s'       => \$skip_fields,
+    'f|font-size:s'  => \$font_size,
     '--join-pk-only' => \$join_pk_only,
 ) or die pod2usage;
 my $file = shift @ARGV or pod2usage( -message => 'No input file' );
 
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
-$image_type = $image_type ? lc $image_type : 'png';
-$title    ||= $file;
-my %skip    = map { $_, 1 } split ( /,/, $skip_fields );
+$image_type   = $image_type ? lc $image_type : 'png';
+$title      ||= $file;
+$font_size    = 'medium' unless VALID_FONT_SIZE->{ $font_size };
+my %skip      = map { $_, 1 } split ( /,/, $skip_fields );
 
 #
 # Parse file.
 #
 my $t    = SQL::Translator->new( parser => $db_driver, producer => 'Raw' );
 my $data = $t->translate( $file ) or die $t->error;
-use Data::Dumper;
-#print Dumper( $data );
-#exit;
 
 #
 # Layout the image.
 #
-my $font         = gdTinyFont;
+my $font         = 
+    $font_size eq 'small'  ? gdTinyFont  :
+    $font_size eq 'medium' ? gdSmallFont :
+    $font_size eq 'large'  ? gdLargeFont : gdGiantFont;
 my $no_tables    = scalar keys %$data;
 $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
 my $no_per_col   = sprintf( "%.0f", $no_tables/$no_columns + .5 );
