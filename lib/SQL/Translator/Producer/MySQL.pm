@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 #-----------------------------------------------------
-# $Id: MySQL.pm,v 1.1 2002-03-27 12:41:53 dlc Exp $
+# $Id: MySQL.pm,v 1.2 2002-03-29 13:08:19 dlc Exp $
 #-----------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw($VERSION $DEBUG);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -56,7 +56,7 @@ sub produce {
 "# ----------------------------------------------------------------------
 # Table: $table
 # ----------------------------------------------------------------------\n";
-        $create .= "CREATE TABLE $table (\n";
+        $create .= "CREATE TABLE $table (";
 
         # --------------------------------------------------------------
         # Fields
@@ -66,10 +66,12 @@ sub produce {
             debug("Looking at field: $field");
             my $field_data = $table_data->{'fields'}->{$field};
             my @fdata = ("", $field);
+            $create .= "\n";
 
             # data type and size
-            push @fdata, sprintf "%s(%d)", $field_data->{'data_type'},
-                                           $field_data->{'size'};
+            push @fdata, sprintf "%s%s", $field_data->{'data_type'},
+                                         ($field_data->{'size'}) ?
+                                        "($field_data->{'size'})" : "";
 
             # Null?
             push @fdata, "NOT NULL" unless $field_data->{'null'};
@@ -90,26 +92,40 @@ sub produce {
             push @fdata, "PRIMARY KEY" if $field_data->{'is_primary_key'};
 
 
-            $create .= (join "\t", @fdata);
+            $create .= (join " ", @fdata);
             $create .= "," unless ($i == $#fields);
-            $create .= "\n";
         }
 
         # --------------------------------------------------------------
         # Other keys
         # --------------------------------------------------------------
-
+        my @indeces = @{$table_data->{'indeces'}};
+        for (my $i = 0; $i <= $#indeces; $i++) {
+            $create .= ",\n";
+            my $key = $indeces[$i];
+            my ($name, $type, $fields) = @{$key}{qw(name type fields)};
+            if ($type eq "primary_key") {
+                $create .= " PRIMARY KEY (@{$fields})"
+            } else {
+                local $" = ", ";
+                $create .= " KEY $name (@{$fields})"
+            }
+        }
 
         # --------------------------------------------------------------
         # Footer
         # --------------------------------------------------------------
-        $create .= ")";
+        $create .= "\n)";
         $create .= " TYPE=$table_data->{'type'}"
             if defined $table_data->{'type'};
         $create .= ";\n\n";
     }
 
-    $create .= "#\n";
+    # Global footer (with a vim plug)
+    $create .= "#
+#
+# vim: set ft=sql:
+";
 
     return $create;
 }

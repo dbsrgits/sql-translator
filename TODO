@@ -8,3 +8,8 @@ Modules to be written/finished
     SQL::Translator::Parser::xSV
     SQL::Translator::Producer::MySQL
 
+Should the parsers return an instance instead of a data structure?  It
+would make traversing the data structure easier.
+
+
+# vim: set sw=2 ts=2 tw=70 fo=trcqo:
