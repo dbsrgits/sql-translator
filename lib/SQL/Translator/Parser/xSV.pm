@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.6 2003-05-07 20:36:59 kycl4rk Exp $
+# $Id: xSV.pm,v 1.7 2003-05-09 17:15:30 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -47,12 +47,13 @@ include:
 =item * scan_fields
 
 Indicates that the columns should be scanned to determine data types
-and field sizes.
+and field sizes.  True by default.
 
 =item * trim_fields
 
 A shortcut to sending filters to Text::RecordParser, will create 
 callbacks that trim leading and trailing spaces from fields and headers.
+True by default.
 
 =back
 
@@ -65,7 +66,7 @@ C<SQL::Translator::Utils::normalize>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -79,8 +80,7 @@ use base qw(Exporter);
 # Passed a SQL::Translator instance and a string containing the data
 #
 sub parse {
-    my ($tr, $data) = @_;
-
+    my ($tr, $data, $schema) = @_;
     my $args             = $tr->parser_args;
     my $parser           = Text::RecordParser->new(
         field_separator  => $args->{'field_separator'}  || ',',
@@ -90,7 +90,7 @@ sub parse {
     );
 
     $parser->field_filter( sub { $_ = shift; s/^\s+|\s+$//g; $_ } ) 
-        if $args->{'trim_fields'};
+        unless defined $args->{'trim_fields'} && $args->{'trim_fields'} == 0;
 
     #
     # Create skeleton structure, mostly empty.
@@ -102,6 +102,8 @@ sub parse {
             fields  => { },
         },
     };
+
+    my $table = $schema->add_table( name => 'table1' );
 
     #
     # Get the field names from the first row.
@@ -116,7 +118,7 @@ sub parse {
             name           => $field_names[$i],
 
             # Default datatype is "char"
-            data_type      => "char",
+            data_type      => 'char',
 
             # default size is 8bits; something more reasonable?
             size           => [ 255 ],
@@ -126,13 +128,30 @@ sub parse {
 
             # field field is the primary key
             is_primary_key => ($i == 0) ? 1 : undef,
+        };
+
+        my $field = $table->add_field(
+            name              => $field_names[$i],
+            data_type         => 'char',
+            default_value     => '',
+            size              => 255,
+            is_nullable       => 1,
+            is_auto_increment => undef,
+        ) or die $table->error;
+
+        if ( $i == 0 ) {
+            $table->primary_key( $field->name );
+            $field->is_primary_key(1);
         }
     }
 
     #
     # If directed, look at every field's values to guess size and type.
     #
-    if ( $args->{'scan_fields'} ) {
+    unless ( 
+        defined $args->{'scan_fields'} &&
+        $args->{'scan_fields'} == 0
+    ) {
         my %field_info = map { $_, {} } @field_names;
         while ( my $rec = $parser->fetchrow_hashref ) {
             for my $field ( @field_names ) {
@@ -143,14 +162,15 @@ sub parse {
                 if ( $data =~ /^-?\d+$/ ) {
                     $type = 'integer';
                 }
-                elsif ( $data =~ /^[\d.-]+$/ ) {
+                elsif ( $data =~ /^-?[\d.]+$/ ) {
                     $type = 'float';
                 }
                 else {
                     $type = 'char';
                 }
 
-                if ( $size > $field_info{ $field }{'size'} ) {
+                my $fsize = $field_info{ $field }{'size'} || 0;
+                if ( $size > $fsize ) {
                     $field_info{ $field }{'size'} = $size;
                 }
 
@@ -159,12 +179,19 @@ sub parse {
         }
 
         for my $field ( keys %field_info ) {
+            my $size      = $field_info{ $field }{'size'};
+            my $data_type = 
+                $field_info{ $field }{'char'}  ? 'char'  : 
+                $field_info{ $field }{'float'} ? 'float' : 'integer';
+
             $parsed->{'table1'}{'fields'}{ $field }{'size'} = 
                 [ $field_info{ $field }{'size'} ];
 
-            $parsed->{'table1'}{'fields'}{ $field }{'data_type'} = 
-                $field_info{ $field }{'char'}  ? 'char'  : 
-                $field_info{ $field }{'float'} ? 'float' : 'integer';
+            $parsed->{'table1'}{'fields'}{ $field }{'data_type'} = $data_type;
+
+            my $field = $table->get_field( $field );
+            $field->size( $size );
+            $field->data_type( $data_type );
         }
     }
 
