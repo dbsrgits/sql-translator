@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.17 2003-08-29 08:25:32 allenday Exp $
+# $Id: Table.pm,v 1.18 2003-08-29 14:54:01 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -51,7 +51,7 @@ use Data::Dumper;
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -89,10 +89,10 @@ sub add_constraint {
 Add a constraint to the table.  Returns the newly created 
 C<SQL::Translator::Schema::Constraint> object.
 
-  my $c1 = $table->add_constraint(
-      name        => 'pk',
-      type        => PRIMARY_KEY,
-      fields      => [ 'foo_id' ],
+  my $c1     = $table->add_constraint(
+      name   => 'pk',
+      type   => PRIMARY_KEY,
+      fields => [ 'foo_id' ],
   );
 
   my $c2 = SQL::Translator::Schema::Constraint->new( name => 'uniq' );
@@ -172,7 +172,7 @@ sub add_index {
 Add an index to the table.  Returns the newly created
 C<SQL::Translator::Schema::Index> object.
 
-  my $i1 = $table->add_index(
+  my $i1     = $table->add_index(
       name   => 'name',
       fields => [ 'name' ],
       type   => 'normal',
@@ -214,17 +214,17 @@ C<SQL::Translator::Schema::Field> object.  The "name" parameter is
 required.  If you try to create a field with the same name as an 
 existing field, you will get an error and the field will not be created.
 
-  my $f1    =  $table->add_field(
+  my $f1        =  $table->add_field(
       name      => 'foo_id',
       data_type => 'integer',
       size      => 11,
   );
 
-  my $f2 =  SQL::Translator::Schema::Field->new( 
+  my $f2     =  SQL::Translator::Schema::Field->new( 
       name   => 'name', 
       table  => $table,
   );
-  $f2    = $table->add_field( $field2 ) or die $table->error;
+  $f2 = $table->add_field( $field2 ) or die $table->error;
 
 =cut
 
@@ -247,7 +247,7 @@ existing field, you will get an error and the field will not be created.
     my $field_name = $field->name or return $self->error('No name');
 
     if ( exists $self->{'fields'}{ $field_name } ) { 
-        return $self->error(qq[Can\'t create field: "$field_name" exists]);
+        return $self->error(qq[Can't create field: "$field_name" exists]);
     }
     else {
         $self->{'fields'}{ $field_name } = $field;
@@ -419,22 +419,31 @@ Determine whether the view is valid or not.
     return 1;
 }
 
+# ----------------------------------------------------------------------
 sub is_data {
-  my $self = shift;
-  return $self->{'is_data'} if defined $self->{'is_data'};
 
-  $self->{'is_data'} = 0;
+=pod
 
-  foreach my $field ($self->get_fields){
-	if(!$field->is_primary_key and !$field->is_foreign_key){
-	  $self->{'is_data'} = 1;
-	  return $self->{'is_data'}
-	}
-  }
+=head2 is_data
 
-  return $self->{'is_data'};
+=cut
+
+    my $self = shift;
+    return $self->{'is_data'} if defined $self->{'is_data'};
+
+    $self->{'is_data'} = 0;
+
+    foreach my $field ( $self->get_fields ) {
+        if ( !$field->is_primary_key and !$field->is_foreign_key ) {
+            $self->{'is_data'} = 1;
+            return $self->{'is_data'};
+        }
+    }
+
+    return $self->{'is_data'};
 }
 
+# ----------------------------------------------------------------------
 sub can_link {
 
 =pod
@@ -447,69 +456,83 @@ Determine whether the table can link two arg tables via many-to-many.
 
 =cut
 
-  my($self,$table1,$table2) = @_;
+    my ( $self, $table1, $table2 ) = @_;
 
-  return $self->{'can_link'}{$table1->name}{$table2->name} if defined $self->{'can_link'}{$table1->name}{$table2->name};
+    return $self->{'can_link'}{ $table1->name }{ $table2->name }
+      if defined $self->{'can_link'}{ $table1->name }{ $table2->name };
 
-  if($self->is_data == 1){
-	$self->{'can_link'}{$table1->name}{$table2->name} = [0];
-	$self->{'can_link'}{$table2->name}{$table1->name} = [0];
-	return $self->{'can_link'}{$table1->name}{$table2->name};
-  }
+    if ( $self->is_data == 1 ) {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } = [0];
+        $self->{'can_link'}{ $table2->name }{ $table1->name } = [0];
+        return $self->{'can_link'}{ $table1->name }{ $table2->name };
+    }
 
-  my %fk = ();
+    my %fk = ();
 
-  foreach my $field ($self->get_fields){
-	if($field->is_foreign_key){
-	  push @{ $fk{$field->foreign_key_reference->reference_table} }, $field->foreign_key_reference;
-	}
-  }
+    foreach my $field ( $self->get_fields ) {
+        if ( $field->is_foreign_key ) {
+            push @{ $fk{ $field->foreign_key_reference->reference_table } },
+              $field->foreign_key_reference;
+        }
+    }
 
-  if(!defined($fk{ $table1->name }) or !defined($fk{ $table2->name })){
-	$self->{'can_link'}{$table1->name}{$table2->name} = [0];
-	$self->{'can_link'}{$table2->name}{$table1->name} = [0];
-	return $self->{'can_link'}{$table1->name}{$table2->name};
-  }
+    if ( !defined( $fk{ $table1->name } ) or !defined( $fk{ $table2->name } ) )
+    {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } = [0];
+        $self->{'can_link'}{ $table2->name }{ $table1->name } = [0];
+        return $self->{'can_link'}{ $table1->name }{ $table2->name };
+    }
 
-  #trivial traversal, only one way to link the two tables
-  if(scalar(@{$fk{ $table1->name } } == 1)
-	 and
-	 scalar(@{$fk{ $table2->name } } == 1)
-	){
-	$self->{'can_link'}{$table1->name}{$table2->name} = ['one2one', $fk{$table1->name}, $fk{$table2->name}];
-	$self->{'can_link'}{$table1->name}{$table2->name} = ['one2one', $fk{$table2->name}, $fk{$table1->name}];
+    # trivial traversal, only one way to link the two tables
+    if (    scalar( @{ $fk{ $table1->name } } == 1 )
+        and scalar( @{ $fk{ $table2->name } } == 1 ) )
+    {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } =
+          [ 'one2one', $fk{ $table1->name }, $fk{ $table2->name } ];
+        $self->{'can_link'}{ $table1->name }{ $table2->name } =
+          [ 'one2one', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-  #non-trivial traversal.  one way to link table2, many ways to link table1
-  } elsif(scalar(@{ $fk{ $table1->name } }  > 1)
-		  and
-		  scalar(@{ $fk{ $table2->name } } == 1)
-		 ){
-	$self->{'can_link'}{$table1->name}{$table2->name} = ['many2one', $fk{$table1->name}, $fk{$table2->name}];
-	$self->{'can_link'}{$table2->name}{$table1->name} = ['one2many', $fk{$table2->name}, $fk{$table1->name}];
+        # non-trivial traversal.  one way to link table2, 
+        # many ways to link table1
+    }
+    elsif ( scalar( @{ $fk{ $table1->name } } > 1 )
+        and scalar( @{ $fk{ $table2->name } } == 1 ) )
+    {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } =
+          [ 'many2one', $fk{ $table1->name }, $fk{ $table2->name } ];
+        $self->{'can_link'}{ $table2->name }{ $table1->name } =
+          [ 'one2many', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-  #non-trivial traversal.  one way to link table1, many ways to link table2
-  } elsif(scalar(@{ $fk{ $table1->name } } == 1)
-		  and
-		  scalar(@{ $fk{ $table2->name } }  > 1)
-		 ){
-	$self->{'can_link'}{$table1->name}{$table2->name} = ['one2many', $fk{$table1->name}, $fk{$table2->name}];
-	$self->{'can_link'}{$table2->name}{$table1->name} = ['many2one', $fk{$table2->name}, $fk{$table1->name}];
+        # non-trivial traversal.  one way to link table1, 
+        # many ways to link table2
+    }
+    elsif ( scalar( @{ $fk{ $table1->name } } == 1 )
+        and scalar( @{ $fk{ $table2->name } } > 1 ) )
+    {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } =
+          [ 'one2many', $fk{ $table1->name }, $fk{ $table2->name } ];
+        $self->{'can_link'}{ $table2->name }{ $table1->name } =
+          [ 'many2one', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-  #non-trivial traversal.  many ways to link table1 and table2
-  } elsif(scalar(@{ $fk{ $table1->name } }  > 1)
-		  and
-		  scalar(@{ $fk{ $table2->name } }  > 1)
-		 ){
-	$self->{'can_link'}{$table1->name}{$table2->name} = ['many2many', $fk{$table1->name}, $fk{$table2->name}];
-	$self->{'can_link'}{$table2->name}{$table1->name} = ['many2many', $fk{$table2->name}, $fk{$table1->name}];
+        # non-trivial traversal.  many ways to link table1 and table2
+    }
+    elsif ( scalar( @{ $fk{ $table1->name } } > 1 )
+        and scalar( @{ $fk{ $table2->name } } > 1 ) )
+    {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } =
+          [ 'many2many', $fk{ $table1->name }, $fk{ $table2->name } ];
+        $self->{'can_link'}{ $table2->name }{ $table1->name } =
+          [ 'many2many', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-  #one of the tables didn't export a key to this table, no linking possible
-  } else {
-	$self->{'can_link'}{$table1->name}{$table2->name} = [0];
-	$self->{'can_link'}{$table2->name}{$table1->name} = [0];
-  }
+        # one of the tables didn't export a key 
+        # to this table, no linking possible
+    }
+    else {
+        $self->{'can_link'}{ $table1->name }{ $table2->name } = [0];
+        $self->{'can_link'}{ $table2->name }{ $table1->name } = [0];
+    }
 
-  return $self->{'can_link'}{$table1->name}{$table2->name};
+    return $self->{'can_link'}{ $table1->name }{ $table2->name };
 }
 
 # ----------------------------------------------------------------------
@@ -519,7 +542,7 @@ sub name {
 
 =head2 name
 
-Get or set the table\'s name.
+Get or set the table's name.
 
 If provided an argument, checks the schema object for a table of 
 that name and disallows the change if one exists.
@@ -532,7 +555,7 @@ that name and disallows the change if one exists.
 
     if ( my $arg = shift ) {
         if ( my $schema = $self->schema ) {
-            return $self->error( qq[Can\'t use table name "$arg": table exists] )
+            return $self->error( qq[Can't use table name "$arg": table exists] )
                 if $schema->get_table( $arg );
         }
         $self->{'name'} = $arg;
@@ -548,7 +571,7 @@ sub schema {
 
 =head2 schema
 
-Get or set the table\'s schema object.
+Get or set the table's schema object.
 
   my $schema = $table->schema;
 
@@ -569,9 +592,9 @@ sub primary_key {
 
 =pod
 
-=head2 options
+=head2 primary_key
 
-Gets or sets the table\'s primary key(s).  Takes one or more field
+Gets or sets the table's primary key(s).  Takes one or more field
 names (as a string, list or array[ref]) as an argument.  If the field
 names are present, it will create a new PK if none exists, or it will
 add to the fields of an existing PK (and will unique the field names).
@@ -637,7 +660,7 @@ sub options {
 
 =head2 options
 
-Get or set the table\'s options (e.g., table types for MySQL).  Returns
+Get or set the table's options (e.g., table types for MySQL).  Returns
 an array or array reference.
 
   my @options = $table->options;
@@ -664,7 +687,7 @@ sub order {
 
 =head2 order
 
-Get or set the table\'s order.
+Get or set the table's order.
 
   my $order = $table->order(3);
 
@@ -694,8 +717,9 @@ sub DESTROY {
 
 =pod
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Allen Day E<lt>allenday@ucla.eduE<gt>.
 
 =cut
