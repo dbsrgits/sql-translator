@@ -101,7 +101,7 @@ t/data/sqlite/create.sql
 t/data/sqlite/create2.sql
 t/data/sybase/create.sql
 t/data/template/basic.tt
-t/data/xml/schema-basic.xml
+t/data/xml/schema.xml
 t/data/template/table.tt
 META.yml
 SIGNATURE
