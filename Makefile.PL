@@ -127,3 +127,17 @@ sub _message {
     my $fmt = '%' . $size . 's';
     sprintf $fmt => $message;
 }
+
+package MY;
+use File::Basename qw(basename);
+
+sub libscan {
+    my ($self, $file) = @_;
+    my $bfile = basename($file);
+
+    return if $bfile =~ /^\.(?:cvs)?ignore$/;
+    return if $bfile =~ /\.swp$/;
+
+    return $self->SUPER::libscan($file);
+}
+
