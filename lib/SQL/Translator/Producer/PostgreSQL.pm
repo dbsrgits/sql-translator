@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.4 2002-12-04 01:53:51 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.5 2003-01-02 17:47:59 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -347,7 +347,9 @@ sub produce {
 sub mk_name {
     my ($basename, $type, $scope, $critical) = @_;
     my $basename_orig = $basename;
-    my $max_name      = $max_id_length - (length($type) + 1);
+    my $max_name      = $type 
+                        ? $max_id_length - (length($type) + 1) 
+                        : $max_id_length;
     $basename         = substr( $basename, 0, $max_name ) 
                         if length( $basename ) > $max_name;
     my $name          = $type ? "${type}_$basename" : $basename;
