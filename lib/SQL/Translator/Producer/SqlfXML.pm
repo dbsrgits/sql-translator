@@ -1,7 +1,7 @@
-package SQL::Translator::Producer::XML;
+package SQL::Translator::Producer::SqlfXML;
 
 # -------------------------------------------------------------------
-# $Id: XML.pm,v 1.11 2003-07-31 20:48:23 dlc Exp $
+# $Id: SqlfXML.pm,v 1.1 2003-08-06 17:14:09 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::XML;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
 
 use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment);
@@ -145,11 +145,21 @@ sub produce {
 
 =head1 NAME
 
-SQL::Translator::Producer::XML - XML output
+SQL::Translator::Producer::SqlfXML - XML output
 
 =head1 SYNOPSIS
 
-  use SQL::Translator::Producer::XML;
+  use SQL::Translator;
+
+  my $translator = SQL::Translator->new(
+      show_warnings  => 1,
+      add_drop_table => 1,
+  );
+  print = $obj->translate(
+      from     => "MySQL",
+      to       => "SqlfXML",
+      filename => "fooschema.sql",
+  );
 
 =head1 DESCRIPTION
 
@@ -161,4 +171,5 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>, darren chamberlain E<lt>darren@cpan.orgE
 
 =head1 SEE ALSO
 
-L<XML::Writer>
+perl(1), SQL::Translator, SQL::Translator::Parser::SqlfXML,
+SQL::Translator::Schema, XML::Writer.

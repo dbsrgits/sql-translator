@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+Created by SQL::Translator::Producer::XML
+Created on Fri Aug  1 11:24:58 2003
+
+ -->
+
+<sqlf:schema xmlns:sqlf="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+	
+  <sqlf:table>
+    <sqlf:name>Basic</sqlf:name>
+    <sqlf:order>1</sqlf:order>
+    <sqlf:fields>
+      <sqlf:field>
+        <sqlf:name>id</sqlf:name>
+        <sqlf:is_primary_key>1</sqlf:is_primary_key>
+        <sqlf:is_auto_increment>1</sqlf:is_auto_increment>
+        <sqlf:data_type>int</sqlf:data_type>
+        <sqlf:size>10</sqlf:size>
+        <sqlf:order>1</sqlf:order>
+      </sqlf:field>
+      <sqlf:field>
+        <sqlf:name>title</sqlf:name>
+        <sqlf:data_type>varchar</sqlf:data_type>
+        <sqlf:size>100</sqlf:size>
+        <sqlf:default_value>hello</sqlf:default_value>
+        <sqlf:order>2</sqlf:order>
+      </sqlf:field>
+      <sqlf:field>
+		<sqlf:name>description</sqlf:name>
+        <sqlf:data_type>text</sqlf:data_type>
+        <sqlf:is_nullable>1</sqlf:is_nullable>
+        <sqlf:order>3</sqlf:order>
+      </sqlf:field>
+      <sqlf:field>
+	    <sqlf:name>email</sqlf:name>
+        <sqlf:data_type>varchar</sqlf:data_type>
+		<sqlf:size>255</sqlf:size>
+        <sqlf:order>4</sqlf:order>
+      </sqlf:field>
+  	</sqlf:fields>
+	
+	<sqlf:indices>
+      <sqlf:index>
+	    <sqlf:fields>title</sqlf:fields>
+        <sqlf:name>titleindex</sqlf:name>
+        <sqlf:type>NORMAL</sqlf:type>
+      </sqlf:index>
+    </sqlf:indices>
+	
+	<sqlf:constraints>
+      <sqlf:constraint>
+        <sqlf:deferrable>1</sqlf:deferrable>
+        <sqlf:fields>email</sqlf:fields>
+        <sqlf:name>emailuniqueindex</sqlf:name>
+        <sqlf:type>UNIQUE</sqlf:type>
+      </sqlf:constraint>
+    </sqlf:constraints>
+  </sqlf:table>
+  
+</sqlf:schema>

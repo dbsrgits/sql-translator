@@ -16,6 +16,7 @@ lib/SQL/Translator/Parser/MySQL.pm
 lib/SQL/Translator/Parser/Oracle.pm
 lib/SQL/Translator/Parser/PostgreSQL.pm
 lib/SQL/Translator/Parser/xSV.pm
+lib/SQL/Translator/Parser/SqlfXML.pm
 lib/SQL/Translator/Producer.pm
 lib/SQL/Translator/Producer/ClassDBI.pm
 lib/SQL/Translator/Producer/Diagram.pm
@@ -27,7 +28,7 @@ lib/SQL/Translator/Producer/POD.pm
 lib/SQL/Translator/Producer/PostgreSQL.pm
 lib/SQL/Translator/Producer/SQLite.pm
 lib/SQL/Translator/Producer/Sybase.pm
-lib/SQL/Translator/Producer/XML.pm
+lib/SQL/Translator/Producer/SqlfXML.pm
 lib/SQL/Translator/Schema.pm
 lib/SQL/Translator/Schema/Constants.pm
 lib/SQL/Translator/Schema/Constraint.pm
