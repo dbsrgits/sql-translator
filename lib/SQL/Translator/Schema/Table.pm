@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.15 2003-08-29 05:38:56 allenday Exp $
+# $Id: Table.pm,v 1.16 2003-08-29 08:00:51 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -46,11 +46,12 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Index;
+use Data::Dumper;
 
 use base 'Class::Base';
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -425,7 +426,7 @@ sub is_data {
   $self->{'is_data'} = 0;
 
   foreach my $field ($self->get_fields){
-	if(!$field->is_primary_key or !$field->is_foreign_key){
+	if(!$field->is_primary_key and !$field->is_foreign_key){
 	  $self->{'is_data'} = 1;
 	  return $self->{'is_data'}
 	}
@@ -448,13 +449,11 @@ Determine whether the table can link two arg tables via many-to-many.
 
   my($self,$table1,$table2) = @_;
 
-  #get tables in abc order
-  ($table1,$table2) = sort {$a->name cmp $b->name} ($table1,$table2);
-
   return $self->{'can_link'}{$table1->name}{$table2->name} if defined $self->{'can_link'}{$table1->name}{$table2->name};
 
   if($self->is_data == 1){
-	$self->{'can_link'}{$table1->name}{$table2->name} = 0;
+	$self->{'can_link'}{$table1->name}{$table2->name} = [0];
+	$self->{'can_link'}{$table2->name}{$table1->name} = [0];
 	return $self->{'can_link'}{$table1->name}{$table2->name};
   }
 
@@ -462,23 +461,53 @@ Determine whether the table can link two arg tables via many-to-many.
 
   foreach my $field ($self->get_fields){
 	#if the table has non-key fields, it can't be a link
-	if(!$field->is_primary_key or !$field->is_foreign_key){
-	  $self->{'can_link'}{$table1->name}{$table2->name} = 0;
+	if(!$field->is_primary_key and !$field->is_foreign_key){
+	  $self->{'can_link'}{$table1->name}{$table2->name} = [0];
+	  $self->{'can_link'}{$table2->name}{$table1->name} = [0];
 	  return $self->{'can_link'}{$table1->name}{$table2->name};
 
 	#otherwise, count up how many fields refer to each FK table.field
 	} elsif($field->is_foreign_key){
-	  $fk{$field->foreign_key_reference->reference_table->name}++;
+	  push @{ $fk{$field->foreign_key_reference->reference_table->name} }, $field->foreign_key_reference;
 	}
   }
 
-  if($fk{ $table1->name } == 1
+  #trivial traversal, only one way to link the two tables
+  if(scalar($fk{ $table1->name } == 1)
 	 and
-	 $fk{ $table2->name } == 1
+	 scalar($fk{ $table2->name } == 1)
 	){
-	$self->{'can_link'}{$table1->name}{$table2->name} = 1;
+	$self->{'can_link'}{$table1->name}{$table2->name} = ['one2one', $fk{$table1->name}, $fk{$table2->name}];
+	$self->{'can_link'}{$table1->name}{$table2->name} = ['one2one', $fk{$table2->name}, $fk{$table1->name}];
+
+  #non-trivial traversal.  one way to link table2, many ways to link table1
+  } elsif(scalar($fk{ $table1->name }  > 1)
+		  and
+		  scalar($fk{ $table2->name } == 1)
+		 ){
+	$self->{'can_link'}{$table1->name}{$table2->name} = ['many2one', $fk{$table1->name}, $fk{$table2->name}];
+	$self->{'can_link'}{$table2->name}{$table1->name} = ['one2many', $fk{$table2->name}, $fk{$table1->name}];
+
+  #non-trivial traversal.  one way to link table1, many ways to link table2
+  } elsif(scalar($fk{ $table1->name } == 1)
+		  and
+		  scalar($fk{ $table2->name }  > 1)
+		 ){
+	$self->{'can_link'}{$table1->name}{$table2->name} = ['one2many', $fk{$table1->name}, $fk{$table2->name}];
+	$self->{'can_link'}{$table2->name}{$table1->name} = ['many2one', $fk{$table2->name}, $fk{$table1->name}];
+
+  #non-trivial traversal.  many ways to link table1 and table2
+  } elsif(scalar($fk{ $table1->name }  > 1)
+		  and
+		  scalar($fk{ $table2->name }  > 1)
+		 ){
+	$self->{'can_link'}{$table1->name}{$table2->name} = ['many2many', $fk{$table1->name}, $fk{$table2->name}];
+	$self->{'can_link'}{$table2->name}{$table1->name} = ['many2many', $fk{$table2->name}, $fk{$table1->name}];
+
+  #one of the tables didn't export a key to this table, no linking possible
   } else {
-	$self->{'can_link'}{$table1->name}{$table2->name} = 0;
+	$self->{'can_link'}{$table1->name}{$table2->name} = [0];
+	$self->{'can_link'}{$table2->name}{$table1->name} = [0];
   }
 
   return $self->{'can_link'}{$table1->name}{$table2->name};

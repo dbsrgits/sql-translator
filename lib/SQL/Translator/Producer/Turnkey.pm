@@ -3,8 +3,8 @@ package Turnkey::Package;
 use strict;
 use Class::MakeMethods::Template::Hash (
   new => [ 'new' ],
-  hash => [ qw( many ) ],
-  hash_of_arrays => [ qw( many_via) ],
+  'array' => [ qw( many ) ],
+  hash_of_arrays => [ qw( one2one one2many many2one many2many) ],
   scalar => [ qw( base name order primary_key primary_key_accessor table) ],
 );
 
@@ -21,7 +21,7 @@ sub init {
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.2 2003-08-29 05:38:56 allenday Exp $
+# $Id: Turnkey.pm,v 1.3 2003-08-29 08:00:51 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Brian O'Connor <boconnor@ucla.edu>,
@@ -44,7 +44,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -87,7 +87,9 @@ sub produce {
 	my %packages;
 	my $order;
 
-
+	#
+	# build package objects
+	#
 	foreach my $table ($schema->get_tables){
 	  die __PACKAGE__." table ".$table->name." doesn't have a primary key!" unless $table->primary_key;
 	  die __PACKAGE__." table ".$table->name." can't have a composite primary key!" if ($table->primary_key->fields)[1];
@@ -106,171 +108,214 @@ sub produce {
 									 defined($t->format_pk_name) ? $t->format_pk_name->( $package->name, $package->primary_key )
 									                             : undef
 									);
+
+	  foreach my $field ($table->get_fields){
+		next unless $field->is_foreign_key;
+
+		$package->push_many( $field->foreign_key_reference->reference_table );
+	  }
 	}
 
+	#
+	# identify FK relationships
+	#
 	foreach my $maylink ( $schema->get_tables ){
 	  foreach my $left ($schema->get_tables){
 		foreach my $right ($schema->get_tables){
 
 		  next if $left->name eq $right->name;
 
-		  if( $maylink->can_link($left,$right) ){
+		  my $lpackage = $packages{$left->name};
+		  my $rpackage = $packages{$right->name};
 
-			$lpackage = $packages{$left->name};
-			$rpackage = $packages{$right->name};
+warn $left->name, "\t", $right->name;
+		  my($link,$lconstraints,$rconstraints) = @{ $maylink->can_link($left,$right) };
 
-			$lpackage->many_via($rpackage => $maylink);
-			$rpackage->many_via($lpackage => $maylink);
-#			$linktable{ $maylink->name } = $maylink;
+		  #one FK to one FK
+		  if( $link eq 'one2one'){
+warn "\tone2one";
+			$lpackage->one2one_push($rpackage->name, [$rpackage, $maylink]);
+			$rpackage->one2one_push($lpackage->name, [$lpackage, $maylink]);
+
+		  #one FK to many FK
+		  } elsif( $link eq 'one2many'){
+warn "\tone2many";
+			$lpackage->one2many_push($rpackage->name, [$rpackage, $maylink]);
+			$rpackage->many2one_push($lpackage->name, [$lpackage, $maylink]);
+
+		  #many FK to one FK
+		  } elsif( $link eq 'many2one'){
+warn "\tmany2one";
+			$lpackage->many2one_push($rpackage->name, [$rpackage, $maylink]);
+			$rpackage->one2many_push($lpackage->name, [$lpackage, $maylink]);
+
+		  #many FK to many FK
+		  } elsif( $link eq 'many2many'){
+warn "\tmany2many";
+			$lpackage->many2many_push($rpackage->name, [$rpackage, $maylink]);
+			$rpackage->many2many_push($lpackage->name, [$lpackage, $maylink]);
+
+		  } else {
+			#not linkable
 		  }
-
 		}
 	  }
 	}
 
     #
-    # Iterate over all tables
+    # create methods
     #
-    for my $table_from ( $schema->get_tables ) {
+	foreach my $package_from (values %packages){
+	  next unless $package_from->table->is_data;
+
 	  my %linked;
 
+	  my %o2o = $package_from->one2one;
+warn Dumper(%o2o);
+	  my %o2m = $package_from->one2many;
+warn Dumper(%o2m);
+	  my %m2o = $package_from->many2one;
+warn Dumper(%m2o);
+	  my %m2m = $package_from->many2many;
+warn Dumper(%m2m);
 
-	  next unless $table_from->is_data;
-
-	  if($table_from->is_data){
-		foreach my $link ( keys %{ $linkable{ $table_from->name } } ) {
-		  my $linkmethodname;
-
-			if ( my $fk_xform = $t->format_fk_name ) {
-			  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-			  $linkmethodname = $fk_xform->($linkable{$table->name}{$link}->name,
-											($schema->get_table($link)->primary_key->fields)[0]).'s';
-			} else {
-			  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-			  $linkmethodname = $linkable{$table->name}{$link}->name.'_'.
-				($schema->get_table($link)->primary_key->fields)[0].'s';
-			}
-
-			my @rk_fields = ();
-			my @lk_fields = ();
-			foreach my $field ($linkable{$table->name}{$link}->get_fields) {
-			  next unless $field->is_foreign_key;
-
-			  next unless(
-						  $field->foreign_key_reference->reference_table eq $table->name
-						  ||
-						  $field->foreign_key_reference->reference_table eq $link
-						 );
-			  push @lk_fields, ($field->foreign_key_reference->reference_fields)[0]
-				if $field->foreign_key_reference->reference_table eq $link;
-			  push @rk_fields, $field->name
-				if $field->foreign_key_reference->reference_table eq $table->name;
-			}
-
-			#if one possible traversal via link table
-			if (scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1) {
-			  foreach my $rk_field (@rk_fields) {
-				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
-				push @{ $packages{ $package->name }{'has_many'}{$link}{'link_one_one'} },
-				  "sub ".$linkmethodname." { my \$self = shift; ".
-					"return map \$_->".
-					  ($schema->get_table($link)->primary_key->fields)[0].
-						", \$self->".$linkable{$table->name}{$link}->name.
-						  "_".$rk_field." }\n\n";
-				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'one_one'} },
-				#  {link_method_name => $linkmethodname, primary_key_field => ($schema->get_table($link)->primary_key->fields)[0],
-				#   table_name => $linkable{$table_name}{$link}->name, rk_field => $rk_field};
-			  }
-			  #else there is more than one way to traverse it.  ack!
-			  #let's treat these types of link tables as a many-to-one (easier)
-			  #
-			  #NOTE: we need to rethink the link method name, as the cardinality
-			  #has shifted on us.
-			} elsif (scalar(@rk_fields) == 1) {
-			  foreach my $rk_field (@rk_fields) {
-				# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
-				push @{ $packages{ $package->name }{'has_many'}{ $link }{'link_many_one'} },
-				  "sub " . $linkable{$table->name}{$link}->name .
-					"s { my \$self = shift; return \$self->" .
-					  $linkable{$table->name}{$link}->name . "_" .
-						$rk_field . "(\@_) }\n\n";
-				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'many_one'} },
-				#  {
-				#    table_name => $linkable{$table_name}{$link}->name, rk_field => $rk_field
-				#  };
-			  }
-			} elsif (scalar(@lk_fields) == 1) {
-			  #these will be taken care of on the other end...
-			} else {
-			  #many many many.  need multiple iterations here, data structure revision
-			  #to handle N FK sources.  This code has not been tested and likely doesn't
-			  #work here
-			  foreach my $rk_field (@rk_fields) {
-				# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link } },
-				push @{ $packages{ $package->name }{'has_many'}{ $link }{'link_many_many'} },
-				  "sub " . $linkable{$table->name}{$link}->name . "_" . $rk_field .
-					"s { my \$self = shift; return \$self->" .
-					  $linkable{$table->name}{$link}->name . "_" .
-						$rk_field . "(\@_) }\n\n";
-				#push @{ $packages{ $table_pkg_name }{'has_many'}{ $link }{'many_many'} },
-				#  {
-				#   table_name => $linkable{$table_name}{$link}->name, rk_field => $rk_field
-				#  };
-			  }
-			}
-		  }
-        }
-
-
-        #
-        # Use foreign keys to set up "has_a/has_many" relationships.
-        #
-        foreach my $field ( $table->get_fields ) {
-            if ( $field->is_foreign_key ) {
-                my $table_name = $table->name;
-                my $field_name = $field->name;
-                my $fk_method  = $t->format_fk_name($table_name, $field_name);
-                my $fk         = $field->foreign_key_reference;
-                my $ref_table  = $fk->reference_table;
-                my $ref_pkg    = $t->format_package_name($ref_table);
-                my $ref_field  = ($fk->reference_fields)[0];
-
-                push @{ $packages{ $package->name }{'has_a'} },
-                    $package->name."->has_a( $field_name => '$ref_pkg');\n".
-                    "sub $fk_method { return shift->$field_name }\n\n"
-                ;
-				
-				
-                #
-                # If this table "has a" to the other, then it follows 
-                # that the other table "has many" of this one, right?
-                #
-				# No... there is the possibility of 1-1 cardinality
-
-				#if there weren't M-M relationships via the has_many
-				#being set up here, create nice pluralized method alias
-				#rather for user as alt. to ugly tablename_fieldname name
-				if(! $packages{ $ref_pkg }{ 'has_many' }{ $table->name } ){
-				  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-				  #push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
-				#	"sub $table_name\s {\n    return shift->$table_name\_$field_name\n}\n\n";
-				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table->name }{'fk_pluralized'} },
-					{ table_name => $table->name, field_name => $field_name };
-
-				#else ugly
-				} else {
-				}
-
-				#push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
-				#  "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
-				#  "'$table_pkg_name' => '$field_name'\n);\n\n";
-				push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name }{pluralized} },
-				  { ref_pkg => $ref_pkg, table_pkg_name => $package->name, table_name => $table->name, field_name => $field_name };
-            }
+	  foreach my $package_to (keys %{ $package_from->one2one }){
+		$package_to = $packages{$package_to};
+		foreach my $bridge ( $package_from->one2one($package_to->name) ){
+		  $bridge->[3] = $t->format_fk_name ? $t->format_fk_name->(
+																 $package_from->one2one($package_to->name)->[1]->name,
+																 $package_to->primary_key
+																).'s'
+									      : $package_from->one2one($package_to->name)->[1]->name .'_'.
+									        $package_to->primary_key .'s';
 		}
-	}
+	  }
+
+	  foreach my $package_to (keys %{ $package_from->one2many }){
+		$package_to = $packages{$package_to};
+		foreach my $bridge ( $package_from->one2many($package_to->name) ){
+		  $bridge->[3] = $t->format_fk_name ? $t->format_fk_name->(
+																 $package_from->one2many($package_to->name)->[1]->name,
+																 $package_to->primary_key
+																).'s'
+									      : $package_from->one2many($package_to->name)->[1]->name .'_'.
+									        $package_to->primary_key .'s';
+		}
+	  }
+
+	  foreach my $package_to (keys %{ $package_from->many2one }){
+		$package_to = $packages{$package_to};
+		foreach my $bridge ( $package_from->many2one($package_to->name) ){
+		  $bridge->[3] = $t->format_fk_name ? $t->format_fk_name->(
+																 $package_from->many2one($package_to->name)->[1]->name,
+																 $package_to->primary_key
+																).'s'
+									      : $package_from->many2one($package_to->name)->[1]->name .'_'.
+									        $package_to->primary_key .'s';
+		}
+	  }
+
+	  foreach my $package_to (keys %{ $package_from->many2many }){
+		$package_to = $packages{$package_to};
+		foreach my $bridge ( $package_from->many2many($package_to->name) ){
+		  $bridge->[3] = $t->format_fk_name ? $t->format_fk_name->(
+																 $package_from->many2many($package_to->name)->[1]->name,
+																 $package_to->primary_key
+																).'s'
+									      : $package_from->many2many($package_to->name)->[1]->name .'_'.
+									        $package_to->primary_key .'s';
+		}
+	  }
+
+
+
+
+# 		#if one possible traversal via link table
+# 		if (scalar(@rk_fields) == 1 and scalar(@lk_fields) == 1) {
+# 		  foreach my $rk_field (@rk_fields) {
+# 			push @{ $packages{ $package->name }{'has_many'}{$link}{'link_one_one'} },
+# 			  "sub ".$linkmethodname." { my \$self = shift; ".
+# 				"return map \$_->".
+# 				  ($schema->get_table($link)->primary_key->fields)[0].
+# 					", \$self->".$linkable{$table_from->name}{$link}->name.
+# 					  "_".$rk_field." }\n\n";
+# 		  }
+# 		  #NOTE: we need to rethink the link method name, as the cardinality
+# 		  #has shifted on us.
+# 		} elsif (scalar(@rk_fields) == 1) {
+# 		  foreach my $rk_field (@rk_fields) {
+# 			# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+# 			push @{ $packages{ $package->name }{'has_many'}{ $link }{'link_many_one'} },
+# 			  "sub " . $linkable{$table_from->name}{$link}->name .
+# 				"s { my \$self = shift; return \$self->" .
+# 				  $linkable{$table_from->name}{$link}->name . "_" .
+# 					$rk_field . "(\@_) }\n\n";
+# 		  }
+# 		} elsif (scalar(@lk_fields) == 1) {
+# 		  #these will be taken care of on the other end...
+# 		} else {
+# 		  #many many many.  need multiple iterations here, data structure revision
+# 		  #to handle N FK sources.  This code has not been tested and likely doesn't
+# 		  #work here
+# 		  foreach my $rk_field (@rk_fields) {
+# 			# ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+# 			push @{ $packages{ $package->name }{'has_many'}{ $link }{'link_many_many'} },
+# 			  "sub " . $linkable{$table_from->name}{$link}->name . "_" . $rk_field .
+# 				"s { my \$self = shift; return \$self->" .
+# 				  $linkable{$table_from->name}{$link}->name . "_" .
+# 					$rk_field . "(\@_) }\n\n";
+# 		  }
+# 		}
+# 	  }
+
+
+# 	  #
+# 	  # Use foreign keys to set up "has_a/has_many" relationships.
+# 	  #
+#         foreach my $field ( $table_from->get_fields ) {
+#             if ( $field->is_foreign_key ) {
+#                 my $table_name = $table_from->name;
+#                 my $field_name = $field->name;
+#                 my $fk_method  = $t->format_fk_name($table_name, $field_name);
+#                 my $fk         = $field->foreign_key_reference;
+#                 my $ref_table  = $fk->reference_table;
+#                 my $ref_pkg    = $t->format_package_name($ref_table);
+#                 my $ref_field  = ($fk->reference_fields)[0];
+
+#                 push @{ $packages{ $package->name }{'has_a'} },
+#                     $package->name."->has_a( $field_name => '$ref_pkg');\n".
+#                     "sub $fk_method { return shift->$field_name }\n\n"
+#                 ;
+				
+				
+#                 #
+#                 # If this table "has a" to the other, then it follows 
+#                 # that the other table "has many" of this one, right?
+#                 #
+# 				# No... there is the possibility of 1-1 cardinality
+
+# 				#if there weren't M-M relationships via the has_many
+# 				#being set up here, create nice pluralized method alias
+# 				#rather for user as alt. to ugly tablename_fieldname name
+# 				if(! $packages{ $ref_pkg }{ 'has_many' }{ $table_from->name } ){
+# 				  # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+# 				  #push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
+# 				#	"sub $table_name\s {\n    return shift->$table_name\_$field_name\n}\n\n";
+# 				  push @{ $packages{ $ref_pkg }{'has_many'}{ $table_from->name }{'fk_pluralized'} },
+# 					{ table_name => $table_from->name, field_name => $field_name };
+
+# 				#else ugly
+# 				} else {
+# 				}
+
+# 				#push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name } },
+# 				#  "$ref_pkg->has_many(\n    '${table_name}_${field_name}', ".
+# 				#  "'$table_pkg_name' => '$field_name'\n);\n\n";
+# 				push @{ $packages{ $ref_pkg }{'has_many'}{ $table_name }{pluralized} },
+# 				  { ref_pkg => $ref_pkg, table_pkg_name => $package->name, table_name => $table_from->name, field_name => $field_name };
+# 			  }
+#	  	}
+ 	}
 
 	my %metadata;
 	$metadata{"packages"} = \%packages;
