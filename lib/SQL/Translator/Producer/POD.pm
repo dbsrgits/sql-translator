@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::POD;
 
 # -------------------------------------------------------------------
-# $Id: POD.pm,v 1.1 2003-06-09 05:37:04 kycl4rk Exp $
+# $Id: POD.pm,v 1.2 2003-06-10 03:49:35 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::POD;
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -44,7 +44,7 @@ sub produce {
         #
         # Fields
         #
-        for my $field ( $table->get_fields ) {
+        for my $field ( @fields ) {
             $pod .= "=head4 " . $field->name . "\n\n=over 4\n\n";
 
             my $data_type = $field->data_type;
@@ -87,10 +87,11 @@ sub produce {
                     join(', ', $c->fields ) . "\n\n";
 
                 if ( $c->type eq FOREIGN_KEY ) {
-                    $pod .= "=item * Reference Table = " . 
-                        $c->reference_table . "\n\n";
+                    $pod .= "=item * Reference Table = L</" . 
+                        $c->reference_table . ">\n\n";
                     $pod .= "=item * Reference Fields = " . 
-                        join(', ', $c->reference_fields ) . "\n\n";
+                        join(', ', map {"L</$_>"} $c->reference_fields ) . 
+                        "\n\n";
                 }
 
                 if ( my $update = $c->on_update ) {
@@ -106,7 +107,10 @@ sub produce {
         }
     }
 
-    $pod .= "=head1 PRODUCED BY\n\n" . header_comment('', ''). "=cut";
+    my $header = ( map { $_ || () } split( /\n/, header_comment('', '') ) )[0];
+       $header =~ s/^Created by //;
+    $pod .= "=head1 PRODUCED BY\n\n$header\n\n=cut";
+
     return $pod;
 }
 
@@ -128,7 +132,9 @@ SQL::Translator::Producer::POD - POD producer for SQL::Translator
 =head1 DESCRIPTION
 
 Creates a POD description of each table, field, index, and constraint.  
-A good starting point for text documentation of a schema.
+A good starting point for text documentation of a schema.  You can 
+easily convert the output to HTML or text using "perldoc" or other 
+interesting formats using Pod::POM or Template::Toolkit.
 
 =head1 AUTHOR
 
@@ -136,6 +142,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-perldoc perlpod.
+perldoc, perlpod, Pod::POM, Template::Toolkit.
 
 =cut
