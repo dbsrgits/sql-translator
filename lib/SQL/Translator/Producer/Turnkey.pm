@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.16 2004-01-02 19:53:40 allenday Exp $
+# $Id: Turnkey.pm,v 1.17 2004-01-03 03:13:39 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #   Brian O'Connor <brian.oconnor@excite.com>.
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -62,6 +62,7 @@ sub produce {
 						 baseclass => $baseclass,
 						 db_user   => $args->{'db_user'}       || '',
 						 db_pass   => $args->{'db_pass'}       || '',
+						 db_str    => $args->{'db_str'}        || '',
 						 parser    => $t->parser_type,
 						 producer  => __PACKAGE__,
 						 dsn       => $args->{'dsn'} || sprintf( 'dbi:%s:_', $producer2dsn{ $parser_type }
@@ -339,7 +340,7 @@ package [% baseclass %];
 use strict;
 use base qw(Class::DBI::Pg);
 
-[% baseclass %]->set_db('Main', '[% db_str  %]', '[% db_user %]', '[% db_pass %]');
+[% baseclass %]->set_db('Main', '[% db_str %]', '[% db_user %]', '[% db_pass %]');
 
 [% FOREACH node = nodes %]
     [% printPackage(node.value) %]
