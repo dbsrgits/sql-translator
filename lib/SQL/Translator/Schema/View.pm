@@ -1,9 +1,9 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id: View.pm,v 1.6 2003-10-08 17:34:23 kycl4rk Exp $
+# $Id: View.pm,v 1.7 2004-02-09 22:15:15 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -50,7 +50,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -230,6 +230,6 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

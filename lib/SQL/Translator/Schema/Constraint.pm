@@ -1,9 +1,9 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.9 2003-09-25 01:31:28 allenday Exp $
+# $Id: Constraint.pm,v 1.10 2004-02-09 22:15:15 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -51,7 +51,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -508,6 +508,6 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

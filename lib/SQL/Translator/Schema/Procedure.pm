@@ -1,10 +1,9 @@
 package SQL::Translator::Schema::Procedure;
 
 # ----------------------------------------------------------------------
-# $Id: Procedure.pm,v 1.1 2003-10-08 17:31:24 kycl4rk Exp $
+# $Id: Procedure.pm,v 1.2 2004-02-09 22:15:15 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
-#   Paul Harrington <Paul-Harrington@deshaw.com>.
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -55,7 +54,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -256,9 +255,13 @@ sub DESTROY {
 
 1;
 
+# ----------------------------------------------------------------------
+
 =pod
 
 =head1 AUTHORS
 
 Ken Y. Clark E<lt>kclark@cshl.orgE<gt>,
 Paul Harrington E<lt>Paul-Harrington@deshaw.comE<gt>.
+
+=cut

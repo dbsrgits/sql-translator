@@ -1,9 +1,9 @@
 package SQL::Translator::Schema::Trigger;
 
 # ----------------------------------------------------------------------
-# $Id: Trigger.pm,v 1.2 2003-10-08 17:33:47 kycl4rk Exp $
+# $Id: Trigger.pm,v 1.3 2004-02-09 22:15:15 kycl4rk Exp $
 # ----------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
+# Copyright (C) 2002-4 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -54,7 +54,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'Class::Base';
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
