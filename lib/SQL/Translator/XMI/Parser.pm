@@ -289,14 +289,21 @@ foreach ( values %$SPECS ) { init_specs($_) };
 mk_get_dispatch();
 
 # Build lookups etc. Its important that each spec item becomes self contained
-# so we can build good closures, therefor we do all the lookups 1st.
+# so we can build good closures, therefore we do all the lookups 1st.
 sub init_specs {
 	my $specs = shift;
 
 	foreach my $spec ( values %$specs ) {
-        foreach ( @{$spec->{kids}} ) {
+		# Look up for kids get method
+		foreach ( @{$spec->{kids}} ) {
             $_->{get_method} = "get_".$specs->{$_->{class}}{plural};
         }
+		
+		# Add xmi.id ti all specs. Everything we want at the moment (in both
+		# versions) has an id. The tags that don't seem to be used for
+		# structure.
+		my $attrib_data = $spec->{attrib_data} ||= [];
+		push @$attrib_data, "xmi.id";
 	}
 
 }
@@ -335,8 +342,9 @@ sub new {
     $me = { xml_xpath => $xp };
     
     # Work out the version of XMI we have and generate the get subs to parse it
-    my $xmiv = "".$xp->findvalue('/XMI/@xmi.version')
-        or die "Can't find XMI version";
+    my $xmiv = $args{xmi_version}
+	    || "".$xp->findvalue('/XMI/@xmi.version')
+        || die "Can't find XMI version";
     $me->{xmi_get_} = mk_gets($SPECS->{$xmiv});
     
     return bless $me, $class;
@@ -492,8 +500,11 @@ provides hooks to filter the data down to what you want.
 
 =head2 new
 
-Pass in name/value arg of either filename, xml or ioref for the XMI data you
-want to parse.
+Pass in name/value arg of either C<filename>, C<xml> or C<ioref> for the XMI
+data you want to parse.
+
+The version of XMI to use either 1.0 or 1.2 is worked out from the file. You
+can also use a C<xmi_version> arg to set it explicitley.
 
 =head2 get_* methods
 
