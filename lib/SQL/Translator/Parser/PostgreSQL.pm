@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.39 2004-08-11 22:00:39 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.40 2004-08-30 18:54:58 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.39 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -498,7 +498,7 @@ pg_data_type :
             $return = { type => 'bytea' };
         }
     |
-    /(timestamptz|timestamp)/i
+    /(timestamptz|timestamp)( without time zone)?/i
         { 
             $return = { type => 'timestamp' };
         }
@@ -871,7 +871,7 @@ sub parse {
 
     my $schema = $translator->schema;
     my @tables = sort { 
-        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
+        ( $result->{ $a }{'order'} || 0 ) <=> ( $result->{ $b }{'order'} || 0 )
     } keys %{ $result };
 
     for my $table_name ( @tables ) {
@@ -883,9 +883,9 @@ sub parse {
         $table->comments( $tdata->{'comments'} );
 
         my @fields = sort { 
-            $tdata->{'fields'}->{ $a }->{'order'} 
+            $tdata->{'fields'}{ $a }{'order'} 
             <=>
-            $tdata->{'fields'}->{ $b }->{'order'}
+            $tdata->{'fields'}{ $b }{'order'}
         } keys %{ $tdata->{'fields'} };
 
         for my $fname ( @fields ) {
