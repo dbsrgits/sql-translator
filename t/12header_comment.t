@@ -1,10 +1,9 @@
 #!/usr/bin/perl
 # vim: set ft=perl:
 
-use Test::More;
+use strict;
+use Test::More tests => 5;
 use SQL::Translator::Utils qw($DEFAULT_COMMENT header_comment);
-
-plan tests => 5;
 
 # Superfluous test, but that's ok
 use_ok("SQL::Translator::Utils");
