@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.2 2003-06-27 01:58:44 kycl4rk Exp $
+# $Id: HTML.pm,v 1.3 2003-06-27 16:28:21 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::HTML;
 use strict;
 use CGI;
 use vars qw[ $VERSION ];
-$VERSION = (qw$Revision: 1.2 $)[-1];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
