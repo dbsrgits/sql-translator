@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.28 2003-11-05 22:27:55 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.29 2004-01-25 18:12:54 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -41,7 +41,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -270,7 +270,11 @@ sub produce {
                     }
                 }
                 elsif ( 
-                    $data_type =~ /date/ && $default eq 'current_timestamp' 
+                    $data_type =~ /date/ && (
+                        $default eq 'current_timestamp' 
+                        ||
+                        $default eq 'now()' 
+                    )
                 ) {
                     $default = 'SYSDATE';
                 }
@@ -285,10 +289,6 @@ sub produce {
             # Not null constraint
             #
             unless ( $field->is_nullable ) {
-#                my $constraint_name = mk_name( 
-#                    join('_', $table_name_ur, $field_name_ur ), 'nn' 
-#                );
-#                $field_def .= ' CONSTRAINT ' . $constraint_name . ' NOT NULL';
                 $field_def .= ' NOT NULL';
             }
 
@@ -305,7 +305,7 @@ sub produce {
                 push @trigger_defs, 
                     "CREATE SEQUENCE $seq_name;\n" .
                     "CREATE OR REPLACE TRIGGER $trigger_name\n" .
-                    "BEFORE INSERT ON $table_name\n" .
+                    "BEFORE INSERT ON $table_name_ur\n" .
                     "FOR EACH ROW WHEN (\n" .
                         " new.$field_name_ur IS NULL".
                         " OR new.$field_name_ur = 0\n".
@@ -379,6 +379,15 @@ sub produce {
             }
             elsif ( $c->type eq UNIQUE ) {
                 $name ||= mk_name( $table_name, 'u' );
+                for my $f ( $c->fields ) {
+                    my $field_def = $table->get_field( $f ) or next;
+                    my $dtype     = $translate{ $field_def->data_type } or next;
+                    if ( $WARN && $dtype =~ /clob/i ) {
+                        warn "Oracle will not allow UNIQUE constraints on " .
+                             "CLOB field '" . $field_def->table->name . '.' .
+                             $field_def->name . ".'\n"
+                    }
+                }
                 push @constraint_defs, "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
