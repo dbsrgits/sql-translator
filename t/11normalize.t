@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 # vim: set ft=perl:
 
+use strict;
 use Test::More;
 use SQL::Translator::Utils qw(normalize_name);
 
