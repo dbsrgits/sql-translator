@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.21 2003-06-03 22:42:10 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.22 2003-06-04 22:04:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -155,11 +155,16 @@ startrule : statement(s) eofile { \%tables }
 eofile : /^\Z/
 
 statement : comment
+    | use
     | drop
     | create
     | <error>
 
+use : /use/i WORD ';'
+
 drop : /drop/i WORD(s) ';'
+
+create : CREATE /database/i WORD ';'
 
 create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
     { 
