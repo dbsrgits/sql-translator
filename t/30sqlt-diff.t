@@ -23,12 +23,13 @@ my $create2 = (-d "t")
     ? catfile($Bin, @create2)
     : catfile($Bin, "t", @create2);
 
-plan tests => 2;
+plan tests => 3;
 
-ok(-e $sqlt_diff); 
+ok(-e $sqlt_diff, 'Found sqlt-diff script'); 
 my @cmd = ($sqlt_diff, "$create1=SQLite", "$create2=SQLite");
 
-close STDERR;
 my $out = `@cmd`;
 
-like($out, qr/ is missing field/, "Detected missing field 'lemon'");
+like($out, qr/ALTER TABLE person CHANGE iq/, "Detected altered 'iq' field");
+like($out, qr/ALTER TABLE person ADD is_rock_star/, 
+    "Detected missing rock star field");
