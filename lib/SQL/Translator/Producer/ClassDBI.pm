@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.20 2003-06-25 18:47:45 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.21 2003-06-25 19:10:17 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -45,7 +45,8 @@ sub produce {
     my $args          = $translator->producer_args;
     my $db_user       = $args->{'db_user'} || '';
     my $db_pass       = $args->{'db_pass'} || '';
-    my $dsn           = $args->{'dsn'}     || 'dbi:$from:_';
+    my $parser_type   = $translator->parser_type;
+    my $dsn           = $args->{'dsn'}     || "dbi:$CDBI_auto_pkgs{$parser_type}:_";
     my $main_pkg_name = $translator->format_package_name('DBI');
     my $header        = header_comment(__PACKAGE__, "# ");
     my $sep           = '# ' . '-' x 67;
@@ -71,10 +72,12 @@ sub produce {
         #
         # Primary key may have a differenct accessor method name
         #
-        if ( my $pk_xform = $translator->format_pk_name ) {
+        if(defined($translator->format_pk_name)) {
+#        if ( my $pk_xform = $translator->format_pk_name ) {
             if ( my $constraint = $table->primary_key ) {
                 my $field          = ($constraint->fields)[0];
-                my $pk_name        = $pk_xform->($table_pkg_name, $field);
+#                my $pk_name        = $pk_xform->($table_pkg_name, $field);
+                my $pk_name        = $translator->format_pk_name($table_pkg_name, $field);
                 
                 $packages{ $table_pkg_name }{'pk_accessor'} = 
                     "#\n# Primary key accessor\n#\n".
@@ -108,7 +111,7 @@ sub produce {
                 # that the other table "has many" of this one, right?
                 #
                 push @{ $packages{ $ref_pkg }{'has_many'} },
-                    "$ref_pkg->has_many(\n    '$table_name', ".
+                    "$ref_pkg->has_many(\n    '$table_name\s', ".
                     "'$table_pkg_name' => '$field_name'\n);\n\n"
                 ;
             }
