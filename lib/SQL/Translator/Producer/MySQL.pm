@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.18 2003-05-03 15:17:23 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.19 2003-05-09 17:04:39 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -60,11 +60,8 @@ sub produce {
     $create .= header_comment unless ($no_comments);
 
     for my $table ( keys %{ $data } ) {
-
-
         debug("PKG: Looking at table '$table'\n");
         my $table_data = $data->{$table};
-#warn Dumper($table_data);
         my @fields = sort { 
             $table_data->{'fields'}->{$a}->{'order'} 
             <=>
