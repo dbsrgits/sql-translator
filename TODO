@@ -1,5 +1,5 @@
 *   The Sybase parser still doesn't work.  It is not included with the
-    distribuution but can be found in CVS.  There has been some
+    distribution but can be found in CVS.  There has been some
     discussion about reviving this, but no one has had that particular
     itch to scratch, so it's languished.
 
