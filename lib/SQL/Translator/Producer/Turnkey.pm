@@ -21,7 +21,7 @@ sub init {
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.4 2003-08-29 08:25:31 allenday Exp $
+# $Id: Turnkey.pm,v 1.5 2003-08-29 14:52:56 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Brian O'Connor <boconnor@ucla.edu>,
@@ -44,7 +44,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -648,22 +648,18 @@ sub translateForm
 
 =head1 NAME
 
-SQL::Translator::Producer::ClassDBI - create Class::DBI classes from schema
+SQL::Translator::Producer::Turnkey - create Turnkey classes from schema
 
 =head1 SYNOPSIS
 
-Use this producer as you would any other from SQL::Translator.  See
-L<SQL::Translator> for details.
+Creates output for use with the Turnkey project.
 
-This package utilizes SQL::Translator\'s formatting methods
-format_package_name(), format_pk_name(), format_fk_name(), and
-format_table_name() as it creates classes, one per table in the schema
-provided.  An additional base class is also created for database connectivity
-configuration.  See L<Class::DBI> for details on how this works.
+=head1 SEE ALSO
+
+L<http://turnkey.sourceforge.net>.
 
 =head1 AUTHORS
 
 Allen Day E<lt>allenday@ucla.eduE<gt>
 Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Brian O\'Connor E<lt>brian.oconnor@excite.comE<gt>.
+Brian O'Connor E<lt>brian.oconnor@excite.comE<gt>.
