@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.7 2003-06-06 22:35:44 kycl4rk Exp $
+# $Id: Field.pm,v 1.8 2003-06-09 02:10:59 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -99,7 +99,11 @@ all the comments joined on newlines.
 =cut
 
     my $self = shift;
-    push @{ $self->{'comments'} }, @_ if @_;
+
+    for my $arg ( @_ ) {
+        $arg = $arg->[0] if ref $arg;
+        push @{ $self->{'comments'} }, $arg;
+    }
 
     return wantarray 
         ? @{ $self->{'comments'} || [] }
@@ -442,7 +446,7 @@ numbers and returns a string.
     }
 
     return wantarray 
-        ? @{ $self->{'size'} }
+        ? @{ $self->{'size'} || [0] }
         : join( ',', @{ $self->{'size'} || [0] } )
     ;
 }
