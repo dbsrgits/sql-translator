@@ -11,7 +11,7 @@ WriteMakefile(
     ],
     'PREREQ_PM'    => {
         'Parse::RecDescent'  => 0,  # Is a particular version needed?
-        'XML::Writer'        => 0,
+        'XML::Dumper'        => 0,
         'Pod::Usage'         => 0,
     },
 );
