@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.4 2003-10-15 19:56:20 phrrngtn Exp $
+# $Id: PostgreSQL.pm,v 1.5 2003-10-15 20:13:24 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Paul Harrington <harringp@deshaw.com>.
 #
@@ -30,7 +30,9 @@ See SQL::Translator::Parser::DBI.
 
 =head1 DESCRIPTION
 
-Uses DBD::Pg 1.31 catalog methods to determine schema structure.
+Uses DBI methods to determine schema structure.  DBI, of course, 
+delegates to DBD::Pg, and versions < 1.31 of DBD::Pg don't return very 
+useful information.  It is recommended that you upgrade this module.
 
 =cut
 
@@ -40,7 +42,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -52,7 +54,8 @@ sub parse {
     my ($sth, @tables, $columns);
     my $stuff;
 
-    warn "DBD:Pg $DBD::Pg::VERSION is not likely to produce anything useful. Upgrade to 1.31 or better if available."
+    warn "DBD:Pg $DBD::Pg::VERSION is not likely to produce anything ".
+        "useful. Upgrade to 1.31 or better if available.\n"
         unless ($DBD::Pg::VERSION ge '1.31');
 
     if ($dbh->{FetchHashKeyName} ne 'NAME_uc') {
