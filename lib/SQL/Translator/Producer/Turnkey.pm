@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.49 2004-04-25 00:38:40 boconnor Exp $
+# $Id: Turnkey.pm,v 1.50 2004-04-25 10:13:31 boconnor Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -368,16 +368,26 @@ use base qw(Class::DBI::Pg);
 
 [% baseclass %]->set_db('Main', '[% db_dsn  %]', '[% db_user %]', '[% db_pass %]');
 sub search_ilike { shift->_do_search(ILIKE => [% "\@\_" %] ) }
+sub search_lower {
+   my $c = shift;
+   my %q = @_;
+   my %t;
+   foreach my $k (keys %q){
+     $t{"lower($k)"} = lc($q{$k});
+   }
+   $c->_do_search(LIKE => %t);
+}
+
 
 # debug method
 sub dump {
   my $self = shift;
-  my %arg  = @_;
-  $arg{indent} ||= 1;
-  $arg{depth} ||= 2;
-  $Data::Dumper::Maxdepth = $arg{depth} if defined $arg{depth};
-  $Data::Dumper::Indent = $arg{indent} if defined $arg{indent};
-  return(Dumper($arg{object}));
+  my %arg  = %{shift @_};
+  $arg{'indent'} ||= 1;
+  $arg{'depth'} ||= 3;
+  $Data::Dumper::Maxdepth = $arg{'depth'} if defined $arg{'depth'};
+  $Data::Dumper::Indent = $arg{'indent'} if defined $arg{'indent'};
+  return(Dumper($arg{'object'}));
 }
 
 [% FOREACH node = nodes %]
@@ -503,6 +513,12 @@ EOF
   <atom class="[% format_table(node.key) %]" name="[% format_table(node.key) %]" label="[% format_table(node.key) %]Atom"/>
 [%- END -%]
 [% END %]
+<!-- custom -->
+<atom class="Frontpage"  name="Frontpage" label="FrontpageAtom"/>
+<atom class="Search"  name="Search" label="SearchAtom"/>
+<atom class="Userinfo"  name="UserInfo" label="UserinfoAtom"/>
+<!-- custom -->
+
 
 <!-- Atom Bindings -->
 <atomatombindings>
@@ -540,6 +556,17 @@ EOF
   </layout>
   [%- END %]
 [% END %]
+<!-- custom -->
+  <layout label="Turnkey::Util::Frontpage">
+    <placement from="#MainContainer"    label="MainContainer2AnalysisAtom"    to="#FrontpageAtom"/>
+  </layout>
+  <layout label="Turnkey::Util::Search">
+    <placement from="#MainContainer"    label="MainContainer2AnalysisAtom"    to="#SearchAtom"/>
+  </layout>
+  <layout label="Turnkey::Util::Userinfo">
+    <placement from="#MainContainer"    label="MainContainer2UserinfoAtom"    to="#UserinfoAtom"/>
+  </layout>
+<!-- custom -->
 </layouts>
 
 <uribindings>
@@ -552,6 +579,11 @@ EOF
    <classbinding class="[% format_table(focus_atom.key) %]" plugin="#[% format_table(focus_atom.key) %]Atom" rank="0"/>
 [%- END -%]
 [% END %]
+<!-- custom -->
+  <classbinding class="Turnkey::Util::Frontpage" plugin="#FrontpageAtom" rank="0"/>
+  <classbinding class="Turnkey::Util::Search" plugin="#SearchAtom" rank="0"/>
+  <classbinding class="Turnkey::Util::Userinfo" plugin="#UserinfoAtom" rank="0"/>
+<!-- custom -->
 </classbindings>
 
 </Turnkey>
@@ -620,8 +652,9 @@ EOF
 [% END %]
 [% MACRO obj2url(obj) SWITCH obj %]
   [% CASE DEFAULT %]
-    /[% ref(obj) | replace('.+::','') %]/[% obj %]
+    /[% ref(obj) | replace('.+::','') %]/db/[% obj %]
 [% END %]
+<!-- the above method should be updated when additional namespaces are used -->
 [% MACRO obj2desc(obj) SWITCH ref(obj) %]
   [% CASE '' %]
     [% obj %]
