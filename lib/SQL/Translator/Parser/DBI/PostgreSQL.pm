@@ -1,9 +1,9 @@
 package SQL::Translator::Parser::DBI::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.2 2003-10-13 19:51:31 phrrngtn Exp $
+# $Id: PostgreSQL.pm,v 1.3 2003-10-15 16:42:35 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
+# Copyright (C) 2003 Paul Harrington <harringp@deshaw.com>.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -30,7 +30,7 @@ See SQL::Translator::Parser::DBI.
 
 =head1 DESCRIPTION
 
-Uses DBIx::DBSchema.
+Uses DBD::Pg 1.31 catalog methods to determine schema structure.
 
 =cut
 
@@ -41,7 +41,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -55,12 +55,10 @@ sub parse {
 
 
     if ($dbh->{FetchHashKeyName} ne 'NAME_uc') {
-#        warn "setting dbh attribute {FetchHashKeyName} to NAME_uc";
         $dbh->{FetchHashKeyName} = 'NAME_uc';
     }
 
     if ($dbh->{ChopBlanks} != 1) {
-#        warn "setting dbh attribute {ChopBlanks} to 1";
         $dbh->{ChopBlanks} = 1;
     }
 
@@ -114,18 +112,18 @@ sub parse {
 1;
 
 # -------------------------------------------------------------------
-# Where man is not nature is barren.
-# William Blake
+# Time is a waste of money.
+# Oscar Wilde
 # -------------------------------------------------------------------
 
 =pod
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Paul Harrington E<lt>harringp@deshaw.comE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), Parse::RecDescent, SQL::Translator::Schema.
+SQL::Translator, DBD::Pg.
 
 =cut
