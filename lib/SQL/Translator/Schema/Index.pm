@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Index;
 
 # ----------------------------------------------------------------------
-# $Id: Index.pm,v 1.3 2003-05-09 17:09:43 kycl4rk Exp $
+# $Id: Index.pm,v 1.4 2003-06-06 00:06:49 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -39,7 +39,7 @@ SQL::Translator::Schema::Index - SQL::Translator index object
 
 C<SQL::Translator::Schema::Index> is the index object.
 
-Primary keys will be considered table constraints, not indices.
+Primary and unique keys are table constraints, not indices.
 
 =head1 METHODS
 
@@ -78,7 +78,7 @@ Object constructor.
 
     for my $arg ( qw[ name type fields table ] ) {
         next unless $config->{ $arg };
-        $self->$arg( $config->{ $arg } ) or return;
+        defined $self->$arg( $config->{ $arg } ) or return;
     }
 
     return $self;
@@ -91,17 +91,17 @@ sub fields {
 
 =head2 fields
 
-Gets and set the fields the constraint is on.  Accepts a string, list or
+Gets and set the fields the index is on.  Accepts a string, list or
 arrayref; returns an array or array reference.  Will unique the field
 names and keep them in order by the first occurrence of a field name.
 
-  $constraint->fields('id');
-  $constraint->fields('id', 'name');
-  $constraint->fields( 'id, name' );
-  $constraint->fields( [ 'id', 'name' ] );
-  $constraint->fields( qw[ id name ] );
+  $index->fields('id');
+  $index->fields('id', 'name');
+  $index->fields( 'id, name' );
+  $index->fields( [ 'id', 'name' ] );
+  $index->fields( qw[ id name ] );
 
-  my @fields = $constraint->fields;
+  my @fields = $index->fields;
 
 =cut
 
@@ -120,6 +120,32 @@ names and keep them in order by the first occurrence of a field name.
     }
 
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
+}
+
+# ----------------------------------------------------------------------
+sub is_valid {
+
+=pod
+
+=head2 is_valid
+
+Determine whether the index is valid or not.
+
+  my $ok = $index->is_valid;
+
+=cut
+
+    my $self   = shift;
+    my $table  = $self->table  or return $self->error('No table');
+    my @fields = $self->fields or return $self->error('No fields');
+
+    for my $field ( @fields ) {
+        return $self->error(
+            "Field '$field' does not exist in table '", $table->name, "'"
+        ) unless $table->get_field( $field );
+    }
+
+    return 1;
 }
 
 # ----------------------------------------------------------------------
@@ -214,32 +240,6 @@ Get or set the index's type.
     return $self->{'type'} || NORMAL;
 }
 
-
-# ----------------------------------------------------------------------
-sub is_valid {
-
-=pod
-
-=head2 is_valid
-
-Determine whether the index is valid or not.
-
-  my $ok = $index->is_valid;
-
-=cut
-
-    my $self   = shift;
-    my $table  = $self->table  or return $self->error('No table');
-    my @fields = $self->fields or return $self->error('No fields');
-
-    for my $field ( @fields ) {
-        return $self->error(
-            "Field '$field' does not exist in table '", $table->name, "'"
-        ) unless $table->get_field( $field );
-    }
-
-    return 1;
-}
 
 # ----------------------------------------------------------------------
 sub DESTROY {
