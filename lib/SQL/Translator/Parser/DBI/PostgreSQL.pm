@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.6 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.7 2004-09-15 21:13:43 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -42,7 +42,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -66,15 +66,6 @@ sub parse {
         $dbh->{ChopBlanks} = 1;
     }
 
-    $sth = $dbh->column_info();
-    foreach my $c (@{$sth->fetchall_arrayref({})}) {
-        $columns
-            ->{$c->{TABLE_SCHEM}}
-                ->{$c->{TABLE_NAME}}
-                    ->{columns}
-                        ->{$c->{COLUMN_NAME}}= $c;
-    }
-
     $sth = $dbh->table_info();
 
     @tables   = @{$sth->fetchall_arrayref({})};
@@ -91,21 +82,23 @@ sub parse {
                                           ) || die $schema->error;
 
 
-            my $cols =
-                $columns->{$table_info->{TABLE_SCHEM}}
-                        ->{$table_info->{TABLE_NAME}}
-                            ->{columns};
+            my $cols = $dbh->column_info(undef,
+                                         $table_info->{TABLE_SCHEM},
+                                         $table_info->{TABLE_NAME},
+                                         "%" )->fetchall_arrayref({});
 
-            foreach my $c (values %{$cols}) {
+            foreach my $c (@{$cols}) {
+                print Dumper($c) if $DEBUG;
                 my $f = $table->add_field(
-                                          name        => $c->{COLUMN_NAME},
-                                          data_type   => $c->{TYPE_NAME},
-                                          order       => $c->{ORDINAL_POSITION},
-                                          size        => $c->{COLUMN_SIZE},
+                                        name        => $c->{COLUMN_NAME},
+                                        default_value => $c->{COLUMN_DEF},
+                                        data_type   => $c->{TYPE_NAME},
+                                        order       => $c->{ORDINAL_POSITION},
+                                        size        => $c->{COLUMN_SIZE},
                                          ) || die $table->error;
 
-                $f->is_nullable(1)
-                    if ($c->{NULLABLE} == 1);
+                
+                $f->is_nullable($c->{NULLABLE} == 1);
             }
         }
     }
