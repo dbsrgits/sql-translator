@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Turnkey;
 
 # -------------------------------------------------------------------
-# $Id: Turnkey.pm,v 1.31 2004-03-31 08:36:21 allenday Exp $
+# $Id: Turnkey.pm,v 1.32 2004-04-03 03:50:05 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::Turnkey;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -476,7 +476,7 @@ EOF
 <!-- Atom Classes -->
 [% FOREACH node = nodes %]
 [% IF !node.value.is_trivial_link %]
-  <atom class="Turnkey::Atom::[% format_table(node.key) %]"  name="[% format_table(node.key) %]" xlink:label="[% format_table(node.key) %]Atom"/>
+  <atom class="[% format_table(node.key) %]" name="[% format_table(node.key) %]" xlink:label="[% format_table(node.key) %]Atom"/>
 [%- END -%]
 [% END %]
 
@@ -498,25 +498,25 @@ EOF
 [% END %]
 </atomatombindings>
 
-<atomcontainerbindings>
+<layouts>
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
-  <layout xlink:label="Turnkey::Model::[% format_table(focus_atom.key) %]">
+  <layout xlink:label="[% format_table(focus_atom.key) %]">
   [% FOREACH link_atom = focus_atom.value.hyperedges %]
-    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
+    <placement xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [%- END%]
   [% previous = "" %]
   [% FOREACH link_atom = focus_atom.value.edges %]
   [% IF link_atom.type == 'export' && previous != link_atom.thatnode.table.name %]
-    <atomcontainerbinding xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
+    <placement xlink:from="#MidLeftContainer" xlink:label="MidLeftContainer2[% format_table(link_atom.thatnode.table.name) %]Atom"  xlink:to="#[% format_table(link_atom.thatnode.table.name) %]Atom"/>
   [% previous = link_atom.thatnode.table.name %]
   [% END %]
   [%- END %]
-    <atomcontainerbinding xlink:from="#MainContainer"    xlink:label="MainContainer2[% format_table(focus_atom.key) %]Atom"    xlink:to="#[% format_table(focus_atom.key) %]Atom"/>
+    <placement xlink:from="#MainContainer"    xlink:label="MainContainer2[% format_table(focus_atom.key) %]Atom"    xlink:to="#[% format_table(focus_atom.key) %]Atom"/>
   </layout>
   [%- END %]
 [% END %]
-</atomcontainerbindings>
+</layouts>
 
 <uribindings>
   <uribinding uri="/" class="Turnkey::Util::Frontpage"/>
@@ -525,7 +525,7 @@ EOF
 <classbindings>
 [% FOREACH focus_atom = nodes %]
 [% IF !focus_atom.value.is_trivial_link %]
-   <classbinding class="Turnkey::Model::[% format_table(focus_atom.key) %]" plugin="#[% format_table(focus_atom.key) %]Atom" rank="0"/>
+   <classbinding class="[% format_table(focus_atom.key) %]" plugin="#[% format_table(focus_atom.key) %]Atom" rank="0"/>
 [%- END -%]
 [% END %]
 </classbindings>
