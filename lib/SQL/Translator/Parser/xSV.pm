@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::xSV;
 
 # -------------------------------------------------------------------
-# $Id: xSV.pm,v 1.7 2003-05-09 17:15:30 kycl4rk Exp $
+# $Id: xSV.pm,v 1.8 2003-05-09 19:51:04 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -66,7 +66,7 @@ C<SQL::Translator::Utils::normalize>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -80,7 +80,7 @@ use base qw(Exporter);
 # Passed a SQL::Translator instance and a string containing the data
 #
 sub parse {
-    my ($tr, $data, $schema) = @_;
+    my ( $tr, $data )    = @_;
     my $args             = $tr->parser_args;
     my $parser           = Text::RecordParser->new(
         field_separator  => $args->{'field_separator'}  || ',',
@@ -103,6 +103,7 @@ sub parse {
         },
     };
 
+    my $schema = $tr->schema;
     my $table = $schema->add_table( name => 'table1' );
 
     #

@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.17 2003-05-09 16:55:07 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.18 2003-05-09 19:51:04 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -123,7 +123,7 @@ Here's the word from the MySQL site
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -456,7 +456,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 
 # -------------------------------------------------------------------
 sub parse {
-    my ( $translator, $data, $schema ) = @_;
+    my ( $translator, $data ) = @_;
     $parser ||= Parse::RecDescent->new($GRAMMAR);
 
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
@@ -471,6 +471,7 @@ sub parse {
     die "Parse failed.\n" unless defined $result;
     warn Dumper( $result ) if $DEBUG;
 
+    my $schema = $translator->schema;
     for my $table_name ( keys %{ $result } ) {
         my $tdata =  $result->{ $table_name };
         my $table =  $schema->add_table( 
