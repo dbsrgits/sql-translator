@@ -42,6 +42,7 @@ t/08postgres-to-mysql.t
 t/09auto-dia.t
 t/10excel.t
 t/11normalize.t
+t/12header_comment.t
 t/data/pgsql/Chado-CV-PostGreSQL.sql
 t/data/Excel/t.xls
 t/data/mysql/Apache-Session-MySQL.sql
