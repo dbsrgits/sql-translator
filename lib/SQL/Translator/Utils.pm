@@ -1,7 +1,7 @@
 package SQL::Translator::Utils;
 
 # ----------------------------------------------------------------------
-# $Id: Utils.pm,v 1.3 2003-04-25 11:44:20 dlc Exp $
+# $Id: Utils.pm,v 1.4 2003-05-09 16:54:03 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 darren chamberlain <darren@cpan.org>
 #
@@ -28,7 +28,9 @@ use Exporter;
 
 $VERSION = 1.00;
 $DEFAULT_COMMENT = '-- ';
-@EXPORT_OK = qw(debug normalize_name header_comment $DEFAULT_COMMENT);
+@EXPORT_OK = qw(
+    debug normalize_name header_comment parse_list_arg $DEFAULT_COMMENT
+);
 
 # ----------------------------------------------------------------------
 # debug(@msg)
@@ -68,7 +70,7 @@ sub debug {
     }
 }
 
-
+# ----------------------------------------------------------------------
 sub normalize_name {
     my $name = shift;
 
@@ -89,6 +91,7 @@ sub normalize_name {
     return $name;
 }
 
+# ----------------------------------------------------------------------
 sub header_comment {
     my $producer = shift || caller;
     my $comment_char = shift;
@@ -112,9 +115,19 @@ HEADER_COMMENT
     return $header_comment;
 }
 
+# ----------------------------------------------------------------------
+sub parse_list_arg {
+    return UNIVERSAL::isa( $_[0], 'ARRAY' ) 
+        ? shift 
+        : [ map { s/^\s+|\s+$//g; $_ } map { split /,/ } @_ ]
+    ;
+}
+
 1;
 
-__END__
+# ----------------------------------------------------------------------
+
+=pod
 
 =head1 NAME
 
@@ -205,8 +218,28 @@ produces:
 
 Note the gratuitous spacing.
 
+=head2 parse_list_arg
+
+Takes a string, list or arrayref (all of which could contain
+comma-separated values) and returns an array reference of the values.
+All of the following will return equivalent values:
+
+  parse_list_arg('id');
+  parse_list_arg('id', 'name');
+  parse_list_arg( 'id, name' );
+  parse_list_arg( [ 'id', 'name' ] );
+  parse_list_arg( qw[ id name ] );
+
 =head2 $DEFAULT_COMMENT
 
 This is the default comment string, '-- ' by default.  Useful for
 C<header_comment>.
 
+=head1 AUTHORS
+
+Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+
+=cut
+
+=cut
