@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.6 2002-11-26 03:59:58 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.7 2002-12-04 01:53:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::Oracle;
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 my %translate  = (
@@ -211,7 +211,7 @@ sub produce {
             #
             # Default value
             #
-            if ( $field->{'default'} ) {
+            if ( defined $field->{'default'} ) {
                 $field_str .= sprintf(
                     ' DEFAULT %s',
                     $field->{'default'} =~ m/null/i ? 'NULL' : 
@@ -297,8 +297,10 @@ sub produce {
                 $index_name = mk_name( 
                     $table_name, $index_name || ++$idx_name_default
                 );
-                push @index_decs, "CREATE INDEX $index_name on $table_name (".
-                    join( ', ', @fields ).  ");"; 
+                push @index_decs, 
+                    "CREATE INDEX $index_name on $table_name_ur (".
+                        join( ', ', @fields ).  
+                    ");"; 
             }
             else {
                 warn "Unknown index type ($index_type) on table $table_name.\n"

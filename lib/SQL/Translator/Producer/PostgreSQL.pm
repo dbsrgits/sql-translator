@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.3 2002-11-26 03:59:58 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.4 2002-12-04 01:53:51 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -47,7 +47,7 @@ my %translate  = (
     smallint   => 'smallint',
     tinyint    => 'smallint',
     char       => 'char',
-    varchar    => 'varchar',
+    varchar    => 'character varying',
     longtext   => 'text',
     mediumtext => 'text',
     text       => 'text',
@@ -56,8 +56,8 @@ my %translate  = (
     blob       => 'bytea',
     mediumblob => 'bytea',
     longblob   => 'bytea',
-    enum       => 'varchar',
-    set        => 'varchar',
+    enum       => 'character varying',
+    set        => 'character varying',
     date       => 'date',
     datetime   => 'timestamp',
     time       => 'date',
@@ -69,7 +69,7 @@ my %translate  = (
     #
     number     => 'integer',
     char       => 'char',
-    varchar2   => 'varchar',
+    varchar2   => 'character varying',
     long       => 'text',
     CLOB       => 'bytea',
     date       => 'date',
@@ -79,7 +79,7 @@ my %translate  = (
     #
     int        => 'integer',
     money      => 'money',
-    varchar    => 'varchar',
+    varchar    => 'character varying',
     datetime   => 'timestamp',
     text       => 'text',
     real       => 'double precision',
@@ -143,6 +143,15 @@ and table_constraint is:
       [ MATCH FULL | MATCH PARTIAL ] [ ON DELETE action ] [ ON UPDATE action ] }
   [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
+=head1 Create Index Syntax
+
+  CREATE [ UNIQUE ] INDEX index_name ON table
+      [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ WHERE predicate ]
+  CREATE [ UNIQUE ] INDEX index_name ON table
+      [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
+      [ WHERE predicate ]
+
 =cut
 
 # -------------------------------------------------------------------
@@ -153,9 +162,9 @@ sub produce {
     my $no_comments           = $translator->no_comments;
     my $add_drop_table        = $translator->add_drop_table;
 
-    my $create;
+    my $output;
     unless ( $no_comments ) {
-        $create .=  sprintf 
+        $output .=  sprintf 
             "--\n-- Created by %s\n-- Created on %s\n--\n\n",
             __PACKAGE__, scalar localtime;
     }
@@ -166,86 +175,172 @@ sub produce {
         map  { [ $_->{'order'}, $_ ] }
         values %$data
    ) {
-        my $table_name = $table->{'table_name'};
-        my @fields     = 
-            map  { $_->[1] }
-            sort { $a->[0] <=> $b->[0] }
-            map  { [ $_->{'order'}, $_ ] }
-            values %{ $table->{'fields'} };
+        my $table_name    = $table->{'table_name'};
+        $table_name       = mk_name( $table_name, '', undef, 1 );
+        my $table_name_ur = unreserve($table_name);
 
-        $create .= "--\n-- Table: $table_name\n--\n" unless $no_comments;
-        $create  = "DROP TABLE $table_name;\n" if $add_drop_table;
-        $create .= "CREATE TABLE $table_name (\n";
+        my ( @comments, @field_decs, @sequence_decs, @constraints );
+
+        push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
 
         #
         # Fields
         #
         my %field_name_scope;
-        my @field_statements;
-        for my $field ( @fields ) {
-            my @fdata = ("", $field);
-
+        for my $field ( 
+            map  { $_->[1] }
+            sort { $a->[0] <=> $b->[0] }
+            map  { [ $_->{'order'}, $_ ] }
+            values %{ $table->{'fields'} }
+        ) {
             my $field_name    = mk_name(
                 $field->{'name'}, '', \%field_name_scope, 1 
             );
             my $field_name_ur = unreserve( $field_name, $table_name );
-            my $field_str     = $field_name_ur;
+            my $field_str     = qq["$field_name_ur"];
 
-            # data type and size
-            push @fdata, sprintf "%s%s", 
-                $field->{'data_type'},
-                ( defined $field->{'size'} ) 
-                    ? "($field->{'size'})" : '';
+            #
+            # Datatype
+            #
+            my $data_type = lc $field->{'data_type'};
+            my $list      = $field->{'list'} || [];
+            my $commalist = join ",", @$list;
+            my $seq_name;
 
-            # Null?
-            push @fdata, "NOT NULL" unless $field->{'null'};
-
-            # Default?  XXX Need better quoting!
-            my $default = $field->{'default'};
-            if ( defined $default ) {
-                push @fdata, "DEFAULT '$default'";
-#                if (int $default eq "$default") {
-#                    push @fdata, "DEFAULT $default";
-#                } else {
-#                    push @fdata, "DEFAULT '$default'";
-#                }
+            if ( $data_type eq 'enum' ) {
+                my $len = 0;
+                $len = ($len < length($_)) ? length($_) : $len for (@$list);
+                my $check_name = mk_name( $table_name.'_'.$field_name, 'chk' );
+                push @constraints, 
+                "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
+                $field_str .= " character varying($len)";
             }
-
-            # auto_increment?
-            push @fdata, "auto_increment" if $field->{'is_auto_inc'};
-
-            # primary key?
-            push @fdata, "PRIMARY KEY" if $field->{'is_primary_key'};
-
-            push @field_statements, join( " ", @fdata );
-
-        }
-        $create .= join( ",\n", @field_statements );
-
-        #
-        # Other keys
-        #
-        my @indices = @{ $table->{'indices'} || [] };
-        for ( my $i = 0; $i <= $#indices; $i++ ) {
-            $create .= ",\n";
-            my $key = $indices[$i];
-            my ( $name, $type, $fields ) = @{ $key }{ qw( name type fields ) };
-            if ( $type eq 'primary_key' ) {
-                $create .= " PRIMARY KEY (@{$fields})"
-            } 
+            elsif ( $data_type eq 'set' ) {
+                # XXX add a CHECK constraint maybe 
+                # (trickier and slower, than enum :)
+                my $len     = length $commalist;
+                $field_str .= " character varying($len) /* set $commalist */";
+            }
+            elsif ( $field->{'is_auto_inc'} ) {
+                $field_str .= ' serial';
+                $seq_name   = mk_name( $table_name.'_'.$field_name, 'sq' );
+                push @sequence_decs, qq[DROP SEQUENCE "$seq_name";];
+                push @sequence_decs, qq[CREATE SEQUENCE "$seq_name";];
+            }
             else {
-                local $" = ", ";
-                $create .= " KEY $name (@{$fields})"
+                $data_type  = defined $translate{ $data_type } ?
+                              $translate{ $data_type } :
+                              die "Unknown datatype: $data_type\n";
+                $field_str .= ' '.$data_type;
+                if ( $data_type =~ /(char|varbit|numeric|decimal)/i ) {
+                    $field_str .= '('.join(',', @{ $field->{'size'} }).')' 
+                        if @{ $field->{'size'} || [] };
+                }
             }
+
+            #
+            # Default value
+            #
+            if ( defined $field->{'default'} ) {
+                $field_str .= sprintf( ' DEFAULT %s',
+                    ( $field->{'is_auto_inc'} && $seq_name )
+                    ? qq[nextval('"$seq_name"'::text)] :
+                    ( $field->{'default'} =~ m/null/i )
+                    ? 'NULL' : 
+                    "'".$field->{'default'}."'"
+                );
+            }
+
+            #
+            # Not null constraint
+            #
+            unless ( $field->{'null'} ) {
+                my $constraint_name = mk_name($field_name_ur, 'nn');
+#                $field_str .= ' CONSTRAINT '.$constraint_name.' NOT NULL';
+                $field_str .= ' NOT NULL';
+            }
+
+            #
+            # Primary key
+            #
+#            if ( $field->{'is_primary_key'} ) {
+#                my $constraint_name = mk_name($field_name_ur, 'pk');
+#                $field_str .= ' CONSTRAINT '.$constraint_name.' PRIMARY KEY';
+#            }
+
+            push @field_decs, $field_str;
         }
 
         #
-        # Footer
+        # Index Declarations
         #
-        $create .= "\n);\n\n";
+        my @index_decs = ();
+        my $idx_name_default;
+        for my $index ( @{ $table->{'indices'} } ) {
+            my $index_name = $index->{'name'} || '';
+            my $index_type = $index->{'type'} || 'normal';
+            my @fields     = map { unreserve( $_, $table_name ) }
+                             @{ $index->{'fields'} };
+            next unless @fields;
+
+            if ( $index_type eq 'primary_key' ) {
+                $index_name = mk_name( $table_name, 'pk' );
+                push @constraints, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
+                    '(' . join( ', ', @fields ) . ')';
+            }
+            elsif ( $index_type eq 'unique' ) {
+                $index_name = mk_name( 
+                    $table_name, $index_name || ++$idx_name_default
+                );
+                push @constraints, 'CONSTRAINT ' . $index_name . ' UNIQUE ' .
+                    '(' . join( ', ', @fields ) . ')';
+            }
+            elsif ( $index_type eq 'normal' ) {
+                $index_name = mk_name( 
+                    $table_name, $index_name || ++$idx_name_default
+                );
+                push @index_decs, 
+                    qq[CREATE INDEX "$index_name" on $table_name_ur (].
+                        join( ', ', @fields ).  
+                    ');'; 
+            }
+            else {
+                warn "Unknown index type ($index_type) on table $table_name.\n"
+                    if $WARN;
+            }
+        }
+
+        my $create_statement;
+        $create_statement  = qq[DROP TABLE "$table_name_ur";\n] 
+            if $add_drop_table;
+        $create_statement .= qq[CREATE TABLE "$table_name_ur" (\n].
+            join( ",\n", map { "  $_" } @field_decs, @constraints ).
+            "\n);"
+        ;
+
+        $output .= join( "\n\n", 
+            @comments,
+            @sequence_decs, 
+            $create_statement, 
+            @index_decs, 
+            '' 
+        );
     }
 
-    return $create;
+    if ( $WARN ) {
+        if ( %truncated ) {
+            warn "Truncated " . keys( %truncated ) . " names:\n";
+            warn "\t" . join( "\n\t", sort keys %truncated ) . "\n";
+        }
+
+        if ( %unreserve ) {
+            warn "Encounted " . keys( %unreserve ) .
+                " unsafe names in schema (reserved or invalid):\n";
+            warn "\t" . join( "\n\t", sort keys %unreserve ) . "\n";
+        }
+    }
+
+    return $output;
 }
 
 # -------------------------------------------------------------------
