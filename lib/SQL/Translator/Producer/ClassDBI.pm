@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.1 2003-04-18 23:45:52 allenday Exp $
+# $Id: ClassDBI.pm,v 1.2 2003-04-19 01:32:27 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ying Zhang <zyolive@yahoo.com>,
 #                    Allen Day <allenday@ucla.edu>,
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -91,7 +91,7 @@ sub produce {
 	for (my $i = 0; $i < scalar(@fields); $i++) {
 	  my $field = $fields[$i];
 	  my $field_data = $table_data->{'fields'}->{$field}->{'constraints'};
-	  my $type = $field_data->[1]->{'type'};
+	  my $type = $field_data->[1]->{'type'} || '';
 	  my $ref_table = $field_data->[1]->{'reference_table'};
 	  my $ref_fields = $field_data->[1]->{'reference_fields'};
 			
@@ -104,9 +104,9 @@ sub produce {
 	$create .= "1;\n\n\n";
   }
   
-  open( FILE, '>DBI.pm') or die( "Cann't open file : $!");
+  open( FILE, '>DBI.pm') or die( "Can't open file : $!");
   print ( FILE $create);
-  close	( FILE ) or die( "Cann't close file : $!");							   
+  close	( FILE ) or die( "Can't close file : $!");							   
 
 }
 
@@ -135,23 +135,19 @@ __END__
 
 =head1 NAME
 
-  SQL::Translator::Producer::ClassDBI - Translate SQL schemata into Class::DBI classes
+SQL::Translator::Producer::ClassDBI - Translate SQL schemata into Class::DBI classes
 
 =head1 SYNOPSIS
 
-  Use this producer as you would any other from SQL::Translator.  See L<SQL::Translator>
-  for details.
+Use this producer as you would any other from SQL::Translator.  See
+L<SQL::Translator> for details.
 
-  This package utilizes SQL::Translator's formatting methods format_package_name(),
-  format_pk_name(), format_fk_name(), and format_table_name() as it creates classes,
-  one per table in the schema provided.  An additional base class is also created for
-  database connectivity configuration.  See L<Class::DBI> for details on how this works.
+This package utilizes SQL::Translator's formatting methods
+format_package_name(), format_pk_name(), format_fk_name(), and
+format_table_name() as it creates classes, one per table in the schema
+provided.  An additional base class is also created for database connectivity
+configuration.  See L<Class::DBI> for details on how this works.
 
 =head1 AUTHOR
 
-  Ying Zhang <zyolive@yahoo.com>, Allen Day <allenday@ucla.edu>
-
- 
-
-
-	
+Ying Zhang <zyolive@yahoo.com>, Allen Day <allenday@ucla.edu>
