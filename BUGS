@@ -1,8 +1,4 @@
-MySQL parser chokes on DEFAULT x NOT NULL, but works with NOT NULL DEFAULT x
-MySQL parser chokes on FULLTEXT index creation.
 Oracle producer produces duplicate sequences occasionally; need demonstrative tests
 datatype text needs default size in ::Parser::MySQL (comes out as size 0)
-SQL Comments (technically) begin with '-- ', not '#'
 MySQL parser misses double-quoted strings in DEFAULT sections (I think)
 MySQL parser misses primary key declarations that don't occur as part of a field definition line (I think)
-MySQL parser assumes size element of $data->{$table}->{fields}->{$fieldname}->{size} is an array.
