@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # -------------------------------------------------------------------
-# $Id: sql_translator.pl,v 1.12 2003-08-20 13:50:46 dlc Exp $
+# $Id: sql_translator.pl,v 1.13 2003-08-20 22:26:52 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002 Ken Y. Clark <kycl4rk@users.sourceforge.net>,
 #                    darren chamberlain <darren@cpan.org>
@@ -29,7 +29,7 @@ use SQL::Translator;
 use Data::Dumper;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database 
@@ -49,6 +49,7 @@ my $validate;         # whether to validate the parsed document
 my $imap_file;        # filename where to place image map coords
 my $imap_url;         # URL to use in making image map
 my $pretty;           # use CGI::Pretty instead of CGI (HTML producer)
+my $template;         # template to pass to TTSchema producer
 
 #
 # Get options, explain how to use the script if necessary.
@@ -71,6 +72,7 @@ GetOptions(
     'imap-file:s'     => \$imap_file,
     'imap-url:s'      => \$imap_url,
     'pretty!'         => \$pretty,
+    'template:s'      => \$template,
 ) or pod2usage(2);
 
 my @files = @ARGV; # the create script(s) for the original db
@@ -97,6 +99,7 @@ my $translator      =  SQL::Translator->new(
         imap_file        => $imap_file,
         imap_url         => $imap_url,
         pretty           => $pretty,
+        ttfile           => $template,
     },
 );
 
@@ -156,24 +159,32 @@ To translate a schema:
 
   Options:
 
-    -d|--debug            Print debug info
-    -v|--validate         Validate the schema
-    --trace               Print parser trace info
-    --no-comments         Don't include comments in SQL output
-    --show-warnings       Print to STDERR warnings of conflicts, etc.
-    --add-drop-table      Add 'drop table' statements before creates
+    -d|--debug         Print debug info
+    -v|--validate      Validate the schema
+    --trace            Print parser trace info
+    --no-comments      Don't include comments in SQL output
+    --show-warnings    Print to STDERR warnings of conflicts, etc.
+    --add-drop-table   Add 'drop table' statements before creates
 
   xSV Options:
 
-    --fs                  The field separator
-    --rs                  The record separator
-    --no-trim             Don't trim whitespace on fields 
-    --no-scan             Don't scan fields for data types and sizes 
+    --fs               The field separator
+    --rs               The record separator
+    --no-trim          Don't trim whitespace on fields 
+    --no-scan          Don't scan fields for data types and sizes 
 
   Diagram Options:
 
-    --imap-file           Filename to put image map data
-    --imap-url            URL to use for image map
+    --imap-file        Filename to put image map data
+    --imap-url         URL to use for image map
+
+  HTML Options:
+
+    --pretty           Use CGI::Pretty for the outpu
+
+  TTSchema Options:
+
+    --template         The path to the template
 
 =head1 DESCRIPTION
 
