@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.24 2003-08-16 15:56:58 rossta Exp $
+# $Id: MySQL.pm,v 1.25 2003-08-16 20:11:39 rossta Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -24,7 +24,7 @@ package SQL::Translator::Producer::MySQL;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -60,6 +60,7 @@ sub produce {
 
     my $create; 
     $create .= header_comment unless ($no_comments);
+    # \todo Don't set if MySQL 3.x is set on command line
     $create .= "SET foreign_key_checks=0;\n\n";
 
     for my $table ( $schema->get_tables ) {
@@ -87,7 +88,8 @@ sub produce {
             my @size      = $field->size;
             my %extra     = $field->extra;
             my $list      = $extra{'list'} || [];
-            my $commalist = "'" . join("','", @$list) . "'"; # \todo deal with embedded quotes
+            # \todo deal with embedded quotes
+            my $commalist = "'" . join("','", @$list) . "'";
 
             #
             # Oracle "number" type -- figure best MySQL type
@@ -122,7 +124,7 @@ sub produce {
             # MySQL qualifiers
             for my $qual ( qw[ binary unsigned zerofill ] ) {
                 my $val = $extra{ $qual || uc $qual } or next;
-                $field_def .= " $val";
+                $field_def .= " $qual";
             }
 
             # Null?
