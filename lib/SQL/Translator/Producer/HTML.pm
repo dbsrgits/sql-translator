@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 # -------------------------------------------------------------------
-# $Id: HTML.pm,v 1.3 2003-06-27 16:28:21 kycl4rk Exp $
+# $Id: HTML.pm,v 1.4 2003-07-18 22:54:41 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::HTML;
 use strict;
 use CGI;
 use vars qw[ $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
@@ -41,6 +41,16 @@ sub produce {
         { -title => $title, -bgcolor => 'lightgoldenrodyellow' } 
     ) .  $q->h1( $title ).  '<a name="top">', $q->hr;
 
+    if ( my @table_names = map { $_->name } $schema->get_tables ) {
+        $html .= $q->start_table( { -width => '100%' } ).
+            $q->Tr( { -bgcolor => 'khaki' }, $q->td( $q->h2('Tables') ) );
+
+        for my $table ( @table_names ) {
+            $html .= $q->Tr( $q->td( qq[<a href="#$table">$table</a>] ) );
+        }
+        $html .= $q->end_table;
+    }
+
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
         my @fields     = $table->get_fields or next;
@@ -48,7 +58,7 @@ sub produce {
             { -width => '100%' },
             $q->Tr(
                 { -bgcolor => 'khaki' },
-                $q->td( $q->h1( $table_name ) ) . qq[<a name="$table_name">],
+                $q->td( $q->h3( $table_name ) ) . qq[<a name="$table_name">],
                 $q->td( { -align => 'right' }, qq[<a href="#top">Top</a>] )
             )
         );
@@ -74,6 +84,7 @@ sub produce {
             my $data_type = $field->data_type;
             my $size      = $field->size;
             my $default   = $field->default_value;
+            my $comment   = $field->comments || '';
 
             my $fk;
             if ( $field->is_foreign_key ) {
@@ -88,6 +99,7 @@ sub produce {
             push @other, 'PRIMARY KEY' if $field->is_primary_key;
             push @other, 'UNIQUE'      if $field->is_unique;
             push @other, 'NOT NULL'    unless $field->is_nullable;
+            push @other, $comment      if $comment;
             $html .= $q->Tr( $q->td(
                 { -bgcolor => 'white' },
                 [ $name, $data_type, $size, $default, join(', ', @other), $fk ]
