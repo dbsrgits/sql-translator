@@ -1,7 +1,7 @@
 package SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.8 2003-06-18 23:14:31 kycl4rk Exp $
+# $Id: Schema.pm,v 1.9 2003-10-03 23:56:21 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -46,13 +46,14 @@ use strict;
 use Class::Base;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Table;
-use SQL::Translator::Utils 'parse_list_arg';
+use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
+use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'Class::Base';
-use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER ];
+use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 sub init {
@@ -119,6 +120,51 @@ not be created.
     }
 
     return $table;
+}
+
+# ----------------------------------------------------------------------
+sub add_trigger {
+
+=pod
+
+=head2 add_trigger
+
+Add a trigger object.  Returns the new SQL::Translator::Schema::Trigger object.
+The "name" parameter is required.  If you try to create a trigger with the
+same name as an existing trigger, you will get an error and the trigger will 
+not be created.
+
+  my $t1 = $schema->add_trigger( name => 'foo' );
+  my $t2 = SQL::Translator::Schema::Trigger->new( name => 'bar' );
+  $t2    = $schema->add_trigger( $trigger_bar ) or die $schema->error;
+
+=cut
+
+    my $self          = shift;
+    my $trigger_class = 'SQL::Translator::Schema::Trigger';
+    my $trigger;
+
+    if ( UNIVERSAL::isa( $_[0], $trigger_class ) ) {
+        $trigger = shift;
+    }
+    else {
+        my %args = @_;
+        return $self->error('No trigger name') unless $args{'name'};
+        $trigger = $trigger_class->new( \%args ) or 
+            return $self->error( $trigger_class->error );
+    }
+
+    $trigger->order( ++$TRIGGER_ORDER );
+    my $trigger_name = $trigger->name or return $self->error('No trigger name');
+
+    if ( defined $self->{'triggers'}{ $trigger_name } ) { 
+        return $self->error(qq[Can't create trigger: "$trigger_name" exists]);
+    }
+    else {
+        $self->{'triggers'}{ $trigger_name } = $trigger;
+    }
+
+    return $trigger;
 }
 
 # ----------------------------------------------------------------------
