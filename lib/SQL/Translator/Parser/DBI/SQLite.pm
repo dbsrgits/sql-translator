@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.2 2003-10-03 18:13:32 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.3 2003-10-03 19:47:19 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>.
 #
@@ -40,7 +40,7 @@ use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -71,8 +71,7 @@ sub parse {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
-Chris Mungall E<lt>cjm@fruitfly.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
