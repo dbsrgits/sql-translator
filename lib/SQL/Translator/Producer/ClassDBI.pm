@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.22 2003-06-25 19:17:06 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.23 2003-06-25 19:47:10 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Allen Day <allenday@ucla.edu>,
 #                    Ying Zhang <zyolive@yahoo.com>
@@ -23,7 +23,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -45,14 +45,15 @@ sub produce {
     my $args          = $translator->producer_args;
     my $db_user       = $args->{'db_user'} || '';
     my $db_pass       = $args->{'db_pass'} || '';
-    my $parser_type   = $translator->parser_type;
-    my $dsn           = $args->{'dsn'}     || "dbi:$CDBI_auto_pkgs{$parser_type}:_";
     my $main_pkg_name = $translator->format_package_name('DBI');
     my $header        = header_comment(__PACKAGE__, "# ");
-    my $sep           = '# ' . '-' x 67;
-
     my $parser_type   = ( split /::/, $translator->parser_type )[-1];
     my $from          = $CDBI_auto_pkgs{ $parser_type } || '';
+    my $dsn           = $args->{'dsn'} || sprintf( 'dbi:%s:_',
+                            $CDBI_auto_pkgs{ $parser_type }
+                            ? $CDBI_auto_pkgs{ $parser_type } : $parser_type
+                        );
+    my $sep           = '# ' . '-' x 67;
     
     #
     # Iterate over all tables
@@ -109,7 +110,7 @@ sub produce {
                 # that the other table "has many" of this one, right?
                 #
                 push @{ $packages{ $ref_pkg }{'has_many'} },
-                    "$ref_pkg->has_many(\n    '$table_name\s', ".
+                    "$ref_pkg->has_many(\n    '$table_name', ".
                     "'$table_pkg_name' => '$field_name'\n);\n\n"
                 ;
             }
