@@ -1,10 +1,10 @@
 create table person (
   person_id INTEGER PRIMARY KEY,
-  name not null,
+  name varchar(20) not null,
   age integer,
   weight double(11,2),
   iq tinyint default '0',
-  description text,
+  description text
 );
 
 create unique index u_name on person (name);
@@ -22,7 +22,6 @@ create trigger after insert on pet
   begin
     update name=name;
   end
-;
 
 create view person_pet as
   select pr.person_id, pr.name as person_name, pt.name as pet_name
