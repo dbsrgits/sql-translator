@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.13 2003-09-26 21:04:07 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.14 2003-10-15 18:59:53 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -91,11 +91,14 @@ constrnt_state
           [ENABLE|DISABLE] [VALIDATE|NOVALIDATE]
               [EXCEPTIONS INTO [schema.]table]
 
+Note that probably not all of the above syntax is supported, but the grammar 
+was altered to better handle the syntax created by DDL::Oracle.
+
 =cut
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -602,6 +605,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), Parse::RecDescent.
+SQL::Translator, Parse::RecDescent, DDL::Oracle.
 
 =cut
