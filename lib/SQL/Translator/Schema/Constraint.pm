@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.4 2003-06-06 00:08:14 kycl4rk Exp $
+# $Id: Constraint.pm,v 1.5 2003-06-06 22:35:16 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>
 #
@@ -53,12 +53,13 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
 $VERSION = 1.00;
 
-use constant VALID_TYPE => {
+my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
     UNIQUE,      1,
     CHECK_C,     1,
     FOREIGN_KEY, 1,
-};
+    NOT_NULL,    1,
+);
 
 # ----------------------------------------------------------------------
 sub init {
@@ -91,7 +92,7 @@ Object constructor.
 
     for my $arg ( @fields ) {
         next unless $config->{ $arg };
-        $self->$arg( $config->{ $arg } ) or return;
+        defined $self->$arg( $config->{ $arg } ) or return;
     }
 
     return $self;
@@ -286,7 +287,8 @@ Get or set the constraint's name.
 =cut
 
     my $self = shift;
-    $self->{'name'} = shift if @_;
+    my $arg  = shift || '';
+    $self->{'name'} = $arg if $arg;
     return $self->{'name'} || '';
 }
 
@@ -480,7 +482,7 @@ Get or set the constraint's type.
     if ( my $type = uc shift ) {
         $type =~ s/_/ /g;
         return $self->error("Invalid constraint type: $type") 
-            unless VALID_TYPE->{ $type };
+            unless $VALID_CONSTRAINT_TYPE{ $type };
         $self->{'type'} = $type;
     }
 
