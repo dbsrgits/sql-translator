@@ -14,6 +14,7 @@ bin/sqlt-dumper
 bin/sqlt-graph
 bin/sqlt.cgi
 lib/SQL/Translator.pm
+lib/SQL/Translator/Manual.pod
 lib/SQL/Translator/Parser.pm
 lib/SQL/Translator/Parser/DBI.pm
 lib/SQL/Translator/Parser/DBI/MySQL.pm
