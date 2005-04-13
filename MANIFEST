@@ -52,6 +52,12 @@ lib/SQL/Translator/Producer/XML.pm
 lib/SQL/Translator/Producer/XML/SQLFairy.pm
 lib/SQL/Translator/Producer/YAML.pm
 lib/SQL/Translator/Schema.pm
+lib/SQL/Translator/Schema/Graph.pm
+lib/SQL/Translator/Schema/Graph/CompoundEdge.pm
+lib/SQL/Translator/Schema/Graph/Edge.pm
+lib/SQL/Translator/Schema/Graph/HyperEdge.pm
+lib/SQL/Translator/Schema/Graph/Node.pm
+lib/SQL/Translator/Schema/Graph/Port.pm
 lib/SQL/Translator/Schema/Object.pm
 lib/SQL/Translator/Schema/Constants.pm
 lib/SQL/Translator/Schema/Constraint.pm
