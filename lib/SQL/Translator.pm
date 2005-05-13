@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.64 2005-04-13 20:34:20 allenday Exp $
+# $Id: Translator.pm,v 1.65 2005-05-13 07:35:58 allenday Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.07';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.64 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.65 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -736,7 +736,7 @@ sub load {
         eval { require $file };
         next if $@ =~ /Can't locate $file in \@INC/; 
         eval { $file->import(@_) } unless $@;
-        return __PACKAGE__->error("Error loading $name as $module : $@") if $@;
+        return __PACKAGE__->error("Error loading $name as $module : $@") if $@ && $@ !~ /"SQL::Translator::Producer" is not exported/;
 
         return $module; # Module loaded ok
     }
