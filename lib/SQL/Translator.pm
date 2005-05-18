@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.65 2005-05-13 07:35:58 allenday Exp $
+# $Id: Translator.pm,v 1.66 2005-05-18 22:34:10 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.07';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.65 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.66 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -231,7 +231,7 @@ sub filters {
         else {
             $self->debug("Adding $name filter. Args:".Dumper($args)."\n");
             my $code = _load_sub("$name\::filter", "SQL::Translator::Filter");
-            return $self->error("ERROR:".$self->error) unless $code;
+            return $self->error(__PACKAGE__->error) unless $code;
             push @$filters, [$code,$args];
         }
     }
@@ -713,8 +713,8 @@ sub _list {
 # MODULE - is the name of the module to load.
 #
 # PATH - optional list of 'package paths' to look for the module in. e.g
-# If you called load(Bar => 'Foo', 'My::Modules') it will try to load the mod
-# Bar then Foo::Bar then My::Modules::Bar.
+# If you called load('Super::Foo' => 'My', 'Other') it will
+# try to load the mod Super::Foo then My::Super::Foo then Other::Super::Foo.
 #
 # Returns package name of the module actually loaded or false and sets error.
 #
@@ -736,7 +736,8 @@ sub load {
         eval { require $file };
         next if $@ =~ /Can't locate $file in \@INC/; 
         eval { $file->import(@_) } unless $@;
-        return __PACKAGE__->error("Error loading $name as $module : $@") if $@ && $@ !~ /"SQL::Translator::Producer" is not exported/;
+        return __PACKAGE__->error("Error loading $name as $module : $@")
+        if $@ && $@ !~ /"SQL::Translator::Producer" is not exported/;
 
         return $module; # Module loaded ok
     }
@@ -753,7 +754,6 @@ sub load {
 sub _load_sub {
     my ($tool, @path) = @_;
 
-    # Passed a module name or module and sub name
     my (undef,$module,$func_name) = $tool =~ m/((.*)::)?(\w+)$/;
     if ( my $module = load($module => @path) ) {
         my $sub = "$module\::$func_name";
