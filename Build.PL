@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.3 2004-11-05 13:19:31 grommit Exp $
+# $Id: Build.PL,v 1.4 2005-05-18 15:47:24 grommit Exp $
 
 use strict;
 use Module::Build;
@@ -37,7 +37,7 @@ my $builder           =  Module::Build->new(
         'Text::RecordParser'      => 0.02,
         'XML::Writer'             => 0.500,
         'XML::XPath'              => 1.13,
-        'YAML'                    => 0,
+        'YAML'                    => 0.39,
     },
     build_requires    => {
         'File::Basename'          => 0,
