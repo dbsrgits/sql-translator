@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.4 2005-05-18 15:47:24 grommit Exp $
+# $Id: Build.PL,v 1.5 2005-05-18 16:17:41 grommit Exp $
 
 use strict;
 use Module::Build;
@@ -42,7 +42,7 @@ my $builder           =  Module::Build->new(
     build_requires    => {
         'File::Basename'          => 0,
         'File::Spec'              => 0,
-        'Test::More'              => 0,
+        'Test::More'              => 0.6,
         'Test::Exception'         => 0,
         'Test::Differences'       => 0,
     }
