@@ -12,7 +12,6 @@
 use strict;
 
 use IO::File;
-use Storable 'freeze';
 use SQL::Translator;
 use Test::More tests => 3;
 
@@ -26,7 +25,7 @@ my ($v1, $v2);
     my $tr = SQL::Translator->new;
     # Pass filename: simplest way
     $tr->translate($datafile);
-    $v1 = freeze( $tr->schema );
+    $v1 = $tr->schema;
 }
 
 {
@@ -34,9 +33,13 @@ my ($v1, $v2);
     # Pass string reference
     read($fh, $data, -s $datafile);
     $tr->translate(\$data);
-    $v2 = freeze( $tr->schema );
+    $v2 = $tr->schema;
 }
+
+# XXX- Hack to remove Graph hack!
+delete $v1->{translator};
+delete $v2->{translator};
 
 ok(length $v1, "passing string (filename) works");
 ok(length $v2, "passing string as SCALAR reference");
-is($v1, $v2, "from file == from string");
+is_deeply($v1, $v2, "from file == from string");
