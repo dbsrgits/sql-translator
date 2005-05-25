@@ -53,6 +53,7 @@ schema:
           name: First_Name
 };
 
+my $sqlt_version = $SQL::Translator::VERSION;
 my $ans_yaml = qq{---
 schema:
   procedures: {}
@@ -96,7 +97,7 @@ translator:
   producer_type: SQL::Translator::Producer::YAML
   show_warnings: 1
   trace: 0
-  version: 0.07
+  version: $sqlt_version
 };
 
 # Parse the test XML schema

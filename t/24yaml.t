@@ -14,7 +14,8 @@ BEGIN {
         'SQL::Translator::Producer::YAML');
 }
 
-my $yaml = <<'YAML';
+my $sqlt_version = $SQL::Translator::VERSION;
+my $yaml = <<YAML;
 ---
 schema:
   procedures: {}
@@ -226,7 +227,7 @@ translator:
   producer_type: SQL::Translator::Producer::YAML
   show_warnings: 0
   trace: 0
-  version: 0.07
+  version: $sqlt_version
 YAML
 
 my $file = "$Bin/data/sqlite/create.sql";
