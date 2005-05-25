@@ -24,7 +24,7 @@ use Class::MakeMethods::Template::Hash (
   object => [
 			 'translator' => {class => 'SQL::Translator'},
 			],
-  'hash' => [ qw( node translator) ],
+  'hash' => [ qw( node ) ],
   'number --counter' => [ qw( order ) ],
 );
 
@@ -250,18 +250,6 @@ sub init {
     }
   }
 
-}
-
-=head2 translator
-
-get the SQL::Translator instance that instatiated me
-
-=cut
-
-sub translator {
-    my $self = shift;
-    $self->{'translator'} = shift if @_;
-    return $self->{'translator'};
 }
 
 1;
