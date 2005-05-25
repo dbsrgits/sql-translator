@@ -20,7 +20,7 @@ sub many {
 
   if(scalar(@_) == 1){
     my $k = shift;
-    return $self->{_many}{$k};
+    return $self->{_many}{$k} || 0;
   } elsif(@_) {
     my %arg = @_;
 
@@ -42,7 +42,7 @@ sub via {
 
   if(scalar(@_) == 1){
     my $k = shift;
-    return $self->{_via}{$k};
+    return $self->{_via}{$k} || 0;
   } elsif(@_) {
     my %arg = @_;
 
@@ -64,7 +64,7 @@ sub has {
 
   if(scalar(@_) == 1){
     my $k = shift;
-    return $self->{_has}{$k};
+    return $self->{_has}{$k} || 0;
   } elsif(@_) {
     my %arg = @_;
 
@@ -86,7 +86,7 @@ sub edgecount {
 
   if(scalar(@_) == 1){
     my $k = shift;
-    return $self->{_edgecount}{$k};
+    return $self->{_edgecount}{$k} || 0;
   } elsif(@_) {
     my %arg = @_;
 
