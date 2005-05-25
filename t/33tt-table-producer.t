@@ -66,20 +66,22 @@ is( $files[1], "$tdir/pet.txt"    , "Wrote pet.txt" );
 open(FILE, "$tdir/person.txt") || die "Couldn't open $tdir/person.txt : $!";
 eq_or_diff <FILE>, qq{Table: person
   Primary Key:  person_id
-  Foriegn Keys: 
+  Foreign Keys: 
   Data Fields:  name, age, weight, iq, description
 
 }
 , "person.txt looks right";
+close(FILE);
 
 open(FILE, "$tdir/pet.txt") || die "Couldn't open $tdir/pet.txt : $!";
 eq_or_diff <FILE>, qq{Table: pet
   Primary Key:  pet_id, person_id
-  Foriegn Keys: 
+  Foreign Keys: 
   Data Fields:  name, age
 
 }
-, "person.txt looks right";
+, "pet.txt looks right";
+close(FILE);
 
 
 print $out if DEBUG;
@@ -88,11 +90,11 @@ print $out if DEBUG;
 __DATA__
 Table: person
   Primary Key:  person_id
-  Foriegn Keys: 
+  Foreign Keys: 
   Data Fields:  name, age, weight, iq, description
 
 Table: pet
   Primary Key:  pet_id, person_id
-  Foriegn Keys: 
+  Foreign Keys: 
   Data Fields:  name, age
 
