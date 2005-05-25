@@ -57,6 +57,9 @@ is_deeply( \@tblnames,
 
 table_ok( $scma->get_table("Customer"), {
     name => "Customer",
+    extra => {
+        mysql_table_type => 'InnoDB'
+    },
     fields => [
     {
         name => "name",
@@ -99,6 +102,9 @@ table_ok( $scma->get_table("Customer"), {
 
 table_ok( $scma->get_table("ContactDetails_Customer"), {
     name => "ContactDetails_Customer",
+    extra => {
+        mysql_table_type => 'InnoDB'
+    },
     fields => [
     {
         name => "ContactDetailsID",
@@ -143,6 +149,9 @@ table_ok( $scma->get_table("ContactDetails_Customer"), {
 
 table_ok( $scma->get_table("ContactDetails"), {
     name => "ContactDetails",
+    extra => {
+        mysql_table_type => 'InnoDB'
+    },
     fields => [
     {
         name => "address",
@@ -180,6 +189,9 @@ table_ok( $scma->get_table("ContactDetails"), {
 
 table_ok( $scma->get_table("Order"), {
     name => "Order",
+    extra => {
+        mysql_table_type => 'InnoDB'
+    },
     fields => [
     {
         name => "invoiceNumber",
@@ -232,6 +244,9 @@ table_ok( $scma->get_table("Order"), {
 
 table_ok( $scma->get_table("OrderLine"), {
     name => "OrderLine",
+    extra => {
+        mysql_table_type => 'InnoDB'
+    },
     fields => [
     {
         name => "lineNumber",
