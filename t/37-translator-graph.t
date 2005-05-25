@@ -17,7 +17,7 @@ BEGIN {
         parser   => "PostgreSQL",
     );
 
-    ok( $tr->translate('t/data/pgsql/wiki.sql'), 'Translate PG' );
+    ok( $tr->translate('t/data/pgsql/turnkey.sql'), 'Translate PG' );
     ok( my $schema = $tr->schema, 'Got Schema' );
     ok( my $graph = $schema->as_graph, 'Graph made');
 }
