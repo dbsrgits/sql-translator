@@ -59,7 +59,7 @@ COMMENT ON COLUMN cvterm.cv_id IS
  'The cv/ontology/namespace to which this cvterm belongs';
 COMMENT ON COLUMN cvterm.name IS
  'A concise human-readable name describing the meaning of the cvterm';
-COMMENT ON COLUMN cvterm.definition IS
+COMMENT ON COLUMN cvterm.termdefinition IS
  'A human-readable text definition';
 COMMENT ON COLUMN cvterm.dbxref_id IS
  'A human-readable text definition';
