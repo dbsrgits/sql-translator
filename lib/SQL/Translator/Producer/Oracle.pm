@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.32 2004-12-20 17:18:42 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.33 2005-05-25 15:17:49 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -190,6 +190,7 @@ sub produce {
             );
             my $field_name_ur = unreserve( $field_name, $table_name );
             my $field_def     = $field_name_ur;
+            $field->name( $field_name_ur );
 
             #
             # Datatype
@@ -228,6 +229,15 @@ sub produce {
                 warn "CLOB cannot be a primary key, changing to VARCHAR2\n"
                     if $WARN;
             }
+
+            if ( $data_type eq 'clob' && $field->is_unique ) {
+                $data_type = 'varchar2';
+                $size[0]   = 4000;
+                warn "CLOB cannot be a unique key, changing to VARCHAR2\n"
+                    if $WARN;
+            }
+
+
 
             #
             # Fixes ORA-00907: missing right parenthesis
@@ -296,7 +306,7 @@ sub produce {
             # Auto_increment
             #
             if ( $field->is_auto_increment ) {
-                my $base_name    = $table_name . "_". $field_name;
+                my $base_name    = $table_name_ur . "_". $field_name;
                 my $seq_name     = mk_name( $base_name, 'sq' );
                 my $trigger_name = mk_name( $base_name, 'ai' );
 
@@ -317,7 +327,7 @@ sub produce {
             }
 
             if ( lc $field->data_type eq 'timestamp' ) {
-                my $base_name = $table_name . "_". $field_name_ur;
+                my $base_name = $table_name_ur . "_". $field_name_ur;
                 my $trig_name = mk_name( $base_name, 'ts' );
                 push @trigger_defs, 
                     "CREATE OR REPLACE TRIGGER $trig_name\n".
@@ -532,7 +542,6 @@ sub mk_name {
     $scope ||= \%global_names;
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
-        $name        .= sprintf( "%02d", ++$prev );
         substr($name, $max_id_length - 2) = ""
             if length( $name ) >= $max_id_length - 1;
         $name        .= sprintf( "%02d", $prev++ );
