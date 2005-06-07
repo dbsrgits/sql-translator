@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.45 2004-11-25 22:32:48 grommit Exp $
+# $Id: MySQL.pm,v 1.46 2005-06-07 16:49:55 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -281,6 +281,13 @@ comment : /^\s*(?:#|-{2}).*\n/
         push @table_comments, $comment;
     }
 
+comment : /\/\*/ /[^\*]+/ /\*\// ';'
+    {
+        my $comment = $item[2];
+        $comment    =~ s/^\s*|\s*$//g;
+        $return = $comment;
+    }
+
 field_comment : /^\s*(?:#|-{2}).*\n/ 
     { 
         my $comment =  $item[1];
@@ -424,7 +431,7 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             elsif ( lc $type eq 'mediumint' ) {
                 $size = 9;
             }
-            elsif ( $type =~ /^int(eger)?$/ ) {
+            elsif ( $type =~ /^int(eger)?$/i ) {
                 $type = 'int';
                 $size = 11;
             }
@@ -472,7 +479,11 @@ field_type   : WORD
 
 create_index : /create/i /index/i
 
-not_null     : /not/i /null/i { $return = 0 }
+not_null     : /not/i /null/i 
+    { $return = 0 }
+    |
+    /null/i
+    { $return = 1 }
 
 unsigned     : /unsigned/i { $return = 0 }
 
@@ -508,10 +519,16 @@ foreign_key_def : foreign_key_def_begin parens_field_list reference_definition
         }
     }
 
-foreign_key_def_begin : /constraint/i /foreign key/i 
+foreign_key_def_begin : /constraint/i /foreign key/i WORD
+    { $return = $item[3] }
+    |
+    /constraint/i NAME /foreign key/i
+    { $return = $item[2] }
+    |
+    /constraint/i /foreign key/i
     { $return = '' }
     |
-    /constraint/i WORD /foreign key/i
+    /foreign key/i WORD
     { $return = $item[2] }
     |
     /foreign key/i
@@ -564,7 +581,11 @@ UNIQUE : /unique/i { 1 }
 
 KEY : /key/i | /index/i
 
-table_option : WORD /\s*=\s*/ WORD
+table_option : 'DEFAULT CHARSET' /\s*=\s*/ WORD
+    { 
+        $return = { $item[1] => $item[3] };
+    }
+    | WORD /\s*=\s*/ WORD
     { 
         $return = { $item[1] => $item[3] };
     }
