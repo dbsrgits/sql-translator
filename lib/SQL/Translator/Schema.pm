@@ -1,7 +1,9 @@
 package SQL::Translator::Schema;
 
+# vim: sw=4: ts=4:
+
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.21 2004-11-27 16:32:16 schiffbruechige Exp $
+# $Id: Schema.pm,v 1.22 2005-06-07 16:55:41 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -29,9 +31,13 @@ SQL::Translator::Schema - SQL::Translator schema object
 =head1 SYNOPSIS
 
   use SQL::Translator::Schema;
-  my $schema = SQL::Translator::Schema->new;
-  my $table  = $schema->add_table( name => 'foo' );
-  my $view   = $schema->add_view( name => 'bar', sql => '...' );
+  my $schema   =  SQL::Translator::Schema->new(
+      name     => 'Foo',
+      database => 'MySQL',
+  );
+  my $table    = $schema->add_table( name => 'foo' );
+  my $view     = $schema->add_view( name => 'bar', sql => '...' );
+
 
 =head1 DESCSIPTION
 
@@ -54,28 +60,25 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
-
-# ----------------------------------------------------------------------
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 
 __PACKAGE__->_attributes( qw/name database translator/ );
 
+# ----------------------------------------------------------------------
+sub as_graph {
+
 =pod
 
-=head2 new
+=head2 as_graph
 
-Object constructor.
-
-  my $schema   =  SQL::Translator::Schema->new(
-      name     => 'Foo',
-      database => 'MySQL',
-  );
+Returns the schema as an L<SQL::Translator::Schema::Graph> object.
 
 =cut
 
-sub as_graph {
-  my($self) = @_;
-  return SQL::Translator::Schema::Graph->new(translator => $self->translator);
+    my $self = @_;
+    return SQL::Translator::Schema::Graph->new(
+        translator => $self->translator
+    );
 }
 
 # ----------------------------------------------------------------------
@@ -746,13 +749,17 @@ Get or set the schema's name.  (optional)
     return $self->{'name'} || '';
 }
 
+# ----------------------------------------------------------------------
+sub translator {
+
+=pod
+
 =head2 translator
 
-get the SQL::Translator instance that instatiated me
+Get the SQL::Translator instance that instantiated the parser.
 
 =cut
 
-sub translator {
     my $self = shift;
     $self->{'translator'} = shift if @_;
     return $self->{'translator'};
@@ -773,6 +780,6 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
