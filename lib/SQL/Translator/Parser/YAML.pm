@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.6 2004-03-09 19:19:21 kycl4rk Exp $
+# $Id: YAML.pm,v 1.7 2005-06-08 11:30:15 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -34,7 +34,7 @@ sub parse {
     $data = Load($data);
     $data = $data->{'schema'};
 
-    warn Dumper( $data ) if $translator->debug;
+    warn "YAML data:",Dumper( $data ) if $translator->debug;
 
     my $schema = $translator->schema;
 
@@ -51,6 +51,7 @@ sub parse {
     for my $tdata ( @tables ) {
         my $table = $schema->add_table(
             name  => $tdata->{'name'},
+            extra => $tdata->{'extra'},
         ) or die $schema->error;
 
         my @fields = 
