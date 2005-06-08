@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.42 2005-01-13 11:50:23 grommit Exp $
+# $Id: MySQL.pm,v 1.43 2005-06-08 14:44:07 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -63,11 +63,19 @@ Set the list of allowed values for Enum fields.
 
 Set the MySQL field options of the same name.
 
-=item mysql_table_type
+=item table.mysql_table_type
 
 Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
 automatically set for tables involved in foreign key constraints if it is
 not already set explicitly. See L<"Table Types">.
+
+=item table.mysql_charset table.mysql_collate
+
+Set the tables default charater set and collation order.
+
+=item field.mysql_charset field.mysql_collate
+
+Set the fields charater set and collation order.
 
 =back
 
@@ -75,7 +83,7 @@ not already set explicitly. See L<"Table Types">.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -167,6 +175,8 @@ sub produce {
             my $list      = $extra{'list'} || [];
             # \todo deal with embedded quotes
             my $commalist = join( ', ', map { qq['$_'] } @$list );
+            my $charset = $extra{'mysql_charset'};
+            my $collate = $extra{'mysql_collate'};
 
             #
             # Oracle "number" type -- figure best MySQL type
@@ -211,13 +221,17 @@ sub produce {
             }
 
             $field_def .= " $data_type";
-            
+
             if ( lc $data_type eq 'enum' ) {
                 $field_def .= '(' . $commalist . ')';
 			} 
             elsif ( defined $size[0] && $size[0] > 0 ) {
                 $field_def .= '(' . join( ', ', @size ) . ')';
             }
+
+            # char sets
+            $field_def .= " CHARACTER SET $charset" if $charset;
+            $field_def .= " COLLATE $collate" if $collate;
 
             # MySQL qualifiers
             for my $qual ( qw[ binary unsigned zerofill ] ) {
@@ -337,7 +351,11 @@ sub produce {
         #
         $create .= "\n)";
         my $mysql_table_type = $table->extra('mysql_table_type');
+        my $charset          = $table->extra('mysql_charset');
+        my $collate          = $table->extra('mysql_collate');
         $create .= " Type=$mysql_table_type" if $mysql_table_type;
+        $create .= " DEFAULT CHARACTER SET $charset" if $charset;
+        $create .= " COLLATE $collate" if $collate;
         $create .= ";\n\n";
     }
 

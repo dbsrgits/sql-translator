@@ -1,3 +1,5 @@
+*   YAML parser supports extra attributes on tables.
+
 *   All schema objects now support the extra attribute, so can
     have arbitary name/value data attached to them.
 
@@ -21,6 +23,7 @@
 *   MySQL Producer
     - Added 'mysql_table_type' extra attribute on tables.
     - Works out InnoDB tables from constraints.
+    - mysql_charset and mysql_collate extra attributes for tables and fiels.
 
 
 # -----------------------------------------------------------
