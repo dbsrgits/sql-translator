@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # vim:filetype=perl
 
 #
@@ -37,6 +37,7 @@ schema:
     thing:
       name: thing
       extra:
+        mysql_table_type: InnoDB
         mysql_charset: latin1 
         mysql_collate: latin1_danish_ci 
       order: 1
@@ -70,7 +71,7 @@ CREATE TABLE thing (
   name varchar(32),
   swedish_name varchar(32) CHARACTER SET swe7,
   description text CHARACTER SET utf8 COLLATE utf8_general_ci
-) DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
+) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
 
 EOSQL
 
@@ -82,19 +83,8 @@ EOSQL
         to             => "MySQL",
     );
 
-    my $out;
-    $yaml_in = do {
-        local $/ = undef;
-        open(FILE, "/home/grommit/src/sqlfairy/test.yml") or die "$!";
-        <FILE>
-    };
-    $mysql_out = do {
-        local $/ = undef;
-        open(FILE, "/home/grommit/src/sqlfairy/test.sql") or die "$!";
-        <FILE>
-    };
-
-    $out = $sqlt->translate(\$yaml_in) or die "Translate error:".$sqlt->error;
+    my $out = $sqlt->translate(\$yaml_in)
+    or die "Translate error:".$sqlt->error;
     ok $out ne ""                 ,"Produced something!";
     eq_or_diff $out, $mysql_out   ,"Output looks right";
 }
