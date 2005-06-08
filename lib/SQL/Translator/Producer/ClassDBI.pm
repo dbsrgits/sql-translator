@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.40 2004-02-09 23:02:11 kycl4rk Exp $
+# $Id: ClassDBI.pm,v 1.41 2005-06-08 15:33:59 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,11 +22,11 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.40 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.41 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(header_comment);
+use SQL::Translator::Utils qw(debug header_comment);
 use Data::Dumper;
 
 my %CDBI_auto_pkgs = (
@@ -43,6 +43,12 @@ sub produce {
     my $no_comments   = $t->no_comments;
     my $schema        = $t->schema;
     my $args          = $t->producer_args;
+    if ( my $fmt = $args->{'format_pkg_name'} ) {
+        $t->format_package_name( $fmt );
+    }
+    if ( my $fmt = $args->{'format_fk_name'} ) {
+        $t->format_fk_name( $fmt );
+    }
     my $db_user       = $args->{'db_user'} || '';
     my $db_pass       = $args->{'db_pass'} || '';
     my $main_pkg_name = $args->{'main_pkg_name'} ||
@@ -56,14 +62,16 @@ sub produce {
     );
     my $sep           = '# ' . '-' x 67;
 
+
     #
     # Identify "link tables" (have only PK and FK fields).
     #
     my %linkable;
     my %linktable;
-    foreach my $table ( $schema->get_tables ) {
+    for my $table ( $schema->get_tables ) {
+        debug("PKG: Table = ", $table->name, "\n");
         my $is_link = 1;
-        foreach my $field ( $table->get_fields ) {
+        for my $field ( $table->get_fields ) {
             unless ( $field->is_primary_key or $field->is_foreign_key ) {
                 $is_link = 0;
                 last;
@@ -105,8 +113,11 @@ sub produce {
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
 
-        my $table_pkg_name = $t->format_package_name($table_name);
-        $packages{$table_pkg_name} = {
+#        my $table_pkg_name = $t->format_package_name($table_name);
+        my $table_pkg_name = join( '::', 
+            $main_pkg_name, $t->format_package_name($table_name)
+        );
+        $packages{ $table_pkg_name } = {
             order    => ++$order,
             pkg_name => $table_pkg_name,
             base     => $main_pkg_name,
@@ -116,18 +127,18 @@ sub produce {
         #
         # Primary key may have a differenct accessor method name
         #
-        if ( my $constraint = $table->primary_key ) {
-            my $field = ( $constraint->fields )[0];
-            $packages{ $table_pkg_name }{'_columns_primary'} = $field;
-
-            if ( my $pk_xform = $t->format_pk_name ) {
-                my $pk_name = $pk_xform->( $table_pkg_name, $field );
-
-                $packages{$table_pkg_name}{'pk_accessor'} =
-                  "#\n# Primary key accessor\n#\n"
-                  . "sub $pk_name {\n    shift->$field\n}\n\n";
-            }
-        }
+#        if ( my $constraint = $table->primary_key ) {
+#            my $field = ( $constraint->fields )[0];
+#            $packages{ $table_pkg_name }{'_columns_primary'} = $field;
+#
+#            if ( my $pk_xform = $t->format_pk_name ) {
+#                my $pk_name = $pk_xform->( $table_pkg_name, $field );
+#
+#                $packages{$table_pkg_name}{'pk_accessor'} =
+#                  "#\n# Primary key accessor\n#\n"
+#                  . "sub $pk_name {\n    shift->$field\n}\n\n";
+#            }
+#        }
 
         my $is_data = 0;
         foreach my $field ( $table->get_fields ) {
@@ -262,33 +273,42 @@ sub produce {
             if ( $field->is_foreign_key ) {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
-                my $fk_method  = $t->format_fk_name( $table_name, $field_name );
+#                my $fk_method  = $t->format_fk_name( $table_name, $field_name );
+                my $fk_method  = join('::', $table_pkg_name, 
+                    $t->format_fk_name( $table_name, $field_name )
+                );
                 my $fk         = $field->foreign_key_reference;
                 my $ref_table  = $fk->reference_table;
-                my $ref_pkg    = $t->format_package_name($ref_table);
+                my $ref_pkg    = join('::', 
+                    $main_pkg_name, $t->format_package_name($ref_table)
+                );
                 my $ref_field  = ( $fk->reference_fields )[0];
+#                my $fk_method  = join('::',
+#                    $table_pkg_name, $t->format_fk_name( $ref_table )
+#                );
 
                 push @{ $packages{$table_pkg_name}{'has_a'} },
                   "$table_pkg_name->has_a(\n"
                   . "    $field_name => '$ref_pkg'\n);\n\n"
                   . "sub $fk_method {\n"
-                  . "    return shift->$field_name\n}\n\n";
+                  . "    return shift->$field_name\n}\n\n"
+                ;
 
                 # if there weren't M-M relationships via the has_many
                 # being set up here, create nice pluralized method alias
                 # rather for user as alt. to ugly tablename_fieldname name
                 #
-                if ( !$packages{$ref_pkg}{'has_many'}{$table_name} ) {
-                    #
-                    # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
-                    #
-                    push @{ $packages{$ref_pkg}{'has_many'}{$table_name} },
-                        "sub ${table_name}s {\n    " .
-                        "return shift->$table_name\_$field_name\n}\n\n";
-                    # else ugly
-                }
-                else {
-                }
+#                if ( !$packages{$ref_pkg}{'has_many'}{$table_name} ) {
+#                    #
+#                    # ADD CALLBACK FOR PLURALIZATION MANGLING HERE
+#                    #
+#                    push @{ $packages{$ref_pkg}{'has_many'}{$table_name} },
+#                        "sub ${table_name}s {\n    " .
+#                        "return shift->$table_name\_$field_name\n}\n\n";
+#                    # else ugly
+#                }
+#                else {
+#                }
 
                 push @{ $packages{$ref_pkg}{'has_many'}{$table_name} },
                   "$ref_pkg->has_many(\n    '${table_name}_${field_name}', "
