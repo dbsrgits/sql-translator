@@ -1,11 +1,18 @@
 #!/usr/bin/perl -w
 # vim:filetype=perl
 
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
-# SQL::Translator::Filter::HelloWorld - Test filter in a package
 #=============================================================================
+# Test Package based filters that oks when called.
+package SQL::Translator::Filter::Ok;
+use strict;
+
+sub filter { Test::More::pass(@_) }
+
+# Hack to allow sqlt to see our module as it wasn't loaded from a .pm
+$INC{'SQL/Translator/Filter/Ok.pm'} = 'lib/SQL/Translator/Filter/Ok.pm';
+
+#=============================================================================
+# SQL::Translator::Filter::HelloWorld - Test filter in a package
 package SQL::Translator::Filter::HelloWorld;
 
 use strict;
@@ -13,12 +20,11 @@ use vars qw/$VERSION/;
 $VERSION=0.1;
 
 sub filter {
-    my ($schema,$args) = (shift,shift);
+    my ($schema,%args) = (shift,@_);
 
-    my $greeting = $args->{greeting} || "Hello";
-    $schema->add_table(
-        name => "HelloWorld",
-    );
+    my $greeting = $args{greeting} || "Hello";
+    my $newtable = "${greeting}World";
+    $schema->add_table( name => $newtable );
 }
 
 # Hack to allow sqlt to see our module as it wasn't loaded from a .pm
@@ -37,7 +43,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use Data::Dumper;
 
 BEGIN {
-    maybe_plan(14, 'Template', 'Test::Differences')
+    maybe_plan(16, 'Template', 'Test::Differences')
 }
 use Test::Differences;
 use SQL::Translator;
@@ -58,6 +64,14 @@ my $ans_yaml = qq{---
 schema:
   procedures: {}
   tables:
+    GdayWorld:
+      comments: ''
+      constraints: []
+      fields: {}
+      indices: []
+      name: GdayWorld
+      options: []
+      order: 3
     HelloWorld:
       comments: ''
       constraints: []
@@ -113,22 +127,23 @@ $obj = SQL::Translator->new(
         sub {
             pass("Filter 1 called");
             isa_ok($_[0],"SQL::Translator::Schema", "Filter 1, arg0 ");
-            ok( ref($_[1]) eq "HASH", "Filter 1, arg1 is a hashref ");
+            is( $#_, 0, "Filter 1, got no args");
         },
         sub {
             pass("Filter 2 called");
             isa_ok($_[0],"SQL::Translator::Schema", "Filter 2, arg0 ");
-            ok( ref($_[1]) eq "HASH", "Filter 2, arg1 is a hashref ");
+            is( $#_, 0, "Filter 2, got no args");
         },
 
         # Sub filter with args
         [ sub {
             pass("Filter 3 called");
             isa_ok($_[0],"SQL::Translator::Schema", "Filter 3, arg0 ");
-            ok( ref($_[1]) eq "HASH", "Filter 3, arg1 is a hashref ");
-            is( $_[1]->{hello}, "world", "Filter 3, got args ");
+            is( $#_, 2, "Filter 3, go 2 args");
+            is( $_[1], "hello", "Filter 3, arg1=hello");
+            is( $_[2], "world", "Filter 3, arg2=world");
         },
-        { hello=>"world" } ],
+        hello => "world" ],
 
         # Uppercase all the table names.
         sub {
@@ -147,7 +162,9 @@ $obj = SQL::Translator->new(
         },
 
         # Filter from SQL::Translator::Filter::*
+        'Ok',
         [ 'HelloWorld' ],
+        [ 'HelloWorld', greeting => 'Gday' ],
     ],
 
 ) or die "Failed to create translator object: ".SQL::Translator->error;

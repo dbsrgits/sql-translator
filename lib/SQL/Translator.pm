@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.67 2005-06-08 15:32:51 mwz444 Exp $
+# $Id: Translator.pm,v 1.68 2005-06-09 02:02:00 grommit Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -27,7 +27,7 @@ use base 'Class::Base';
 require 5.004;
 
 $VERSION  = '0.07';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.67 $ =~ /(\d+)\.(\d+)/;
+$REVISION = sprintf "%d.%02d", q$Revision: 1.68 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -220,19 +220,18 @@ sub filters {
     my $filters = $self->{filters} ||= [];
     return @$filters unless @_;
 
-    # Set. Convert args to list of [\&code,\%args]
+    # Set. Convert args to list of [\&code,@args]
     foreach (@_) {
-        $_ = [$_,{}] if not ref($_) eq "ARRAY";
-        my ($name,$args) = @$_;
-        if ( isa($name,"CODE") ) {
-            push @$filters, $_;
+        my ($filt,@args) = ref($_) eq "ARRAY" ? @$_ : $_;
+        if ( isa($filt,"CODE") ) {
+            push @$filters, [$filt,@args];
             next;
         }
         else {
-            $self->debug("Adding $name filter. Args:".Dumper($args)."\n");
-            my $code = _load_sub("$name\::filter", "SQL::Translator::Filter");
-            return $self->error(__PACKAGE__->error) unless $code;
-            push @$filters, [$code,$args];
+            $self->debug("Adding $filt filter. Args:".Dumper(\@args)."\n");
+            $filt = _load_sub("$filt\::filter", "SQL::Translator::Filter")
+            || return $self->error(__PACKAGE__->error);
+            push @$filters, [$filt,@args];
         }
     }
     return @$filters;
@@ -501,8 +500,8 @@ sub translate {
     my $filt_num = 0;
     foreach ($self->filters) {
         $filt_num++;
-        my ($code,$args) = @$_;
-        eval { $code->($self->schema, $args) };
+        my ($code,@args) = @$_;
+        eval { $code->($self->schema, @args) };
         my $err = $@ || $self->error || 0;
         return $self->error("Error with filter $filt_num : $err") if $err;
     }
@@ -1072,36 +1071,39 @@ analogously to C<producer_type> and C<producer_args>
 Set or retreive the filters to run over the schema during the
 translation, before the producer creates its output. Filters are sub
 routines called, in order, with the schema object to filter as the 1st
-arg and a hashref of options as the 2nd. They are free to do whatever
-they want to the schema object, which will be handed to any following
-filters, then used by the producer.
+arg and a hash of options (passed as a list) for the rest of the args.
+They are free to do whatever they want to the schema object, which will be
+handed to any following filters, then used by the producer.
 
 Filters are set as an array, which gives the order they run in.
 Like parsers and producers, they can be defined by a module name, a
 module name relative to the SQL::Translator::Filter namespace, a module
 name and function name together or a reference to an anonymous subroutine.
 When using a module name a function called C<filter> will be invoked in
-that package to do the work. To pass args to the filter set it as an array
-ref with the 1st value giving the filter and the rest being a hash of
-args.
+that package to do the work.
+
+To pass args to the filter set it as an array ref with the 1st value giving
+the filter (name or sub) and the rest its args. e.g.
 
  $tr->filters(
      sub {
         my $schema = shift;
         # Do stuff to schema here!
      },
-     [ "Foo", foo => "bar", hello => "world" ],
-     [ "Filter3" ],
+     DropFKeys,
+     [ "Names", table => 'lc' ],
+     [ "Foo",   foo => "bar", hello => "world" ],
+     [ "Filter5" ],
  );
 
-Although you would normally set them in the constructor, which calls
+Although you normally set them in the constructor, which calls
 through to filters. i.e.
 
   my $translator  = SQL::Translator->new(
       ...
       filters => [
           sub { ... },
-          [ Foo, foo => "bar" ],
+          [ "Names", table => 'lc' ],
       ],
       ...
   );
@@ -1112,7 +1114,7 @@ Multiple set calls to filters are cumulative with new filters added to
 the end of the current list.
 
 Returns the filters as a list of array refs, the 1st value being a
-reference to the filter sub routine and the 2nd a hashref its args.
+reference to the filter sub and the rest its args.
 
 =head2 show_warnings
 
