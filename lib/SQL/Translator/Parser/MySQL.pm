@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.46 2005-06-07 16:49:55 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.47 2005-06-10 18:12:37 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -298,7 +298,7 @@ field_comment : /^\s*(?:#|-{2}).*\n/
 
 blank : /\s*/
 
-field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) field_comment(s?)
+field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) on_update_do(?) field_comment(s?)
     { 
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
@@ -386,7 +386,11 @@ match_type : /match full/i { 'full' }
 on_delete_do : /on delete/i reference_option
     { $item[2] }
 
-on_update_do : /on update/i reference_option
+on_update_do : 
+    /on update/i 'CURRENT_TIMESTAMP'
+    { $item[2] }
+    |
+    /on update/i reference_option
     { $item[2] }
 
 reference_option: /restrict/i | 
@@ -493,7 +497,13 @@ unsigned     : /unsigned/i { $return = 0 }
 #        $return  =  $item[2];
 #    }
 
-default_val : /default/i /'(?:.*?\\')*.*?'|(?:')?[\w\d:.-]*(?:')?/
+default_val : 
+    /default/i 'CURRENT_TIMESTAMP'
+    {
+        $return =  $item[2];
+    }
+    |
+    /default/i /'(?:.*?\\')*.*?'|(?:')?[\w\d:.-]*(?:')?/
     {
         $item[2] =~ s/^\s*'|'\s*$//g;
         $return  =  $item[2];
