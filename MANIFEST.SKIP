@@ -4,9 +4,11 @@
 .*.swp
 .*.old
 ^Makefile$
+^_build/
 ^blib/
 ^blibdirs$
 _blib$
+Build$
 (^|/)\.
 lib/SQL/Translator/Parser/XML/XMI.pm
 lib/SQL/Translator/Parser/XML/XMI/Rational.pm
