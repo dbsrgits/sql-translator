@@ -1,3 +1,6 @@
+# -----------------------------------------------------------
+# 0.7    2005-06-10
+# -----------------------------------------------------------
 *   YAML parser supports extra attributes on tables.
 
 *   All schema objects now support the extra attribute, so can
