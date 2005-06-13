@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.10 2004-03-29 10:20:03 grommit Exp $
+# $Id: YAML.pm,v 1.11 2005-06-13 16:02:15 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -41,14 +41,14 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
 # -------------------------------------------------------------------
 sub produce {
-    my $translator  = shift;
-    my $schema      = $translator->schema;
+    my $translator = shift;
+    my $schema     = $translator->schema;
 
     return Dump({
         schema => {
