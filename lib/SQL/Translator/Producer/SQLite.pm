@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.11 2004-03-16 13:29:11 kycl4rk Exp $
+# $Id: SQLite.pm,v 1.12 2005-06-13 18:23:10 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -100,6 +100,11 @@ sub produce {
             my $size      = $field->size;
             my $data_type = $field->data_type;
             $data_type    = 'varchar' if lc $data_type eq 'set';
+            $data_type  = 'blob' if lc $data_type eq 'bytea';
+
+            if ( lc $data_type =~ /(text|blob)/i ) {
+                $size = undef;
+            }
 
             if ( $data_type =~ /timestamp/i ) {
                 push @trigger_defs, 
@@ -143,6 +148,10 @@ sub produce {
             if ( defined $default ) {
                 if ( uc $default eq 'NULL') {
                     $field_def .= ' DEFAULT NULL';
+                } elsif ( $default eq 'now()' ) {
+                    $field_def .= ' DEFAULT CURRENT_TIMESTAMP';
+                } elsif ( $default =~ /val\(/ ) {
+                    next;
                 } else {
                     $field_def .= " DEFAULT '$default'";
                 }
