@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(199, "SQL::Translator::Parser::MySQL");
+    maybe_plan(201, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -217,7 +217,7 @@ BEGIN {
         q[
             CREATE TABLE orders (
               order_id                  integer NOT NULL auto_increment,
-              member_id                 varchar(255),
+              member_id                 varchar(255) comment 'fk to member',
               billing_address_id        int,
               shipping_address_id       int,
               credit_card_id            int,
@@ -234,7 +234,7 @@ BEGIN {
               FOREIGN KEY (status)              REFERENCES order_status(id) MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE,
               FOREIGN KEY (billing_address_id)  REFERENCES address(address_id),
               FOREIGN KEY (shipping_address_id) REFERENCES address(address_id)
-            ) TYPE=INNODB;
+            ) TYPE=INNODB COMMENT = 'orders table comment';
 
             CREATE TABLE address (
               address_id                int NOT NULL auto_increment,
@@ -257,6 +257,7 @@ BEGIN {
 
     my $t1  = shift @tables;
     is( $t1->name, 'orders', 'Found "orders" table' );
+    is( $t1->comments, 'orders table comment', 'Table comment OK' );
 
     my @fields = $t1->get_fields;
     is( scalar @fields, 10, 'Right number of fields (10)' );
@@ -275,6 +276,7 @@ BEGIN {
     is( $f2->data_type, 'varchar', 'Type is "varchar"' );
     is( $f2->size, 255, 'Size is "255"' );
     is( $f2->is_nullable, 1, 'Field can be null' );
+    is( $f2->comments, 'fk to member', 'Field comment OK' );
     is( $f2->default_value, undef, 'Default value is undefined' );
 
     my $f3 = shift @fields;
