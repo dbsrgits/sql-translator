@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.43 2005-06-08 14:44:07 grommit Exp $
+# $Id: MySQL.pm,v 1.44 2005-06-15 18:05:07 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -83,7 +83,7 @@ Set the fields charater set and collation order.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -252,6 +252,10 @@ sub produce {
                 }
             }
 
+            if ( my $comments = $field->comments ) {
+                $field_def .= qq[ comment '$comments'];
+            }
+
             # auto_increment?
             $field_def .= " auto_increment" if $field->is_auto_increment;
             push @field_defs, $field_def;
@@ -353,9 +357,12 @@ sub produce {
         my $mysql_table_type = $table->extra('mysql_table_type');
         my $charset          = $table->extra('mysql_charset');
         my $collate          = $table->extra('mysql_collate');
+        my $comments         = $table->comments;
+
         $create .= " Type=$mysql_table_type" if $mysql_table_type;
         $create .= " DEFAULT CHARACTER SET $charset" if $charset;
         $create .= " COLLATE $collate" if $collate;
+        $create .= qq[ comment='$comments'] if $comments;
         $create .= ";\n\n";
     }
 
