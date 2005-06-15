@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.47 2005-06-10 18:12:37 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.48 2005-06-15 17:58:42 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -246,7 +246,15 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
         }
 
         if ( my @options = @{ $item{'table_option(s?)'} } ) {
-            $tables{ $table_name }{'table_options'} = \@options;
+            for my $option ( @options ) {
+                my ( $key, $value ) = each %$option;
+                if ( $key eq 'comment' ) {
+                    push @{ $tables{ $table_name }{'comments'} }, $value;
+                }
+                else {
+                    push @{ $tables{ $table_name }{'table_options'} }, $option;
+                }
+            }
         }
 
         1;
@@ -296,9 +304,18 @@ field_comment : /^\s*(?:#|-{2}).*\n/
         $return     = $comment;
     }
 
+
+field_comment2 : /comment/i /'.*?'/
+    {
+        my $comment = $item[2];
+        $comment    =~ s/^'//;
+        $comment    =~ s/'$//;
+        $return     = $comment;
+    }
+
 blank : /\s*/
 
-field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) on_update_do(?) field_comment(s?)
+field : field_comment(s?) field_name data_type field_qualifier(s?) field_comment2(?) reference_definition(?) on_update_do(?) field_comment(s?)
     { 
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
@@ -309,7 +326,7 @@ field : field_comment(s?) field_name data_type field_qualifier(s?) reference_def
                    ? $qualifiers{'not_null'} : 1;
         delete $qualifiers{'not_null'};
 
-        my @comments = ( @{ $item[1] }, @{ $item[6] } );
+        my @comments = ( @{ $item[1] }, @{ $item[5] }, @{ $item[8] } );
 
         $return = { 
             supertype   => 'field',
@@ -594,6 +611,13 @@ KEY : /key/i | /index/i
 table_option : 'DEFAULT CHARSET' /\s*=\s*/ WORD
     { 
         $return = { $item[1] => $item[3] };
+    }
+    | /comment/i /=/ /'.*?'/
+    {
+        my $comment = $item[3];
+        $comment    =~ s/^'//;
+        $comment    =~ s/'$//;
+        $return     = { comment => $comment };
     }
     | WORD /\s*=\s*/ WORD
     { 
