@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.11 2005-06-13 16:02:15 kycl4rk Exp $
+# $Id: YAML.pm,v 1.12 2005-06-15 18:00:31 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -41,7 +41,7 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 
 use YAML qw(Dump);
 
@@ -138,6 +138,7 @@ sub view_field {
         'is_nullable'    => scalar $field->is_nullable,
         'is_primary_key' => scalar $field->is_primary_key,
         'is_unique'      => scalar $field->is_unique,
+        'comments'       => $field->comments || '',
         'extra'          => { $field->extra },
     };
 }
