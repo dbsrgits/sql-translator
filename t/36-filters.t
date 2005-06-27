@@ -85,6 +85,7 @@ schema:
       constraints: []
       fields:
         first_name:
+          comments: ''
           data_type: foovar
           default_value: ~
           extra: {}
