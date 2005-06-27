@@ -3,7 +3,7 @@ package SQL::Translator::Schema;
 # vim: sw=4: ts=4:
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.23 2005-06-08 15:31:06 mwz444 Exp $
+# $Id: Schema.pm,v 1.24 2005-06-27 22:02:50 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -60,7 +60,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 
 __PACKAGE__->_attributes(qw/name database translator/);
 
@@ -528,6 +528,14 @@ Returns a table by the name provided.
 
     my $self = shift;
     my $table_name = shift or return $self->error('No table name');
+    my $case_insensitive = shift;
+    if ( $case_insensitive ) {
+    	$table_name = uc($table_name);
+    	foreach my $table ( keys %{$self->{tables}} ) {
+    		return $self->{tables}{$table} if $table_name eq uc($table);
+    	}
+    	return $self->error(qq[Table "$table_name" does not exist]);
+    }
     return $self->error(qq[Table "$table_name" does not exist])
       unless exists $self->{'tables'}{$table_name};
     return $self->{'tables'}{$table_name};
