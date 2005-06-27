@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.48 2005-06-15 17:58:42 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.49 2005-06-27 20:36:42 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -380,7 +380,21 @@ field_qualifier : unsigned
 field_qualifier : /character set/i WORD
     {
         $return = {
-            character_set => $item[2],
+            'CHARACTER SET' => $item[2],
+        }
+    }
+
+field_qualifier : /collate/i WORD
+    {
+        $return = {
+            COLLATE => $item[2],
+        }
+    }
+
+field_qualifier : /on update/i CURRENT_TIMESTAMP
+    {
+        $return = {
+            'ON UPDATE' => $item[2],
         }
     }
 
@@ -608,7 +622,7 @@ UNIQUE : /unique/i { 1 }
 
 KEY : /key/i | /index/i
 
-table_option : 'DEFAULT CHARSET' /\s*=\s*/ WORD
+table_option : WORD /\s*=\s*/ WORD
     { 
         $return = { $item[1] => $item[3] };
     }
@@ -619,10 +633,12 @@ table_option : 'DEFAULT CHARSET' /\s*=\s*/ WORD
         $comment    =~ s/'$//;
         $return     = { comment => $comment };
     }
-    | WORD /\s*=\s*/ WORD
+    | /(default )?(charset|character set)/i /\s*=\s*/ WORD
     { 
-        $return = { $item[1] => $item[3] };
+        $return = { 'CHARACTER SET' => $item[3] };
     }
+    
+default : /default/i
 
 ADD : /add/i
 
@@ -657,6 +673,10 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     | /NULL/
     { 'NULL' }
 
+CURRENT_TIMESTAMP : /current_timestamp(\(\))?/i
+	| /now\(\)/i
+	{ 'CURRENT_TIMESTAMP' }
+	
 !;
 
 # -------------------------------------------------------------------
@@ -713,7 +733,8 @@ sub parse {
 
             $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
 
-            for my $qual ( qw[ binary unsigned zerofill list ] ) {
+            for my $qual ( qw[ binary unsigned zerofill list collate ],
+            		'character set', 'on update' ) {
                 if ( my $val = $fdata->{ $qual } || $fdata->{ uc $qual } ) {
                     next if ref $val eq 'ARRAY' && !@$val;
                     $field->extra( $qual, $val );
