@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.44 2005-06-15 18:05:07 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.45 2005-06-27 20:41:13 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -83,7 +83,7 @@ Set the fields charater set and collation order.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -235,8 +235,12 @@ sub produce {
 
             # MySQL qualifiers
             for my $qual ( qw[ binary unsigned zerofill ] ) {
-                my $val = $extra{ $qual || uc $qual } or next;
+                my $val = $extra{ $qual } || $extra{ uc $qual } or next;
                 $field_def .= " $qual";
+            }
+            for my $qual ( 'character set', 'collate', 'on update' ) {
+                my $val = $extra{ $qual } || $extra{ uc $qual } or next;
+                $field_def .= " $qual $val";
             }
 
             # Null?
@@ -289,7 +293,9 @@ sub produce {
             }
             elsif ( $c->type eq UNIQUE ) {
                 push @constraint_defs,
-                    'UNIQUE (' . join(', ', @fields). ')';
+                    'UNIQUE '.
+                    (defined $c->name ? $c->name.' ' : '').
+                    '(' . join(', ', @fields). ')';
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
                 #
@@ -301,7 +307,7 @@ sub produce {
                 }
 
                 my $def = join(' ', 
-                    map { $_ || () } 'FOREIGN KEY', $c->name 
+                    map { $_ || () } 'CONSTRAINT', $c->name, 'FOREIGN KEY'
                 );
 
                 $def .= ' (' . join( ', ', @fields ) . ')';
@@ -354,12 +360,20 @@ sub produce {
         # Footer
         #
         $create .= "\n)";
+        my $table_type_defined = 0;
+		for my $t1_option_ref ( $table->options ) {
+			my($key, $value) = %{$t1_option_ref};
+			$table_type_defined = 1
+				if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
+		    $create .= " $key=$value";
+		}
         my $mysql_table_type = $table->extra('mysql_table_type');
+        $create .= " Type=$mysql_table_type"
+			if $mysql_table_type && !$table_type_defined;
         my $charset          = $table->extra('mysql_charset');
         my $collate          = $table->extra('mysql_collate');
         my $comments         = $table->comments;
 
-        $create .= " Type=$mysql_table_type" if $mysql_table_type;
         $create .= " DEFAULT CHARACTER SET $charset" if $charset;
         $create .= " COLLATE $collate" if $collate;
         $create .= qq[ comment='$comments'] if $comments;
