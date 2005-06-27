@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.1 2005-01-13 21:30:04 grommit Exp $
+# $Id: SQLServer.pm,v 1.2 2005-06-27 20:44:06 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -56,7 +56,7 @@ List of values for an enum field.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -106,9 +106,9 @@ my %reserved = map { $_, 1 } qw[
 ];
 
 # If these datatypes have size appended the sql fails.
-my @no_size = qw/int integer bigint text bit/;
+my @no_size = qw/tinyint smallint int integer bigint text bit image datetime/;
 
-my $max_id_length    = 30;
+my $max_id_length    = 128;
 my %used_identifiers = ();
 my %global_names;
 my %unreserve;
@@ -339,7 +339,9 @@ sub produce {
         my $name = $_->name();
         $output .= "\n\n";
         $output .= "--\n-- View: $name\n--" unless $no_comments;
-        $output .= $_->sql();
+        my $text = $_->sql();
+		$text =~ s/\r//g;
+        $output .= $text;
     }
 
     # Text of procedure already has the 'create procedure' stuff
@@ -350,7 +352,9 @@ sub produce {
         my $name = $_->name();
         $output .= "\n\n";
         $output .= "--\n-- Procedure: $name\n--" unless $no_comments;
-        $output .= $_->sql();
+        my $text = $_->sql();
+		$text =~ s/\r//g;
+        $output .= $text;
     }
 
     # Warn out how we messed with the names.
