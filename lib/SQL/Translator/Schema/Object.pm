@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Object;
 
 # ----------------------------------------------------------------------
-# $Id: Object.pm,v 1.4 2005-01-13 09:44:15 grommit Exp $
+# $Id: Object.pm,v 1.5 2005-06-27 21:58:42 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,10 +39,11 @@ use strict;
 use Class::Base;
 use base 'Class::Data::Inheritable';
 use base 'Class::Base';
+use Data::Compare;
 
 use vars qw[ $VERSION ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 
 
 =head1 Construction
@@ -150,6 +151,37 @@ Returns a hash or a hashref.
     }
     
     return wantarray ? %$extra : $extra;
+}
+
+
+# ----------------------------------------------------------------------
+sub equals {
+
+=pod
+
+=head2 equals
+
+Determines if this object is the same as another.
+
+  my $isIdentical = $object1->equals( $object2 );
+
+=cut
+
+    my $self = shift;
+    my $other = shift;
+    
+    return 0 unless $other;
+    return 1 if $self eq $other;
+    return 0 unless $other->isa( __PACKAGE__ );
+    return 1;
+}
+
+# ----------------------------------------------------------------------
+sub _compare_objects($$;$) {
+	my $self = shift;
+	# Suppress spurious Data::Compare warnings
+	local $SIG{__WARN__} = sub {};
+	Data::Compare::Compare(shift, shift, shift);
 }
 
 #=============================================================================
