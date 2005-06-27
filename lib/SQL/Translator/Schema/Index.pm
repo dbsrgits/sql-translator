@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Index;
 
 # ----------------------------------------------------------------------
-# $Id: Index.pm,v 1.10 2004-11-05 13:19:31 grommit Exp $
+# $Id: Index.pm,v 1.11 2005-06-27 21:59:19 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -53,7 +53,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_INDEX_TYPE = (
     UNIQUE,    1,
@@ -233,6 +233,32 @@ Get or set the index's type.
     return $self->{'type'} || NORMAL;
 }
 
+# ----------------------------------------------------------------------
+sub equals {
+
+=pod
+
+=head2 equals
+
+Determines if this index is the same as another
+
+  my $isIdentical = $index1->equals( $index2 );
+
+=cut
+
+    my $self = shift;
+    my $other = shift;
+    my $case_insensitive = shift;
+    
+    return 0 unless $self->SUPER::equals($other);
+#    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+    return 0 unless $self->is_valid eq $other->is_valid;
+    return 0 unless $self->type eq $other->type;
+    return 0 unless $self->_compare_objects($self->fields, $other->fields);
+    return 0 unless $self->_compare_objects($self->options, $other->options);
+    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+    return 1;
+}
 
 # ----------------------------------------------------------------------
 sub DESTROY {

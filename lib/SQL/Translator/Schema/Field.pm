@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.22 2004-11-05 15:03:10 grommit Exp $
+# $Id: Field.pm,v 1.23 2005-06-27 21:59:19 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -546,6 +546,40 @@ also be used to get the table name.
     }
 
     return $self->{'table'};
+}
+
+# ----------------------------------------------------------------------
+sub equals {
+
+=pod
+
+=head2 equals
+
+Determines if this field is the same as another
+
+  my $isIdentical = $field1->equals( $field2 );
+
+=cut
+
+    my $self = shift;
+    my $other = shift;
+    my $case_insensitive = shift;
+    
+    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+    return 0 unless $self->is_valid eq $other->is_valid;
+    return 0 unless $self->data_type eq $other->data_type;
+    return 0 unless $self->size eq $other->size;
+    return 0 unless defined $self->default_value eq defined $other->default_value;
+    return 0 if defined $self->default_value && $self->default_value ne $other->default_value;
+    return 0 unless $self->is_nullable eq $other->is_nullable;
+    return 0 unless $self->is_unique eq $other->is_unique;
+    return 0 unless $self->is_primary_key eq $other->is_primary_key;
+    return 0 unless $self->is_foreign_key eq $other->is_foreign_key;
+    return 0 unless $self->is_auto_increment eq $other->is_auto_increment;
+#    return 0 unless $self->comments eq $other->comments;
+    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+    return 1;
 }
 
 # ----------------------------------------------------------------------

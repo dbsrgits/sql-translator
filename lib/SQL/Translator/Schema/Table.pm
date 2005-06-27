@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.30 2004-11-27 16:32:46 schiffbruechige Exp $
+# $Id: Table.pm,v 1.31 2005-06-27 21:59:20 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.30 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -899,6 +899,82 @@ avoid the overload magic of the Field objects returned by the get_fields method.
         $self->error('No fields');
         return wantarray ? () : undef;
     }
+}
+
+# ----------------------------------------------------------------------
+sub equals {
+
+=pod
+
+=head2 equals
+
+Determines if this table is the same as another
+
+  my $isIdentical = $table1->equals( $table2 );
+
+=cut
+
+    my $self = shift;
+    my $other = shift;
+    
+    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $self->name eq $other->name;
+    return 0 unless $self->_compare_objects($self->options, $other->options);
+    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+
+    # Fields
+    # Go through our fields
+    my %checkedFields;
+    foreach my $field ( $self->get_fields ) {
+    	my $otherField = $other->get_field($field->name);
+    	return 0 unless $field->equals($otherField);
+    	$checkedFields{$field->name} = 1;
+    }
+    # Go through the other table's fields
+    foreach my $otherField ( $other->get_fields ) {
+    	next if $checkedFields{$otherField->name};
+    	return 0;
+    }
+
+    # Constraints
+    # Go through our constraints
+    my %checkedConstraints;
+CONSTRAINT:
+    foreach my $constraint ( $self->get_constraints ) {
+    	foreach my $otherConstraint ( $other->get_constraints ) {
+    		if ( $constraint->equals($otherConstraint) ) {
+    			$checkedConstraints{$otherConstraint} = 1;
+    			next CONSTRAINT;
+    		}
+    	}
+    	return 0;
+    }
+    # Go through the other table's constraints
+    foreach my $otherConstraint ( $other->get_constraints ) {
+    	next if $checkedFields{$otherConstraint};
+    	return 0;
+    }
+
+    # Indices
+    # Go through our indices
+    my %checkedIndices;
+INDEX:
+    foreach my $index ( $self->get_indices ) {
+    	foreach my $otherIndex ( $other->get_indices ) {
+    		if ( $index->equals($otherIndex) ) {
+    			$checkedIndices{$otherIndex} = 1;
+    			next INDEX;
+    		}
+    	}
+    	return 0;
+    }
+    # Go through the other table's constraints
+    foreach my $otherIndex ( $other->get_indices ) {
+    	next if $checkedIndices{$otherIndex};
+    	return 0;
+    }
+
+	return 1;
 }
 
 # ----------------------------------------------------------------------

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.15 2004-11-05 13:19:31 grommit Exp $
+# $Id: Constraint.pm,v 1.16 2005-06-27 21:59:19 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -522,6 +522,42 @@ Get or set the constraint's type.
 
     return $self->{'type'} || '';
 }
+
+# ----------------------------------------------------------------------
+sub equals {
+
+=pod
+
+=head2 equals
+
+Determines if this constraint is the same as another
+
+  my $isIdentical = $constraint1->equals( $constraint2 );
+
+=cut
+
+    my $self = shift;
+    my $other = shift;
+    my $case_insensitive = shift;
+    
+    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+    return 0 unless $self->deferrable eq $other->deferrable;
+    return 0 unless $self->is_valid eq $other->is_valid;
+    return 0 unless $case_insensitive ? uc($self->table->name) eq uc($other->table->name)
+    	: $self->table->name eq $other->table->name;
+    return 0 unless $self->expression eq $other->expression;
+    return 0 unless $self->_compare_objects($self->fields, $other->fields);
+    return 0 unless $self->reference_table eq $other->reference_table;
+    return 0 unless $self->_compare_objects($self->reference_fields, $other->reference_fields);
+    return 0 unless $self->match_type eq $other->match_type;
+    return 0 unless $self->on_delete eq $other->on_delete;
+    return 0 unless $self->on_update eq $other->on_update;
+    return 0 unless $self->_compare_objects($self->options, $other->options);
+    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+    return 1;
+}
+
 # ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
