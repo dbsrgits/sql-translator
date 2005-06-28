@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Object;
 
 # ----------------------------------------------------------------------
-# $Id: Object.pm,v 1.5 2005-06-27 21:58:42 duality72 Exp $
+# $Id: Object.pm,v 1.6 2005-06-28 21:43:28 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,11 +39,11 @@ use strict;
 use Class::Base;
 use base 'Class::Data::Inheritable';
 use base 'Class::Base';
-use Data::Compare;
+use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
 use vars qw[ $VERSION ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 
 =head1 Construction
@@ -177,11 +177,20 @@ Determines if this object is the same as another.
 }
 
 # ----------------------------------------------------------------------
-sub _compare_objects($$;$) {
+sub _compare_objects {
 	my $self = shift;
-	# Suppress spurious Data::Compare warnings
-	local $SIG{__WARN__} = sub {};
-	Data::Compare::Compare(shift, shift, shift);
+	my $obj1 = shift;
+	my $obj2 = shift;
+	my $result = (ref_compare($obj1, $obj2) == 0);
+#	if ( !$result ) {
+#		use Carp qw(cluck);
+#		cluck("How did I get here?");
+#		use Data::Dumper;
+#		$Data::Dumper::Maxdepth = 1;
+#		print "obj1: ", Dumper($obj1), "\n";
+#		print "obj2: ", Dumper($obj2), "\n";
+#	}
+	return $result;
 }
 
 #=============================================================================
