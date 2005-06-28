@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.16 2005-06-27 21:59:19 duality72 Exp $
+# $Id: Constraint.pm,v 1.17 2005-06-28 22:55:19 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -276,7 +276,7 @@ avoid the overload magic of the Field objects returned by the fields method.
 =cut
 
     my $self = shift;
-    return wantarray ? @{ $self->{'fields'} } : $self->{'fields'};
+    return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
 }
 
 # ----------------------------------------------------------------------
@@ -547,7 +547,7 @@ Determines if this constraint is the same as another
     return 0 unless $case_insensitive ? uc($self->table->name) eq uc($other->table->name)
     	: $self->table->name eq $other->table->name;
     return 0 unless $self->expression eq $other->expression;
-    return 0 unless $self->_compare_objects($self->fields, $other->fields);
+    return 0 unless $self->_compare_objects(scalar $self->field_names, scalar $other->field_names);
     return 0 unless $self->reference_table eq $other->reference_table;
     return 0 unless $self->_compare_objects($self->reference_fields, $other->reference_fields);
     return 0 unless $self->match_type eq $other->match_type;
