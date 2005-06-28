@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.31 2005-06-27 21:59:20 duality72 Exp $
+# $Id: Table.pm,v 1.32 2005-06-28 22:58:06 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.31 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -950,8 +950,14 @@ CONSTRAINT:
     	return 0;
     }
     # Go through the other table's constraints
+CONSTRAINT2:
     foreach my $otherConstraint ( $other->get_constraints ) {
     	next if $checkedFields{$otherConstraint};
+    	foreach my $constraint ( $self->get_constraints ) {
+    		if ( $otherConstraint->equals($constraint) ) {
+    			next CONSTRAINT2;
+    		}
+    	}
     	return 0;
     }
 
@@ -968,9 +974,15 @@ INDEX:
     	}
     	return 0;
     }
-    # Go through the other table's constraints
+    # Go through the other table's indices
+INDEX2:
     foreach my $otherIndex ( $other->get_indices ) {
     	next if $checkedIndices{$otherIndex};
+    	foreach my $index ( $self->get_indices ) {
+    		if ( $otherIndex->equals($index) ) {
+    			next INDEX2;
+    		}
+    	}
     	return 0;
     }
 
