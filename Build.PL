@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.7 2005-06-27 20:53:00 duality72 Exp $
+# $Id: Build.PL,v 1.8 2005-06-28 21:43:49 duality72 Exp $
 
 use strict;
 use Module::Build;
@@ -27,7 +27,6 @@ my $builder           =  Module::Build->new(
         'Template'                 => 2.10,
         'Parse::RecDescent'        => 1.94,
         'Pod::Usage'               => 0,
-        'Data::Compare'            => 0,
     },
     recommends        => {
         'GD'                      => 0,
