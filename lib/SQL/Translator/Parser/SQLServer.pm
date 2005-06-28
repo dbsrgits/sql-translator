@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.2 2005-06-28 16:39:41 mwz444 Exp $
+# $Id: SQLServer.pm,v 1.3 2005-06-28 23:37:12 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ should probably be considered a work in progress.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -207,7 +207,7 @@ field : field_name data_type field_qualifier(s?)
             size           => $item{'data_type'}{'size'},
             nullable       => $nullable, 
             default        => $qualifiers{'default_val'}, 
-            is_auto_inc    => $qualifiers{'auto_inc'}, 
+            is_auto_inc    => $qualifiers{'is_auto_inc'}, 
 #            is_primary_key => $item{'primary_key'}[0], 
         } 
     }
