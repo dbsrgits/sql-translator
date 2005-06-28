@@ -79,8 +79,8 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }

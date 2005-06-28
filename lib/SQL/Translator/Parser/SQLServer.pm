@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.1 2005-06-27 19:01:31 duality72 Exp $
+# $Id: SQLServer.pm,v 1.2 2005-06-28 16:39:41 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ should probably be considered a work in progress.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -283,7 +283,7 @@ primary_key_constraint : /constraint/i index_name(?) /primary/i /key/i parens_fi
         } 
     }
 
-foreign_key_constraint : /constraint/i index_name(?) /foreign/i /key/i parens_field_list /references/i table_name parens_field_list(?) on_delete_do(?) on_update_do(?)
+foreign_key_constraint : /constraint/i index_name(?) /foreign/i /key/i parens_field_list /references/i table_name parens_field_list(?) on_delete(?) on_update(?)
     {
         $return = { 
             supertype        => 'constraint',
@@ -292,8 +292,8 @@ foreign_key_constraint : /constraint/i index_name(?) /foreign/i /key/i parens_fi
             fields           => $item[5],
             reference_table  => $item[7],
             reference_fields => $item[8][0], 
-            on_delete_do     => $item[9][0],
-            on_update_do     => $item[10][0],
+            on_delete        => $item[9][0],
+            on_update        => $item[10][0],
         } 
     }
 
@@ -309,10 +309,10 @@ unique_constraint : /unique/i clustered(?) INDEX(?) index_name(?) on_table(?) pa
         } 
     }
 
-on_delete_do : /on delete/i reference_option
+on_delete : /on delete/i reference_option
     { $item[2] }
 
-on_update_do : /on update/i reference_option
+on_update : /on update/i reference_option
     { $item[2] }
 
 reference_option: /cascade/i   | 
@@ -455,8 +455,8 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }

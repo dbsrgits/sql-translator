@@ -97,13 +97,13 @@ sub constraint_ok {
 	"    match_type is '$test->{match_type}'" )
 	if exists $test->{match_type};
 	
-	is( $con->on_delete_do, $test->{on_delete_do},
-	"    on_delete_do is '$test->{on_delete_do}'" )
-	if exists $test->{on_delete_do};
+	is( $con->on_delete, $test->{on_delete},
+	"    on_delete is '$test->{on_delete}'" )
+	if exists $test->{on_delete};
 	
-	is( $con->on_update_do, $test->{on_update_do},
-	"    on_update_do is '$test->{on_update_do}'" )
-	if exists $test->{on_update_do};
+	is( $con->on_update, $test->{on_update},
+	"    on_update is '$test->{on_update}'" )
+	if exists $test->{on_update};
 }
 
 sub test_table {

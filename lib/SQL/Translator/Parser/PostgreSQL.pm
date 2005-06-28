@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.43 2004-10-23 20:18:44 cmungall Exp $
+# $Id: PostgreSQL.pm,v 1.44 2005-06-28 16:39:41 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -394,8 +394,8 @@ column_constraint : constraint_name(?) column_constraint_type deferrable(?) defe
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
             match_type       => $desc->{'match_type'},
-            on_delete_do     => $desc->{'on_delete_do'},
-            on_update_do     => $desc->{'on_update_do'},
+            on_delete        => $desc->{'on_delete'} || $desc->{'on_delete_do'},
+            on_update        => $desc->{'on_update'} || $desc->{'on_update_do'},
         } 
     }
 
@@ -428,8 +428,8 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
             reference_table  => $item[2],
             reference_fields => $item[3][0],
             match_type       => $item[4][0],
-            on_delete_do     => $on_delete,
-            on_update_do     => $on_update,
+            on_delete        => $on_delete,
+            on_update        => $on_update,
         }
     }
 
@@ -601,8 +601,8 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
             match_type       => $desc->{'match_type'}[0],
-            on_delete_do     => $desc->{'on_delete_do'},
-            on_update_do     => $desc->{'on_update_do'},
+            on_delete        => $desc->{'on_delete'} || $desc->{'on_delete_do'},
+            on_update        => $desc->{'on_update'} || $desc->{'on_update_do'},
             comments         => [ @comments ],
         } 
     }
@@ -646,8 +646,8 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
             reference_table  => $item[6],
             reference_fields => $item[7][0],
             match_type       => $item[8][0],
-            on_delete_do     => $on_delete || '',
-            on_update_do     => $on_update || '',
+            on_delete     => $on_delete || '',
+            on_update     => $on_update || '',
         }
     }
 
@@ -979,8 +979,8 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
                 expression       => $cdata->{'expression'},
             ) or die "Can't add constraint of type '" .
                 $cdata->{'type'} .  "' to table '" . $table->name . 

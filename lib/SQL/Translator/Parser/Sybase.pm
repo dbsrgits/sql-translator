@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.9 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: Sybase.pm,v 1.10 2005-06-28 16:39:41 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ DBI-Sybase parser included with SQL::Translator.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -398,8 +398,8 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }

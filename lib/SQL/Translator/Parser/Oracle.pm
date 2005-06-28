@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.19 2004-09-17 21:52:46 kycl4rk Exp $
+# $Id: Oracle.pm,v 1.20 2005-06-28 16:39:41 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -343,7 +343,7 @@ column_constraint : constraint_name(?) column_constraint_type
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
 #            match_type       => $desc->{'match_type'},
-#            on_update_do     => $desc->{'on_update_do'},
+#            on_update        => $desc->{'on_update'},
         } 
     }
 
@@ -358,14 +358,14 @@ column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
         { $return = { type => 'primary_key' } }
     | /check/i '(' /[^)]+/ ')' 
         { $return = { type => 'check', expression => $item[3] } }
-    | /references/i table_name parens_word_list(?) on_delete_do(?) 
+    | /references/i table_name parens_word_list(?) on_delete(?) 
     {
         $return              =  {
             type             => 'foreign_key',
             reference_table  => $item[2],
             reference_fields => $item[3][0],
 #            match_type       => $item[4][0],
-            on_delete_do     => $item[5][0],
+            on_delete     => $item[5][0],
         }
     }
 
@@ -470,8 +470,8 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
 #            match_type       => $desc->{'match_type'}[0],
-            on_delete_do     => $desc->{'on_delete_do'},
-            on_update_do     => $desc->{'on_update_do'},
+            on_delete        => $desc->{'on_delete'} || $desc->{'on_delete_do'},
+            on_update        => $desc->{'on_update'} || $desc->{'on_update_do'},
             comments         => [ @comments ],
         } 
     }
@@ -500,7 +500,7 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
         }
     }
     |
-    /foreign key/i '(' NAME(s /,/) ')' /references/i table_name parens_word_list(?) on_delete_do(?)
+    /foreign key/i '(' NAME(s /,/) ')' /references/i table_name parens_word_list(?) on_delete(?)
     {
         $return              =  {
             type             => 'foreign_key',
@@ -508,12 +508,12 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
             reference_table  => $item[6],
             reference_fields => $item[7][0],
             match_type       => $item[8][0],
-            on_delete_do     => $item[9][0],
-            on_update_do     => $item[10][0],
+            on_delete     => $item[9][0],
+            on_update     => $item[10][0],
         }
     }
 
-on_delete_do : /on delete/i WORD(s)
+on_delete : /on delete/i WORD(s)
     { $item[2] }
 
 UNIQUE : /unique/i { $return = 1 }
@@ -610,8 +610,8 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }

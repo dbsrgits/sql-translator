@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.49 2005-06-27 20:36:42 duality72 Exp $
+# $Id: MySQL.pm,v 1.50 2005-06-28 16:39:41 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -315,7 +315,7 @@ field_comment2 : /comment/i /'.*?'/
 
 blank : /\s*/
 
-field : field_comment(s?) field_name data_type field_qualifier(s?) field_comment2(?) reference_definition(?) on_update_do(?) field_comment(s?)
+field : field_comment(s?) field_name data_type field_qualifier(s?) field_comment2(?) reference_definition(?) on_update(?) field_comment(s?)
     { 
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
@@ -398,15 +398,15 @@ field_qualifier : /on update/i CURRENT_TIMESTAMP
         }
     }
 
-reference_definition : /references/i table_name parens_field_list(?) match_type(?) on_delete_do(?) on_update_do(?)
+reference_definition : /references/i table_name parens_field_list(?) match_type(?) on_delete(?) on_update(?)
     {
         $return = {
             type             => 'foreign_key',
             reference_table  => $item[2],
             reference_fields => $item[3][0],
             match_type       => $item[4][0],
-            on_delete_do     => $item[5][0],
-            on_update_do     => $item[6][0],
+            on_delete        => $item[5][0],
+            on_update        => $item[6][0],
         }
     }
 
@@ -414,10 +414,10 @@ match_type : /match full/i { 'full' }
     |
     /match partial/i { 'partial' }
 
-on_delete_do : /on delete/i reference_option
+on_delete : /on delete/i reference_option
     { $item[2] }
 
-on_update_do : 
+on_update : 
     /on update/i 'CURRENT_TIMESTAMP'
     { $item[2] }
     |
@@ -777,8 +777,8 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }
