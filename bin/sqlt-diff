@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.7 2005-06-27 22:09:42 duality72 Exp $
+# $Id: sqlt-diff,v 1.8 2005-06-28 23:05:47 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -97,7 +97,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
@@ -270,16 +270,23 @@ OPTION:
             );
             if ( $temp_default_value ) {
             	undef $f1_default;
-	            push @diffs_table_adds, sprintf( "ALTER TABLE %s %s %s%s %s%s%s%s%s;",
-	                $t1_name, $target_db =~ /SQLServer/ ? "ALTER COLUMN" : "CHANGE",
-	                $f1_name, $target_db =~ /MySQL/ ? " $f1_name" : '',
-	                $f1_type, ($f1_size && $f1_type !~ /(blob|text)$/) ? "($f1_size)" : '',
-	                $f1_nullable ? '' : ' NOT NULL',
-	                !defined $f1_default || $target_db =~ /SQLServer/ ? ''
-	                	: uc $f1_default eq 'NULL' ? ' DEFAULT NULL'
-	                	: uc $f1_default eq 'CURRENT_TIMESTAMP' ? ' DEFAULT CURRENT_TIMESTAMP'
-	                	: " DEFAULT '$f1_default'",
-	                $f1_auto_inc ? ' AUTO_INCREMENT' : '',
+	            push @diffs_table_adds, sprintf( <<END
+DECLARE \@defname VARCHAR(100), \@cmd VARCHAR(1000)
+SET \@defname = 
+(SELECT name 
+FROM sysobjects so JOIN sysconstraints sc
+ON so.id = sc.constid 
+WHERE object_name(so.parent_obj) = '%s' 
+AND so.xtype = 'D'
+AND sc.colid = 
+ (SELECT colid FROM syscolumns 
+ WHERE id = object_id('%s') AND 
+ name = '%s'))
+SET \@cmd = 'ALTER TABLE %s DROP CONSTRAINT '
++ \@defname
+EXEC(\@cmd)
+END
+					, $t1_name, $t1_name, $f1_name, $t1_name,
 	            );
             }
             next;
@@ -290,9 +297,8 @@ OPTION:
         my $f2_nullable  = $t2_field->is_nullable;
         my $f2_default   = $t2_field->default_value;
         my $f2_auto_inc  = $t2_field->is_auto_increment;
-
         if ( !$t1_field->equals($t2_field, $case_insensitive) ) {
-        	# SQLServer timstamp fields can't be altered, so we drop and add instead
+        	# SQLServer timestamp fields can't be altered, so we drop and add instead
         	if ( $target_db =~ /SQLServer/ && $f2_type eq "timestamp" ) {
         		push @diffs_table_changes, "ALTER TABLE $t1_name DROP COLUMN $f1_name;";
 	            push @diffs_table_changes, sprintf( "ALTER TABLE %s ADD %s %s%s%s%s%s;",
@@ -336,16 +342,12 @@ OPTION:
         }
     }
     
-	my(%table2_indices, @diffs_index_creates, @diffs_index_drops);
-	for my $i2 ( $t2->get_indices ) {
-		$table2_indices{$i2} = $i2;
-	}
+	my(%checked_indices, @diffs_index_creates, @diffs_index_drops);
 INDEX:
 	for my $i1 ( $t1->get_indices ) {
-		for my $i2 ( keys %table2_indices ) {
-			$i2 = $table2_indices{$i2};
+		for my $i2 ( $t2->get_indices ) {
 			if ( $i1->equals($i2, $case_insensitive) ) {
-				delete $table2_indices{$i2};
+				$checked_indices{$i2} = 1;
 				next INDEX;
 			}
 		}
@@ -357,31 +359,35 @@ INDEX:
                 join(",", $i1->fields),
             );
 	}
-	for my $i2 ( keys %table2_indices ) {
-		$i2 = $table2_indices{$i2};
+INDEX2:
+	for my $i2 ( $t2->get_indices ) {
+		next if $checked_indices{$i2};
+		for my $i1 ( $t1->get_indices ) {
+			next INDEX2 if $i2->equals($i1, $case_insensitive);
+		}
 		$target_db =~ /SQLServer/
 			? push @diffs_index_drops, "DROP INDEX $t1_name.".$i2->name.";"
 			: push @diffs_index_drops, "DROP INDEX ".$i2->name." on $t1_name;";
 	}
     
-	my(%table2_constraints, @diffs_constraint_adds, @diffs_constraint_drops);
-	for my $c2 ( $t2->get_constraints ) {
-		$table2_constraints{$c2} = $c2;
-	}
+	my(%checked_constraints, @diffs_constraint_adds, @diffs_constraint_drops);
 CONSTRAINT:
 	for my $c1 ( $t1->get_constraints ) {
-		for my $c2 ( keys %table2_constraints ) {
-			$c2 = $table2_constraints{$c2};
+		for my $c2 ( $t2->get_constraints ) {
 			if ( $c1->equals($c2, $case_insensitive) ) {
-				delete $table2_constraints{$c2};
+				$checked_constraints{$c2} = 1;
 				next CONSTRAINT;
 			}
 		}
 		push @diffs_constraint_adds, "ALTER TABLE $t1_name ADD ".
 			constraint_to_string($c1, $source_schema).";";
 	}
-	for my $c2 ( keys %table2_constraints ) {
-		$c2 = $table2_constraints{$c2};
+CONSTRAINT2:
+	for my $c2 ( $t2->get_constraints ) {
+		next if $checked_constraints{$c2};
+		for my $c1 ( $t1->get_constraints ) {
+			next CONSTRAINT2 if $c2->equals($c1, $case_insensitive);
+		}
 		if ( $c2->type eq UNIQUE ) {
 			push @diffs_constraint_drops, "ALTER TABLE $t1_name DROP INDEX ".
 				$c2->name.";";
