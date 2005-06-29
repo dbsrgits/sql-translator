@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id: View.pm,v 1.10 2005-06-27 21:59:20 duality72 Exp $
+# $Id: View.pm,v 1.11 2005-06-29 22:02:29 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 
@@ -103,7 +103,7 @@ names and keep them in order by the first occurrence of a field name.
         $self->{'fields'} = \@unique;
     }
 
-    return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
+    return wantarray ? @{ $self->{'fields'} || [] } : ($self->{'fields'} || '');
 }
 
 # ----------------------------------------------------------------------
@@ -227,10 +227,10 @@ Determines if this view is the same as another
     
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $self->name eq $other->name;
-    return 0 unless $self->is_valid eq $other->is_valid;
+    #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $self->sql eq $other->sql;
-    return 0 unless $self->_compare_objects($self->fields, $other->fields);
-    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+    return 0 unless $self->_compare_objects(scalar $self->fields, scalar $other->fields);
+    return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
     return 1;
 }
 

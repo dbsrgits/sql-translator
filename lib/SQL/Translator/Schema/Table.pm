@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.32 2005-06-28 22:58:06 duality72 Exp $
+# $Id: Table.pm,v 1.33 2005-06-29 22:02:29 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.32 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -844,7 +844,7 @@ an array or array reference.
     push @{ $self->{'options'} }, @$options;
 
     if ( ref $self->{'options'} ) {
-        return wantarray ? @{ $self->{'options'} || [] } : $self->{'options'};
+        return wantarray ? @{ $self->{'options'} || [] } : ($self->{'options'} || '');
     }
     else {
         return wantarray ? () : [];
@@ -919,8 +919,8 @@ Determines if this table is the same as another
     
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $self->name eq $other->name;
-    return 0 unless $self->_compare_objects($self->options, $other->options);
-    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+    return 0 unless $self->_compare_objects(scalar $self->options, scalar $other->options);
+    return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
 
     # Fields
     # Go through our fields

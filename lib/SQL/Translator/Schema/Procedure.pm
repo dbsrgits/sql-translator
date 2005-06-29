@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Procedure;
 
 # ----------------------------------------------------------------------
-# $Id: Procedure.pm,v 1.5 2005-06-27 21:59:20 duality72 Exp $
+# $Id: Procedure.pm,v 1.6 2005-06-29 22:02:29 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,7 +54,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ Gets and set the parameters of the stored procedure.
         $self->{'parameters'} = \@unique;
     }
 
-    return wantarray ? @{ $self->{'parameters'} || [] } : $self->{'parameters'};
+    return wantarray ? @{ $self->{'parameters'} || [] } : ($self->{'parameters'} || '');
 }
 
 # ----------------------------------------------------------------------
@@ -259,10 +259,10 @@ Determines if this procedure is the same as another
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $self->name eq $other->name;
     return 0 unless $self->sql eq $other->sql;
-    return 0 unless $self->_compare_objects($self->parameters, $other->parameters);
+    return 0 unless $self->_compare_objects(scalar $self->parameters, scalar $other->parameters);
 #    return 0 unless $self->comments eq $other->comments;
     return 0 unless $self->owner eq $other->owner;
-    return 0 unless $self->_compare_objects($self->extra, $other->extra);
+    return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
     return 1;
 }
 
