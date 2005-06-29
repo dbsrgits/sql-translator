@@ -130,7 +130,7 @@ schema:
       constraints:
         - deferrable: 1
           expression: ''
-          fields: ~
+          fields: ''
           match_type: ''
           name: ''
           on_delete: ''
@@ -220,7 +220,7 @@ schema:
       perform_action_when: ~
   views:
     person_pet:
-      fields: ~
+      fields: ''
       name: person_pet
       order: 1
       sql: |
