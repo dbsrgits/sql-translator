@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diagram,v 1.5 2005-06-30 01:03:29 kycl4rk Exp $
+# $Id: sqlt-diagram,v 1.6 2005-06-30 01:04:24 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -35,7 +35,7 @@ sqlt-diagram - Automatically create a diagram from a database schema
     -t|--title         Title to give schema
     -c|--cols          Number of columns
     -n|--no-lines      Don't draw lines
-    -f|--font-size     Font size ("small," "medium," "large," or "huge,"
+    --font-size        Font size ("small," "medium," "large," or "huge,"
                        default "medium")
     --gutter           Gutter size between tables
     --color            Add colors
@@ -76,7 +76,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
