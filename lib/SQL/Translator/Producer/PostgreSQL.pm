@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.22 2004-02-09 23:02:15 kycl4rk Exp $
+# $Id: PostgreSQL.pm,v 1.23 2005-07-05 16:20:43 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -38,7 +38,7 @@ producer.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -184,9 +184,17 @@ sub produce {
         $table_name       = mk_name( $table_name, '', undef, 1 );
         my $table_name_ur = unreserve($table_name);
 
+print STDERR "$table_name table_name\n";
         my ( @comments, @field_defs, @sequence_defs, @constraint_defs );
 
         push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
+
+        if ( $table->comments and !$no_comments ){
+            my $c = "-- Comments: \n-- ";
+            $c .= join "\n-- ",  $table->comments;
+            $c .= "\n--";
+            push @comments, $c;
+        }
 
         #
         # Fields
@@ -197,7 +205,11 @@ sub produce {
                 $field->name, '', \%field_name_scope, 1 
             );
             my $field_name_ur = unreserve( $field_name, $table_name );
-            my $field_def     = qq["$field_name_ur"];
+            my $field_comments = $field->comments 
+                ? "-- " . $field->comments . "\n  " 
+                : '';
+
+            my $field_def     = $field_comments.qq["$field_name_ur"];
 
             #
             # Datatype

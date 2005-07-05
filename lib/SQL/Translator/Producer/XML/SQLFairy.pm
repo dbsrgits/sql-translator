@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.19 2004-11-05 16:37:00 grommit Exp $
+# $Id: SQLFairy.pm,v 1.20 2005-07-05 16:20:43 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Ken Y. Clark <kclark@cpan.org>,
 #                    darren chamberlain <darren@cpan.org>,
@@ -165,7 +165,7 @@ To convert your old format files simply pass them through the translator :)
 
 use strict;
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 
 use Exporter;
 use base qw(Exporter);
@@ -260,6 +260,17 @@ sub produce {
             /],
         );
 
+        #
+        # Comments
+        #
+        xml_obj_children( $xml, $table,
+            tag   => 'comment',
+            collection_tag => "comments",
+            methods => [qw/
+                comments
+            /],
+        );
+
         $xml->endTag( [ $Namespace => 'table' ] );
     }
     $xml->endTag( [ $Namespace => 'tables' ] );
@@ -309,17 +320,28 @@ sub xml_obj_children {
     my ($name,$collection_name,$methods)
         = @args{qw/tag collection_tag methods/};
     $collection_name ||= "${name}s";
-    my $meth = "get_$collection_name";
+
+    my $meth;
+    if ( $collection_name eq 'comments' ) {
+      $meth = 'comments';
+    } else {
+      $meth = "get_$collection_name";
+    }
 
     my @kids = $parent->$meth;
     #@kids || return;
     $xml->startTag( [ $Namespace => $collection_name ] );
+
     for my $obj ( @kids ) {
-        xml_obj($xml, $obj,
-            tag     => "$name",
-            end_tag => 1,
-            methods => $methods,
-        );
+        if ( $collection_name eq 'comments' ){
+            $xml->dataElement( [ $Namespace => 'comment' ], $obj );
+        } else {
+            xml_obj($xml, $obj,
+                tag     => "$name",
+                end_tag => 1,
+                methods => $methods,
+            );
+        }
     }
     $xml->endTag( [ $Namespace => $collection_name ] );
 }

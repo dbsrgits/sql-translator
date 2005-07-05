@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.12 2005-06-13 18:23:10 mwz444 Exp $
+# $Id: SQLite.pm,v 1.13 2005-07-05 16:20:43 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -82,6 +82,15 @@ sub produce {
         $create .= "CREATE TABLE $table_name (\n";
 
         #
+        # Comments
+        #
+        if ( $table->comments and !$no_comments ){
+             $create .= "-- Comments: \n-- ";
+             $create .= join "\n-- ",  $table->comments;
+             $create .= "\n--\n\n";
+        }
+
+        #
         # How many fields in PK?
         #
         my $pk        = $table->primary_key;
@@ -94,7 +103,11 @@ sub produce {
         for my $field ( @fields ) {
             my $field_name = $field->name;
             debug("PKG: Looking at field '$field_name'\n");
-            my $field_def = $field_name;
+            my $field_comments = $field->comments 
+                ? "-- " . $field->comments . "\n  " 
+                : '';
+
+            my $field_def = $field_comments.$field_name;
 
             # data type and size
             my $size      = $field->size;
