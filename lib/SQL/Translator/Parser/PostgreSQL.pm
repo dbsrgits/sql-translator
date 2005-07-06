@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.44 2005-06-28 16:39:41 mwz444 Exp $
+# $Id: PostgreSQL.pm,v 1.45 2005-07-06 05:37:32 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -189,7 +189,7 @@ update : /update/i /[^;]*/ ';'
 #
 # Create table.
 #
-create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
+create : create_table table_name '(' create_definition(s? /,/) ')' table_option(s?) ';'
     {
         my $table_name                       = $item{'table_name'};
         $tables{ $table_name }{'order'}      = ++$table_order;
