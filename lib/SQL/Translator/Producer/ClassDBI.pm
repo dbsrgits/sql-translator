@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.42 2005-07-07 19:24:16 allenday Exp $
+# $Id: ClassDBI.pm,v 1.43 2005-07-07 22:37:19 allenday Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.42 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -276,9 +276,7 @@ sub produce {
                 );
                 my $fk         = $field->foreign_key_reference;
                 my $ref_table  = $fk->reference_table;
-                my $ref_pkg    = join('::', 
-                    $main_pkg_name, $t->format_package_name($ref_table)
-                );
+                my $ref_pkg    = $t->format_package_name($ref_table);
                 my $ref_field  = ( $fk->reference_fields )[0];
 #                my $fk_method  = join('::',
 #                    $table_pkg_name, $t->format_fk_name( $ref_table )
