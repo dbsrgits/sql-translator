@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.1 2005-06-27 19:00:19 duality72 Exp $
+# $Id: SQLServer.pm,v 1.2 2005-07-07 15:20:00 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -243,7 +243,7 @@ $table_info->{TABLE_NAME}", 'COLUMN_NAME');
             }
 
             # add in foreign keys
-            my $h = $dbh->selectall_hashref("sp_fkeys NULL,
+            $h = $dbh->selectall_hashref("sp_fkeys NULL,
 \@fktable_name = '$table_info->{TABLE_NAME}'", 'FK_NAME');
 			foreach my $fk ( values %{$h} ) {
 				my $constraint = $table->add_constraint( name => $fk->{FK_NAME},
