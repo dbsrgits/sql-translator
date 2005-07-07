@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.8 2005-06-28 23:05:47 duality72 Exp $
+# $Id: sqlt-diff,v 1.9 2005-07-07 21:30:42 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -97,7 +97,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
@@ -145,7 +145,6 @@ for my $in ( @input ) {
     my $t = SQL::Translator->new;
     $t->debug( $debug );
     $t->parser( $parser )            or die $tr->error;
-    $t->producer( 'YAML' )           or die $tr->error;
     my $out = $t->translate( $file ) or die $tr->error;
     my $schema = $t->schema;
     unless ( $schema->name ) {
