@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.50 2005-06-28 16:39:41 mwz444 Exp $
+# $Id: MySQL.pm,v 1.51 2005-07-11 21:14:22 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.51 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -286,7 +286,6 @@ comment : /^\s*(?:#|-{2}).*\n/
         $comment    =~ s/^\s*(#|--)\s*//;
         $comment    =~ s/\s*$//;
         $return     = $comment;
-        push @table_comments, $comment;
     }
 
 comment : /\/\*/ /[^\*]+/ /\*\// ';'
