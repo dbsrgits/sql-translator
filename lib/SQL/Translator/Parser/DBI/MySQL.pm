@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.4 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.5 2005-07-12 16:05:35 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -42,7 +42,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -69,6 +69,7 @@ sub parse {
             my $key         = $col->{'key'};
             my $default     = $col->{'default'};
             my $extra       = $col->{'extra'};
+            my $is_auto_inc = $extra =~ s/auto_increment//i;
 
             my ( $data_type, $size, $char_set );
 
@@ -108,7 +109,7 @@ sub parse {
                 data_type         => $data_type,
                 size              => $size,
                 default_value     => $default,
-                is_auto_increment => $extra eq 'auto_increment',
+                is_auto_increment => $is_auto_inc,
                 is_nullable       => $is_nullable,
                 comments          => $extra,
             ) or die $table->error;
