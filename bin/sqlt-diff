@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.9 2005-07-07 21:30:42 mwz444 Exp $
+# $Id: sqlt-diff,v 1.10 2005-07-15 23:36:13 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -97,7 +97,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
@@ -240,7 +240,7 @@ OPTION:
         my $f1_nullable  = $t1_field->is_nullable;
         my $f1_default   = $t1_field->default_value;
         my $f1_auto_inc  = $t1_field->is_auto_increment;
-        my $t2_field     = $t2->get_field( $f1_name );
+        my $t2_field     = $t2->get_field( $f1_name, $case_insensitive );
         my $f1_full_name = "$s1_name.$t1_name.$t1_name";
         warn "FIELD '$f1_full_name'\n" if $debug;
 
