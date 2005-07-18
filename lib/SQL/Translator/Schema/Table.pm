@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.34 2005-07-15 23:36:13 duality72 Exp $
+# $Id: Table.pm,v 1.35 2005-07-18 16:32:52 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -494,7 +494,7 @@ Returns a field by the name provided.
     if ( $case_insensitive ) {
     	$field_name = uc($field_name);
     	foreach my $field ( keys %{$self->{fields}} ) {
-    		return $self->{fields}{$field_name} if $field_name eq uc($field);
+    		return $self->{fields}{$field} if $field_name eq uc($field);
     	}
     	return $self->error(qq[Field "$field_name" does not exist]);
     }
