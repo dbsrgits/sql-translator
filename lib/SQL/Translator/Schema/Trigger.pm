@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Trigger;
 
 # ----------------------------------------------------------------------
-# $Id: Trigger.pm,v 1.7 2005-06-29 22:02:29 duality72 Exp $
+# $Id: Trigger.pm,v 1.8 2005-08-10 16:46:55 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,7 +54,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 
@@ -321,9 +321,10 @@ Determines if this trigger is the same as another
 
     my $self = shift;
     my $other = shift;
+    my $case_insensitive = shift;
     
     return 0 unless $self->SUPER::equals($other);
-    return 0 unless $self->name eq $other->name;
+    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $self->perform_action_when eq $other->perform_action_when;
     return 0 unless $self->database_event eq $other->database_event;
