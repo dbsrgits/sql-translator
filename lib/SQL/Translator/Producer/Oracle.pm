@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.33 2005-05-25 15:17:49 mwz444 Exp $
+# $Id: Oracle.pm,v 1.34 2005-08-10 16:33:39 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ Creates an SQL DDL suitable for Oracle.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.33 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.34 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -264,7 +264,7 @@ sub produce {
                 #
                 if ( 
                     $data_type =~ /^number$/i && 
-                    $default   !~ /^\d+$/     &&
+                    $default   !~ /^-?\d+$/     &&
                     $default   !~ m/null/i
                 ) {
                     if ( $default =~ /^true$/i ) {
@@ -382,12 +382,19 @@ sub produce {
             next if !@fields && $c->type ne CHECK_C;
 
             if ( $c->type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name, 'pk' );
-                push @constraint_defs, "CONSTRAINT $name PRIMARY KEY ".
-                    '(' . join( ', ', @fields ) . ')';
+                #$name ||= mk_name( $table_name, 'pk' );
+                push @constraint_defs, ($name ? "CONSTRAINT $name " : '') .
+                	'PRIMARY KEY (' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq UNIQUE ) {
-                $name = mk_name( $name || $table_name, 'u' );
+            	# Don't create UNIQUE constraints identical to the primary key
+            	if ( my $pk = $table->primary_key ) {
+					my $u_fields = join(":", @fields);
+					my $pk_fields = join(":", $pk->fields);
+					next if $u_fields eq $pk_fields;
+            	}
+
+                $name ||= mk_name( $name || $table_name, 'u' );
 
                 for my $f ( $c->fields ) {
                     my $field_def = $table->get_field( $f ) or next;
@@ -403,12 +410,12 @@ sub produce {
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq CHECK_C ) {
-                $name = mk_name( $name || $table_name, 'ck' );
+                $name ||= mk_name( $name || $table_name, 'ck' );
                 my $expression = $c->expression || '';
                 push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                $name = mk_name( join('_', $table_name, $c->fields), 'fk' );
+                $name ||= mk_name( join('_', $table_name, $c->fields), 'fk' );
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
