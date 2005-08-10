@@ -25,10 +25,9 @@ my $create2 = (-d "t")
     : catfile($Bin, "t", @create2);
 
 BEGIN {
-    maybe_plan(12,
+    maybe_plan(14,
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::YAML',
         );
 }
 
@@ -70,6 +69,10 @@ like($out, qr/ALTER TABLE person ADD UNIQUE UC_person_id/,
     "Detected missing unique constraint");
 like($out, qr/ALTER TABLE person ENGINE=InnoDB;/, 
     "Detected altered table option");
+like($out, qr/ALTER TABLE employee DROP FOREIGN KEY/, 
+    "Detected drop foreign key");
+like($out, qr/ALTER TABLE employee ADD CONSTRAINT/, 
+    "Detected add constraint");
     
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 $out = `@cmd`;
