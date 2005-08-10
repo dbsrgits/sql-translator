@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.20 2005-06-28 16:39:41 mwz444 Exp $
+# $Id: Oracle.pm,v 1.21 2005-08-10 15:17:48 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -114,7 +114,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 
 my $parser; 
 
-$GRAMMAR = q!
+$GRAMMAR = q`
 
 { my ( %tables, %indices, %constraints, $table_order, @table_comments ) }
 
@@ -136,6 +136,7 @@ startrule : statement(s) eofile
 eofile : /^\Z/
 
 statement : remark
+	| run
     | prompt
     | create
     | table_comment
@@ -195,28 +196,36 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         1;
     }
 
-create : /create/i UNIQUE(?) /index/i WORD /on/i table_name parens_word_list table_option(?) ';'
+create : create_index index_name /on/i table_name parens_word_list table_option(?) ';'
     {
-        my $table_name = $item[6];
-        if ( $item[2] ) {
+        my $table_name = $item[4];
+        if ( $item[1] ) {
             push @{ $constraints{ $table_name } }, {
-                name   => $item[4],
+                name   => $item[2],
                 type   => 'unique',
-                fields => $item[7][0],
+                fields => $item[5],
             };
         }
         else {
             push @{ $indices{ $table_name } }, {
-                name   => $item[4],
+                name   => $item[2],
                 type   => 'normal',
-                fields => $item[7][0],
+                fields => $item[5],
             };
         }
     }
 
 # Create anything else (e.g., domain, function, etc.)
-create : /create/i WORD /[^;]+/ ';'
+create : ...!create_table ...!create_index /create/i WORD /[^;]+/ ';'
     { @table_comments = () }
+
+create_index : /create/i UNIQUE(?) /index/i
+	{ $return = $item[2] }
+
+index_name : NAME '.' NAME
+    { $item[3] }
+    | NAME 
+    { $item[1] }
 
 global_temporary: /global/i /temporary/i
 
@@ -252,6 +261,8 @@ comment : /\/\*/ /[^\*]+/ /\*\//
     }
 
 remark : /^REM\s+.*\n/
+
+run : /^(RUN|\/)\s+.*\n/
 
 prompt : /prompt/i /(table|index|sequence|trigger)/i ';'
 
@@ -326,7 +337,7 @@ data_type : ora_data_type parens_value_list(?)
         } 
     }
 
-column_constraint : constraint_name(?) column_constraint_type 
+column_constraint : constraint_name(?) column_constraint_type constraint_state(s?)
     {
         my $desc       = $item{'column_constraint_type'};
         my $type       = $desc->{'type'};
@@ -369,15 +380,15 @@ column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
         }
     }
 
-#constraint_state : deferrable { $return = { type => $item[1] } }
-#    | deferred { $return = { type => $item[1] } }
-#    | /(no)?rely/ { $return = { type => $item[1] } }
+constraint_state : deferrable { $return = { type => $item[1] } }
+    | deferred { $return = { type => $item[1] } }
+    | /(no)?rely/i { $return = { type => $item[1] } }
 #    | /using/i /index/i using_index_clause 
-#        { $return = { type => 'using_index', index => $item[3] }
-#    | (dis)?enable { $return = { type => $item[1] } }
-#    | (no)?validate { $return = { type => $item[1] } }
-#    | /exceptions/i /into/i table_name 
-#        { $return = { type => 'exceptions_into', table => $item[3] } }
+#        { $return = { type => 'using_index', index => $item[3] } }
+    | /(dis|en)able/i { $return = { type => $item[1] } }
+    | /(no)?validate/i { $return = { type => $item[1] } }
+    | /exceptions/i /into/i table_name 
+        { $return = { type => 'exceptions_into', table => $item[3] } }
 
 deferrable : /not/i /deferrable/i 
     { $return = 'not_deferrable' }
@@ -399,13 +410,13 @@ ora_data_type :
     |
     /(pls_integer|binary_integer)/i { $return = 'integer' }
     |
-    /interval\s+day/i { $return = 'interval_day' }
+    /interval\s+day/i { $return = 'interval day' }
     |
-    /interval\s+year/i { $return = 'interval_year' }
+    /interval\s+year/i { $return = 'interval year' }
     |
-    /long\s+raw/i { $return = 'long_raw' }
+    /long\s+raw/i { $return = 'long raw' }
     |
-    /(long|date|timestamp|raw|rowid|urowid|mlslabel|clob|nclob|blob|bfile)/i { $item[1] }
+    /(long|date|timestamp|raw|rowid|urowid|mlslabel|clob|nclob|blob|bfile|float)/i { $item[1] }
 
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
@@ -451,7 +462,7 @@ key_value : WORD VALUE
 
 table_option : /[^;]+/
 
-table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrable(?) deferred(?) comment(s?)
+table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrable(?) deferred(?) constraint_state(s?) comment(s?)
     {
         my $desc       = $item{'table_constraint_type'};
         my $type       = $desc->{'type'};
@@ -476,7 +487,7 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
         } 
     }
 
-table_constraint_type : /primary key/i '(' NAME(s /,/) ')' 
+table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
     { 
         $return = {
             type   => 'primary_key',
@@ -531,7 +542,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     | /NULL/
     { 'NULL' }
 
-!;
+`;
 
 # -------------------------------------------------------------------
 sub parse {
