@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.10 2005-07-15 23:36:13 duality72 Exp $
+# $Id: sqlt-diff,v 1.11 2005-08-10 16:57:06 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -97,7 +97,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {
@@ -174,9 +174,9 @@ for my $t1 ( $source_schema->get_tables ) {
     unless ( $t2 ) {
         warn "Couldn't find table '$s1_name.$t1_name' in '$s2_name'\n" 
             if $debug;
-        if ( $target_db =~ /SQLServer/ ) {
+        if ( $target_db =~ /(SQLServer|Oracle)/ ) {
 			for my $constraint ( $t1->get_constraints ) {
-				next if $constraint->type eq PRIMARY_KEY;
+				next if $constraint->type ne FOREIGN_KEY;
 				push @diffs_at_end, "ALTER TABLE $t1_name ADD ".
 					constraint_to_string($constraint, $source_schema).";";
 				$t1->drop_constraint($constraint);
@@ -257,15 +257,17 @@ OPTION:
             	my(@numeric_types) = qw(decimal numeric float real int bigint smallint tinyint);
             	$f1_default = grep($_ eq $f1_type, @numeric_types) ? 0 : '';
             }
-            push @diffs_table_adds, sprintf( "ALTER TABLE %s ADD %s %s%s%s%s%s;",
-                $t1_name, $f1_name, $f1_type,
+            push @diffs_table_adds, sprintf( "ALTER TABLE %s ADD %s%s %s%s%s%s%s%s;",
+                $t1_name, $target_db =~ /Oracle/ ? '(' : '',
+                $f1_name, $f1_type,
                 ($f1_size && $f1_type !~ /(blob|text)$/) ? "($f1_size)" : '',
-                $f1_nullable ? '' : ' NOT NULL',
                 !defined $f1_default ? ''
                 	: uc $f1_default eq 'NULL' ? ' DEFAULT NULL'
                 	: uc $f1_default eq 'CURRENT_TIMESTAMP' ? ' DEFAULT CURRENT_TIMESTAMP'
                 	: " DEFAULT '$f1_default'",
+                $f1_nullable ? '' : ' NOT NULL',
                 $f1_auto_inc ? ' AUTO_INCREMENT' : '',
+                $target_db =~ /Oracle/ ? ')' : '',
             );
             if ( $temp_default_value ) {
             	undef $f1_default;
@@ -300,29 +302,36 @@ END
         	# SQLServer timestamp fields can't be altered, so we drop and add instead
         	if ( $target_db =~ /SQLServer/ && $f2_type eq "timestamp" ) {
         		push @diffs_table_changes, "ALTER TABLE $t1_name DROP COLUMN $f1_name;";
-	            push @diffs_table_changes, sprintf( "ALTER TABLE %s ADD %s %s%s%s%s%s;",
-	                $t1_name, $f1_name, $f1_type,
+	            push @diffs_table_changes, sprintf( "ALTER TABLE %s ADD %s%s %s%s%s%s%s%s;",
+	                $t1_name, $target_db =~ /Oracle/ ? '(' : '',
+	                $f1_name, $f1_type,
 	                ($f1_size && $f1_type !~ /(blob|text)$/) ? "($f1_size)" : '',
-	                $f1_nullable ? '' : ' NOT NULL',
 	                !defined $f1_default ? ''
 	                	: uc $f1_default eq 'NULL' ? ' DEFAULT NULL'
 	                	: uc $f1_default eq 'CURRENT_TIMESTAMP' ? ' DEFAULT CURRENT_TIMESTAMP'
 	                	: " DEFAULT '$f1_default'",
+	                $f1_nullable ? '' : ' NOT NULL',
 	                $f1_auto_inc ? ' AUTO_INCREMENT' : '',
+	                $target_db =~ /Oracle/ ? ')' : '',
 	            );
 	            next;
         	}
-        		
-            push @diffs_table_changes, sprintf( "ALTER TABLE %s %s %s%s %s%s%s%s%s;",
-                $t1_name, $target_db =~ /SQLServer/ ? "ALTER COLUMN" : "CHANGE",
+
+			my $changeText = $target_db =~ /SQLServer/ ? 'ALTER COLUMN' :
+				$target_db =~ /Oracle/ ? 'MODIFY (' : 'CHANGE';
+			my $nullText = $f1_nullable ? '' : ' NOT NULL';
+			$nullText = '' if $target_db =~ /Oracle/ && $f1_nullable == $f2_nullable;
+            push @diffs_table_changes, sprintf( "ALTER TABLE %s %s %s%s %s%s%s%s%s%s;",
+                $t1_name, $changeText,
                 $f1_name, $target_db =~ /MySQL/ ? " $f1_name" : '',
                 $f1_type, ($f1_size && $f1_type !~ /(blob|text)$/) ? "($f1_size)" : '',
-                $f1_nullable ? '' : ' NOT NULL',
+                $nullText,
                 !defined $f1_default || $target_db =~ /SQLServer/ ? ''
                 	: uc $f1_default eq 'NULL' ? ' DEFAULT NULL'
                 	: uc $f1_default eq 'CURRENT_TIMESTAMP' ? ' DEFAULT CURRENT_TIMESTAMP'
                 	: " DEFAULT '$f1_default'",
                 $f1_auto_inc ? ' AUTO_INCREMENT' : '',
+                $target_db =~ /Oracle/ ? ')' : '',
             );
             if ( defined $f1_default && $target_db =~ /SQLServer/ ) {
             	# Adding a column with a default value for SQL Server means adding a 
@@ -369,16 +378,17 @@ INDEX2:
 			: push @diffs_index_drops, "DROP INDEX ".$i2->name." on $t1_name;";
 	}
     
-	my(%checked_constraints, @diffs_constraint_adds, @diffs_constraint_drops);
+	my(%checked_constraints, @diffs_constraint_drops);
 CONSTRAINT:
 	for my $c1 ( $t1->get_constraints ) {
+		next if $source_db =~ /Oracle/ && $c1->type eq UNIQUE && $c1->name =~ /^SYS_/i;
 		for my $c2 ( $t2->get_constraints ) {
 			if ( $c1->equals($c2, $case_insensitive) ) {
 				$checked_constraints{$c2} = 1;
 				next CONSTRAINT;
 			}
 		}
-		push @diffs_constraint_adds, "ALTER TABLE $t1_name ADD ".
+		push @diffs_at_end, "ALTER TABLE $t1_name ADD ".
 			constraint_to_string($c1, $source_schema).";";
 	}
 CONSTRAINT2:
@@ -399,8 +409,8 @@ CONSTRAINT2:
 	}
 	
 	push @diffs, @diffs_index_drops, @diffs_constraint_drops,
-		@diffs_table_options, @diffs_table_adds, @diffs_table_changes,
-		@diffs_constraint_adds, @diffs_index_creates;
+		@diffs_table_options, @diffs_table_adds,
+		@diffs_table_changes, @diffs_index_creates;
 }
 
 for my $t2 ( $target_schema->get_tables ) {
@@ -438,7 +448,7 @@ push(@diffs, @diffs_at_end);
 
 if ( @diffs ) {
     print join( "\n", 
-        "-- Convert schema '$s2_name' to '$s1_name':\n", @diffs, '' 
+        "-- Convert schema '$s2_name' to '$s1_name':\n", @diffs, "\n"
     );
 }
 else {
@@ -448,15 +458,25 @@ else {
 sub constraint_to_string {
 	my $c = shift;
 	my $schema = shift or die "No schema given";
-	my @fields = $c->fields or return '';
+	my @fields = $c->field_names or return '';
 
 	if ( $c->type eq PRIMARY_KEY ) {
-		return 'PRIMARY KEY (' . join(', ', @fields). ')';
+		if ( $target_db =~ /Oracle/ ) {
+			return (defined $c->name ? 'CONSTRAINT '.$c->name.' ' : '') .
+				'PRIMARY KEY (' . join(', ', @fields). ')';
+		} else {
+			return 'PRIMARY KEY (' . join(', ', @fields). ')';
+		}
 	}
 	elsif ( $c->type eq UNIQUE ) {
-		return 'UNIQUE '.
-			(defined $c->name ? $c->name.' ' : '').
-			'(' . join(', ', @fields). ')';
+		if ( $target_db =~ /Oracle/ ) {
+			return (defined $c->name ? 'CONSTRAINT '.$c->name.' ' : '') .
+				'UNIQUE (' . join(', ', @fields). ')';
+		} else {
+			return 'UNIQUE '.
+				(defined $c->name ? $c->name.' ' : '').
+				'(' . join(', ', @fields). ')';
+		}
 	}
 	elsif ( $c->type eq FOREIGN_KEY ) {
 		my $def = join(' ', 
