@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Object;
 
 # ----------------------------------------------------------------------
-# $Id: Object.pm,v 1.6 2005-06-28 21:43:28 duality72 Exp $
+# $Id: Object.pm,v 1.7 2005-08-10 16:34:47 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -43,7 +43,7 @@ use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
 use vars qw[ $VERSION ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 
 =head1 Construction
@@ -171,7 +171,7 @@ Determines if this object is the same as another.
     my $other = shift;
     
     return 0 unless $other;
-    return 1 if $self eq $other;
+    return 1 if overload::StrVal($self) eq overload::StrVal($other);
     return 0 unless $other->isa( __PACKAGE__ );
     return 1;
 }
