@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.35 2005-07-18 16:32:52 duality72 Exp $
+# $Id: Table.pm,v 1.36 2005-08-10 16:45:40 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.35 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -924,9 +924,10 @@ Determines if this table is the same as another
 
     my $self = shift;
     my $other = shift;
+    my $case_insensitive = shift;
     
     return 0 unless $self->SUPER::equals($other);
-    return 0 unless $self->name eq $other->name;
+    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     return 0 unless $self->_compare_objects(scalar $self->options, scalar $other->options);
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
 
@@ -934,8 +935,8 @@ Determines if this table is the same as another
     # Go through our fields
     my %checkedFields;
     foreach my $field ( $self->get_fields ) {
-    	my $otherField = $other->get_field($field->name);
-    	return 0 unless $field->equals($otherField);
+    	my $otherField = $other->get_field($field->name, $case_insensitive);
+    	return 0 unless $field->equals($otherField, $case_insensitive);
     	$checkedFields{$field->name} = 1;
     }
     # Go through the other table's fields
@@ -950,7 +951,7 @@ Determines if this table is the same as another
 CONSTRAINT:
     foreach my $constraint ( $self->get_constraints ) {
     	foreach my $otherConstraint ( $other->get_constraints ) {
-    		if ( $constraint->equals($otherConstraint) ) {
+    		if ( $constraint->equals($otherConstraint, $case_insensitive) ) {
     			$checkedConstraints{$otherConstraint} = 1;
     			next CONSTRAINT;
     		}
@@ -962,7 +963,7 @@ CONSTRAINT2:
     foreach my $otherConstraint ( $other->get_constraints ) {
     	next if $checkedFields{$otherConstraint};
     	foreach my $constraint ( $self->get_constraints ) {
-    		if ( $otherConstraint->equals($constraint) ) {
+    		if ( $otherConstraint->equals($constraint, $case_insensitive) ) {
     			next CONSTRAINT2;
     		}
     	}
@@ -975,7 +976,7 @@ CONSTRAINT2:
 INDEX:
     foreach my $index ( $self->get_indices ) {
     	foreach my $otherIndex ( $other->get_indices ) {
-    		if ( $index->equals($otherIndex) ) {
+    		if ( $index->equals($otherIndex, $case_insensitive) ) {
     			$checkedIndices{$otherIndex} = 1;
     			next INDEX;
     		}
@@ -987,7 +988,7 @@ INDEX2:
     foreach my $otherIndex ( $other->get_indices ) {
     	next if $checkedIndices{$otherIndex};
     	foreach my $index ( $self->get_indices ) {
-    		if ( $otherIndex->equals($index) ) {
+    		if ( $otherIndex->equals($index, $case_insensitive) ) {
     			next INDEX2;
     		}
     	}
