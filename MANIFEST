@@ -9,7 +9,6 @@ bin/sqltsh
 BUGS
 Build.PL
 Changes
-doap.rdf
 images/sql-fairy.jpg
 lib/SQL/Translator.pm
 lib/SQL/Translator/Manual.pod
@@ -78,8 +77,8 @@ LICENSE
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
-META.yml
 README
+META.yml
 SIGNATURE
 t/02mysql-parser.t
 t/03mysql-to-oracle.t
