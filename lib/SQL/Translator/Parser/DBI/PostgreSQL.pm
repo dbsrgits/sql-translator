@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.8 2005-10-06 20:33:07 scottcain Exp $
+# $Id: PostgreSQL.pm,v 1.9 2005-10-07 16:26:41 scottcain Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -88,15 +88,18 @@ sub parse {
 
         while (my $columnhash = $column_select->fetchrow_hashref ) {
 
-            $table->add_field(
+            #data_type seems to not be populated; perhaps there needs to 
+            #be a mapping of query output to reserved constants in sqlt?
+
+            my $col = $table->add_field(
                               name        => $$columnhash{'attname'},
                               default_value => $$columnhash{'adsrc'},
                               data_type   => $$columnhash{'typename'},
                               order       => $$columnhash{'attnum'},
-                              size        => $$columnhash{'length'},
-                              nullable    => $$columnhash{'attnotnull'} eq 't'
-                                                ? 0 : 1,
                              ) || die $table->error;
+
+            $col->{size} = [$$columnhash{'length'}] if $$columnhash{'length'}>0;
+            $col->{is_nullable} = 1 unless $$columnhash{'attnotnull'};
         }
 
         $index_select->execute($table_oid);
@@ -108,9 +111,14 @@ sub parse {
                      or !defined($$indexhash{'indkey'}) );
 
             my $type;
-            if      ($$indexhash{'indisprimary'} eq 't') {
-                $type = PRIMARY_KEY;
-            } elsif ($$indexhash{'indisunique'}  eq 't') {
+            if      ($$indexhash{'indisprimary'}) {
+                $type = UNIQUE; #PRIMARY_KEY;
+
+                #tell sqlt that this is the primary key:
+                my $col_name=$column_names[($$indexhash{'indkey'} - 1)];
+                $table->get_field($col_name)->{is_primary_key}=1;
+
+            } elsif ($$indexhash{'indisunique'}) {
                 $type = UNIQUE;    
             } else {
                 $type = NORMAL;
@@ -125,7 +133,7 @@ sub parse {
             $table->add_index(
                               name         => $$indexhash{'relname'},
                               type         => $type,
-                              fields       => @columns,
+                              fields       => \@columns,
                              ) || die $table->error;
         }
     }
