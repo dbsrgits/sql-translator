@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 # -------------------------------------------------------------------
-# $Id: ClassDBI.pm,v 1.43 2005-07-07 22:37:19 allenday Exp $
+# $Id: ClassDBI.pm,v 1.44 2005-11-17 21:55:41 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer::ClassDBI;
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.44 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -50,8 +50,9 @@ sub produce {
         $t->format_fk_name( $fmt );
     }
     my $db_user       = $args->{'db_user'} || '';
-    my $db_pass       = $args->{'db_pass'} || '';
-    my $main_pkg_name = $args->{'main_pkg_name'} ||
+    my $db_pass       = $args->{'db_password'} || '';
+    my $main_pkg_name = $args->{'package_name'} ||
+                        # $args->{'main_pkg_name'} || # keep this? undocumented
                         $t->format_package_name('DBI');
     my $header        = header_comment( __PACKAGE__, "# " );
     my $parser_type   = ( split /::/, $t->parser_type )[-1];
@@ -113,7 +114,7 @@ sub produce {
     for my $table ( $schema->get_tables ) {
         my $table_name = $table->name or next;
 
-        my $table_pkg_name = $t->format_package_name($table_name);
+        my $table_pkg_name = join '::', $main_pkg_name, $t->format_package_name($table_name);
         $packages{ $table_pkg_name } = {
             order    => ++$order,
             pkg_name => $table_pkg_name,
