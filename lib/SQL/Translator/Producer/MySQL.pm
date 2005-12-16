@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.45 2005-06-27 20:41:13 duality72 Exp $
+# $Id: MySQL.pm,v 1.46 2005-12-16 05:49:37 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -69,6 +69,15 @@ Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
 automatically set for tables involved in foreign key constraints if it is
 not already set explicitly. See L<"Table Types">.
 
+=item mysql_character_set
+
+MySql-4.1+. Set the tables character set.
+Run SHOW CHARACTER SET to see list.
+
+=item mysql_collate
+
+MySql-4.1+. Set the tables colation order.
+
 =item table.mysql_charset table.mysql_collate
 
 Set the tables default charater set and collation order.
@@ -83,7 +92,7 @@ Set the fields charater set and collation order.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -368,6 +377,11 @@ sub produce {
 		    $create .= " $key=$value";
 		}
         my $mysql_table_type = $table->extra('mysql_table_type');
+        #my $charset          = $table->extra('mysql_character_set');
+        #my $collate          = $table->extra('mysql_collate');
+        #$create .= " Type=$mysql_table_type" if $mysql_table_type;
+        #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
+        #$create .= " COLLATE $collate" if $collate;
         $create .= " Type=$mysql_table_type"
 			if $mysql_table_type && !$table_type_defined;
         my $charset          = $table->extra('mysql_charset');
