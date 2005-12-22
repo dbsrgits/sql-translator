@@ -83,6 +83,7 @@ $ans = <<EOXML;
           <extra />
         </constraint>
       </constraints>
+      <comments></comments>
     </table>
   </tables>
   <views></views>
@@ -291,6 +292,7 @@ $ans = <<EOXML;
       </fields>
       <indices></indices>
       <constraints></constraints>
+      <comments></comments>
     </table>
   </tables>
   <views></views>
