@@ -1,0 +1,30 @@
+[%# vim:ft=tt2 -%]
+[% WRAPPER diagram %]
+    [% WRAPPER layer name="Background" %]
+        [% FOREACH table IN schema.get_tables %]
+            [% INCLUDE 'uml-class-start'
+                name       = table.name
+                stereotype = 'Table'
+                visible_operations = 'false'
+            %]
+              <dia:attribute name="attributes">
+              [% FOREACH field IN table.get_fields;
+                SET type = field.data_type;
+                SET type = "$type($field.size)" IF field.size;
+                INCLUDE "uml-attribute"
+                    name       = field.name
+                    stereotype = 'Field'
+                    type       = type
+                    value      = field.default_value
+                ;
+              END %]
+              </dia:attribute>
+              <dia:attribute name="operations"/>
+              <dia:attribute name="template">
+                <dia:boolean val="false"/>
+              </dia:attribute>
+              <dia:attribute name="templates"/>
+            [% INCLUDE 'uml-class-end' %]
+        [% END %]
+    [% END %]
+[% END %]
