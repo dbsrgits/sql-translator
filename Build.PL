@@ -1,9 +1,10 @@
-# $Id: Build.PL,v 1.8 2005-06-28 21:43:49 duality72 Exp $
+# $Id: Build.PL,v 1.9 2006-01-20 15:04:55 grommit Exp $
 
 use strict;
-use Module::Build;
+use lib './lib';
+use SQL::Translator::Module::Build;
 
-my $builder           =  Module::Build->new(
+my $builder = SQL::Translator::Module::Build->new(
     create_readme     => 0,
     dist_abstract     => 'SQL DDL transformations and more',
     dist_author       => 'Ken Y. Clark <kclark@cpan.org>',
@@ -46,7 +47,32 @@ my $builder           =  Module::Build->new(
         'Test::More'              => 0.6,
         'Test::Exception'         => 0,
         'Test::Differences'       => 0,
-    }
+    },
+
+    get_options => {
+        # Where to store additional files such as templates.
+        # TODO: Should be OS dependant. See Module::Build::os_type()
+        install_dir => { type=>'=s', default=>'/usr/local/share/sqlfairy' },
+    },
 );
+
+my $install_dir = $builder->args('install_dir');
+print "SqlFairy needs to install some additional files such as templates.\n";
+$install_dir = $builder->prompt( "Where should they go?", $install_dir );
+print "\n";
+
+# Add the install (and template) dir to the config data. They will then be
+# available via the (Module::Build) generated SQL::Translator::ConfigData.
+# During build time they are availiable from $builder->config_data( NAME )
+my $template_dir = "$install_dir/template";
+$builder->config_data( install_dir  => $install_dir );
+$builder->config_data( template_dir => $template_dir );
+
+# Add build element for templates, these are processed by
+# SQL::Translator::Module::Build::process_template_files
+$builder->add_build_element('template');
+$builder->install_path->{template} = $template_dir;
+
+
 $builder->create_build_script;
 print "Now run './Build', './Build test', and './Build install'\n";

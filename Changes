@@ -1,6 +1,7 @@
 
 * Added mysql_character_set for 4.1+ -mda
 * Two experimental filters. -mda
+* Added build support for installing templates. -mda
 
 # -----------------------------------------------------------
 # 0.7    2005-06-10
