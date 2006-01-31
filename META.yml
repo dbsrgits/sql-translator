@@ -1,0 +1,209 @@
+---
+name: SQL-Translator
+version: 0.07
+author: Ken Y. Clark <kclark@cpan.org>
+abstract: SQL DDL transformations and more
+license: gpl
+requires:
+  Class::Base: 0
+  Class::Data::Inheritable: 0.02
+  Class::MakeMethods: 0
+  IO::Dir: 0
+  Log::Log4perl: 0
+  Parse::RecDescent: 1.94
+  Pod::Usage: 0
+  Template: 2.1
+recommends:
+  GD: 0
+  GraphViz: 0
+  IO::File: 0
+  IO::Scalar: 0
+  Spreadsheet::ParseExcel: 0.2602
+  Text::ParseWords: 0
+  Text::RecordParser: 0.02
+  XML::Writer: 0.5
+  XML::XPath: 1.13
+  YAML: 0.39
+build_requires:
+  File::Basename: 0
+  File::Spec: 0
+  Test::Differences: 0
+  Test::Exception: 0
+  Test::More: 0.6
+provides:
+  Parse::RecDescent::SQL::Translator::Parser::DB2::Grammar:
+    file: lib/SQL/Translator/Parser/DB2/Grammar.pm
+  SQL::Translator:
+    file: lib/SQL/Translator.pm
+    version: 0.07
+  SQL::Translator::Parser:
+    file: lib/SQL/Translator/Parser.pm
+    version: 1.09
+  SQL::Translator::Parser::Access:
+    file: lib/SQL/Translator/Parser/Access.pm
+    version: 1.02
+  SQL::Translator::Parser::DB2:
+    file: lib/SQL/Translator/Parser/DB2.pm
+  SQL::Translator::Parser::DB2::Grammar:
+    file: lib/SQL/Translator/Parser/DB2/Grammar.pm
+  SQL::Translator::Parser::DBI:
+    file: lib/SQL/Translator/Parser/DBI.pm
+    version: 1.06
+  SQL::Translator::Parser::DBI::DB2:
+    file: lib/SQL/Translator/Parser/DBI/DB2.pm
+  SQL::Translator::Parser::DBI::MySQL:
+    file: lib/SQL/Translator/Parser/DBI/MySQL.pm
+    version: 1.04
+  SQL::Translator::Parser::DBI::PostgreSQL:
+    file: lib/SQL/Translator/Parser/DBI/PostgreSQL.pm
+    version: 1.07
+  SQL::Translator::Parser::DBI::SQLite:
+    file: lib/SQL/Translator/Parser/DBI/SQLite.pm
+    version: 1.05
+  SQL::Translator::Parser::DBI::Sybase:
+    file: lib/SQL/Translator/Parser/DBI/Sybase.pm
+    version: 1.06
+  SQL::Translator::Parser::Excel:
+    file: lib/SQL/Translator/Parser/Excel.pm
+    version: 1.14
+  SQL::Translator::Parser::MySQL:
+    file: lib/SQL/Translator/Parser/MySQL.pm
+    version: 1.47
+  SQL::Translator::Parser::Oracle:
+    file: lib/SQL/Translator/Parser/Oracle.pm
+    version: 1.19
+  SQL::Translator::Parser::PostgreSQL:
+    file: lib/SQL/Translator/Parser/PostgreSQL.pm
+    version: 1.43
+  SQL::Translator::Parser::SQLite:
+    file: lib/SQL/Translator/Parser/SQLite.pm
+    version: 1.06
+  SQL::Translator::Parser::Storable:
+    file: lib/SQL/Translator/Parser/Storable.pm
+    version: 1.05
+  SQL::Translator::Parser::Sybase:
+    file: lib/SQL/Translator/Parser/Sybase.pm
+    version: 1.09
+  SQL::Translator::Parser::XML:
+    file: lib/SQL/Translator/Parser/XML.pm
+    version: 1.02
+  SQL::Translator::Parser::XML::SQLFairy:
+    file: lib/SQL/Translator/Parser/XML/SQLFairy.pm
+    version: 1.13
+  SQL::Translator::Parser::YAML:
+    file: lib/SQL/Translator/Parser/YAML.pm
+    version: 1.07
+  SQL::Translator::Parser::xSV:
+    file: lib/SQL/Translator/Parser/xSV.pm
+    version: 1.16
+  SQL::Translator::Producer:
+    file: lib/SQL/Translator/Producer.pm
+    version: 1.07
+  SQL::Translator::Producer::ClassDBI:
+    file: lib/SQL/Translator/Producer/ClassDBI.pm
+    version: 1.41
+  SQL::Translator::Producer::Diagram:
+    file: lib/SQL/Translator/Producer/Diagram.pm
+    version: 1.12
+  SQL::Translator::Producer::Dumper:
+    file: lib/SQL/Translator/Producer/Dumper.pm
+    version: 1.08
+  SQL::Translator::Producer::GraphViz:
+    file: lib/SQL/Translator/Producer/GraphViz.pm
+    version: 1.12
+  SQL::Translator::Producer::HTML:
+    file: lib/SQL/Translator/Producer/HTML.pm
+    version: 1.15
+  SQL::Translator::Producer::MySQL:
+    file: lib/SQL/Translator/Producer/MySQL.pm
+    version: 1.43
+  SQL::Translator::Producer::Oracle:
+    file: lib/SQL/Translator/Producer/Oracle.pm
+    version: 1.33
+  SQL::Translator::Producer::POD:
+    file: lib/SQL/Translator/Producer/POD.pm
+    version: 1.05
+  SQL::Translator::Producer::PostgreSQL:
+    file: lib/SQL/Translator/Producer/PostgreSQL.pm
+    version: 1.22
+  SQL::Translator::Producer::SQLServer:
+    file: lib/SQL/Translator/Producer/SQLServer.pm
+    version: 1.01
+  SQL::Translator::Producer::SQLite:
+    file: lib/SQL/Translator/Producer/SQLite.pm
+    version: 1.11
+  SQL::Translator::Producer::Storable:
+    file: lib/SQL/Translator/Producer/Storable.pm
+    version: 1.05
+  SQL::Translator::Producer::Sybase:
+    file: lib/SQL/Translator/Producer/Sybase.pm
+    version: 1.09
+  SQL::Translator::Producer::TT::Base:
+    file: lib/SQL/Translator/Producer/TT/Base.pm
+    version: 1.06
+  SQL::Translator::Producer::TT::Table:
+    file: lib/SQL/Translator/Producer/TT/Table.pm
+    version: 1.03
+  SQL::Translator::Producer::TTSchema:
+    file: lib/SQL/Translator/Producer/TTSchema.pm
+    version: 1.10
+  SQL::Translator::Producer::XML:
+    file: lib/SQL/Translator/Producer/XML.pm
+    version: 1.16
+  SQL::Translator::Producer::XML::SQLFairy:
+    file: lib/SQL/Translator/Producer/XML/SQLFairy.pm
+    version: 1.19
+  SQL::Translator::Producer::YAML:
+    file: lib/SQL/Translator/Producer/YAML.pm
+    version: 1.11
+  SQL::Translator::Schema:
+    file: lib/SQL/Translator/Schema.pm
+    version: 1.23
+  SQL::Translator::Schema::Constants:
+    file: lib/SQL/Translator/Schema/Constants.pm
+    version: 1.43
+  SQL::Translator::Schema::Constraint:
+    file: lib/SQL/Translator/Schema/Constraint.pm
+    version: 1.15
+  SQL::Translator::Schema::Field:
+    file: lib/SQL/Translator/Schema/Field.pm
+    version: 1.22
+  SQL::Translator::Schema::Graph:
+    file: lib/SQL/Translator/Schema/Graph.pm
+  SQL::Translator::Schema::Graph::CompoundEdge:
+    file: lib/SQL/Translator/Schema/Graph/CompoundEdge.pm
+  SQL::Translator::Schema::Graph::Edge:
+    file: lib/SQL/Translator/Schema/Graph/Edge.pm
+  SQL::Translator::Schema::Graph::HyperEdge:
+    file: lib/SQL/Translator/Schema/Graph/HyperEdge.pm
+  SQL::Translator::Schema::Graph::Node:
+    file: lib/SQL/Translator/Schema/Graph/Node.pm
+  SQL::Translator::Schema::Graph::Port:
+    file: lib/SQL/Translator/Schema/Graph/Port.pm
+  SQL::Translator::Schema::Index:
+    file: lib/SQL/Translator/Schema/Index.pm
+    version: 1.10
+  SQL::Translator::Schema::Object:
+    file: lib/SQL/Translator/Schema/Object.pm
+    version: 1.04
+  SQL::Translator::Schema::Procedure:
+    file: lib/SQL/Translator/Schema/Procedure.pm
+    version: 1.04
+  SQL::Translator::Schema::Table:
+    file: lib/SQL/Translator/Schema/Table.pm
+    version: 1.30
+  SQL::Translator::Schema::Trigger:
+    file: lib/SQL/Translator/Schema/Trigger.pm
+    version: 1.05
+  SQL::Translator::Schema::View:
+    file: lib/SQL/Translator/Schema/View.pm
+    version: 1.09
+  SQL::Translator::Shell:
+    file: lib/SQL/Translator/Shell.pm
+  SQL::Translator::Utils:
+    file: lib/SQL/Translator/Utils.pm
+    version: 1.12
+  Test::SQL::Translator:
+    file: lib/Test/SQL/Translator.pm
+    version: 1.08
+generated_by: Module::Build version 0.25
