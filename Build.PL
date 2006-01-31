@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.9 2006-01-20 15:04:55 grommit Exp $
+# $Id: Build.PL,v 1.10 2006-01-31 03:28:07 kycl4rk Exp $
 
 use strict;
 use lib './lib';
@@ -39,7 +39,6 @@ my $builder = SQL::Translator::Module::Build->new(
         'Text::RecordParser'      => 0.02,
         'XML::Writer'             => 0.500,
         'XML::XPath'              => 1.13,
-        'YAML'                    => 0.39,
     },
     build_requires    => {
         'File::Basename'          => 0,
@@ -47,8 +46,8 @@ my $builder = SQL::Translator::Module::Build->new(
         'Test::More'              => 0.6,
         'Test::Exception'         => 0,
         'Test::Differences'       => 0,
+        'YAML'                    => 0.39,
     },
-
     get_options => {
         # Where to store additional files such as templates.
         # TODO: Should be OS dependant. See Module::Build::os_type()
