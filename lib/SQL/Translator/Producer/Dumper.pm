@@ -1,9 +1,9 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# $Id: Dumper.pm,v 1.8 2004-07-23 15:38:20 kycl4rk Exp $
+# $Id: Dumper.pm,v 1.9 2006-02-16 14:59:19 kycl4rk Exp $
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-6 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -61,7 +61,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;
@@ -243,12 +243,13 @@ for my $table ( @tables ) {
         print "TRUNCATE TABLE $table_name;\n";
     }
 
-    my $data = $db->selectall_arrayref(
-        'select ' . join(', ', @{ $table->{'fields'} } ) . " from $table_name",
-        { Columns => {} }
-    );
+    my $sql =
+        'select ' . join(', ', @{ $table->{'fields'} } ) . " from $table_name"
+    ;
+    my $sth = $db->prepare( $sql );
+    $sth->execute;
 
-    for my $rec ( @{ $data } ) {
+    while ( my $rec = $sth->fetchrow_hashref ) {
         my @vals;
         for my $fld ( @{ $table->{'fields'} } ) {
             my $val = $rec->{ $fld };
@@ -300,6 +301,6 @@ EOF
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
