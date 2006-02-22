@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.19 2005-11-17 21:55:41 mwz444 Exp $
+# $Id: sqlt,v 1.20 2006-02-22 17:03:57 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database
@@ -320,7 +320,7 @@ for my $file (@files) {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
 darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO
