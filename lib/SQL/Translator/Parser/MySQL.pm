@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.51 2005-07-11 21:14:22 duality72 Exp $
+# $Id: MySQL.pm,v 1.52 2006-02-22 22:54:12 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.51 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -376,7 +376,7 @@ field_qualifier : unsigned
         } 
     }
 
-field_qualifier : /character set/i WORD
+field_qualifier : /character set/i WORD 
     {
         $return = {
             'CHARACTER SET' => $item[2],
@@ -621,11 +621,7 @@ UNIQUE : /unique/i { 1 }
 
 KEY : /key/i | /index/i
 
-table_option : WORD /\s*=\s*/ WORD
-    { 
-        $return = { $item[1] => $item[3] };
-    }
-    | /comment/i /=/ /'.*?'/
+table_option : /comment/i /=/ /'.*?'/
     {
         my $comment = $item[3];
         $comment    =~ s/^'//;
@@ -635,6 +631,10 @@ table_option : WORD /\s*=\s*/ WORD
     | /(default )?(charset|character set)/i /\s*=\s*/ WORD
     { 
         $return = { 'CHARACTER SET' => $item[3] };
+    }
+    | WORD /\s*=\s*/ WORD
+    { 
+        $return = { $item[1] => $item[3] };
     }
     
 default : /default/i
@@ -796,11 +796,11 @@ sub parse {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
 Chris Mungall E<lt>cjm@fruitfly.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl(1), Parse::RecDescent, SQL::Translator::Schema.
+Parse::RecDescent, SQL::Translator::Schema.
 
 =cut
