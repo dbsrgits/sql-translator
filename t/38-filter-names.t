@@ -4,31 +4,6 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
-# SQL::Translator::Filter::HelloWorld - Test filter in a package
-#=============================================================================
-package SQL::Translator::Filter::HelloWorld;
-
-use strict;
-use vars qw/$VERSION/;
-$VERSION=0.1;
-
-sub filter {
-    my ($schema,$args) = (shift,shift);
-
-    my $greeting = $args->{greeting} || "Hello";
-    $schema->add_table(
-        name => "HelloWorld",
-    );
-}
-
-# Hack to allow sqlt to see our module as it wasn't loaded from a .pm
-$INC{'SQL/Translator/Filter/HelloWorld.pm'}
-    = 'lib/SQL/Translator/Filter/HelloWorld.pm';
-
-#=============================================================================
-
-package main;
-
 use strict;
 use Test::More;
 use Test::Exception;
@@ -53,14 +28,6 @@ schema:
           name: first_name
 };
 
-#    helloworld:
-#      comments: ''
-#      constraints: []
-#      fields: {}
-#      indices: []
-#      name: HelloWorld
-#      options: []
-#      order: 2
 my $ans_yaml = qq{---
 schema:
   procedures: {}
@@ -100,7 +67,7 @@ translator:
   version: 0.07
 };
 
-# Parse the test XML schema
+# Parse the test schema
 my $obj;
 $obj = SQL::Translator->new(
     debug         => 0,
@@ -117,16 +84,6 @@ $obj = SQL::Translator->new(
     ],
 
 ) or die "Failed to create translator object: ".SQL::Translator->error;
-
-#sub translate_ok {
-#    my ($sqlt,$ans_yaml,$name) = @_;
-#    $name ||= "";
-#
-#    my $out = eval { $sqlt->translate };
-#    fail( $sqlt->error ) if $sqlt->error;
-#    fail( "No output" ) unless $out;
-#    eq_or_diff $out, $ans_yaml           ,"Translated $name";
-#}
 
 my $out;
 lives_ok { $out = $obj->translate; }  "Translate ran";
