@@ -1,10 +1,10 @@
-# $Id: Build.PL,v 1.10 2006-01-31 03:28:07 kycl4rk Exp $
+# $Id: Build.PL,v 1.11 2006-03-06 13:08:42 grommit Exp $
 
 use strict;
 use lib './lib';
-use SQL::Translator::Module::Build;
+use Module::Build;
 
-my $builder = SQL::Translator::Module::Build->new(
+my $builder = Module::Build->new(
     create_readme     => 0,
     dist_abstract     => 'SQL DDL transformations and more',
     dist_author       => 'Ken Y. Clark <kclark@cpan.org>',
@@ -55,23 +55,8 @@ my $builder = SQL::Translator::Module::Build->new(
     },
 );
 
-my $install_dir = $builder->args('install_dir');
-print "SqlFairy needs to install some additional files such as templates.\n";
-$install_dir = $builder->prompt( "Where should they go?", $install_dir );
-print "\n";
-
-# Add the install (and template) dir to the config data. They will then be
-# available via the (Module::Build) generated SQL::Translator::ConfigData.
-# During build time they are availiable from $builder->config_data( NAME )
-my $template_dir = "$install_dir/template";
-$builder->config_data( install_dir  => $install_dir );
-$builder->config_data( template_dir => $template_dir );
-
-# Add build element for templates, these are processed by
-# SQL::Translator::Module::Build::process_template_files
-$builder->add_build_element('template');
-$builder->install_path->{template} = $template_dir;
-
+# Copy .tt2 files in lib into blib/lib
+$builder->add_build_element('tt2');
 
 $builder->create_build_script;
 print "Now run './Build', './Build test', and './Build install'\n";

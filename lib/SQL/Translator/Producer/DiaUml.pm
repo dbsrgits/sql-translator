@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::DiaUml;
 
 # -------------------------------------------------------------------
-# $Id: DiaUml.pm,v 1.1 2006-01-20 16:17:21 grommit Exp $
+# $Id: DiaUml.pm,v 1.2 2006-03-06 13:08:43 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -59,18 +59,20 @@ automatically arrange them horizontally or vertically.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Utils 'debug';
-use SQL::Translator::ConfigData;
 use base qw/SQL::Translator::Producer::TT::Base/;
 # Convert produce call into a method call on our class
 sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
-# Add the installed templates to the inc path.
+# Uses dir in lib with this mods name as the template dir
+my $_TEMPLATE_DIR = __FILE__;
+$_TEMPLATE_DIR =~ s/\.pm$//;
+
 sub tt_config {
-    ( INCLUDE_PATH => SQL::Translator::ConfigData->config('template_dir')."/dia_uml" );
+    ( INCLUDE_PATH => $_TEMPLATE_DIR );
 }
 
 sub tt_schema { 'schema.tt2' }

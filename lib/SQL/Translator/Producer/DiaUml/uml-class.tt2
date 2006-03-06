@@ -1,9 +1,9 @@
 [%# vim:ft=tt2
 -%]
-    [% INCLUDE 'uml-class-start' %]
+    [% INCLUDE 'uml-class-start.tt2' %]
       <dia:attribute name="attributes">
         [%- FOREACH attributes;
-            INCLUDE "uml-attribute";
+            INCLUDE "uml-attribute.tt2";
         END %]
       </dia:attribute>
       <dia:attribute name="operations"/>
@@ -11,4 +11,4 @@
         <dia:boolean val="false"/>
       </dia:attribute>
       <dia:attribute name="templates"/>
-    [% INCLUDE 'uml-class-end' %]
+    [% INCLUDE 'uml-class-end.tt2' %]

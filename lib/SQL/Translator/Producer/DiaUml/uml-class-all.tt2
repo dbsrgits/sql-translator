@@ -96,7 +96,7 @@
       </dia:attribute>
       <dia:attribute name="attributes">
         [% FOREACH attributes %]
-            [% INCLUDE "uml-attribute" %]
+            [% INCLUDE "uml-attribute.tt2" %]
         [% END %]
       </dia:attribute>
       <dia:attribute name="operations"/>

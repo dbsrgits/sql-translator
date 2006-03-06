@@ -1,8 +1,8 @@
 [%# vim:ft=tt2 -%]
-[% WRAPPER diagram %]
-    [% WRAPPER layer name="Background" %]
+[% WRAPPER diagram.tt2 %]
+    [% WRAPPER layer.tt2 name="Background" %]
         [% FOREACH table IN schema.get_tables %]
-            [% INCLUDE 'uml-class-start'
+            [% INCLUDE 'uml-class-start.tt2'
                 name       = table.name
                 stereotype = 'Table'
                 visible_operations = 'false'
@@ -11,7 +11,7 @@
               [% FOREACH field IN table.get_fields;
                 SET type = field.data_type;
                 SET type = "$type($field.size)" IF field.size;
-                INCLUDE "uml-attribute"
+                INCLUDE "uml-attribute.tt2"
                     name       = field.name
                     stereotype = 'Field'
                     type       = type
@@ -24,7 +24,7 @@
                 <dia:boolean val="false"/>
               </dia:attribute>
               <dia:attribute name="templates"/>
-            [% INCLUDE 'uml-class-end' %]
+            [% INCLUDE 'uml-class-end.tt2' %]
         [% END %]
     [% END %]
 [% END %]
