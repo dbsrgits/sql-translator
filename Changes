@@ -1,6 +1,6 @@
 
 * Added mysql_character_set for 4.1+ -mda
-* Two experimental filters (DefaultExtra, Names). -mda
+* New filters, Names and Globals. -mda
 * Added the initial work on a template based Dia UML producer. -mda
 
 # -----------------------------------------------------------
