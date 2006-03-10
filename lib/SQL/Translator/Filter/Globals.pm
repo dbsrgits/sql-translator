@@ -1,7 +1,7 @@
 package SQL::Translator::Filter::Globals;
 
 # -------------------------------------------------------------------
-# $Id: Globals.pm,v 1.1 2006-03-06 17:46:57 grommit Exp $
+# $Id: Globals.pm,v 1.2 2006-03-10 15:04:12 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -45,6 +45,10 @@ SQL::Translator::Filter::Globals - Add global fields and indices to all tables.
                     fields => 'modifed',
                 },
             ]
+            constraints => [
+                {
+                }
+            ]
         },
       ],
   ) || die "SQLFairy error : ".SQL::Translator->error;
@@ -61,9 +65,10 @@ sub filter {
     my %args = @_;
     my $global_table = $args{global_table} ||= '_GLOBAL_';
 
-    my (@global_fields, @global_indices);
-    push @global_fields, @{ $args{fields} }   if $args{fields};
-    push @global_indices, @{ $args{indices} } if $args{indices};
+    my (@global_fields, @global_indices, @global_constraints);
+    push @global_fields,      @{ $args{fields} }      if $args{fields};
+    push @global_indices,     @{ $args{indices} }     if $args{indices};
+    push @global_constraints, @{ $args{constraints} } if $args{constraints};
 
     # Pull fields and indices off global table and then remove it.
     if ( my $gtbl = $schema->get_table( $global_table ) ) {
@@ -97,6 +102,23 @@ sub filter {
             };
         }
 
+        foreach ( $gtbl->get_constraints ) {
+            push @global_constraints, {
+                name             => $_->name,
+                fields           => [$_->fields],
+                deferrable       => $_->deferrable,
+                expression       => $_->expression,
+                match_type       => $_->match_type,
+                options          => [$_->options],
+                on_delete        => $_->on_delete,
+                on_update        => $_->on_update,
+                reference_fields => [$_->reference_fields],
+                reference_table  => $_->reference_table,
+                table            => $_->table,
+                type             => $_->type,
+            };
+        }
+
         $schema->drop_table($gtbl);
     }
 
@@ -110,9 +132,11 @@ sub filter {
         }
 
         foreach my $new_index ( @global_indices ) {
-            # Don't add if already there
-            #next if $tbl->get_index( $new_index->{name} );
             $tbl->add_index( %$new_index );
+        }
+
+        foreach my $new_constraint ( @global_constraints ) {
+            $tbl->add_constraint( %$new_constraint );
         }
     }
 }
@@ -123,7 +147,7 @@ __END__
 
 =head1 DESCRIPTION
 
-Adds global fields and indices to all tables in the schema.
+Adds global fields, indices and constraints to all tables in the schema.
 The globals to add can either be defined in the filter args or using a _GLOBAL_
 table (see below).
 
@@ -148,9 +172,10 @@ L<perl(1)>, L<SQL::Translator>
 Will generate duplicate indices if an index already exists on a table the same
 as one added globally.
 
-=head1 TODO
+Will generate duplicate constraints if a constraint already exists on a table
+the same as one added globally.
 
-Global addition of constraints.
+=head1 TODO
 
 Some extra data values that can be used to control the global addition. e.g.
 'skip_global'.

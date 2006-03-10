@@ -31,6 +31,10 @@ schema:
       indices:
         - fields:
             - modified
+      constraints:
+        - fields:
+            - modified
+          type: UNIQUE
     Person:
       name: Person
       fields:
@@ -39,13 +43,27 @@ schema:
           name: first_name
 };
 
+# Should include the the items added from the Global table defined above in the
+# schema as well as those defined in the filter args below.
 my $ans_yaml = qq{---
 schema:
   procedures: {}
   tables:
     Person:
       comments: ''
-      constraints: []
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields:
+            - modified
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: UNIQUE
       fields:
         created:
           comments: ''
@@ -78,7 +96,7 @@ schema:
           extra: {}
           is_nullable: 1
           is_primary_key: 0
-          is_unique: 0
+          is_unique: 1
           name: modified
           order: 4
           size:
@@ -111,6 +129,7 @@ translator:
   trace: 0
   version: 0.07
 };
+
 
 # Parse the test XML schema
 my $obj;
