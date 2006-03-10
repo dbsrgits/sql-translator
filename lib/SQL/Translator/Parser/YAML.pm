@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::YAML;
 
 # -------------------------------------------------------------------
-# $Id: YAML.pm,v 1.7 2005-06-08 11:30:15 grommit Exp $
+# $Id: YAML.pm,v 1.8 2006-03-10 14:55:19 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -44,7 +44,7 @@ sub parse {
     my @tables = 
         map   { $data->{'tables'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
-        map   { [ $data->{'tables'}{ $_ }{'order'}, $_ ] }
+        map   { [ $data->{'tables'}{ $_ }{'order'} || 0, $_ ] }
         keys %{ $data->{'tables'} }
     ;
 
