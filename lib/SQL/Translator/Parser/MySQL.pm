@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.52 2006-02-22 22:54:12 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.53 2006-03-16 19:24:02 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -394,6 +394,20 @@ field_qualifier : /on update/i CURRENT_TIMESTAMP
     {
         $return = {
             'ON UPDATE' => $item[2],
+        }
+    }
+
+field_qualifier : /unique/i KEY(?)
+    {
+        $return = {
+            is_unique => 1,
+        }
+    }
+
+field_qualifier : KEY
+    {
+        $return = {
+            has_index => 1,
         }
     }
 
@@ -738,6 +752,22 @@ sub parse {
                     next if ref $val eq 'ARRAY' && !@$val;
                     $field->extra( $qual, $val );
                 }
+            }
+
+            if ( $fdata->{'has_index'} ) {
+                $table->add_index(
+                    name   => '',
+                    type   => 'NORMAL',
+                    fields => $fdata->{'name'},
+                ) or die $table->error;
+            }
+
+            if ( $fdata->{'is_unique'} ) {
+                $table->add_constraint(
+                    name   => '',
+                    type   => 'UNIQUE',
+                    fields => $fdata->{'name'},
+                ) or die $table->error;
             }
 
             if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
