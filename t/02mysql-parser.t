@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(216, "SQL::Translator::Parser::MySQL");
+    maybe_plan(218, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -18,11 +18,12 @@ BEGIN {
     my $tr = SQL::Translator->new;
     my $data = q|create table sessions (
         id char(32) not null default '0' primary key,
-        a_session text
+        a_session text,
+        ssn varchar(12) unique key,
+        age int key
     );|;
 
     my $val = parse($tr, $data);
-
     my $schema = $tr->schema;
     is( $schema->is_valid, 1, 'Schema is valid' );
     my @tables = $schema->get_tables;
@@ -31,7 +32,7 @@ BEGIN {
     is( $table->name, 'sessions', 'Found "sessions" table' );
 
     my @fields = $table->get_fields;
-    is( scalar @fields, 2, 'Right number of fields (2)' );
+    is( scalar @fields, 4, 'Right number of fields (4)' );
     my $f1 = shift @fields;
     my $f2 = shift @fields;
     is( $f1->name, 'id', 'First field name is "id"' );
@@ -49,13 +50,16 @@ BEGIN {
     is( $f2->is_primary_key, 0, 'Field is not PK' );
 
     my @indices = $table->get_indices;
-    is( scalar @indices, 0, 'Right number of indices (0)' );
+    is( scalar @indices, 1, 'Right number of indices (1)' );
 
     my @constraints = $table->get_constraints;
-    is( scalar @constraints, 1, 'Right number of constraints (1)' );
+    is( scalar @constraints, 2, 'Right number of constraints (2)' );
     my $c = shift @constraints;
     is( $c->type, PRIMARY_KEY, 'Constraint is a PK' );
     is( join(',', $c->fields), 'id', 'Constraint is on "id"' );
+    my $c2 = shift @constraints;
+    is( $c2->type, UNIQUE, 'Constraint is UNIQUE' );
+    is( join(',', $c2->fields), 'ssn', 'Constraint is on "ssn"' );
 }
 
 {
