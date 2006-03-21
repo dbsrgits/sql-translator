@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.45 2005-07-06 05:37:32 allenday Exp $
+# $Id: PostgreSQL.pm,v 1.46 2006-03-21 18:39:28 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.45 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -546,12 +546,7 @@ pg_data_type :
             $return = { type => 'bytea' };
         }
     |
-    /(timestamptz|timestamp)( with time zone)?/i
-        { 
-            $return = { type => 'timestamp' };
-        }
-    |
-    /(timestamptz|timestamp)( without time zone)?/i
+    /(timestamptz|timestamp)( with(out)? time zone)?/i
         { 
             $return = { type => 'timestamp' };
         }
