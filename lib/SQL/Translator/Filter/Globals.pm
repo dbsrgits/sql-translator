@@ -1,7 +1,7 @@
 package SQL::Translator::Filter::Globals;
 
 # -------------------------------------------------------------------
-# $Id: Globals.pm,v 1.2 2006-03-10 15:04:12 grommit Exp $
+# $Id: Globals.pm,v 1.3 2006-04-07 10:00:21 grommit Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -99,6 +99,7 @@ sub filter {
                 type    => $_->type,
                 fields  => [$_->fields],
                 options => [$_->options],
+                extra   => scalar($_->extra),
             };
         }
 
@@ -116,6 +117,7 @@ sub filter {
                 reference_table  => $_->reference_table,
                 table            => $_->table,
                 type             => $_->type,
+                extra            => scalar($_->extra),
             };
         }
 
