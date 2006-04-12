@@ -79,7 +79,6 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 README
 META.yml
-SIGNATURE
 t/02mysql-parser.t
 t/03mysql-to-oracle.t
 t/04file,fh,string.t
