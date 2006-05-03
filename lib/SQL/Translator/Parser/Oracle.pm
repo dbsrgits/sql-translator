@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.21 2005-08-10 15:17:48 duality72 Exp $
+# $Id: Oracle.pm,v 1.22 2006-05-03 21:25:07 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -196,7 +196,7 @@ create : create_table table_name '(' create_definition(s /,/) ')' table_option(s
         1;
     }
 
-create : create_index index_name /on/i table_name parens_word_list table_option(?) ';'
+create : create_index index_name /on/i table_name index_expr table_option(?) ';'
     {
         my $table_name = $item[4];
         if ( $item[1] ) {
@@ -214,6 +214,11 @@ create : create_index index_name /on/i table_name parens_word_list table_option(
             };
         }
     }
+
+index_expr: parens_word_list
+	{ $item[1] }
+	| '(' WORD parens_word_list ')'
+	{ $item[2].$item[3] }
 
 # Create anything else (e.g., domain, function, etc.)
 create : ...!create_table ...!create_index /create/i WORD /[^;]+/ ';'
@@ -329,13 +334,19 @@ field : comment(s?) field_name data_type field_meta(s?) comment(s?)
 
 field_name : NAME
 
-data_type : ora_data_type parens_value_list(?)
+data_type : ora_data_type data_size(?)
     { 
         $return  = { 
             type => $item[1],
             size => $item[2][0] || '',
         } 
     }
+    
+data_size : '(' VALUE(s /,/) data_size_modifier(?) ')'
+    { $item[2] } 
+
+data_size_modifier: /byte/i
+	| /char/i
 
 column_constraint : constraint_name(?) column_constraint_type constraint_state(s?)
     {

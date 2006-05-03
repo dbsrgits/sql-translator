@@ -29,8 +29,8 @@ my $sql = q[
     (
         qtl_trait_id            NUMBER(11)      NOT NULL    
             CONSTRAINT pk_qtl_trait PRIMARY KEY,
-        trait_symbol            VARCHAR2(100)   NOT NULL,
-        trait_name              VARCHAR2(200)   NOT NULL,
+        trait_symbol            VARCHAR2(100 BYTE)   NOT NULL,
+        trait_name              VARCHAR2(200 CHAR)   NOT NULL,
         qtl_trait_category_id   NUMBER(11)      NOT NULL,
         UNIQUE ( trait_symbol ),
         UNIQUE ( trait_name ),
@@ -54,6 +54,7 @@ my $sql = q[
     );
 
     CREATE UNIQUE INDEX qtl_accession ON qtl ( qtl_accession_id );
+    CREATE UNIQUE INDEX qtl_accession_upper ON qtl ( UPPER(qtl_accession_id) );
 
     CREATE TABLE qtl_trait_synonym
     (
@@ -206,7 +207,7 @@ my @t3_fields = $t3->get_fields;
 is( scalar @t3_fields, 8, '8 fields in table' );
 
 my @t3_constraints = $t3->get_constraints;
-is( scalar @t3_constraints, 3, '3 constraints on table' );
+is( scalar @t3_constraints, 4, '4 constraints on table' );
 
 is( $t3->comments, 'qtl table comment', 'Comment "qtl table comment" exists' );
 
