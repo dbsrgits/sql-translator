@@ -7,7 +7,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
-maybe_plan(76, 'SQL::Translator::Parser::Oracle');
+maybe_plan(79, 'SQL::Translator::Parser::Oracle');
 SQL::Translator::Parser::Oracle->import('parse');
 
 my $t   = SQL::Translator->new( trace => 0 );
@@ -208,6 +208,10 @@ is( scalar @t3_fields, 8, '8 fields in table' );
 
 my @t3_constraints = $t3->get_constraints;
 is( scalar @t3_constraints, 4, '4 constraints on table' );
+my $t3_c4 = $t3_constraints[3];
+is( $t3_c4->type, UNIQUE, 'Fourth constraint is unique' );
+is( $t3_c4->name, 'qtl_accession_upper', 'Name = "qtl_accession_upper"' );
+is( join(',', $t3_c4->fields), 'UPPER(qtl_accession_id)', 'Fields = "UPPER(qtl_accession_id)"' );
 
 is( $t3->comments, 'qtl table comment', 'Comment "qtl table comment" exists' );
 

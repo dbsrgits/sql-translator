@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.22 2006-05-03 21:25:07 duality72 Exp $
+# $Id: Oracle.pm,v 1.23 2006-05-03 21:46:06 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -218,7 +218,10 @@ create : create_index index_name /on/i table_name index_expr table_option(?) ';'
 index_expr: parens_word_list
 	{ $item[1] }
 	| '(' WORD parens_word_list ')'
-	{ $item[2].$item[3] }
+	{
+		my $arg_list = join(",", @{$item[3]});
+		$return = "$item[2]($arg_list)";
+	}
 
 # Create anything else (e.g., domain, function, etc.)
 create : ...!create_table ...!create_index /create/i WORD /[^;]+/ ';'
