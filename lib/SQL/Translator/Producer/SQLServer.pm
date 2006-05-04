@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.3 2005-07-11 20:12:02 duality72 Exp $
+# $Id: SQLServer.pm,v 1.4 2006-05-04 20:46:45 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -56,7 +56,7 @@ List of values for an enum field.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -250,7 +250,6 @@ sub produce {
             else {
                 $field_def .= ' NULL' if $data_type ne 'bit';
             }
-            push @field_defs, $field_def;
 
             #
             # Default value
@@ -263,6 +262,8 @@ sub produce {
                     ( $default =~ m/null/i ) ? 'NULL' : "'$default'"
                 );
             }
+            
+            push @field_defs, $field_def;            
         }
 
         #
