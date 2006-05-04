@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.2 2005-07-07 15:20:00 mwz444 Exp $
+# $Id: SQLServer.pm,v 1.3 2006-05-04 20:45:58 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -224,8 +224,10 @@ $table_info->{TABLE_TYPE},
                                          ) || die $table->error;
                 $f->is_nullable($c->{NULLABLE} == 1);
                 $f->is_auto_increment($is_auto_increment);
-                $c->{COLUMN_DEF} =~ s#\('?(.*?)'?\)#$1#;
-                $f->default_value($c->{COLUMN_DEF}) if defined $c->{COLUMN_DEF};
+                if ( defined $c->{COLUMN_DEF}) {
+                	$c->{COLUMN_DEF} =~ s#\('?(.*?)'?\)#$1#;
+                	$f->default_value($c->{COLUMN_DEF});
+                }
             }
 
             # add in primary key
