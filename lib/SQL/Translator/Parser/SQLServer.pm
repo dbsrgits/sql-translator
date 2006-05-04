@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.3 2005-06-28 23:37:12 duality72 Exp $
+# $Id: SQLServer.pm,v 1.4 2006-05-04 20:47:07 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ should probably be considered a work in progress.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -268,7 +268,9 @@ nullable : /not/i /null/i
     | /null/i
     { $return = 1 }
 
-default_val : /default/i /(?:')?[^']*(?:')?/ 
+default_val : /default/i /null/i
+    { $return = 'null' }
+	| /default/i /'[^']*'/ 
     { $item[2]=~ s/'//g; $return = $item[2] }
 
 auto_inc : /identity/i { 1 }
