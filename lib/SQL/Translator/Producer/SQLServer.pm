@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.4 2006-05-04 20:46:45 duality72 Exp $
+# $Id: SQLServer.pm,v 1.5 2006-05-05 16:41:26 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -56,7 +56,7 @@ List of values for an enum field.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -282,30 +282,40 @@ sub produce {
                 $constraint->reference_fields;
             next unless @fields;
 
+			my $c_def;
             if ( $type eq PRIMARY_KEY ) {
                 $name ||= mk_name( $table_name, 'pk', undef,1 );
-                push @constraint_defs,
+                $c_def = 
                     "CONSTRAINT $name PRIMARY KEY ".
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq FOREIGN_KEY ) {
                 $name ||= mk_name( $table_name, 'fk', undef,1 );
                 #$name = mk_name( ($name || $table_name), 'fk', undef,1 );
-                push @constraint_defs, 
+                $c_def = 
                     "CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
                     ' (' . join( ', ', @rfields ) . ')';
+                 my $on_delete = $constraint->on_delete;
+                 if ( defined $on_delete && $on_delete ne "NO ACTION") {
+                 	$c_def .= " ON DELETE $on_delete";
+                 }
+                 my $on_update = $constraint->on_update;
+                 if ( defined $on_update && $on_update ne "NO ACTION") {
+                 	$c_def .= " ON UPDATE $on_update";
+                 }
             }
             elsif ( $type eq UNIQUE ) {
                 $name ||= mk_name(
                     $table_name,
                     $name || ++$c_name_default,undef, 1
                 );
-                push @constraint_defs, 
+                $c_def = 
                     "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
+            push @constraint_defs, $c_def;
         }
 
         #
