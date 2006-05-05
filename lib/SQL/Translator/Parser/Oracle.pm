@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.23 2006-05-03 21:46:06 duality72 Exp $
+# $Id: Oracle.pm,v 1.24 2006-05-05 16:42:17 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.23 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -532,14 +532,14 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
             fields           => $item[3],
             reference_table  => $item[6],
             reference_fields => $item[7][0],
-            match_type       => $item[8][0],
-            on_delete     => $item[9][0],
-            on_update     => $item[10][0],
+#            match_type       => $item[8][0],
+            on_delete     => $item[8][0],
+#            on_update     => $item[9][0],
         }
     }
 
 on_delete : /on delete/i WORD(s)
-    { $item[2] }
+    { join(' ', @{$item[2]}) }
 
 UNIQUE : /unique/i { $return = 1 }
 

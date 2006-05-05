@@ -7,7 +7,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
-maybe_plan(79, 'SQL::Translator::Parser::Oracle');
+maybe_plan(85, 'SQL::Translator::Parser::Oracle');
 SQL::Translator::Parser::Oracle->import('parse');
 
 my $t   = SQL::Translator->new( trace => 0 );
@@ -63,7 +63,7 @@ my $sql = q[
         trait_synonym           VARCHAR2(200)   NOT NULL,
         qtl_trait_id            NUMBER(11)      NOT NULL,
         UNIQUE( qtl_trait_id, trait_synonym ),
-        FOREIGN KEY ( qtl_trait_id ) REFERENCES qtl_trait
+        FOREIGN KEY ( qtl_trait_id ) REFERENCES qtl_trait ON DELETE SET NULL
     );
 ];
 
@@ -233,3 +233,14 @@ is( scalar @t4_fields, 3, '3 fields in table' );
 
 my @t4_constraints = $t4->get_constraints;
 is( scalar @t4_constraints, 3, '3 constraints on table' );
+my $t4_c3 = $t4_constraints[2];
+is( $t4_c3->type, FOREIGN_KEY, 'Third constraint is FK' );
+is( $t4_c3->name, '', 'No name' );
+is( join(',', $t4_c3->fields), 'qtl_trait_id', 
+    'Fields = "qtl_trait_id"' );
+is( $t4_c3->reference_table, 'qtl_trait', 
+    'Reference table = "qtl_trait"' );
+is( join(',', $t4_c3->reference_fields), 'qtl_trait_id', 
+    'Reference fields = "qtl_trait_id"' );
+is( $t4_c3->on_delete, 'SET NULL', 
+    'on_delete = "SET NULL"' );
