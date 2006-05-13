@@ -3,7 +3,7 @@ package SQL::Translator::Schema;
 # vim: sw=4: ts=4:
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.24 2005-06-27 22:02:50 duality72 Exp $
+# $Id: Schema.pm,v 1.25 2006-05-13 01:21:21 kycl4rk Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -60,7 +60,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 
 __PACKAGE__->_attributes(qw/name database translator/);
 
@@ -78,6 +78,36 @@ Returns the schema as an L<SQL::Translator::Schema::Graph> object.
     my $self = shift;
     return SQL::Translator::Schema::Graph->new(
         translator => $self->translator );
+}
+
+# ----------------------------------------------------------------------
+sub as_graph_pm {
+
+=pod
+
+=head2 as_grap_pmh
+
+Returns a Graph::Directed object with the table names for nodes.
+
+=cut
+
+    my $self = shift;
+    my $g    = Graph::Directed->new;
+    
+    for my $table ( $self->get_tables ) { 
+        my $tname  = $table->name;
+        $g->add_vertex( $tname );
+    
+        for my $field ( $table->get_fields ) {
+            if ( $field->is_foreign_key ) {
+                my $fktable = $field->foreign_key_reference->reference_table;
+
+                $g->add_edge( $fktable, $tname );
+            }
+        }
+    }
+
+    return $g;
 }
 
 # ----------------------------------------------------------------------
