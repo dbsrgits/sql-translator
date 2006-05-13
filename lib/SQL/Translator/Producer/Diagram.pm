@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# $Id: Diagram.pm,v 1.12 2004-08-30 19:04:59 kycl4rk Exp $
+# $Id: Diagram.pm,v 1.13 2006-05-13 01:25:44 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -42,7 +42,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {
@@ -81,10 +81,23 @@ sub produce {
     my $skip_fields  = $args->{'skip_fields'};
     my %skip         = map { s/^\s+|\s+$//g; $_,1 } split (/,/, $skip_fields);
 
-    $schema->make_natural_joins(
-        join_pk_only => $join_pk_only,
-        skip_fields  => $args->{'skip_fields'},
-    ) if $natural_join;
+#    my @tables       = $schema->get_tables;
+    my @table_names;
+    if ( $natural_join ) {
+        $schema->make_natural_joins(
+            join_pk_only => $join_pk_only,
+            skip_fields  => $args->{'skip_fields'},
+        );
+
+        my $g = $schema->as_graph_pm; 
+        my $d = Graph::Traversal::DFS->new( $g, next_alphabetic => 1 );
+        $d->preorder;
+
+        @table_names = $d->dfs;        
+    }
+    else {
+        @table_names = map { $_->name } $schema->get_tables;
+    }
 
     die "Invalid image type '$output_type'"
         unless VALID_IMAGE_TYPE ->{ $output_type  };
@@ -94,12 +107,13 @@ sub produce {
     #
     # Layout the image.
     #
-    my $font         = 
-        $font_size eq 'small'  ? gdTinyFont  :
-        $font_size eq 'medium' ? gdSmallFont :
-        $font_size eq 'large'  ? gdLargeFont : gdGiantFont;
-    my @tables       = $schema->get_tables;
-    my $no_tables    = scalar @tables;
+    my $font
+        = $font_size eq 'small'  ? gdTinyFont  
+        : $font_size eq 'medium' ? gdSmallFont 
+        : $font_size eq 'large'  ? gdLargeFont 
+        :                          gdGiantFont;
+
+    my $no_tables    = scalar @table_names;
     $no_columns      = 0 unless $no_columns =~ /^\d+$/;
     $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
     $no_columns    ||= .5;
@@ -120,9 +134,9 @@ sub produce {
     my @imap_coords;                # for making clickable image map
     my %legend;
 
-    for my $table ( @tables ) {
-        my $table_name = $table->name;
-        my $top        = $y;
+    for my $table_name ( @table_names ) {
+        my $table = $schema->get_table( $table_name );
+        my $top   = $y;
         push @shapes, 
             [ 'string', $font, $this_col_x, $y, $table_name, 'black' ];
         $y                   += $font->height + 2;
