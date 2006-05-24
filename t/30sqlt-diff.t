@@ -25,9 +25,10 @@ my $create2 = (-d "t")
     : catfile($Bin, "t", @create2);
 
 BEGIN {
-    maybe_plan(14,
+    maybe_plan(16,
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Parser::MySQL',
+        'SQL::Translator::Parser::Oracle',
         );
 }
 
@@ -43,7 +44,7 @@ like($out, qr/ALTER TABLE person ADD is_rock_star/,
 @cmd = ($sqlt_diff, "$create1=SQLite", "$create1=SQLite");
 $out = `@cmd`;
 
-like($out, qr/There were no differences/, "Properly detected no differences");
+like($out, qr/No differences found/, "Properly detected no differences");
 
 my @mysql_create1 = qw(data mysql create.sql);
 my @mysql_create2 = qw(data mysql create2.sql);
@@ -77,4 +78,23 @@ like($out, qr/ALTER TABLE employee ADD CONSTRAINT/,
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 $out = `@cmd`;
 
-like($out, qr/There were no differences/, "Properly detected no differences");
+like($out, qr/No differences found/, "Properly detected no differences");
+
+my @oracle_create1 = qw(data oracle create.sql);
+my @oracle_create2 = qw(data oracle create2.sql);
+
+my $oracle_create1 = (-d "t")
+    ? catfile($Bin, @oracle_create1)
+    : catfile($Bin, "t", @oracle_create1);
+
+my $oracle_create2 = (-d "t")
+    ? catfile($Bin, @oracle_create2)
+    : catfile($Bin, "t", @oracle_create2);
+
+@cmd = ($sqlt_diff, "$oracle_create1=Oracle", "$oracle_create2=Oracle");
+$out = `@cmd`;
+
+like($out, qr/ALTER TABLE TABLE1 DROP FOREIGN KEY/, 
+    "Detected drop foreign key");
+like($out, qr/ALTER TABLE TABLE1 ADD CONSTRAINT/, 
+    "Detected add constraint");
