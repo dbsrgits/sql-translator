@@ -254,6 +254,8 @@ END
         }
       CONSTRAINT2:
         for my $c_src ( $src_table->get_constraints ) {
+          next if $source_db =~ /Oracle/ && 
+            $c_src->type eq UNIQUE && $c_src->name =~ /^SYS_/i;
           next if $checked_constraints{$c_src};
           for my $c_tar ( $tar_table->get_constraints ) {
 			next CONSTRAINT2 if $c_src->equals($c_tar, $case_insensitive);
