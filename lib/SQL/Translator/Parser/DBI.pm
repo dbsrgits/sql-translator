@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI;
 
 # -------------------------------------------------------------------
-# $Id: DBI.pm,v 1.8 2006-03-09 19:25:47 cahille Exp $
+# $Id: DBI.pm,v 1.9 2006-05-24 14:45:21 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -121,7 +121,7 @@ query Oracle directly and skip the parsing of a text file, too.
 use strict;
 use DBI;
 use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 use constant DRIVERS => {
     mysql            => 'MySQL',
@@ -130,6 +130,8 @@ use constant DRIVERS => {
     pg               => 'PostgreSQL',
     sqlite           => 'SQLite',
     sybase           => 'Sybase',
+    pg               => 'PostgreSQL',
+    db2              => 'DB2',
 };
 
 use Exporter;
@@ -141,7 +143,11 @@ use SQL::Translator::Parser::DBI::SQLServer;
 use SQL::Translator::Parser::DBI::SQLite;
 use SQL::Translator::Parser::DBI::Sybase;
 use SQL::Translator::Parser::DBI::PostgreSQL;
+<<<<<<< DBI.pm
+use SQL::Translator::Parser::DBI::DB2;
+=======
 use SQL::Translator::Parser::DBI::Oracle;
+>>>>>>> 1.8
 
 use base qw(Exporter);
 @EXPORT = qw(parse);
