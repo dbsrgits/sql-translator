@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.24 2006-05-05 16:42:17 duality72 Exp $
+# $Id: Oracle.pm,v 1.25 2006-05-24 18:10:30 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -111,8 +111,6 @@ use base qw(Exporter);
 $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
-
-my $parser; 
 
 $GRAMMAR = q`
 
@@ -561,7 +559,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 # -------------------------------------------------------------------
 sub parse {
     my ( $translator, $data ) = @_;
-    $parser ||= Parse::RecDescent->new($GRAMMAR);
+    my $parser = Parse::RecDescent->new($GRAMMAR);
 
     local $::RD_TRACE = $translator->trace ? 1 : undef;
     local $DEBUG      = $translator->debug;
