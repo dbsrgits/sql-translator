@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Object;
 
 # ----------------------------------------------------------------------
-# $Id: Object.pm,v 1.7 2005-08-10 16:34:47 duality72 Exp $
+# $Id: Object.pm,v 1.8 2006-06-07 16:43:41 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -43,12 +43,12 @@ use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
 use vars qw[ $VERSION ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 
 =head1 Construction
 
-Derived classes should decalare their attributes using the C<_attributes>
+Derived classes should declare their attributes using the C<_attributes>
 method. They can then inherit the C<init> method from here which will call
 accessors of the same name for any values given in the hash passed to C<new>.
 Note that you will have to impliment the accessors your self and we expect perl

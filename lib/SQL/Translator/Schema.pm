@@ -3,7 +3,7 @@ package SQL::Translator::Schema;
 # vim: sw=4: ts=4:
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.25 2006-05-13 01:21:21 kycl4rk Exp $
+# $Id: Schema.pm,v 1.26 2006-06-07 16:43:41 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -60,7 +60,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 
 __PACKAGE__->_attributes(qw/name database translator/);
 
@@ -324,8 +324,8 @@ not be created.
     }
 
     $trigger->order( ++$TRIGGER_ORDER );
-    my $trigger_name = $trigger->name or return $self->error('No trigger name');
 
+    my $trigger_name = $trigger->name or return $self->error('No trigger name');
     if ( defined $self->{'triggers'}{$trigger_name} ) {
         return $self->error(qq[Can't create trigger: "$trigger_name" exists]);
     }
