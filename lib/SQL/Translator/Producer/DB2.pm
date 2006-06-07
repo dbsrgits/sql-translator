@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::DB2;
 
 # -------------------------------------------------------------------
-# $Id: DB2.pm,v 1.2 2006-05-24 22:06:56 schiffbruechige Exp $
+# $Id: DB2.pm,v 1.3 2006-06-07 16:02:54 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ Creates an SQL DDL suitable for DB2.
 use warnings;
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -52,7 +52,9 @@ use SQL::Translator::Utils qw(header_comment);
 # of SQL data types, with field->extra entries being used to convert back to
 # weird types like "polygon" if needed (IMO anyway)
 
-my %dt_translate  = (
+my %dt_translate  = ( );
+BEGIN {
+  %dt_translate = (
     #
     # MySQL types
     #
@@ -106,6 +108,7 @@ my %dt_translate  = (
     varchar2            => 'varchar',
     long                => 'clob',
 );
+}
 
 my %db2_reserved = map { $_ => 1} qw/
 ADD                DETERMINISTIC  LEAVE         RESTART
@@ -205,7 +208,7 @@ sub produce
     my (@table_defs, @index_defs);
     foreach my $table ($schema->get_tables)
     {
-        push @table_defs, 'DROP TABLE ' . $table->name . ";\n" if $add_drop_table;
+        push @table_defs, 'DROP TABLE ' . $table->name . ";" if $add_drop_table;
         push @table_defs, create_table($table, {
             no_comments => $no_comments});
 
@@ -226,7 +229,8 @@ sub produce
         push @trigger_defs, create_trigger($trigger);
     }
 
-    $output .= join("\n\n", @table_defs, @index_defs, @view_defs, @trigger_defs) . "\n";
+    return wantarray ? (@table_defs, @index_defs, @view_defs, @trigger_defs) :
+        $output . join("\n\n", @table_defs, @index_defs, @view_defs, @trigger_defs) . "\n";
 }
 
 { my %objnames;
@@ -253,7 +257,8 @@ sub produce
             warn "$newname is a reserved word in DB2!" if $WARN;
         }
 
-        return sprintf("%-*s", $length-5, $newname);
+#        return sprintf("%-*s", $length-5, $newname);
+        return $newname;
     }
 }
 
@@ -311,6 +316,7 @@ sub create_field
         'DEFAULT CURRENT TIMESTAMP' : defined $field->default_value ?
         (" DEFAULT '" .  $field->default_value . "'") : '';
 
+    return $field_def;
 }
 
 sub create_index
@@ -378,7 +384,7 @@ sub create_trigger
                       $trigger->database_event =~ /update_on/i ? 
                         ('UPDATE OF '. join(', ', $trigger->fields)) :
                         $trigger->database_event || 'UPDATE',
-                      $trigger->on_table->name,
+                      $trigger->table->name,
                       $trigger->extra->{reference} || 'REFERENCING OLD AS oldrow NEW AS newrow',
                       $trigger->extra->{granularity} || 'FOR EACH ROW',
                       $trigger->action );
@@ -390,15 +396,40 @@ sub create_trigger
 sub alter_field
 {
     my ($from_field, $to_field) = @_;
+
+    my $data_type = uc($dt_translate{lc($to_field->data_type)} || $to_field->data_type);
+
+    my $size = $to_field->size();
+    $data_type .= $data_type =~ /CHAR/i ? "(${size})" : '';
+
+    # DB2 will only allow changing of varchar/vargraphic datatypes
+    # to extend their lengths. Or changing of text types to other
+    # texttypes, and numeric types to larger numeric types. (v8)
+    # We can also drop/add keys, checks and constraints, but not
+    # columns !?
+
+    my $out = sprintf('ALTER TABLE %s ALTER %s SET DATATYPE %s',
+                      $to_field->table->name,
+                      $to_field->name,
+                      $data_type);
+
 }
 
 sub add_field
 {
-    my ($field) = @_;
+    my ($new_field) = @_;
+
+    my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
+                      $new_field->table->name,
+                      create_field($new_field));
+
+    return $out;
 }
 
 sub drop_field
 {
     my ($field) = @_;
+
+    return '';
 }
 1;

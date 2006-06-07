@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.68 2005-06-09 02:02:00 grommit Exp $
+# $Id: Translator.pm,v 1.69 2006-06-07 16:02:54 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -26,8 +26,8 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.07';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.68 $ =~ /(\d+)\.(\d+)/;
+$VERSION  = '0.08_01';
+$REVISION = sprintf "%d.%02d", q$Revision: 1.69 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -125,6 +125,11 @@ sub init {
     $self->trace( $config->{'trace'} );
 
     $self->validate( $config->{'validate'} );
+    
+    $self->quote_table_names( (defined $config->{'quote_table_names'} 
+        ? $config->{'quote_table_names'} : 1) );
+    $self->quote_field_names( (defined $config->{'quote_field_names'} 
+        ? $config->{'quote_field_names'} : 1) );
 
     return $self;
 }
@@ -152,6 +157,28 @@ sub no_comments {
     return $self->{'no_comments'} || 0;
 }
 
+
+# ----------------------------------------------------------------------
+# quote_table_names([$bool])
+# ----------------------------------------------------------------------
+sub quote_table_names {
+    my $self = shift;
+    if ( defined (my $arg = shift) ) {
+        $self->{'quote_table_names'} = $arg ? 1 : 0;
+    }
+    return $self->{'quote_table_names'} || 0;
+}
+
+# ----------------------------------------------------------------------
+# quote_field_names([$bool])
+# ----------------------------------------------------------------------
+sub quote_field_names {
+    my $self = shift;
+    if ( defined (my $arg = shift) ) {
+        $self->{'quote_field_names'} = $arg ? 1 : 0;
+    }
+    return $self->{'quote_field_names'} || 0;
+}
 
 # ----------------------------------------------------------------------
 # producer([$producer_spec])
@@ -386,7 +413,7 @@ sub trace {
 sub translate {
     my $self = shift;
     my ($args, $parser, $parser_type, $producer, $producer_type);
-    my ($parser_output, $producer_output);
+    my ($parser_output, $producer_output, @producer_output);
 
     # Parse arguments
     if (@_ == 1) {
@@ -507,14 +534,17 @@ sub translate {
     }
 
     # Run producer
-    eval { $producer_output = $producer->($self) };
-    if ($@ || ! $producer_output) {
+    # Calling wantarray in the eval no work, wrong scope.
+    my $wantarray = wantarray ? 1 : 0;
+    eval { $wantarray ? @producer_output = $producer->($self) :
+               $producer_output = $producer->($self) };
+    if ($@ || !( $producer_output || @producer_output)) {
         my $err = $@ || $self->error || "no results";
         my $msg = "translate: Error with producer '$producer_type': $err";
         return $self->error($msg);
     }
 
-    return $producer_output;
+    return wantarray ? @producer_output : $producer_output;
 }
 
 # ----------------------------------------------------------------------
@@ -862,6 +892,9 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
       show_warnings       => 0,
       # Add "drop table" statements
       add_drop_table      => 1,
+      # to quote or not to quote, thats the question
+      quote_table_names     => 1,
+      quote_field_names     => 1,
       # Validate schema object
       validate            => 1,
       # Make all table names CAPS in producers which support this option
@@ -945,6 +978,14 @@ add_drop_table
 
 =item *
 
+quote_table_names
+
+=item *
+
+quote_field_names
+
+=item *
+
 no_comments
 
 =item *
@@ -967,6 +1008,16 @@ advantage is gained by passing options to the constructor.
 
 Toggles whether or not to add "DROP TABLE" statements just before the 
 create definitions.
+
+=head2 quote_table_names
+
+Toggles whether or not to quote table names with " in DROP and CREATE
+statements. The default (true) is to quote them.
+
+=head2 quote_field_names
+
+Toggles whether or not to quote field names with " in most
+statements. The default (true), is to quote them.
 
 =head2 no_comments
 
