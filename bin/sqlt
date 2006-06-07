@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.20 2006-02-22 17:03:57 kycl4rk Exp $
+# $Id: sqlt,v 1.21 2006-06-07 16:04:12 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -74,6 +74,8 @@ To translate a schema:
   DB Producer Options:
 
     --add-drop-table   Add 'DROP TABLE' statements before creates
+    --quote-table-names  Quote all table names in statements
+    --quote-field-names  Qjuote all field names in statements
     --no-comments      Don't include comments in SQL output
 
   Diagram Producer Options:
@@ -134,7 +136,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database
@@ -142,7 +144,9 @@ my $help;             # show POD and bail
 my $stdin;            # whether to read STDIN for create script
 my $no_comments;      # whether to put comments in out file
 my $show_warnings;    # whether to show warnings from SQL::Translator
-my $add_drop_table;   # whether to show warnings from SQL::Translator
+my $add_drop_table;   # whether to add "DROP table" statements
+my $quote_table_names;  # whether to quote table names
+my $quote_field_names;  # whether to quote field names
 my $debug;            # whether to print debug info
 my $trace;            # whether to print parser trace
 my $list;             # list all parsers and producers
@@ -177,6 +181,8 @@ my $add_truncate;
 
 GetOptions(
     'add-drop-table'   => \$add_drop_table,
+    'quote_table_names'   => \$quote_table_names,
+    'quote_field_names'   => \$quote_field_names,
     'd|debug'          => \$debug,
     'f|from|parser:s'  => \$from,
     'fs:s'             => \$field_separator,
@@ -245,6 +251,8 @@ my $translator           =  SQL::Translator->new(
     no_comments          => $no_comments    ||  0,
     show_warnings        => $show_warnings  ||  0,
     add_drop_table       => $add_drop_table ||  0,
+    quote_table_names    => $quote_table_names ||  1,
+    quote_field_names    => $quote_field_names ||  1,
     validate             => $validate       ||  0,
     parser_args          => {
         trim_fields      => $no_trim ? 0 : 1,
