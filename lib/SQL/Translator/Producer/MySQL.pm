@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.46 2005-12-16 05:49:37 grommit Exp $
+# $Id: MySQL.pm,v 1.47 2006-06-07 16:32:11 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -92,7 +92,7 @@ Set the fields charater set and collation order.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -157,244 +157,316 @@ sub produce {
     #
     # Generate sql
     #
+    my (@table_defs);
     for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name;
-        debug("PKG: Looking at table '$table_name'\n");
-
-        #
-        # Header.  Should this look like what mysqldump produces?
-        #
-        $create .= "--\n-- Table: $table_name\n--\n" unless $no_comments;
-        $create .= qq[DROP TABLE IF EXISTS $table_name;\n] if $add_drop_table;
-        $create .= "CREATE TABLE $table_name (\n";
-
-        #
-        # Fields
-        #
-        my @field_defs;
-        for my $field ( $table->get_fields ) {
-            my $field_name = $field->name;
-            debug("PKG: Looking at field '$field_name'\n");
-            my $field_def = $field_name;
-
-            # data type and size
-            my $data_type = $field->data_type;
-            my @size      = $field->size;
-            my %extra     = $field->extra;
-            my $list      = $extra{'list'} || [];
-            # \todo deal with embedded quotes
-            my $commalist = join( ', ', map { qq['$_'] } @$list );
-            my $charset = $extra{'mysql_charset'};
-            my $collate = $extra{'mysql_collate'};
-
-            #
-            # Oracle "number" type -- figure best MySQL type
-            #
-            if ( lc $data_type eq 'number' ) {
-                # not an integer
-                if ( scalar @size > 1 ) {
-                    $data_type = 'double';
-                }
-                elsif ( $size[0] && $size[0] >= 12 ) {
-                    $data_type = 'bigint';
-                }
-                elsif ( $size[0] && $size[0] <= 1 ) {
-                    $data_type = 'tinyint';
-                }
-                else {
-                    $data_type = 'int';
-                }
-            }
-            #
-            # Convert a large Oracle varchar to "text"
-            #
-            elsif ( $data_type =~ /char/i && $size[0] > 255 ) {
-                $data_type = 'text';
-                @size      = ();
-            }
-            elsif ( $data_type =~ /char/i && ! $size[0] ) {
-                @size = (255);
-            }
-            elsif ( $data_type =~ /boolean/i ) {
-                $data_type = 'enum';
-                $commalist = "'0','1'";
-            }
-            elsif ( exists $translate{ lc $data_type } ) {
-                $data_type = $translate{ lc $data_type };
-            }
-
-            @size = () if $data_type =~ /(text|blob)/i;
-
-            if ( $data_type =~ /(double|float)/ && scalar @size == 1 ) {
-                push @size, '0';
-            }
-
-            $field_def .= " $data_type";
-
-            if ( lc $data_type eq 'enum' ) {
-                $field_def .= '(' . $commalist . ')';
-			} 
-            elsif ( defined $size[0] && $size[0] > 0 ) {
-                $field_def .= '(' . join( ', ', @size ) . ')';
-            }
-
-            # char sets
-            $field_def .= " CHARACTER SET $charset" if $charset;
-            $field_def .= " COLLATE $collate" if $collate;
-
-            # MySQL qualifiers
-            for my $qual ( qw[ binary unsigned zerofill ] ) {
-                my $val = $extra{ $qual } || $extra{ uc $qual } or next;
-                $field_def .= " $qual";
-            }
-            for my $qual ( 'character set', 'collate', 'on update' ) {
-                my $val = $extra{ $qual } || $extra{ uc $qual } or next;
-                $field_def .= " $qual $val";
-            }
-
-            # Null?
-            $field_def .= ' NOT NULL' unless $field->is_nullable;
-
-            # Default?  XXX Need better quoting!
-            my $default = $field->default_value;
-            if ( defined $default ) {
-                if ( uc $default eq 'NULL') {
-                    $field_def .= ' DEFAULT NULL';
-                } else {
-                    $field_def .= " DEFAULT '$default'";
-                }
-            }
-
-            if ( my $comments = $field->comments ) {
-                $field_def .= qq[ comment '$comments'];
-            }
-
-            # auto_increment?
-            $field_def .= " auto_increment" if $field->is_auto_increment;
-            push @field_defs, $field_def;
-		}
-
-        #
-        # Indices
-        #
-        my @index_defs;
-        my %indexed_fields;
-        for my $index ( $table->get_indices ) {
-            push @index_defs, join( ' ', 
-                lc $index->type eq 'normal' ? 'INDEX' : $index->type,
-                $index->name,
-                '(' . join( ', ', $index->fields ) . ')'
-            );
-            $indexed_fields{ $_ } = 1 for $index->fields;
-        }
-
-        #
-        # Constraints -- need to handle more than just FK. -ky
-        #
-        my @constraint_defs;
-        my @constraints = $table->get_constraints;
-        for my $c ( @constraints ) {
-            my @fields = $c->fields or next;
-
-            if ( $c->type eq PRIMARY_KEY ) {
-                push @constraint_defs,
-                    'PRIMARY KEY (' . join(', ', @fields). ')';
-            }
-            elsif ( $c->type eq UNIQUE ) {
-                push @constraint_defs,
-                    'UNIQUE '.
-                    (defined $c->name ? $c->name.' ' : '').
-                    '(' . join(', ', @fields). ')';
-            }
-            elsif ( $c->type eq FOREIGN_KEY ) {
-                #
-                # Make sure FK field is indexed or MySQL complains.
-                #
-                unless ( $indexed_fields{ $fields[0] } ) {
-                    push @index_defs, "INDEX ($fields[0])";
-                    $indexed_fields{ $fields[0] } = 1;
-                }
-
-                my $def = join(' ', 
-                    map { $_ || () } 'CONSTRAINT', $c->name, 'FOREIGN KEY'
-                );
-
-                $def .= ' (' . join( ', ', @fields ) . ')';
-
-                $def .= ' REFERENCES ' . $c->reference_table;
-
-                my @rfields = map { $_ || () } $c->reference_fields;
-                unless ( @rfields ) {
-                    my $rtable_name = $c->reference_table;
-                    if ( my $ref_table = $schema->get_table( $rtable_name ) ) {
-                        push @rfields, $ref_table->primary_key;
-                    }
-                    else {
-                        warn "Can't find reference table '$rtable_name' " .
-                            "in schema\n" if $show_warnings;
-                    }
-                }
-
-                if ( @rfields ) {
-                    $def .= ' (' . join( ', ', @rfields ) . ')';
-                }
-                else {
-                    warn "FK constraint on " . $table->name . '.' .
-                        join('', @fields) . " has no reference fields\n" 
-                        if $show_warnings;
-                }
-
-                if ( $c->match_type ) {
-                    $def .= ' MATCH ' . 
-                        ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
-                }
-
-                if ( $c->on_delete ) {
-                    $def .= ' ON DELETE '.join( ' ', $c->on_delete );
-                }
-
-                if ( $c->on_update ) {
-                    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
-                }
-
-                push @constraint_defs, $def;
-            }
-        }
-
-        $create .= join(",\n", map { "  $_" } 
-            @field_defs, @index_defs, @constraint_defs
-        );
-
-        #
-        # Footer
-        #
-        $create .= "\n)";
-        my $table_type_defined = 0;
-		for my $t1_option_ref ( $table->options ) {
-			my($key, $value) = %{$t1_option_ref};
-			$table_type_defined = 1
-				if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
-		    $create .= " $key=$value";
-		}
-        my $mysql_table_type = $table->extra('mysql_table_type');
-        #my $charset          = $table->extra('mysql_character_set');
-        #my $collate          = $table->extra('mysql_collate');
-        #$create .= " Type=$mysql_table_type" if $mysql_table_type;
-        #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
-        #$create .= " COLLATE $collate" if $collate;
-        $create .= " Type=$mysql_table_type"
-			if $mysql_table_type && !$table_type_defined;
-        my $charset          = $table->extra('mysql_charset');
-        my $collate          = $table->extra('mysql_collate');
-        my $comments         = $table->comments;
-
-        $create .= " DEFAULT CHARACTER SET $charset" if $charset;
-        $create .= " COLLATE $collate" if $collate;
-        $create .= qq[ comment='$comments'] if $comments;
-        $create .= ";\n\n";
+        push @table_defs, create_table($table, 
+                                       { add_drop_table => $add_drop_table,
+                                         show_warnings  => $show_warnings,
+                                         no_comments    => $no_comments
+                                         });
     }
 
+    return wantarray ? @table_defs : $create . join ('', @table_defs);
+}
+
+sub create_table
+{
+    my ($table, $options) = @_;
+
+    my $table_name = $table->name;
+    debug("PKG: Looking at table '$table_name'\n");
+
+    #
+    # Header.  Should this look like what mysqldump produces?
+    #
+    my $create .= "--\n-- Table: $table_name\n--\n" unless $options->{no_comments};
+    $create .= qq[DROP TABLE IF EXISTS $table_name;\n] if $options->{add_drop_table};
+    $create .= "CREATE TABLE $table_name (\n";
+
+    #
+    # Fields
+    #
+    my @field_defs;
+    for my $field ( $table->get_fields ) {
+        push @field_defs, create_field($field);
+    }
+
+    #
+    # Indices
+    #
+    my @index_defs;
+    my %indexed_fields;
+    for my $index ( $table->get_indices ) {
+        push @index_defs, create_index($index);
+        $indexed_fields{ $_ } = 1 for $index->fields;
+    }
+
+    #
+    # Constraints -- need to handle more than just FK. -ky
+    #
+    my @constraint_defs;
+    my @constraints = $table->get_constraints;
+    for my $c ( @constraints ) {
+        push @constraint_defs, create_constraint($c, $options);
+        
+        unless ( $indexed_fields{ ($c->fields())[0] } ) {
+            push @index_defs, "INDEX (" . ($c->fields())[0] . ")";
+            $indexed_fields{ ($c->fields())[0] } = 1;
+        }
+    }
+
+    $create .= join(",\n", map { "  $_" } 
+                    @field_defs, @index_defs, @constraint_defs
+                    );
+
+    #
+    # Footer
+    #
+    $create .= "\n)";
+    my $table_type_defined = 0;
+    for my $t1_option_ref ( $table->options ) {
+        my($key, $value) = %{$t1_option_ref};
+        $table_type_defined = 1
+            if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
+        $create .= " $key=$value";
+    }
+    my $mysql_table_type = $table->extra('mysql_table_type');
+    #my $charset          = $table->extra('mysql_character_set');
+    #my $collate          = $table->extra('mysql_collate');
+    #$create .= " Type=$mysql_table_type" if $mysql_table_type;
+    #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
+    #$create .= " COLLATE $collate" if $collate;
+    $create .= " Type=$mysql_table_type"
+        if $mysql_table_type && !$table_type_defined;
+    my $charset          = $table->extra('mysql_charset');
+    my $collate          = $table->extra('mysql_collate');
+    my $comments         = $table->comments;
+
+    $create .= " DEFAULT CHARACTER SET $charset" if $charset;
+    $create .= " COLLATE $collate" if $collate;
+    $create .= qq[ comment='$comments'] if $comments;
+    $create .= ";\n\n";
+
     return $create;
+}
+
+sub create_field
+{
+    my ($field) = @_;
+
+    my $field_name = $field->name;
+    debug("PKG: Looking at field '$field_name'\n");
+    my $field_def = $field_name;
+
+    # data type and size
+    my $data_type = $field->data_type;
+    my @size      = $field->size;
+    my %extra     = $field->extra;
+    my $list      = $extra{'list'} || [];
+    # \todo deal with embedded quotes
+    my $commalist = join( ', ', map { qq['$_'] } @$list );
+    my $charset = $extra{'mysql_charset'};
+    my $collate = $extra{'mysql_collate'};
+
+    #
+    # Oracle "number" type -- figure best MySQL type
+    #
+    if ( lc $data_type eq 'number' ) {
+        # not an integer
+        if ( scalar @size > 1 ) {
+            $data_type = 'double';
+        }
+        elsif ( $size[0] && $size[0] >= 12 ) {
+            $data_type = 'bigint';
+        }
+        elsif ( $size[0] && $size[0] <= 1 ) {
+            $data_type = 'tinyint';
+        }
+        else {
+            $data_type = 'int';
+        }
+    }
+    #
+    # Convert a large Oracle varchar to "text"
+    #
+    elsif ( $data_type =~ /char/i && $size[0] > 255 ) {
+        $data_type = 'text';
+        @size      = ();
+    }
+    elsif ( $data_type =~ /char/i && ! $size[0] ) {
+        @size = (255);
+    }
+    elsif ( $data_type =~ /boolean/i ) {
+        $data_type = 'enum';
+        $commalist = "'0','1'";
+    }
+    elsif ( exists $translate{ lc $data_type } ) {
+        $data_type = $translate{ lc $data_type };
+    }
+
+    @size = () if $data_type =~ /(text|blob)/i;
+
+    if ( $data_type =~ /(double|float)/ && scalar @size == 1 ) {
+        push @size, '0';
+    }
+
+    $field_def .= " $data_type";
+
+    if ( lc $data_type eq 'enum' ) {
+        $field_def .= '(' . $commalist . ')';
+    } 
+    elsif ( defined $size[0] && $size[0] > 0 ) {
+        $field_def .= '(' . join( ', ', @size ) . ')';
+    }
+
+    # char sets
+    $field_def .= " CHARACTER SET $charset" if $charset;
+    $field_def .= " COLLATE $collate" if $collate;
+
+    # MySQL qualifiers
+    for my $qual ( qw[ binary unsigned zerofill ] ) {
+        my $val = $extra{ $qual } || $extra{ uc $qual } or next;
+        $field_def .= " $qual";
+    }
+    for my $qual ( 'character set', 'collate', 'on update' ) {
+        my $val = $extra{ $qual } || $extra{ uc $qual } or next;
+        $field_def .= " $qual $val";
+    }
+
+    # Null?
+    $field_def .= ' NOT NULL' unless $field->is_nullable;
+
+    # Default?  XXX Need better quoting!
+    my $default = $field->default_value;
+    if ( defined $default ) {
+        if ( uc $default eq 'NULL') {
+            $field_def .= ' DEFAULT NULL';
+        } else {
+            $field_def .= " DEFAULT '$default'";
+        }
+    }
+
+    if ( my $comments = $field->comments ) {
+        $field_def .= qq[ comment '$comments'];
+    }
+
+    # auto_increment?
+    $field_def .= " auto_increment" if $field->is_auto_increment;
+
+    return $field_def;
+}
+
+sub create_index
+{
+    my ($index) = @_;
+
+    return join( ' ', 
+                 lc $index->type eq 'normal' ? 'INDEX' : $index->type,
+                 $index->name,
+                 '(' . join( ', ', $index->fields ) . ')'
+                 );
+
+}
+
+sub create_constraint
+{
+    my ($c, $options) = @_;
+
+    my @fields = $c->fields or next;
+
+    if ( $c->type eq PRIMARY_KEY ) {
+        return 'PRIMARY KEY (' . join(', ', @fields). ')';
+    }
+    elsif ( $c->type eq UNIQUE ) {
+        return
+        'UNIQUE '.
+            (defined $c->name ? $c->name.' ' : '').
+            '(' . join(', ', @fields). ')';
+    }
+    elsif ( $c->type eq FOREIGN_KEY ) {
+        #
+        # Make sure FK field is indexed or MySQL complains.
+        #
+
+        my $def = join(' ', 
+                       map { $_ || () } 'CONSTRAINT', $c->name, 'FOREIGN KEY'
+                       );
+
+        $def .= ' (' . join( ', ', @fields ) . ')';
+
+        $def .= ' REFERENCES ' . $c->reference_table;
+
+        my @rfields = map { $_ || () } $c->reference_fields;
+        unless ( @rfields ) {
+            my $rtable_name = $c->reference_table;
+            if ( my $ref_table = $c->table->schema->get_table( $rtable_name ) ) {
+                push @rfields, $ref_table->primary_key;
+            }
+            else {
+                warn "Can't find reference table '$rtable_name' " .
+                    "in schema\n" if $options->{show_warnings};
+            }
+        }
+
+        if ( @rfields ) {
+            $def .= ' (' . join( ', ', @rfields ) . ')';
+        }
+        else {
+            warn "FK constraint on " . $c->table->name . '.' .
+                join('', @fields) . " has no reference fields\n" 
+                if $options->{show_warnings};
+        }
+
+        if ( $c->match_type ) {
+            $def .= ' MATCH ' . 
+                ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
+        }
+
+        if ( $c->on_delete ) {
+            $def .= ' ON DELETE '.join( ' ', $c->on_delete );
+        }
+
+        if ( $c->on_update ) {
+            $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+        }
+    }
+
+}
+
+sub alter_field
+{
+    my ($from_field, $to_field) = @_;
+
+    my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
+                      $to_field->table->name,
+                      $to_field->name,
+                      create_field($to_field));
+
+    return $out;
+}
+
+sub add_field
+{
+    my ($new_field) = @_;
+
+    my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
+                      $new_field->table->name,
+                      create_field($new_field));
+
+    return $out;
+
+}
+
+sub drop_field
+{ 
+    my ($old_field) = @_;
+
+    my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
+                      $old_field->table->name,
+                      $old_field->name);
+
+    return $out;
+    
 }
 
 1;
