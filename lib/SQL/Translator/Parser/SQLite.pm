@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.7 2005-06-28 16:39:41 mwz444 Exp $
+# $Id: SQLite.pm,v 1.8 2006-06-07 16:08:45 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -152,7 +152,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -191,6 +191,7 @@ eofile : /^\Z/
 
 statement : begin_transaction
     | commit
+    | drop
     | comment
     | create
     | <error>
@@ -198,6 +199,8 @@ statement : begin_transaction
 begin_transaction : /begin transaction/i SEMICOLON
 
 commit : /commit/i SEMICOLON
+
+drop : /drop/i TABLE <commit> table_name SEMICOLON
 
 comment : /^\s*(?:#|-{2}).*\n/
     {
@@ -533,6 +536,8 @@ VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     }
     | /NULL/
     { 'NULL' }
+    | /CURRENT_TIMESTAMP/i
+    { 'CURRENT_TIMESTAMP' }
 
 !;
 
