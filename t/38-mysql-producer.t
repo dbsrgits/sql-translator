@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(2,
+    maybe_plan(6,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -88,3 +88,43 @@ EOSQL
     ok $out ne ""                 ,"Produced something!";
     eq_or_diff $out, $mysql_out   ,"Output looks right";
 }
+
+###############################################################################
+# New alter/add subs
+
+my $table = SQL::Translator::Schema::Table->new( name => 'mytable');
+
+my $field1 = SQL::Translator::Schema::Field->new( name => 'myfield',
+                                                  table => $table,
+                                                  data_type => 'VARCHAR',
+                                                  size => 10,
+                                                  default_value => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable => 1,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
+
+my $field1_sql = SQL::Translator::Producer::MySQL::create_field($field1);
+
+is($field1_sql, 'myfield VARCHAR(10)', 'Create field works');
+
+my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
+                                                  table => $table,
+                                                  data_type => 'VARCHAR',
+                                                  size      => 25,
+                                                  default_value => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable => 0,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
+
+my $alter_field = SQL::Translator::Producer::MySQL::alter_field($field1,
+                                                                $field2);
+is($alter_field, 'ALTER TABLE mytable CHANGE COLUMN myfield myfield VARCHAR(25) NOT NULL', 'Alter field works');
+
+my $add_field = SQL::Translator::Producer::MySQL::add_field($field1);
+
+is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10)', 'Add field works');
+
+my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2);
+is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
