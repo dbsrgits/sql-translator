@@ -1,7 +1,7 @@
 package SQL::Translator::Producer;
 
 # -------------------------------------------------------------------
-# $Id: Producer.pm,v 1.7 2004-02-09 23:04:26 kycl4rk Exp $
+# $Id: Producer.pm,v 1.8 2006-06-07 16:28:59 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -22,7 +22,7 @@ package SQL::Translator::Producer;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 sub produce { "" }
 
@@ -46,6 +46,30 @@ implement a single function, called B<produce>.  B<produce> will be
 called with the SQL::Translator object from which it is expected to 
 retrieve the SQL::Translator::Schema object which has been populated 
 by the parser.  It is expected to return a string.
+
+=head1 METHODS
+
+=over 4
+
+=item produce
+
+=item create_table($table)
+
+=item create_field($field)
+
+=item create_view($view)
+
+=item create_index($index)
+
+=item create_constraint($constraint)
+
+=item create_trigger($trigger)
+
+=item alter_field($from_field, $to_field)
+
+=item add_field($table, $new_field)
+
+=item drop_field($table, $old_field)
 
 =head1 AUTHORS
 
