@@ -63,7 +63,7 @@ Created on Fri Aug 15 15:08:18 2003
   </views>
 
   <triggers>
-      <trigger name="foo_trigger" database_event="insert" on_table="foo"
+      <trigger name="foo_trigger" database_event="insert" on_table="Basic"
           perform_action_when="after" order="1">
           <action>update modified=timestamp();</action>
           <extra foo="bar" hello="world" bar="baz" />

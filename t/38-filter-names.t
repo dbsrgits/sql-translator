@@ -64,7 +64,7 @@ translator:
   producer_type: SQL::Translator::Producer::YAML
   show_warnings: 1
   trace: 0
-  version: 0.07
+  version: SUPPRESSED
 };
 
 # Parse the test schema
@@ -89,4 +89,7 @@ my $out;
 lives_ok { $out = $obj->translate; }  "Translate ran";
 is $obj->error, ''                   ,"No errors";
 ok $out ne ""                        ,"Produced something!";
+# Somewhat hackishly modify the yaml with a regex to avoid 
+# failing randomly on every change of version.
+$out =~ s/version: .*/version: SUPPRESSED/;
 eq_or_diff $out, $ans_yaml           ,"Output looks right";

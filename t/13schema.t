@@ -581,6 +581,7 @@ require_ok( 'SQL::Translator::Schema' );
 #
 {
     my $s                   = SQL::Translator::Schema->new(name => 'TrigTest');
+    $s->add_table(name=>'foo') or die "Couldn't create table: ", $s->error;
     my $name                = 'foo_trigger';
     my $perform_action_when = 'after';
     my $database_event      = 'insert';
@@ -602,7 +603,7 @@ require_ok( 'SQL::Translator::Schema' );
         qq[Perform action when is "$perform_action_when"] );
     is( $t->database_event, $database_event, 
         qq[Database event is "$database_event"] );
-    is( $t->on_table, $on_table, qq[Table is "$on_table"] );
+    isa_ok( $t->table, 'SQL::Translator::Schema::Table', qq[table is a Table"] );
     is( $t->action, $action, qq[Action is "$action"] );
 
     my @triggs = $s->get_triggers;

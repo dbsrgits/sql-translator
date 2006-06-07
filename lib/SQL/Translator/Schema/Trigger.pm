@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Trigger;
 
 # ----------------------------------------------------------------------
-# $Id: Trigger.pm,v 1.8 2005-08-10 16:46:55 duality72 Exp $
+# $Id: Trigger.pm,v 1.9 2006-06-07 16:37:33 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,12 +54,12 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
-    name perform_action_when database_event fields on_table action schema
+    name schema perform_action_when database_event fields table on_table action
     order
 /);
 
@@ -171,22 +171,47 @@ Gets and set which fields to monitor for C<database_event>.
 }
 
 # ----------------------------------------------------------------------
+sub table {
+
+=pod
+
+=head2 table
+
+Gets or set the table on which the trigger works, as a L<SQL::Translator::Schema::Table> object.
+  $trigger->table($triggered_table);
+
+=cut
+
+    my ($self, $arg) = @_;
+    if ( @_ == 2 ) {
+        $self->error("Table attribute of a ".__PACKAGE__.
+                     " must be a SQL::Translator::Schema::Table") 
+            unless ref $arg and $arg->isa('SQL::Translator::Schema::Table');
+        $self->{table} = $arg;
+    }
+    return $self->{table};
+}
+
+# ----------------------------------------------------------------------
 sub on_table {
 
 =pod
 
 =head2 on_table
 
-Gets or set the table name on which the trigger works.
-
-  $trigger->table('foo');
+Gets or set the table name on which the trigger works, as a string.
+  $trigger->on_table('foo');
 
 =cut
 
-    my $self = shift;
-    my $arg  = shift || '';
-    $self->{'on_table'} = $arg if $arg;
-    return $self->{'on_table'};
+    my ($self, $arg) = @_;
+    if ( @_ == 2 ) {
+        my $table = $self->schema->get_table($arg);
+        die "Table named $arg doesn't exist"
+            if !$table;
+        $self->table($table);
+    }
+    return $self->table->name;
 }
 
 # ----------------------------------------------------------------------

@@ -23,7 +23,7 @@ my $file = "$Bin/data/mysql/sqlfxml-producer-basic.sql";
 
 local $SIG{__WARN__} = sub {
     CORE::warn(@_)
-        unless $_[0] =~ m#XML/Writer#;
+        unless $_[0] =~ m!XML/Writer!;
 };
 
 # Testing 1,2,3,4...
@@ -171,10 +171,18 @@ my ($obj,$ans,$xml);
 $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
-  <tables></tables>
+  <tables>
+    <table name="Basic" order="2">
+      <extra />
+      <fields></fields>
+      <indices></indices>
+      <constraints></constraints>
+      <comments></comments>
+    </table>
+  </tables>
   <views></views>
   <triggers>
-    <trigger name="foo_trigger" database_event="insert" on_table="foo" perform_action_when="after" order="1">
+    <trigger name="foo_trigger" database_event="insert" on_table="Basic" perform_action_when="after" order="1">
       <action>update modified=timestamp();</action>
       <extra hello="world" />
     </trigger>
@@ -195,13 +203,13 @@ EOXML
     my $name                = 'foo_trigger';
     my $perform_action_when = 'after';
     my $database_event      = 'insert';
-    my $on_table            = 'foo';
     my $action              = 'update modified=timestamp();';
+    my $table = $s->add_table( name => "Basic" ) or die $s->error;
     my $t                   = $s->add_trigger(
         name                => $name,
         perform_action_when => $perform_action_when,
         database_event      => $database_event,
-        on_table            => $on_table,
+        table               => $table,
         action              => $action,
         extra               => { hello => "world" },
     ) or die $s->error;
@@ -282,7 +290,7 @@ $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
-    <table name="Basic" order="2">
+    <table name="Basic" order="3">
       <extra />
       <fields>
         <field name="foo" data_type="integer" size="10" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="5">
