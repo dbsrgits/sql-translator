@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.8 2006-06-07 16:08:45 schiffbruechige Exp $
+# $Id: SQLite.pm,v 1.9 2006-06-08 21:02:19 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -152,7 +152,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -421,6 +421,7 @@ create : CREATE TEMPORARY(?) TRIGGER NAME before_or_after(?) database_event ON t
             instead_of   => 0,
             db_event     => $item[6],
             action       => $item[9],
+            on_table     => $table_name,
         }
     }
 
@@ -434,6 +435,7 @@ create : CREATE TEMPORARY(?) TRIGGER NAME instead_of database_event ON view_name
             instead_of   => 1,
             db_event     => $item[6],
             action       => $item[9],
+            on_table     => $table_name,
         }
     }
 
@@ -628,6 +630,7 @@ sub parse {
             perform_action_when => $def->{'when'},
             database_event      => $def->{'db_event'},
             action              => $def->{'action'},
+            on_table            => $def->{'on_table'},
         );
     }
 

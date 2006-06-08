@@ -18,7 +18,7 @@ create table pet (
   primary key (pet_id, person_id)
 );
 
-create trigger after insert on pet 
+create trigger pet_trig after insert on pet 
   begin
     update name=name;
   end

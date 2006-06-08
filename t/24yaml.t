@@ -206,7 +206,7 @@ schema:
       options: []
       order: 2
   triggers:
-    after:
+    pet_trig:
       action:
         for_each: ~
         steps:
@@ -214,10 +214,10 @@ schema:
         when: ~
       database_event: insert
       fields: ~
-      name: after
-      on_table: ~
+      name: pet_trig
+      on_table: pet
       order: 1
-      perform_action_when: ~
+      perform_action_when: after
   views:
     person_pet:
       fields: ''
@@ -248,6 +248,8 @@ my $tr   = SQL::Translator->new(
     parser   => 'SQLite',
     producer => 'YAML',
     data     => $data,
+#    debug    => 1,
+#    trace    => 1,
 );
 
 my $out;
