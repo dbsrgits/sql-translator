@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.53 2006-03-16 19:24:02 kycl4rk Exp $
+# $Id: MySQL.pm,v 1.54 2006-06-09 13:56:58 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -149,7 +149,7 @@ $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
 
-$GRAMMAR = q!
+$GRAMMAR = << 'END_OF_GRAMMAR';
 
 { 
     my ( $database_name, %tables, $table_order, @table_comments );
@@ -190,7 +190,20 @@ drop : /drop/i TABLE /[^;]+/ ';'
 drop : /drop/i WORD(s) ';'
     { @table_comments = () }
 
-insert : /insert/i  /[^;]+/ ';'
+string :
+  # MySQL strings, unlike common SQL strings, can be double-quoted or 
+  # single-quoted, and you can escape the delmiters by doubling (but only the 
+  # delimiter) or by backslashing.
+
+   /'(\\.|''|[^\\\'])*'/ |
+   /"(\\.|""|[^\\\"])*"/
+  # For reference, std sql str: /(?:(?:\')(?:[^\']*(?:(?:\'\')[^\']*)*)(?:\'))//
+
+nonstring : /[^;\'"]+/
+
+statement_body : (string | nonstring)(s?)
+
+insert : /insert/i  statement_body ';'
 
 alter : ALTER TABLE table_name alter_specification(s /,/) ';'
     {
@@ -690,7 +703,7 @@ CURRENT_TIMESTAMP : /current_timestamp(\(\))?/i
 	| /now\(\)/i
 	{ 'CURRENT_TIMESTAMP' }
 	
-!;
+END_OF_GRAMMAR
 
 # -------------------------------------------------------------------
 sub parse {

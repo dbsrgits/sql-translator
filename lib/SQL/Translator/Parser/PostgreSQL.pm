@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.46 2006-03-21 18:39:28 mwz444 Exp $
+# $Id: PostgreSQL.pm,v 1.47 2006-06-09 13:56:58 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.46 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -182,9 +182,16 @@ grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quote
 
 drop : /drop/i /[^;]*/ ';'
 
-insert : /insert/i /[^;]*/ ';'
+string :
+   /'(\\.|''|[^\\\'])*'/ 
 
-update : /update/i /[^;]*/ ';'
+nonstring : /[^;\'"]+/
+
+statement_body : (string | nonstring)(s?)
+
+insert : /insert/i statement_body ';'
+
+update : /update/i statement_body ';'
 
 #
 # Create table.
