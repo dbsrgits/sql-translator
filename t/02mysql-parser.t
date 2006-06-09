@@ -427,7 +427,7 @@ BEGIN {
 
             ALTER TABLE one ADD FOREIGN KEY (two_id) REFERENCES two (id);
 
-            INSERT absolutely *#! any old $£ ? rubbish ;
+            INSERT absolutely *#! any old $£ ? rubbish, even "quoted; semi-what""sits";
         ]
     ) or die $tr->error;
 
