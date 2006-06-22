@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.10 2006-06-09 13:56:58 schiffbruechige Exp $
+# $Id: SQLite.pm,v 1.11 2006-06-22 19:06:35 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -152,7 +152,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -465,7 +465,7 @@ statement_body : (string | nonstring)(s?)
 
 trigger_step : /(select|delete|insert|update)/i statement_body SEMICOLON
     {
-        $return = join( ' ', $item[1], $item[2] )
+        $return = join( ' ', $item[1], join ' ', @{ $item[2] || [] } )
     }   
 
 before_or_after : /(before|after)/i { $return = lc $1 }
