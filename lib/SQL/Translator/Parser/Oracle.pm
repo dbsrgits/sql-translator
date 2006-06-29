@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.25 2006-05-24 18:10:30 duality72 Exp $
+# $Id: Oracle.pm,v 1.26 2006-06-29 19:24:14 kycl4rk Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -373,9 +373,7 @@ column_constraint : constraint_name(?) column_constraint_type constraint_state(s
 constraint_name : /constraint/i NAME { $item[2] }
 
 column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
-    | /null/ 
-        { $return = { type => 'null' } }
-    | /unique/ 
+    | /unique/i
         { $return = { type => 'unique' } }
     | /primary\s+key/i 
         { $return = { type => 'primary_key' } }
@@ -447,6 +445,14 @@ default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
             supertype => 'constraint',
             type      => 'default',
             value     => $val,
+        }
+    }
+    | /null/i
+    {
+        $return =  {
+            supertype => 'constraint',
+            type      => 'default',
+            value     => 'NULL',
         }
     }
 
