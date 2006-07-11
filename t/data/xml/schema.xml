@@ -51,7 +51,7 @@ Created on Fri Aug 15 15:08:18 2003
           <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
         </constraints>
         
-        <extra foo="bar" hello="world" bar="baz" />
+        <extra foo="bar" hello="world" bar="baz" mysql_table_type="InnoDB" />
       </table>
   </tables>
 
