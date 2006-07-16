@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.47 2006-06-07 16:32:11 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.48 2006-07-16 13:57:49 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -91,8 +91,9 @@ Set the fields charater set and collation order.
 =cut
 
 use strict;
+use warnings;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.47 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -147,6 +148,7 @@ sub produce {
     # constraints. We do this first as we need InnoDB at both ends.
     #
     foreach ( map { $_->get_constraints } $schema->get_tables ) {
+        next unless $_->type eq FOREIGN_KEY;
         foreach my $meth (qw/table reference_table/) {
             my $table = $schema->get_table($_->$meth) || next;
             next if $table->extra('mysql_table_type');
@@ -157,8 +159,9 @@ sub produce {
     #
     # Generate sql
     #
-    my (@table_defs);
+    my @table_defs =();
     for my $table ( $schema->get_tables ) {
+#        print $table->name, "\n";
         push @table_defs, create_table($table, 
                                        { add_drop_table => $add_drop_table,
                                          show_warnings  => $show_warnings,
@@ -166,7 +169,9 @@ sub produce {
                                          });
     }
 
-    return wantarray ? @table_defs : $create . join ('', @table_defs);
+#    print "@table_defs\n";
+
+    return wantarray ? ($create, @table_defs, 'SET foreign_key_checks=1') : $create . join ('', @table_defs, "SET foreign_key_checks=1;\n\n");
 }
 
 sub create_table
@@ -179,7 +184,8 @@ sub create_table
     #
     # Header.  Should this look like what mysqldump produces?
     #
-    my $create .= "--\n-- Table: $table_name\n--\n" unless $options->{no_comments};
+    my $create = '';
+    $create .= "--\n-- Table: $table_name\n--\n" unless $options->{no_comments};
     $create .= qq[DROP TABLE IF EXISTS $table_name;\n] if $options->{add_drop_table};
     $create .= "CREATE TABLE $table_name (\n";
 
@@ -207,7 +213,8 @@ sub create_table
     my @constraint_defs;
     my @constraints = $table->get_constraints;
     for my $c ( @constraints ) {
-        push @constraint_defs, create_constraint($c, $options);
+        my $constr = create_constraint($c, $options);
+        push @constraint_defs, $constr if($constr);
         
         unless ( $indexed_fields{ ($c->fields())[0] } ) {
             push @index_defs, "INDEX (" . ($c->fields())[0] . ")";
@@ -389,7 +396,7 @@ sub create_constraint
         #
 
         my $def = join(' ', 
-                       map { $_ || () } 'CONSTRAINT', $c->name, 'FOREIGN KEY'
+                       map { $_ || () } 'CONSTRAINT', $c->table . '_' . $c->name, 'FOREIGN KEY'
                        );
 
         $def .= ' (' . join( ', ', @fields ) . ')';
@@ -429,8 +436,10 @@ sub create_constraint
         if ( $c->on_update ) {
             $def .= ' ON UPDATE '.join( ' ', $c->on_update );
         }
+        return $def;
     }
 
+    return undef;
 }
 
 sub alter_field
