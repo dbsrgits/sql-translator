@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.11 2006-03-06 13:08:42 grommit Exp $
+# $Id: Build.PL,v 1.12 2006-07-23 14:14:56 schiffbruechige Exp $
 
 use strict;
 use lib './lib';
@@ -25,11 +25,11 @@ my $builder = Module::Build->new(
         'Class::MakeMethods'       => 0,
         'IO::Dir'                  => 0,
         'Log::Log4perl'            => 0,
-        'Template'                 => 2.10,
         'Parse::RecDescent'        => 1.94,
         'Pod::Usage'               => 0,
     },
     recommends        => {
+        'Template'                 => 2.10,
         'GD'                      => 0,
         'GraphViz'                => 0,
         'IO::File'                => 0,
