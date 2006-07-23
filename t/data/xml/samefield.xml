@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Created by SQL::Translator::Producer::SqlfXML
+Created on Fri Aug 15 15:08:18 2003
+
+ -->
+<schema xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+    
+  <tables>
+      <table order="1" name="one">
+        <fields>
+          <field
+              name="same"
+              is_primary_key="0" is_foreign_key="0"
+              size="100" is_auto_increment="0" data_type="varchar"
+              order="1" default_value="hello" is_nullable="0" />
+        </fields>
+      </table>
+      <table order="2" name="two">
+        <fields>
+          <field
+              name="same"
+              is_primary_key="0" is_foreign_key="0"
+              size="100" is_auto_increment="0" data_type="varchar"
+              order="1" default_value="hello" is_nullable="0" />
+        </fields>
+      </table>
+  </tables>
+
+
+</schema>

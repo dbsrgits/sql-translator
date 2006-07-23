@@ -37,11 +37,16 @@ schema:
     thing:
       name: thing
       extra:
-        mysql_table_type: InnoDB
         mysql_charset: latin1 
         mysql_collate: latin1_danish_ci 
       order: 1
       fields:
+        id:
+          name: id
+          data_type: unsigned int
+          is_primary_key: 1
+          is_auto_increment: 1
+          order: 0
         name:
           name: name
           data_type: varchar
@@ -62,16 +67,56 @@ schema:
             mysql_charset: utf8
             mysql_collate: utf8_general_ci
           order: 3
+    thing2:
+      name: thing2
+      extra:
+      order: 2
+      fields:
+        id:
+          name: id
+          data_type: int
+          is_primary_key: 0
+          order: 0
+          is_foreign_key: 1
+        foo:
+          name: foo
+          data_type: int
+          order: 1
+          is_not_null: 1
+      constraints:
+        - type: PRIMARY_KEY
+          fields:
+            - id
+            - foo
+        - reference_table: thing
+          type: FOREIGN_KEY
+          fields: foo
+          name: fk_thing
+
 EOSCHEMA
 
 my $mysql_out = <<EOSQL;
 SET foreign_key_checks=0;
 
 CREATE TABLE thing (
+  id unsigned int auto_increment,
   name varchar(32),
   swedish_name varchar(32) CHARACTER SET swe7,
-  description text CHARACTER SET utf8 COLLATE utf8_general_ci
+  description text CHARACTER SET utf8 COLLATE utf8_general_ci,
+  INDEX (id),
+  PRIMARY KEY (id)
 ) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
+
+CREATE TABLE thing2 (
+  id integer,
+  foo integer,
+  INDEX (id),
+  INDEX (foo),
+  PRIMARY KEY (id, foo),
+  CONSTRAINT thing2_fk_thing FOREIGN KEY (foo) REFERENCES thing (id)
+) Type=InnoDB;
+
+SET foreign_key_checks=1;
 
 EOSQL
 
@@ -79,6 +124,7 @@ EOSQL
     $sqlt = SQL::Translator->new(
         show_warnings  => 1,
         no_comments    => 1,
+#        debug          => 1,
         from           => "YAML",
         to             => "MySQL",
     );
