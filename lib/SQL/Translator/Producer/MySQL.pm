@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.48 2006-07-16 13:57:49 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.49 2006-07-23 14:03:52 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -93,7 +93,7 @@ Set the fields charater set and collation order.
 use strict;
 use warnings;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -171,7 +171,7 @@ sub produce {
 
 #    print "@table_defs\n";
 
-    return wantarray ? ($create, @table_defs, 'SET foreign_key_checks=1') : $create . join ('', @table_defs, "SET foreign_key_checks=1;\n\n");
+    return wantarray ? ($create, @table_defs, 'SET foreign_key_checks=1;') : $create . join ('', @table_defs, "SET foreign_key_checks=1;\n\n");
 }
 
 sub create_table

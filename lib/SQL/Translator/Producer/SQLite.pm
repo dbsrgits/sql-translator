@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.13 2005-07-05 16:20:43 mwz444 Exp $
+# $Id: SQLite.pm,v 1.14 2006-07-23 14:03:52 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -67,162 +67,15 @@ sub produce {
     $create .= header_comment unless ($no_comments);
     $create .= "BEGIN TRANSACTION;\n\n";
 
-    my ( @index_defs, @constraint_defs, @trigger_defs );
+    my @table_defs = ();
     for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name;
-        debug("PKG: Looking at table '$table_name'\n");
-
-        my @fields = $table->get_fields or die "No fields in $table_name";
-
-        #
-        # Header.
-        #
-        $create .= "--\n-- Table: $table_name\n--\n" unless $no_comments;
-        $create .= qq[DROP TABLE $table_name;\n] if $add_drop_table;
-        $create .= "CREATE TABLE $table_name (\n";
-
-        #
-        # Comments
-        #
-        if ( $table->comments and !$no_comments ){
-             $create .= "-- Comments: \n-- ";
-             $create .= join "\n-- ",  $table->comments;
-             $create .= "\n--\n\n";
-        }
-
-        #
-        # How many fields in PK?
-        #
-        my $pk        = $table->primary_key;
-        my @pk_fields = $pk ? $pk->fields : ();
-
-        #
-        # Fields
-        #
-        my ( @field_defs, $pk_set );
-        for my $field ( @fields ) {
-            my $field_name = $field->name;
-            debug("PKG: Looking at field '$field_name'\n");
-            my $field_comments = $field->comments 
-                ? "-- " . $field->comments . "\n  " 
-                : '';
-
-            my $field_def = $field_comments.$field_name;
-
-            # data type and size
-            my $size      = $field->size;
-            my $data_type = $field->data_type;
-            $data_type    = 'varchar' if lc $data_type eq 'set';
-            $data_type  = 'blob' if lc $data_type eq 'bytea';
-
-            if ( lc $data_type =~ /(text|blob)/i ) {
-                $size = undef;
-            }
-
-            if ( $data_type =~ /timestamp/i ) {
-                push @trigger_defs, 
-                    "CREATE TRIGGER ts_${table_name} ".
-                    "after insert on $table_name\n".
-                    "begin\n".
-                    "  update $table_name set $field_name=timestamp() ".
-                       "where id=new.id;\n".
-                    "end;\n"
-                ;
-
-            }
-
-            #
-            # SQLite is generally typeless, but newer versions will
-            # make a field autoincrement if it is declared as (and
-            # *only* as) INTEGER PRIMARY KEY
-            #
-            if ( 
-                $field->is_primary_key && 
-                scalar @pk_fields == 1 &&
-                (
-                    $data_type =~ /int(eger)?$/i
-                    ||
-                    ( $data_type =~ /^number?$/i && $size !~ /,/ )
-                )
-            ) {
-                $data_type = 'INTEGER PRIMARY KEY';
-                $size      = undef;
-                $pk_set    = 1;
-            }
-
-            $field_def .= sprintf " %s%s", $data_type, 
-                ( !$field->is_auto_increment && $size ) ? "($size)" : '';
-
-            # Null?
-            $field_def .= ' NOT NULL' unless $field->is_nullable;
-
-            # Default?  XXX Need better quoting!
-            my $default = $field->default_value;
-            if ( defined $default ) {
-                if ( uc $default eq 'NULL') {
-                    $field_def .= ' DEFAULT NULL';
-                } elsif ( $default eq 'now()' ) {
-                    $field_def .= ' DEFAULT CURRENT_TIMESTAMP';
-                } elsif ( $default =~ /val\(/ ) {
-                    next;
-                } else {
-                    $field_def .= " DEFAULT '$default'";
-                }
-            }
-
-            push @field_defs, $field_def;
-        }
-
-        if ( 
-            scalar @pk_fields > 1 
-            || 
-            ( @pk_fields && !$pk_set ) 
-        ) {
-            push @field_defs, 'PRIMARY KEY (' . join(', ', @pk_fields ) . ')';
-        }
-
-        #
-        # Indices
-        #
-        my $idx_name_default = 'A';
-        for my $index ( $table->get_indices ) {
-            my $name   = $index->name;
-            $name      = mk_name($table_name, $name || ++$idx_name_default);
-
-            # strip any field size qualifiers as SQLite doesn't like these
-            my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
-            push @index_defs, 
-                "CREATE INDEX $name on $table_name ".
-                '(' . join( ', ', @fields ) . ');';
-        }
-
-        #
-        # Constraints
-        #
-        my $c_name_default = 'A';
-        for my $c ( $table->get_constraints ) {
-            next unless $c->type eq UNIQUE; 
-            my $name   = $c->name;
-            $name      = mk_name($table_name, $name || ++$idx_name_default);
-            my @fields = $c->fields;
-
-            push @constraint_defs, 
-                "CREATE UNIQUE INDEX $name on $table_name ".
-                '(' . join( ', ', @fields ) . ');';
-        }
-
-        $create .= join(",\n", map { "  $_" } @field_defs ) . "\n);\n";
-
-        $create .= "\n";
+        push @table_defs, create_table($table, { no_comment => $no_comments,
+                                                 add_drop_table => $add_drop_table,});
     }
 
-    for my $def ( @index_defs, @constraint_defs, @trigger_defs ) {
-        $create .= "$def\n";
-    }
+#    $create .= "COMMIT;\n";
 
-    $create .= "COMMIT;\n";
-
-    return $create;
+    return wantarray ? ($create, @table_defs, "COMMIT;\n") : join("\n", ($create, @table_defs, "COMMIT;\n"));
 }
 
 # -------------------------------------------------------------------
@@ -260,9 +113,198 @@ sub mk_name {
     return $name;
 }
 
-1;
+sub create_table
+{
+    my ($table, $options) = @_;
 
-# -------------------------------------------------------------------
+    my $table_name = $table->name;
+    my $no_comments = $options->{no_comments};
+    my $add_drop_table = $options->{add_drop_table};
+
+    debug("PKG: Looking at table '$table_name'\n");
+
+    my ( @index_defs, @constraint_defs, @trigger_defs );
+    my @fields = $table->get_fields or die "No fields in $table_name";
+
+    #
+    # Header.
+    #
+    my $create = '';
+    $create .= "--\n-- Table: $table_name\n--\n" unless $no_comments;
+    $create .= qq[DROP TABLE $table_name;\n] if $add_drop_table;
+    $create .= "CREATE TABLE $table_name (\n";
+
+    #
+    # Comments
+    #
+    if ( $table->comments and !$no_comments ){
+        $create .= "-- Comments: \n-- ";
+        $create .= join "\n-- ",  $table->comments;
+        $create .= "\n--\n\n";
+    }
+
+    #
+    # How many fields in PK?
+    #
+    my $pk        = $table->primary_key;
+    my @pk_fields = $pk ? $pk->fields : ();
+
+    #
+    # Fields
+    #
+    my ( @field_defs, $pk_set );
+    for my $field ( @fields ) {
+        push @field_defs, create_field($field);
+    }
+
+    if ( 
+         scalar @pk_fields > 1 
+         || 
+         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs ) 
+         ) {
+        push @field_defs, 'PRIMARY KEY (' . join(', ', @pk_fields ) . ')';
+    }
+
+    #
+    # Indices
+    #
+    my $idx_name_default = 'A';
+    for my $index ( $table->get_indices ) {
+        push @index_defs, create_index($index);
+    }
+
+    #
+    # Constraints
+    #
+    my $c_name_default = 'A';
+    for my $c ( $table->get_constraints ) {
+        next unless $c->type eq UNIQUE; 
+        push @constraint_defs, create_constraint($c);
+    }
+
+    $create .= join(",\n", map { "  $_" } @field_defs ) . "\n);\n";
+
+    $create .= "\n";
+
+    for my $def ( @index_defs, @constraint_defs, @trigger_defs ) {
+        $create .= "$def\n";
+    }
+    return $create;
+}
+
+sub create_field
+{
+    my ($field, $options) = @_;
+
+    my $field_name = $field->name;
+    debug("PKG: Looking at field '$field_name'\n");
+    my $field_comments = $field->comments 
+        ? "-- " . $field->comments . "\n  " 
+        : '';
+
+    my $field_def = $field_comments.$field_name;
+
+    # data type and size
+    my $size      = $field->size;
+    my $data_type = $field->data_type;
+    $data_type    = 'varchar' if lc $data_type eq 'set';
+    $data_type  = 'blob' if lc $data_type eq 'bytea';
+
+    if ( lc $data_type =~ /(text|blob)/i ) {
+        $size = undef;
+    }
+
+#             if ( $data_type =~ /timestamp/i ) {
+#                 push @trigger_defs, 
+#                     "CREATE TRIGGER ts_${table_name} ".
+#                     "after insert on $table_name\n".
+#                     "begin\n".
+#                     "  update $table_name set $field_name=timestamp() ".
+#                        "where id=new.id;\n".
+#                     "end;\n"
+#                 ;
+#
+#            }
+
+    #
+    # SQLite is generally typeless, but newer versions will
+    # make a field autoincrement if it is declared as (and
+    # *only* as) INTEGER PRIMARY KEY
+    #
+    my $pk        = $field->table->primary_key;
+    my @pk_fields = $pk ? $pk->fields : ();
+
+    if ( 
+         $field->is_primary_key && 
+         scalar @pk_fields == 1 &&
+         (
+          $data_type =~ /int(eger)?$/i
+          ||
+          ( $data_type =~ /^number?$/i && $size !~ /,/ )
+          )
+         ) {
+        $data_type = 'INTEGER PRIMARY KEY';
+        $size      = undef;
+#        $pk_set    = 1;
+    }
+
+    $field_def .= sprintf " %s%s", $data_type, 
+    ( !$field->is_auto_increment && $size ) ? "($size)" : '';
+
+    # Null?
+    $field_def .= ' NOT NULL' unless $field->is_nullable;
+
+    # Default?  XXX Need better quoting!
+    my $default = $field->default_value;
+    if ( defined $default ) {
+        if ( uc $default eq 'NULL') {
+            $field_def .= ' DEFAULT NULL';
+        } elsif ( $default eq 'now()' ||
+                  $default eq 'CURRENT_TIMESTAMP' ) {
+            $field_def .= ' DEFAULT CURRENT_TIMESTAMP';
+        } elsif ( $default =~ /val\(/ ) {
+            next;
+        } else {
+            $field_def .= " DEFAULT '$default'";
+        }
+    }
+
+    return $field_def;
+
+}
+
+sub create_index
+{
+    my ($index, $options) = @_;
+
+    my $name   = $index->name;
+    $name      = mk_name($index->table->name, $name); #  || ++$idx_name_default);
+
+    # strip any field size qualifiers as SQLite doesn't like these
+    my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
+    my $index_def =  
+    "CREATE INDEX $name on " . $index->table->name .
+        ' (' . join( ', ', @fields ) . ');';
+
+    return $index_def;
+}
+
+sub create_constraint
+{
+    my ($c, $options) = @_;
+
+    my $name   = $c->name;
+    $name      = mk_name($c->table->name, $name); # || ++$idx_name_default);
+    my @fields = $c->fields;
+
+    my $c_def =  
+    "CREATE UNIQUE INDEX $name on " . $c->table->name .
+        ' (' . join( ', ', @fields ) . ');';
+
+    return $c_def;
+}
+
+1;
 
 =pod
 
