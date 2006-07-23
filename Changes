@@ -1,10 +1,20 @@
+# -----------------------------------------------------------
+# 0.08_01    2006-07-23
+# -----------------------------------------------------------
 
+* Made Trigger check that a give table exists in on_table - castaway
+* Split some producers (DB2, MySQL, SQLite, PostgreSQL) into sub methods (others to follow) - castaway
+* Add alter_* methods to some Producers and docs to Producer.pm (for use by Diff later) - castaway
+* Made changes to allow producers to return a list of statements - castaway
+* Split sqlt-diff into script and module - castaway
+* Added quote_table_names and quote_field_names patch (omega, zamolxes) - castaway
+* Added DB2 Producer - castaway
 * Added mysql_character_set for 4.1+ -mda
 * New filters, Names and Globals. -mda
 * Added the initial work on a template based Dia UML producer. -mda
 
 # -----------------------------------------------------------
-# 0.7    2005-06-10
+# 0.07    2005-06-10
 # -----------------------------------------------------------
 *   YAML parser supports extra attributes on tables.
 
