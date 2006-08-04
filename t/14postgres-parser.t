@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(119, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(117, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -27,7 +27,9 @@ my $sql = q[
         f_tz timestamp,
         f_text text,
         f_fk1 integer not null references t_test2 (f_id),
-        f_dropped text
+        f_dropped text,
+        f_timestamp timestamp(0) with time zone,
+        f_timestamp2 timestamp without time zone
     );
 
     create table t_test2 (
@@ -52,7 +54,7 @@ my $sql = q[
     alter table t_test1 alter column f_char drop default;
 
     -- The following are allowed by the grammar 
-    -- but won't do anything... - ky
+    -- but won\'t do anything... - ky
 
     alter table t_text1 alter column f_char set not null;
 
@@ -86,7 +88,7 @@ is( $t1->name, 't_test1', 'Table t_test1 exists' );
 is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 11, '11 fields in t_test1' );
+is( scalar @t1_fields, 13, '13 fields in t_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -176,16 +178,16 @@ isa_ok( $fk_ref1, 'SQL::Translator::Schema::Constraint', 'FK' );
 is( $fk_ref1->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my $f11 = shift @t1_fields;
-is( $f11->name, 'f_fk2', 'Eleventh field is "f_fk2"' );
-is( $f11->data_type, 'integer', 'Field is an integer' );
+is( $f11->name, 'f_timestamp', 'Eleventh field is "f_timestamp"' );
+is( $f11->data_type, 'timestamp', 'Field is a timestamp' );
 is( $f11->is_nullable, 1, 'Field can be null' );
-is( $f11->size, 10, 'Size is "10"' );
-is( $f11->default_value, 'FOO', 'Default value is "FOO"' );
+is( $f11->size, 0, 'Size is "0"' );
+is( $f11->default_value, undef, 'Default value is "undef"' );
 is( $f11->is_primary_key, 0, 'Field is not PK' );
-is( $f11->is_foreign_key, 1, 'Field is a FK' );
-my $fk_ref2 = $f11->foreign_key_reference;
-isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
-is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
+is( $f11->is_foreign_key, 0, 'Field is not FK' );
+# my $fk_ref2 = $f11->foreign_key_reference;
+# isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
+# is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my @t1_constraints = $t1->get_constraints;
 is( scalar @t1_constraints, 8, '8 constraints on t_test1' );

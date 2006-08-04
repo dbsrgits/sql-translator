@@ -50,7 +50,8 @@ CREATE TABLE Basic (
   explicitnulldef varchar,
   explicitemptystring varchar DEFAULT '',
   -- Hello emptytagdef
-  emptytagdef varchar DEFAULT ''
+  emptytagdef varchar DEFAULT '',
+  timest timestamp
 );
 
 CREATE INDEX titleindex_Basic on Basic (title);

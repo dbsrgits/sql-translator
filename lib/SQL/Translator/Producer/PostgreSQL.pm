@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.24 2006-07-23 14:03:52 schiffbruechige Exp $
+# $Id: PostgreSQL.pm,v 1.25 2006-08-04 21:38:20 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ producer.
 use strict;
 use warnings;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.24 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -191,24 +191,24 @@ sub produce {
     $output .= header_comment unless ($no_comments);
 #    my %used_index_names;
 
-    my @table_defs;
+    my (@table_defs, @fks);
     for my $table ( $schema->get_tables ) {
-        
-        push @table_defs, create_table($table, { quote_table_names => $qt,
-                                                 quote_field_names => $qf,
-                                                 no_comments => $no_comments,
-                                                 add_drop_table => $add_drop_table,});
 
-#        $output .= join( "\n\n", 
-#            @comments,
-#            @sequence_defs, 
-#            $create_statement, 
-#            @index_defs, 
-#            '' 
- #       );
+        my ($table_def, $fks) = create_table($table, 
+                                             { quote_table_names => $qt,
+                                               quote_field_names => $qf,
+                                               no_comments => $no_comments,
+                                               add_drop_table => $add_drop_table,});
+        push @table_defs, $table_def;
+        push @fks, @$fks;
+
     }
 
     $output = join("\n\n", @table_defs);
+    if ( @fks ) {
+        $output .= "--\n-- Foreign Key Definitions\n--\n\n" unless $no_comments;
+        $output .= join( "\n\n", @fks );
+    }
 
     if ( $WARN ) {
         if ( %truncated ) {
@@ -318,7 +318,7 @@ sub create_table
 
     my $table_name    = $table->name or next;
     $table_name       = mk_name( $table_name, '', undef, 1 );
-    my $table_name_ur = $qt ? unreserve($table_name) : $table_name;
+    my $table_name_ur = $qt ? $table_name : unreserve($table_name);
     $table->name($table_name_ur);
 
 # print STDERR "$table_name table_name\n";
@@ -383,14 +383,10 @@ sub create_table
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n);"
                             ;
-    if ( @fks ) {
-        $create_statement .= "--\n-- Foreign Key Definitions\n--\n\n" unless $no_comments;
-        $create_statement .= join( "\n\n", @fks );
-    }
 
     $create_statement .= "\n" . join(";\n", @index_defs) . "\n";
     
-    return $create_statement;    
+    return $create_statement, \@fks;
 }
 
 { 
@@ -410,7 +406,7 @@ sub create_table
         my $field_name    = mk_name(
                                     $field->name, '', $field_name_scope{$table_name}, 1 
                                     );
-        my $field_name_ur = $qf ? unreserve($field_name, $table_name ) : $field_name;
+        my $field_name_ur = $qf ? $field_name : unreserve($field_name, $table_name );
         $field->name($field_name_ur);
         my $field_comments = $field->comments 
             ? "-- " . $field->comments . "\n  " 
@@ -463,7 +459,7 @@ sub create_table
         my $qt = $options->{quote_table_names} ||'';
         my $qf = $options->{quote_field_names} ||'';
         my $table_name = $index->table->name;
-        my $table_name_ur = $qt ? unreserve($table_name) : $table_name;
+#        my $table_name_ur = $qt ? unreserve($table_name) : $table_name;
 
         my ($index_def, @constraint_defs);
 
@@ -477,7 +473,7 @@ sub create_table
         my $type = $index->type || NORMAL;
         my @fields     = 
             map { $_ =~ s/\(.+\)//; $_ }
-        map { $qt ? unreserve($_, $table_name ) : $_ }
+        map { $qt ? $_ : unreserve($_, $table_name ) }
         $index->fields;
         next unless @fields;
 
@@ -492,7 +488,7 @@ sub create_table
         }
         elsif ( $type eq NORMAL ) {
             $index_def = 
-                "CREATE INDEX ${qf}${name}${qf} on ${qt}${table_name_ur}${qt} (".
+                "CREATE INDEX ${qf}${name}${qf} on ${qt}${table_name}${qt} (".
                 join( ', ', map { qq[$qf$_$qf] } @fields ).  
                 ');'
                 ; 
@@ -522,12 +518,12 @@ sub create_table
 
         my @fields     = 
             map { $_ =~ s/\(.+\)//; $_ }
-        map { $qt ? unreserve( $_, $table_name ) : $_}
+        map { $qt ? $_ : unreserve( $_, $table_name )}
         $c->fields;
 
         my @rfields     = 
             map { $_ =~ s/\(.+\)//; $_ }
-        map { $qt ? unreserve( $_, $table_name ) : $_}
+        map { $qt ? $_ : unreserve( $_, $table_name )}
         $c->reference_fields;
 
         next if !@fields && $c->type ne CHECK_C;
@@ -638,6 +634,9 @@ sub convert_datatype
     undef @size if $data_type =~ m/(integer|smallint|bigint|text)/;
     
     if ( defined $size[0] && $size[0] > 0 ) {
+        $data_type .= '(' . join( ',', @size ) . ')';
+    }
+    elsif (defined $size[0] && $data_type eq 'timestamp' ) {
         $data_type .= '(' . join( ',', @size ) . ')';
     }
 

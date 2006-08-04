@@ -34,6 +34,9 @@ Created on Fri Aug 15 15:08:18 2003
               data_type="varchar" order="7" default_value="" >
               <comments>Hello emptytagdef</comments>
           </field>
+          <field name="timest" size="0"
+              data_type="timestamp" order="7" >
+          </field>
         </fields>
 
         <indices>

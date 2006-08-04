@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(150, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(162, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -118,6 +118,12 @@ schema_ok( $scma, {
                     default_value => "",
                     is_nullable => 1,
                     comments => "Hello emptytagdef",
+                },
+                {
+                    name => "timest",
+                    data_type => "timestamp",
+                    size => "0",
+                    is_nullable => 1,
                 },
             ],
             constraints => [

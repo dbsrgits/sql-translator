@@ -43,6 +43,7 @@ CREATE TABLE "Basic" (
   "explicitemptystring" character varying DEFAULT '',
   -- Hello emptytagdef
   "emptytagdef" character varying DEFAULT '',
+  "timest" timestamp(0),
   PRIMARY KEY ("id"),
   Constraint "emailuniqueindex" UNIQUE ("email")
 );

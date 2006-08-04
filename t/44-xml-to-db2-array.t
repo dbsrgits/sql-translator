@@ -41,6 +41,7 @@ email VARCHAR(255),
 explicitnulldef VARCHAR(0),
 explicitemptystring VARCHAR(0) DEFAULT '',
 emptytagdef VARCHAR(0) DEFAULT '',
+timest TIMESTAMP,
 CONSTRAINT emailuniqueindex UNIQUE (email)   ,
  PRIMARY KEY(id)
 );|,
