@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.49 2006-07-23 14:03:52 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.50 2006-08-09 13:06:20 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -59,7 +59,7 @@ The producer recognises the following extra attributes on the Schema objects.
 
 Set the list of allowed values for Enum fields.
 
-=item field.binary field.unsigned field.zerofill
+=item field.binary, field.unsigned, field.zerofill
 
 Set the MySQL field options of the same name.
 
@@ -78,11 +78,11 @@ Run SHOW CHARACTER SET to see list.
 
 MySql-4.1+. Set the tables colation order.
 
-=item table.mysql_charset table.mysql_collate
+=item table.mysql_charset, table.mysql_collate
 
 Set the tables default charater set and collation order.
 
-=item field.mysql_charset field.mysql_collate
+=item field.mysql_charset, field.mysql_collate
 
 Set the fields charater set and collation order.
 
@@ -93,7 +93,7 @@ Set the fields charater set and collation order.
 use strict;
 use warnings;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -136,6 +136,10 @@ sub produce {
     my $schema         = $translator->schema;
     my $show_warnings  = $translator->show_warnings || 0;
 
+    my ($qt, $qf) = ('','');
+    $qt = '`' if $translator->quote_table_names;
+    $qf = '`' if $translator->quote_field_names;
+
     debug("PKG: Beginning production\n");
 
     my $create; 
@@ -163,9 +167,11 @@ sub produce {
     for my $table ( $schema->get_tables ) {
 #        print $table->name, "\n";
         push @table_defs, create_table($table, 
-                                       { add_drop_table => $add_drop_table,
-                                         show_warnings  => $show_warnings,
-                                         no_comments    => $no_comments
+                                       { add_drop_table    => $add_drop_table,
+                                         show_warnings     => $show_warnings,
+                                         no_comments       => $no_comments,
+                                         quote_table_names => $qt,
+                                         quote_field_names => $qf
                                          });
     }
 
@@ -178,6 +184,9 @@ sub create_table
 {
     my ($table, $options) = @_;
 
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+
     my $table_name = $table->name;
     debug("PKG: Looking at table '$table_name'\n");
 
@@ -185,16 +194,16 @@ sub create_table
     # Header.  Should this look like what mysqldump produces?
     #
     my $create = '';
-    $create .= "--\n-- Table: $table_name\n--\n" unless $options->{no_comments};
-    $create .= qq[DROP TABLE IF EXISTS $table_name;\n] if $options->{add_drop_table};
-    $create .= "CREATE TABLE $table_name (\n";
+    $create .= "--\n-- Table: $qt$table_name$qt\n--\n" unless $options->{no_comments};
+    $create .= qq[DROP TABLE IF EXISTS $qt$table_name$qt;\n] if $options->{add_drop_table};
+    $create .= "CREATE TABLE $qt$table_name$qt (\n";
 
     #
     # Fields
     #
     my @field_defs;
     for my $field ( $table->get_fields ) {
-        push @field_defs, create_field($field);
+        push @field_defs, create_field($field, $options);
     }
 
     #
@@ -203,7 +212,7 @@ sub create_table
     my @index_defs;
     my %indexed_fields;
     for my $index ( $table->get_indices ) {
-        push @index_defs, create_index($index);
+        push @index_defs, create_index($index, $options);
         $indexed_fields{ $_ } = 1 for $index->fields;
     }
 
@@ -217,7 +226,7 @@ sub create_table
         push @constraint_defs, $constr if($constr);
         
         unless ( $indexed_fields{ ($c->fields())[0] } ) {
-            push @index_defs, "INDEX (" . ($c->fields())[0] . ")";
+            push @index_defs, "INDEX ($qf" . ($c->fields())[0] . "$qf)";
             $indexed_fields{ ($c->fields())[0] } = 1;
         }
     }
@@ -259,11 +268,13 @@ sub create_table
 
 sub create_field
 {
-    my ($field) = @_;
+    my ($field, $options) = @_;
+
+    my $qf = $options->{quote_field_names} ||= '';
 
     my $field_name = $field->name;
     debug("PKG: Looking at field '$field_name'\n");
-    my $field_def = $field_name;
+    my $field_def = "$qf$field_name$qf";
 
     # data type and size
     my $data_type = $field->data_type;
@@ -365,12 +376,14 @@ sub create_field
 
 sub create_index
 {
-    my ($index) = @_;
+    my ($index, $options) = @_;
+
+    my $qf = $options->{quote_field_names} || '';
 
     return join( ' ', 
                  lc $index->type eq 'normal' ? 'INDEX' : $index->type,
                  $index->name,
-                 '(' . join( ', ', $index->fields ) . ')'
+                 '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
                  );
 
 }
@@ -379,16 +392,19 @@ sub create_constraint
 {
     my ($c, $options) = @_;
 
+    my $qf = $options->{quote_field_names} || '';
+    my $qt = $options->{quote_table_names} || '';
+
     my @fields = $c->fields or next;
 
     if ( $c->type eq PRIMARY_KEY ) {
-        return 'PRIMARY KEY (' . join(', ', @fields). ')';
+        return 'PRIMARY KEY (' . $qf . join("$qf, $qf", @fields). $qf . ')';
     }
     elsif ( $c->type eq UNIQUE ) {
         return
-        'UNIQUE '.
-            (defined $c->name ? $c->name.' ' : '').
-            '(' . join(', ', @fields). ')';
+        'UNIQUE '. 
+            (defined $c->name ? $qf.$c->name.$qf.' ' : '').
+            '(' . $qf . join("$qf, $qf", @fields). $qf . ')';
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
         #
@@ -396,12 +412,12 @@ sub create_constraint
         #
 
         my $def = join(' ', 
-                       map { $_ || () } 'CONSTRAINT', $c->table . '_' . $c->name, 'FOREIGN KEY'
+                       map { $_ || () } 'CONSTRAINT', $qt . $c->table . '_' . $c->name . $qt, 'FOREIGN KEY'
                        );
 
-        $def .= ' (' . join( ', ', @fields ) . ')';
+        $def .= ' ('.$qf . join( "$qf, $qf", @fields ) . $qf . ')';
 
-        $def .= ' REFERENCES ' . $c->reference_table;
+        $def .= ' REFERENCES ' . $qt . $c->reference_table . $qt;
 
         my @rfields = map { $_ || () } $c->reference_fields;
         unless ( @rfields ) {
@@ -416,7 +432,7 @@ sub create_constraint
         }
 
         if ( @rfields ) {
-            $def .= ' (' . join( ', ', @rfields ) . ')';
+            $def .= ' (' . $qf . join( "$qf, $qf", @rfields ) . $qf . ')';
         }
         else {
             warn "FK constraint on " . $c->table->name . '.' .
@@ -444,23 +460,28 @@ sub create_constraint
 
 sub alter_field
 {
-    my ($from_field, $to_field) = @_;
+    my ($from_field, $to_field, $options) = @_;
+
+    my $qf = $options->{quote_field_name} || '';
+    my $qt = $options->{quote_table_name} || '';
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
-                      $to_field->table->name,
-                      $to_field->name,
-                      create_field($to_field));
+                      $qt . $to_field->table->name . $qt,
+                      $qf . $to_field->name . $qf,
+                      create_field($to_field, $options));
 
     return $out;
 }
 
 sub add_field
 {
-    my ($new_field) = @_;
+    my ($new_field, $options) = @_;
+
+    my $qt = $options->{quote_table_name} || '';
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
-                      $new_field->table->name,
-                      create_field($new_field));
+                      $qt . $new_field->table->name . $qt,
+                      create_field($new_field, $options));
 
     return $out;
 
@@ -468,11 +489,14 @@ sub add_field
 
 sub drop_field
 { 
-    my ($old_field) = @_;
+    my ($old_field, $options) = @_;
 
+    my $qf = $options->{quote_field_name} || '';
+    my $qt = $options->{quote_table_name} || '';
+    
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
-                      $old_field->table->name,
-                      $old_field->name);
+                      $qt . $old_field->table->name . $qt,
+                      $qf . $old_field->name . $qf);
 
     return $out;
     

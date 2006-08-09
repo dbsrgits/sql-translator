@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(6,
+    maybe_plan(7,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -67,6 +67,11 @@ schema:
             mysql_charset: utf8
             mysql_collate: utf8_general_ci
           order: 3
+      constraints:
+        - type: UNIQUE
+          fields:
+            - name
+          name: idx_unique_name
     thing2:
       name: thing2
       extra:
@@ -98,22 +103,24 @@ EOSCHEMA
 my $mysql_out = <<EOSQL;
 SET foreign_key_checks=0;
 
-CREATE TABLE thing (
-  id unsigned int auto_increment,
-  name varchar(32),
-  swedish_name varchar(32) CHARACTER SET swe7,
-  description text CHARACTER SET utf8 COLLATE utf8_general_ci,
-  INDEX (id),
-  PRIMARY KEY (id)
+CREATE TABLE `thing` (
+  `id` unsigned int auto_increment,
+  `name` varchar(32),
+  `swedish_name` varchar(32) CHARACTER SET swe7,
+  `description` text CHARACTER SET utf8 COLLATE utf8_general_ci,
+  INDEX (`id`),
+  INDEX (`name`),
+  PRIMARY KEY (`id`),
+  UNIQUE `idx_unique_name` (`name`)
 ) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
 
-CREATE TABLE thing2 (
-  id integer,
-  foo integer,
-  INDEX (id),
-  INDEX (foo),
-  PRIMARY KEY (id, foo),
-  CONSTRAINT thing2_fk_thing FOREIGN KEY (foo) REFERENCES thing (id)
+CREATE TABLE `thing2` (
+  `id` integer,
+  `foo` integer,
+  INDEX (`id`),
+  INDEX (`foo`),
+  PRIMARY KEY (`id`, `foo`),
+  CONSTRAINT `thing2_fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`)
 ) Type=InnoDB;
 
 SET foreign_key_checks=1;
@@ -127,12 +134,21 @@ EOSQL
 #        debug          => 1,
         from           => "YAML",
         to             => "MySQL",
+        quote_table_names => 1,
+        quote_field_names => 1
     );
 
     my $out = $sqlt->translate(\$yaml_in)
     or die "Translate error:".$sqlt->error;
     ok $out ne ""                 ,"Produced something!";
-    eq_or_diff $out, $mysql_out   ,"Output looks right";
+    eq_or_diff $out, $mysql_out   ,"Output looks right with quoting";
+
+    @{$sqlt}{qw/quote_table_names quote_field_names/} = (0,0);
+
+    $out = $sqlt->translate(\$yaml_in)
+    or die "Translat eerror:".$sqlt->error;
+    $mysql_out =~ s/`//g;
+    eq_or_diff $out, $mysql_out, "Output looks right without quoting";
 }
 
 ###############################################################################
