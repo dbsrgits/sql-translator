@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.3 2006-05-04 20:45:58 duality72 Exp $
+# $Id: SQLServer.pm,v 1.4 2006-08-26 11:37:18 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -113,7 +113,7 @@ ORDER BY o.name,
             if defined;
     } @{$dbh->selectall_arrayref("SELECT DISTINCT object_name(id)
                                     FROM sysindexes
-                                   WHERE indid > 0 and indid < 255 and
+                                   WHERE indid > 0 and indid < 255 and rows > 0 and
                                          name not like '_WA_Sys%'")};
 
     ## slurp objects
@@ -141,7 +141,7 @@ SELECT o.name, colid,c.text
   FROM syscomments c
   JOIN sysobjects o
     ON c.id = o.id
- WHERE o.type ='P'
+ WHERE o.type in ('P', 'FN', 'TF', 'IF')
 }
 );
 
