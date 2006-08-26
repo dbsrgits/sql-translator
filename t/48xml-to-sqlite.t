@@ -38,9 +38,6 @@ is($sql, << "SQL");
 BEGIN TRANSACTION;
 
 
---
--- Table: Basic
---
 DROP TABLE Basic;
 CREATE TABLE Basic (
   id INTEGER PRIMARY KEY NOT NULL,
