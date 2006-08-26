@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.14 2006-07-23 14:03:52 schiffbruechige Exp $
+# $Id: SQLite.pm,v 1.15 2006-08-26 11:35:31 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -44,7 +44,7 @@ use SQL::Translator::Utils qw(debug header_comment);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -69,7 +69,7 @@ sub produce {
 
     my @table_defs = ();
     for my $table ( $schema->get_tables ) {
-        push @table_defs, create_table($table, { no_comment => $no_comments,
+        push @table_defs, create_table($table, { no_comments => $no_comments,
                                                  add_drop_table => $add_drop_table,});
     }
 
