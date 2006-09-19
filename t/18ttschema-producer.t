@@ -38,6 +38,7 @@ use SQL::Translator::Producer::TTSchema;
         to             => "TTSchema",
         producer_args  => {
             ttfile  => "$Bin/data/template/basic.tt",
+#            ttfile  => "$Bin/data/template/test.tt",
             tt_vars => {
                 foo   => 'bar',
                 hello => 'world',
@@ -46,6 +47,7 @@ use SQL::Translator::Producer::TTSchema;
     );
     my $out;
     lives_ok { $out = $obj->translate; }  "Translate ran";
+#    print STDERR "Output: $out\n";
     ok $out ne ""                        ,"Produced something!";
     local $/ = undef; # slurp
     eq_or_diff $out, <DATA>              ,"Output looks right";

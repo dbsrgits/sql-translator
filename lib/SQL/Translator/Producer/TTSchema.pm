@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TTSchema;
 
 # -------------------------------------------------------------------
-# $Id: TTSchema.pm,v 1.10 2004-11-26 00:28:06 grommit Exp $
+# $Id: TTSchema.pm,v 1.11 2006-09-19 20:55:12 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -129,7 +129,7 @@ constructor.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;
@@ -157,6 +157,7 @@ sub produce {
     my %tt_conf = exists $args->{tt_conf} ? %{$args->{tt_conf}} : ();
     # sqlt passes the producer args for _all_ producers in, so we use this
     # grep hack to test for the old usage.
+    debug(Dumper(\%tt_conf));
     if ( grep /^[A-Z_]+$/, keys %$args ) {
         warn "Template config directly in the producer args is deprecated."
             ." Please use 'tt_conf' instead.\n";
@@ -170,13 +171,17 @@ sub produce {
         ABSOLUTE => 1, # Set so we can use from the command line sensibly
         RELATIVE => 1, # Maybe the cmd line code should set it! Security!
         %tt_conf,
-    ) || die "Failed to initialize Template object: ".Template->error;
+    );
+    debug("Template ERROR: " . Template->error. "\n") if(!$tt);
+    $tt || die "Failed to initialize Template object: ".Template->error;
 
-    $tt->process(
+    my $ttproc = $tt->process(
         $file,
         { schema => $scma , %$tt_vars },
         \$out
-    ) or die "Error processing template '$file': ".$tt->error;
+    );
+    debug("ERROR: ". $tt->error. "\n") if(!$ttproc);
+    $ttproc or die "Error processing template '$file': ".$tt->error;
 
     return $out;
 };
