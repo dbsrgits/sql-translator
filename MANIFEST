@@ -82,7 +82,6 @@ lib/SQL/Translator/Schema/Trigger.pm
 lib/SQL/Translator/Schema/View.pm
 lib/SQL/Translator/Shell.pm
 lib/SQL/Translator/Utils.pm
-lib/t
 lib/Test/SQL/Translator.pm
 LICENSE
 Makefile.PL
