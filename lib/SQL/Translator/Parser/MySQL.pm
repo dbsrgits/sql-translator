@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.54 2006-06-09 13:56:58 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.55 2006-10-10 19:04:54 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.55 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -153,6 +153,7 @@ $GRAMMAR = << 'END_OF_GRAMMAR';
 
 { 
     my ( $database_name, %tables, $table_order, @table_comments );
+    my $delimiter = ';';
 }
 
 #
@@ -174,20 +175,22 @@ statement : comment
     | create
     | alter
     | insert
+    | delimiter
+    | empty_statement
     | <error>
 
-use : /use/i WORD ';'
+use : /use/i WORD "$delimiter"
     {
         $database_name = $item[2];
         @table_comments = ();
     }
 
-set : /set/i /[^;]+/ ';'
+set : /set/i /[^;]+/ "$delimiter"
     { @table_comments = () }
 
-drop : /drop/i TABLE /[^;]+/ ';'
+drop : /drop/i TABLE /[^;]+/ "$delimiter"
 
-drop : /drop/i WORD(s) ';'
+drop : /drop/i WORD(s) "$delimiter"
     { @table_comments = () }
 
 string :
@@ -203,9 +206,14 @@ nonstring : /[^;\'"]+/
 
 statement_body : (string | nonstring)(s?)
 
-insert : /insert/i  statement_body ';'
+insert : /insert/i  statement_body "$delimiter"
 
-alter : ALTER TABLE table_name alter_specification(s /,/) ';'
+delimiter : /delimiter/i /[\S]+/
+	{ $delimiter = $item[2] }
+
+empty_statement : "$delimiter"
+
+alter : ALTER TABLE table_name alter_specification(s /,/) "$delimiter"
     {
         my $table_name                       = $item{'table_name'};
     die "Cannot ALTER table '$table_name'; it does not exist"
@@ -219,10 +227,10 @@ alter : ALTER TABLE table_name alter_specification(s /,/) ';'
 alter_specification : ADD foreign_key_def
     { $return = $item[2] }
 
-create : CREATE /database/i WORD ';'
+create : CREATE /database/i WORD "$delimiter"
     { @table_comments = () }
 
-create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) /(,\s*)?\)/ table_option(s?) ';'
+create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) /(,\s*)?\)/ table_option(s?) "$delimiter"
     { 
         my $table_name                       = $item{'table_name'};
         $tables{ $table_name }{'order'}      = ++$table_order;
@@ -275,7 +283,7 @@ create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_de
 
 opt_if_not_exists : /if not exists/i
 
-create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_name(s /,/) ')' ';'
+create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_name(s /,/) ')' "$delimiter"
     {
         @table_comments = ();
         push @{ $tables{ $item{'table_name'} }{'indices'} },
@@ -301,13 +309,13 @@ comment : /^\s*(?:#|-{2}).*\n/
         $return     = $comment;
     }
 
-comment : /\/\*/ /[^\*]+/ /\*\// ';'
+comment : /\/\*/ /[^\*]+/ /\*\//
     {
         my $comment = $item[2];
         $comment    =~ s/^\s*|\s*$//g;
         $return = $comment;
     }
-
+    
 field_comment : /^\s*(?:#|-{2}).*\n/ 
     { 
         my $comment =  $item[1];
