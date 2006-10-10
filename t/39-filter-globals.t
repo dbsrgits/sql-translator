@@ -17,6 +17,8 @@ BEGIN {
 use Test::Differences;
 use SQL::Translator;
 
+my $sqlt_version = $SQL::Translator::VERSION;
+
 # The _GLOBAL_ table should be removed and its fields copied onto all other
 # tables.
 my $in_yaml = qq{---
@@ -127,7 +129,7 @@ translator:
   producer_type: SQL::Translator::Producer::YAML
   show_warnings: 1
   trace: 0
-  version: 0.07
+  version: $sqlt_version
 };
 
 
