@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-graph,v 1.6 2004-08-30 18:59:09 kycl4rk Exp $
+# $Id: sqlt-graph,v 1.7 2006-10-16 15:24:12 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -91,7 +91,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
@@ -116,9 +116,9 @@ GetOptions(
     'natural-join'     => \$natural_join,
     'natural-join-pk'  => \$join_pk_only,
     's|skip:s'         => \$skip_fields,
-    'show-datatypes'   => $show_datatypes,
-    'show-sizes'       => $show_sizes,
-    'show-constraints' => $show_constraints,
+    'show-datatypes'   => \$show_datatypes,
+    'show-sizes'       => \$show_sizes,
+    'show-constraints' => \$show_constraints,
     'debug'            => \$debug,
     'h|help'           => \$help,
 ) or die pod2usage;
