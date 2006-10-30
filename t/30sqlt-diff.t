@@ -25,7 +25,7 @@ my $create2 = (-d "t")
     : catfile($Bin, "t", @create2);
 
 BEGIN {
-    maybe_plan(16,
+    maybe_plan(19,
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Parser::Oracle',
@@ -37,6 +37,7 @@ my @cmd = ($sqlt_diff, "$create1=SQLite", "$create2=SQLite");
 
 my $out = `@cmd`;
 
+like($out, qr/-- Target database SQLite is untested/, "Detected 'untested' comment");
 like($out, qr/ALTER TABLE person CHANGE iq/, "Detected altered 'iq' field");
 like($out, qr/ALTER TABLE person ADD is_rock_star/, 
     "Detected missing rock star field");
@@ -60,6 +61,7 @@ my $mysql_create2 = (-d "t")
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
 $out = `@cmd`;
 
+unlike($out, qr/-- Target database MySQL is untested/, "Did not detect 'untested' comment");
 like($out, qr/ALTER TABLE person CHANGE person_id/, "Detected altered 'person_id' field");
 like($out, qr/ALTER TABLE person CHANGE iq/, "Detected altered 'iq' field");
 like($out, qr/ALTER TABLE person CHANGE name/, "Detected altered 'name' field");
@@ -94,6 +96,7 @@ my $oracle_create2 = (-d "t")
 @cmd = ($sqlt_diff, "$oracle_create1=Oracle", "$oracle_create2=Oracle");
 $out = `@cmd`;
 
+unlike($out, qr/-- Target database Oracle is untested/, "Did not detect 'untested' comment");
 like($out, qr/ALTER TABLE TABLE1 DROP FOREIGN KEY/, 
     "Detected drop foreign key");
 like($out, qr/ALTER TABLE TABLE1 ADD CONSTRAINT/, 

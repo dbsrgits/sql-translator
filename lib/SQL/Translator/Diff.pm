@@ -310,6 +310,9 @@ END
     push(@diffs, @diffs_at_end);
 
     if ( @diffs ) {
+    	if ( $target_db !~ /^(MySQL|SQLServer|Oracle)$/ ) {
+    		unshift(@diffs, "-- Target database $target_db is untested/unsupported!!!");
+    	}
         return join( "\n", 
                   "-- Convert schema '$src_name' to '$tar_name':\n", @diffs, "\n"
                 );
