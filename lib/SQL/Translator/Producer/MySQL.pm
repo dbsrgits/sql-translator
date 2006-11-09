@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.50 2006-08-09 13:06:20 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.51 2006-11-09 18:19:05 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -93,7 +93,7 @@ Set the fields charater set and collation order.
 use strict;
 use warnings;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.51 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -176,8 +176,9 @@ sub produce {
     }
 
 #    print "@table_defs\n";
+    push @table_defs, "SET foreign_key_checks=1;\n\n";
 
-    return wantarray ? ($create, @table_defs, 'SET foreign_key_checks=1;') : $create . join ('', @table_defs, "SET foreign_key_checks=1;\n\n");
+    return wantarray ? ($create, @table_defs) : $create . join ('', @table_defs);
 }
 
 sub create_table
@@ -194,8 +195,9 @@ sub create_table
     # Header.  Should this look like what mysqldump produces?
     #
     my $create = '';
+    my $drop;
     $create .= "--\n-- Table: $qt$table_name$qt\n--\n" unless $options->{no_comments};
-    $create .= qq[DROP TABLE IF EXISTS $qt$table_name$qt;\n] if $options->{add_drop_table};
+    $drop = qq[DROP TABLE IF EXISTS $qt$table_name$qt;\n] if $options->{add_drop_table};
     $create .= "CREATE TABLE $qt$table_name$qt (\n";
 
     #
@@ -263,7 +265,7 @@ sub create_table
     $create .= qq[ comment='$comments'] if $comments;
     $create .= ";\n\n";
 
-    return $create;
+    return $drop ? ($drop,$create) : $create;
 }
 
 sub create_field
