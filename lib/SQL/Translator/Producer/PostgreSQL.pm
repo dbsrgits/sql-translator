@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.25 2006-08-04 21:38:20 schiffbruechige Exp $
+# $Id: PostgreSQL.pm,v 1.26 2006-11-09 18:16:24 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ producer.
 use strict;
 use warnings;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.25 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -430,13 +430,17 @@ sub create_table
         #
         # Default value -- disallow for timestamps
         #
-        my $default = $data_type =~ /(timestamp|date)/i
-            ? undef : $field->default_value;
+#        my $default = $data_type =~ /(timestamp|date)/i
+#            ? undef : $field->default_value;
+        my $default = $field->default_value;
         if ( defined $default ) {
+            my $qd = "'";
+            $qd = '' if ($default eq 'now()' || 
+                         $default eq 'CURRENT_TIMESTAMP');
             $field_def .= sprintf( ' DEFAULT %s',
                                    ( $field->is_auto_increment && $seq_name )
                                    ? qq[nextval('"$seq_name"'::text)] :
-                                   ( $default =~ m/null/i ) ? 'NULL' : "'$default'"
+                                   ( $default =~ m/null/i ) ? 'NULL' : "$qd$default$qd"
                                    );
         }
 
