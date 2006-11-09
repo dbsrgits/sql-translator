@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(7,
+    maybe_plan(11,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -100,10 +100,11 @@ schema:
 
 EOSCHEMA
 
-my $mysql_out = <<EOSQL;
-SET foreign_key_checks=0;
+my @stmts = (
+"SET foreign_key_checks=0;\n\n",
 
-CREATE TABLE `thing` (
+"DROP TABLE IF EXISTS `thing`;\n",
+"CREATE TABLE `thing` (
   `id` unsigned int auto_increment,
   `name` varchar(32),
   `swedish_name` varchar(32) CHARACTER SET swe7,
@@ -112,20 +113,26 @@ CREATE TABLE `thing` (
   INDEX (`name`),
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
-) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;
+) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
 
-CREATE TABLE `thing2` (
+"DROP TABLE IF EXISTS `thing2`;\n",
+"CREATE TABLE `thing2` (
   `id` integer,
   `foo` integer,
   INDEX (`id`),
   INDEX (`foo`),
   PRIMARY KEY (`id`, `foo`),
   CONSTRAINT `thing2_fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`)
-) Type=InnoDB;
+) Type=InnoDB;\n\n",
 
-SET foreign_key_checks=1;
+"SET foreign_key_checks=1;\n\n"
 
-EOSQL
+);
+
+my @stmts_no_drop = grep {$_ !~ /^DROP TABLE/} @stmts;
+
+my $mysql_out = join("", @stmts_no_drop);
+
 
     my $sqlt;
     $sqlt = SQL::Translator->new(
@@ -140,15 +147,33 @@ EOSQL
 
     my $out = $sqlt->translate(\$yaml_in)
     or die "Translate error:".$sqlt->error;
-    ok $out ne ""                 ,"Produced something!";
-    eq_or_diff $out, $mysql_out   ,"Output looks right with quoting";
+    ok $out ne "",                    "Produced something!";
+    eq_or_diff $out, $mysql_out,      "Scalar output looks right with quoting";
+
+    my @out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:".$sqlt->error;
+    is_deeply \@out, \@stmts_no_drop, "Array output looks right with quoting";
+
 
     @{$sqlt}{qw/quote_table_names quote_field_names/} = (0,0);
-
     $out = $sqlt->translate(\$yaml_in)
-    or die "Translat eerror:".$sqlt->error;
+      or die "Translat eerror:".$sqlt->error;
+
+    @out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:".$sqlt->error;
     $mysql_out =~ s/`//g;
-    eq_or_diff $out, $mysql_out, "Output looks right without quoting";
+    my @unquoted_stmts = map { s/`//g; $_} @stmts_no_drop;
+    eq_or_diff $out, $mysql_out,       "Output looks right without quoting";
+    is_deeply \@out, \@unquoted_stmts, "Array output looks right without quoting";
+
+    @{$sqlt}{qw/add_drop_table quote_field_names quote_table_names/} = (1,1,1);
+    @out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:".$sqlt->error;
+    $out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:".$sqlt->error;
+
+    eq_or_diff $out, join("", @stmts), "Output looks right with DROP TABLEs";
+    is_deeply \@out, \@stmts,          "Array output looks right with DROP TABLEs";
 }
 
 ###############################################################################
