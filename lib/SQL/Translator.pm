@@ -1,7 +1,7 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id: Translator.pm,v 1.70 2006-11-09 18:23:01 schiffbruechige Exp $
+# $Id: Translator.pm,v 1.71 2006-11-10 21:58:14 mwz444 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -26,8 +26,8 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.08_03';
-$REVISION = sprintf "%d.%02d", q$Revision: 1.70 $ =~ /(\d+)\.(\d+)/;
+$VERSION  = '0.08_04';
+$REVISION = sprintf "%d.%02d", q$Revision: 1.71 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
