@@ -1,3 +1,9 @@
+*   Parse FOREIGN KEY / REFERENCES with SQLite as the latest version
+     supports them.
+
+*   Add Parser/Producer for ActiveRecord::Migration 
+    [http://api.rubyonrails.com/classes/ActiveRecord/Migration.html].
+
 *   The regular Sybase parser is only just functional.  If you are
     interested in using Sybase, I would suggest serializing the schema
     (via YAML or Storable) using the DBI-Sybase parser and then
@@ -33,6 +39,7 @@
     not installed).
 
 *   Support for precompiled Parse::RecDescent grammars.
+- This is easy and I've done it locally with the DB2 parser - Jess
 
 *   More code generation producers, such as Java, PHP, and Python.
 
