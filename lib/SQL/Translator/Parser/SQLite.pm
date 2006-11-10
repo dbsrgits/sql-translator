@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.11 2006-06-22 19:06:35 mwz444 Exp $
+# $Id: SQLite.pm,v 1.12 2006-11-10 21:43:15 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -152,7 +152,7 @@ like-op::=
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.11 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -411,7 +411,7 @@ sort_order : /(ASC|DESC)/i
 #
 # Create Trigger
 
-create : CREATE TEMPORARY(?) TRIGGER NAME before_or_after(?) database_event ON table_name trigger_action
+create : CREATE TEMPORARY(?) TRIGGER NAME before_or_after(?) database_event ON table_name trigger_action SEMICOLON
     {
         my $table_name = $item[8]->{'name'};
         push @triggers, {

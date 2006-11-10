@@ -20,8 +20,9 @@ create table pet (
 
 create trigger pet_trig after insert on pet 
   begin
-    update name=name;
+    update pet set name=name;
   end
+;
 
 create view person_pet as
   select pr.person_id, pr.name as person_name, pt.name as pet_name
