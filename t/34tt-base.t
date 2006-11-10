@@ -42,8 +42,13 @@ eq_or_diff $out, <DATA>              ,"Output looks right";
 
 __DATA__
 Hello World
-Tables: Basic
+Tables: Basic, Another
 
 Basic
 ------
-Fields: id title description email explicitnulldef explicitemptystring emptytagdef timest
+Fields: id title description email explicitnulldef explicitemptystring emptytagdef another_id timest
+
+Another
+------
+Fields: id
+

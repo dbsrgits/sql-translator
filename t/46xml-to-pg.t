@@ -43,9 +43,20 @@ CREATE TABLE "Basic" (
   "explicitemptystring" character varying DEFAULT '',
   -- Hello emptytagdef
   "emptytagdef" character varying DEFAULT '',
+  "another_id" integer DEFAULT '2',
   "timest" timestamp(0),
   PRIMARY KEY ("id"),
   Constraint "emailuniqueindex" UNIQUE ("email")
 );
 CREATE INDEX "titleindex" on "Basic" ("title");
+
+
+DROP TABLE "Another";
+CREATE TABLE "Another" (
+  "id" serial NOT NULL,
+  PRIMARY KEY ("id")
+);
+
+ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
+  REFERENCES "Another" ("id");
 SQL

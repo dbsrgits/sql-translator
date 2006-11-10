@@ -48,11 +48,18 @@ CREATE TABLE Basic (
   explicitemptystring varchar DEFAULT '',
   -- Hello emptytagdef
   emptytagdef varchar DEFAULT '',
+  another_id int(10) DEFAULT '2',
   timest timestamp
 );
 
 CREATE INDEX titleindex_Basic on Basic (title);
 CREATE UNIQUE INDEX emailuniqueindex_Basic on Basic (email);
+
+DROP TABLE Another;
+CREATE TABLE Another (
+  id INTEGER PRIMARY KEY NOT NULL
+);
+
 
 COMMIT;
 SQL

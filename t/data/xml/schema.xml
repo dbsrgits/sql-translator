@@ -34,6 +34,8 @@ Created on Fri Aug 15 15:08:18 2003
               data_type="varchar" order="7" default_value="" >
               <comments>Hello emptytagdef</comments>
           </field>
+          <field name="another_id" size="10"
+              data_type="int" default_value="2" />
           <field name="timest" size="0"
               data_type="timestamp" order="7" >
           </field>
@@ -52,8 +54,32 @@ Created on Fri Aug 15 15:08:18 2003
               <extra foo="bar" hello="world" bar="baz" />
           </constraint>
           <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
+          <constraint name="" type="FOREIGN KEY" fields="another_id"
+              reference_table="Another" options="" deferrable="1" match_type=""
+              expression="" on_update="" on_delete="">
+          </constraint>
         </constraints>
         
+        <extra foo="bar" hello="world" bar="baz" mysql_table_type="InnoDB" />
+      </table>
+
+      <table order="1" name="Another">
+        <fields>
+          <field
+              name="id"
+              is_primary_key="1" is_foreign_key="0"
+              size="10" data_type="int" is_auto_increment="1" order="1"
+              is_nullable="0">
+          </field>
+        </fields>
+
+        <constraints>
+          <constraint name="" type="PRIMARY KEY" fields="id"
+              reference_table="" options="" deferrable="1" match_type=""
+              expression="" on_update="" on_delete="">
+          </constraint>
+        </constraints>
+
         <extra foo="bar" hello="world" bar="baz" mysql_table_type="InnoDB" />
       </table>
   </tables>

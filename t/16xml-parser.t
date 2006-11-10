@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(162, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(204, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -120,6 +120,14 @@ schema_ok( $scma, {
                     comments => "Hello emptytagdef",
                 },
                 {
+                    name => "another_id",
+                    data_type => "int",
+                    size => "10",
+                    default_value => 2,
+                    is_nullable => 1,
+                    is_foreign_key => 1,
+                },
+                {
                     name => "timest",
                     data_type => "timestamp",
                     size => "0",
@@ -140,7 +148,13 @@ schema_ok( $scma, {
                     name => 'emailuniqueindex',
                     type => UNIQUE,
                     fields => ["email"],
-                }
+                },
+                {
+                    type => FOREIGN_KEY,
+                    fields => ["another_id"],
+                    reference_table => "Another",
+                    reference_fields => ["id"],
+                },
             ],
             indices => [
                 {
@@ -153,7 +167,27 @@ schema_ok( $scma, {
                     },
                 },
             ],
-        } # end table Basic
+        }, # end table Basic
+        {
+            name => "Another",
+            extra => {
+                foo => "bar",
+                hello => "world",
+                bar => "baz",
+                mysql_table_type => "InnoDB",
+            },
+            fields => [
+                {
+                    name => "id",
+                    data_type => "int",
+                    default_value => undef,
+                    is_nullable => 0,
+                    size => 10,
+                    is_primary_key => 1,
+                    is_auto_increment => 1,
+                },
+            ],
+        }, # end table Another
     ], # end tables
 
     views => [

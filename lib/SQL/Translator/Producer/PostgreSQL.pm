@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.26 2006-11-09 18:16:24 schiffbruechige Exp $
+# $Id: PostgreSQL.pm,v 1.27 2006-11-10 21:21:51 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ producer.
 use strict;
 use warnings;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -207,7 +207,7 @@ sub produce {
     $output = join("\n\n", @table_defs);
     if ( @fks ) {
         $output .= "--\n-- Foreign Key Definitions\n--\n\n" unless $no_comments;
-        $output .= join( "\n\n", @fks );
+        $output .= join( "\n\n", @fks ) . "\n";
     }
 
     if ( $WARN ) {

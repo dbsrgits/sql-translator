@@ -19,7 +19,7 @@ Fields
         is_unique:             [% field.is_unique %]
         is_auto_increment:     [% field.is_auto_increment %]
         is_foreign_key:        [% field.is_foreign_key %]
-        foreign_key_reference: [% field.foreign_key_reference %]
+        foreign_key_reference: [% field.foreign_key_reference.reference_table %]
         is_valid:              [% field.is_valid %]
         order:                 [% field.order %]
         table:                 [% field.table %]

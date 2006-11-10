@@ -81,7 +81,8 @@ use SQL::Translator::Producer::TTSchema;
     ok $out ne ""                        ,"Produced something!";
     local $/ = undef; # slurp
     eq_or_diff $out, q{
-    Table: Basic}              
+    Table: Basic
+    Table: Another}
     ,"Output looks right";
 }
 
@@ -195,6 +196,20 @@ Fields
         order:                 7
         table:                 Basic
     
+    another_id
+        data_type:             int
+        size:                  10
+        is_nullable:           1
+        default_value:         2
+        is_primary_key:        0
+        is_unique:             0
+        is_auto_increment:     0
+        is_foreign_key:        1
+        foreign_key_reference: Another
+        is_valid:              1
+        order:                 8
+        table:                 Basic
+    
     timest
         data_type:             timestamp
         size:                  0
@@ -206,7 +221,7 @@ Fields
         is_foreign_key:        0
         foreign_key_reference: 
         is_valid:              1
-        order:                 8
+        order:                 9
         table:                 Basic
     
 
@@ -236,6 +251,54 @@ Constraints
     emailuniqueindex
         type:             UNIQUE
         fields:           email
+        expression:       
+        match_type:       
+        reference_fields: 
+        reference_table:  
+        deferrable:       1
+        on_delete:        
+        on_update:        
+        options:          
+        is_valid:         1
+    
+    ?
+        type:             FOREIGN KEY
+        fields:           another_id
+        expression:       
+        match_type:       
+        reference_fields: id
+        reference_table:  Another
+        deferrable:       1
+        on_delete:        
+        on_update:        
+        options:          
+        is_valid:         1
+    
+Table: Another
+==========================================================================
+
+Fields
+    id
+        data_type:             int
+        size:                  10
+        is_nullable:           0
+        default_value:         
+        is_primary_key:        1
+        is_unique:             0
+        is_auto_increment:     1
+        is_foreign_key:        0
+        foreign_key_reference: 
+        is_valid:              1
+        order:                 10
+        table:                 Another
+    
+
+Indices
+    
+Constraints
+    ?
+        type:             PRIMARY KEY
+        fields:           id
         expression:       
         match_type:       
         reference_fields: 

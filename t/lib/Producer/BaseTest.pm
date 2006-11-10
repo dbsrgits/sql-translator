@@ -20,9 +20,10 @@ sub tt_config { ( INTERPOLATE => 1 ); }
 
 __DATA__
 Hello World
-Tables: [% schema.get_tables %]
-[% table = schema.get_tables.first -%]
+Tables: [% schema.get_tables.join(', ') %]
+[% FOREACH table IN schema.get_tables -%]
 
 $table
 ------
 Fields: $table.field_names.join
+[% END %]
