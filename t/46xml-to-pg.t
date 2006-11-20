@@ -33,7 +33,7 @@ my $sql = $sqlt->translate(
 ) or die $sqlt->error;
 
 is($sql, << "SQL");
-DROP TABLE "Basic";
+DROP TABLE "Basic" CASCADE;
 CREATE TABLE "Basic" (
   "id" serial NOT NULL,
   "title" character varying(100) DEFAULT 'hello' NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE "Basic" (
 CREATE INDEX "titleindex" on "Basic" ("title");
 
 
-DROP TABLE "Another";
+DROP TABLE "Another" CASCADE;
 CREATE TABLE "Another" (
   "id" serial NOT NULL,
   PRIMARY KEY ("id")

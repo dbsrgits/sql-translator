@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.27 2006-11-10 21:21:51 mwz444 Exp $
+# $Id: PostgreSQL.pm,v 1.28 2006-11-20 23:56:14 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ producer.
 use strict;
 use warnings;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -377,7 +377,7 @@ sub create_table
 
     my $create_statement;
     $create_statement = join("\n", @comments);
-    $create_statement .= qq[DROP TABLE $qt$table_name_ur$qt;\n] 
+    $create_statement .= qq[DROP TABLE $qt$table_name_ur$qt CASCADE;\n] 
         if $add_drop_table;
     $create_statement .= qq[CREATE TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).

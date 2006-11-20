@@ -33,14 +33,14 @@ my $sql = $sqlt->translate(
 ) or die $sqlt->error;
 
 is($sql, << "SQL");
-DROP TABLE "one";
+DROP TABLE "one" CASCADE;
 CREATE TABLE "one" (
   "same" character varying(100) DEFAULT 'hello' NOT NULL
 );
 
 
 
-DROP TABLE "two";
+DROP TABLE "two" CASCADE;
 CREATE TABLE "two" (
   "same" character varying(100) DEFAULT 'hello' NOT NULL
 );
