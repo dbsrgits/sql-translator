@@ -88,6 +88,11 @@ schema:
           data_type: int
           order: 1
           is_not_null: 1
+        foo2:
+          name: foo2
+          data_type: int
+          order: 2
+          is_not_null: 1
       constraints:
         - type: PRIMARY_KEY
           fields:
@@ -96,6 +101,10 @@ schema:
         - reference_table: thing
           type: FOREIGN_KEY
           fields: foo
+          name: fk_thing
+        - reference_table: thing
+          type: FOREIGN_KEY
+          fields: foo2
           name: fk_thing
 
 EOSCHEMA
@@ -119,10 +128,13 @@ my @stmts = (
 "CREATE TABLE `thing2` (
   `id` integer,
   `foo` integer,
+  `foo2` integer,
   INDEX (`id`),
   INDEX (`foo`),
+  INDEX (`foo2`),
   PRIMARY KEY (`id`, `foo`),
-  CONSTRAINT `thing2_fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`)
+  CONSTRAINT `thing2_fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
+  CONSTRAINT `thing2_fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
 ) Type=InnoDB;\n\n",
 
 "SET foreign_key_checks=1;\n\n"

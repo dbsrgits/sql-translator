@@ -2,6 +2,7 @@
 # 0.08_04 2006-11-10
 # -----------------------------------------------------------
 
+* Patched MySQL producer to name constraints sanely, thanks Ash
 * Added patch to Producer::DB2 to avoid dependency issues with foreign keys
 * Added patch to remove single quotes for numeric default values in Producer::DB2
 * Fixed Parser::SQLite to require a semicolon after a create trigger statement

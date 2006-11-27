@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.51 2006-11-09 18:19:05 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.52 2006-11-27 19:28:04 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -93,7 +93,7 @@ Set the fields charater set and collation order.
 use strict;
 use warnings;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.51 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -394,8 +394,9 @@ sub create_constraint
 {
     my ($c, $options) = @_;
 
-    my $qf = $options->{quote_field_names} || '';
-    my $qt = $options->{quote_table_names} || '';
+    my $qf      = $options->{quote_field_names} || '';
+    my $qt      = $options->{quote_table_names} || '';
+    my $counter = ($options->{fk_name_counter}   ||= {});
 
     my @fields = $c->fields or next;
 
@@ -413,9 +414,16 @@ sub create_constraint
         # Make sure FK field is indexed or MySQL complains.
         #
 
+        $counter->{$c->table} ||= {};
         my $def = join(' ', 
-                       map { $_ || () } 'CONSTRAINT', $qt . $c->table . '_' . $c->name . $qt, 'FOREIGN KEY'
-                       );
+                       map { $_ || () } 
+                         'CONSTRAINT', 
+                         $qt . join('_', $c->table, 
+                                         $c->name,
+                                         ($counter->{$c->table}{$c->name}++ || ())
+                                   ) . $qt, 
+                         'FOREIGN KEY'
+                      );
 
         $def .= ' ('.$qf . join( "$qf, $qf", @fields ) . $qf . ')';
 
