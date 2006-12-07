@@ -210,7 +210,7 @@ schema:
       action:
         for_each: ~
         steps:
-          - update name=name
+          - update pet set name=name
         when: ~
       database_event: insert
       fields: ~
