@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.5 2006-05-05 16:41:26 duality72 Exp $
+# $Id: SQLServer.pm,v 1.6 2007-01-15 19:18:45 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -56,7 +56,7 @@ List of values for an enum field.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -349,7 +349,7 @@ sub produce {
     foreach ( $schema->get_views ) {
         my $name = $_->name();
         $output .= "\n\n";
-        $output .= "--\n-- View: $name\n--" unless $no_comments;
+        $output .= "--\n-- View: $name\n--\n\n" unless $no_comments;
         my $text = $_->sql();
 		$text =~ s/\r//g;
         $output .= $text;
@@ -362,7 +362,7 @@ sub produce {
     foreach ( $schema->get_procedures ) {
         my $name = $_->name();
         $output .= "\n\n";
-        $output .= "--\n-- Procedure: $name\n--" unless $no_comments;
+        $output .= "--\n-- Procedure: $name\n--\n\n" unless $no_comments;
         my $text = $_->sql();
 		$text =~ s/\r//g;
         $output .= $text;
