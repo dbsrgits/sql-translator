@@ -481,7 +481,10 @@ BEGIN {
         q[
         	DELIMITER ;;
             /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;;
-			/*!50003 CREATE */ /*!50017 DEFINER=`cmdomain`@`localhost` */ /*!50003 TRIGGER `acl_entry_insert` BEFORE INSERT ON `acl_entry` FOR EACH ROW SET NEW.dateCreated = CONVERT_TZ(SYSDATE(),'SYSTEM','+0:00'), NEW.dateModified = CONVERT_TZ(SYSDATE(),'SYSTEM','+0:00') */;;
+			/*!50003 CREATE */ /*!50017 DEFINER=`cmdomain`@`localhost` */
+			/*!50003 TRIGGER `acl_entry_insert` BEFORE INSERT ON `acl_entry`
+				FOR EACH ROW SET NEW.dateCreated = CONVERT_TZ(SYSDATE(),'SYSTEM','+0:00'),
+				NEW.dateModified = CONVERT_TZ(SYSDATE(),'SYSTEM','+0:00') */;;
 
 			DELIMITER ;
             CREATE TABLE one (
