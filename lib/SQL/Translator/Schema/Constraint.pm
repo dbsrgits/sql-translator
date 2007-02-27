@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.19 2005-08-10 16:42:47 duality72 Exp $
+# $Id: Constraint.pm,v 1.20 2007-02-27 20:45:30 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -548,13 +548,36 @@ Determines if this constraint is the same as another
     return 0 unless $case_insensitive ? uc($self->table->name) eq uc($other->table->name)
     	: $self->table->name eq $other->table->name;
     return 0 unless $self->expression eq $other->expression;
-    my $selfFields = join(":", $self->fields);
-    my $otherFields = join(":", $other->fields);
-    return 0 unless $case_insensitive ? uc($selfFields) eq uc($otherFields) : $selfFields eq $otherFields;
+    
+    # Check fields, regardless of order
+    my %otherFields = ();	# create a hash of the other fields
+    foreach my $otherField ($other->fields) {
+    	$otherField = uc($otherField) if $case_insensitive;
+    	$otherFields{$otherField} = 1;
+    }
+    foreach my $selfField ($self->fields) { # check for self fields in hash
+    	$selfField = uc($selfField) if $case_insensitive;
+    	return 0 unless $otherFields{$selfField};
+    	delete $otherFields{$selfField};
+    }
+    # Check all other fields were accounted for
+    return 0 unless keys %otherFields == 0;
+
+    # Check reference fields, regardless of order
+    my %otherRefFields = ();	# create a hash of the other reference fields
+    foreach my $otherRefField ($other->reference_fields) {
+    	$otherRefField = uc($otherRefField) if $case_insensitive;
+    	$otherRefFields{$otherRefField} = 1;
+    }
+    foreach my $selfRefField ($self->reference_fields) { # check for self reference fields in hash
+    	$selfRefField = uc($selfRefField) if $case_insensitive;
+    	return 0 unless $otherRefFields{$selfRefField};
+    	delete $otherRefFields{$selfRefField};
+    }
+    # Check all other reference fields were accounted for
+    return 0 unless keys %otherRefFields == 0;
+
     return 0 unless $case_insensitive ? uc($self->reference_table) eq uc($other->reference_table) : $self->reference_table eq $other->reference_table;
-    my $selfRefFields = join(":", $self->reference_fields);
-    my $otherRefFields = join(":", $other->reference_fields);
-    return 0 unless $case_insensitive ? uc($selfRefFields) eq uc($otherRefFields) : $selfRefFields eq $otherRefFields;
     return 0 unless $self->match_type eq $other->match_type;
     return 0 unless $self->on_delete eq $other->on_delete;
     return 0 unless $self->on_update eq $other->on_update;

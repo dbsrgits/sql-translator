@@ -25,7 +25,7 @@ my $create2 = (-d "t")
     : catfile($Bin, "t", @create2);
 
 BEGIN {
-    maybe_plan(19,
+    maybe_plan(20,
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Parser::Oracle',
@@ -76,6 +76,7 @@ like($out, qr/ALTER TABLE employee DROP FOREIGN KEY/,
     "Detected drop foreign key");
 like($out, qr/ALTER TABLE employee ADD CONSTRAINT/, 
     "Detected add constraint");
+unlike($out, qr/ALTER TABLE employee ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
     
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 $out = `@cmd`;

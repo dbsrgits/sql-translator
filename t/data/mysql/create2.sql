@@ -14,5 +14,6 @@ create unique index u_name on person (name);
 create table employee (
 	position varchar(50),
 	employee_id INTEGER,
-	CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id)
+	CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id),
+	PRIMARY KEY  (employee_id, position)
 ) ENGINE=InnoDB;
