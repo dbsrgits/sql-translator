@@ -25,7 +25,7 @@ my $create2 = (-d "t")
     : catfile($Bin, "t", @create2);
 
 BEGIN {
-    maybe_plan(20,
+    maybe_plan(23,
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Parser::Oracle',
@@ -58,6 +58,7 @@ my $mysql_create2 = (-d "t")
     ? catfile($Bin, @mysql_create2)
     : catfile($Bin, "t", @mysql_create2);
 
+# Test for differences
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
 $out = `@cmd`;
 
@@ -70,14 +71,27 @@ like($out, qr/ALTER TABLE person ADD is_rock_star/,
     "Detected missing rock star field");
 like($out, qr/ALTER TABLE person ADD UNIQUE UC_person_id/, 
     "Detected missing unique constraint");
+like($out, qr/CREATE UNIQUE INDEX unique_name/, 
+    "Detected unique index with different name");
 like($out, qr/ALTER TABLE person ENGINE=InnoDB;/, 
     "Detected altered table option");
-like($out, qr/ALTER TABLE employee DROP FOREIGN KEY/, 
+like($out, qr/ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E/, 
     "Detected drop foreign key");
-like($out, qr/ALTER TABLE employee ADD CONSTRAINT/, 
+like($out, qr/ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff/, 
     "Detected add constraint");
 unlike($out, qr/ALTER TABLE employee ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
-    
+
+# Test ignore parameters
+@cmd = ($sqlt_diff, "--ignore-index-names", "--ignore-constraint-names",
+    "$mysql_create1=MySQL", "$mysql_create2=MySQL");
+$out = `@cmd`;
+
+unlike($out, qr/CREATE UNIQUE INDEX unique_name/, 
+    "Detected unique index with different name");
+unlike($out, qr/ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff/, 
+    "Detected add constraint");
+
+# Test for sameness
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 $out = `@cmd`;
 

@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.13 2006-05-20 09:02:47 schiffbruechige Exp $
+# $Id: sqlt-diff,v 1.14 2007-03-01 22:16:00 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -44,6 +44,8 @@ Options:
   -d|--debug   Show debugging info
   -t|--trace   Turn on tracing for Parse::RecDescent
   -c|--case-insensitive   Compare tables/columns case-insenstiviely
+  --ignore-index-names    Ignore index name differences
+  --ignore-constraint-names   Ignore constraint name differences
 
 =head1 DESCRIPTION
 
@@ -100,9 +102,9 @@ use SQL::Translator::Diff;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 
-my ( @input, $list, $help, $debug, $trace, $caseopt );
+my ( @input, $list, $help, $debug, $trace, $caseopt , $ignore_index_names, $ignore_constraint_names );
 for my $arg ( @ARGV ) {
     if ( $arg =~ m/^-?-l(ist)?$/ ) {
         $list = 1;
@@ -116,8 +118,14 @@ for my $arg ( @ARGV ) {
     elsif ( $arg =~ m/^-?-t(race)?$/ ) {
         $trace = 1; 
     }
-    elsif ( $arg =~ m/^-?-c(ase-insenstive)?$/ ) {
+    elsif ( $arg =~ m/^-?-c(ase-insensitive)?$/ ) {
         $caseopt = 1; 
+    }
+    elsif ( $arg =~ m/^--ignore-index-names$/ ) {
+        $ignore_index_names = 1; 
+    }
+    elsif ( $arg =~ m/^--ignore-constraint-names?$/ ) {
+        $ignore_constraint_names = 1; 
     }
     elsif ( $arg =~ m/^([^=]+)=(.+)$/ ) {
         push @input, { file => $1, parser => $2 };
@@ -164,9 +172,11 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
 
 my $result = SQL::Translator::Diff::schema_diff($source_schema, $source_db, 
                                                 $target_schema, $target_db,
-                                                { caseopt => $caseopt,
-                                                  debug   => $debug,
-                                                  trace   => $trace });
+                                                { caseopt                 => $caseopt,
+                                                  ignore_index_names      => $ignore_index_names,
+                                                  ignore_constraint_names => $ignore_constraint_names,
+                                                  debug                   => $debug,
+                                                  trace                   => $trace });
 if($result)
 {
     print $result;

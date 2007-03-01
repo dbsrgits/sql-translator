@@ -12,6 +12,8 @@ sub schema_diff
     my $caseopt = $options->{caseopt} || 0;
     my $debug = $options->{debug} || 0;
     my $trace = $options->{trace} || 0;
+    my $ignore_index_names = $options->{ignore_index_names} || 0;
+    my $ignore_constraint_names = $options->{ignore_constraint_names} || 0;
 
     my $case_insensitive = $source_db =~ /SQLServer/ || $caseopt;
 
@@ -214,7 +216,7 @@ END
       INDEX:
         for my $i_tar ( $tar_table->get_indices ) {
           for my $i_src ( $src_table->get_indices ) {
-			if ( $i_tar->equals($i_src, $case_insensitive) ) {
+			if ( $i_tar->equals($i_src, $case_insensitive, $ignore_index_names) ) {
               $checked_indices{$i_src} = 1;
               next INDEX;
 			}
@@ -231,7 +233,7 @@ END
         for my $i_src ( $src_table->get_indices ) {
           next if $checked_indices{$i_src};
           for my $i_tar ( $tar_table->get_indices ) {
-			next INDEX2 if $i_src->equals($i_tar, $case_insensitive);
+			next INDEX2 if $i_src->equals($i_tar, $case_insensitive, $ignore_index_names);
           }
           $source_db =~ /SQLServer/
 			? push @diffs_index_drops, "DROP INDEX $tar_table_name.".$i_src->name.";"
@@ -242,9 +244,9 @@ END
       CONSTRAINT:
         for my $c_tar ( $tar_table->get_constraints ) {
           next if $target_db =~ /Oracle/ && 
-            $c_tar->type eq UNIQUE && $c_tar->name =~ /^SYS_/i;
+            $c_tar->type eq UNIQUE && $c_tar->name =~ /^SYS_/i;	# Ignore Oracle SYS_ constraints hack
           for my $c_src ( $src_table->get_constraints ) {
-			if ( $c_tar->equals($c_src, $case_insensitive) ) {
+			if ( $c_tar->equals($c_src, $case_insensitive, $ignore_constraint_names) ) {
               $checked_constraints{$c_src} = 1;
               next CONSTRAINT;
 			}
@@ -255,10 +257,10 @@ END
       CONSTRAINT2:
         for my $c_src ( $src_table->get_constraints ) {
           next if $source_db =~ /Oracle/ && 
-            $c_src->type eq UNIQUE && $c_src->name =~ /^SYS_/i;
+            $c_src->type eq UNIQUE && $c_src->name =~ /^SYS_/i;	# Ignore Oracle SYS_ constraints hack
           next if $checked_constraints{$c_src};
           for my $c_tar ( $tar_table->get_constraints ) {
-			next CONSTRAINT2 if $c_src->equals($c_tar, $case_insensitive);
+			next CONSTRAINT2 if $c_src->equals($c_tar, $case_insensitive, $ignore_constraint_names);
           }
           if ( $c_src->type eq UNIQUE ) {
 			push @diffs_constraint_drops, "ALTER TABLE $tar_table_name DROP INDEX ".

@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Constraint;
 
 # ----------------------------------------------------------------------
-# $Id: Constraint.pm,v 1.20 2007-02-27 20:45:30 duality72 Exp $
+# $Id: Constraint.pm,v 1.21 2007-03-01 22:15:59 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.20 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -539,10 +539,13 @@ Determines if this constraint is the same as another
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
+    my $ignore_constraint_names = shift;
     
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $self->type eq $other->type;
-    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+    unless ($ignore_constraint_names) {
+        return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+    }
     return 0 unless $self->deferrable eq $other->deferrable;
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $case_insensitive ? uc($self->table->name) eq uc($other->table->name)

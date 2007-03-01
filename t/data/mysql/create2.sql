@@ -9,7 +9,7 @@ create table person (
   UNIQUE KEY UC_person_id (person_id)
 ) ENGINE=InnoDB;
 
-create unique index u_name on person (name);
+create unique index unique_name on person (name);
 
 create table employee (
 	position varchar(50),
