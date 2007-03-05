@@ -231,7 +231,7 @@ END
         }
       INDEX2:
         for my $i_src ( $src_table->get_indices ) {
-          next if $checked_indices{$i_src};
+          next if !$ignore_index_names && $checked_indices{$i_src};
           for my $i_tar ( $tar_table->get_indices ) {
 			next INDEX2 if $i_src->equals($i_tar, $case_insensitive, $ignore_index_names);
           }
@@ -258,7 +258,7 @@ END
         for my $c_src ( $src_table->get_constraints ) {
           next if $source_db =~ /Oracle/ && 
             $c_src->type eq UNIQUE && $c_src->name =~ /^SYS_/i;	# Ignore Oracle SYS_ constraints hack
-          next if $checked_constraints{$c_src};
+          next if !$ignore_constraint_names && $checked_constraints{$c_src};
           for my $c_tar ( $tar_table->get_constraints ) {
 			next CONSTRAINT2 if $c_src->equals($c_tar, $case_insensitive, $ignore_constraint_names);
           }
