@@ -9,13 +9,12 @@ sub schema_diff
 #  use Data::Dumper;
     my ($source_schema, $source_db, $target_schema, $target_db, $options) = @_;
 #  print Data::Dumper::Dumper($target_schema);
-    my $caseopt = $options->{caseopt} || 0;
+    my $case_insensitive = $options->{caseopt} || 0;
     my $debug = $options->{debug} || 0;
     my $trace = $options->{trace} || 0;
     my $ignore_index_names = $options->{ignore_index_names} || 0;
     my $ignore_constraint_names = $options->{ignore_constraint_names} || 0;
-
-    my $case_insensitive = $source_db =~ /SQLServer/ || $caseopt;
+    my $output_db = $options->{output_db} || $source_db;
 
     my $tar_name  = $target_schema->name;
     my $src_name  = $source_schema->name;
@@ -28,11 +27,11 @@ sub schema_diff
         unless ( $src_table ) {
             warn "Couldn't find table '$tar_name.$tar_table_name' in '$src_name'\n"
                 if $debug;
-            if ( $source_db =~ /(SQLServer|Oracle)/ ) {
+            if ( $output_db =~ /(SQLServer|Oracle)/ ) {
                 for my $constraint ( $tar_table->get_constraints ) {
                     next if $constraint->type ne FOREIGN_KEY;
                     push @diffs_at_end, "ALTER TABLE $tar_table_name ADD ".
-                        constraint_to_string($constraint, $source_db, $target_schema).";";
+                        constraint_to_string($constraint, $output_db, $target_schema).";";
                     $tar_table->drop_constraint($constraint);
                 }
             }
@@ -95,7 +94,7 @@ sub schema_diff
             my $f_tar_default   = $tar_table_field->default_value;
             my $f_tar_auto_inc  = $tar_table_field->is_auto_increment;
             my $src_table_field     = $src_table->get_field( $f_tar_name, $case_insensitive );
-            my $f_tar_full_name = "$tar_name.$tar_table_name.$tar_table_name";
+            my $f_tar_full_name = "$tar_name.$tar_table_name.$f_tar_name";
             warn "FIELD '$f_tar_full_name'\n" if $debug;
 
             my $f_src_full_name = "$src_name.$src_table_name.$f_tar_name";
@@ -104,7 +103,7 @@ sub schema_diff
                 warn "Couldn't find field '$f_src_full_name' in '$src_table_name'\n" 
                     if $debug;
                 my $temp_default_value = 0;
-                if ( $source_db =~ /SQLServer/ && 
+                if ( $output_db =~ /SQLServer/ && 
                      !$f_tar_nullable             && 
                      !defined $f_tar_default ) {
                     # SQL Server doesn't allow adding non-nullable, non-default columns
@@ -115,7 +114,7 @@ sub schema_diff
                 }
                 push @diffs_table_adds, sprintf
                     ( "ALTER TABLE %s ADD %s%s %s%s%s%s%s%s;",
-                      $tar_table_name, $source_db =~ /Oracle/ ? '(' : '',
+                      $tar_table_name, $output_db =~ /Oracle/ ? '(' : '',
                       $f_tar_name, $f_tar_type,
                       ($f_tar_size && $f_tar_type !~ /(blob|text)$/) ? "($f_tar_size)" : '',
                       !defined $f_tar_default ? ''
@@ -124,7 +123,7 @@ sub schema_diff
                       : " DEFAULT '$f_tar_default'",
                       $f_tar_nullable ? '' : ' NOT NULL',
                       $f_tar_auto_inc ? ' AUTO_INCREMENT' : '',
-                      $source_db =~ /Oracle/ ? ')' : '',
+                      $output_db =~ /Oracle/ ? ')' : '',
                       );
                 if ( $temp_default_value ) {
                     undef $f_tar_default;
@@ -158,11 +157,11 @@ END
             my $f_src_auto_inc  = $src_table_field->is_auto_increment;
             if ( !$tar_table_field->equals($src_table_field, $case_insensitive) ) {
               # SQLServer timestamp fields can't be altered, so we drop and add instead
-              if ( $source_db =~ /SQLServer/ && $f_src_type eq "timestamp" ) {
+              if ( $output_db =~ /SQLServer/ && $f_src_type eq "timestamp" ) {
         		push @diffs_table_changes, "ALTER TABLE $tar_table_name DROP COLUMN $f_tar_name;";
 	            push @diffs_table_changes, sprintf
                   ( "ALTER TABLE %s ADD %s%s %s%s%s%s%s%s;",
-                    $tar_table_name, $source_db =~ /Oracle/ ? '(' : '',
+                    $tar_table_name, $output_db =~ /Oracle/ ? '(' : '',
                     $f_tar_name, $f_tar_type,
                     ($f_tar_size && $f_tar_type !~ /(blob|text)$/) ? "($f_tar_size)" : '',
                     !defined $f_tar_default ? ''
@@ -171,29 +170,29 @@ END
                     : " DEFAULT '$f_tar_default'",
 	                $f_tar_nullable ? '' : ' NOT NULL',
 	                $f_tar_auto_inc ? ' AUTO_INCREMENT' : '',
-	                $source_db =~ /Oracle/ ? ')' : '',
+	                $output_db =~ /Oracle/ ? ')' : '',
                   );
 	            next;
               }
 
-              my $changeText = $source_db =~ /SQLServer/ ? 'ALTER COLUMN' :
-				$source_db =~ /Oracle/ ? 'MODIFY (' : 'CHANGE';
+              my $changeText = $output_db =~ /SQLServer/ ? 'ALTER COLUMN' :
+				$output_db =~ /Oracle/ ? 'MODIFY (' : 'CHANGE';
               my $nullText = $f_tar_nullable ? '' : ' NOT NULL';
-              $nullText = '' if $source_db =~ /Oracle/ && $f_tar_nullable == $f_src_nullable;
+              $nullText = '' if $output_db =~ /Oracle/ && $f_tar_nullable == $f_src_nullable;
               push @diffs_table_changes, sprintf
                 ( "ALTER TABLE %s %s %s%s %s%s%s%s%s%s;",
                   $tar_table_name, $changeText,
-                  $f_tar_name, $source_db =~ /MySQL/ ? " $f_tar_name" : '',
+                  $f_tar_name, $output_db =~ /MySQL/ ? " $f_tar_name" : '',
                   $f_tar_type, ($f_tar_size && $f_tar_type !~ /(blob|text)$/) ? "($f_tar_size)" : '',
                   $nullText,
-                  !defined $f_tar_default || $source_db =~ /SQLServer/ ? ''
+                  !defined $f_tar_default || $output_db =~ /SQLServer/ ? ''
                   : uc $f_tar_default eq 'NULL' ? ' DEFAULT NULL'
                   : uc $f_tar_default eq 'CURRENT_TIMESTAMP' ? ' DEFAULT CURRENT_TIMESTAMP'
                   : " DEFAULT '$f_tar_default'",
                   $f_tar_auto_inc ? ' AUTO_INCREMENT' : '',
-                  $source_db =~ /Oracle/ ? ')' : '',
+                  $output_db =~ /Oracle/ ? ')' : '',
                 );
-              if ( defined $f_tar_default && $source_db =~ /SQLServer/ ) {
+              if ( defined $f_tar_default && $output_db =~ /SQLServer/ ) {
             	# Adding a column with a default value for SQL Server means adding a 
             	# constraint and setting existing NULLs to the default value
             	push @diffs_table_changes, sprintf
@@ -235,7 +234,7 @@ END
           for my $i_tar ( $tar_table->get_indices ) {
 			next INDEX2 if $i_src->equals($i_tar, $case_insensitive, $ignore_index_names);
           }
-          $source_db =~ /SQLServer/
+          $output_db =~ /SQLServer/
 			? push @diffs_index_drops, "DROP INDEX $tar_table_name.".$i_src->name.";"
               : push @diffs_index_drops, "DROP INDEX ".$i_src->name." on $tar_table_name;";
         }
@@ -243,8 +242,6 @@ END
         my(%checked_constraints, @diffs_constraint_drops);
       CONSTRAINT:
         for my $c_tar ( $tar_table->get_constraints ) {
-          next if $target_db =~ /Oracle/ && 
-            $c_tar->type eq UNIQUE && $c_tar->name =~ /^SYS_/i;	# Ignore Oracle SYS_ constraints hack
           for my $c_src ( $src_table->get_constraints ) {
 			if ( $c_tar->equals($c_src, $case_insensitive, $ignore_constraint_names) ) {
               $checked_constraints{$c_src} = 1;
@@ -252,12 +249,10 @@ END
 			}
           }
           push @diffs_at_end, "ALTER TABLE $tar_table_name ADD ".
-			constraint_to_string($c_tar, $source_db, $target_schema).";";
+			constraint_to_string($c_tar, $output_db, $target_schema).";";
         }
       CONSTRAINT2:
         for my $c_src ( $src_table->get_constraints ) {
-          next if $source_db =~ /Oracle/ && 
-            $c_src->type eq UNIQUE && $c_src->name =~ /^SYS_/i;	# Ignore Oracle SYS_ constraints hack
           next if !$ignore_constraint_names && $checked_constraints{$c_src};
           for my $c_tar ( $tar_table->get_constraints ) {
 			next CONSTRAINT2 if $c_src->equals($c_tar, $case_insensitive, $ignore_constraint_names);
@@ -265,7 +260,7 @@ END
           if ( $c_src->type eq UNIQUE ) {
 			push @diffs_constraint_drops, "ALTER TABLE $tar_table_name DROP INDEX ".
               $c_src->name.";";
-          } elsif ( $source_db =~ /SQLServer/ ) {
+          } elsif ( $output_db =~ /SQLServer/ ) {
 			push @diffs_constraint_drops, "ALTER TABLE $tar_table_name DROP ".$c_src->name.";";
           } else {
 			push @diffs_constraint_drops, "ALTER TABLE $tar_table_name DROP ".$c_src->type.
@@ -280,10 +275,10 @@ END
 
     for my $src_table ( $source_schema->get_tables ) {
       my $src_table_name = $src_table->name;
-      my $tar_table      = $target_schema->get_table( $src_table_name, $source_db =~ /SQLServer/ );
+      my $tar_table      = $target_schema->get_table( $src_table_name, $case_insensitive );
 
       unless ( $tar_table ) {
-    	if ( $source_db =~ /SQLServer/ ) {
+    	if ( $output_db =~ /SQLServer/ ) {
           for my $constraint ( $src_table->get_constraints ) {
             next if $constraint->type eq PRIMARY_KEY;
             push @diffs, "ALTER TABLE $src_table_name DROP ".$constraint->name.";";
@@ -295,9 +290,9 @@ END
 
       for my $src_table_field ( $src_table->get_fields ) {
         my $f_src_name      = $src_table_field->name;
-        my $tar_table_field     = $tar_table->get_field( $f_src_name );
+        my $tar_table_field     = $tar_table->get_field( $f_src_name, $case_insensitive );
         unless ( $tar_table_field ) {
-          my $modifier = $source_db =~ /SQLServer/ ? "COLUMN " : '';
+          my $modifier = $output_db =~ /SQLServer/ ? "COLUMN " : '';
           push @diffs, "ALTER TABLE $src_table_name DROP $modifier$f_src_name;";
         }
       }
@@ -306,7 +301,7 @@ END
     if ( @new_tables ) {
       my $dummytr = SQL::Translator->new;
       $dummytr->schema->add_table( $_ ) for @new_tables;
-      my $producer = $dummytr->producer( $source_db );
+      my $producer = $dummytr->producer( $output_db );
       unshift @diffs, $producer->( $dummytr );
     }
     push(@diffs, @diffs_at_end);
