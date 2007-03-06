@@ -7,7 +7,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
-maybe_plan(85, 'SQL::Translator::Parser::Oracle');
+maybe_plan(89, 'SQL::Translator::Parser::Oracle');
 SQL::Translator::Parser::Oracle->import('parse');
 
 my $t   = SQL::Translator->new( trace => 0 );
@@ -55,6 +55,7 @@ my $sql = q[
 
     CREATE UNIQUE INDEX qtl_accession ON qtl ( qtl_accession_id );
     CREATE UNIQUE INDEX qtl_accession_upper ON qtl ( UPPER(qtl_accession_id) );
+    CREATE INDEX qtl_index ON qtl ( qtl_accession_id );
 
     CREATE TABLE qtl_trait_synonym
     (
@@ -221,6 +222,14 @@ is( $t3_f1->comments, 'qtl_id comment', 'Comment "qtl_id comment" exists' );
 my $t3_f2     = shift @t3_fields;
 is( $t3_f2->comments, 'accession comment', 
     'Comment "accession comment" exists' );
+
+my @t3_indices = $t3->get_indices;
+is( scalar @t3_indices, 1, '1 index on table' );
+
+my $t3_i1 = shift @t3_indices;
+is( $t3_i1->type, 'NORMAL', 'First index is normal' );
+is( $t3_i1->name, 'qtl_index', 'Name is "qtl_index"' );
+is( join(',', $t3_i1->fields), 'qtl_accession_id', 'Fields = "qtl_accession_id"' );
 
 #
 # qtl_trait_synonym
