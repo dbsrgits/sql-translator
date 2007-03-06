@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.14 2007-03-01 22:16:00 duality72 Exp $
+# $Id: sqlt-diff,v 1.15 2007-03-06 23:49:42 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -37,7 +37,7 @@ For a list of all valid parsers:
 
 To diff two schemas:
 
-  sqlt-diff [options] file_name1=parser file_name2=parser
+  sqlt-diff [options] file_name1=parser1 file_name2=parser2
 
 Options:
 
@@ -46,6 +46,8 @@ Options:
   -c|--case-insensitive   Compare tables/columns case-insenstiviely
   --ignore-index-names    Ignore index name differences
   --ignore-constraint-names   Ignore constraint name differences
+  --output-db  This Producer will be used instead of one corresponding to
+               parser1 to format output for new tables
 
 =head1 DESCRIPTION
 
@@ -102,9 +104,9 @@ use SQL::Translator::Diff;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.15 $ =~ /(\d+)\.(\d+)/;
 
-my ( @input, $list, $help, $debug, $trace, $caseopt , $ignore_index_names, $ignore_constraint_names );
+my ( @input, $list, $help, $debug, $trace, $caseopt , $ignore_index_names, $ignore_constraint_names, $output_db );
 for my $arg ( @ARGV ) {
     if ( $arg =~ m/^-?-l(ist)?$/ ) {
         $list = 1;
@@ -124,8 +126,11 @@ for my $arg ( @ARGV ) {
     elsif ( $arg =~ m/^--ignore-index-names$/ ) {
         $ignore_index_names = 1; 
     }
-    elsif ( $arg =~ m/^--ignore-constraint-names?$/ ) {
+    elsif ( $arg =~ m/^--ignore-constraint-names$/ ) {
         $ignore_constraint_names = 1; 
+    }
+    elsif ( $arg =~ m/^--output-db=(.+)$/ ) {
+        $output_db = $1; 
     }
     elsif ( $arg =~ m/^([^=]+)=(.+)$/ ) {
         push @input, { file => $1, parser => $2 };
