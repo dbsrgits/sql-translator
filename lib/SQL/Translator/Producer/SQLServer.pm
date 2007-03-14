@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.6 2007-01-15 19:18:45 duality72 Exp $
+# $Id: SQLServer.pm,v 1.7 2007-03-14 16:56:33 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -56,7 +56,7 @@ List of values for an enum field.
 
 use strict;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -352,7 +352,7 @@ sub produce {
         $output .= "--\n-- View: $name\n--\n\n" unless $no_comments;
         my $text = $_->sql();
 		$text =~ s/\r//g;
-        $output .= $text;
+        $output .= "$text\nGO\n";
     }
 
     # Text of procedure already has the 'create procedure' stuff
@@ -365,7 +365,7 @@ sub produce {
         $output .= "--\n-- Procedure: $name\n--\n\n" unless $no_comments;
         my $text = $_->sql();
 		$text =~ s/\r//g;
-        $output .= $text;
+        $output .= "$text\nGO\n";
     }
 
     # Warn out how we messed with the names.
