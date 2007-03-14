@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Procedure;
 
 # ----------------------------------------------------------------------
-# $Id: Procedure.pm,v 1.6 2005-06-29 22:02:29 duality72 Exp $
+# $Id: Procedure.pm,v 1.7 2007-03-14 20:22:58 duality72 Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -54,7 +54,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
 
 # ----------------------------------------------------------------------
 
@@ -255,13 +255,24 @@ Determines if this procedure is the same as another
 
     my $self = shift;
     my $other = shift;
+    my $case_insensitive = shift;
     
     return 0 unless $self->SUPER::equals($other);
-    return 0 unless $self->name eq $other->name;
-    return 0 unless $self->sql eq $other->sql;
+    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+    
+    my $selfSql = $self->sql;
+    my $otherSql = $other->sql;
+    # Remove comments
+    $selfSql =~ s/--.*$//mg;
+    $otherSql =~ s/--.*$//mg;
+    # Collapse whitespace to space to avoid whitespace comparison issues
+    $selfSql =~ s/\s+/ /sg;
+    $otherSql =~ s/\s+/ /sg;
+    return 0 unless $selfSql eq $otherSql;
+    
     return 0 unless $self->_compare_objects(scalar $self->parameters, scalar $other->parameters);
 #    return 0 unless $self->comments eq $other->comments;
-    return 0 unless $self->owner eq $other->owner;
+    return 0 unless $case_insensitive ? uc($self->owner) eq uc($other->owner) : $self->owner eq $other->owner;
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
     return 1;
 }
