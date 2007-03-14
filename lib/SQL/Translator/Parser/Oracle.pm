@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.27 2007-03-06 21:09:32 duality72 Exp $
+# $Id: Oracle.pm,v 1.28 2007-03-14 20:20:09 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -624,8 +624,6 @@ sub parse {
              @{ $constraints->{ $table_name } || [] };
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
-open(OUT, ">>ACK");
-print OUT $idata->{name}, "\n";
             my $index  =  $table->add_index(
                 name   => $idata->{'name'},
                 type   => uc $idata->{'type'},
