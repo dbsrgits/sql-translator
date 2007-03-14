@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.4 2006-05-04 20:47:07 duality72 Exp $
+# $Id: SQLServer.pm,v 1.5 2007-03-14 17:03:52 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ should probably be considered a work in progress.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.4 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -56,15 +56,23 @@ $::RD_HINT   = 1;
 $GRAMMAR = q{
 
 { 
-    my ( %tables, @table_comments, $table_order );
+    my ( %tables, @table_comments, $table_order, %procedures, $proc_order, %views, $view_order );
 }
 
-startrule : statement(s) eofile { \%tables }
+startrule : statement(s) eofile
+	{
+		return {
+			tables     => \%tables,
+			procedures => \%procedures,
+			views      => \%views,
+		}
+	}
 
 eofile : /^\Z/
 
 statement : create_table
     | create_procedure
+    | create_view
     | create_index
     | create_constraint
     | comment
@@ -129,7 +137,7 @@ comment_middle : m{([^*]+|\*(?!/))*}
 #
 # Create table.
 #
-create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_system(?) ';' GO(?)
+create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_system(?) END_STATEMENT
     { 
         my $table_owner = $item[3]{'owner'};
         my $table_name  = $item[3]{'name'};
@@ -180,14 +188,51 @@ create_index : /create/i index
         push @{ $tables{ $item[2]{'table'} }{'indices'} }, $item[2];
     }
 
-create_procedure : /create/i /procedure/i procedure_body GO
+create_procedure : /create/i PROCEDURE WORD not_go GO
     {
         @table_comments = ();
+        my $proc_name = $item[3];
+        my $owner = '';
+        my $sql = "$item[1] $item[2] $proc_name $item[4]";
+        
+        $procedures{ $proc_name }{'order'}  = ++$proc_order;
+        $procedures{ $proc_name }{'name'}   = $proc_name;
+        $procedures{ $proc_name }{'owner'}  = $owner;
+        $procedures{ $proc_name }{'sql'}    = $sql;
     }
+
+create_procedure : /create/i PROCEDURE '[' WORD '].' WORD not_go GO
+    {
+        @table_comments = ();
+        my $proc_name = $item[6];
+        my $owner = $item[4];
+        my $sql = "$item[1] $item[2] [$owner].$proc_name $item[7]";
+        
+        $procedures{ $proc_name }{'order'}  = ++$proc_order;
+        $procedures{ $proc_name }{'name'}   = $proc_name;
+        $procedures{ $proc_name }{'owner'}  = $owner;
+        $procedures{ $proc_name }{'sql'}    = $sql;
+    }
+
+PROCEDURE : /procedure/i
+	| /function/i
 
 procedure_body : not_go(s)
 
-not_go : /((?!go).)*/
+create_view : /create/i /view/i WORD not_go GO
+    {
+        @table_comments = ();
+        my $view_name = $item[3];
+        my $sql = "$item[1] $item[2] $item[3] $item[4]";
+        
+        $views{ $view_name }{'order'}  = ++$view_order;
+        $views{ $view_name }{'name'}   = $view_name;
+        $views{ $view_name }{'sql'}    = $sql;
+    }
+
+view_body : not_go(s)
+
+not_go : /((?!\bgo\b).)*/is
 
 create_def : constraint
     | index
@@ -317,9 +362,10 @@ on_delete : /on delete/i reference_option
 on_update : /on update/i reference_option
     { $item[2] }
 
-reference_option: /cascade/i   | 
-    /no action/i
-    { $item[1] }  
+reference_option: /cascade/i
+    { $item[1] }
+    | /no action/i
+    { $item[1] }
 
 clustered : /clustered/i
     { $return = 1 }
@@ -353,6 +399,9 @@ ident : QUOTE(?) WORD '.' WORD QUOTE(?)
     { $return = { owner => $item[2], name => $item[4] } }
     | WORD
     { $return = { name  => $item[1] } }
+
+END_STATEMENT : ';'
+	| GO
 
 GO : /^go/i
 
@@ -388,11 +437,11 @@ sub parse {
 
     my $schema = $translator->schema;
     my @tables = sort { 
-        $result->{ $a }->{'order'} <=> $result->{ $b }->{'order'}
-    } keys %{ $result };
+        $result->{tables}->{ $a }->{'order'} <=> $result->{tables}->{ $b }->{'order'}
+    } keys %{ $result->{tables} };
 
     for my $table_name ( @tables ) {
-        my $tdata = $result->{ $table_name };
+        my $tdata = $result->{tables}->{ $table_name };
         my $table = $schema->add_table( name => $tdata->{'name'} ) 
                     or die "Can't create table '$table_name': ", $schema->error;
 
@@ -461,6 +510,27 @@ sub parse {
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
+    }
+    
+    my @procedures = sort { 
+        $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
+    } keys %{ $result->{procedures} };
+    for my $proc_name (@procedures) {
+    	$schema->add_procedure(
+    		name  => $proc_name,
+    		owner => $result->{procedures}->{$proc_name}->{owner},
+    		sql   => $result->{procedures}->{$proc_name}->{sql},
+		);
+    }
+
+    my @views = sort { 
+        $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
+    } keys %{ $result->{views} };
+    for my $view_name (keys %{ $result->{views} }) {
+    	$schema->add_view(
+    		name => $view_name,
+    		sql  => $result->{views}->{$view_name}->{sql},
+		);
     }
 
     return 1;
