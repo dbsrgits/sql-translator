@@ -306,6 +306,53 @@ END
     }
     push(@diffs, @diffs_at_end);
 
+	# Procedures
+    my(%checked_procs, @diffs_proc_creates, @diffs_proc_drops);
+  PROC:
+    for my $p_tar ( $target_schema->get_procedures ) {
+      for my $p_src ( $source_schema->get_procedures ) {
+		if ( $p_tar->equals($p_src, $case_insensitive) ) {
+          $checked_procs{$p_src} = 1;
+          next PROC;
+		}
+      }
+      push @diffs_proc_creates, $p_tar->sql;
+    }
+  PROC2:
+    for my $p_src ( $source_schema->get_procedures ) {
+      next if $checked_procs{$p_src};
+      for my $p_tar ( $target_schema->get_procedures ) {
+		next PROC2 if $p_src->equals($p_tar, $case_insensitive);
+      }
+      my $proc_ident = $p_src->owner ? sprintf("[%s].%s", $p_src->owner, $p_src->name) : $p_src->name;
+      push @diffs_proc_drops, "DROP PROCEDURE $proc_ident;\nGO\n";
+    }
+
+	# Views
+    my(%checked_views, @diffs_view_creates, @diffs_view_drops);
+  VIEW:
+    for my $v_tar ( $target_schema->get_views ) {
+      for my $v_src ( $source_schema->get_views ) {
+		if ( $v_tar->equals($v_src, $case_insensitive) ) {
+          $checked_views{$v_src} = 1;
+          next VIEW;
+		}
+      }
+      push @diffs_view_creates, $v_tar->sql;
+    }
+  VIEW2:
+    for my $v_src ( $source_schema->get_views ) {
+      next if $checked_views{$v_src};
+      for my $v_tar ( $target_schema->get_views ) {
+		next VIEW2 if $v_src->equals($v_tar, $case_insensitive);
+      }
+      my $view_ident = $v_src->name;
+      push @diffs_view_drops, "DROP VIEW $view_ident;\nGO\n";
+    }
+
+    push @diffs, @diffs_view_drops, @diffs_view_creates,
+      @diffs_proc_creates, @diffs_proc_drops;
+
     if ( @diffs ) {
     	if ( $target_db !~ /^(MySQL|SQLServer|Oracle)$/ ) {
     		unshift(@diffs, "-- Target database $target_db is untested/unsupported!!!");
