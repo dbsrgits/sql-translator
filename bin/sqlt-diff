@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt-diff,v 1.16 2007-03-08 23:11:20 duality72 Exp $
+# $Id: sqlt-diff,v 1.17 2007-03-19 17:15:54 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 The SQLFairy Authors
 #
@@ -43,11 +43,14 @@ Options:
 
   -d|--debug   Show debugging info
   -t|--trace   Turn on tracing for Parse::RecDescent
-  -c|--case-insensitive   Compare tables/columns case-insenstiviely
+  -c|--case-insensitive   Compare tables/columns case-insensitively
   --ignore-index-names    Ignore index name differences
   --ignore-constraint-names   Ignore constraint name differences
-  --output-db  This Producer will be used instead of one corresponding to
-               parser1 to format output for new tables
+  --mysql_parser_version=<#####> Specify a target MySQL parser version
+                                 for dealing with /*! comments
+  --output-db=<Producer>  This Producer will be used instead of one
+                          corresponding to parser1 to format output
+                          for new tables
 
 =head1 DESCRIPTION
 
@@ -104,9 +107,10 @@ use SQL::Translator::Diff;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.16 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
 
-my ( @input, $list, $help, $debug, $trace, $caseopt , $ignore_index_names, $ignore_constraint_names, $output_db );
+my ( @input, $list, $help, $debug, $trace, $caseopt,$ignore_index_names, 
+	$ignore_constraint_names, $output_db, $mysql_parser_version );
 for my $arg ( @ARGV ) {
     if ( $arg =~ m/^-?-l(ist)?$/ ) {
         $list = 1;
@@ -128,6 +132,9 @@ for my $arg ( @ARGV ) {
     }
     elsif ( $arg =~ m/^--ignore-constraint-names$/ ) {
         $ignore_constraint_names = 1; 
+    }
+    elsif ( $arg =~ m/^--mysql-parser-version=(.+)$/ ) {
+        $mysql_parser_version = $1; 
     }
     elsif ( $arg =~ m/^--output-db=(.+)$/ ) {
         $output_db = $1; 
@@ -162,7 +169,7 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     die "Unable to read file '$file'\n" unless -r $file;
     die "'$parser' is an invalid parser\n" unless $valid_parsers{ $parser };
 
-    my $t = SQL::Translator->new;
+    my $t = SQL::Translator->new(parser_args => {mysql_parser_version => $mysql_parser_version || 0});
     $t->debug( $debug );
     $t->trace( $trace );
     $t->parser( $parser )            or die $tr->error;
