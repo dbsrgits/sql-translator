@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.28 2007-03-14 20:20:09 duality72 Exp $
+# $Id: Oracle.pm,v 1.29 2007-03-19 22:32:31 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -97,7 +97,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -114,7 +114,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 
 $GRAMMAR = q`
 
-{ my ( %tables, %indices, %constraints, $table_order, @table_comments ) }
+{ my ( %tables, %indices, %constraints, $table_order, @table_comments, %views, $view_order, %procedures, $proc_order ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -128,6 +128,8 @@ startrule : statement(s) eofile
             tables      => \%tables,
             indices     => \%indices,
             constraints => \%constraints,
+            views       => \%views,
+            procedures  => \%procedures,
         };
     }
 
@@ -220,6 +222,38 @@ index_expr: parens_word_list
 		my $arg_list = join(",", @{$item[3]});
 		$return = "$item[2]($arg_list)";
 	}
+
+create : /create/i /or replace/i /procedure/i table_name not_end m#^/$#im
+	{
+		@table_comments = ();
+        my $proc_name = $item[4];
+        # Hack to strip owner from procedure name
+        $proc_name =~ s#.*\.##;
+        my $owner = '';
+        my $sql = "$item[1] $item[2] $item[3] $item[4] $item[5]";
+        
+        $procedures{ $proc_name }{'order'}  = ++$proc_order;
+        $procedures{ $proc_name }{'name'}   = $proc_name;
+        $procedures{ $proc_name }{'owner'}  = $owner;
+        $procedures{ $proc_name }{'sql'}    = $sql;
+	}
+
+not_end: m#.*?(?=^/$)#ism
+
+create : /create/i /or replace/i /force/i /view/i table_name not_delimiter ';'
+	{
+		@table_comments = ();
+        my $view_name = $item[5];
+        # Hack to strip owner from view name
+        $view_name =~ s#.*\.##;
+        my $sql = "$item[1] $item[2] $item[3] $item[4] $item[5] $item[6] $item[7]";
+        
+        $views{ $view_name }{'order'}  = ++$view_order;
+        $views{ $view_name }{'name'}   = $view_name;
+        $views{ $view_name }{'sql'}    = $sql;
+	}
+
+not_delimiter: /.*?(?=;)/is
 
 # Create anything else (e.g., domain, function, etc.)
 create : ...!create_table ...!create_index /create/i WORD /[^;]+/ ';'
@@ -643,6 +677,27 @@ sub parse {
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
+    }
+    
+    my @procedures = sort { 
+        $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
+    } keys %{ $result->{procedures} };
+    foreach my $proc_name (@procedures) {
+    	$schema->add_procedure(
+    		name  => $proc_name,
+    		owner => $result->{procedures}->{$proc_name}->{owner},
+    		sql   => $result->{procedures}->{$proc_name}->{sql},
+		);
+    }
+
+    my @views = sort { 
+        $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
+    } keys %{ $result->{views} };
+    foreach my $view_name (keys %{ $result->{views} }) {
+    	$schema->add_view(
+    		name => $view_name,
+    		sql  => $result->{views}->{$view_name}->{sql},
+		);
     }
 
     return 1;
