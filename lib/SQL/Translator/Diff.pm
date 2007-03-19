@@ -350,8 +350,8 @@ END
       push @diffs_view_drops, "DROP VIEW $view_ident;\nGO\n";
     }
 
-    push @diffs, @diffs_view_drops, @diffs_view_creates,
-      @diffs_proc_creates, @diffs_proc_drops;
+    push @diffs, @diffs_view_drops, @diffs_proc_drops,
+      @diffs_view_creates, @diffs_proc_creates;
 
     if ( @diffs ) {
     	if ( $target_db !~ /^(MySQL|SQLServer|Oracle)$/ ) {
