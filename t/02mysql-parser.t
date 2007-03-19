@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(218, "SQL::Translator::Parser::MySQL");
+    maybe_plan(228, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -476,7 +476,7 @@ BEGIN {
 #    charset table option
 #
 {
-    my $tr = SQL::Translator->new;
+    my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
     my $data = parse($tr, 
         q[
         	DELIMITER ;;
@@ -491,6 +491,58 @@ BEGIN {
               `op` varchar(255) character set latin1 collate latin1_bin default NULL,
               `last_modified` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
             ) TYPE=INNODB DEFAULT CHARSET=latin1;
+
+			/*!50001 CREATE ALGORITHM=UNDEFINED */
+			/*!50013 DEFINER=`cmdomain`@`localhost` SQL SECURITY DEFINER */
+			/*! VIEW `vs_asset` AS 
+				select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
+				`cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
+				`cfgmgmt_mig`.`ap_extract_asset`(`a`.`fq_name`) AS `asset_name`,
+				`a`.`annotation` AS `annotation`,`a`.`asset_type` AS `asset_type`,
+				`a`.`foreign_asset_id` AS `foreign_asset_id`,
+				`a`.`foreign_asset_id2` AS `foreign_asset_id2`,`a`.`dateCreated` AS `date_created`,
+				`a`.`dateModified` AS `date_modified`,`a`.`container_id` AS `container_id`,
+				`a`.`creator_id` AS `creator_id`,`a`.`modifier_id` AS `modifier_id`,
+				`m`.`user_id` AS `user_access` 
+				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
+			DELIMITER ;;
+			/*!50003 CREATE*/ /*!50020 DEFINER=`cmdomain`@`localhost`*/ /*!50003 FUNCTION `ap_from_millitime_nullable`( millis_since_1970 BIGINT ) RETURNS timestamp
+    			DETERMINISTIC
+				BEGIN
+    				DECLARE rval TIMESTAMP;
+				    IF ( millis_since_1970 = 0 )
+				    THEN
+				        SET rval = NULL;
+				    ELSE
+				        SET rval = FROM_UNIXTIME( millis_since_1970 / 1000 );
+				    END IF;
+				    RETURN rval;
+				END */;;
+			/*!50003 CREATE*/ /*!50020 DEFINER=`cmdomain`@`localhost`*/ /*!50003 PROCEDURE `sp_update_security_acl`(IN t_acl_id INTEGER)
+    			BEGIN
+    				DECLARE hasMoreRows BOOL DEFAULT TRUE;
+    				DECLARE t_group_id INT;
+    				DECLARE t_user_id INT ;
+    				DECLARE t_user_name VARCHAR (512) ;
+    				DECLARE t_message VARCHAR (512) ;
+
+    				DROP TABLE IF EXISTS group_acl;
+    				DROP TABLE IF EXISTS user_group;
+    				DELETE FROM M_ACCESS_CONTROL WHERE acl_id = t_acl_id;
+
+    				CREATE TEMPORARY TABLE group_acl SELECT DISTINCT p.id group_id, d.acl_id acl_id
+				        FROM  asset d, acl_entry e, alterpoint_principal p
+				        WHERE d.acl_id = e.acl
+				        AND p.id = e.principal AND d.acl_id = t_acl_id;
+
+    				CREATE TEMPORARY TABLE user_group  SELECT a.id user_id, a.name user_name, c.id group_id
+    					FROM alterpoint_principal a, groups_for_user b, alterpoint_principal c
+    					WHERE a.id = b.user_ref AND b.elt = c.id;
+
+    				INSERT INTO M_ACCESS_CONTROL SELECT DISTINCT group_acl.group_id, group_acl.acl_id, user_group.user_id, user_group.user_name
+    					FROM group_acl, user_group
+    					WHERE group_acl.group_id = user_group.group_id ;
+    			END */;;
         ]
     ) or die $tr->error;
 
@@ -530,5 +582,22 @@ BEGIN {
     ok( !$t1f2->is_nullable, 'Field is not nullable' );
     is( $t1f2->default_value, 'CURRENT_TIMESTAMP', 'Field has right default value' );
     is( $t1f2->extra('on update'), 'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
+    
+    my @views = $schema->get_views;
+    is( scalar @views, 1, 'Right number of views (1)' );
+    my $view1 = shift @views;
+    is( $view1->name, 'vs_asset', 'Found "vs_asset" view' );
+	like($view1->sql, qr/ALGORITHM=UNDEFINED/, "Detected algorithm");
+	like($view1->sql, qr/vs_asset/, "Detected view vs_asset");
+	unlike($view1->sql, qr/cfgmgmt_mig/, "Did not detect cfgmgmt_mig");
+    
+    my @procs = $schema->get_procedures;
+    is( scalar @procs, 2, 'Right number of procedures (2)' );
+    my $proc1 = shift @procs;
+    is( $proc1->name, 'ap_from_millitime_nullable', 'Found "ap_from_millitime_nullable" procedure' );
+	like($proc1->sql, qr/CREATE FUNCTION ap_from_millitime_nullable/, "Detected procedure ap_from_millitime_nullable");
+    my $proc2 = shift @procs;
+    is( $proc2->name, 'sp_update_security_acl', 'Found "sp_update_security_acl" procedure' );
+	like($proc2->sql, qr/CREATE PROCEDURE sp_update_security_acl/, "Detected procedure sp_update_security_acl");
 }
 

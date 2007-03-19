@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.57 2007-02-19 23:35:27 duality72 Exp $
+# $Id: MySQL.pm,v 1.58 2007-03-19 17:15:24 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -134,7 +134,7 @@ A subset of INSERT that we ignore:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.57 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.58 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -149,10 +149,12 @@ $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
 
+use constant DEFAULT_PARSER_VERSION => 30000;
+
 $GRAMMAR = << 'END_OF_GRAMMAR';
 
 { 
-    my ( $database_name, %tables, $table_order, @table_comments );
+    my ( $database_name, %tables, $table_order, @table_comments, %views, $view_order, %procedures, $proc_order );
     my $delimiter = ';';
 }
 
@@ -163,7 +165,7 @@ $GRAMMAR = << 'END_OF_GRAMMAR';
 # failed. -ky
 #
 startrule : statement(s) eofile { 
-    { tables => \%tables, database_name => $database_name } 
+    { tables => \%tables, database_name => $database_name, views => \%views, procedures =>\%procedures } 
 }
 
 eofile : /^\Z/
@@ -294,6 +296,48 @@ create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_n
             }
         ;
     }
+
+create : CREATE /trigger/i NAME not_delimiter "$delimiter"
+	{
+		@table_comments = ();
+	}
+
+create : CREATE PROCEDURE NAME not_delimiter "$delimiter"
+	{
+		@table_comments = ();
+        my $func_name = $item[3];
+        my $owner = '';
+        my $sql = "$item[1] $item[2] $item[3] $item[4]";
+        
+        $procedures{ $func_name }{'order'}  = ++$proc_order;
+        $procedures{ $func_name }{'name'}   = $func_name;
+        $procedures{ $func_name }{'owner'}  = $owner;
+        $procedures{ $func_name }{'sql'}    = $sql;
+	}
+
+PROCEDURE : /procedure/i
+	| /function/i
+
+create : CREATE algorithm /view/i NAME not_delimiter "$delimiter"
+	{
+		@table_comments = ();
+        my $view_name = $item[4];
+        my $sql = "$item[1] $item[2] $item[3] $item[4] $item[5]";
+        
+        # Hack to strip database from function calls in SQL
+        $sql =~ s#`\w+`\.(`\w+`\()##g;
+        
+        $views{ $view_name }{'order'}  = ++$view_order;
+        $views{ $view_name }{'name'}   = $view_name;
+        $views{ $view_name }{'sql'}    = $sql;
+	}
+
+algorithm : /algorithm/i /=/ WORD
+	{
+		$return = "$item[1]=$item[3]";
+	}
+
+not_delimiter : /.*?(?=$delimiter)/is
 
 create_definition : constraint 
     | index
@@ -726,6 +770,10 @@ sub parse {
         return $translator->error("Error instantiating Parse::RecDescent ".
             "instance: Bad grammer");
     }
+    
+    # Preprocess for MySQL-specific and not-before-version comments from mysqldump
+    my $parser_version = $translator->parser_args->{mysql_parser_version} || DEFAULT_PARSER_VERSION;
+    while ( $data =~ s#/\*!(\d{5})?(.*?)\*/#($1 && $1 > $parser_version ? '' : $2)#es ) {}
 
     my $result = $parser->startrule($data);
     return $translator->error( "Parse failed." ) unless defined $result;
@@ -832,6 +880,27 @@ sub parse {
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
+    }
+    
+    my @procedures = sort { 
+        $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
+    } keys %{ $result->{procedures} };
+    foreach my $proc_name (@procedures) {
+    	$schema->add_procedure(
+    		name  => $proc_name,
+    		owner => $result->{procedures}->{$proc_name}->{owner},
+    		sql   => $result->{procedures}->{$proc_name}->{sql},
+		);
+    }
+
+    my @views = sort { 
+        $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
+    } keys %{ $result->{views} };
+    foreach my $view_name (keys %{ $result->{views} }) {
+    	$schema->add_view(
+    		name => $view_name,
+    		sql  => $result->{views}->{$view_name}->{sql},
+		);
     }
 
     return 1;
