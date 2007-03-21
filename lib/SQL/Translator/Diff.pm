@@ -14,6 +14,8 @@ sub schema_diff
     my $trace = $options->{trace} || 0;
     my $ignore_index_names = $options->{ignore_index_names} || 0;
     my $ignore_constraint_names = $options->{ignore_constraint_names} || 0;
+    my $ignore_view_sql = $options->{ignore_view_sql} || 0;
+    my $ignore_proc_sql = $options->{ignore_proc_sql} || 0;
     my $output_db = $options->{output_db} || $source_db;
 
     my $tar_name  = $target_schema->name;
@@ -311,7 +313,7 @@ END
   PROC:
     for my $p_tar ( $target_schema->get_procedures ) {
       for my $p_src ( $source_schema->get_procedures ) {
-		if ( $p_tar->equals($p_src, $case_insensitive) ) {
+		if ( $p_tar->equals($p_src, $case_insensitive, $ignore_proc_sql) ) {
           $checked_procs{$p_src} = 1;
           next PROC;
 		}
@@ -322,7 +324,7 @@ END
     for my $p_src ( $source_schema->get_procedures ) {
       next if $checked_procs{$p_src};
       for my $p_tar ( $target_schema->get_procedures ) {
-		next PROC2 if $p_src->equals($p_tar, $case_insensitive);
+		next PROC2 if $p_src->equals($p_tar, $case_insensitive, $ignore_proc_sql);
       }
       my $proc_ident = $p_src->owner ? sprintf("[%s].%s", $p_src->owner, $p_src->name) : $p_src->name;
       push @diffs_proc_drops, "DROP PROCEDURE $proc_ident;\nGO\n";
@@ -333,7 +335,7 @@ END
   VIEW:
     for my $v_tar ( $target_schema->get_views ) {
       for my $v_src ( $source_schema->get_views ) {
-		if ( $v_tar->equals($v_src, $case_insensitive) ) {
+		if ( $v_tar->equals($v_src, $case_insensitive, $ignore_view_sql) ) {
           $checked_views{$v_src} = 1;
           next VIEW;
 		}
@@ -344,7 +346,7 @@ END
     for my $v_src ( $source_schema->get_views ) {
       next if $checked_views{$v_src};
       for my $v_tar ( $target_schema->get_views ) {
-		next VIEW2 if $v_src->equals($v_tar, $case_insensitive);
+		next VIEW2 if $v_src->equals($v_tar, $case_insensitive, $ignore_view_sql);
       }
       my $view_ident = $v_src->name;
       push @diffs_view_drops, "DROP VIEW $view_ident;\nGO\n";
