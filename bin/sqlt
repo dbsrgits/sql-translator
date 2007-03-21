@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
-# $Id: sqlt,v 1.21 2006-06-07 16:04:12 schiffbruechige Exp $
+# $Id: sqlt,v 1.22 2007-03-21 15:21:31 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -63,6 +63,11 @@ To translate a schema:
     --rs               The record separator
     --no-trim          Don't trim whitespace on fields
     --no-scan          Don't scan fields for data types and sizes
+
+  MySQL Parser Options:
+
+    --mysql-parser-version  Target MySQL parser version for dealing with
+                              /*! comments; default = 30000
 
   General Producer Options
 
@@ -136,7 +141,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.21 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.22 $ =~ /(\d+)\.(\d+)/;
 
 my $from;             # the original database
 my $to;               # the destination database
@@ -178,6 +183,7 @@ my $producer_db_user; # DSN     for producer (e.g. Dumper, ClassDBI)
 my $producer_db_password; # db_pass "
 my $producer_dsn;     # db_user "
 my $add_truncate;
+my $mysql_parser_version;  # MySQL parser arg for /*! comments
 
 GetOptions(
     'add-drop-table'   => \$add_drop_table,
@@ -219,6 +225,7 @@ GetOptions(
     'package=s'        => \$package_name,
     'use-same-auth'    => \$use_same_auth,
     'version'          => \$show_version,
+    'mysql-parser-version=i' => \$mysql_parser_version,
 ) or pod2usage(2);
 
 if ($use_same_auth) {
@@ -262,6 +269,7 @@ my $translator           =  SQL::Translator->new(
         dsn              => $dsn,
         db_user          => $db_user,
         db_password      => $db_password,
+        mysql_parser_version => $mysql_parser_version,
     },
     producer_args   => {
         imap_file        => $imap_file,
