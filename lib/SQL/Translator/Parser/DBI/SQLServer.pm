@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLServer;
 
 # -------------------------------------------------------------------
-# $Id: SQLServer.pm,v 1.5 2006-10-10 19:04:10 duality72 Exp $
+# $Id: SQLServer.pm,v 1.6 2007-04-12 15:14:59 duality72 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
@@ -297,6 +297,7 @@ $_->{INDEX_NAME},
         } elsif ($table_info->{TABLE_TYPE} eq 'VIEW') {
         	next if $table_info->{TABLE_NAME} eq 'sysconstraints'
         		|| $table_info->{TABLE_NAME} eq 'syssegments';
+        	next if !$stuff->{view}->{$table_info->{TABLE_NAME}}->{text};
             my $view =  $schema->add_view(
                                           name =>
 $table_info->{TABLE_NAME},
@@ -322,6 +323,7 @@ $table_info->{TABLE_NAME},
     }
 
     foreach my $p (values %{$stuff->{procedures}}) {
+    	next if !$p->{text};
         my $proc = $schema->add_procedure(
                                name      => $p->{name},
                                owner     => $p->{PROCEDURE_OWNER},
