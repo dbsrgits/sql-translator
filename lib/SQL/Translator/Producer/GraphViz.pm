@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.12 2004-02-20 02:41:47 dlc Exp $
+# $Id: GraphViz.pm,v 1.13 2007-05-07 20:58:56 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -88,6 +88,31 @@ width (in inches) of the output graphic
 
 height (in inches) of the output grahic
 
+=item * fontsize
+
+custom font size for node and edge labels (note that arbitrarily large
+sizes may be ignored due to page size or graph size constraints)
+
+==item * fontname
+
+custom font name (or full path to font file) for node, edge, and graph
+labels
+
+==item * nodeattrs
+
+reference to a hash of node attribute names and their values; these
+may override general fontname or fontsize parameter
+
+==item * edgeattrs
+
+reference to a hash of edge attribute names and their values; these
+may override general fontname or fontsize parameter
+
+==item * graphattrs
+
+reference to a hash of graph attribute names and their values; these
+may override the general fontname parameter
+
 =item * show_fields (DEFAULT: true)
 
 if set to a true value, the names of the colums in a table will
@@ -157,7 +182,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -221,6 +246,11 @@ sub produce {
                            ? $args->{'width'} : 8.5;
     my $height           = defined $args->{'height'}
                            ? $args->{'height'} : 11;
+    my $fontsize         = $args->{'fontsize'};
+    my $fontname         = $args->{'fontname'};
+    my $edgeattrs        = $args->{'edgeattrs'} || {};
+    my $graphattrs       = $args->{'graphattrs'} || {};
+    my $nodeattrs        = $args->{'nodeattrs'} || {};
     my $show_fields      = defined $args->{'show_fields'} 
                            ? $args->{'show_fields'} : 1;
     my $add_color        = $args->{'add_color'};
@@ -262,11 +292,40 @@ sub produce {
         node          => { 
             shape     => $node_shape, 
             style     => 'filled', 
-            fillcolor => 'white' 
-        }
+            fillcolor => 'white',
+        },
     );
     $args{'width'}  = $width  if $width;
     $args{'height'} = $height if $height;
+    # set fontsize for edge and node labels if specified
+    if ($fontsize) {
+        $args{'node'}->{'fontsize'} = $fontsize;
+        $args{'edge'} = {} unless $args{'edge'};
+        $args{'edge'}->{'fontsize'} = $fontsize;        
+    }
+    # set the font name globally for node, edge, and graph labels if
+    # specified (use node, edge, or graph attributes for individual
+    # font specification)
+    if ($fontname) {
+        $args{'node'}->{'fontname'} = $fontname;
+        $args{'edge'} = {} unless $args{'edge'};
+        $args{'edge'}->{'fontname'} = $fontname;        
+        $args{'graph'} = {} unless $args{'graph'};
+        $args{'graph'}->{'fontname'} = $fontname;        
+    }
+    # set additional node, edge, and graph attributes; these may
+    # possibly override ones set before
+    while (my ($key,$val) = each %$nodeattrs) {
+        $args{'node'}->{$key} = $val;
+    }
+    $args{'edge'} = {} if %$edgeattrs && !$args{'edge'};
+    while (my ($key,$val) = each %$edgeattrs) {
+        $args{'edge'}->{$key} = $val;
+    }
+    $args{'graph'} = {} if %$edgeattrs && !$args{'graph'};
+    while (my ($key,$val) = each %$graphattrs) {
+        $args{'graph'}->{$key} = $val;
+    }
 
     my $gv =  GraphViz->new( %args ) or die "Can't create GraphViz object\n";
 

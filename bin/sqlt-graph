@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-graph,v 1.7 2006-10-16 15:24:12 duality72 Exp $
+# $Id: sqlt-graph,v 1.8 2007-05-07 20:58:56 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -47,6 +47,14 @@ sqlt-graph - Automatically create a graph from a database schema
                        set to "0" to undefine)
     --width            Image width (in inches, default "8.5", 
                        set to "0" to undefine)
+    --fontsize         custom font size for node and edge labels
+    --fontname         name of custom font (or full path to font file) for 
+                       node, edge, and graph labels
+    --nodeattr         attribute name and value (in key=val syntax) for
+                       nodes; this option may be repeated to specify 
+                       multiple node attributes
+    --edgeattr         same as --nodeattr, but for edge attributes
+    --graphattr        same as --nodeattr, but for graph attributes
     --natural-join     Perform natural joins
     --natural-join-pk  Perform natural joins from primary keys only
     --show-datatypes   Show datatype of each field
@@ -91,7 +99,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 #
 # Get arguments.
@@ -100,8 +108,13 @@ my (
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
     $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
     $show_sizes, $show_constraints, $debug, $help, $height, $width,
-    $no_fields
+    $no_fields, $fontsize, $fontname
 );
+
+# multi-valued options:
+my %edgeattrs = ();
+my %nodeattrs = ();
+my %graphattrs = ();
 
 GetOptions(
     'd|db|f|from=s'    => \$db_driver,
@@ -111,6 +124,11 @@ GetOptions(
     't|output-type:s'  => \$output_type,
     'height:f'         => \$height,
     'width:f'          => \$width,
+    'fontsize=i'       => \$fontsize,
+    'fontname=s'       => \$fontname,
+    'nodeattr=s'       => \%nodeattrs,
+    'edgeattr=s'       => \%edgeattrs,
+    'graphattr=s'      => \%graphattrs,
     'c|color'          => \$add_color,
     'no-fields'        => \$no_fields,
     'natural-join'     => \$natural_join,
@@ -146,6 +164,11 @@ my $translator           =  SQL::Translator->new(
         show_constraints => $show_constraints,
         height           => $height || 0,
         width            => $width  || 0,
+        fontsize         => $fontsize,
+        fontname         => $fontname,
+        nodeattrs        => \%nodeattrs,
+        edgeattrs        => \%edgeattrs,
+        graphattrs       => \%graphattrs,
         show_fields      => $no_fields ? 0 : 1,
     },
 ) or die SQL::Translator->error;
