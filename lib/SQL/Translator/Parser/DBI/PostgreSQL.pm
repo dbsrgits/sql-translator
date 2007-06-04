@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.9 2005-10-07 16:26:41 scottcain Exp $
+# $Id: PostgreSQL.pm,v 1.10 2007-06-04 04:01:14 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------
@@ -94,12 +94,12 @@ sub parse {
             my $col = $table->add_field(
                               name        => $$columnhash{'attname'},
                               default_value => $$columnhash{'adsrc'},
-                              data_type   => $$columnhash{'typename'},
+                              data_type   => $$columnhash{'typname'},
                               order       => $$columnhash{'attnum'},
                              ) || die $table->error;
 
             $col->{size} = [$$columnhash{'length'}] if $$columnhash{'length'}>0;
-            $col->{is_nullable} = 1 unless $$columnhash{'attnotnull'};
+            $col->{is_nullable} = $$columnhash{'attnotnull'} ? 0 : 1;
         }
 
         $index_select->execute($table_oid);

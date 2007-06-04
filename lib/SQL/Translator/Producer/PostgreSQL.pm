@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.28 2006-11-20 23:56:14 schiffbruechige Exp $
+# $Id: PostgreSQL.pm,v 1.29 2007-06-04 04:01:14 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -39,7 +39,7 @@ producer.
 use strict;
 use warnings;
 use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.28 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -324,12 +324,12 @@ sub create_table
 # print STDERR "$table_name table_name\n";
     my ( @comments, @field_defs, @sequence_defs, @constraint_defs, @fks );
 
-    push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
+    push @comments, "--\n-- Table: $table_name_ur\n--\n" unless $no_comments;
 
     if ( $table->comments and !$no_comments ){
         my $c = "-- Comments: \n-- ";
         $c .= join "\n-- ",  $table->comments;
-        $c .= "\n--";
+        $c .= "\n--\n";
         push @comments, $c;
     }
 
@@ -356,7 +356,7 @@ sub create_table
                                                   quote_table_names => $qt,
                                                   table_name => $table_name,
                                               });
-        push @index_defs, $idef;
+        $idef and push @index_defs, $idef;
         push @constraint_defs, @$constraints;
     }
 
