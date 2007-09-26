@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id: GraphViz.pm,v 1.13 2007-05-07 20:58:56 mwz444 Exp $
+# $Id: GraphViz.pm,v 1.14 2007-09-26 13:20:09 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -182,7 +182,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.13 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.14 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {
@@ -360,8 +360,8 @@ sub produce {
             } @fields
         ) . '\l';
         my $label = $show_fields ? "{$table_name|$field_str}" : $table_name;
-        $gv->add_node( $table_name, label => $label );
-
+#        $gv->add_node( $table_name, label => $label );
+        $gv->add_node( $table_name, label => $label, ($node_shape eq 'record' ? ( shape => $node_shape ) : ()) );
         debug("Processing table '$table_name'");
 
         debug("Fields = ", join(', ', map { $_->name } @fields));
