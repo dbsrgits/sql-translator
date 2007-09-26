@@ -16,12 +16,16 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
+    eval {require Template;};
+        plan skip_all => "Template v2.15 is is incompatible with SQL::Translator 0.08+" 
+        if !$@ && Template->VERSION >= 2.15;
+
     maybe_plan(6, 
         'XML::XPath', 
         'SQL::Translator::Parser::XML::SQLFairy',
         'Template', 
         'Test::Differences'
-    )
+    );
 }
 use Test::Differences;
 
