@@ -13,7 +13,8 @@ BEGIN {
     maybe_plan(
         3,
         'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::Diagram'
+        'SQL::Translator::Producer::Diagram',
+        'Graph::Directed',
     );
 }
 
