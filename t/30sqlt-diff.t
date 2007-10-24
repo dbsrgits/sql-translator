@@ -8,7 +8,7 @@ use FindBin qw($Bin);
 use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
 
-my @script = qw(blib script sqlt-diff);
+my @script = qw(blib script sqlt-diff-old);
 my @create1 = qw(data sqlite create.sql);
 my @create2 = qw(data sqlite create2.sql);
 
@@ -25,7 +25,7 @@ my $create2 = (-d "t")
     : catfile($Bin, "t", @create2);
 
 BEGIN {
-    maybe_plan(23,
+    maybe_plan(21,
         'SQL::Translator::Parser::SQLite',
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Parser::Oracle',
@@ -34,7 +34,6 @@ BEGIN {
 
 ok(-e $sqlt_diff, 'Found sqlt-diff script'); 
 my @cmd = ($sqlt_diff, "$create1=SQLite", "$create2=SQLite");
-
 my $out = `@cmd`;
 
 like($out, qr/-- Target database SQLite is untested/, "Detected 'untested' comment");
@@ -45,7 +44,7 @@ like($out, qr/ALTER TABLE person ADD is_rock_star/,
 @cmd = ($sqlt_diff, "$create1=SQLite", "$create1=SQLite");
 $out = `@cmd`;
 
-like($out, qr/No differences found/, "Properly detected no differences");
+like($out, qr/There were no differences/, "Properly detected no differences");
 
 my @mysql_create1 = qw(data mysql create.sql);
 my @mysql_create2 = qw(data mysql create2.sql);
@@ -81,21 +80,11 @@ like($out, qr/ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff/,
     "Detected add constraint");
 unlike($out, qr/ALTER TABLE employee ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
 
-# Test ignore parameters
-@cmd = ($sqlt_diff, "--ignore-index-names", "--ignore-constraint-names",
-    "$mysql_create1=MySQL", "$mysql_create2=MySQL");
-$out = `@cmd`;
-
-unlike($out, qr/CREATE UNIQUE INDEX unique_name/, 
-    "Detected unique index with different name");
-unlike($out, qr/ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff/, 
-    "Detected add constraint");
-
 # Test for sameness
 @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 $out = `@cmd`;
 
-like($out, qr/No differences found/, "Properly detected no differences");
+like($out, qr/There were no differences/, "Properly detected no differences");
 
 my @oracle_create1 = qw(data oracle create.sql);
 my @oracle_create2 = qw(data oracle create2.sql);

@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.12 2006-07-23 14:14:56 schiffbruechige Exp $
+# $Id: Build.PL,v 1.13 2007-10-24 10:55:44 schiffbruechige Exp $
 
 use strict;
 use lib './lib';
@@ -15,6 +15,7 @@ my $builder = Module::Build->new(
     script_files      => [
         'bin/sqlt-diagram',
         'bin/sqlt-diff',
+        'bin/sqlt-diff-old',
         'bin/sqlt-dumper',
         'bin/sqlt-graph',
         'bin/sqlt',
@@ -32,6 +33,7 @@ my $builder = Module::Build->new(
         'Template'                 => 2.10,
         'GD'                      => 0,
         'GraphViz'                => 0,
+        'Graph::Directed'         => 0,
         'IO::File'                => 0,
         'IO::Scalar'              => 0,
         'Spreadsheet::ParseExcel' => 0.2602,

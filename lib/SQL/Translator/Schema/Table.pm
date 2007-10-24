@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Table;
 
 # ----------------------------------------------------------------------
-# $Id: Table.pm,v 1.36 2005-08-10 16:45:40 duality72 Exp $
+# $Id: Table.pm,v 1.37 2007-10-24 10:55:44 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw( $VERSION $FIELD_ORDER );
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.36 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.37 $ =~ /(\d+)\.(\d+)/;
 
 
 # Stringify to our name, being careful not to pass any args through so we don't
@@ -238,7 +238,9 @@ C<SQL::Translator::Schema::Index> object.
         $index = $index_class->new( \%args ) or return 
             $self->error( $index_class->error );
     }
-
+    foreach my $ex_index ($self->get_indices) {
+       return if ($ex_index->equals($index));
+    }
     push @{ $self->{'indices'} }, $index;
     return $index;
 }

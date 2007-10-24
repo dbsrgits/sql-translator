@@ -118,8 +118,6 @@ my @stmts = (
   `name` varchar(32),
   `swedish_name` varchar(32) CHARACTER SET swe7,
   `description` text CHARACTER SET utf8 COLLATE utf8_general_ci,
-  INDEX (`id`),
-  INDEX (`name`),
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
 ) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
@@ -129,12 +127,11 @@ my @stmts = (
   `id` integer,
   `foo` integer,
   `foo2` integer,
-  INDEX (`id`),
   INDEX (`foo`),
   INDEX (`foo2`),
   PRIMARY KEY (`id`, `foo`),
-  CONSTRAINT `thing2_fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
-  CONSTRAINT `thing2_fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
+  CONSTRAINT `fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
+  CONSTRAINT `fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
 ) Type=InnoDB;\n\n",
 
 "SET foreign_key_checks=1;\n\n"

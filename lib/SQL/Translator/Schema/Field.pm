@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Field;
 
 # ----------------------------------------------------------------------
-# $Id: Field.pm,v 1.26 2005-08-10 16:44:17 duality72 Exp $
+# $Id: Field.pm,v 1.27 2007-10-24 10:55:44 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -50,7 +50,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -569,7 +569,7 @@ Determines if this field is the same as another
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     return 0 unless lc($self->data_type) eq lc($other->data_type);
     return 0 unless $self->size eq $other->size;
-    return 0 unless defined $self->default_value eq defined $other->default_value;
+    return 0 unless (!defined $self->default_value || $self->default_value eq 'NULL') eq (!defined $other->default_value || $other->default_value eq 'NULL');
     return 0 if defined $self->default_value && $self->default_value ne $other->default_value;
     return 0 unless $self->is_nullable eq $other->is_nullable;
 #    return 0 unless $self->is_unique eq $other->is_unique;

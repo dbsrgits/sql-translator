@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.52 2006-11-27 19:28:04 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.53 2007-10-24 10:55:44 schiffbruechige Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -92,8 +92,8 @@ Set the fields charater set and collation order.
 
 use strict;
 use warnings;
-use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.52 $ =~ /(\d+)\.(\d+)/;
+use vars qw[ $VERSION $DEBUG %used_names ];
+$VERSION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -131,6 +131,7 @@ my %translate  = (
 sub produce {
     my $translator     = shift;
     local $DEBUG       = $translator->debug;
+    local %used_names;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
@@ -141,7 +142,7 @@ sub produce {
     $qf = '`' if $translator->quote_field_names;
 
     debug("PKG: Beginning production\n");
-
+    %used_names = ();
     my $create; 
     $create .= header_comment unless ($no_comments);
     # \todo Don't set if MySQL 3.x is set on command line
@@ -227,10 +228,10 @@ sub create_table
         my $constr = create_constraint($c, $options);
         push @constraint_defs, $constr if($constr);
         
-        unless ( $indexed_fields{ ($c->fields())[0] } ) {
-            push @index_defs, "INDEX ($qf" . ($c->fields())[0] . "$qf)";
-            $indexed_fields{ ($c->fields())[0] } = 1;
-        }
+         unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY ) {
+             push @index_defs, "INDEX ($qf" . ($c->fields())[0] . "$qf)";
+             $indexed_fields{ ($c->fields())[0] } = 1;
+         }
     }
 
     $create .= join(",\n", map { "  $_" } 
@@ -241,31 +242,40 @@ sub create_table
     # Footer
     #
     $create .= "\n)";
-    my $table_type_defined = 0;
-    for my $t1_option_ref ( $table->options ) {
-        my($key, $value) = %{$t1_option_ref};
-        $table_type_defined = 1
-            if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
-        $create .= " $key=$value";
-    }
-    my $mysql_table_type = $table->extra('mysql_table_type');
-    #my $charset          = $table->extra('mysql_character_set');
-    #my $collate          = $table->extra('mysql_collate');
-    #$create .= " Type=$mysql_table_type" if $mysql_table_type;
-    #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
-    #$create .= " COLLATE $collate" if $collate;
-    $create .= " Type=$mysql_table_type"
-        if $mysql_table_type && !$table_type_defined;
-    my $charset          = $table->extra('mysql_charset');
-    my $collate          = $table->extra('mysql_collate');
-    my $comments         = $table->comments;
-
-    $create .= " DEFAULT CHARACTER SET $charset" if $charset;
-    $create .= " COLLATE $collate" if $collate;
-    $create .= qq[ comment='$comments'] if $comments;
+    $create .= generate_table_options($table) || '';
     $create .= ";\n\n";
 
     return $drop ? ($drop,$create) : $create;
+}
+
+sub generate_table_options 
+{
+  my ($table) = @_;
+  my $create;
+
+  my $table_type_defined = 0;
+  for my $t1_option_ref ( $table->options ) {
+    my($key, $value) = %{$t1_option_ref};
+    $table_type_defined = 1
+      if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
+    $create .= " $key=$value";
+  }
+  my $mysql_table_type = $table->extra('mysql_table_type');
+  #my $charset          = $table->extra('mysql_character_set');
+  #my $collate          = $table->extra('mysql_collate');
+  #$create .= " Type=$mysql_table_type" if $mysql_table_type;
+  #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
+  #$create .= " COLLATE $collate" if $collate;
+  $create .= " Type=$mysql_table_type"
+    if $mysql_table_type && !$table_type_defined;
+  my $charset          = $table->extra('mysql_charset');
+  my $collate          = $table->extra('mysql_collate');
+  my $comments         = $table->comments;
+
+  $create .= " DEFAULT CHARACTER SET $charset" if $charset;
+  $create .= " COLLATE $collate" if $collate;
+  $create .= qq[ comment='$comments'] if $comments;
+  return $create;
 }
 
 sub create_field
@@ -376,6 +386,21 @@ sub create_field
     return $field_def;
 }
 
+sub alter_create_index
+{
+    my ($index, $options) = @_;
+
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+
+    return join( ' ',
+                 'ALTER TABLE',
+                 $qt.$index->table->name.$qt,
+                 'ADD',
+                 create_index(@_)
+                 );
+}
+
 sub create_index
 {
     my ($index, $options) = @_;
@@ -383,11 +408,55 @@ sub create_index
     my $qf = $options->{quote_field_names} || '';
 
     return join( ' ', 
-                 lc $index->type eq 'normal' ? 'INDEX' : $index->type,
+                 lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
                  $index->name,
                  '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
                  );
 
+}
+
+sub alter_drop_index
+{
+    my ($index, $options) = @_;
+
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+
+    return join( ' ', 
+                 'ALTER TABLE',
+                 $qt.$index->table->name.$qt,
+                 'DROP',
+                 'INDEX',
+                 $index->name || $index->fields
+                 );
+
+}
+
+sub alter_drop_constraint
+{
+    my ($c, $options) = @_;
+
+    my $qt      = $options->{quote_table_names} || '';
+    my $qc      = $options->{quote_constraint_names} || '';
+
+    my $out = sprintf('ALTER TABLE %s DROP %s %s',
+                      $c->table->name,
+                      $c->type,
+                      $qc . $c->name . $qc );
+
+    return $out;
+}
+
+sub alter_create_constraint
+{
+    my ($index, $options) = @_;
+
+    my $qt = $options->{quote_table_names} || '';
+    return join( ' ',
+                 'ALTER TABLE',
+                 $qt.$index->table->name.$qt,
+                 'ADD',
+                 create_constraint(@_) );
 }
 
 sub create_constraint
@@ -396,6 +465,7 @@ sub create_constraint
 
     my $qf      = $options->{quote_field_names} || '';
     my $qt      = $options->{quote_table_names} || '';
+    my $leave_name      = $options->{leave_name} || undef;
     my $counter = ($options->{fk_name_counter}   ||= {});
 
     my @fields = $c->fields or next;
@@ -414,16 +484,16 @@ sub create_constraint
         # Make sure FK field is indexed or MySQL complains.
         #
 
+        my $c_name = $c->name;
         $counter->{$c->table} ||= {};
         my $def = join(' ', 
                        map { $_ || () } 
                          'CONSTRAINT', 
-                         $qt . join('_', $c->table, 
-                                         $c->name,
-                                         ($counter->{$c->table}{$c->name}++ || ())
+                         $qt . join('_', next_unused_name($c_name)
                                    ) . $qt, 
                          'FOREIGN KEY'
                       );
+
 
         $def .= ' ('.$qf . join( "$qf, $qf", @fields ) . $qf . ')';
 
@@ -468,6 +538,20 @@ sub create_constraint
     return undef;
 }
 
+sub alter_table
+{
+    my ($to_table, $options) = @_;
+
+    my $qt = $options->{quote_table_name} || '';
+
+    my $table_options = generate_table_options($to_table) || '';
+    my $out = sprintf('ALTER TABLE %s%s',
+                      $qt . $to_table->name . $qt,
+                      $table_options);
+
+    return $out;
+}
+
 sub alter_field
 {
     my ($from_field, $to_field, $options) = @_;
@@ -510,6 +594,22 @@ sub drop_field
 
     return $out;
     
+}
+
+sub next_unused_name {
+  my $name       = shift || '';
+  if ( !defined($used_names{$name}) ) {
+    $used_names{$name} = $name;
+    return $name;
+  }
+
+  my $i = 1;
+  while ( defined($used_names{$name . '_' . $i}) ) {
+    ++$i;
+  }
+  $name .= '_' . $i;
+  $used_names{$name} = $name;
+  return $name;
 }
 
 1;

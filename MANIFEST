@@ -2,6 +2,7 @@ AUTHORS
 bin/sqlt
 bin/sqlt-diagram
 bin/sqlt-diff
+bin/sqlt-diff-old
 bin/sqlt-dumper
 bin/sqlt-graph
 bin/sqlt.cgi
@@ -114,6 +115,7 @@ t/26sybase.t
 t/27sqlite-parser.t
 t/29html.t
 t/30sqlt-diff.t
+t/30sqlt-new-diff.t
 t/31dumper.t
 t/32schema-lookups.t
 t/33tt-table-producer.t

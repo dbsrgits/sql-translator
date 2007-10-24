@@ -1,7 +1,7 @@
 package SQL::Translator::Schema::Index;
 
 # ----------------------------------------------------------------------
-# $Id: Index.pm,v 1.17 2007-03-06 23:50:23 duality72 Exp $
+# $Id: Index.pm,v 1.18 2007-10-24 10:55:44 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -53,7 +53,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.17 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_INDEX_TYPE = (
     UNIQUE,    1,
@@ -252,8 +252,12 @@ Determines if this index is the same as another
     my $ignore_index_names = shift;
     
     return 0 unless $self->SUPER::equals($other);
+
     unless ($ignore_index_names) {
+      unless ((!$self->name && ($other->name eq $other->fields->[0])) ||
+        (!$other->name && ($self->name eq $self->fields->[0]))) {
         return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+      }
     }
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $self->type eq $other->type;

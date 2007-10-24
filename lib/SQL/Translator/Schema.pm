@@ -3,7 +3,7 @@ package SQL::Translator::Schema;
 # vim: sw=4: ts=4:
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.26 2006-06-07 16:43:41 schiffbruechige Exp $
+# $Id: Schema.pm,v 1.27 2007-10-24 10:58:35 schiffbruechige Exp $
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -60,7 +60,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.26 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
 
 __PACKAGE__->_attributes(qw/name database translator/);
 
@@ -85,11 +85,13 @@ sub as_graph_pm {
 
 =pod
 
-=head2 as_grap_pmh
+=head2 as_graph_pm
 
 Returns a Graph::Directed object with the table names for nodes.
 
 =cut
+
+    require Graph::Directed;
 
     my $self = shift;
     my $g    = Graph::Directed->new;
