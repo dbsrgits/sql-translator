@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.48 2006-08-26 11:34:49 schiffbruechige Exp $
+# $Id: PostgreSQL.pm,v 1.49 2007-11-09 20:50:17 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.48 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -653,7 +653,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
 
-deferrable : /not/i /deferrable/i 
+deferrable : not(?) /deferrable/i 
     { 
         $return = ( $item[1] =~ /not/i ) ? 0 : 1;
     }
@@ -805,6 +805,8 @@ alter_nullable : SET not_null
     }
 
 not_null : /not/i /null/i
+
+not : /not/i
 
 add_column : ADD COLUMN(?)
 
