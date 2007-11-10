@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.53 2007-10-24 10:55:44 schiffbruechige Exp $
+# $Id: MySQL.pm,v 1.54 2007-11-10 03:36:43 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -93,7 +93,7 @@ Set the fields charater set and collation order.
 use strict;
 use warnings;
 use vars qw[ $VERSION $DEBUG %used_names ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.53 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -484,8 +484,16 @@ sub create_constraint
         # Make sure FK field is indexed or MySQL complains.
         #
 
+        my $table = $c->table;
         my $c_name = $c->name;
-        $counter->{$c->table} ||= {};
+
+        # Give the constraint a name if it doesn't have one, so it doens't feel
+        # left out
+        unless ( $c_name ){
+            $c_name   = $table->name . '_fk';
+        }
+
+        $counter->{$table} ||= {};
         my $def = join(' ', 
                        map { $_ || () } 
                          'CONSTRAINT', 
@@ -502,7 +510,7 @@ sub create_constraint
         my @rfields = map { $_ || () } $c->reference_fields;
         unless ( @rfields ) {
             my $rtable_name = $c->reference_table;
-            if ( my $ref_table = $c->table->schema->get_table( $rtable_name ) ) {
+            if ( my $ref_table = $table->schema->get_table( $rtable_name ) ) {
                 push @rfields, $ref_table->primary_key;
             }
             else {
@@ -515,7 +523,7 @@ sub create_constraint
             $def .= ' (' . $qf . join( "$qf, $qf", @rfields ) . $qf . ')';
         }
         else {
-            warn "FK constraint on " . $c->table->name . '.' .
+            warn "FK constraint on " . $table->name . '.' .
                 join('', @fields) . " has no reference fields\n" 
                 if $options->{show_warnings};
         }
