@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::PostgreSQL;
 
 # -------------------------------------------------------------------
-# $Id: PostgreSQL.pm,v 1.49 2007-11-09 20:50:17 mwz444 Exp $
+# $Id: PostgreSQL.pm,v 1.50 2007-11-13 19:25:04 mwz444 Exp $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -108,7 +108,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.49 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.50 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -162,7 +162,9 @@ set : /set/i /[^;]*/ ';'
 
 revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_quotes(s /,/) ';'
     {
-        my $table_name = $item{'table_name'};
+        my $table_info  = $item{'table_name'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
         push @{ $tables{ $table_name }{'permissions'} }, {
             type       => 'revoke',
             actions    => $item[2],
@@ -172,7 +174,9 @@ revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_q
 
 grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quotes(s /,/) ';'
     {
-        my $table_name = $item{'table_name'};
+        my $table_info  = $item{'table_name'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
         push @{ $tables{ $table_name }{'permissions'} }, {
             type       => 'grant',
             actions    => $item[2],
@@ -198,9 +202,12 @@ update : /update/i statement_body ';'
 #
 create : create_table table_name '(' create_definition(s? /,/) ')' table_option(s?) ';'
     {
-        my $table_name                       = $item{'table_name'};
-        $tables{ $table_name }{'order'}      = ++$table_order;
-        $tables{ $table_name }{'table_name'} = $table_name;
+        my $table_info  = $item{'table_name'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        $tables{ $table_name }{'order'}       = ++$table_order;
+        $tables{ $table_name }{'schema_name'} = $schema_name;
+        $tables{ $table_name }{'table_name'}  = $table_name;
 
         if ( @table_comments ) {
             $tables{ $table_name }{'comments'} = [ @table_comments ];
@@ -238,7 +245,10 @@ create : create_table table_name '(' create_definition(s? /,/) ')' table_option(
 
 create : CREATE unique(?) /(index|key)/i index_name /on/i table_name using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
     {
-        push @{ $tables{ $item{'table_name'} }{'indices'} },
+        my $table_info  = $item{'table_name'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        push @{ $tables{ $table_name }{'indices'} },
             {
                 name      => $item{'index_name'},
                 supertype => $item{'unique'}[0] ? 'constraint' : 'index',
@@ -275,7 +285,10 @@ comment : /^\s*(?:#|-{2})(.*)\n/
 
 comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
     {
-        push @{ $tables{ $item{'table_name'} }{'comments'} }, $item{'comment_phrase'};
+        my $table_info  = $item{'table_name'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        push @{ $tables{ $table_name }{'comments'} }, $item{'comment_phrase'};
     }
 
 comment_on_column : /comment/i /on/i /column/i column_name /is/i comment_phrase ';'
@@ -424,6 +437,9 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     |
     /references/i table_name parens_word_list(?) match_type(?) key_action(s?)
     {
+        my $table_info  = $item{'table_name'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
         my ( $on_delete, $on_update );
         for my $action ( @{ $item[5] || [] } ) {
             $on_delete = $action->{'action'} if $action->{'type'} eq 'delete';
@@ -432,7 +448,7 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
 
         $return              =  {
             type             => 'foreign_key',
-            reference_table  => $item[2],
+            reference_table  => $table_name,
             reference_fields => $item[3][0],
             match_type       => $item[4][0],
             on_delete        => $on_delete,
@@ -440,7 +456,11 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
         }
     }
 
-table_name : name_with_opt_quotes
+table_name : schema_qualification(?) name_with_opt_quotes {
+    $return = { schema_name => $item[1], table_name => $item[2] }
+}
+
+  schema_qualification : name_with_opt_quotes '.'
 
 field_name : name_with_opt_quotes
 
@@ -645,7 +665,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
             supertype        => 'constraint',
             type             => 'foreign_key',
             fields           => $item[3],
-            reference_table  => $item[6],
+            reference_table  => $item[6]->{'table_name'},
             reference_fields => $item[7][0],
             match_type       => $item[8][0],
             on_delete     => $on_delete || '',
@@ -697,7 +717,7 @@ key_mutation : /no action/i { $return = 'no_action' }
 alter : alter_table table_name add_column field ';' 
     { 
         my $field_def = $item[4];
-        $tables{ $item[2] }{'fields'}{ $field_def->{'name'} } = {
+        $tables{ $item[2]->{'table_name'} }{'fields'}{ $field_def->{'name'} } = {
             %$field_def, order => $field_order++
         };
         1;
@@ -705,7 +725,7 @@ alter : alter_table table_name add_column field ';'
 
 alter : alter_table table_name ADD table_constraint ';' 
     { 
-        my $table_name = $item[2];
+        my $table_name = $item[2]->{'table_name'};
         my $constraint = $item[4];
         push @{ $tables{ $table_name }{'constraints'} }, $constraint;
         1;
@@ -713,13 +733,13 @@ alter : alter_table table_name ADD table_constraint ';'
 
 alter : alter_table table_name drop_column NAME restrict_or_cascade(?) ';' 
     {
-        $tables{ $item[2] }{'fields'}{ $item[4] }{'drop'} = 1;
+        $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'drop'} = 1;
         1;
     }
 
 alter : alter_table table_name alter_column NAME alter_default_val ';' 
     {
-        $tables{ $item[2] }{'fields'}{ $item[4] }{'default'} = 
+        $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'default'} = 
             $item[5]->{'value'};
         1;
     }
@@ -765,7 +785,7 @@ alter_default_val : SET default_val
 #
 alter : alter_table table_name alter_column NAME alter_nullable ';'
     {
-#        my $table_name  = $item[2];
+#        my $table_name  = $item[2]->{'table_name'};
 #        my $field_name  = $item[4];
 #        my $is_nullable = $item[5]->{'is_nullable'};
 #
@@ -934,7 +954,8 @@ sub parse {
     for my $table_name ( @tables ) {
         my $tdata =  $result->{ $table_name };
         my $table =  $schema->add_table( 
-            name  => $tdata->{'table_name'},
+            #schema => $tdata->{'schema_name'},
+            name   => $tdata->{'table_name'},
         ) or die "Couldn't create table '$table_name': " . $schema->error;
 
         $table->comments( $tdata->{'comments'} );
