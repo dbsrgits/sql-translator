@@ -38,7 +38,7 @@ SQL::Translator::Producer::GraphViz - GraphViz producer for SQL::Translator
           add_color => 1,
           show_constraints => 1,
           show_datatypes => 1,
-          show_col_sizes => 1
+          show_sizes => 1
       }
   ) or die SQL::Translator->error;
 
@@ -93,22 +93,22 @@ height (in inches) of the output grahic
 custom font size for node and edge labels (note that arbitrarily large
 sizes may be ignored due to page size or graph size constraints)
 
-==item * fontname
+=item * fontname
 
 custom font name (or full path to font file) for node, edge, and graph
 labels
 
-==item * nodeattrs
+=item * nodeattrs
 
 reference to a hash of node attribute names and their values; these
 may override general fontname or fontsize parameter
 
-==item * edgeattrs
+=item * edgeattrs
 
 reference to a hash of edge attribute names and their values; these
 may override general fontname or fontsize parameter
 
-==item * graphattrs
+=item * graphattrs
 
 reference to a hash of graph attribute names and their values; these
 may override the general fontname parameter
@@ -129,7 +129,7 @@ if set to a true value, the datatype of each column will be
 displayed next to each column's name; this option will have no
 effect if the value of show_fields is set to false
 
-=item * show_col_sizes
+=item * show_sizes
 
 if set to a true value, the size (in bytes) of each CHAR and
 VARCHAR column will be displayed in parentheses next to the
@@ -260,8 +260,8 @@ sub produce {
     my $show_sizes       = $args->{'show_sizes'};
     my $show_constraints = $args->{'show_constraints'};
     my $join_pk_only     = $args->{'join_pk_only'};
-    my $skip_fields      = $args->{'skip_fields'};
-    my %skip             = map { s/^\s+|\s+$//g; $_, 1 }
+    my $skip_fields      = $args->{'skip_fields'} || '';
+    my %skip             = map { s/^\s+|\s+$//g; length $_ ? ($_, 1) : () }
                            split ( /,/, $skip_fields );
     $natural_join      ||= $join_pk_only;
 
