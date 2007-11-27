@@ -72,6 +72,7 @@ schema:
           fields:
             - name
           name: idx_unique_name
+
     thing2:
       name: thing2
       extra:
@@ -93,6 +94,15 @@ schema:
           data_type: int
           order: 2
           is_not_null: 1
+      indices:
+        - type: NORMAL
+          fields: 
+            - id
+          name: index_1
+        - type: NORMAL
+          fields: 
+            - id
+          name: index_2
       constraints:
         - type: PRIMARY_KEY
           fields:
@@ -127,6 +137,8 @@ my @stmts = (
   `id` integer,
   `foo` integer,
   `foo2` integer,
+  INDEX index_1 (`id`),
+  INDEX index_2 (`id`),
   INDEX (`foo`),
   INDEX (`foo2`),
   PRIMARY KEY (`id`, `foo`),
@@ -166,10 +178,10 @@ my $mysql_out = join("", @stmts_no_drop);
 
     @{$sqlt}{qw/quote_table_names quote_field_names/} = (0,0);
     $out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
+      or die "Translate error:".$sqlt->error;
 
     @out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
+      or die "Translate error:".$sqlt->error;
     $mysql_out =~ s/`//g;
     my @unquoted_stmts = map { s/`//g; $_} @stmts_no_drop;
     eq_or_diff $out, $mysql_out,       "Output looks right without quoting";

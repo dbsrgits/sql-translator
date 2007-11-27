@@ -92,7 +92,7 @@ sub view_table {
         'name'        => $table->name,
         'order'       => $table->order,
         'options'     => $table->options  || [],
-        'comments'    => $table->comments || '',
+        $table->comments ? ('comments'    => $table->comments ) : (),
         'constraints' => [
             map { view_constraint($_) } $table->get_constraints
         ],
@@ -113,7 +113,7 @@ sub view_constraint {
     return {
         'deferrable'       => scalar $constraint->deferrable,
         'expression'       => scalar $constraint->expression,
-        'fields'           => scalar $constraint->field_names,
+        'fields'           => [ map { ref $_ ? $_->name : $_ } $constraint->field_names ],
         'match_type'       => scalar $constraint->match_type,
         'name'             => scalar $constraint->name,
         'options'          => scalar $constraint->options,
@@ -130,16 +130,17 @@ sub view_field {
     my $field = shift;
 
     return {
-        'order'          => scalar $field->order,
-        'name'           => scalar $field->name,
-        'data_type'      => scalar $field->data_type,
-        'size'           => [ $field->size ],
-        'default_value'  => scalar $field->default_value,
-        'is_nullable'    => scalar $field->is_nullable,
-        'is_primary_key' => scalar $field->is_primary_key,
-        'is_unique'      => scalar $field->is_unique,
-        'comments'       => $field->comments || '',
-        'extra'          => { $field->extra },
+        'order'             => scalar $field->order,
+        'name'              => scalar $field->name,
+        'data_type'         => scalar $field->data_type,
+        'size'              => [ $field->size ],
+        'default_value'     => scalar $field->default_value,
+        'is_nullable'       => scalar $field->is_nullable,
+        'is_primary_key'    => scalar $field->is_primary_key,
+        'is_unique'         => scalar $field->is_unique,
+        $field->is_auto_increment ? ('is_auto_increment' => 1) : (),
+        $field->comments ? ('comments' => $field->comments) : (),
+        'extra'             => { $field->extra },
     };
 }
 

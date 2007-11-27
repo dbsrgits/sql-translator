@@ -63,20 +63,16 @@ Set the list of allowed values for Enum fields.
 
 Set the MySQL field options of the same name.
 
+=item field.renamed_from
+
+Used when producing diffs to say this column is the new name fo the specified
+old column.
+
 =item table.mysql_table_type
 
 Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
 automatically set for tables involved in foreign key constraints if it is
 not already set explicitly. See L<"Table Types">.
-
-=item mysql_character_set
-
-MySql-4.1+. Set the tables character set.
-Run SHOW CHARACTER SET to see list.
-
-=item mysql_collate
-
-MySql-4.1+. Set the tables colation order.
 
 =item table.mysql_charset, table.mysql_collate
 
@@ -165,6 +161,7 @@ sub produce {
     # Generate sql
     #
     my @table_defs =();
+    
     for my $table ( $schema->get_tables ) {
 #        print $table->name, "\n";
         push @table_defs, create_table($table, 
@@ -261,11 +258,6 @@ sub generate_table_options
     $create .= " $key=$value";
   }
   my $mysql_table_type = $table->extra('mysql_table_type');
-  #my $charset          = $table->extra('mysql_character_set');
-  #my $collate          = $table->extra('mysql_collate');
-  #$create .= " Type=$mysql_table_type" if $mysql_table_type;
-  #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
-  #$create .= " COLLATE $collate" if $collate;
   $create .= " Type=$mysql_table_type"
     if $mysql_table_type && !$table_type_defined;
   my $charset          = $table->extra('mysql_charset');
@@ -560,6 +552,7 @@ sub alter_table
     return $out;
 }
 
+sub rename_field { alter_field(@_) }
 sub alter_field
 {
     my ($from_field, $to_field, $options) = @_;
@@ -569,7 +562,7 @@ sub alter_field
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
                       $qt . $to_field->table->name . $qt,
-                      $qf . $to_field->name . $qf,
+                      $qf . $from_field->name . $qf,
                       create_field($to_field, $options));
 
     return $out;
@@ -602,6 +595,52 @@ sub drop_field
 
     return $out;
     
+}
+
+sub batch_alter_table {
+  my ($table, $diff_hash, $options) = @_;
+
+  my @stmts = map {
+    if (@{ $diff_hash->{$_} || [] }) {
+      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
+      map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_) } @{ $diff_hash->{$_} }
+    } else { () }
+  } qw/alter_drop_constraint
+       alter_drop_index
+       drop_field
+       add_field
+       alter_field
+       rename_field
+       alter_create_index
+       alter_create_constraint
+       alter_table/;
+
+  return unless @stmts;
+  # Just zero or one stmts. return now
+  return "@stmts;" unless @stmts > 1;
+
+  # Now strip off the 'ALTER TABLE xyz' of all but the first one
+
+  my $qt = $options->{quote_table_name} || '';
+  my $table_name = $qt . $table->name . $qt;
+
+  my $first = shift  @stmts;
+  my ($alter_table) = $first =~ /^(ALTER TABLE \Q$table_name\E )/;
+  my $re = qr/^$alter_table/;
+  my $padd = " " x length($alter_table);
+
+  return join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
+}
+
+sub drop_table {
+  my ($table) = @_;
+
+  # Drop (foreign key) constraints so table drops cleanly
+  $DB::single = 1;
+  my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] });
+
+  return join("\n", @sql, "DROP TABLE $table;");
+
 }
 
 sub next_unused_name {

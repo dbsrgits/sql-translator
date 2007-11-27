@@ -535,7 +535,7 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             $list = [];
         }
 
-        unless ( @{ $size || [] } ) {
+        if ( @{ $size || [] } == 0 && !$thisparser->{local}{sqlt_parser_args}{no_default_sizes} ) {
             if ( lc $type eq 'tinyint' ) {
                 $size = 4;
             }
@@ -770,6 +770,9 @@ sub parse {
         return $translator->error("Error instantiating Parse::RecDescent ".
             "instance: Bad grammer");
     }
+
+    # This is the only way to get args into the productions/actions
+    $parser->{local}{sqlt_parser_args} = $translator->parser_args;
     
     # Preprocess for MySQL-specific and not-before-version comments from mysqldump
     my $parser_version = $translator->parser_args->{mysql_parser_version} || DEFAULT_PARSER_VERSION;

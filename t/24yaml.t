@@ -21,7 +21,6 @@ schema:
   procedures: {}
   tables:
     person:
-      comments: ''
       constraints:
         - deferrable: 1
           expression: ''
@@ -49,7 +48,6 @@ schema:
           type: UNIQUE
       fields:
         age:
-          comments: ''
           data_type: integer
           default_value: ~
           extra: {}
@@ -61,7 +59,6 @@ schema:
           size:
             - 0
         description:
-          comments: ''
           data_type: text
           default_value: ~
           extra: {}
@@ -73,7 +70,6 @@ schema:
           size:
             - 0
         iq:
-          comments: ''
           data_type: tinyint
           default_value: 0
           extra: {}
@@ -85,7 +81,6 @@ schema:
           size:
             - 0
         name:
-          comments: ''
           data_type: varchar
           default_value: ~
           extra: {}
@@ -97,7 +92,6 @@ schema:
           size:
             - 20
         person_id:
-          comments: ''
           data_type: INTEGER
           default_value: ~
           extra: {}
@@ -109,7 +103,6 @@ schema:
           size:
             - 0
         weight:
-          comments: ''
           data_type: double
           default_value: ~
           extra: {}
@@ -126,11 +119,10 @@ schema:
       options: []
       order: 1
     pet:
-      comments: ''
       constraints:
         - deferrable: 1
           expression: ''
-          fields: ''
+          fields: []
           match_type: ''
           name: ''
           on_delete: ''
@@ -154,7 +146,6 @@ schema:
           type: PRIMARY KEY
       fields:
         age:
-          comments: ''
           data_type: int
           default_value: ~
           extra: {}
@@ -166,7 +157,6 @@ schema:
           size:
             - 0
         name:
-          comments: ''
           data_type: varchar
           default_value: ~
           extra: {}
@@ -178,7 +168,6 @@ schema:
           size:
             - 30
         person_id:
-          comments: ''
           data_type: int
           default_value: ~
           extra: {}
@@ -190,7 +179,6 @@ schema:
           size:
             - 0
         pet_id:
-          comments: ''
           data_type: int
           default_value: ~
           extra: {}

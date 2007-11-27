@@ -116,6 +116,8 @@ t/27sqlite-parser.t
 t/29html.t
 t/30sqlt-diff.t
 t/30sqlt-new-diff.t
+t/30sqlt-new-diff-mysql.t
+t/30sqlt-new-diff-sqlite.t
 t/31dumper.t
 t/32schema-lookups.t
 t/33tt-table-producer.t
@@ -152,6 +154,8 @@ t/data/sqlite/create2.sql
 t/data/sybase/create.sql
 t/data/template/basic.tt
 t/data/template/table.tt
+t/data/diff/create1.yml
+t/data/diff/create2.yml
 t/data/xml/schema.xml
 t/data/xml/samefield.xml
 t/lib/Producer/BaseTest.pm

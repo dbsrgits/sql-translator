@@ -8,6 +8,7 @@ license: gpl
 resources:
   license: http://www.opensource.org/licenses/gpl-license.php
 requires:
+  Class::Accessor::Fast: 0
   Class::Base: 0
   Class::Data::Inheritable: 0.02
   Class::MakeMethods: 0
@@ -24,6 +25,7 @@ build_requires:
   YAML: 0.39
 recommends:
   GD: 0
+  Graph::Directed: 0
   GraphViz: 0
   IO::File: 0
   IO::Scalar: 0
@@ -94,7 +96,7 @@ provides:
     version: 1.29
   SQL::Translator::Parser::PostgreSQL:
     file: lib/SQL/Translator/Parser/PostgreSQL.pm
-    version: 1.48
+    version: 1.50
   SQL::Translator::Parser::SQLServer:
     file: lib/SQL/Translator/Parser/SQLServer.pm
     version: 1.06
@@ -145,7 +147,7 @@ provides:
     version: 1.01
   SQL::Translator::Producer::MySQL:
     file: lib/SQL/Translator/Producer/MySQL.pm
-    version: 1.52
+    version: 1.54
   SQL::Translator::Producer::Oracle:
     file: lib/SQL/Translator/Producer/Oracle.pm
     version: 1.34
@@ -187,7 +189,7 @@ provides:
     version: 1.12
   SQL::Translator::Schema:
     file: lib/SQL/Translator/Schema.pm
-    version: 1.26
+    version: 1.27
   SQL::Translator::Schema::Constants:
     file: lib/SQL/Translator/Schema/Constants.pm
     version: 1.43
@@ -196,7 +198,7 @@ provides:
     version: 1.21
   SQL::Translator::Schema::Field:
     file: lib/SQL/Translator/Schema/Field.pm
-    version: 1.26
+    version: 1.27
   SQL::Translator::Schema::Graph:
     file: lib/SQL/Translator/Schema/Graph.pm
   SQL::Translator::Schema::Graph::CompoundEdge:
@@ -211,7 +213,7 @@ provides:
     file: lib/SQL/Translator/Schema/Graph/Port.pm
   SQL::Translator::Schema::Index:
     file: lib/SQL/Translator/Schema/Index.pm
-    version: 1.17
+    version: 1.18
   SQL::Translator::Schema::Object:
     file: lib/SQL/Translator/Schema/Object.pm
     version: 1.08
@@ -220,7 +222,7 @@ provides:
     version: 1.08
   SQL::Translator::Schema::Table:
     file: lib/SQL/Translator/Schema/Table.pm
-    version: 1.36
+    version: 1.37
   SQL::Translator::Schema::Trigger:
     file: lib/SQL/Translator/Schema/Trigger.pm
     version: 1.09
@@ -235,7 +237,7 @@ provides:
   Test::SQL::Translator:
     file: lib/Test/SQL/Translator.pm
     version: 1.08
-generated_by: Module::Build version 0.28
+generated_by: Module::Build version 0.2806
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

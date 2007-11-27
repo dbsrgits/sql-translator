@@ -52,7 +52,6 @@ schema:
   procedures: {}
   tables:
     Person:
-      comments: ''
       constraints:
         - deferrable: 1
           expression: ''
@@ -68,7 +67,6 @@ schema:
           type: UNIQUE
       fields:
         created:
-          comments: ''
           data_type: timestamp
           default_value: ~
           extra: {}
@@ -80,7 +78,6 @@ schema:
           size:
             - 0
         first_name:
-          comments: ''
           data_type: foovar
           default_value: ~
           extra: {}
@@ -92,7 +89,6 @@ schema:
           size:
             - 0
         modified:
-          comments: ''
           data_type: timestamp
           default_value: ~
           extra: {}
