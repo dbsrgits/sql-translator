@@ -151,7 +151,6 @@ sub produce_diff_sql {
         my $tar_table = $target_schema->get_table($table)
                      || $source_schema->get_table($table);
 
-  $DB::single = 1 if $table eq 'deleted'; 
         push @diffs, $batch_alter->($tar_table,
           { map {
               $func_map{$_} => $self->table_diff_hash->{$table}{$_}
@@ -312,8 +311,13 @@ sub diff_table_fields {
       next;
     }
 
-    ## field exists, something changed.
-    if ( !$tar_table_field->equals($src_table_field, $self->case_insensitive) ) {
+    # field exists, something changed. This is a bit complex. Parsers can 
+    # normalize types, but only some of them do, so compare the normalized and
+    # parsed types for each field to each other
+    if ( !$tar_table_field->equals($src_table_field, $self->case_insensitive) &&
+         !$tar_table_field->equals($src_table_field->parsed_field, $self->case_insensitive) && 
+         !$tar_table_field->parsed_field->equals($src_table_field, $self->case_insensitive) && 
+         !$tar_table_field->parsed_field->equals($src_table_field->parsed_field, $self->case_insensitive) ) {
 
       # Some producers might need src field to diff against
       push @{$self->table_diff_hash->{$tar_table}{fields_to_alter}}, [ $src_table_field, $tar_table_field ];

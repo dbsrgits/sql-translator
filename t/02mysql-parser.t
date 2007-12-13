@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(235, "SQL::Translator::Parser::MySQL");
+    maybe_plan(228, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -601,26 +601,4 @@ BEGIN {
 	like($proc2->sql, qr/CREATE PROCEDURE sp_update_security_acl/, "Detected procedure sp_update_security_acl");
 }
 
-{
-    my $tr = SQL::Translator->new({parser_args => { no_default_sizes => 1 } });
-    my $data = q|create table sessions (
-        age int
-    );|;
-
-    my $val = parse($tr, $data);
-    my $schema = $tr->schema;
-    is( $schema->is_valid, 1, 'Schema is valid' );
-    my @tables = $schema->get_tables;
-    is( scalar @tables, 1, 'Right number of tables (1)' );
-    my $table  = shift @tables;
-    is( $table->name, 'sessions', 'Found "sessions" table' );
-
-    my @fields = $table->get_fields;
-    is( scalar @fields, 1, 'Right number of fields (1)' );
-    my $f1 = shift @fields;
-    is( $f1->name, 'age', 'First field name is "id"' );
-    is( $f1->data_type, 'int', 'Type is "int"' );
-    is( $f1->size, 0, 'No default size' );
-
-}
 

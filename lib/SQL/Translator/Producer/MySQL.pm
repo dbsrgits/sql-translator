@@ -636,7 +636,6 @@ sub drop_table {
   my ($table) = @_;
 
   # Drop (foreign key) constraints so table drops cleanly
-  $DB::single = 1;
   my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] });
 
   return join("\n", @sql, "DROP TABLE $table;");

@@ -548,6 +548,24 @@ also be used to get the table name.
     return $self->{'table'};
 }
 
+sub parsed_field {
+
+=head2 
+
+Returns the field exactly as the parser found it
+
+=cut
+
+    my $self = shift;
+
+    if (@_) {
+      my $value = shift;
+      $self->{parsed_field} = $value;
+      return $value || $self;
+    }
+    return $self->{parsed_field} || $self;
+}
+
 # ----------------------------------------------------------------------
 sub equals {
 

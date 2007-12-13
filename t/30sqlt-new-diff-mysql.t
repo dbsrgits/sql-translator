@@ -11,13 +11,13 @@ use Test::More;
 use Test::Differences;
 use Test::SQL::Translator qw(maybe_plan);
 
-plan tests => 4;
+plan tests => 5;
 
 use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
 my $tr            = SQL::Translator->new;
 
-my ( $source_schema, $target_schema ) = map {
+my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
     my $t = SQL::Translator->new;
     $t->parser( 'YAML' )
       or die $tr->error;
@@ -29,7 +29,7 @@ my ( $source_schema, $target_schema ) = map {
         $schema->name( $_ );
     }
     ($schema);
-} (qw/create1.yml create2.yml/);
+} (qw( create1.yml create2.yml ));
 
 # Test for differences
 my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'MySQL', $target_schema, 'MySQL', { no_batch_alters => 1} );
@@ -69,8 +69,6 @@ DROP TABLE deleted;
 
 COMMIT;
 ## END OF DIFF
-
-#die $out;
 
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schema, 'MySQL',
     { ignore_index_names => 1,
@@ -121,4 +119,57 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 
 ## END OF DIFF
 
-=cut
+{
+  my $t = SQL::Translator->new;
+  $t->parser( 'MySQL' )
+    or die $tr->error;
+  my $out = $t->translate( catfile($Bin, qw/data mysql create.sql/ ) )
+    or die $tr->error;
+  
+  my $schema = $t->schema;
+  unless ( $schema->name ) {
+      $schema->name( 'create.sql' );
+  }
+
+  # Now lets change the type of one of the 'integer' columns so that it 
+  # matches what the mysql parser sees for '<col> interger'.
+  my $field = $target_schema->get_table('employee')->get_field('employee_id');
+  $field->data_type('integer');
+  $field->size(0);
+  $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL' );
+  eq_or_diff($out, <<'## END OF DIFF', "No differences found");
+-- Convert schema 'create.sql' to 'create2.yml':
+
+BEGIN TRANSACTION;
+
+SET foreign_key_checks=0;
+
+
+CREATE TABLE added (
+  id integer(11)
+);
+
+
+SET foreign_key_checks=1;
+
+
+ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
+                     DROP COLUMN job_title,
+                     ADD CONSTRAINT FK5302D47D93FE702E_diff_1 FOREIGN KEY (employee_id) REFERENCES person (person_id);
+ALTER TABLE person DROP UNIQUE UC_age_name,
+                   DROP INDEX u_name,
+                   ADD COLUMN is_rock_star tinyint(4) DEFAULT '1',
+                   CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
+                   CHANGE COLUMN name name varchar(20) NOT NULL,
+                   CHANGE COLUMN age age integer(11) DEFAULT '18',
+                   CHANGE COLUMN iq iq integer(11) DEFAULT '0',
+                   CHANGE COLUMN description physical_description text,
+                   ADD UNIQUE INDEX unique_name (name),
+                   ADD UNIQUE UC_person_id (person_id),
+                   ADD UNIQUE UC_age_name (age, name),
+                   ENGINE=InnoDB;
+DROP TABLE deleted;
+
+COMMIT;
+## END OF DIFF
+}
