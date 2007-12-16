@@ -141,7 +141,54 @@ use Data::Dumper;
 use Parse::RecDescent;
 use Exporter;
 use Storable qw(dclone);
+use DBI qw(:sql_types);
 use base qw(Exporter);
+
+our %type_mapping = (
+  int => SQL_INTEGER,
+  integer => SQL_INTEGER,
+
+  tinyint => SQL_TINYINT,
+  smallint => SQL_SMALLINT,
+  mediumint,
+  bigint,
+
+  float => SQL_FLOAT, # Precision 0..23
+  double => SQL_DOUBLE, # Precision 24..53
+  "double precision" => SQL_DOUBLE,
+  real => SQL_DOUBLE,
+
+  # all these are the same.
+  decimal => SQL_DECIMAL,
+  numeric => SQL_NUMERIC,
+  dec => SQL_DECIMAL,
+  # fixed: does this exist
+
+  bit => SQL_BIT
+
+  date => SQL_DATE,
+  datetime => SQL_DATETIME,
+  timestamp => SQL_TIMESTAMP,
+  time => SQL_TIME,
+  year
+
+
+  char => SQL_CHAR,
+  varchar => SQL_VARCHAR,
+  binary => SQL_BINARY,
+  varbinary => SQL_VARBINARY,
+  tinyblob => SQL_BLOB,
+  tinytext => 
+  blob => SQL_BLOB,
+  text => SQL_LONGVARCHAR
+  mediumblob => SQL_BLOB,
+  mediumtext => SQL_LONGVARCHAR
+  longblob => SQL_BLOB
+  longtext => SQL_LONGVARCHAR
+
+  enum
+  set
+);
 
 @EXPORT_OK = qw(parse);
 
@@ -938,9 +985,11 @@ sub normalize_field {
       }
       $field->size($size);
       $field->data_type($type);
+      $field->sql_data_type( $type_mapping{lc $type} || SQL_UNKNOWN_TYPE );
       $field->extra->{list} = $list if @$list;
     }
 }
+
 
 1;
 

@@ -66,7 +66,7 @@ use overload
 __PACKAGE__->_attributes( qw/
     table name data_type size is_primary_key is_nullable
     is_auto_increment default_value comments is_foreign_key
-    is_unique order
+    is_unique order sql_data_type
 /);
 
 =pod
@@ -134,6 +134,21 @@ Get or set the field's data type.
     my $self = shift;
     $self->{'data_type'} = shift if @_;
     return $self->{'data_type'} || '';
+}
+
+sub sql_data_type {
+
+=head2 sql_data_type
+
+Constant from DBI package representing this data type. See L<DBI/DBI Constants>
+for more details.
+
+=cut
+
+    my $self = shift;
+    $self->{sql_data_type} = shift if @_;
+    return $self->{sql_data_type} || 0;
+
 }
 
 # ----------------------------------------------------------------------
@@ -585,7 +600,14 @@ Determines if this field is the same as another
     
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
-    return 0 unless lc($self->data_type) eq lc($other->data_type);
+
+    # Comparing types: use sql_data_type if both are not 0. Else use string data_type
+    if ($self->sql_data_type && $other->sql_data_type) {
+        return 0 unless $self->sql_data_type == $other->sql_data_type
+    } else {
+        return 0 unless lc($self->data_type) eq lc($other->data_type)
+    }
+
     return 0 unless $self->size eq $other->size;
     return 0 unless (!defined $self->default_value || $self->default_value eq 'NULL') eq (!defined $other->default_value || $other->default_value eq 'NULL');
     return 0 if defined $self->default_value && $self->default_value ne $other->default_value;
