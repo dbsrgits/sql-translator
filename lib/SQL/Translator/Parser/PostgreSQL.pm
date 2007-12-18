@@ -765,6 +765,9 @@ alter : alter_table table_name DROP /constraint/i NAME restrict_or_cascade ';'
 alter : alter_table table_name /owner/i /to/i NAME ';'
     { 1 }
 
+alter : alter_sequence NAME /owned/i /by/i column_name ';'
+    { 1 }
+
 storage_type : /(plain|external|extended|main)/i
 
 alter_default_val : SET default_val 
@@ -831,6 +834,8 @@ not : /not/i
 add_column : ADD COLUMN(?)
 
 alter_table : ALTER TABLE ONLY(?)
+
+alter_sequence : ALTER SEQUENCE 
 
 drop_column : DROP COLUMN(?)
 
@@ -902,6 +907,8 @@ COLUMN : /column/i
 TABLE : /table/i
 
 SEMICOLON : /\s*;\n?/
+
+SEQUENCE : /sequence/i
 
 INTEGER : /\d+/
 
