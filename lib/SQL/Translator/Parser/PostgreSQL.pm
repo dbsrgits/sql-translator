@@ -154,6 +154,9 @@ statement : create
   | connect
   | update
   | set
+  | select
+  | copy
+  | readin_symbol
   | <error>
 
 connect : /^\s*\\\connect.*\n/
@@ -172,6 +175,9 @@ revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_q
         }
     }
 
+revoke : /revoke/i WORD(s /,/) /on/i SCHEMA(?) schema_name /from/i name_with_opt_quotes(s /,/) ';'
+    { 1 }
+
 grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quotes(s /,/) ';'
     {
         my $table_info  = $item{'table_name'};
@@ -183,6 +189,9 @@ grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quote
             users      => $item[7],
         }
     }
+
+grant : /grant/i WORD(s /,/) /on/i SCHEMA(?) schema_name /to/i name_with_opt_quotes(s /,/) ';'
+    { 1 }
 
 drop : /drop/i /[^;]*/ ';'
 
@@ -461,6 +470,8 @@ table_name : schema_qualification(?) name_with_opt_quotes {
 }
 
   schema_qualification : name_with_opt_quotes '.'
+
+schema_name : name_with_opt_quotes
 
 field_name : name_with_opt_quotes
 
@@ -846,6 +857,24 @@ rename_column : /rename/i COLUMN(?)
 restrict_or_cascade : /restrict/i | 
     /cascade/i
 
+# Handle functions that can be called
+select : SELECT select_function ';' 
+    { 1 }
+
+# Read the setval function but don't do anything with it because this parser
+# isn't handling sequences
+select_function : schema_qualification(?) /setval/i '(' VALUE /,/ VALUE /,/ /(true|false)/i ')' 
+    { 1 }
+
+# Skipping all COPY commands
+copy : COPY WORD /[^;]+/ ';' { 1 }
+    { 1 }
+
+# The "\." allows reading in from STDIN but this isn't needed for schema
+# creation, so it is skipped.
+readin_symbol : '\.'
+    {1}
+
 #
 # End basically useless stuff. - ky
 #
@@ -906,9 +935,15 @@ COLUMN : /column/i
 
 TABLE : /table/i
 
+SCHEMA : /schema/i
+
 SEMICOLON : /\s*;\n?/
 
 SEQUENCE : /sequence/i
+
+SELECT : /select/i
+
+COPY : /copy/i
 
 INTEGER : /\d+/
 
