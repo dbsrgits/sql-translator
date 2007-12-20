@@ -79,7 +79,6 @@ sub compute_differences {
 
     if (my $preprocess = $producer_class->can('preprocess_schema')) {
       $producer_class->$preprocess($source_schema);
-      $DB::single = 1;
       $producer_class->$preprocess($target_schema);
     }
 
@@ -87,7 +86,6 @@ sub compute_differences {
     ## do original/source tables exist in target?
     for my $tar_table ( @tar_tables ) {
       my $tar_table_name = $tar_table->name;
-      $DB::single = 1 if $tar_table_name eq 'admin_contest';
       my $src_table      = $source_schema->get_table( $tar_table_name, $self->case_insensitive );
 
       unless ( $src_table ) {
@@ -307,7 +305,6 @@ sub diff_table_fields {
   for my $tar_table_field ( $tar_table->get_fields ) {
     my $f_tar_name      = $tar_table_field->name;
 
-    $DB::single = 1 if $f_tar_name eq 'invite_type';
     if (my $old_name = $tar_table_field->extra->{renamed_from}) {
       my $src_table_field = $src_table->get_field( $old_name, $self->case_insensitive );
       die qq#Renamed cant find "@{[$src_table->name]}.$old_name" for renamed column\n# unless $src_table_field;
