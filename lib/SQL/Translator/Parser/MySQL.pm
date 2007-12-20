@@ -145,49 +145,6 @@ use DBI qw(:sql_types);
 use base qw(Exporter);
 
 our %type_mapping = (
-  int => SQL_INTEGER,
-  integer => SQL_INTEGER,
-
-  tinyint => SQL_TINYINT,
-  smallint => SQL_SMALLINT,
-  mediumint,
-  bigint,
-
-  float => SQL_FLOAT, # Precision 0..23
-  double => SQL_DOUBLE, # Precision 24..53
-  "double precision" => SQL_DOUBLE,
-  real => SQL_DOUBLE,
-
-  # all these are the same.
-  decimal => SQL_DECIMAL,
-  numeric => SQL_NUMERIC,
-  dec => SQL_DECIMAL,
-  # fixed: does this exist
-
-  bit => SQL_BIT
-
-  date => SQL_DATE,
-  datetime => SQL_DATETIME,
-  timestamp => SQL_TIMESTAMP,
-  time => SQL_TIME,
-  year
-
-
-  char => SQL_CHAR,
-  varchar => SQL_VARCHAR,
-  binary => SQL_BINARY,
-  varbinary => SQL_VARBINARY,
-  tinyblob => SQL_BLOB,
-  tinytext => 
-  blob => SQL_BLOB,
-  text => SQL_LONGVARCHAR
-  mediumblob => SQL_BLOB,
-  mediumtext => SQL_LONGVARCHAR
-  longblob => SQL_BLOB
-  longtext => SQL_LONGVARCHAR
-
-  enum
-  set
 );
 
 @EXPORT_OK = qw(parse);
@@ -852,15 +809,6 @@ sub parse {
                 ) or die $table->error;
             }
 
-            if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
-                my %extra = $field->extra;
-                my $longest = 0;
-                for my $len ( map { length } @{ $extra{'list'} || [] } ) {
-                    $longest = $len if $len > $longest;
-                }
-                $field->size( $longest ) if $longest;
-            }
-
             for my $cdata ( @{ $fdata->{'constraints'} } ) {
                 next unless $cdata->{'type'} eq 'foreign_key';
                 $cdata->{'fields'} ||= [ $field->name ];
@@ -976,7 +924,17 @@ sub normalize_field {
         $changed = $size != 4_294_967_295;
         $size = 4_294_967_295;
     }
-    $DB::single = 1 if $field->name eq 'employee_id';
+    if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
+        my %extra = $field->extra;
+        my $longest = 0;
+        for my $len ( map { length } @{ $extra{'list'} || [] } ) {
+            $longest = $len if $len > $longest;
+        }
+        $changed = 1;
+        $size = $longest if $longest;
+    }
+
+
     if ($changed) {
       # We only want to clone the field, not *everything*
       { local $field->{table} = undef;
@@ -985,7 +943,7 @@ sub normalize_field {
       }
       $field->size($size);
       $field->data_type($type);
-      $field->sql_data_type( $type_mapping{lc $type} || SQL_UNKNOWN_TYPE );
+      $field->sql_data_type( $type_mapping{lc $type} ) if exists $type_mapping{lc $type};
       $field->extra->{list} = $list if @$list;
     }
 }

@@ -73,10 +73,21 @@ sub compute_differences {
     my $target_schema = $self->target_schema;
     my $source_schema = $self->source_schema;
 
+    my $producer_class = "SQL::Translator::Producer::@{[$self->output_db]}";
+    eval "require $producer_class";
+    die $@ if $@;
+
+    if (my $preprocess = $producer_class->can('preprocess_schema')) {
+      $producer_class->$preprocess($source_schema);
+      $DB::single = 1;
+      $producer_class->$preprocess($target_schema);
+    }
+
     my @tar_tables = sort { $a->name cmp $b->name } $target_schema->get_tables;
     ## do original/source tables exist in target?
     for my $tar_table ( @tar_tables ) {
       my $tar_table_name = $tar_table->name;
+      $DB::single = 1 if $tar_table_name eq 'admin_contest';
       my $src_table      = $source_schema->get_table( $tar_table_name, $self->case_insensitive );
 
       unless ( $src_table ) {
@@ -296,6 +307,7 @@ sub diff_table_fields {
   for my $tar_table_field ( $tar_table->get_fields ) {
     my $f_tar_name      = $tar_table_field->name;
 
+    $DB::single = 1 if $f_tar_name eq 'invite_type';
     if (my $old_name = $tar_table_field->extra->{renamed_from}) {
       my $src_table_field = $src_table->get_field( $old_name, $self->case_insensitive );
       die qq#Renamed cant find "@{[$src_table->name]}.$old_name" for renamed column\n# unless $src_table_field;
@@ -344,45 +356,9 @@ sub diff_table_options {
   my ($self, $src_table, $tar_table) = @_;
 
 
-  # Go through our options
-  my $options_different = 0;
-  my %checkedOptions;
-
-  OPTION:
-  for my $tar_table_option_ref ( $tar_table->options ) {
-    my($key_tar, $value_tar) = %{$tar_table_option_ref};
-    for my $src_table_option_ref ( $src_table->options ) {
-      my($key_src, $value_src) = %{$src_table_option_ref};
-      if ( $key_tar eq $key_src ) {
-        if ( defined $value_tar != defined $value_src ) {
-          $options_different = 1;
-          last OPTION;
-        }
-        if ( defined $value_tar && $value_tar ne $value_src ) {
-          $options_different = 1;
-          last OPTION;
-        }
-        $checkedOptions{$key_tar} = 1;
-        next OPTION;
-      }
-    }
-    $options_different = 1;
-    last OPTION;
-  }
-
-  # Go through the other table's options
-  unless ( $options_different ) {
-    for my $src_table_option_ref ( $src_table->options ) {
-      my($key, $value) = %{$src_table_option_ref};
-      next if $checkedOptions{$key};
-      $options_different = 1;
-      last;
-    }
-  }
-
   # If there's a difference, just re-set all the options
   push @{ $self->table_diff_hash->{$tar_table}{table_options} }, $tar_table
-    if ( $options_different );
+    unless $src_table->_compare_objects( scalar $src_table->options, scalar $tar_table->options );
 }
 
 1;

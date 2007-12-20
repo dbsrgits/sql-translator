@@ -130,7 +130,7 @@ my @stmts = (
   `description` text CHARACTER SET utf8 COLLATE utf8_general_ci,
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
-) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
+) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
 
 "DROP TABLE IF EXISTS `thing2`;\n",
 "CREATE TABLE `thing2` (
@@ -144,7 +144,7 @@ my @stmts = (
   PRIMARY KEY (`id`, `foo`),
   CONSTRAINT `fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
   CONSTRAINT `fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
-) Type=InnoDB;\n\n",
+) ENGINE=InnoDB;\n\n",
 
 "SET foreign_key_checks=1;\n\n"
 

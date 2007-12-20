@@ -61,6 +61,38 @@ use overload
     fallback => 1,
 ;
 
+use DBI qw(:sql_types);
+
+# Mapping from string to sql contstant
+our %type_mapping = (
+  integer => SQL_INTEGER,
+  int     => SQL_INTEGER,
+
+  smallint => SQL_SMALLINT,
+  bigint => 9999, # DBI doesn't export a constatn for this. Le suck
+
+  double => SQL_DOUBLE,
+
+  decimal => SQL_DECIMAL,
+  numeric => SQL_NUMERIC,
+  dec => SQL_DECIMAL,
+
+  bit => SQL_BIT,
+
+  date => SQL_DATE,
+  datetime => SQL_DATETIME,
+  timestamp => SQL_TIMESTAMP,
+  time => SQL_TIME,
+
+  char => SQL_CHAR,
+  varchar => SQL_VARCHAR,
+  binary => SQL_BINARY,
+  varbinary => SQL_VARBINARY,
+  tinyblob => SQL_BLOB,
+  blob => SQL_BLOB,
+  text => SQL_LONGVARCHAR
+
+);
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
@@ -132,7 +164,10 @@ Get or set the field's data type.
 =cut
 
     my $self = shift;
-    $self->{'data_type'} = shift if @_;
+    if (@_) {
+      $self->{'data_type'} = $_[0];
+      $self->{'sql_data_type'} = $type_mapping{lc $_[0]} || SQL_UNKNOWN_TYPE unless exists $self->{sql_data_type};
+    }
     return $self->{'data_type'} || '';
 }
 

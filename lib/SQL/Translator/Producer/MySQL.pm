@@ -124,6 +124,68 @@ my %translate  = (
     'datetime'     => 'datetime',
 );
 
+
+sub preprocess_schema {
+    my ($class, $schema) = @_;
+
+    # extra->{mysql_table_type} used to be the type. It belongs in options, so
+    # move it if we find it. Return Engine type if found in extra or options
+    my $mysql_table_type_to_options = sub {
+      my ($table) = @_;
+
+      my $extra = $table->extra;
+
+      my $extra_type = delete $extra->{mysql_table_type};
+
+      # Now just to find if there is already an Engine or Type option...
+      # and lets normalize it to ENGINE since:
+      #
+      # The ENGINE table option specifies the storage engine for the table. 
+      # TYPE is a synonym, but ENGINE is the preferred option name.
+      #
+
+      # We have to use the hash directly here since otherwise there is no way 
+      # to remove options.
+      my $options = ( $table->{options} ||= []);
+
+      # This assumes that there isn't both a Type and an Engine option.
+      for my $idx ( 0..$#{$options} ) {
+        my ($key, $value) = %{ $options->[$idx] };
+
+        next unless uc $key eq 'ENGINE' || uc $key eq 'TYPE';
+
+        # if the extra.mysql_table_type is given, use that
+        delete $options->[$idx]{$key};
+        return $options->[$idx]{ENGINE} = $value || $extra_type;
+
+      }
+  
+      if ($extra_type) {
+        push @$options, { ENGINE => $extra_type };
+        return $extra_type;
+      }
+
+    };
+
+    #
+    # Work out which tables need to be InnoDB to support foreign key
+    # constraints. We do this first as we need InnoDB at both ends.
+    #
+    foreach my $table ( $schema->get_tables ) {
+       
+        $mysql_table_type_to_options->($table);
+
+        foreach ( $table->get_constraints ) {
+            next unless $_->type eq FOREIGN_KEY;
+            for my $meth (qw/table reference_table/) {
+                my $table = $schema->get_table($_->$meth) || next;
+                next if $mysql_table_type_to_options->($table);
+                $table->options( { 'ENGINE' => 'InnoDB' } );
+            }
+        }
+    }
+}
+
 sub produce {
     my $translator     = shift;
     local $DEBUG       = $translator->debug;
@@ -144,18 +206,7 @@ sub produce {
     # \todo Don't set if MySQL 3.x is set on command line
     $create .= "SET foreign_key_checks=0;\n\n";
 
-    #
-    # Work out which tables need to be InnoDB to support foreign key
-    # constraints. We do this first as we need InnoDB at both ends.
-    #
-    foreach ( map { $_->get_constraints } $schema->get_tables ) {
-        next unless $_->type eq FOREIGN_KEY;
-        foreach my $meth (qw/table reference_table/) {
-            my $table = $schema->get_table($_->$meth) || next;
-            next if $table->extra('mysql_table_type');
-            $table->extra( 'mysql_table_type' => 'InnoDB');
-        }
-    }
+    __PACKAGE__->preprocess_schema($schema);
 
     #
     # Generate sql
@@ -257,8 +308,9 @@ sub generate_table_options
       if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
     $create .= " $key=$value";
   }
+
   my $mysql_table_type = $table->extra('mysql_table_type');
-  $create .= " Type=$mysql_table_type"
+  $create .= " ENGINE=$mysql_table_type"
     if $mysql_table_type && !$table_type_defined;
   my $charset          = $table->extra('mysql_charset');
   my $collate          = $table->extra('mysql_collate');
