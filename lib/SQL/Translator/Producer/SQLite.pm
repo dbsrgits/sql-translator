@@ -87,6 +87,7 @@ sub mk_name {
                         : $max_id_length;
     $basename         = substr( $basename, 0, $max_name ) 
                         if length( $basename ) > $max_name;
+    $basename         =~ s/\./_/g;
     my $name          = $type ? "${type}_$basename" : $basename;
 
     if ( $basename ne $basename_orig and $critical ) {
@@ -282,8 +283,10 @@ sub create_index
 
     # strip any field size qualifiers as SQLite doesn't like these
     my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
+    (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
+    warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
     my $index_def =  
-    "CREATE INDEX $name on " . $index->table->name .
+    "CREATE INDEX $name on " . $index_table_name .
         ' (' . join( ', ', @fields ) . ');';
 
     return $index_def;
@@ -296,9 +299,11 @@ sub create_constraint
     my $name   = $c->name;
     $name      = mk_name($c->table->name, $name); # || ++$idx_name_default);
     my @fields = $c->fields;
+    (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
+    warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
     my $c_def =  
-    "CREATE UNIQUE INDEX $name on " . $c->table->name .
+    "CREATE UNIQUE INDEX $name on " . $index_table_name .
         ' (' . join( ', ', @fields ) . ');';
 
     return $c_def;
