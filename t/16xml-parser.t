@@ -57,11 +57,11 @@ schema_ok( $scma, {
     tables => [
         {
             name => "Basic",
+            options => [ { ENGINE => 'InnoDB' } ],
             extra => {
                 foo => "bar",
                 hello => "world",
                 bar => "baz",
-                mysql_table_type => "InnoDB",
             },
             fields => [
                 {
@@ -174,8 +174,8 @@ schema_ok( $scma, {
                 foo => "bar",
                 hello => "world",
                 bar => "baz",
-                mysql_table_type => "InnoDB",
             },
+            options => [ { ENGINE => 'InnoDB' } ],
             fields => [
                 {
                     name => "id",
