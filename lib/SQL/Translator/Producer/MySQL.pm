@@ -178,7 +178,7 @@ sub preprocess_schema {
        
         $mysql_table_type_to_options->($table);
 
-        foreach my $c( $table->get_constraints ) {
+        foreach my $c ( $table->get_constraints ) {
             next unless $c->type eq FOREIGN_KEY;
 
             # Normalize constraint names here.
@@ -194,7 +194,15 @@ sub preprocess_schema {
                 next if $mysql_table_type_to_options->($table);
                 $table->options( { 'ENGINE' => 'InnoDB' } );
             }
+        } # foreach constraints
+
+        foreach my $f ( $table->get_fields ) {
+          my @size = $f->size;
+          if ( !$size[0] && $f->data_type =~ /char$/ ) {
+            $f->size( (255) );
+          }
         }
+
     }
 }
 
@@ -378,9 +386,6 @@ sub create_field
     elsif ( $data_type =~ /char/i && $size[0] > 255 ) {
         $data_type = 'text';
         @size      = ();
-    }
-    elsif ( $data_type =~ /char/i && ! $size[0] ) {
-        @size = (255);
     }
     elsif ( $data_type =~ /boolean/i ) {
         $data_type = 'enum';

@@ -105,12 +105,14 @@ schema_ok( $scma, {
                     data_type => "varchar",
                     default_value => undef,
                     is_nullable => 1,
+                    size => 255,
                 },
                 {
                     name => "explicitemptystring",
                     data_type => "varchar",
                     default_value => "",
                     is_nullable => 1,
+                    size => 255,
                 },
                 {
                     name => "emptytagdef",
@@ -118,6 +120,7 @@ schema_ok( $scma, {
                     default_value => "",
                     is_nullable => 1,
                     comments => "Hello emptytagdef",
+                    size => 255,
                 },
                 {
                     name => "another_id",
