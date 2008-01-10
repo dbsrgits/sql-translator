@@ -155,7 +155,7 @@ SET foreign_key_checks=1;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
                      DROP COLUMN job_title,
-                     ADD CONSTRAINT FK5302D47D93FE702E_diff_1 FOREIGN KEY (employee_id) REFERENCES person (person_id);
+                     ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
 ALTER TABLE person DROP UNIQUE UC_age_name,
                    DROP INDEX u_name,
                    ADD COLUMN is_rock_star tinyint(4) DEFAULT '1',

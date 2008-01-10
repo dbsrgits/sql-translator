@@ -237,7 +237,7 @@ provides:
   Test::SQL::Translator:
     file: lib/Test/SQL/Translator.pm
     version: 1.08
-generated_by: Module::Build version 0.2806
+generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

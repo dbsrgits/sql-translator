@@ -167,6 +167,9 @@ sub preprocess_schema {
 
     };
 
+    # Names are only specific to a given schema
+    local %used_names = ();
+
     #
     # Work out which tables need to be InnoDB to support foreign key
     # constraints. We do this first as we need InnoDB at both ends.
@@ -175,10 +178,19 @@ sub preprocess_schema {
        
         $mysql_table_type_to_options->($table);
 
-        foreach ( $table->get_constraints ) {
-            next unless $_->type eq FOREIGN_KEY;
+        foreach my $c( $table->get_constraints ) {
+            next unless $c->type eq FOREIGN_KEY;
+
+            # Normalize constraint names here.
+            my $c_name = $c->name;
+            # Give the constraint a name if it doesn't have one, so it doens't feel
+            # left out
+            $c_name   = $table->name . '_fk' unless length $c_name;
+            
+            $c->name( next_unused_name($c_name) );
+
             for my $meth (qw/table reference_table/) {
-                my $table = $schema->get_table($_->$meth) || next;
+                my $table = $schema->get_table($c->$meth) || next;
                 next if $mysql_table_type_to_options->($table);
                 $table->options( { 'ENGINE' => 'InnoDB' } );
             }
@@ -510,7 +522,6 @@ sub create_constraint
     my $qf      = $options->{quote_field_names} || '';
     my $qt      = $options->{quote_table_names} || '';
     my $leave_name      = $options->{leave_name} || undef;
-    my $counter = ($options->{fk_name_counter}   ||= {});
 
     my @fields = $c->fields or next;
 
@@ -531,18 +542,10 @@ sub create_constraint
         my $table = $c->table;
         my $c_name = $c->name;
 
-        # Give the constraint a name if it doesn't have one, so it doens't feel
-        # left out
-        unless ( $c_name ){
-            $c_name   = $table->name . '_fk';
-        }
-
-        $counter->{$table} ||= {};
         my $def = join(' ', 
                        map { $_ || () } 
                          'CONSTRAINT', 
-                         $qt . join('_', next_unused_name($c_name)
-                                   ) . $qt, 
+                         $qt . $c_name . $qt, 
                          'FOREIGN KEY'
                       );
 

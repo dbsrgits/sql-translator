@@ -154,6 +154,7 @@ schema_ok( $scma, {
                     fields => ["another_id"],
                     reference_table => "Another",
                     reference_fields => ["id"],
+                    name => 'Basic_fk'
                 },
             ],
             indices => [
