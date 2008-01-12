@@ -287,8 +287,8 @@ sub create_index
     (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
     my $index_def =  
-    "CREATE ${type]INDEX $name on " . $index_table_name .
-        ' (' . join( ', ', @fields ) . ');';
+    "CREATE ${type}INDEX $name ON " . $index_table_name .
+        ' (' . join( ', ', @fields ) . ')';
 
     return $index_def;
 }
@@ -304,8 +304,8 @@ sub create_constraint
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
     my $c_def =  
-    "CREATE UNIQUE INDEX $name on " . $index_table_name .
-        ' (' . join( ', ', @fields ) . ');';
+    "CREATE UNIQUE INDEX $name ON " . $index_table_name .
+        ' (' . join( ', ', @fields ) . ')';
 
     return $c_def;
 }
