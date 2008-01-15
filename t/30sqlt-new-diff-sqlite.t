@@ -48,10 +48,12 @@ CREATE TABLE added (
 );
 
 
+ALTER TABLE old_name RENAME TO new_name;
 DROP INDEX FK5302D47D93FE702E ON employee;
 DROP INDEX UC_age_name ON person;
 DROP INDEX u_name ON person;
 -- SQL::Translator::Producer::SQLite cant drop_field
+ALTER TABLE new_name ADD COLUMN new_field int;
 ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT '1';
 -- SQL::Translator::Producer::SQLite cant alter_field
 -- SQL::Translator::Producer::SQLite cant rename_field
@@ -96,6 +98,8 @@ CREATE TABLE employee (
 INSERT INTO employee SELECT position, employee_id FROM employee_temp_alter;
 DROP TABLE employee_temp_alter;
 
+ALTER TABLE old_name RENAME TO new_name;
+ALTER TABLE new_name ADD COLUMN new_field int;
 CREATE TEMPORARY TABLE person_temp_alter (
   person_id INTEGER PRIMARY KEY NOT NULL,
   name varchar(20) NOT NULL,

@@ -222,7 +222,6 @@ provides:
     version: 1.08
   SQL::Translator::Schema::Table:
     file: lib/SQL/Translator/Schema/Table.pm
-    version: 1.37
   SQL::Translator::Schema::Trigger:
     file: lib/SQL/Translator/Schema/Trigger.pm
     version: 1.09

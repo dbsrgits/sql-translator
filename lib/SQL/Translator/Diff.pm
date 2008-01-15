@@ -32,6 +32,7 @@ my @diff_hash_keys = qw/
   fields_to_rename
   fields_to_drop
   table_options
+  table_renamed_from
 /;
 
 __PACKAGE__->mk_accessors(@diff_arrays, 'table_diff_hash');
@@ -82,11 +83,29 @@ sub compute_differences {
       $producer_class->$preprocess($target_schema);
     }
 
+    my %src_tables_checked = ();
     my @tar_tables = sort { $a->name cmp $b->name } $target_schema->get_tables;
     ## do original/source tables exist in target?
     for my $tar_table ( @tar_tables ) {
       my $tar_table_name = $tar_table->name;
-      my $src_table      = $source_schema->get_table( $tar_table_name, $self->case_insensitive );
+
+      my $src_table;
+
+      $self->table_diff_hash->{$tar_table_name} = {
+        map {$_ => [] } @diff_hash_keys
+      };
+
+      if (my $old_name = $tar_table->extra('renamed_from')) {
+        $src_table = $source_schema->get_table( $old_name, $self->case_insensitive );
+        if ($src_table) {
+          $self->table_diff_hash->{$tar_table_name}{table_renamed_from} = [ [$src_table, $tar_table] ];
+        } else {
+          delete $tar_table->extra->{renamed_from};
+          warn qq#Renamed table can't find old table "$old_name" for renamed table\n#;
+        }
+      } else {
+        $src_table = $source_schema->get_table( $tar_table_name, $self->case_insensitive );
+      }
 
       unless ( $src_table ) {
         ## table is new
@@ -95,9 +114,10 @@ sub compute_differences {
         next;
       }
 
-      $self->table_diff_hash->{$tar_table_name} = {
-        map {$_ => [] } @diff_hash_keys
-      };
+      my $src_table_name = $src_table->name;
+      $src_table_name = lc $src_table_name if $self->case_insensitive;
+      $src_tables_checked{$src_table_name} = 1;
+
 
       $self->diff_table_options($src_table, $tar_table);
 
@@ -111,16 +131,11 @@ sub compute_differences {
 
     for my $src_table ( $source_schema->get_tables ) {
       my $src_table_name = $src_table->name;
-      my $tar_table      = $target_schema->get_table( $src_table_name, $self->case_insensitive );
 
-      unless ( $tar_table ) {
-        $self->table_diff_hash->{$src_table_name} = {
-          map {$_ => [] } @diff_hash_keys
-        };
+      $src_table_name = lc $src_table_name if $self->case_insensitive;
 
-        push @{ $self->tables_to_drop}, $src_table;
-        next;
-      }
+      push @{ $self->tables_to_drop}, $src_table
+        unless $src_tables_checked{$src_table_name};
     }
 
     return $self;
@@ -148,7 +163,8 @@ sub produce_diff_sql {
       fields_to_alter       => 'alter_field',
       fields_to_rename      => 'rename_field',
       fields_to_drop        => 'drop_field',
-      table_options         => 'alter_table'
+      table_options         => 'alter_table',
+      table_renamed_from    => 'rename_table',
     );
     my @diffs;
   
@@ -169,6 +185,7 @@ sub produce_diff_sql {
       }
     } else {
 
+      # If we have any table renames we need to do those first;
       my %flattened_diffs;
       foreach my $table ( sort keys %{$self->table_diff_hash} ) {
         my $table_diff = $self->table_diff_hash->{$table};
@@ -178,7 +195,7 @@ sub produce_diff_sql {
       }
 
       push @diffs, map( {
-          if (@{$flattened_diffs{$_}}) {
+          if (@{ $flattened_diffs{$_} || [] }) {
             my $meth = $producer_class->can($_);
             
             $meth ? map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql;") : () } @{ $flattened_diffs{$_} }
@@ -187,7 +204,8 @@ sub produce_diff_sql {
                   : die "$producer_class cant $_";
           } else { () }
 
-        } qw/alter_drop_constraint
+        } qw/rename_table
+             alter_drop_constraint
              alter_drop_index
              drop_field
              add_field
@@ -213,7 +231,7 @@ sub produce_diff_sql {
 
       unshift @diffs, 
         # Remove begin/commit here, since we wrap everything in one.
-        grep { $_ !~ /^(?:COMMIT|BEGIN(?: TRANSACTION)?);/ } $producer_class->can('produce')->($translator);
+        grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?);/ } $producer_class->can('produce')->($translator);
     }
 
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
@@ -275,6 +293,10 @@ sub diff_table_constraints {
   CONSTRAINT_CREATE:
   for my $c_tar ( $tar_table->get_constraints ) {
     for my $c_src ( $src_table->get_constraints ) {
+
+      # This is a bit of a hack - needed for renaming tables to work
+      local $c_src->{table} = $tar_table;
+
       if ( $c_tar->equals($c_src, $self->case_insensitive, $self->ignore_constraint_names) ) {
         $checked_constraints{$c_src} = 1;
         next CONSTRAINT_CREATE;
@@ -286,6 +308,10 @@ sub diff_table_constraints {
 
   CONSTRAINT_DROP:
   for my $c_src ( $src_table->get_constraints ) {
+
+    # This is a bit of a hack - needed for renaming tables to work
+    local $c_src->{table} = $tar_table;
+
     next if !$self->ignore_constraint_names && $checked_constraints{$c_src};
     for my $c_tar ( $tar_table->get_constraints ) {
       next CONSTRAINT_DROP if $c_src->equals($c_tar, $self->case_insensitive, $self->ignore_constraint_names);
@@ -307,10 +333,14 @@ sub diff_table_fields {
 
     if (my $old_name = $tar_table_field->extra->{renamed_from}) {
       my $src_table_field = $src_table->get_field( $old_name, $self->case_insensitive );
-      die qq#Renamed cant find "@{[$src_table->name]}.$old_name" for renamed column\n# unless $src_table_field;
-      push @{$self->table_diff_hash->{$tar_table}{fields_to_rename} }, [ $src_table_field, $tar_table_field ];
-      $renamed_source_fields{$old_name} = 1;
-      next;
+      unless ($src_table_field) {
+        warn qq#Renamed column can't find old column "@{[$src_table->name]}.$old_name" for renamed column\n#;
+        delete $tar_table_field->extra->{renamed_from};
+      } else {
+        push @{$self->table_diff_hash->{$tar_table}{fields_to_rename} }, [ $src_table_field, $tar_table_field ];
+        $renamed_source_fields{$old_name} = 1;
+        next;
+      }
     }
 
     my $src_table_field = $src_table->get_field( $f_tar_name, $self->case_insensitive );
@@ -448,7 +478,10 @@ thrown.
 
 =item * C<drop_table($table)>
 
+=item * C<rename_table($old_table, $new_table)> (optional)
+
 =item * C<batch_alter_table($table, $hash)> (optional)
+
 
 =back
 

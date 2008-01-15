@@ -665,7 +665,8 @@ sub batch_alter_table {
       my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
       map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_) } @{ $diff_hash->{$_} }
     } else { () }
-  } qw/alter_drop_constraint
+  } qw/rename_table
+       alter_drop_constraint
        alter_drop_index
        drop_field
        add_field
@@ -675,6 +676,11 @@ sub batch_alter_table {
        alter_create_constraint
        alter_table/;
 
+  # rename_table makes things a bit more complex
+  my $renamed_from = "";
+  $renamed_from = $diff_hash->{rename_table}[0][0]->name
+    if $diff_hash->{rename_table} && @{$diff_hash->{rename_table}};
+
   return unless @stmts;
   # Just zero or one stmts. return now
   return "@stmts;" unless @stmts > 1;
@@ -682,24 +688,36 @@ sub batch_alter_table {
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
   my $qt = $options->{quote_table_name} || '';
-  my $table_name = $qt . $table->name . $qt;
+  my $table_name = $qt . $renamed_from || $table->name . $qt;
 
   my $first = shift  @stmts;
   my ($alter_table) = $first =~ /^(ALTER TABLE \Q$table_name\E )/;
+
   my $re = qr/^$alter_table/;
+  $re = qr/^ALTER TABLE \Q$qt@{[$table->name]}$qt\E / if $renamed_from;
   my $padd = " " x length($alter_table);
 
   return join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
 }
 
 sub drop_table {
-  my ($table) = @_;
+  my ($table, $options) = @_;
+
+    my $qt = $options->{quote_table_names} || '';
 
   # Drop (foreign key) constraints so table drops cleanly
-  my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] });
+  my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
 
-  return join("\n", @sql, "DROP TABLE $table;");
+  return join("\n", @sql, "DROP TABLE $qt$table$qt;");
 
+}
+
+sub rename_table {
+  my ($old_table, $new_table, $options) = @_;
+
+  my $qt = $options->{quote_table_names} || '';
+
+  return "ALTER TABLE $qt$old_table$qt RENAME TO $qt$new_table$qt";
 }
 
 sub next_unused_name {

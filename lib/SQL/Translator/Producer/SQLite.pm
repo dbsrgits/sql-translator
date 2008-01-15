@@ -344,8 +344,6 @@ sub alter_drop_index {
 sub batch_alter_table {
   my ($table, $diffs) = @_;
 
-  $DB::single = 1 if $table->name eq 'deleted'; 
-
   # If we have any of the following
   #
   #  rename_field
@@ -364,32 +362,49 @@ sub batch_alter_table {
   # COMMIT;
   #
   # Fun, eh?
+  #
+  # If we have rename_field we do similarly.
+
+  my $table_name = $table->name;
+  my $renaming = $diffs->{rename_table} && @{$diffs->{rename_table}};
 
   if ( @{$diffs->{rename_field}} == 0 &&
        @{$diffs->{alter_field}}  == 0 &&
-       @{$diffs->{drop_field}}   == 0) {
+       @{$diffs->{drop_field}}   == 0
+       ) {
     return join("\n", map { 
         my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
         map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql;") : () } @{ $diffs->{$_} }
         
-      } grep { @{$diffs->{$_}} } keys %$diffs);
+      } grep { @{$diffs->{$_}} } 
+    qw/rename_table
+       alter_drop_constraint
+       alter_drop_index
+       drop_field
+       add_field
+       alter_field
+       rename_field
+       alter_create_index
+       alter_create_constraint
+       alter_table/);
   }
 
 
   my @sql;
+  my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
   
   do {
-    local $table->{name} = $table->name . '_temp_alter';
+    local $table->{name} = $table_name . '_temp_alter';
     # We only want the table - dont care about indexes on tmp table
     my ($table_sql) = create_table($table, {no_comments => 1, temporary_table => 1});
     push @sql,$table_sql;
   };
 
-  push @sql, "INSERT INTO @{[$table]}_temp_alter SELECT @{[ join(', ', $table->get_fields)]} FROM @{[$table]}",
-             "DROP TABLE @{[$table]}",
+  push @sql, "INSERT INTO @{[$table_name]}_temp_alter SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$old_table]}",
+             "DROP TABLE @{[$old_table]}",
              create_table($table, { no_comments => 1 }),
-             "INSERT INTO @{[$table]} SELECT @{[ join(', ', $table->get_fields)]} FROM @{[$table]}_temp_alter",
-             "DROP TABLE @{[$table]}_temp_alter";
+             "INSERT INTO @{[$table_name]} SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$table_name]}_temp_alter",
+             "DROP TABLE @{[$table_name]}_temp_alter";
 
   return join(";\n", @sql, "");
 }
@@ -397,6 +412,15 @@ sub batch_alter_table {
 sub drop_table {
   my ($table) = @_;
   return "DROP TABLE $table;";
+}
+
+sub rename_table {
+  my ($old_table, $new_table, $options) = @_;
+
+  my $qt = $options->{quote_table_names} || '';
+
+  return "ALTER TABLE $qt$old_table$qt RENAME TO $qt$new_table$qt";
+
 }
 
 1;

@@ -76,6 +76,26 @@ schema:
       options:
         - ENGINE: InnoDB
       order: 2
+    new_name:
+      name: new_name
+      extra:
+        renamed_from: old_name
+      fields:
+        pk:
+          data_type: int
+          default_value: ~
+          extra: {}
+          is_auto_increment: 1
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 1
+          name: pk
+          order: 1
+        other:
+          data_type: int
+          name: new_field
+          order: 2
+      order: 4
     person:
       constraints:
         - deferrable: 1
