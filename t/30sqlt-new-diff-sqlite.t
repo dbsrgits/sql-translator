@@ -41,7 +41,7 @@ my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'SQLite', $target_
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema 'create1.yml' to 'create2.yml':
 
-BEGIN TRANSACTION;
+BEGIN;
 
 CREATE TABLE added (
   id int(11)
@@ -75,7 +75,7 @@ $out = SQL::Translator::Diff::schema_diff($source_schema, 'SQLite', $target_sche
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema 'create1.yml' to 'create2.yml':
 
-BEGIN TRANSACTION;
+BEGIN;
 
 CREATE TABLE added (
   id int(11)
