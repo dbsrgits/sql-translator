@@ -660,10 +660,40 @@ sub drop_field
 sub batch_alter_table {
   my ($table, $diff_hash, $options) = @_;
 
+  # InnoDB has an issue with dropping and re-adding a FK constraint under the 
+  # name in a single alter statment, see: http://bugs.mysql.com/bug.php?id=13741
+  #
+  # We have to work round this.
+
+  my %fks_to_alter;
+  my %fks_to_drop = map {
+    $_->type eq FOREIGN_KEY 
+              ? ( $_->name => $_ ) 
+              : ( )
+  } @{$diff_hash->{alter_drop_constraint} };
+
+  my %fks_to_create = map {
+    if ( $_->type eq FOREIGN_KEY) {
+      $fks_to_alter{$_->name} = $fks_to_drop{$_->name} if $fks_to_drop{$_->name};
+      ( $_->name => $_ );
+    } else { ( ) }
+  } @{$diff_hash->{alter_create_constraint} };
+
+  my $drop_stmt = '';
+  if (scalar keys %fks_to_alter) {
+    $diff_hash->{alter_drop_constraint} = [
+      grep { !$fks_to_alter{$_->name} } @{ $diff_hash->{alter_drop_constraint} }
+    ];
+
+    $drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options) 
+               . "\n";
+
+  }
+
   my @stmts = map {
     if (@{ $diff_hash->{$_} || [] }) {
       my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-      map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_) } @{ $diff_hash->{$_} }
+      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) } @{ $diff_hash->{$_} }
     } else { () }
   } qw/rename_table
        alter_drop_constraint
@@ -683,7 +713,7 @@ sub batch_alter_table {
 
   return unless @stmts;
   # Just zero or one stmts. return now
-  return "@stmts;" unless @stmts > 1;
+  return "$drop_stmt@stmts;" unless @stmts > 1;
 
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
@@ -697,7 +727,7 @@ sub batch_alter_table {
   $re = qr/^ALTER TABLE \Q$qt@{[$table->name]}$qt\E / if $renamed_from;
   my $padd = " " x length($alter_table);
 
-  return join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
+  return $drop_stmt . join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
 }
 
 sub drop_table {
