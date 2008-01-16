@@ -244,7 +244,7 @@ sub produce_diff_sql {
     }
 
     if (@diffs) {
-      unshift @diffs, "BEGIN TRANSACTION;\n";
+      unshift @diffs, "BEGIN;\n";
       push    @diffs, "\nCOMMIT;\n";
     } else {
       @diffs = ("-- No differences found\n\n");
