@@ -718,16 +718,20 @@ sub batch_alter_table {
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
   my $qt = $options->{quote_table_name} || '';
-  my $table_name = $qt . $renamed_from || $table->name . $qt;
+  my $table_name = $qt . $table->name . $qt;
+
+
+  my $re = $renamed_from 
+         ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$qt$renamed_from$qt\E) /
+            : qr/^ALTER TABLE \Q$table_name\E /;
 
   my $first = shift  @stmts;
-  my ($alter_table) = $first =~ /^(ALTER TABLE \Q$table_name\E )/;
+  my ($alter_table) = $first =~ /($re)/;
 
-  my $re = qr/^$alter_table/;
-  $re = qr/^ALTER TABLE \Q$qt@{[$table->name]}$qt\E / if $renamed_from;
   my $padd = " " x length($alter_table);
 
   return $drop_stmt . join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
+
 }
 
 sub drop_table {

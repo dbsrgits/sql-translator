@@ -13,7 +13,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator::Schema::Constants;
 use Storable 'dclone';
 
-plan tests => 6;
+plan tests => 7;
 
 use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
@@ -214,7 +214,7 @@ COMMIT;
     data_type => 'int'
   );
 
-  $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
+  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
 
   eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB");
 -- Convert schema 'Schema 1' to 'Schema 2':
@@ -225,6 +225,52 @@ ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E_diff;
 ALTER TABLE employee ADD COLUMN new integer,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id) ON DELETE CASCADE,
                      ADD CONSTRAINT new_constraint FOREIGN KEY (employee_id) REFERENCES patty (fake);
+
+COMMIT;
+## END OF DIFF
+}
+
+{
+  # Test other things about renaming tables to - namely that renames 
+  # constraints are still formated right.
+
+  my $s1 = SQL::Translator::Schema->new;
+  my $s2 = SQL::Translator::Schema->new;
+
+  $s1->name('Schema 3');
+  $s2->name('Schema 4');
+
+  my $t1 = $s1->add_table(dclone($target_schema->get_table('employee')));
+  my $t2 = dclone($target_schema->get_table('employee'));
+  $t2->name('fnord');
+  $t2->extra(renamed_from => 'employee');
+  $s2->add_table($t2);
+
+
+  $t1->add_constraint(
+    name => 'bar_fk',
+    type => 'FOREIGN KEY',
+    fields => ['employee_id'],
+    reference_fields => ['id'],
+    reference_table => 'bar',
+  );
+  $t2->add_constraint(
+    name => 'foo_fk',
+    type => 'FOREIGN KEY',
+    fields => ['employee_id'],
+    reference_fields => ['id'],
+    reference_table => 'foo',
+  );
+
+  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
+  eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table");
+-- Convert schema 'Schema 3' to 'Schema 4':
+
+BEGIN;
+
+ALTER TABLE employee RENAME TO fnord,
+                     DROP FOREIGN KEY bar_fk,
+                     ADD CONSTRAINT foo_fk FOREIGN KEY (employee_id) REFERENCES foo (id);
 
 COMMIT;
 ## END OF DIFF
