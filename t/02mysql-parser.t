@@ -601,3 +601,4 @@ BEGIN {
 	like($proc2->sql, qr/CREATE PROCEDURE sp_update_security_acl/, "Detected procedure sp_update_security_acl");
 }
 
+

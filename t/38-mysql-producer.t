@@ -72,6 +72,7 @@ schema:
           fields:
             - name
           name: idx_unique_name
+
     thing2:
       name: thing2
       extra:
@@ -93,6 +94,15 @@ schema:
           data_type: int
           order: 2
           is_not_null: 1
+      indices:
+        - type: NORMAL
+          fields: 
+            - id
+          name: index_1
+        - type: NORMAL
+          fields: 
+            - id
+          name: index_2
       constraints:
         - type: PRIMARY_KEY
           fields:
@@ -120,19 +130,21 @@ my @stmts = (
   `description` text CHARACTER SET utf8 COLLATE utf8_general_ci,
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
-) Type=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
+) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
 
 "DROP TABLE IF EXISTS `thing2`;\n",
 "CREATE TABLE `thing2` (
   `id` integer,
   `foo` integer,
   `foo2` integer,
+  INDEX index_1 (`id`),
+  INDEX index_2 (`id`),
   INDEX (`foo`),
   INDEX (`foo2`),
   PRIMARY KEY (`id`, `foo`),
   CONSTRAINT `fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
   CONSTRAINT `fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
-) Type=InnoDB;\n\n",
+) ENGINE=InnoDB;\n\n",
 
 "SET foreign_key_checks=1;\n\n"
 
@@ -166,10 +178,10 @@ my $mysql_out = join("", @stmts_no_drop);
 
     @{$sqlt}{qw/quote_table_names quote_field_names/} = (0,0);
     $out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
+      or die "Translate error:".$sqlt->error;
 
     @out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
+      or die "Translate error:".$sqlt->error;
     $mysql_out =~ s/`//g;
     my @unquoted_stmts = map { s/`//g; $_} @stmts_no_drop;
     eq_or_diff $out, $mysql_out,       "Output looks right without quoting";

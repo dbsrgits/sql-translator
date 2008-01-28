@@ -69,8 +69,11 @@ sub produce {
 
     my @table_defs = ();
     for my $table ( $schema->get_tables ) {
-        push @table_defs, create_table($table, { no_comments => $no_comments,
-                                                 add_drop_table => $add_drop_table,});
+        my @defs = create_table($table, { no_comments => $no_comments,
+                                          add_drop_table => $add_drop_table,});
+        my $create = shift @defs;
+        $create .= ";\n";
+        push @table_defs, $create, map( { "$_;" } @defs), "";
     }
 
 #    $create .= "COMMIT;\n";
@@ -127,13 +130,14 @@ sub create_table
     my ( @index_defs, @constraint_defs, @trigger_defs );
     my @fields = $table->get_fields or die "No fields in $table_name";
 
+    my $temp = $options->{temporary_table} ? 'TEMPORARY ' : '';
     #
     # Header.
     #
     my $create = '';
     $create .= "--\n-- Table: $table_name\n--\n" unless $no_comments;
     $create .= qq[DROP TABLE $table_name;\n] if $add_drop_table;
-    $create .= "CREATE TABLE $table_name (\n";
+    $create .= "CREATE ${temp}TABLE $table_name (\n";
 
     #
     # Comments
@@ -183,14 +187,9 @@ sub create_table
         push @constraint_defs, create_constraint($c);
     }
 
-    $create .= join(",\n", map { "  $_" } @field_defs ) . "\n);\n";
+    $create .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
 
-    $create .= "\n";
-
-    for my $def ( @index_defs, @constraint_defs, @trigger_defs ) {
-        $create .= "$def\n";
-    }
-    return $create;
+    return ($create, @index_defs, @constraint_defs, @trigger_defs );
 }
 
 sub create_field
@@ -279,15 +278,17 @@ sub create_index
     my ($index, $options) = @_;
 
     my $name   = $index->name;
-    $name      = mk_name($index->table->name, $name); #  || ++$idx_name_default);
+    $name      = mk_name($index->table->name, $name);
+
+    my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : ''; 
 
     # strip any field size qualifiers as SQLite doesn't like these
     my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
     (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
     my $index_def =  
-    "CREATE INDEX $name on " . $index_table_name .
-        ' (' . join( ', ', @fields ) . ');';
+    "CREATE ${type}INDEX $name ON " . $index_table_name .
+        ' (' . join( ', ', @fields ) . ')';
 
     return $index_def;
 }
@@ -297,16 +298,129 @@ sub create_constraint
     my ($c, $options) = @_;
 
     my $name   = $c->name;
-    $name      = mk_name($c->table->name, $name); # || ++$idx_name_default);
+    $name      = mk_name($c->table->name, $name);
     my @fields = $c->fields;
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
     my $c_def =  
-    "CREATE UNIQUE INDEX $name on " . $index_table_name .
-        ' (' . join( ', ', @fields ) . ');';
+    "CREATE UNIQUE INDEX $name ON " . $index_table_name .
+        ' (' . join( ', ', @fields ) . ')';
 
     return $c_def;
+}
+
+sub alter_table { } # Noop
+
+sub add_field {
+  my ($field) = @_;
+
+  return sprintf("ALTER TABLE %s ADD COLUMN %s",
+      $field->table->name, create_field($field))
+}
+
+sub alter_create_index {
+  my ($index) = @_;
+
+  # This might cause name collisions
+  return create_index($index);
+}
+
+sub alter_create_constraint {
+  my ($constraint) = @_;
+
+  return create_constraint($constraint) if $constraint->type eq 'UNIQUE';
+}
+
+sub alter_drop_constraint { alter_drop_index(@_) }
+
+sub alter_drop_index {
+  my ($constraint) = @_;
+
+  return sprintf("DROP INDEX %s ON %s",
+      $constraint->name, $constraint->table->name);
+}
+
+sub batch_alter_table {
+  my ($table, $diffs) = @_;
+
+  # If we have any of the following
+  #
+  #  rename_field
+  #  alter_field
+  #  drop_field
+  #
+  # we need to do the following <http://www.sqlite.org/faq.html#q11>
+  #
+  # BEGIN TRANSACTION;
+  # CREATE TEMPORARY TABLE t1_backup(a,b);
+  # INSERT INTO t1_backup SELECT a,b FROM t1;
+  # DROP TABLE t1;
+  # CREATE TABLE t1(a,b);
+  # INSERT INTO t1 SELECT a,b FROM t1_backup;
+  # DROP TABLE t1_backup;
+  # COMMIT;
+  #
+  # Fun, eh?
+  #
+  # If we have rename_field we do similarly.
+
+  my $table_name = $table->name;
+  my $renaming = $diffs->{rename_table} && @{$diffs->{rename_table}};
+
+  if ( @{$diffs->{rename_field}} == 0 &&
+       @{$diffs->{alter_field}}  == 0 &&
+       @{$diffs->{drop_field}}   == 0
+       ) {
+    return join("\n", map { 
+        my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
+        map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql;") : () } @{ $diffs->{$_} }
+        
+      } grep { @{$diffs->{$_}} } 
+    qw/rename_table
+       alter_drop_constraint
+       alter_drop_index
+       drop_field
+       add_field
+       alter_field
+       rename_field
+       alter_create_index
+       alter_create_constraint
+       alter_table/);
+  }
+
+
+  my @sql;
+  my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
+  
+  do {
+    local $table->{name} = $table_name . '_temp_alter';
+    # We only want the table - dont care about indexes on tmp table
+    my ($table_sql) = create_table($table, {no_comments => 1, temporary_table => 1});
+    push @sql,$table_sql;
+  };
+
+  push @sql, "INSERT INTO @{[$table_name]}_temp_alter SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$old_table]}",
+             "DROP TABLE @{[$old_table]}",
+             create_table($table, { no_comments => 1 }),
+             "INSERT INTO @{[$table_name]} SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$table_name]}_temp_alter",
+             "DROP TABLE @{[$table_name]}_temp_alter";
+
+  return join(";\n", @sql, "");
+}
+
+sub drop_table {
+  my ($table) = @_;
+  return "DROP TABLE $table;";
+}
+
+sub rename_table {
+  my ($old_table, $new_table, $options) = @_;
+
+  my $qt = $options->{quote_table_names} || '';
+
+  return "ALTER TABLE $qt$old_table$qt RENAME TO $qt$new_table$qt";
+
 }
 
 1;
@@ -319,6 +433,8 @@ SQL::Translator, http://www.sqlite.org/.
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark C<< <kclark@cpan.orgE> >>.
+
+Diff code added by Ash Berlin C<< <ash@cpan.org> >>.
 
 =cut

@@ -28,6 +28,7 @@ my $builder = Module::Build->new(
         'Log::Log4perl'            => 0,
         'Parse::RecDescent'        => 1.94,
         'Pod::Usage'               => 0,
+        'Class::Accessor::Fast'    => 0,
     },
     recommends        => {
         'Template'                 => 2.10,
@@ -46,6 +47,7 @@ my $builder = Module::Build->new(
         'File::Basename'          => 0,
         'File::Spec'              => 0,
         'Test::More'              => 0.6,
+        'Test::Differences'       => 0,
         'Test::Exception'         => 0,
         'Test::Differences'       => 0,
         'YAML'                    => 0.39,

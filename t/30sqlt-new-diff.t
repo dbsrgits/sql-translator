@@ -2,82 +2,157 @@
 # vim: set ft=perl:
 
 use strict;
+use warnings;
+use SQL::Translator;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
 use Test::More;
-use Test::SQL::Translator qw(maybe_plan);
+use Test::Differences;
 
-my @script = qw(blib script sqlt-diff);
-my @create1 = qw(data sqlite create.sql);
-my @create2 = qw(data sqlite create2.sql);
+plan tests => 10;
 
-my $sqlt_diff = (-d "blib")
-    ? catfile($Bin, updir, @script)
-    : catfile($Bin, @script);
+use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
-my $create1 = (-d "t")
-    ? catfile($Bin, @create1)
-    : catfile($Bin, "t", @create1);
+my $tr            = SQL::Translator->new;
 
-my $create2 = (-d "t")
-    ? catfile($Bin, @create2)
-    : catfile($Bin, "t", @create2);
-
-BEGIN {
-    maybe_plan(16,        'SQL::Translator::Parser::MySQL',
-        );
-}
-
-ok(-e $sqlt_diff, 'Found sqlt-diff script'); 
-
-my @mysql_create1 = qw(data mysql create.sql);
-my @mysql_create2 = qw(data mysql create2.sql);
-
-my $mysql_create1 = (-d "t")
-    ? catfile($Bin, @mysql_create1)
-    : catfile($Bin, "t", @mysql_create1);
-
-my $mysql_create2 = (-d "t")
-    ? catfile($Bin, @mysql_create2)
-    : catfile($Bin, "t", @mysql_create2);
+my ( $source_schema, $target_schema ) = map {
+    my $t = SQL::Translator->new;
+    $t->parser( 'YAML' )
+      or die $tr->error;
+    my $out = $t->translate( catfile($Bin, qw/data diff /, $_ ) )
+      or die $tr->error;
+    
+    my $schema = $t->schema;
+    unless ( $schema->name ) {
+        $schema->name( $_ );
+    }
+    ($schema);
+} (qw/create1.yml create2.yml/);
 
 # Test for differences
-my @cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
-my $out = `@cmd`;
+my $diff = SQL::Translator::Diff->new({
+  source_schema => $source_schema,
+  source_db     => 'MySQL',
+  target_schema => $target_schema,
+  target_db     => 'MySQL',
+})->compute_differences;
 
-unlike($out, qr/-- Target database MySQL is untested/, "Did not detect 'untested' comment");
-like($out, qr/ALTER TABLE person CHANGE COLUMN person_id/, "Detected altered 'person_id' field");
-like($out, qr/ALTER TABLE person CHANGE COLUMN iq/, "Detected altered 'iq' field");
-like($out, qr/ALTER TABLE person CHANGE COLUMN name/, "Detected altered 'name' field");
-like($out, qr/ALTER TABLE person CHANGE COLUMN age/, "Detected altered 'age' field");
-like($out, qr/ALTER TABLE person ADD COLUMN is_rock_star/, 
-    "Detected missing rock star field");
-like($out, qr/ALTER TABLE person ADD UNIQUE UC_person_id/, 
-    "Detected missing unique constraint");
-like($out, qr/ALTER TABLE person ADD UNIQUE INDEX unique_name/, 
-    "Detected unique index with different name");
-like($out, qr/ALTER TABLE person ENGINE=InnoDB;/, 
-    "Detected altered table option");
-like($out, qr/ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E/, 
-    "Detected drop foreign key");
-like($out, qr/ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff/, 
-    "Detected add constraint");
-unlike($out, qr/ALTER TABLE employee ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
+my $diff_hash = make_diff_hash();
 
-# Test ignore parameters
-@cmd = ($sqlt_diff, "--ignore-index-names", "--ignore-constraint-names",
-    "$mysql_create1=MySQL", "$mysql_create2=MySQL");
-$out = `@cmd`;
+eq_or_diff($diff_hash->{employee},
+  { 
+    constraints_to_create => [ 'FK5302D47D93FE702E_diff' ],
+    constraints_to_drop => [ 'FK5302D47D93FE702E' ],
+    fields_to_drop => [ 'job_title' ]
+  },
+  "Correct differences correct on employee table");
 
-unlike($out, qr/CREATE UNIQUE INDEX unique_name/, 
-    "Detected unique index with different name");
-unlike($out, qr/ALTER TABLE employee ADD CONSTRAINT employee_FK5302D47D93FE702E_diff/, 
-    "Detected add constraint");
+eq_or_diff($diff_hash->{person},
+  {
+    constraints_to_create => [ 'UC_person_id', 'UC_age_name' ],
+    constraints_to_drop => [ 'UC_age_name' ],
+    fields_to_alter => [ 
+      'person_id person_id',
+      'name name',
+      'age age',
+      'iq iq',
+    ],
+    fields_to_create => [ 'is_rock_star' ],
+    fields_to_rename => [ 'description physical_description' ],
+    indexes_to_create => [ 'unique_name' ],
+    indexes_to_drop => [ 'u_name' ],
+    table_options => [ 'person' ],
+  },
+  "Correct differences correct on person table");
+
+eq_or_diff(
+  [ map { $_->name } @{$diff->tables_to_drop} ],
+  [ "deleted" ],
+  "tables_to_drop right"
+);
+
+eq_or_diff(
+  [ map { $_->name } @{$diff->tables_to_create} ],
+  [ "added" ],
+  "tables_to_create right"
+);
+
+
+$diff = SQL::Translator::Diff->new({
+  source_schema => $source_schema,
+  source_db     => 'MySQL',
+  target_schema => $target_schema,
+  target_db     => 'MySQL',
+  ignore_index_names      => 1,
+  ignore_constraint_names => 1,
+})->compute_differences;
+
+$diff_hash = make_diff_hash();
+
+eq_or_diff($diff_hash->{employee},
+  { 
+    fields_to_drop => [ 'job_title' ]
+  },
+  "Correct differences correct on employee table");
+
+eq_or_diff($diff_hash->{person},
+  {
+    constraints_to_create => [ 'UC_person_id', 'UC_age_name' ],
+    constraints_to_drop => [ 'UC_age_name' ],
+    fields_to_alter => [ 
+      'person_id person_id',
+      'name name',
+      'age age',
+      'iq iq',
+    ],
+    fields_to_create => [ 'is_rock_star' ],
+    fields_to_rename => [ 'description physical_description' ],
+    table_options => [ 'person' ],
+  },
+  "Correct differences correct on person table");
+
 
 # Test for sameness
-@cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
-$out = `@cmd`;
+$diff = SQL::Translator::Diff->new({
+  source_schema => $source_schema,
+  source_db     => 'MySQL',
+  target_schema => $source_schema,
+  target_db     => 'MySQL',
+})->compute_differences;
 
-like($out, qr/No differences found/, "Properly detected no differences");
+$diff_hash = make_diff_hash();
 
+eq_or_diff($diff_hash, {}, "No differences");
+
+is( @{$diff->tables_to_drop}, 0, "tables_to_drop right");
+is( @{$diff->tables_to_create}, 0, "tables_to_create right");
+
+
+# Turn table_diff_hash into something we can eq_or_diff better
+sub make_diff_hash {
+
+  return {
+    map {
+      my $table = $_;
+      my $table_diff = $diff->table_diff_hash->{$table};
+
+      my %table_diffs = (
+        map {
+          
+          my $opt = $table_diff->{$_};
+          @$opt ? ( $_ => [ map {
+                        (ref $_||'') eq 'ARRAY' ? "@$_" :
+                        (ref $_)                ? $_->name
+                                                : "$_";
+                      } @$opt 
+                    ] ) 
+                : ()
+        } keys %$table_diff
+      );
+
+      %table_diffs ? ( $table => \%table_diffs ) : ();
+    } keys %{ $diff->table_diff_hash }
+  };
+
+}

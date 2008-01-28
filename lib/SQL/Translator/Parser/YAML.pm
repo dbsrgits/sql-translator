@@ -49,9 +49,11 @@ sub parse {
     ;
 
     for my $tdata ( @tables ) {
+  
         my $table = $schema->add_table(
-            name  => $tdata->{'name'},
-            extra => $tdata->{'extra'},
+            map {
+              $tdata->{$_} ? ($_ => $tdata->{$_}) : ()
+            } (qw/name extra options/)
         ) or die $schema->error;
 
         my @fields = 

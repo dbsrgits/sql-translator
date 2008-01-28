@@ -57,11 +57,11 @@ schema_ok( $scma, {
     tables => [
         {
             name => "Basic",
+            options => [ { ENGINE => 'InnoDB' } ],
             extra => {
                 foo => "bar",
                 hello => "world",
                 bar => "baz",
-                mysql_table_type => "InnoDB",
             },
             fields => [
                 {
@@ -105,12 +105,14 @@ schema_ok( $scma, {
                     data_type => "varchar",
                     default_value => undef,
                     is_nullable => 1,
+                    size => 255,
                 },
                 {
                     name => "explicitemptystring",
                     data_type => "varchar",
                     default_value => "",
                     is_nullable => 1,
+                    size => 255,
                 },
                 {
                     name => "emptytagdef",
@@ -118,6 +120,7 @@ schema_ok( $scma, {
                     default_value => "",
                     is_nullable => 1,
                     comments => "Hello emptytagdef",
+                    size => 255,
                 },
                 {
                     name => "another_id",
@@ -154,6 +157,7 @@ schema_ok( $scma, {
                     fields => ["another_id"],
                     reference_table => "Another",
                     reference_fields => ["id"],
+                    name => 'Basic_fk'
                 },
             ],
             indices => [
@@ -174,8 +178,8 @@ schema_ok( $scma, {
                 foo => "bar",
                 hello => "world",
                 bar => "baz",
-                mysql_table_type => "InnoDB",
             },
+            options => [ { ENGINE => 'InnoDB' } ],
             fields => [
                 {
                     name => "id",

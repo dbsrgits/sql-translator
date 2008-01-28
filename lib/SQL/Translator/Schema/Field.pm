@@ -61,12 +61,44 @@ use overload
     fallback => 1,
 ;
 
+use DBI qw(:sql_types);
+
+# Mapping from string to sql contstant
+our %type_mapping = (
+  integer => SQL_INTEGER,
+  int     => SQL_INTEGER,
+
+  smallint => SQL_SMALLINT,
+  bigint => 9999, # DBI doesn't export a constatn for this. Le suck
+
+  double => SQL_DOUBLE,
+
+  decimal => SQL_DECIMAL,
+  numeric => SQL_NUMERIC,
+  dec => SQL_DECIMAL,
+
+  bit => SQL_BIT,
+
+  date => SQL_DATE,
+  datetime => SQL_DATETIME,
+  timestamp => SQL_TIMESTAMP,
+  time => SQL_TIME,
+
+  char => SQL_CHAR,
+  varchar => SQL_VARCHAR,
+  binary => SQL_BINARY,
+  varbinary => SQL_VARBINARY,
+  tinyblob => SQL_BLOB,
+  blob => SQL_BLOB,
+  text => SQL_LONGVARCHAR
+
+);
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
     table name data_type size is_primary_key is_nullable
     is_auto_increment default_value comments is_foreign_key
-    is_unique order
+    is_unique order sql_data_type
 /);
 
 =pod
@@ -132,8 +164,26 @@ Get or set the field's data type.
 =cut
 
     my $self = shift;
-    $self->{'data_type'} = shift if @_;
+    if (@_) {
+      $self->{'data_type'} = $_[0];
+      $self->{'sql_data_type'} = $type_mapping{lc $_[0]} || SQL_UNKNOWN_TYPE unless exists $self->{sql_data_type};
+    }
     return $self->{'data_type'} || '';
+}
+
+sub sql_data_type {
+
+=head2 sql_data_type
+
+Constant from DBI package representing this data type. See L<DBI/DBI Constants>
+for more details.
+
+=cut
+
+    my $self = shift;
+    $self->{sql_data_type} = shift if @_;
+    return $self->{sql_data_type} || 0;
+
 }
 
 # ----------------------------------------------------------------------
@@ -548,6 +598,24 @@ also be used to get the table name.
     return $self->{'table'};
 }
 
+sub parsed_field {
+
+=head2 
+
+Returns the field exactly as the parser found it
+
+=cut
+
+    my $self = shift;
+
+    if (@_) {
+      my $value = shift;
+      $self->{parsed_field} = $value;
+      return $value || $self;
+    }
+    return $self->{parsed_field} || $self;
+}
+
 # ----------------------------------------------------------------------
 sub equals {
 
@@ -567,7 +635,14 @@ Determines if this field is the same as another
     
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
-    return 0 unless lc($self->data_type) eq lc($other->data_type);
+
+    # Comparing types: use sql_data_type if both are not 0. Else use string data_type
+    if ($self->sql_data_type && $other->sql_data_type) {
+        return 0 unless $self->sql_data_type == $other->sql_data_type
+    } else {
+        return 0 unless lc($self->data_type) eq lc($other->data_type)
+    }
+
     return 0 unless $self->size eq $other->size;
     return 0 unless (!defined $self->default_value || $self->default_value eq 'NULL') eq (!defined $other->default_value || $other->default_value eq 'NULL');
     return 0 if defined $self->default_value && $self->default_value ne $other->default_value;

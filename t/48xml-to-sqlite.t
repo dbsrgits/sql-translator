@@ -5,6 +5,7 @@ use FindBin qw/$Bin/;
 use Test::More;
 use Test::SQL::Translator;
 use Test::Exception;
+use Test::Differences;
 use Data::Dumper;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
@@ -34,7 +35,7 @@ my $sql = $sqlt->translate(
 
 # print ">>$sql<<\n";
 
-is($sql, << "SQL");
+eq_or_diff($sql, << "SQL");
 BEGIN TRANSACTION;
 
 
@@ -52,8 +53,8 @@ CREATE TABLE Basic (
   timest timestamp
 );
 
-CREATE INDEX titleindex_Basic on Basic (title);
-CREATE UNIQUE INDEX emailuniqueindex_Basic on Basic (email);
+CREATE INDEX titleindex_Basic ON Basic (title);
+CREATE UNIQUE INDEX emailuniqueindex_Basic ON Basic (email);
 
 DROP TABLE Another;
 CREATE TABLE Another (

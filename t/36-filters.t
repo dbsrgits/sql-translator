@@ -65,7 +65,6 @@ schema:
   procedures: {}
   tables:
     GdayWorld:
-      comments: ''
       constraints: []
       fields: {}
       indices: []
@@ -73,7 +72,6 @@ schema:
       options: []
       order: 3
     HelloWorld:
-      comments: ''
       constraints: []
       fields: {}
       indices: []
@@ -81,11 +79,9 @@ schema:
       options: []
       order: 2
     PERSON:
-      comments: ''
       constraints: []
       fields:
         first_name:
-          comments: ''
           data_type: foovar
           default_value: ~
           extra: {}

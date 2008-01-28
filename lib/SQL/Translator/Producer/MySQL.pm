@@ -63,20 +63,16 @@ Set the list of allowed values for Enum fields.
 
 Set the MySQL field options of the same name.
 
+=item field.renamed_from
+
+Used when producing diffs to say this column is the new name fo the specified
+old column.
+
 =item table.mysql_table_type
 
 Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
 automatically set for tables involved in foreign key constraints if it is
 not already set explicitly. See L<"Table Types">.
-
-=item mysql_character_set
-
-MySql-4.1+. Set the tables character set.
-Run SHOW CHARACTER SET to see list.
-
-=item mysql_collate
-
-MySql-4.1+. Set the tables colation order.
 
 =item table.mysql_charset, table.mysql_collate
 
@@ -128,6 +124,88 @@ my %translate  = (
     'datetime'     => 'datetime',
 );
 
+
+sub preprocess_schema {
+    my ($class, $schema) = @_;
+
+    # extra->{mysql_table_type} used to be the type. It belongs in options, so
+    # move it if we find it. Return Engine type if found in extra or options
+    my $mysql_table_type_to_options = sub {
+      my ($table) = @_;
+
+      my $extra = $table->extra;
+
+      my $extra_type = delete $extra->{mysql_table_type};
+
+      # Now just to find if there is already an Engine or Type option...
+      # and lets normalize it to ENGINE since:
+      #
+      # The ENGINE table option specifies the storage engine for the table. 
+      # TYPE is a synonym, but ENGINE is the preferred option name.
+      #
+
+      # We have to use the hash directly here since otherwise there is no way 
+      # to remove options.
+      my $options = ( $table->{options} ||= []);
+
+      # This assumes that there isn't both a Type and an Engine option.
+      for my $idx ( 0..$#{$options} ) {
+        my ($key, $value) = %{ $options->[$idx] };
+
+        next unless uc $key eq 'ENGINE' || uc $key eq 'TYPE';
+
+        # if the extra.mysql_table_type is given, use that
+        delete $options->[$idx]{$key};
+        return $options->[$idx]{ENGINE} = $value || $extra_type;
+
+      }
+  
+      if ($extra_type) {
+        push @$options, { ENGINE => $extra_type };
+        return $extra_type;
+      }
+
+    };
+
+    # Names are only specific to a given schema
+    local %used_names = ();
+
+    #
+    # Work out which tables need to be InnoDB to support foreign key
+    # constraints. We do this first as we need InnoDB at both ends.
+    #
+    foreach my $table ( $schema->get_tables ) {
+       
+        $mysql_table_type_to_options->($table);
+
+        foreach my $c ( $table->get_constraints ) {
+            next unless $c->type eq FOREIGN_KEY;
+
+            # Normalize constraint names here.
+            my $c_name = $c->name;
+            # Give the constraint a name if it doesn't have one, so it doens't feel
+            # left out
+            $c_name   = $table->name . '_fk' unless length $c_name;
+            
+            $c->name( next_unused_name($c_name) );
+
+            for my $meth (qw/table reference_table/) {
+                my $table = $schema->get_table($c->$meth) || next;
+                next if $mysql_table_type_to_options->($table);
+                $table->options( { 'ENGINE' => 'InnoDB' } );
+            }
+        } # foreach constraints
+
+        foreach my $f ( $table->get_fields ) {
+          my @size = $f->size;
+          if ( !$size[0] && $f->data_type =~ /char$/ ) {
+            $f->size( (255) );
+          }
+        }
+
+    }
+}
+
 sub produce {
     my $translator     = shift;
     local $DEBUG       = $translator->debug;
@@ -148,23 +226,13 @@ sub produce {
     # \todo Don't set if MySQL 3.x is set on command line
     $create .= "SET foreign_key_checks=0;\n\n";
 
-    #
-    # Work out which tables need to be InnoDB to support foreign key
-    # constraints. We do this first as we need InnoDB at both ends.
-    #
-    foreach ( map { $_->get_constraints } $schema->get_tables ) {
-        next unless $_->type eq FOREIGN_KEY;
-        foreach my $meth (qw/table reference_table/) {
-            my $table = $schema->get_table($_->$meth) || next;
-            next if $table->extra('mysql_table_type');
-            $table->extra( 'mysql_table_type' => 'InnoDB');
-        }
-    }
+    __PACKAGE__->preprocess_schema($schema);
 
     #
     # Generate sql
     #
     my @table_defs =();
+    
     for my $table ( $schema->get_tables ) {
 #        print $table->name, "\n";
         push @table_defs, create_table($table, 
@@ -260,13 +328,9 @@ sub generate_table_options
       if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
     $create .= " $key=$value";
   }
+
   my $mysql_table_type = $table->extra('mysql_table_type');
-  #my $charset          = $table->extra('mysql_character_set');
-  #my $collate          = $table->extra('mysql_collate');
-  #$create .= " Type=$mysql_table_type" if $mysql_table_type;
-  #$create .= " DEFAULT CHARACTER SET $charset" if $charset;
-  #$create .= " COLLATE $collate" if $collate;
-  $create .= " Type=$mysql_table_type"
+  $create .= " ENGINE=$mysql_table_type"
     if $mysql_table_type && !$table_type_defined;
   my $charset          = $table->extra('mysql_charset');
   my $collate          = $table->extra('mysql_collate');
@@ -322,9 +386,6 @@ sub create_field
     elsif ( $data_type =~ /char/i && $size[0] > 255 ) {
         $data_type = 'text';
         @size      = ();
-    }
-    elsif ( $data_type =~ /char/i && ! $size[0] ) {
-        @size = (255);
     }
     elsif ( $data_type =~ /boolean/i ) {
         $data_type = 'enum';
@@ -466,7 +527,6 @@ sub create_constraint
     my $qf      = $options->{quote_field_names} || '';
     my $qt      = $options->{quote_table_names} || '';
     my $leave_name      = $options->{leave_name} || undef;
-    my $counter = ($options->{fk_name_counter}   ||= {});
 
     my @fields = $c->fields or next;
 
@@ -487,18 +547,10 @@ sub create_constraint
         my $table = $c->table;
         my $c_name = $c->name;
 
-        # Give the constraint a name if it doesn't have one, so it doens't feel
-        # left out
-        unless ( $c_name ){
-            $c_name   = $table->name . '_fk';
-        }
-
-        $counter->{$table} ||= {};
         my $def = join(' ', 
                        map { $_ || () } 
                          'CONSTRAINT', 
-                         $qt . join('_', next_unused_name($c_name)
-                                   ) . $qt, 
+                         $qt . $c_name . $qt, 
                          'FOREIGN KEY'
                       );
 
@@ -560,6 +612,7 @@ sub alter_table
     return $out;
 }
 
+sub rename_field { alter_field(@_) }
 sub alter_field
 {
     my ($from_field, $to_field, $options) = @_;
@@ -569,7 +622,7 @@ sub alter_field
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
                       $qt . $to_field->table->name . $qt,
-                      $qf . $to_field->name . $qf,
+                      $qf . $from_field->name . $qf,
                       create_field($to_field, $options));
 
     return $out;
@@ -602,6 +655,103 @@ sub drop_field
 
     return $out;
     
+}
+
+sub batch_alter_table {
+  my ($table, $diff_hash, $options) = @_;
+
+  # InnoDB has an issue with dropping and re-adding a FK constraint under the 
+  # name in a single alter statment, see: http://bugs.mysql.com/bug.php?id=13741
+  #
+  # We have to work round this.
+
+  my %fks_to_alter;
+  my %fks_to_drop = map {
+    $_->type eq FOREIGN_KEY 
+              ? ( $_->name => $_ ) 
+              : ( )
+  } @{$diff_hash->{alter_drop_constraint} };
+
+  my %fks_to_create = map {
+    if ( $_->type eq FOREIGN_KEY) {
+      $fks_to_alter{$_->name} = $fks_to_drop{$_->name} if $fks_to_drop{$_->name};
+      ( $_->name => $_ );
+    } else { ( ) }
+  } @{$diff_hash->{alter_create_constraint} };
+
+  my $drop_stmt = '';
+  if (scalar keys %fks_to_alter) {
+    $diff_hash->{alter_drop_constraint} = [
+      grep { !$fks_to_alter{$_->name} } @{ $diff_hash->{alter_drop_constraint} }
+    ];
+
+    $drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options) 
+               . "\n";
+
+  }
+
+  my @stmts = map {
+    if (@{ $diff_hash->{$_} || [] }) {
+      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
+      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) } @{ $diff_hash->{$_} }
+    } else { () }
+  } qw/rename_table
+       alter_drop_constraint
+       alter_drop_index
+       drop_field
+       add_field
+       alter_field
+       rename_field
+       alter_create_index
+       alter_create_constraint
+       alter_table/;
+
+  # rename_table makes things a bit more complex
+  my $renamed_from = "";
+  $renamed_from = $diff_hash->{rename_table}[0][0]->name
+    if $diff_hash->{rename_table} && @{$diff_hash->{rename_table}};
+
+  return unless @stmts;
+  # Just zero or one stmts. return now
+  return "$drop_stmt@stmts;" unless @stmts > 1;
+
+  # Now strip off the 'ALTER TABLE xyz' of all but the first one
+
+  my $qt = $options->{quote_table_name} || '';
+  my $table_name = $qt . $table->name . $qt;
+
+
+  my $re = $renamed_from 
+         ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$qt$renamed_from$qt\E) /
+            : qr/^ALTER TABLE \Q$table_name\E /;
+
+  my $first = shift  @stmts;
+  my ($alter_table) = $first =~ /($re)/;
+
+  my $padd = " " x length($alter_table);
+
+  return $drop_stmt . join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
+
+}
+
+sub drop_table {
+  my ($table, $options) = @_;
+
+    my $qt = $options->{quote_table_names} || '';
+
+  # Drop (foreign key) constraints so table drops cleanly
+  my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
+
+  return join("\n", @sql, "DROP TABLE $qt$table$qt;");
+
+}
+
+sub rename_table {
+  my ($old_table, $new_table, $options) = @_;
+
+  my $qt = $options->{quote_table_names} || '';
+
+  return "ALTER TABLE $qt$old_table$qt RENAME TO $qt$new_table$qt";
 }
 
 sub next_unused_name {

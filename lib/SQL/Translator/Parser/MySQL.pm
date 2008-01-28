@@ -140,7 +140,12 @@ $DEBUG   = 0 unless defined $DEBUG;
 use Data::Dumper;
 use Parse::RecDescent;
 use Exporter;
+use Storable qw(dclone);
+use DBI qw(:sql_types);
 use base qw(Exporter);
+
+our %type_mapping = (
+);
 
 @EXPORT_OK = qw(parse);
 
@@ -211,7 +216,7 @@ statement_body : (string | nonstring)(s?)
 insert : /insert/i  statement_body "$delimiter"
 
 delimiter : /delimiter/i /[\S]+/
-	{ $delimiter = $item[2] }
+    { $delimiter = $item[2] }
 
 empty_statement : "$delimiter"
 
@@ -298,13 +303,13 @@ create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_n
     }
 
 create : CREATE /trigger/i NAME not_delimiter "$delimiter"
-	{
-		@table_comments = ();
-	}
+    {
+        @table_comments = ();
+    }
 
 create : CREATE PROCEDURE NAME not_delimiter "$delimiter"
-	{
-		@table_comments = ();
+    {
+        @table_comments = ();
         my $func_name = $item[3];
         my $owner = '';
         my $sql = "$item[1] $item[2] $item[3] $item[4]";
@@ -313,14 +318,14 @@ create : CREATE PROCEDURE NAME not_delimiter "$delimiter"
         $procedures{ $func_name }{'name'}   = $func_name;
         $procedures{ $func_name }{'owner'}  = $owner;
         $procedures{ $func_name }{'sql'}    = $sql;
-	}
+    }
 
 PROCEDURE : /procedure/i
-	| /function/i
+    | /function/i
 
 create : CREATE algorithm /view/i NAME not_delimiter "$delimiter"
-	{
-		@table_comments = ();
+    {
+        @table_comments = ();
         my $view_name = $item[4];
         my $sql = "$item[1] $item[2] $item[3] $item[4] $item[5]";
         
@@ -330,12 +335,12 @@ create : CREATE algorithm /view/i NAME not_delimiter "$delimiter"
         $views{ $view_name }{'order'}  = ++$view_order;
         $views{ $view_name }{'name'}   = $view_name;
         $views{ $view_name }{'sql'}    = $sql;
-	}
+    }
 
 algorithm : /algorithm/i /=/ WORD
-	{
-		$return = "$item[1]=$item[3]";
-	}
+    {
+        $return = "$item[1]=$item[3]";
+    }
 
 not_delimiter : /.*?(?=$delimiter)/is
 
@@ -535,42 +540,6 @@ data_type    : WORD parens_value_list(s?) type_qualifier(s?)
             $list = [];
         }
 
-        unless ( @{ $size || [] } ) {
-            if ( lc $type eq 'tinyint' ) {
-                $size = 4;
-            }
-            elsif ( lc $type eq 'smallint' ) {
-                $size = 6;
-            }
-            elsif ( lc $type eq 'mediumint' ) {
-                $size = 9;
-            }
-            elsif ( $type =~ /^int(eger)?$/i ) {
-                $type = 'int';
-                $size = 11;
-            }
-            elsif ( lc $type eq 'bigint' ) {
-                $size = 20;
-            }
-            elsif ( 
-                lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ 
-            ) {
-                $size = [8,2];
-            }
-        }
-
-        if ( $type =~ /^tiny(text|blob)$/i ) {
-            $size = 255;
-        }
-        elsif ( $type =~ /^(blob|text)$/i ) {
-            $size = 65_535;
-        }
-        elsif ( $type =~ /^medium(blob|text)$/i ) {
-            $size = 16_777_215;
-        }
-        elsif ( $type =~ /^long(blob|text)$/i ) {
-            $size = 4_294_967_295;
-        }
 
         $return        = { 
             type       => $type,
@@ -753,9 +722,9 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     { 'NULL' }
 
 CURRENT_TIMESTAMP : /current_timestamp(\(\))?/i
-	| /now\(\)/i
-	{ 'CURRENT_TIMESTAMP' }
-	
+    | /now\(\)/i
+    { 'CURRENT_TIMESTAMP' }
+    
 END_OF_GRAMMAR
 
 # -------------------------------------------------------------------
@@ -817,7 +786,7 @@ sub parse {
             $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
 
             for my $qual ( qw[ binary unsigned zerofill list collate ],
-            		'character set', 'on update' ) {
+                    'character set', 'on update' ) {
                 if ( my $val = $fdata->{ $qual } || $fdata->{ uc $qual } ) {
                     next if ref $val eq 'ARRAY' && !@$val;
                     $field->extra( $qual, $val );
@@ -840,20 +809,12 @@ sub parse {
                 ) or die $table->error;
             }
 
-            if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
-                my %extra = $field->extra;
-                my $longest = 0;
-                for my $len ( map { length } @{ $extra{'list'} || [] } ) {
-                    $longest = $len if $len > $longest;
-                }
-                $field->size( $longest ) if $longest;
-            }
-
             for my $cdata ( @{ $fdata->{'constraints'} } ) {
                 next unless $cdata->{'type'} eq 'foreign_key';
                 $cdata->{'fields'} ||= [ $field->name ];
                 push @{ $tdata->{'constraints'} }, $cdata;
             }
+
         }
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
@@ -880,31 +841,113 @@ sub parse {
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
+
+        # After the constrains and PK/idxs have been created, we normalize fields
+        normalize_field($_) for $table->get_fields;
     }
     
     my @procedures = sort { 
         $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
     } keys %{ $result->{procedures} };
     foreach my $proc_name (@procedures) {
-    	$schema->add_procedure(
-    		name  => $proc_name,
-    		owner => $result->{procedures}->{$proc_name}->{owner},
-    		sql   => $result->{procedures}->{$proc_name}->{sql},
-		);
+        $schema->add_procedure(
+            name  => $proc_name,
+            owner => $result->{procedures}->{$proc_name}->{owner},
+            sql   => $result->{procedures}->{$proc_name}->{sql},
+        );
     }
 
     my @views = sort { 
         $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
     } keys %{ $result->{views} };
     foreach my $view_name (keys %{ $result->{views} }) {
-    	$schema->add_view(
-    		name => $view_name,
-    		sql  => $result->{views}->{$view_name}->{sql},
-		);
+        $schema->add_view(
+            name => $view_name,
+            sql  => $result->{views}->{$view_name}->{sql},
+        );
     }
 
     return 1;
 }
+
+# Takes a field, and returns 
+sub normalize_field {
+    my ($field) = @_;
+    my ($size, $type, $list, $changed) = @_;
+  
+    $size = $field->size;
+    $type = $field->data_type;
+    $list = $field->extra->{list} || [];
+
+    if ( !ref $size && $size eq 0 ) {
+        if ( lc $type eq 'tinyint' ) {
+            $changed = $size != 4;
+            $size = 4;
+        }
+        elsif ( lc $type eq 'smallint' ) {
+            $changed = $size != 6;
+            $size = 6;
+        }
+        elsif ( lc $type eq 'mediumint' ) {
+            $changed = $size != 9;
+            $size = 9;
+        }
+        elsif ( $type =~ /^int(eger)?$/i ) {
+            $changed = $size != 11 || $type ne 'int';
+            $type = 'int';
+            $size = 11;
+        }
+        elsif ( lc $type eq 'bigint' ) {
+            $changed = $size != 20;
+            $size = 20;
+        }
+        elsif ( lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ ) {
+            my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
+            $changed = @$old_size != 2 && $old_size->[0] != 8 && $old_size->[1] != 2;
+            $size = [8,2];
+        }
+    }
+
+    if ( $type =~ /^tiny(text|blob)$/i ) {
+        $changed = $size != 255;
+        $size = 255;
+    }
+    elsif ( $type =~ /^(blob|text)$/i ) {
+        $changed = $size != 65_535;
+        $size = 65_535;
+    }
+    elsif ( $type =~ /^medium(blob|text)$/i ) {
+        $changed = $size != 16_777_215;
+        $size = 16_777_215;
+    }
+    elsif ( $type =~ /^long(blob|text)$/i ) {
+        $changed = $size != 4_294_967_295;
+        $size = 4_294_967_295;
+    }
+    if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
+        my %extra = $field->extra;
+        my $longest = 0;
+        for my $len ( map { length } @{ $extra{'list'} || [] } ) {
+            $longest = $len if $len > $longest;
+        }
+        $changed = 1;
+        $size = $longest if $longest;
+    }
+
+
+    if ($changed) {
+      # We only want to clone the field, not *everything*
+      { local $field->{table} = undef;
+        $field->parsed_field(dclone($field));
+        $field->parsed_field->{table} = $field->table;
+      }
+      $field->size($size);
+      $field->data_type($type);
+      $field->sql_data_type( $type_mapping{lc $type} ) if exists $type_mapping{lc $type};
+      $field->extra->{list} = $list if @$list;
+    }
+}
+
 
 1;
 
