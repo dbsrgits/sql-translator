@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(4,
+    maybe_plan(6,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -64,4 +64,29 @@ is($add_field, 'ALTER TABLE mytable ADD COLUMN field3 character varying(10);', '
 my $drop_field = SQL::Translator::Producer::PostgreSQL::drop_field($field2);
 is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield;', 'Drop field works');
 
+my $field3 = SQL::Translator::Schema::Field->new( name      => 'time_field',
+                                                  table => $table,
+                                                  data_type => 'TIME',
+                                                  default_value => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable => 0,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
 
+my $field3_sql = SQL::Translator::Producer::PostgreSQL::create_field($field3);
+
+is($field3_sql, 'time_field time NOT NULL', 'Create time field works');
+
+my $field4 = SQL::Translator::Schema::Field->new( name      => 'bytea_field',
+                                                  table => $table,
+                                                  data_type => 'bytea',
+                                                  size => '16777215',
+                                                  default_value => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable => 0,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
+
+my $field4_sql = SQL::Translator::Producer::PostgreSQL::create_field($field4);
+
+is($field4_sql, 'bytea_field bytea NOT NULL', 'Create bytea field works');

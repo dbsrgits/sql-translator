@@ -150,35 +150,58 @@ my %truncated;
 sub produce {
     my $translator     = shift;
     $DEBUG             = $translator->debug;
-    $WARN              = $translator->show_warnings;
+    $WARN              = $translator->show_warnings || 0;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
-    my $output;
+    my ($output, $create, @table_defs, @fk_defs, @trigger_defs);
 
-    $output .= header_comment unless ($no_comments);
+    $create .= header_comment unless ($no_comments);
 
     if ( $translator->parser_type =~ /mysql/i ) {
-        $output .= 
+        $create .= 
             "-- We assume that default NLS_DATE_FORMAT has been changed\n".
             "-- but we set it here anyway to be self-consistent.\n"
             unless $no_comments;
 
-        $output .= 
+        $create .= 
         "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';\n\n";
     }
 
-    #
-    # Print create for each table
-    #
     for my $table ( $schema->get_tables ) { 
-        my $table_name    = $table->name or next;
-        $table_name       = mk_name( $table_name, '', undef, 1 );
-        my $table_name_ur = unreserve($table_name) or next;
+        my ( $table_def, $fk_def, $trigger_def ) = create_table(
+            $table,
+            {
+                add_drop_table => $add_drop_table,
+                show_warnings  => $WARN,
+                no_comments    => $no_comments,
+            }
+        );
+        push @table_defs, @$table_def;
+        push @fk_defs, @$fk_def;
+        push @trigger_defs, @$trigger_def;
+    }
 
-        my ( @comments, @field_defs, @trigger_defs, @constraint_defs );
+    my (@view_defs);
+    foreach my $view ( $schema->get_views ) {
+        push @view_defs, create_view($view);
+    }
 
-        push @comments, "--\n-- Table: $table_name_ur\n--" unless $no_comments;
+    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs) : $create . join ("\n\n", @table_defs, @view_defs, @fk_defs, @trigger_defs);
+}
+
+sub create_table {
+    my ($table, $options) = @_;
+    my $table_name = $table->name;
+    
+    my $item = '';
+    my $drop;
+    my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
+
+    push @create, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
+    push @create, qq[DROP TABLE $table_name CASCADE CONSTRAINTS;] if $options->{add_drop_table};
+
+    my $table_name_ur = unreserve($table_name) or next;
 
         my ( %field_name_scope, @field_comments );
         for my $field ( $table->get_fields ) {
@@ -236,8 +259,6 @@ sub produce {
                 warn "CLOB cannot be a unique key, changing to VARCHAR2\n"
                     if $WARN;
             }
-
-
 
             #
             # Fixes ORA-00907: missing right parenthesis
@@ -310,8 +331,9 @@ sub produce {
                 my $seq_name     = mk_name( $base_name, 'sq' );
                 my $trigger_name = mk_name( $base_name, 'ai' );
 
+            push @create, qq[DROP SEQUENCE $seq_name;] if $options->{add_drop_table};
+            push @create, "CREATE SEQUENCE $seq_name;";
                 push @trigger_defs, 
-                    "CREATE SEQUENCE $seq_name;\n" .
                     "CREATE OR REPLACE TRIGGER $trigger_name\n" .
                     "BEFORE INSERT ON $table_name_ur\n" .
                     "FOR EACH ROW WHEN (\n" .
@@ -344,7 +366,7 @@ sub produce {
                 $comment =~ s/'/''/g;
                 push @field_comments, 
                     "COMMENT ON COLUMN $table_name_ur.$field_name_ur is\n '" .
-                    $comment . "';" unless $no_comments;
+                $comment . "';" unless $options->{no_comments};
             }
         }
 
@@ -415,7 +437,7 @@ sub produce {
                 push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-                $name ||= mk_name( join('_', $table_name, $c->fields), 'fk' );
+            $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
@@ -439,11 +461,12 @@ sub produce {
                     $def .= ' ON DELETE '.join( ' ', $c->on_delete );
                 }
 
-                if ( $c->on_update ) {
-                    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
-                }
+            # disabled by plu 2007-12-29 - doesn't exist for oracle
+            #if ( $c->on_update ) {
+            #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+            #}
 
-                push @constraint_defs, $def;
+            push @fk_defs, sprintf("ALTER TABLE %s ADD %s;", $table, $def);
             }
         }
 
@@ -478,35 +501,21 @@ sub produce {
             }
         }
 
-        my $create_statement;
-        $create_statement  = "DROP TABLE $table_name_ur;\n" if $add_drop_table;
-
         if ( my @table_comments = $table->comments ) {
             for my $comment ( @table_comments ) {
                 next unless $comment;
                 $comment =~ s/'/''/g;
                 push @field_comments, "COMMENT ON TABLE $table_name_ur is\n '".
-                    $comment . "';" unless $no_comments
+                $comment . "';" unless $options->{no_comments}
                 ;
             }
         }
 
         my $table_options = @table_options 
             ? "\n".join("\n", @table_options) : '';
-        $create_statement .= "CREATE TABLE $table_name_ur (\n" .
+    push @create, "CREATE TABLE $table_name_ur (\n" .
             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ) .
-            "\n)$table_options;"
-        ;
-
-        $output .= join( "\n\n", 
-            @comments,
-            $create_statement, 
-            @trigger_defs, 
-            @index_defs, 
-            @field_comments, 
-            '' 
-        );
-    }
+        "\n)$table_options;";
 
     if ( $WARN ) {
         if ( %truncated ) {
@@ -521,7 +530,17 @@ sub produce {
         }
     }
 
-    return $output;
+    return \@create, \@fk_defs, \@trigger_defs;
+}
+
+sub create_view {
+    my ($view) = @_;
+
+    my $out = sprintf("CREATE VIEW %s AS\n%s;",
+                      $view->name,
+                      $view->sql);
+
+    return $out;
 }
 
 # -------------------------------------------------------------------

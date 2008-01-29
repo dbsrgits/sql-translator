@@ -77,7 +77,7 @@ BEGIN {
     set        => 'character varying',
     date       => 'date',
     datetime   => 'timestamp',
-    time       => 'date',
+    time       => 'time',
     timestamp  => 'timestamp',
     year       => 'date',
 
@@ -631,12 +631,15 @@ sub convert_datatype
             $data_type = 'integer';
         }
     }
+    my @type_without_size = qw/bigint boolean box bytea cidr circle date inet
+                               integer smallint text line lseg macaddr money
+                               path point polygon real/;
+    foreach (@type_without_size) {
+        if ( $data_type =~ qr/$_/ ) {
+            undef @size; last;
+        }
+    }
 
-    #
-    # PG doesn't need a size for integers or text
-    #
-    undef @size if $data_type =~ m/(integer|smallint|bigint|text)/;
-    
     if ( defined $size[0] && $size[0] > 0 ) {
         $data_type .= '(' . join( ',', @size ) . ')';
     }
