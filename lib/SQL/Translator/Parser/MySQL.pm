@@ -903,7 +903,7 @@ sub normalize_field {
         }
         elsif ( lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ ) {
             my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
-            $changed = @$old_size != 2 && $old_size->[0] != 8 && $old_size->[1] != 2;
+            $changed = @$old_size != 2 || $old_size->[0] != 8 || $old_size->[1] != 2;
             $size = [8,2];
         }
     }

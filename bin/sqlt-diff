@@ -53,6 +53,8 @@ Options:
                           for new tables
   --ignore-view-sql    Ignore view SQL differences
   --ignore-proc-sql    Ignore procedure SQL differences
+  --no-batch-alters    Do not clump multile alters to the same table into a
+                       single ALTER TABLE statement where possible.
 
 =head1 DESCRIPTION
 
@@ -114,7 +116,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.19 $ =~ /(\d+)\.(\d+)/;
 
 my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names, 
 	$ignore_constraint_names, $output_db, $mysql_parser_version,
-	$ignore_view_sql, $ignore_proc_sql );
+	$ignore_view_sql, $ignore_proc_sql, $no_batch_alters );
 for my $arg ( @ARGV ) {
     if ( $arg =~ m/^-?-l(ist)?$/ ) {
         $list = 1;
@@ -152,12 +154,21 @@ for my $arg ( @ARGV ) {
     elsif ( $arg =~ m/^([^=]+)=(.+)$/ ) {
         push @input, { file => $1, parser => $2 };
     }
+    elsif ( $arg =~ m/^--no-batch-alters$/ ) {
+      $no_batch_alters = 1;
+    }
     else {
         pod2usage( msg => "Unknown argument '$arg'" );
     }
 }
 
-print STDERR "This code is experimental, currently the new code only supports MySQL diffing.\n   To add support for other databases, please patch the relevant SQL::Translator::Producer:: module.\n   If you need compatibility with the old sqlt-diff, please use sqlt-diff-old, and look into helping us make this one work for you.\n";
+print STDERR <<'EOM';
+This code is experimental, currently the new code only supports MySQL or 
+SQLite diffing. To add support for other databases, please patch the relevant
+SQL::Translator::Producer:: module.  If you need compatibility with the old
+sqlt-diff, please use sqlt-diff-old, and look into helping us make this one
+work for you
+EOM
 
 pod2usage(1) if $help || !@ARGV;
 pod2usage('Please specify only two schemas to diff') if scalar @input > 2;
@@ -202,6 +213,7 @@ my $result = SQL::Translator::Diff::schema_diff($source_schema, $source_db,
                                                   ignore_view_sql         => $ignore_view_sql,
                                                   ignore_proc_sql         => $ignore_proc_sql,
                                                   output_db               => $output_db,
+                                                  no_batch_alters         => $no_batch_alters,
                                                   debug                   => $debug,
                                                   trace                   => $trace });
 if($result)
