@@ -126,7 +126,7 @@ my %translate  = (
 
 
 sub preprocess_schema {
-    my ($class, $schema) = @_;
+    my ($schema) = @_;
 
     # extra->{mysql_table_type} used to be the type. It belongs in options, so
     # move it if we find it. Return Engine type if found in extra or options
@@ -226,7 +226,7 @@ sub produce {
     # \todo Don't set if MySQL 3.x is set on command line
     $create .= "SET foreign_key_checks=0;\n\n";
 
-    __PACKAGE__->preprocess_schema($schema);
+    preprocess_schema($schema);
 
     #
     # Generate sql

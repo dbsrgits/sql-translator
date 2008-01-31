@@ -79,8 +79,8 @@ sub compute_differences {
     die $@ if $@;
 
     if (my $preprocess = $producer_class->can('preprocess_schema')) {
-      $producer_class->$preprocess($source_schema);
-      $producer_class->$preprocess($target_schema);
+      $preprocess->($source_schema);
+      $preprocess->($target_schema);
     }
 
     my %src_tables_checked = ();
@@ -482,9 +482,6 @@ thrown.
 
 =item * C<batch_alter_table($table, $hash)> (optional)
 
-
-=back
-
 If the producer supports C<batch_alter_table>, it will be called with the 
 table to alter and a hash, the keys of which will be the method names listed
 above; values will be arrays of fields or constraints to operate on. In the 
@@ -498,11 +495,31 @@ I.e. the hash might look something like the following:
    alter_field => [ [$old_field, $new_field] ]
  }
 
+
+=item * C<preprocess_schema($class, $schema)> (optional)
+
+C<preprocess_schema> is called by the Diff code to allow the producer to
+normalize any data it needs to first. For example, the MySQL producer uses
+this method to ensure that FK contraint names are unique.
+
+Basicaly any changes that need to be made to produce the SQL file for the
+schema should be done here, so that a diff between a parsed SQL file and (say)
+a parsed DBIx::Class::Schema object will be sane.
+
+(As an aside, DBIx::Class, for instance, uses the presence of a 
+C<preprocess_schema> function on the producer to know that it can diff between
+the previous SQL file and its own internal representation. Without this method
+on th producer it will diff the two SQL files which is slower, but known to 
+work better on old-style producers.)
+
+=back
+
+
 =head1 AUTHOR
 
 Original Author(s) unknown.
 
-Refactor and more comprehensive tests by Ash Berlin C<< ash@cpan.org >>.
+Refactor/re-write and more comprehensive tests by Ash Berlin C<< ash@cpan.org >>.
 
 Redevelopment sponsored by Takkle Inc.
 

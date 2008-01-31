@@ -423,6 +423,9 @@ sub rename_table {
 
 }
 
+# No-op. Just here to signify that we are a new style parser.
+sub preproces_schema { }
+
 1;
 
 =pod
