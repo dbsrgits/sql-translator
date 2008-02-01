@@ -337,8 +337,8 @@ sub alter_drop_constraint { alter_drop_index(@_) }
 sub alter_drop_index {
   my ($constraint) = @_;
 
-  return sprintf("DROP INDEX %s ON %s",
-      $constraint->name, $constraint->table->name);
+  return sprintf("DROP INDEX %s",
+      $constraint->name);
 }
 
 sub batch_alter_table {
