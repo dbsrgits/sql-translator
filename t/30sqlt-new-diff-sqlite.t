@@ -49,9 +49,9 @@ CREATE TABLE added (
 
 
 ALTER TABLE old_name RENAME TO new_name;
-DROP INDEX FK5302D47D93FE702E ON employee;
-DROP INDEX UC_age_name ON person;
-DROP INDEX u_name ON person;
+DROP INDEX FK5302D47D93FE702E;
+DROP INDEX UC_age_name;
+DROP INDEX u_name;
 -- SQL::Translator::Producer::SQLite cant drop_field
 ALTER TABLE new_name ADD COLUMN new_field int;
 ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT '1';
