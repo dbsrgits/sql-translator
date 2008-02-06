@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(228, "SQL::Translator::Parser::MySQL");
+    maybe_plan(232, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -601,4 +601,29 @@ BEGIN {
 	like($proc2->sql, qr/CREATE PROCEDURE sp_update_security_acl/, "Detected procedure sp_update_security_acl");
 }
 
+# Tests for collate table option
+{
+    my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
+    my $data = parse($tr, 
+        q[
+          CREATE TABLE test ( id int ) COLLATE latin1_bin;
+         ] ); 
 
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 1, 'Right number of tables (1)' );
+    my $table1 = shift @tables;
+    is( $table1->name, 'test', 'Found "test" table' );
+
+
+    my $collate = "Not found!";
+    for my $t1_option_ref ( $table1->options ) {
+      my($key, $value) = %{$t1_option_ref};
+      if ($key eq 'COLLATE') {
+        $collate = $value;
+        last;
+      }
+    }
+    is($collate, 'latin1_bin', "Collate found");
+}

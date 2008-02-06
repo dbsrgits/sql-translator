@@ -101,9 +101,12 @@ Here's the word from the MySQL site
   
   table_options:
           TYPE = {BDB | HEAP | ISAM | InnoDB | MERGE | MRG_MYISAM | MYISAM }
+  or      ENGINE = {BDB | HEAP | ISAM | InnoDB | MERGE | MRG_MYISAM | MYISAM }
   or      AUTO_INCREMENT = #
   or      AVG_ROW_LENGTH = #
+  or      [ DEFAULT ] CHARACTER SET charset_name
   or      CHECKSUM = {0 | 1}
+  or      COLLATE collation_name
   or      COMMENT = "string"
   or      MAX_ROWS = #
   or      MIN_ROWS = #
@@ -116,6 +119,7 @@ Here's the word from the MySQL site
   or      INSERT_METHOD= {NO | FIRST | LAST }
   or      DATA DIRECTORY="absolute path to directory"
   or      INDEX DIRECTORY="absolute path to directory"
+
 
 A subset of the ALTER TABLE syntax that allows addition of foreign keys:
 
@@ -681,6 +685,10 @@ table_option : /comment/i /=/ /'.*?'/
     { 
         $return = { 'CHARACTER SET' => $item[3] };
     }
+    | /collate/i WORD
+    {
+        $return = { 'COLLATE' => $item[2] }
+    }
     | WORD /\s*=\s*/ WORD
     { 
         $return = { $item[1] => $item[3] };
@@ -704,7 +712,9 @@ DIGITS : /\d+/
 
 COMMA : ','
 
-NAME    : "`" /\w+/ "`"
+BACKTICK : '`'
+
+NAME    : BACKTICK /\w+/ BACKTICK
     { $item[2] }
     | /\w+/
     { $item[1] }
