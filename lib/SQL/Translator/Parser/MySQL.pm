@@ -681,7 +681,7 @@ table_option : /comment/i /=/ /'.*?'/
         $comment    =~ s/'$//;
         $return     = { comment => $comment };
     }
-    | /(default )?(charset|character set)/i /\s*=\s*/ WORD
+    | /(default )?(charset|character set)/i /\s*=?\s*/ WORD
     { 
         $return = { 'CHARACTER SET' => $item[3] };
     }

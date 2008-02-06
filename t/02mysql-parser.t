@@ -10,7 +10,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(232, "SQL::Translator::Parser::MySQL");
+    maybe_plan(233, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -606,7 +606,7 @@ BEGIN {
     my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
     my $data = parse($tr, 
         q[
-          CREATE TABLE test ( id int ) COLLATE latin1_bin;
+          CREATE TABLE test ( id int ) DEFAULT CHARACTER SET latin1 COLLATE latin1_bin;
          ] ); 
 
     my $schema = $tr->schema;
@@ -618,12 +618,13 @@ BEGIN {
 
 
     my $collate = "Not found!";
+    my $charset = "Not found!";
     for my $t1_option_ref ( $table1->options ) {
+      $DB::single = 1;
       my($key, $value) = %{$t1_option_ref};
-      if ($key eq 'COLLATE') {
-        $collate = $value;
-        last;
-      }
+      $collate = $value if $key eq 'COLLATE';
+      $charset = $value if $key eq 'CHARACTER SET';
     }
     is($collate, 'latin1_bin', "Collate found");
+    is($charset, 'latin1', "Character set found");
 }
