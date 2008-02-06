@@ -1,5 +1,18 @@
 
 # -----------------------------------------------------------
+# 0.0899_02 2008-01-29
+# ----------------------------------------------------------
+
+* Major refactoring of SQL::Translator::Diff again:
+* Diff is no longer one huge monolithic function.                         
+* Added more tests for diff                                               
+* When producing diffs for MySQL you will (by default) get single alter statements per table
+* SQLite can also do remove columns (by creating a temp table as shown in http://sqlite.org/faq.html#q11
+* Columns can be renamed if the new schema is from a form that can have metadata (which is pretty much anything but an SQL file.) It does this by looking at renamed_from in the $field->extra                              
+* Updated Oracle and Postgres producers
+* More tests!
+
+# -----------------------------------------------------------
 # 0.0899_01 2007-10-21
 # ----------------------------------------------------------
 
