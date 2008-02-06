@@ -502,7 +502,7 @@ sub alter_drop_constraint
 
     my $out = sprintf('ALTER TABLE %s DROP %s %s',
                       $c->table->name,
-                      $c->type,
+                      $c->type eq FOREIGN_KEY ? $c->type : "INDEX",
                       $qc . $c->name . $qc );
 
     return $out;

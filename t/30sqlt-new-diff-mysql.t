@@ -53,7 +53,7 @@ SET foreign_key_checks=1;
 
 ALTER TABLE old_name RENAME TO new_name;
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E;
-ALTER TABLE person DROP UNIQUE UC_age_name;
+ALTER TABLE person DROP INDEX UC_age_name;
 ALTER TABLE person DROP INDEX u_name;
 ALTER TABLE employee DROP COLUMN job_title;
 ALTER TABLE new_name ADD COLUMN new_field integer;
@@ -98,7 +98,7 @@ SET foreign_key_checks=1;
 ALTER TABLE employee DROP COLUMN job_title;
 ALTER TABLE old_name RENAME TO new_name,
                      ADD COLUMN new_field integer;
-ALTER TABLE person DROP UNIQUE UC_age_name,
+ALTER TABLE person DROP INDEX UC_age_name,
                    ADD COLUMN is_rock_star tinyint(4) DEFAULT '1',
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
                    CHANGE COLUMN name name varchar(20) NOT NULL,
@@ -165,7 +165,7 @@ SET foreign_key_checks=1;
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
                      DROP COLUMN job_title,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
-ALTER TABLE person DROP UNIQUE UC_age_name,
+ALTER TABLE person DROP INDEX UC_age_name,
                    DROP INDEX u_name,
                    ADD COLUMN is_rock_star tinyint(4) DEFAULT '1',
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
