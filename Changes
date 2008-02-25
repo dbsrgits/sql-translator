@@ -1,3 +1,6 @@
+# ----------------------------------------------------------
+# 0.0900 2008-02-25
+# ----------------------------------------------------------
 
 * Fix Pg produces idea of which field types need a size param
 * Add support for COLLATE table option to MySQL parser
