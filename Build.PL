@@ -29,6 +29,7 @@ my $builder = Module::Build->new(
         'Parse::RecDescent'        => 1.94,
         'Pod::Usage'               => 0,
         'Class::Accessor::Fast'    => 0,
+        'DBI'                      => 0,
     },
     recommends        => {
         'Template'                 => 2.10,

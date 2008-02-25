@@ -26,7 +26,7 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.0899_02';
+$VERSION  = '0.0900';
 $REVISION = sprintf "%d.%02d", q$Revision: 1.73 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
