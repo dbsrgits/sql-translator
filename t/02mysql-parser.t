@@ -620,7 +620,6 @@ BEGIN {
     my $collate = "Not found!";
     my $charset = "Not found!";
     for my $t1_option_ref ( $table1->options ) {
-      $DB::single = 1;
       my($key, $value) = %{$t1_option_ref};
       $collate = $value if $key eq 'COLLATE';
       $charset = $value if $key eq 'CHARACTER SET';
