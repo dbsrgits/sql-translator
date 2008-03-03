@@ -55,30 +55,34 @@ The producer recognises the following extra attributes on the Schema objects.
 
 =over 4
 
-=item field.list
+=item B<field.list>
 
 Set the list of allowed values for Enum fields.
 
-=item field.binary, field.unsigned, field.zerofill
+=item B<field.binary>, B<field.unsigned>, B<field.zerofill>
 
 Set the MySQL field options of the same name.
 
-=item field.renamed_from
+=item B<field.renamed_from>, B<table.renamed_from>
 
-Used when producing diffs to say this column is the new name fo the specified
-old column.
+Use when producing diffs to indicate that the current table/field has been
+renamed from the old name as given in the attribute value.
 
-=item table.mysql_table_type
+=item B<table.mysql_table_type>
 
 Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
 automatically set for tables involved in foreign key constraints if it is
 not already set explicitly. See L<"Table Types">.
 
-=item table.mysql_charset, table.mysql_collate
+Please note that the C<ENGINE> option is the prefered method of specifying
+the MySQL storage engine to use, but this method still works for backwards
+compatability.
+
+=item B<table.mysql_charset>, B<table.mysql_collate>
 
 Set the tables default charater set and collation order.
 
-=item field.mysql_charset, field.mysql_collate
+=item B<field.mysql_charset>, B<field.mysql_collate>
 
 Set the fields charater set and collation order.
 
@@ -501,7 +505,7 @@ sub alter_drop_constraint
     my $qc      = $options->{quote_constraint_names} || '';
 
     my $out = sprintf('ALTER TABLE %s DROP %s %s',
-                      $c->table->name,
+                      $qt . $c->table->name . $qt,
                       $c->type eq FOREIGN_KEY ? $c->type : "INDEX",
                       $qc . $c->name . $qc );
 
@@ -526,6 +530,7 @@ sub create_constraint
 
     my $qf      = $options->{quote_field_names} || '';
     my $qt      = $options->{quote_table_names} || '';
+    my $qc      = $options->{quote_constraint_names} || '';
     my $leave_name      = $options->{leave_name} || undef;
 
     my @fields = $c->fields or next;
@@ -550,7 +555,7 @@ sub create_constraint
         my $def = join(' ', 
                        map { $_ || () } 
                          'CONSTRAINT', 
-                         $qt . $c_name . $qt, 
+                         $qc . $c_name . $qc, 
                          'FOREIGN KEY'
                       );
 
@@ -602,7 +607,7 @@ sub alter_table
 {
     my ($to_table, $options) = @_;
 
-    my $qt = $options->{quote_table_name} || '';
+    my $qt = $options->{quote_table_names} || '';
 
     my $table_options = generate_table_options($to_table) || '';
     my $out = sprintf('ALTER TABLE %s%s',
@@ -617,8 +622,8 @@ sub alter_field
 {
     my ($from_field, $to_field, $options) = @_;
 
-    my $qf = $options->{quote_field_name} || '';
-    my $qt = $options->{quote_table_name} || '';
+    my $qf = $options->{quote_field_names} || '';
+    my $qt = $options->{quote_table_names} || '';
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
                       $qt . $to_field->table->name . $qt,
@@ -632,7 +637,7 @@ sub add_field
 {
     my ($new_field, $options) = @_;
 
-    my $qt = $options->{quote_table_name} || '';
+    my $qt = $options->{quote_table_names} || '';
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
                       $qt . $new_field->table->name . $qt,
@@ -646,8 +651,8 @@ sub drop_field
 { 
     my ($old_field, $options) = @_;
 
-    my $qf = $options->{quote_field_name} || '';
-    my $qt = $options->{quote_table_name} || '';
+    my $qf = $options->{quote_field_names} || '';
+    my $qt = $options->{quote_table_names} || '';
     
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $qt . $old_field->table->name . $qt,
@@ -717,7 +722,7 @@ sub batch_alter_table {
 
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
-  my $qt = $options->{quote_table_name} || '';
+  my $qt = $options->{quote_table_names} || '';
   my $table_name = $qt . $table->name . $qt;
 
 

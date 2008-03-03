@@ -14,7 +14,7 @@ use base 'Class::Accessor::Fast';
 __PACKAGE__->mk_accessors(qw/
   ignore_index_names ignore_constraint_names ignore_view_sql
   ignore_proc_sql output_db source_schema source_db target_schema target_db
-  case_insensitive no_batch_alters ignore_missing_methods
+  case_insensitive no_batch_alters ignore_missing_methods producer_options
 /);
 
 my @diff_arrays = qw/
@@ -64,6 +64,7 @@ sub new {
   $values->{$_} ||= [] foreach @diff_arrays;
   $values->{table_diff_hash} = {};
 
+  $values->{producer_options} ||= {};
   $values->{output_db} ||= $values->{source_db};
   return $class->SUPER::new($values);
 }
@@ -180,7 +181,8 @@ sub produce_diff_sql {
           { map {
               $func_map{$_} => $self->table_diff_hash->{$table}{$_}
             } keys %func_map 
-          }
+          }, 
+          $self->producer_options
         );
       }
     } else {
@@ -198,7 +200,10 @@ sub produce_diff_sql {
           if (@{ $flattened_diffs{$_} || [] }) {
             my $meth = $producer_class->can($_);
             
-            $meth ? map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql;") : () } @{ $flattened_diffs{$_} }
+            $meth ? map { 
+                    my $sql = $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_options );
+                    $sql ?  ("$sql;") : (); 
+                  } @{ $flattened_diffs{$_} }
                   : $self->ignore_missing_methods
                   ? "-- $producer_class cant $_"
                   : die "$producer_class cant $_";
@@ -222,8 +227,7 @@ sub produce_diff_sql {
         add_drop_table => 0,
         no_comments => 1,
         # TODO: sort out options
-        quote_table_names => 0,
-        quote_field_names => 0,
+        %{ $self->producer_options }
       );
       my $schema = $translator->schema;
 
@@ -237,7 +241,7 @@ sub produce_diff_sql {
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
       my $meth = $producer_class->can('drop_table');
       
-      push @diffs, $meth ? map( { $meth->($_) } @tables_to_drop )
+      push @diffs, $meth ? map( { $meth->($_, $self->producer_options) } @tables_to_drop )
                          : $self->ignore_missing_methods
                          ? "-- $producer_class cant drop_table"
                          : die "$producer_class cant drop_table";
