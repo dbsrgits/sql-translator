@@ -1,3 +1,6 @@
+
+* Added support for proper enums under pg (as of 8.3), with pg version check, and deferrable constraints
+
 # ----------------------------------------------------------
 # 0.0900 2008-02-25
 # ----------------------------------------------------------
