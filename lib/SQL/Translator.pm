@@ -1273,6 +1273,8 @@ The following people have contributed to the SQLFairy project:
 
 =item * Sam Angiuoli <angiuoli@users.sourceforge.net>
 
+=item * Anders Nor Berle <berle@cpan.org>
+
 =item * Dave Cash <dave@gnofn.org>
 
 =item * Darren Chamberlain <dlc@users.sourceforge.net>

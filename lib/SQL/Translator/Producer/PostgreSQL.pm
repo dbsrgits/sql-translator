@@ -181,6 +181,9 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
+    my $pargs          = $translator->producer_args;
+
+    my $postgres_version = $pargs->{postgres_version} || 0;
 
     my $qt = '';
     $qt = '"' if ($translator->quote_table_names);
@@ -198,6 +201,7 @@ sub produce {
                                              { quote_table_names => $qt,
                                                quote_field_names => $qf,
                                                no_comments => $no_comments,
+                                               postgres_version => $postgres_version,
                                                add_drop_table => $add_drop_table,});
         push @table_defs, $table_def;
         push @fks, @$fks;
@@ -315,6 +319,7 @@ sub create_table
     my $qf = $options->{quote_field_names} || '';
     my $no_comments = $options->{no_comments} || 0;
     my $add_drop_table = $options->{add_drop_table} || 0;
+    my $postgres_version = $options->{postgres_version} || 0;
 
     my $table_name    = $table->name or next;
     $table_name       = mk_name( $table_name, '', undef, 1 );
@@ -322,7 +327,7 @@ sub create_table
     $table->name($table_name_ur);
 
 # print STDERR "$table_name table_name\n";
-    my ( @comments, @field_defs, @sequence_defs, @constraint_defs, @fks );
+    my ( @comments, @field_defs, @sequence_defs, @constraint_defs, @type_defs, @type_drops, @fks );
 
     push @comments, "--\n-- Table: $table_name_ur\n--\n" unless $no_comments;
 
@@ -341,6 +346,9 @@ sub create_table
         push @field_defs, create_field($field, { quote_table_names => $qt,
                                                  quote_field_names => $qf,
                                                  table_name => $table_name_ur,
+                                                 postgres_version => $postgres_version,
+                                                 type_defs => \@type_defs,
+                                                 type_drops => \@type_drops,
                                                  constraint_defs => \@constraint_defs,});
     }
 
@@ -377,8 +385,17 @@ sub create_table
 
     my $create_statement;
     $create_statement = join("\n", @comments);
-    $create_statement .= qq[DROP TABLE $qt$table_name_ur$qt CASCADE;\n] 
-        if $add_drop_table;
+    if ($add_drop_table) {
+        if ($postgres_version >= 8.2) {
+            $create_statement .= qq[DROP TABLE IF EXISTS $qt$table_name_ur$qt CASCADE;\n];
+            $create_statement .= join ("\n", @type_drops) . "\n"
+                if $postgres_version >= 8.3;
+        } else {
+            $create_statement .= qq[DROP TABLE $qt$table_name_ur$qt CASCADE;\n];
+        }
+    }
+    $create_statement .= join("\n", @type_defs) . "\n"
+        if $postgres_version >= 8.3;
     $create_statement .= qq[CREATE TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n);"
@@ -401,6 +418,9 @@ sub create_table
         my $qf = $options->{quote_field_names} || '';
         my $table_name = $field->table->name;
         my $constraint_defs = $options->{constraint_defs} || [];
+        my $postgres_version = $options->{postgres_version} || 0;
+        my $type_defs = $options->{type_defs} || [];
+        my $type_drops = $options->{type_drops} || [];
 
         $field_name_scope{$table_name} ||= {};
         my $field_name    = mk_name(
@@ -425,7 +445,14 @@ sub create_table
         my $commalist = join( ', ', map { qq['$_'] } @$list );
         my $seq_name;
 
-        $field_def .= ' '. convert_datatype($field);
+        if ($postgres_version >= 8.3 && $field->data_type eq 'enum') {
+            my $type_name = $field->table->name . '_' . $field->name . '_type';
+            $field_def .= ' '. $type_name;
+            push @$type_defs, "CREATE TYPE $type_name AS ENUM ($commalist);";
+            push @$type_drops, "DROP TYPE IF EXISTS $type_name;";
+        } else {
+            $field_def .= ' '. convert_datatype($field);
+        }
 
         #
         # Default value -- disallow for timestamps
@@ -566,6 +593,10 @@ sub create_table
 
             if ( $c->on_update ) {
                 $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+            }
+
+            if ( $c->deferrable ) {
+                $def .= ' DEFERRABLE';
             }
 
             push @fks, "$def;";

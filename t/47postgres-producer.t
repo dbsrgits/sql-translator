@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(6,
+    maybe_plan(7,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -90,3 +90,17 @@ my $field4 = SQL::Translator::Schema::Field->new( name      => 'bytea_field',
 my $field4_sql = SQL::Translator::Producer::PostgreSQL::create_field($field4);
 
 is($field4_sql, 'bytea_field bytea NOT NULL', 'Create bytea field works');
+
+my $field5 = SQL::Translator::Schema::Field->new( name => 'enum_field',
+                                                   table => $table,
+                                                   data_type => 'enum',
+                                                   extra => { list => [ 'Foo', 'Bar' ] },
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field5_sql = SQL::Translator::Producer::PostgreSQL::create_field($field5,{ postgres_version => 8.3 });
+
+is($field5_sql, 'enum_field mytable_enum_field_type NOT NULL', 'Create real enum field works');
+

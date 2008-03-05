@@ -83,6 +83,10 @@ To translate a schema:
     --quote-field-names  Qjuote all field names in statements
     --no-comments      Don't include comments in SQL output
 
+  PostgreSQL Producer Options:
+
+    --postgres-version   PostgreSQL server version
+
   Diagram Producer Options:
 
     --imap-file        Filename to put image map data
@@ -184,6 +188,7 @@ my $producer_db_password; # db_pass "
 my $producer_dsn;     # db_user "
 my $add_truncate;
 my $mysql_parser_version;  # MySQL parser arg for /*! comments
+my $postgres_version; # PostgreSQL version
 
 GetOptions(
     'add-drop-table'   => \$add_drop_table,
@@ -226,6 +231,7 @@ GetOptions(
     'use-same-auth'    => \$use_same_auth,
     'version'          => \$show_version,
     'mysql-parser-version=i' => \$mysql_parser_version,
+    'postgres-version=f' => \$postgres_version,
 ) or pod2usage(2);
 
 if ($use_same_auth) {
@@ -289,6 +295,7 @@ my $translator           =  SQL::Translator->new(
         prefix           => $prefix,
         indent           => $indent,
         newlines         => $newlines,
+        postgres_version => $postgres_version,
 	    package_name     => $package_name,
     },
 );

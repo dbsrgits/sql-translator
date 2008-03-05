@@ -58,5 +58,5 @@ CREATE TABLE "Another" (
 );
 
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
-  REFERENCES "Another" ("id");
+  REFERENCES "Another" ("id") DEFERRABLE;
 SQL
