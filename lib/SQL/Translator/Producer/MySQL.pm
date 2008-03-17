@@ -134,12 +134,13 @@ sub preprocess_schema {
 
     # extra->{mysql_table_type} used to be the type. It belongs in options, so
     # move it if we find it. Return Engine type if found in extra or options
-    my $mysql_table_type_to_options = sub {
-      my ($table) = @_;
+    # Similarly for mysql_charset and mysql_collate
+    my $extra_to_options = sub {
+      my ($table, $extra_name, $opt_name) = @_;
 
       my $extra = $table->extra;
 
-      my $extra_type = delete $extra->{mysql_table_type};
+      my $extra_type = delete $extra->{$extra_name};
 
       # Now just to find if there is already an Engine or Type option...
       # and lets normalize it to ENGINE since:
@@ -152,20 +153,38 @@ sub preprocess_schema {
       # to remove options.
       my $options = ( $table->{options} ||= []);
 
+      # If multiple option names, normalize to the first one
+      if (ref $opt_name) {
+        OPT_NAME: for ( @$opt_name[1..$#$opt_name] ) {
+          for my $idx ( 0..$#{$options} ) {
+            my ($key, $value) = %{ $options->[$idx] };
+            
+            if (uc $key eq $_) {
+              $options->[$idx] = { $opt_name->[0] => $value };
+              last OPT_NAME;
+            }
+          }
+        }
+        $opt_name = $opt_name->[0];
+
+      }
+
+
       # This assumes that there isn't both a Type and an Engine option.
+      OPTION:
       for my $idx ( 0..$#{$options} ) {
         my ($key, $value) = %{ $options->[$idx] };
 
-        next unless uc $key eq 'ENGINE' || uc $key eq 'TYPE';
-
-        # if the extra.mysql_table_type is given, use that
+        next unless uc $key eq $opt_name;
+     
+        # make sure case is right on option name
         delete $options->[$idx]{$key};
-        return $options->[$idx]{ENGINE} = $value || $extra_type;
+        return $options->[$idx]{$opt_name} = $value || $extra_type;
 
       }
   
       if ($extra_type) {
-        push @$options, { ENGINE => $extra_type };
+        push @$options, { $opt_name => $extra_type };
         return $extra_type;
       }
 
@@ -179,8 +198,10 @@ sub preprocess_schema {
     # constraints. We do this first as we need InnoDB at both ends.
     #
     foreach my $table ( $schema->get_tables ) {
-       
-        $mysql_table_type_to_options->($table);
+      
+        $extra_to_options->($table, 'mysql_table_type', ['ENGINE', 'TYPE'] );
+        $extra_to_options->($table, 'mysql_charset', 'CHARACTER SET' );
+        $extra_to_options->($table, 'mysql_collate', 'COLLATE' );
 
         foreach my $c ( $table->get_constraints ) {
             next unless $c->type eq FOREIGN_KEY;
@@ -195,7 +216,8 @@ sub preprocess_schema {
 
             for my $meth (qw/table reference_table/) {
                 my $table = $schema->get_table($c->$meth) || next;
-                next if $mysql_table_type_to_options->($table);
+                # This normalizes the types to ENGINE and returns the value if its there
+                next if $extra_to_options->($table, 'mysql_table_type', ['ENGINE', 'TYPE']);
                 $table->options( { 'ENGINE' => 'InnoDB' } );
             }
         } # foreach constraints
@@ -219,7 +241,7 @@ sub produce {
     my $schema         = $translator->schema;
     my $show_warnings  = $translator->show_warnings || 0;
 
-    my ($qt, $qf) = ('','');
+    my ($qt, $qf, $qc) = ('','', '');
     $qt = '`' if $translator->quote_table_names;
     $qf = '`' if $translator->quote_field_names;
 
@@ -326,18 +348,25 @@ sub generate_table_options
   my $create;
 
   my $table_type_defined = 0;
+  my $charset          = $table->extra('mysql_charset');
+  my $collate          = $table->extra('mysql_collate');
   for my $t1_option_ref ( $table->options ) {
     my($key, $value) = %{$t1_option_ref};
     $table_type_defined = 1
       if uc $key eq 'ENGINE' or uc $key eq 'TYPE';
+    if (uc $key eq 'CHARACTER SET') {
+      $charset = $value;
+      next;
+    } elsif (uc $key eq 'COLLATE') {
+      $collate = $value;
+      next;
+    }
     $create .= " $key=$value";
   }
 
   my $mysql_table_type = $table->extra('mysql_table_type');
   $create .= " ENGINE=$mysql_table_type"
     if $mysql_table_type && !$table_type_defined;
-  my $charset          = $table->extra('mysql_charset');
-  my $collate          = $table->extra('mysql_collate');
   my $comments         = $table->comments;
 
   $create .= " DEFAULT CHARACTER SET $charset" if $charset;
@@ -502,7 +531,7 @@ sub alter_drop_constraint
     my ($c, $options) = @_;
 
     my $qt      = $options->{quote_table_names} || '';
-    my $qc      = $options->{quote_constraint_names} || '';
+    my $qc      = $options->{quote_field_names} || '';
 
     my $out = sprintf('ALTER TABLE %s DROP %s %s',
                       $qt . $c->table->name . $qt,
@@ -530,7 +559,6 @@ sub create_constraint
 
     my $qf      = $options->{quote_field_names} || '';
     my $qt      = $options->{quote_table_names} || '';
-    my $qc      = $options->{quote_constraint_names} || '';
     my $leave_name      = $options->{leave_name} || undef;
 
     my @fields = $c->fields or next;
@@ -555,7 +583,7 @@ sub create_constraint
         my $def = join(' ', 
                        map { $_ || () } 
                          'CONSTRAINT', 
-                         $qc . $c_name . $qc, 
+                         $qf . $c_name . $qf, 
                          'FOREIGN KEY'
                       );
 

@@ -386,10 +386,19 @@ sub diff_table_fields {
 sub diff_table_options {
   my ($self, $src_table, $tar_table) = @_;
 
+  my $cmp = sub {
+    my ($a_name, undef, $b_name, undef) = ( %$a, %$b );
+    $a_name cmp $b_name;
+  };
+  # Need to sort the options so we dont get supruious diffs.
+  my (@src_opts, @tar_opts);
+  @src_opts = sort $cmp $src_table->options;
+  @tar_opts = sort $cmp $tar_table->options;
+
 
   # If there's a difference, just re-set all the options
   push @{ $self->table_diff_hash->{$tar_table}{table_options} }, $tar_table
-    unless $src_table->_compare_objects( scalar $src_table->options, scalar $tar_table->options );
+    unless $src_table->_compare_objects( \@src_opts, \@tar_opts );
 }
 
 1;
