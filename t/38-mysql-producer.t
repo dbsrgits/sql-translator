@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(11,
+    maybe_plan(14,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -236,3 +236,17 @@ is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10)', 'Add field 
 
 my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2);
 is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
+
+my $field3 = SQL::Translator::Schema::Field->new( name      => 'myfield',
+                                                  table => $table,
+                                                  data_type => 'boolean',
+                                                  is_nullable => 0,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
+
+my $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 4.1 });
+is($field3_sql, 'myfield boolean NOT NULL', 'For Mysql >= 4, use boolean type');
+$field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 3.22 });
+is($field3_sql, "myfield enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
+$field3_sql = SQL::Translator::Producer::MySQL::create_field($field3,);
+is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');

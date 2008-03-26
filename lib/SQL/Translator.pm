@@ -1299,6 +1299,8 @@ The following people have contributed to the SQLFairy project:
 
 =item * Ying Zhang <zyolive@yahoo.com>
 
+=item * Daniel Ruoso <daniel@ruoso.com>
+
 =back
 
 If you would like to contribute to the project, you can send patches

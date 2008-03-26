@@ -69,6 +69,10 @@ To translate a schema:
     --mysql-parser-version  Target MySQL parser version for dealing with
                               /*! comments; default = 30000
 
+  MySQL Producer Options:
+
+    --mysql-version  MySQL server version
+
   General Producer Options
 
     --producer-db-user   Database user for producer
@@ -189,6 +193,7 @@ my $producer_dsn;     # db_user "
 my $add_truncate;
 my $mysql_parser_version;  # MySQL parser arg for /*! comments
 my $postgres_version; # PostgreSQL version
+my $mysql_version; # MySQL version
 
 GetOptions(
     'add-drop-table'   => \$add_drop_table,
@@ -232,6 +237,7 @@ GetOptions(
     'version'          => \$show_version,
     'mysql-parser-version=i' => \$mysql_parser_version,
     'postgres-version=f' => \$postgres_version,
+    'mysql-version=f' => \$mysql_version,
 ) or pod2usage(2);
 
 if ($use_same_auth) {
@@ -296,6 +302,7 @@ my $translator           =  SQL::Translator->new(
         indent           => $indent,
         newlines         => $newlines,
         postgres_version => $postgres_version,
+        mysql_version    => $mysql_version,
 	    package_name     => $package_name,
     },
 );

@@ -240,6 +240,8 @@ sub produce {
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
     my $show_warnings  = $translator->show_warnings || 0;
+    my $producer_args  = $translator->producer_args;
+    my $mysql_version  = $producer_args->{mysql_version} || 0;
 
     my ($qt, $qf, $qc) = ('','', '');
     $qt = '`' if $translator->quote_table_names;
@@ -266,7 +268,8 @@ sub produce {
                                          show_warnings     => $show_warnings,
                                          no_comments       => $no_comments,
                                          quote_table_names => $qt,
-                                         quote_field_names => $qf
+                                         quote_field_names => $qf,
+                                         mysql_version     => $mysql_version
                                          });
     }
 
@@ -421,8 +424,13 @@ sub create_field
         @size      = ();
     }
     elsif ( $data_type =~ /boolean/i ) {
-        $data_type = 'enum';
-        $commalist = "'0','1'";
+        my $mysql_version = $options->{mysql_version} || 0;
+        if ($mysql_version >= 4) {
+            $data_type = 'boolean';
+        } else {
+            $data_type = 'enum';
+            $commalist = "'0','1'";
+        }
     }
     elsif ( exists $translate{ lc $data_type } ) {
         $data_type = $translate{ lc $data_type };
