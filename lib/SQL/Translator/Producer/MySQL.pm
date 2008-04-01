@@ -222,7 +222,13 @@ sub preprocess_schema {
             }
         } # foreach constraints
 
+        my %map = ( mysql_collate => 'collate', mysql_charset => 'character set');
         foreach my $f ( $table->get_fields ) {
+          my $extra = $f->extra;
+          for (keys %map) {
+            $extra->{$map{$_}} = delete $extra->{$_} if exists $extra->{$_};
+          }
+
           my @size = $f->size;
           if ( !$size[0] && $f->data_type =~ /char$/ ) {
             $f->size( (255) );
