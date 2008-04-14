@@ -536,8 +536,13 @@ sub translate {
     # Run producer
     # Calling wantarray in the eval no work, wrong scope.
     my $wantarray = wantarray ? 1 : 0;
-    eval { $wantarray ? @producer_output = $producer->($self) :
-               $producer_output = $producer->($self) };
+    eval {
+        if ($wantarray) {
+            @producer_output = $producer->($self);
+        } else {
+            $producer_output = $producer->($self);
+        }
+    };
     if ($@ || !( $producer_output || @producer_output)) {
         my $err = $@ || $self->error || "no results";
         my $msg = "translate: Error with producer '$producer_type': $err";
