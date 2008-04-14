@@ -482,6 +482,28 @@ sub create_table {
                              $index->fields;
             next unless @fields;
 
+            my @index_options;
+            for my $opt ( $index->options ) {
+                if ( ref $opt eq 'HASH' ) {
+                    my ( $key, $value ) = each %$opt;
+                    if ( ref $value eq 'ARRAY' ) {
+                        push @table_options, "$key\n(\n".  join ("\n",
+                            map { "  $_->[0]\t$_->[1]" } 
+                            map { [ each %$_ ] }
+                           @$value
+                        )."\n)";
+                    }
+                    elsif ( !defined $value ) {
+                        push @index_options, $key;
+                    }
+                    else {
+                        push @index_options, "$key    $value";
+                    }
+                }
+            }
+            my $index_options = @index_options
+              ? "\n".join("\n", @index_options) : '';
+
             if ( $index_type eq PRIMARY_KEY ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, 'pk' );
@@ -494,7 +516,7 @@ sub create_table {
                 push @index_defs, 
                     "CREATE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
-                    ");"; 
+                    ")$index_options;";
             }
             elsif ( $index_type eq UNIQUE ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
@@ -502,7 +524,7 @@ sub create_table {
                 push @index_defs, 
                     "CREATE UNIQUE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
-                    ");"; 
+                    ")$index_options;"; 
             }
             else {
                 warn "Unknown index type ($index_type) on table $table_name.\n"

@@ -64,7 +64,7 @@ my %VALID_INDEX_TYPE = (
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
-    name type fields table
+    name type fields table options
 /);
 
 =pod

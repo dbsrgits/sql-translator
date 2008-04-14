@@ -1,0 +1,53 @@
+---
+schema:
+  procedures: {}
+  tables:
+    d_operator:
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields:
+            - id_operator
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: PRIMARY KEY
+      fields:
+        id_operator:
+          data_type: integer
+          default_value: ~
+          extra: {}
+          is_auto_increment: 1
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 0
+          name: id_operator
+          order: 58
+          size:
+            - 0
+        name:
+          data_type: varchar
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 0
+          name: name
+          order: 59
+          size:
+            - 0
+      indices:
+        - fields:
+            - name
+          name: operator_name
+          options:
+            - TABLESPACE: INDX
+          type: NORMAL
+      name: d_operator
+      options:
+        - TABLESPACE: DATA
+      order: 11
