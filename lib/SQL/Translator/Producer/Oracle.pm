@@ -220,169 +220,12 @@ sub create_table {
 
         my ( %field_name_scope, @field_comments );
         for my $field ( $table->get_fields ) {
-            #
-            # Field name
-            #
-            my $field_name    = mk_name(
-                $field->name, '', \%field_name_scope, 1 
-            );
-            my $field_name_ur = unreserve( $field_name, $table_name );
-            my $field_def     = $field_name_ur;
-            $field->name( $field_name_ur );
-
-            #
-            # Datatype
-            #
-            my $check;
-            my $data_type = lc $field->data_type;
-            my @size      = $field->size;
-            my %extra     = $field->extra;
-            my $list      = $extra{'list'} || [];
-            # \todo deal with embedded quotes
-            my $commalist = join( ', ', map { qq['$_'] } @$list );
-
-            if ( $data_type eq 'enum' ) {
-                $check = "CHECK ($field_name_ur IN ($commalist))";
-                $data_type = 'varchar2';
-            }
-            elsif ( $data_type eq 'set' ) {
-                # XXX add a CHECK constraint maybe 
-                # (trickier and slower, than enum :)
-                $data_type = 'varchar2';
-            }
-            else {
-                $data_type  = defined $translate{ $data_type } ?
-                              $translate{ $data_type } :
-                              $data_type;
-                $data_type ||= 'varchar2';
-            }
-            
-            #
-            # Fixes ORA-02329: column of datatype LOB cannot be 
-            # unique or a primary key
-            #
-            if ( $data_type eq 'clob' && $field->is_primary_key ) {
-                $data_type = 'varchar2';
-                $size[0]   = 4000;
-                warn "CLOB cannot be a primary key, changing to VARCHAR2\n"
-                    if $WARN;
-            }
-
-            if ( $data_type eq 'clob' && $field->is_unique ) {
-                $data_type = 'varchar2';
-                $size[0]   = 4000;
-                warn "CLOB cannot be a unique key, changing to VARCHAR2\n"
-                    if $WARN;
-            }
-
-            #
-            # Fixes ORA-00907: missing right parenthesis
-            #
-            if ( $data_type =~ /(date|clob)/i ) {
-                undef @size;
-            }
-
-            $field_def .= " $data_type";
-            if ( defined $size[0] && $size[0] > 0 ) {
-                $field_def .= '(' . join( ', ', @size ) . ')';
-            }
-
-            #
-            # Default value
-            #
-            my $default = $field->default_value;
-            if ( defined $default ) {
-                #
-                # Wherein we try to catch a string being used as 
-                # a default value for a numerical field.  If "true/false,"
-                # then sub "1/0," otherwise just test the truthity of the
-                # argument and use that (naive?).
-                #
-                if ( 
-                    $data_type =~ /^number$/i && 
-                    $default   !~ /^-?\d+$/     &&
-                    $default   !~ m/null/i
-                ) {
-                    if ( $default =~ /^true$/i ) {
-                        $default = "'1'";
-                    }
-                    elsif ( $default =~ /^false$/i ) {
-                        $default = "'0'";
-                    }
-                    else {
-                        $default = $default ? "'1'" : "'0'";
-                    }
-                }
-                elsif ( 
-                    $data_type =~ /date/ && (
-                        $default eq 'current_timestamp' 
-                        ||
-                        $default eq 'now()' 
-                    )
-                ) {
-                    $default = 'SYSDATE';
-                }
-                else {
-                    $default = $default =~ m/null/i ? 'NULL' : "'$default'"
-                } 
-
-                $field_def .= " DEFAULT $default",
-            }
-
-            #
-            # Not null constraint
-            #
-            unless ( $field->is_nullable ) {
-                $field_def .= ' NOT NULL';
-            }
-
-            $field_def .= " $check" if $check;
-
-            #
-            # Auto_increment
-            #
-            if ( $field->is_auto_increment ) {
-                my $base_name    = $table_name_ur . "_". $field_name;
-                my $seq_name     = mk_name( $base_name, 'sq' );
-                my $trigger_name = mk_name( $base_name, 'ai' );
-
-            push @create, qq[DROP SEQUENCE $seq_name;] if $options->{add_drop_table};
-            push @create, "CREATE SEQUENCE $seq_name;";
-                push @trigger_defs, 
-                    "CREATE OR REPLACE TRIGGER $trigger_name\n" .
-                    "BEFORE INSERT ON $table_name_ur\n" .
-                    "FOR EACH ROW WHEN (\n" .
-                        " new.$field_name_ur IS NULL".
-                        " OR new.$field_name_ur = 0\n".
-                    ")\n".
-                    "BEGIN\n" .
-                        " SELECT $seq_name.nextval\n" .
-                        " INTO :new." . $field->name."\n" .
-                        " FROM dual;\n" .
-                    "END;\n/";
-                ;
-            }
-
-            if ( lc $field->data_type eq 'timestamp' ) {
-                my $base_name = $table_name_ur . "_". $field_name_ur;
-                my $trig_name = mk_name( $base_name, 'ts' );
-                push @trigger_defs, 
-                    "CREATE OR REPLACE TRIGGER $trig_name\n".
-                    "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
-                    "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
-                    "BEGIN \n".
-                    " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
-                    "END;\n/";
-            }
-
-            push @field_defs, $field_def;
-
-            if ( my $comment = $field->comments ) {
-                $comment =~ s/'/''/g;
-                push @field_comments, 
-                    "COMMENT ON COLUMN $table_name_ur.$field_name_ur is\n '" .
-                $comment . "';" unless $options->{no_comments};
-            }
+            my ($field_create, $field_defs, $trigger_defs, $field_comments) =
+              create_field($field, $options, \%field_name_scope);
+            push @create, @$field_create if ref $field_create;
+            push @field_defs, @$field_defs if ref $field_defs;
+            push @trigger_defs, @$trigger_defs if ref $trigger_defs;
+            push @field_comments, @$field_comments if ref $field_comments;
         }
 
         #
@@ -583,6 +426,192 @@ sub create_table {
 
     return \@create, \@fk_defs, \@trigger_defs, \@index_defs, ($options->{delay_constraints} ? \@constraint_defs : []);
 }
+
+sub alter_field {
+    my ($from_field, $to_field, $options) = @_;
+
+    my ($field_create, $field_defs, $trigger_defs, $field_comments) =
+      create_field($to_field, $options, {});
+
+    my $table_name = $to_field->table->name;
+    my $table_name_ur = unreserve( $table_name );
+
+    return 'ALTER TABLE '.$table_name_ur.' MODIFY ( '.join('', @$field_defs).' )';
+}
+
+sub create_field {
+    my ($field, $options, $field_name_scope) = @_;
+
+    my (@create, @field_defs, @trigger_defs, @field_comments);
+
+    my $table_name = $field->table->name;
+    my $table_name_ur = unreserve( $table_name );
+
+    #
+    # Field name
+    #
+    my $field_name    = mk_name(
+                                $field->name, '', $field_name_scope, 1
+                               );
+
+    my $field_name_ur = unreserve( $field_name, $table_name );
+    my $field_def     = $field_name_ur;
+    $field->name( $field_name_ur );
+
+    #
+    # Datatype
+    #
+    my $check;
+    my $data_type = lc $field->data_type;
+    my @size      = $field->size;
+    my %extra     = $field->extra;
+    my $list      = $extra{'list'} || [];
+    # \todo deal with embedded quotes
+    my $commalist = join( ', ', map { qq['$_'] } @$list );
+
+    if ( $data_type eq 'enum' ) {
+        $check = "CHECK ($field_name_ur IN ($commalist))";
+        $data_type = 'varchar2';
+    }
+    elsif ( $data_type eq 'set' ) {
+        # XXX add a CHECK constraint maybe 
+        # (trickier and slower, than enum :)
+        $data_type = 'varchar2';
+    }
+    else {
+        $data_type  = defined $translate{ $data_type } ?
+          $translate{ $data_type } :
+            $data_type;
+        $data_type ||= 'varchar2';
+    }
+
+    #
+    # Fixes ORA-02329: column of datatype LOB cannot be 
+    # unique or a primary key
+    #
+    if ( $data_type eq 'clob' && $field->is_primary_key ) {
+        $data_type = 'varchar2';
+        $size[0]   = 4000;
+        warn "CLOB cannot be a primary key, changing to VARCHAR2\n"
+          if $WARN;
+    }
+
+    if ( $data_type eq 'clob' && $field->is_unique ) {
+        $data_type = 'varchar2';
+        $size[0]   = 4000;
+        warn "CLOB cannot be a unique key, changing to VARCHAR2\n"
+          if $WARN;
+    }
+
+    #
+    # Fixes ORA-00907: missing right parenthesis
+    #
+    if ( $data_type =~ /(date|clob)/i ) {
+        undef @size;
+    }
+
+    $field_def .= " $data_type";
+    if ( defined $size[0] && $size[0] > 0 ) {
+        $field_def .= '(' . join( ', ', @size ) . ')';
+    }
+
+    #
+    # Default value
+    #
+    my $default = $field->default_value;
+    if ( defined $default ) {
+        #
+        # Wherein we try to catch a string being used as 
+        # a default value for a numerical field.  If "true/false,"
+        # then sub "1/0," otherwise just test the truthity of the
+        # argument and use that (naive?).
+        #
+        if ( 
+            $data_type =~ /^number$/i && 
+            $default   !~ /^-?\d+$/     &&
+            $default   !~ m/null/i
+           ) {
+            if ( $default =~ /^true$/i ) {
+                $default = "'1'";
+            } elsif ( $default =~ /^false$/i ) {
+                $default = "'0'";
+            } else {
+                $default = $default ? "'1'" : "'0'";
+            }
+        } elsif ( 
+                 $data_type =~ /date/ && (
+                                          $default eq 'current_timestamp' 
+                                          ||
+                                          $default eq 'now()' 
+                                         )
+                ) {
+            $default = 'SYSDATE';
+        } else {
+            $default = $default =~ m/null/i ? 'NULL' : "'$default'"
+        } 
+
+        $field_def .= " DEFAULT $default",
+    }
+
+    #
+    # Not null constraint
+    #
+    unless ( $field->is_nullable ) {
+        $field_def .= ' NOT NULL';
+    }
+
+    $field_def .= " $check" if $check;
+
+    #
+    # Auto_increment
+    #
+    if ( $field->is_auto_increment ) {
+        my $base_name    = $table_name_ur . "_". $field_name;
+        my $seq_name     = mk_name( $base_name, 'sq' );
+        my $trigger_name = mk_name( $base_name, 'ai' );
+
+        push @create, qq[DROP SEQUENCE $seq_name;] if $options->{add_drop_table};
+        push @create, "CREATE SEQUENCE $seq_name;";
+        push @trigger_defs, 
+          "CREATE OR REPLACE TRIGGER $trigger_name\n" .
+          "BEFORE INSERT ON $table_name_ur\n" .
+          "FOR EACH ROW WHEN (\n" .
+          " new.$field_name_ur IS NULL".
+          " OR new.$field_name_ur = 0\n".
+          ")\n".
+          "BEGIN\n" .
+          " SELECT $seq_name.nextval\n" .
+          " INTO :new." . $field->name."\n" .
+          " FROM dual;\n" .
+          "END;\n/";
+        ;
+    }
+
+    if ( lc $field->data_type eq 'timestamp' ) {
+        my $base_name = $table_name_ur . "_". $field_name_ur;
+        my $trig_name = mk_name( $base_name, 'ts' );
+        push @trigger_defs, 
+          "CREATE OR REPLACE TRIGGER $trig_name\n".
+          "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
+          "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
+          "BEGIN \n".
+          " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
+          "END;\n/";
+    }
+
+    push @field_defs, $field_def;
+
+    if ( my $comment = $field->comments ) {
+        $comment =~ s/'/''/g;
+        push @field_comments, 
+          "COMMENT ON COLUMN $table_name_ur.$field_name_ur is\n '" .
+            $comment . "';" unless $options->{no_comments};
+    }
+
+    return \@create, \@field_defs, \@trigger_defs, \@field_comments;
+
+}
+
 
 sub create_view {
     my ($view) = @_;

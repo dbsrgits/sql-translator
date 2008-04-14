@@ -46,5 +46,5 @@ my $d = SQL::Translator::Diff->new
 my $diff = $d->compute_differences->produce_diff_sql || die $d->error;
 
 ok($diff, 'Diff generated.');
-like($diff, '/ALTER TABLE d_operator CHANGE COLUMN \( name nvarchar2\(10\) \)/',
+like($diff, '/ALTER TABLE d_operator MODIFY \( name nvarchar2\(10\) NOT NULL \)/',
      'Alter table generated.');
