@@ -154,7 +154,8 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
-    my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs);
+    my $delay_constraints = $translator->producer_args->{delay_constraints};
+    my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 
     $create .= header_comment unless ($no_comments);
 
@@ -169,18 +170,20 @@ sub produce {
     }
 
     for my $table ( $schema->get_tables ) { 
-        my ( $table_def, $fk_def, $trigger_def, $index_def) = create_table(
+        my ( $table_def, $fk_def, $trigger_def, $index_def, $constraint_def) = create_table(
             $table,
             {
                 add_drop_table => $add_drop_table,
                 show_warnings  => $WARN,
                 no_comments    => $no_comments,
+                delay_constraints => $delay_constraints
             }
         );
         push @table_defs, @$table_def;
         push @fk_defs, @$fk_def;
         push @trigger_defs, @$trigger_def;
         push @index_defs, @$index_def;
+        push @constraint_defs, @$constraint_def;
     }
 
     my (@view_defs);
@@ -188,7 +191,7 @@ sub produce {
         push @view_defs, create_view($view);
     }
 
-    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs) : $create . join ("\n\n", @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, '');
+    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs) : $create . join ("\n\n", @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs, '');
 }
 
 sub create_table {
@@ -545,8 +548,12 @@ sub create_table {
         my $table_options = @table_options 
             ? "\n".join("\n", @table_options) : '';
     push @create, "CREATE TABLE $table_name_ur (\n" .
-            join( ",\n", map { "  $_" } @field_defs, @constraint_defs ) .
-        "\n)$table_options;";
+            join( ",\n", map { "  $_" } @field_defs,
+            ($options->{delay_constraints} ? () : @constraint_defs) ) .
+            "\n)$table_options;";
+
+    @constraint_defs = map { 'ALTER TABLE '.$table_name_ur.' ADD '.$_  }
+      @constraint_defs;
 
     if ( $WARN ) {
         if ( %truncated ) {
@@ -561,7 +568,7 @@ sub create_table {
         }
     }
 
-    return \@create, \@fk_defs, \@trigger_defs, \@index_defs;
+    return \@create, \@fk_defs, \@trigger_defs, \@index_defs, ($options->{delay_constraints} ? \@constraint_defs : []);
 }
 
 sub create_view {
