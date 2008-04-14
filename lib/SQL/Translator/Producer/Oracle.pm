@@ -35,6 +35,17 @@ SQL::Translator::Producer::Oracle - Oracle SQL producer
 
 Creates an SQL DDL suitable for Oracle.
 
+=head1 producer_args
+
+=over
+
+=item delay_constraints
+
+This option remove the primary key and other key constraints from the
+CREATE TABLE statement and adds ALTER TABLEs at the end with it.
+
+=back
+
 =cut
 
 use strict;
