@@ -419,7 +419,9 @@ sub create_table {
             next if !@fields && $c->type ne CHECK_C;
 
             if ( $c->type eq PRIMARY_KEY ) {
-                #$name ||= mk_name( $table_name, 'pk' );
+                # create a name if delay_constraints
+                $name ||= mk_name( $table_name, 'pk' )
+                  if $options->{delay_constraints};
                 push @constraint_defs, ($name ? "CONSTRAINT $name " : '') .
                 	'PRIMARY KEY (' . join( ', ', @fields ) . ')';
             }
