@@ -28,7 +28,6 @@ my $sql_string = $sqlt->translate(
     filename => $yamlfile,
 );
 
-warn $sql_string;
 ok($sql_string, 'Translation successfull');
 ok($sql_string =~ /TABLESPACE\s+DATA/, 'Table options');
 ok($sql_string =~ /TABLESPACE\s+INDX/, 'Index options');

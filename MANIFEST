@@ -136,10 +136,13 @@ t/46xml-to-pg.t
 t/47postgres-producer.t
 t/48xml-to-sqlite.t
 t/49xml-to-pg-samefield.t
+t/52-oracle-options.t
+t/53-oracle-delay-constraints.t
 t/data/access/gdpdm.ddl
 t/data/Excel/t.xls
 t/data/oracle/create.sql
 t/data/oracle/create2.sql
+t/data/oracle/schema_with_options.yaml
 t/data/mysql/Apache-Session-MySQL.sql
 t/data/mysql/BGEP-RE-create.sql
 t/data/mysql/create.sql

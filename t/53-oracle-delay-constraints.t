@@ -29,6 +29,5 @@ my $sql_string = $sqlt->translate(
     filename => $yamlfile,
 );
 
-warn $sql_string;
 ok($sql_string, 'Translation successfull');
-ok($sql_string =~ /ADD PRIMARY KEY/, 'constraints delayed');
+ok($sql_string =~ /ADD CONSTRAINT pk_d_operator PRIMARY KEY/, 'constraints delayed');
