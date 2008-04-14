@@ -300,7 +300,7 @@ create : CREATE UNIQUE(?) /(index|key)/i index_name /on/i table_name '(' field_n
         push @{ $tables{ $item{'table_name'} }{'indices'} },
             {
                 name   => $item[4],
-                type   => $item[2] ? 'unique' : 'normal',
+                type   => $item[2][0] ? 'unique' : 'normal',
                 fields => $item[8],
             }
         ;
@@ -670,7 +670,7 @@ fulltext_index : /fulltext/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/)
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
 
-UNIQUE : /unique/i { 1 }
+UNIQUE : /unique/i
 
 KEY : /key/i | /index/i
 

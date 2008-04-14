@@ -12,10 +12,13 @@ CREATE TABLE random (
     foo varchar(255) not null default '',
     updated timestamp
 );
+CREATE UNIQUE INDEX random_foo_update ON random(foo,updated);
+CREATE INDEX random_foo ON random(foo);
+
 |;
 
 BEGIN {
-    maybe_plan(1, 
+    maybe_plan(3,
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Producer::Oracle');
 }
@@ -25,5 +28,8 @@ my $tr       = SQL::Translator->new(
     producer => "Oracle"
 );
 
-ok( $tr->translate(\$create), 'Translate MySQL to Oracle' );
+my $output = $tr->translate(\$create);
 
+ok( $output, 'Translate MySQL to Oracle' );
+ok( $output =~ /CREATE INDEX random_foo /, 'Normal index definition translated.');
+ok( $output =~ /CREATE UNIQUE INDEX random_foo_update /, 'Unique index definition translated.');

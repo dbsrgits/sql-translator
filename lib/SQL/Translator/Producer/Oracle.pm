@@ -154,7 +154,7 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
-    my ($output, $create, @table_defs, @fk_defs, @trigger_defs);
+    my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs);
 
     $create .= header_comment unless ($no_comments);
 
@@ -169,7 +169,7 @@ sub produce {
     }
 
     for my $table ( $schema->get_tables ) { 
-        my ( $table_def, $fk_def, $trigger_def ) = create_table(
+        my ( $table_def, $fk_def, $trigger_def, $index_def) = create_table(
             $table,
             {
                 add_drop_table => $add_drop_table,
@@ -180,6 +180,7 @@ sub produce {
         push @table_defs, @$table_def;
         push @fk_defs, @$fk_def;
         push @trigger_defs, @$trigger_def;
+        push @index_defs, @$index_def;
     }
 
     my (@view_defs);
@@ -187,7 +188,7 @@ sub produce {
         push @view_defs, create_view($view);
     }
 
-    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs) : $create . join ("\n\n", @table_defs, @view_defs, @fk_defs, @trigger_defs);
+    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs) : $create . join ("\n\n", @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, '');
 }
 
 sub create_table {
@@ -495,6 +496,14 @@ sub create_table {
                         join( ', ', @fields ).  
                     ");"; 
             }
+            elsif ( $index_type eq UNIQUE ) {
+                $index_name = $index_name ? mk_name( $index_name ) 
+                    : mk_name( $table_name, $index_name || 'i' );
+                push @index_defs, 
+                    "CREATE UNIQUE INDEX $index_name on $table_name_ur (".
+                        join( ', ', @fields ).  
+                    ");"; 
+            }
             else {
                 warn "Unknown index type ($index_type) on table $table_name.\n"
                     if $WARN;
@@ -530,7 +539,7 @@ sub create_table {
         }
     }
 
-    return \@create, \@fk_defs, \@trigger_defs;
+    return \@create, \@fk_defs, \@trigger_defs, \@index_defs;
 }
 
 sub create_view {
