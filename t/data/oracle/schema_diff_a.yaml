@@ -40,5 +40,16 @@ schema:
           order: 59
           size:
             - 0
+        other:
+          data_type: varchar2(10)
+          default_value: ~
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: other
+          order: 59
+          size:
+            - 0
       name: d_operator
       order: 11

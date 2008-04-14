@@ -433,6 +433,13 @@ sub alter_field {
     my ($field_create, $field_defs, $trigger_defs, $field_comments) =
       create_field($to_field, $options, {});
 
+    # Fix ORA-01442
+    if ($to_field->is_nullable && !$from_field->is_nullable) {
+        die 'Cannot remove NOT NULL from table field';
+    } elsif (!$from_field->is_nullable && !$to_field->is_nullable) {
+        @$field_defs = map { s/ NOT NULL//; $_} @$field_defs;
+    }
+
     my $table_name = $to_field->table->name;
     my $table_name_ur = unreserve( $table_name );
 
