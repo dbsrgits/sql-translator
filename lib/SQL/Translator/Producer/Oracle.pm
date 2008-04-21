@@ -408,7 +408,7 @@ sub create_table {
             ($options->{delay_constraints} ? () : @constraint_defs) ) .
             "\n)$table_options;";
 
-    @constraint_defs = map { 'ALTER TABLE '.$table_name_ur.' ADD '.$_  }
+    @constraint_defs = map { 'ALTER TABLE '.$table_name_ur.' ADD '.$_.';'  }
       @constraint_defs;
 
     if ( $WARN ) {
