@@ -446,6 +446,21 @@ sub alter_field {
     return 'ALTER TABLE '.$table_name_ur.' MODIFY ( '.join('', @$field_defs).' )';
 }
 
+sub add_field {
+    my ($new_field, $options) = @_;
+
+    my ($field_create, $field_defs, $trigger_defs, $field_comments) =
+      create_field($new_field, $options, {});
+
+    my $table_name = $new_field->table->name;
+    my $table_name_ur = unreserve( $table_name );
+
+    my $out = sprintf('ALTER TABLE %s ADD ( %s )',
+                      $table_name_ur,
+                      join('', @$field_defs));
+    return $out;
+}
+
 sub create_field {
     my ($field, $options, $field_name_scope) = @_;
 
