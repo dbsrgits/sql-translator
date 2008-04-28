@@ -605,7 +605,8 @@ pg_data_type :
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
 
-parens_word_list : '(' WORD(s /,/) ')'
+
+parens_word_list : '(' name_with_opt_quotes(s /,/) ')'
     { $item[2] }
 
 field_size : '(' num_range ')' { $item{'num_range'} }
