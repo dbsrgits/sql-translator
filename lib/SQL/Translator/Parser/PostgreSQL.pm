@@ -884,7 +884,7 @@ create_table : CREATE TABLE
 
 create_index : CREATE /index/i
 
-default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*?\))|\w+/
+default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+/
     { 
         my $val =  defined $item[2] ? $item[2] : '';
         $val    =~ s/^'|'$//g; 
