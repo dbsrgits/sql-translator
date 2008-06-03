@@ -24,12 +24,14 @@ use strict;
 use base qw(Exporter);
 use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 
+use Digest::SHA1 qw( sha1_hex );
+
 use Exporter;
 
 $VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
-    debug normalize_name header_comment parse_list_arg $DEFAULT_COMMENT
+    debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT
 );
 
 # ----------------------------------------------------------------------
@@ -143,6 +145,32 @@ sub parse_list_arg {
     }
 }
 
+# ----------------------------------------------------------------------
+# truncate_id_uniquely( $desired_name, $max_symbol_length )
+#
+# Truncates the name $desired_name to the $max_symbol_length by
+# including part of the hash of the full name at the end of the
+# truncated name, giving a high probability that the symbol will be
+# unique.
+# ----------------------------------------------------------------------
+my $COLLISION_TAG_LENGTH = 8;
+sub truncate_id_uniquely {
+    my ( $desired_name, $max_symbol_length ) = @_;
+
+    return $desired_name unless defined $desired_name && length $desired_name > $max_symbol_length;
+
+    my $truncated_name = substr $desired_name, 0, $max_symbol_length - $COLLISION_TAG_LENGTH - 1;
+
+    # Hex isn't the most space-efficient, but it skirts around allowed
+    # charset issues
+    my $digest = sha1_hex($desired_name);
+    my $collision_tag = substr $digest, 0, $COLLISION_TAG_LENGTH;
+
+    return $truncated_name
+         . '_'
+         . $collision_tag;
+}
+
 1;
 
 # ----------------------------------------------------------------------
@@ -249,6 +277,23 @@ All of the following will return equivalent values:
   parse_list_arg( 'id, name' );
   parse_list_arg( [ 'id', 'name' ] );
   parse_list_arg( qw[ id name ] );
+
+=head2 truncate_id_uniquely
+
+Takes a string ($desired_name) and int ($max_symbol_length). Truncates
+$desired_name to $max_symbol_length by including part of the hash of
+the full name at the end of the truncated name, giving a high
+probability that the symbol will be unique. For example,
+
+  truncate_id_uniquely( 'a' x 100, 64 )
+  truncate_id_uniquely( 'a' x 99 . 'b', 64 );
+  truncate_id_uniquely( 'a' x 99,  64 )
+
+Will give three different results; specifically:
+
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_7f900025
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_6191e39a
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa_8cd96af2
 
 =head2 $DEFAULT_COMMENT
 

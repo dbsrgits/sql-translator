@@ -24,6 +24,7 @@ my $builder = Module::Build->new(
         'Class::Base'              => 0,
         'Class::Data::Inheritable' => 0.02,
         'Class::MakeMethods'       => 0,
+        'Digest::SHA1'             => 2.00,
         'IO::Dir'                  => 0,
         'Log::Log4perl'            => 0,
         'Parse::RecDescent'        => 1.94,

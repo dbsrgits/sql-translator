@@ -1306,6 +1306,8 @@ The following people have contributed to the SQLFairy project:
 
 =item * Daniel Ruoso <daniel@ruoso.com>
 
+=item * Ryan D Johnson <ryan@innerfence.com>
+
 =back
 
 If you would like to contribute to the project, you can send patches

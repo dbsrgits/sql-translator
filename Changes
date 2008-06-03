@@ -1,6 +1,7 @@
 
 * Added support for proper booleans in the mysql producer, when a mysql version of at least 4.x is supplied
 * Added support for proper enums under pg (as of 8.3), with pg version check, and deferrable constraints
+* Added support to truncate long constraint and index names in the mysql producer, because of a change to DBIx::Class to produce such long names in some cases.
 
 # ----------------------------------------------------------
 # 0.0900 2008-02-25

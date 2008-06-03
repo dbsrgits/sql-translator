@@ -96,9 +96,14 @@ use vars qw[ $VERSION $DEBUG %used_names ];
 $VERSION = sprintf "%d.%02d", q$Revision: 1.54 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
+# Maximum length for most identifiers is 64, according to:
+#   http://dev.mysql.com/doc/refman/4.1/en/identifiers.html
+#   http://dev.mysql.com/doc/refman/5.0/en/identifiers.html
+my $DEFAULT_MAX_ID_LENGTH = 64;
+
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment);
+use SQL::Translator::Utils qw(debug header_comment truncate_id_uniquely);
 
 #
 # Use only lowercase for the keys (e.g. "long" and not "LONG")
@@ -248,6 +253,7 @@ sub produce {
     my $show_warnings  = $translator->show_warnings || 0;
     my $producer_args  = $translator->producer_args;
     my $mysql_version  = $producer_args->{mysql_version} || 0;
+    my $max_id_length  = $producer_args->{mysql_max_id_length} || $DEFAULT_MAX_ID_LENGTH;
 
     my ($qt, $qf, $qc) = ('','', '');
     $qt = '`' if $translator->quote_table_names;
@@ -275,6 +281,7 @@ sub produce {
                                          no_comments       => $no_comments,
                                          quote_table_names => $qt,
                                          quote_field_names => $qf,
+                                         max_id_length     => $max_id_length,
                                          mysql_version     => $mysql_version
                                          });
     }
@@ -517,7 +524,7 @@ sub create_index
 
     return join( ' ', 
                  lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
-                 $index->name,
+                 truncate_id_uniquely( $index->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ),
                  '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
                  );
 
@@ -583,7 +590,7 @@ sub create_constraint
     elsif ( $c->type eq UNIQUE ) {
         return
         'UNIQUE '. 
-            (defined $c->name ? $qf.$c->name.$qf.' ' : '').
+            (defined $c->name ? $qf.truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ).$qf.' ' : '').
             '(' . $qf . join("$qf, $qf", @fields). $qf . ')';
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
@@ -592,7 +599,7 @@ sub create_constraint
         #
 
         my $table = $c->table;
-        my $c_name = $c->name;
+        my $c_name = truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH );
 
         my $def = join(' ', 
                        map { $_ || () } 

@@ -102,7 +102,7 @@ schema:
         - type: NORMAL
           fields: 
             - id
-          name: index_2
+          name: really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaaaaaaaaaaaa
       constraints:
         - type: PRIMARY_KEY
           fields:
@@ -126,8 +126,8 @@ my @stmts = (
 "CREATE TABLE `thing` (
   `id` unsigned int auto_increment,
   `name` varchar(32),
-  `swedish_name` varchar(32) CHARACTER SET swe7,
-  `description` text CHARACTER SET utf8 COLLATE utf8_general_ci,
+  `swedish_name` varchar(32) character set swe7,
+  `description` text character set utf8 collate utf8_general_ci,
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
@@ -138,7 +138,7 @@ my @stmts = (
   `foo` integer,
   `foo2` integer,
   INDEX index_1 (`id`),
-  INDEX index_2 (`id`),
+  INDEX really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47 (`id`),
   INDEX (`foo`),
   INDEX (`foo2`),
   PRIMARY KEY (`id`, `foo`),
