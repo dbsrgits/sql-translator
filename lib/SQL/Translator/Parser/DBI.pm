@@ -138,14 +138,6 @@ use Exporter;
 
 use SQL::Translator::Utils qw(debug);
 
-use SQL::Translator::Parser::DBI::MySQL;
-use SQL::Translator::Parser::DBI::SQLServer;
-use SQL::Translator::Parser::DBI::SQLite;
-use SQL::Translator::Parser::DBI::Sybase;
-use SQL::Translator::Parser::DBI::PostgreSQL;
-use SQL::Translator::Parser::DBI::DB2;
-use SQL::Translator::Parser::DBI::Oracle;
-
 use base qw(Exporter);
 @EXPORT = qw(parse);
 
@@ -180,11 +172,7 @@ sub parse {
     my $pkg     = "SQL::Translator::Parser::DBI::$driver";
     my $sub     = $pkg.'::parse';
 
-    #
-    # I can't get this to work.  I seem to have to have the "use"
-    # statements above.
-    #
-#    $tr->load( $pkg );
+    $tr->load( $pkg );
 
     eval {
         no strict 'refs';

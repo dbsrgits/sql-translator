@@ -6,7 +6,7 @@ use Data::Dumper;
 local $Data::Dumper::Maxdepth = 3;
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);
+Log::Log4perl->easy_init($ERROR) unless Log::Log4perl->initialized();
 use SQL::Translator::Schema::Graph::Node;
 use SQL::Translator::Schema::Graph::Edge;
 use SQL::Translator::Schema::Graph::Port;

@@ -54,7 +54,7 @@ use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
-use SQL::Translator::Schema::Graph;
+
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
@@ -74,8 +74,10 @@ sub as_graph {
 Returns the schema as an L<SQL::Translator::Schema::Graph> object.
 
 =cut
+    require  SQL::Translator::Schema::Graph;
 
     my $self = shift;
+
     return SQL::Translator::Schema::Graph->new(
         translator => $self->translator );
 }
