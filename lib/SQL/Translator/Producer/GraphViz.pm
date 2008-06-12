@@ -422,8 +422,8 @@ sub produce {
         for my $i ( 0 .. $#tables ) {
             my $table1 = $tables[ $i ];
             for my $j ( 0 .. $#tables ) {
+                next if $i == $j;
                 my $table2 = $tables[ $j ];
-                next if $table1 eq $table2;
                 next if $done{ $table1 }{ $table2 };
                 $gv->add_edge( $table2, $table1 );
                 $done{ $table1 }{ $table2 } = 1;
