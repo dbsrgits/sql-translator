@@ -94,13 +94,23 @@ schema:
           data_type: int
           order: 2
           is_not_null: 1
+        bar_set:
+          name: bar_set
+          data_type: set
+          order: 3
+          is_not_null: 1
+          extra:
+            list:
+              - foo
+              - bar
+              - baz
       indices:
         - type: NORMAL
-          fields: 
+          fields:
             - id
           name: index_1
         - type: NORMAL
-          fields: 
+          fields:
             - id
           name: really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaaaaaaaaaaaa
       constraints:
@@ -137,6 +147,7 @@ my @stmts = (
   `id` integer,
   `foo` integer,
   `foo2` integer,
+  `bar_set` set('foo', 'bar', 'baz'),
   INDEX index_1 (`id`),
   INDEX really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47 (`id`),
   INDEX (`foo`),

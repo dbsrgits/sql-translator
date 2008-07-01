@@ -457,9 +457,9 @@ sub create_field
 
     $field_def .= " $data_type";
 
-    if ( lc $data_type eq 'enum' ) {
+    if ( lc($data_type) eq 'enum' || lc($data_type) eq 'set') {
         $field_def .= '(' . $commalist . ')';
-    } 
+    }
     elsif ( defined $size[0] && $size[0] > 0 ) {
         $field_def .= '(' . join( ', ', @size ) . ')';
     }
