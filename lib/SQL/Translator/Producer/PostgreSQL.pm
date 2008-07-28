@@ -38,7 +38,7 @@ producer.
 
 use strict;
 use warnings;
-use vars qw[ $DEBUG $WARN $VERSION ];
+use vars qw[ $DEBUG $WARN $VERSION %used_names ];
 $VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
@@ -182,6 +182,7 @@ sub produce {
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
     my $pargs          = $translator->producer_args;
+    local %used_names  = ();
 
     my $postgres_version = $pargs->{postgres_version} || 0;
 
@@ -192,7 +193,6 @@ sub produce {
     
     my $output;
     $output .= header_comment unless ($no_comments);
-#    my %used_index_names;
 
     my (@table_defs, @fks);
     for my $table ( $schema->get_tables ) {
@@ -292,24 +292,21 @@ sub unreserve {
 
 # -------------------------------------------------------------------
 sub next_unused_name {
-    my $name       = shift || '';
-    my $used_names = shift || '';
-
-    my %used_names = %$used_names;
-
-    if ( !defined($used_names{$name}) ) {
+    my $name = shift || '';
+    if ( !defined( $used_names{$name} ) ) {
         $used_names{$name} = $name;
         return $name;
     }
-    
+
     my $i = 2;
-    while ( defined($used_names{$name . $i}) ) {
+    while ( defined( $used_names{ $name . $i } ) ) {
         ++$i;
     }
     $name .= $i;
     $used_names{$name} = $name;
     return $name;
 }
+
 
 sub create_table 
 {
@@ -401,7 +398,7 @@ sub create_table
                             "\n);"
                             ;
 
-    $create_statement .= "\n" . join(";\n", @index_defs) . "\n";
+    $create_statement .= "\n" . join("\n", @index_defs) . "\n";
     
     return $create_statement, \@fks;
 }
@@ -480,9 +477,6 @@ sub create_table
     }
 }
 
-{
-    my %used_index_names;
-
     sub create_index
     {
         my ($index, $options) = @_;
@@ -494,11 +488,9 @@ sub create_table
 
         my ($index_def, @constraint_defs);
 
-        $used_index_names{$table_name} ||= {};
         my $name = $index->name || '';
         if ( $name ) {
-            $name = next_unused_name($name, $used_index_names{$table_name});
-            $used_index_names{$name} = $name;
+            $name = next_unused_name($name);
         }
 
         my $type = $index->type || NORMAL;
@@ -543,8 +535,7 @@ sub create_table
 
         my $name = $c->name || '';
         if ( $name ) {
-            $name = next_unused_name($name, \%used_index_names);
-            $used_index_names{$name} = $name;
+            $name = next_unused_name($name);
         }
 
         my @fields     = 
@@ -564,8 +555,7 @@ sub create_table
                 '('.$qf . join( $qf.', '.$qf, @fields ) . $qf.')';
         }
         elsif ( $c->type eq UNIQUE ) {
-            $name = next_unused_name($name, \%used_index_names);
-            $used_index_names{$name} = $name;
+            $name = next_unused_name($name);
             push @constraint_defs, "${def_start}UNIQUE " .
                 '('.$qf . join( $qf.', '.$qf, @fields ) . $qf.')';
         }
@@ -604,7 +594,6 @@ sub create_table
 
         return \@constraint_defs, \@fks;
     }
-}
 
 sub convert_datatype
 {
