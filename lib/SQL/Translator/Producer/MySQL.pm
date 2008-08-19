@@ -286,8 +286,8 @@ sub produce {
                                          });
     }
 
-    for my $view ( $schema->get_views ) {
-#        print $view->name, "\n";
+    if ($mysql_version > 5.0) {
+      for my $view ( $schema->get_views ) {
         push @table_defs, create_view($view,
                                        { add_replace_view  => $add_drop_table,
                                          show_warnings     => $show_warnings,
@@ -297,6 +297,7 @@ sub produce {
                                          max_id_length     => $max_id_length,
                                          mysql_version     => $mysql_version
                                          });
+      }
     }
 
 
