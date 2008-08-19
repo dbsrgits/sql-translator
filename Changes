@@ -1,4 +1,7 @@
 
+# ----------------------------------------------------------
+# 0.09001 2008-08-19
+# ----------------------------------------------------------
 * Added support for CREATE VIEW + tests in the mysql producer (groditi)
 * Added support for SET fields in the mysql producer + test (groditi)
 * Added support for proper booleans in the mysql producer, when a mysql version of at least 4.x is supplied
@@ -6,7 +9,7 @@
 * Added support to truncate long constraint and index names in the mysql producer, because of a change to DBIx::Class to produce such long names in some cases.
 
 # ----------------------------------------------------------
-# 0.0900 2008-02-25
+# 0.09000 2008-02-25
 # ----------------------------------------------------------
 
 * Fix Pg produces idea of which field types need a size param
