@@ -286,10 +286,67 @@ sub produce {
                                          });
     }
 
+    for my $view ( $schema->get_views ) {
+#        print $view->name, "\n";
+        push @table_defs, create_view($view,
+                                       { add_replace_view  => $add_drop_table,
+                                         show_warnings     => $show_warnings,
+                                         no_comments       => $no_comments,
+                                         quote_table_names => $qt,
+                                         quote_field_names => $qf,
+                                         max_id_length     => $max_id_length,
+                                         mysql_version     => $mysql_version
+                                         });
+    }
+
+
 #    print "@table_defs\n";
     push @table_defs, "SET foreign_key_checks=1;\n\n";
 
     return wantarray ? ($create, @table_defs) : $create . join ('', @table_defs);
+}
+
+sub create_view {
+    my ($view, $options) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+
+    my $view_name = $view->name;
+    debug("PKG: Looking at view '${view_name}'\n");
+
+    # Header.  Should this look like what mysqldump produces?
+    my $create = '';
+    $create .= "--\n-- View: ${qt}${view_name}${qt}\n--\n" unless $options->{no_comments};
+    $create .= 'CREATE';
+    $create .= ' OR REPLACE' if $options->{add_replace_view};
+    $create .= "\n";
+
+    my $extra = $view->extra;
+    # ALGORITHM
+    if( exists($extra->{mysql_algorithm}) && defined(my $algorithm = $extra->{mysql_algorithm}) ){
+      $create .= "   ALGORITHM = ${algorithm}\n" if $algorithm =~ /(?:UNDEFINED|MERGE|TEMPTABLE)/i;
+    }
+    # DEFINER
+    if( exists($extra->{mysql_definer}) && defined(my $user = $extra->{mysql_definer}) ){
+      $create .= "   DEFINER = ${user}\n";
+    }
+    # SECURITY
+    if( exists($extra->{mysql_security}) && defined(my $security = $extra->{mysql_security}) ){
+      $create .= "   SQL SECURITY ${security}\n" if $security =~ /(?:DEFINER|INVOKER)/i;
+    }
+
+    #Header, cont.
+    $create .= "  VIEW ${qt}${view_name}${qt}";
+
+    if( my @fields = $view->fields ){
+      my $list = join ', ', map { "${qf}${_}${qf}"} @fields;
+      $create .= " ( ${list} )";
+    }
+    if( my $sql = $view->sql ){
+      $create .= " AS (\n    ${sql}\n  )";
+    }
+    $create .= ";\n\n";
+    return $create;
 }
 
 sub create_table

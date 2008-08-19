@@ -1,4 +1,5 @@
 
+* Added support for CREATE VIEW + tests in the mysql producer (groditi)
 * Added support for SET fields in the mysql producer + test (groditi)
 * Added support for proper booleans in the mysql producer, when a mysql version of at least 4.x is supplied
 * Added support for proper enums under pg (as of 8.3), with pg version check, and deferrable constraints

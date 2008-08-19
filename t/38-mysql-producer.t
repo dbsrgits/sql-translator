@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(14,
+    maybe_plan(16,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -261,3 +261,39 @@ $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_ve
 is($field3_sql, "myfield enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
 $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3,);
 is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
+
+{
+  my $view1 = SQL::Translator::Schema::View->new( name => 'view_foo',
+                                                  fields => [qw/id name/],
+                                                  sql => 'SELECT id, name FROM thing',
+                                                  extra => {
+                                                    mysql_definer => 'CURRENT_USER',
+                                                    mysql_algorithm => 'MERGE',
+                                                    mysql_security => 'DEFINER',
+                                                  });
+  my $create_opts = { add_replace_view => 1, no_comments => 1 };
+  my $view1_sql1 = SQL::Translator::Producer::MySQL::create_view($view1, $create_opts);
+
+  my $view_sql_replace = "CREATE OR REPLACE
+   ALGORITHM = MERGE
+   DEFINER = CURRENT_USER
+   SQL SECURITY DEFINER
+  VIEW view_foo ( id, name ) AS (
+    SELECT id, name FROM thing
+  );\n\n";
+  is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
+
+
+  my $view2 = SQL::Translator::Schema::View->new( name => 'view_foo',
+                                                  fields => [qw/id name/],
+                                                  sql => 'SELECT id, name FROM thing',);
+  my $create2_opts = { add_replace_view => 0, no_comments => 1 };
+  my $view1_sql2 = SQL::Translator::Producer::MySQL::create_view($view2, $create2_opts);
+  my $view_sql_noreplace = "CREATE
+  VIEW view_foo ( id, name ) AS (
+    SELECT id, name FROM thing
+  );\n\n";
+  is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
+}
+
+
