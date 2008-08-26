@@ -57,6 +57,12 @@ CREATE TABLE "Another" (
   PRIMARY KEY ("id")
 );
 
+
+
+CREATE OR REPLACE VIEW "email_list" ( "email" ) AS (
+    SELECT email FROM Basic WHERE email IS NOT NULL
+  );
+
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
 SQL

@@ -1,6 +1,7 @@
 # ----------------------------------------------------------
-#
+# 
 # ----------------------------------------------------------
+* Added support for CREATE VIEW + tests in the Pg producer (wreis)
 * Added support for CREATE VIEW + tests in the sqlite producer (groditi)
 
 # ----------------------------------------------------------
@@ -16,7 +17,7 @@
 # 0.09000 2008-02-25
 # ----------------------------------------------------------
 
-* Fix Pg produces idea of which field types need a size param
+* Fix Pg produces idea of which field types need a size param (wreis)
 * Add support for COLLATE table option to MySQL parser
 * Allow DEFAULT CHARACTER SET without '=' (as produced by mysqldump)
 

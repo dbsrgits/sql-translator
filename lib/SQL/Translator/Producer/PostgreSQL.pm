@@ -43,7 +43,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(header_comment);
+use SQL::Translator::Utils qw(debug header_comment);
 use Data::Dumper;
 
 my %translate;
@@ -206,6 +206,15 @@ sub produce {
         push @table_defs, $table_def;
         push @fks, @$fks;
 
+    }
+
+    for my $view ( $schema->get_views ) {
+      push @table_defs, create_view($view, {
+        add_replace_view  => $add_drop_table,
+        quote_table_names => $qt,
+        quote_field_names => $qf,
+        no_comments       => $no_comments,
+      });
     }
 
     $output = join("\n\n", @table_defs);
@@ -401,6 +410,41 @@ sub create_table
     $create_statement .= "\n" . join("\n", @index_defs) . "\n";
     
     return $create_statement, \@fks;
+}
+
+sub create_view {
+    my ($view, $options) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+
+    my $view_name = $view->name;
+    debug("PKG: Looking at view '${view_name}'\n");
+
+    my $create = '';
+    $create .= "--\n-- View: ${qt}${view_name}${qt}\n--\n"
+        unless $options->{no_comments};
+    $create .= 'CREATE';
+    $create .= ' OR REPLACE' if $options->{add_replace_view};
+
+    my $extra = $view->extra;
+    $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create .= " VIEW ${qt}${view_name}${qt}";
+
+    if ( my @fields = $view->fields ) {
+        my $field_list = join ', ', map { "${qf}${_}${qf}" } @fields;
+        $create .= " ( ${field_list} )";
+    }
+
+    if ( my $sql = $view->sql ) {
+        $create .= " AS (\n    ${sql}\n  )";
+    }
+
+    if ( $extra->{check_option} ) {
+        $create .= ' WITH ' . uc $extra->{check_option} . ' CHECK OPTION';
+    }
+
+    $create .= ";\n\n";
+    return $create;
 }
 
 { 
