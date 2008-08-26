@@ -76,6 +76,10 @@ sub produce {
         push @table_defs, $create, map( { "$_;" } @defs), "";
     }
 
+    for my $view ( $schema->get_views ) {
+      push @table_defs, create_view($view, {no_comments => $no_comments,});
+    }
+
 #    $create .= "COMMIT;\n";
 
     return wantarray ? ($create, @table_defs, "COMMIT;\n") : join("\n", ($create, @table_defs, "COMMIT;\n"));
@@ -116,6 +120,30 @@ sub mk_name {
     $scope->{ $name }++;
     return $name;
 }
+
+sub create_view {
+    my ($view, $options) = @_;
+
+    my $view_name = $view->name;
+    debug("PKG: Looking at view '${view_name}'\n");
+
+    # Header.  Should this look like what mysqldump produces?
+    my $extra = $view->extra;
+    my $create = '';
+    $create .= "--\n-- View: ${view_name}\n--\n" unless $options->{no_comments};
+    $create .= 'CREATE';
+    $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create .= ' VIEW';
+    $create .= " IF NOT EXISTS" if exists($extra->{if_not_exists}) && $extra->{if_not_exists};
+    $create .= " ${view_name}";
+
+    if( my $sql = $view->sql ){
+      $create .= " AS (\n    ${sql}\n  )";
+    }
+    $create .= ";\n\n";
+    return $create;
+}
+
 
 sub create_table
 {
