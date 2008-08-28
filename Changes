@@ -3,6 +3,7 @@
 # ----------------------------------------------------------
 * Added support for CREATE VIEW + tests in the Pg producer (wreis)
 * Added support for CREATE VIEW + tests in the sqlite producer (groditi)
+* Added proper argument parsing and documentation to MySQL Parser and Producer (ribasushi)
 
 # ----------------------------------------------------------
 # 0.09001 2008-08-19
