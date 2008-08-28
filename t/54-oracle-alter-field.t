@@ -38,6 +38,7 @@ $t->parser->($t,$yaml2);
 my $d = SQL::Translator::Diff->new
   ({
     output_db => 'Oracle',
+    target_db => 'Oracle',
     source_schema => $s->schema,
     target_schema => $t->schema,
    });
