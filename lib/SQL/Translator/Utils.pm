@@ -31,7 +31,7 @@ use Exporter;
 $VERSION = sprintf "%d.%02d", q$Revision: 1.12 $ =~ /(\d+)\.(\d+)/;
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
-    debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT
+    debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT parse_mysql_version
 );
 
 # ----------------------------------------------------------------------
@@ -171,6 +171,55 @@ sub truncate_id_uniquely {
          . $collision_tag;
 }
 
+
+#---------------------------------------------------------------------
+# parse_mysql_version ( $version_string, $result_target)
+#
+# Attempts to parse an arbitrary string as a mysql version number. 
+# Returns either a floating point perl style string, or a mysql style
+# 5 digit string, depending on the supplied $result_target
+#---------------------------------------------------------------------
+sub parse_mysql_version {
+    my ($v, $target) = @_;
+
+    return undef unless $v;
+
+    $target ||= 'perl';
+
+    my @vers;
+
+    # X.Y.Z style 
+    if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
+        push @vers, $1, $2, $3;
+    }
+
+    # XYYZZ (mysql) style 
+    elsif ( $v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x ) {
+        push @vers, $1, $2, $3;
+    }
+
+    # XX.YYYZZZ (perl) style or simply X 
+    elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
+        push @vers, $1, $2, $3;
+    }
+    else {
+        #how do I croak sanely here?
+        die "Unparseable MySQL version '$v'";
+    }
+
+    if ($target eq 'perl') {
+        return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
+    }
+    elsif ($target eq 'mysql') {
+        return sprintf ('%d%02d%02d', map { $_ || 0 } (@vers) );
+    }
+    else {
+        #how do I croak sanely here?
+        die "Unknown version target '$target'";
+    }
+}
+
+
 1;
 
 # ----------------------------------------------------------------------
@@ -300,11 +349,24 @@ Will give three different results; specifically:
 This is the default comment string, '-- ' by default.  Useful for
 C<header_comment>.
 
+=head2 parse_mysql_version
+
+Used by both L<Parser::MySQL|SQL::Translator::Parser::MySQL> and 
+L<Producer::MySQL|SQL::Translator::Producer::MySQL> in order to provide a
+consistent format for both C<< parser_args->{mysql_parser_version} >> and
+C<< producer_args->{mysql_version} >> respectively. Takes any of the following
+version specifications:
+
+  5.0.3
+  4.1
+  3.23.2
+  5
+  5.001005  (perl style)
+  30201     (mysql style)
+
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
-
-=cut
 
 =cut

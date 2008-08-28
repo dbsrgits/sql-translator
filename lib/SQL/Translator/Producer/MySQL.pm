@@ -40,6 +40,15 @@ There are still some issues to be worked out with syntax differences
 between MySQL versions 3 and 4 ("SET foreign_key_checks," character sets
 for fields, etc.).
 
+=head1 ARGUMENTS 
+
+This producer takes a single optional producer_arg C<mysql_version>, which 
+provides the desired version for the target database. By default MySQL v3 is
+assumed, and statements pertaining to any features introduced in later versions
+(e.g. CREATE VIEW) are not produced.
+
+Valid version specifiers for C<mysql_parser_version> are listed L<here|SQL::Translator::Utils/parse_mysql_version> 
+
 =head2 Table Types
 
 Normally the tables will be created without any explicit table type given and
@@ -103,7 +112,7 @@ my $DEFAULT_MAX_ID_LENGTH = 64;
 
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment truncate_id_uniquely);
+use SQL::Translator::Utils qw(debug header_comment truncate_id_uniquely parse_mysql_version);
 
 #
 # Use only lowercase for the keys (e.g. "long" and not "LONG")
@@ -252,7 +261,7 @@ sub produce {
     my $schema         = $translator->schema;
     my $show_warnings  = $translator->show_warnings || 0;
     my $producer_args  = $translator->producer_args;
-    my $mysql_version  = $producer_args->{mysql_version} || 0;
+    my $mysql_version  = parse_mysql_version ($producer_args->{mysql_version}, 'perl') || 0;
     my $max_id_length  = $producer_args->{mysql_max_id_length} || $DEFAULT_MAX_ID_LENGTH;
 
     my ($qt, $qf, $qc) = ('','', '');
@@ -469,6 +478,7 @@ sub create_field
     my $charset = $extra{'mysql_charset'};
     my $collate = $extra{'mysql_collate'};
 
+    my $mysql_version = $options->{mysql_version} || 0;
     #
     # Oracle "number" type -- figure best MySQL type
     #
@@ -489,13 +499,15 @@ sub create_field
     }
     #
     # Convert a large Oracle varchar to "text"
+    # (not necessary as of 5.0.3 http://dev.mysql.com/doc/refman/5.0/en/char.html)
     #
     elsif ( $data_type =~ /char/i && $size[0] > 255 ) {
-        $data_type = 'text';
-        @size      = ();
+        unless ($size[0] <= 65535 && $mysql_version >= 5.000003 ) {
+            $data_type = 'text';
+            @size      = ();
+        }
     }
     elsif ( $data_type =~ /boolean/i ) {
-        my $mysql_version = $options->{mysql_version} || 0;
         if ($mysql_version >= 4) {
             $data_type = 'boolean';
         } else {

@@ -134,6 +134,17 @@ A subset of INSERT that we ignore:
 
   INSERT anything
 
+=head1 ARGUMENTS
+
+This parser takes a single optional parser_arg C<mysql_parser_version>, which
+provides the desired version for the target database. Any statement in the processed
+dump file, that is commented with a version higher than the one supplied, will be stripped.
+
+Valid version specifiers for C<mysql_parser_version> are listed L<here|SQL::Translator::Utils/parse_mysql_version>
+
+More information about the MySQL comment-syntax: L<http://dev.mysql.com/doc/refman/5.0/en/comments.html>
+
+
 =cut
 
 use strict;
@@ -147,6 +158,8 @@ use Exporter;
 use Storable qw(dclone);
 use DBI qw(:sql_types);
 use base qw(Exporter);
+
+use SQL::Translator::Utils qw/parse_mysql_version/;
 
 our %type_mapping = (
 );
@@ -751,7 +764,9 @@ sub parse {
     }
     
     # Preprocess for MySQL-specific and not-before-version comments from mysqldump
-    my $parser_version = $translator->parser_args->{mysql_parser_version} || DEFAULT_PARSER_VERSION;
+    my $parser_version = 
+        parse_mysql_version ($translator->parser_args->{mysql_parser_version}, 'mysql') 
+        || DEFAULT_PARSER_VERSION;
     while ( $data =~ s#/\*!(\d{5})?(.*?)\*/#($1 && $1 > $parser_version ? '' : $2)#es ) {}
 
     my $result = $parser->startrule($data);

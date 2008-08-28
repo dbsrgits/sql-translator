@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(16,
+    maybe_plan(32,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -262,6 +262,111 @@ is($field3_sql, "myfield enum('0','1') NOT NULL", 'For Mysql < 4, use enum for b
 $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3,);
 is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
 
+my $number_sizes = {
+    '3, 2' => 'double',
+    12 => 'bigint',
+    1 => 'tinyint',
+    4 => 'int',
+};
+for my $size (keys %$number_sizes) {
+    my $expected = $number_sizes->{$size};
+    my $number_field = SQL::Translator::Schema::Field->new( 
+        name => "numberfield_$size",
+        table => $table,
+        data_type => 'number',
+        size => $size,
+        is_nullable => 1,
+        is_foreign_key => 0,
+        is_unique => 0 
+    );
+
+    is(
+        SQL::Translator::Producer::MySQL::create_field($number_field),
+        "numberfield_$size $expected($size)",
+        "Use $expected for NUMBER types of size $size"
+    );
+}
+
+my $varchars;
+for my $size (qw/255 256 65535 65536/) {
+    $varchars->{$size} = SQL::Translator::Schema::Field->new( 
+        name => "vch_$size",
+        table => $table,
+        data_type => 'varchar',
+        size => $size,
+        is_nullable => 1,
+    );
+}
+
+
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003 }),
+    'vch_255 varchar(255)', 
+    'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0 }),
+    'vch_255 varchar(255)', 
+    'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{255}),
+    'vch_255 varchar(255)', 
+    'VARCHAR(255) is not substituted with TEXT when no version specified',
+);
+
+
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003 }),
+    'vch_256 varchar(256)', 
+    'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0 }),
+    'vch_256 text', 
+    'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{256}),
+    'vch_256 text', 
+    'VARCHAR(256) is substituted with TEXT when no version specified',
+);
+
+
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003 }),
+    'vch_65535 varchar(65535)', 
+    'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0 }),
+    'vch_65535 text', 
+    'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65535}),
+    'vch_65535 text', 
+    'VARCHAR(65535) is substituted with TEXT when no version specified',
+);
+
+
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003 }),
+    'vch_65536 text', 
+    'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0 }),
+    'vch_65536 text', 
+    'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
+);
+is (
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65536}),
+    'vch_65536 text', 
+    'VARCHAR(65536) is substituted with TEXT when no version specified',
+);
+
+
 {
   my $view1 = SQL::Translator::Schema::View->new( name => 'view_foo',
                                                   fields => [qw/id name/],
@@ -295,5 +400,3 @@ is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, us
   );\n\n";
   is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
 }
-
-

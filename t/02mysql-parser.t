@@ -7,10 +7,11 @@ use strict;
 use Test::More;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
+use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(233, "SQL::Translator::Parser::MySQL");
+    maybe_plan(244, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -627,3 +628,35 @@ BEGIN {
     is($collate, 'latin1_bin', "Collate found");
     is($charset, 'latin1', "Character set found");
 }
+
+# Test the mysql version parser (probably needs to migrate to t/utils.t)
+my $parse_as = {
+    perl => {
+        '3.23.2'    => 3.023002,
+        '4'         => 4.000000,
+        '50003'     => 5.000003,
+        '5.01.0'    => 5.001000,
+        '5.1'       => 5.001000,
+    },
+    mysql => {
+        '3.23.2'    => 32302,
+        '4'         => 40000,
+        '50003'     => 50003,
+        '5.01.0'    => 50100,
+        '5.1'       => 50100,
+    },
+};
+
+for my $target (keys %$parse_as) {
+    for my $str (keys %{$parse_as->{$target}}) {
+        cmp_ok (
+            SQL::Translator::Utils::parse_mysql_version ($str, $target),
+            '==',
+            $parse_as->{$target}{$str},
+            "'$str' parsed as $target version '$parse_as->{$target}{$str}'",
+        );
+    }
+}
+
+eval { SQL::Translator::Utils::parse_mysql_version ('bogus5.1') };
+ok ($@, 'Exception thrown on invalid version string');
