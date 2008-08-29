@@ -271,7 +271,7 @@ my $number_sizes = {
 for my $size (keys %$number_sizes) {
     my $expected = $number_sizes->{$size};
     my $number_field = SQL::Translator::Schema::Field->new( 
-        name => "numberfield_$size",
+        name => "numberfield_$expected",
         table => $table,
         data_type => 'number',
         size => $size,
@@ -282,7 +282,7 @@ for my $size (keys %$number_sizes) {
 
     is(
         SQL::Translator::Producer::MySQL::create_field($number_field),
-        "numberfield_$size $expected($size)",
+        "numberfield_$expected $expected($size)",
         "Use $expected for NUMBER types of size $size"
     );
 }
