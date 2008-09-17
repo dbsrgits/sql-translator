@@ -77,7 +77,10 @@ sub produce {
     }
 
     for my $view ( $schema->get_views ) {
-      push @table_defs, create_view($view, {no_comments => $no_comments,});
+      push @table_defs, create_view($view, {
+        add_drop_view => $add_drop_table,
+        no_comments   => $no_comments,
+      });
     }
 
 #    $create .= "COMMIT;\n";
@@ -123,6 +126,7 @@ sub mk_name {
 
 sub create_view {
     my ($view, $options) = @_;
+    my $add_drop_view = $options->{add_drop_view};
 
     my $view_name = $view->name;
     debug("PKG: Looking at view '${view_name}'\n");
@@ -131,6 +135,7 @@ sub create_view {
     my $extra = $view->extra;
     my $create = '';
     $create .= "--\n-- View: ${view_name}\n--\n" unless $options->{no_comments};
+    $create .= "DROP VIEW IF EXISTS $view_name;\n" if $add_drop_view;
     $create .= 'CREATE';
     $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
     $create .= ' VIEW';
@@ -138,7 +143,7 @@ sub create_view {
     $create .= " ${view_name}";
 
     if( my $sql = $view->sql ){
-      $create .= " AS (\n    ${sql}\n  )";
+      $create .= " AS\n    ${sql}";
     }
     $create .= ";\n\n";
     return $create;

@@ -62,9 +62,9 @@ CREATE TABLE Another (
 );
 
 
-CREATE VIEW email_list AS (
-    SELECT email FROM Basic WHERE email IS NOT NULL
-  );
+DROP VIEW IF EXISTS email_list;
+CREATE VIEW email_list AS
+    SELECT email FROM Basic WHERE email IS NOT NULL;
 
 
 COMMIT;

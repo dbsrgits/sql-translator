@@ -59,7 +59,8 @@ CREATE TABLE "Another" (
 
 
 
-CREATE OR REPLACE VIEW "email_list" ( "email" ) AS (
+DROP VIEW "email_list";
+CREATE VIEW "email_list" ( "email" ) AS (
     SELECT email FROM Basic WHERE email IS NOT NULL
   );
 

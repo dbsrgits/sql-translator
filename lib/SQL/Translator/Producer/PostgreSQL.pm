@@ -40,7 +40,7 @@ use strict;
 use warnings;
 use vars qw[ $DEBUG $WARN $VERSION %used_names ];
 $VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
-$DEBUG = 1 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
@@ -176,8 +176,8 @@ and table_constraint is:
 # -------------------------------------------------------------------
 sub produce {
     my $translator     = shift;
-    $DEBUG             = $translator->debug;
-    $WARN              = $translator->show_warnings;
+    local $DEBUG             = $translator->debug;
+    local $WARN              = $translator->show_warnings;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
@@ -210,7 +210,7 @@ sub produce {
 
     for my $view ( $schema->get_views ) {
       push @table_defs, create_view($view, {
-        add_replace_view  => $add_drop_table,
+        add_drop_view     => $add_drop_table,
         quote_table_names => $qt,
         quote_field_names => $qf,
         no_comments       => $no_comments,
@@ -416,6 +416,7 @@ sub create_view {
     my ($view, $options) = @_;
     my $qt = $options->{quote_table_names} || '';
     my $qf = $options->{quote_field_names} || '';
+    my $add_drop_view = $options->{add_drop_view};
 
     my $view_name = $view->name;
     debug("PKG: Looking at view '${view_name}'\n");
@@ -423,8 +424,8 @@ sub create_view {
     my $create = '';
     $create .= "--\n-- View: ${qt}${view_name}${qt}\n--\n"
         unless $options->{no_comments};
+    $create .= "DROP VIEW ${qt}${view_name}${qt};\n" if $add_drop_view;
     $create .= 'CREATE';
-    $create .= ' OR REPLACE' if $options->{add_replace_view};
 
     my $extra = $view->extra;
     $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
