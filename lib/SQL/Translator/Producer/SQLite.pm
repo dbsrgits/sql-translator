@@ -63,29 +63,23 @@ sub produce {
 
     debug("PKG: Beginning production\n");
 
-    my $create = '';
-    $create .= header_comment unless ($no_comments);
-    $create .= "BEGIN TRANSACTION;\n\n";
+    my @create = ();
+    push @create, header_comment unless ($no_comments);
+    push @create, 'BEGIN TRANSACTION';
 
-    my @table_defs = ();
     for my $table ( $schema->get_tables ) {
-        my @defs = create_table($table, { no_comments => $no_comments,
+        push @create, create_table($table, { no_comments => $no_comments,
                                           add_drop_table => $add_drop_table,});
-        my $create = shift @defs;
-        $create .= ";\n";
-        push @table_defs, $create, map( { "$_;" } @defs), "";
     }
 
     for my $view ( $schema->get_views ) {
-      push @table_defs, create_view($view, {
+      push @create, create_view($view, {
         add_drop_view => $add_drop_table,
         no_comments   => $no_comments,
       });
     }
 
-#    $create .= "COMMIT;\n";
-
-    return wantarray ? ($create, @table_defs, "COMMIT;\n") : join("\n", ($create, @table_defs, "COMMIT;\n"));
+    return wantarray ? (@create, "COMMIT") : join(";\n\n", (@create, "COMMIT;\n"));
 }
 
 # -------------------------------------------------------------------
@@ -145,7 +139,6 @@ sub create_view {
     if( my $sql = $view->sql ){
       $create .= " AS\n    ${sql}";
     }
-    $create .= ";\n\n";
     return $create;
 }
 
@@ -167,18 +160,18 @@ sub create_table
     #
     # Header.
     #
-    my $create = '';
-    $create .= "--\n-- Table: $table_name\n--\n" unless $no_comments;
-    $create .= qq[DROP TABLE $table_name;\n] if $add_drop_table;
-    $create .= "CREATE ${temp}TABLE $table_name (\n";
+    my @create;
+    push @create, "--\n-- Table: $table_name\n--\n" unless $no_comments;
+    push @create, qq[DROP TABLE $table_name] if $add_drop_table;
+    my $create_table = "CREATE ${temp}TABLE $table_name (\n";
 
     #
     # Comments
     #
     if ( $table->comments and !$no_comments ){
-        $create .= "-- Comments: \n-- ";
-        $create .= join "\n-- ",  $table->comments;
-        $create .= "\n--\n\n";
+        $create_table .= "-- Comments: \n-- ";
+        $create_table .= join "\n-- ",  $table->comments;
+        $create_table .= "\n--\n\n";
     }
 
     #
@@ -220,9 +213,9 @@ sub create_table
         push @constraint_defs, create_constraint($c);
     }
 
-    $create .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
+    $create_table .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
 
-    return ($create, @index_defs, @constraint_defs, @trigger_defs );
+    return (@create, $create_table, @index_defs, @constraint_defs, @trigger_defs );
 }
 
 sub create_field
@@ -405,9 +398,10 @@ sub batch_alter_table {
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
-    return join("\n", map { 
+#    return join("\n", map { 
+    return map { 
         my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-        map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql;") : () } @{ $diffs->{$_} }
+        map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql") : () } @{ $diffs->{$_} }
         
       } grep { @{$diffs->{$_}} } 
     qw/rename_table
@@ -419,7 +413,7 @@ sub batch_alter_table {
        rename_field
        alter_create_index
        alter_create_constraint
-       alter_table/);
+       alter_table/;
   }
 
 
@@ -439,12 +433,13 @@ sub batch_alter_table {
              "INSERT INTO @{[$table_name]} SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$table_name]}_temp_alter",
              "DROP TABLE @{[$table_name]}_temp_alter";
 
-  return join(";\n", @sql, "");
+  return @sql;
+#  return join("", @sql, "");
 }
 
 sub drop_table {
   my ($table) = @_;
-  return "DROP TABLE $table;";
+  return "DROP TABLE $table";
 }
 
 sub rename_table {

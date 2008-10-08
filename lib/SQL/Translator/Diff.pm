@@ -202,7 +202,7 @@ sub produce_diff_sql {
             
             $meth ? map { 
                     my $sql = $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_options );
-                    $sql ?  ("$sql;") : (); 
+                    $sql ?  ("$sql") : (); 
                   } @{ $flattened_diffs{$_} }
                   : $self->ignore_missing_methods
                   ? "-- $producer_class cant $_"
@@ -235,30 +235,30 @@ sub produce_diff_sql {
 
       unshift @diffs, 
         # Remove begin/commit here, since we wrap everything in one.
-        grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?);/ } $producer_class->can('produce')->($translator);
+        grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
     }
 
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
       my $meth = $producer_class->can('drop_table');
       
-      push @diffs, $meth ? map( { $meth->($_, $self->producer_options) } @tables_to_drop )
+      push @diffs, $meth ? ( map { $meth->($_, $self->producer_options) } @tables_to_drop)
                          : $self->ignore_missing_methods
                          ? "-- $producer_class cant drop_table"
                          : die "$producer_class cant drop_table";
     }
 
     if (@diffs) {
-      unshift @diffs, "BEGIN;\n";
-      push    @diffs, "\nCOMMIT;\n";
+      unshift @diffs, "BEGIN";
+      push    @diffs, "\nCOMMIT";
     } else {
-      @diffs = ("-- No differences found\n\n");
+      @diffs = ("-- No differences found");
     }
 
     if ( @diffs ) {
       if ( $self->target_db !~ /^(?:MySQL|SQLite)$/ ) {
         unshift(@diffs, "-- Target database @{[$self->target_db]} is untested/unsupported!!!");
       }
-      return join( "\n", "-- Convert schema '$src_name' to '$tar_name':\n", @diffs);
+      return join '', map { $_ ? "$_;\n\n" : "\n" } ("-- Convert schema '$src_name' to '$tar_name':", @diffs);
     }
     return undef;
 

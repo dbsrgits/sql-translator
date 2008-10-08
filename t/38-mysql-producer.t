@@ -130,9 +130,9 @@ schema:
 EOSCHEMA
 
 my @stmts = (
-"SET foreign_key_checks=0;\n\n",
+"SET foreign_key_checks=0",
 
-"DROP TABLE IF EXISTS `thing`;\n",
+"DROP TABLE IF EXISTS `thing`",
 "CREATE TABLE `thing` (
   `id` unsigned int auto_increment,
   `name` varchar(32),
@@ -140,9 +140,9 @@ my @stmts = (
   `description` text character set utf8 collate utf8_general_ci,
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci;\n\n",
+) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci",
 
-"DROP TABLE IF EXISTS `thing2`;\n",
+"DROP TABLE IF EXISTS `thing2`",
 "CREATE TABLE `thing2` (
   `id` integer,
   `foo` integer,
@@ -155,15 +155,15 @@ my @stmts = (
   PRIMARY KEY (`id`, `foo`),
   CONSTRAINT `fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
   CONSTRAINT `fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
-) ENGINE=InnoDB;\n\n",
+) ENGINE=InnoDB",
 
-"SET foreign_key_checks=1;\n\n"
+"SET foreign_key_checks=1",
 
 );
 
 my @stmts_no_drop = grep {$_ !~ /^DROP TABLE/} @stmts;
 
-my $mysql_out = join("", @stmts_no_drop);
+my $mysql_out = join(";\n\n", @stmts_no_drop) . ";\n\n";
 
 
     my $sqlt;
@@ -204,7 +204,7 @@ my $mysql_out = join("", @stmts_no_drop);
     $out = $sqlt->translate(\$yaml_in)
       or die "Translat eerror:".$sqlt->error;
 
-    eq_or_diff $out, join("", @stmts), "Output looks right with DROP TABLEs";
+    eq_or_diff $out, join(";\n\n", @stmts) . ";\n\n", "Output looks right with DROP TABLEs";
     is_deeply \@out, \@stmts,          "Array output looks right with DROP TABLEs";
 }
 
@@ -385,7 +385,7 @@ is (
    SQL SECURITY DEFINER
   VIEW view_foo ( id, name ) AS (
     SELECT id, name FROM thing
-  );\n\n";
+  )";
   is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
 
 
@@ -397,6 +397,6 @@ is (
   my $view_sql_noreplace = "CREATE
   VIEW view_foo ( id, name ) AS (
     SELECT id, name FROM thing
-  );\n\n";
+  )";
   is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
 }

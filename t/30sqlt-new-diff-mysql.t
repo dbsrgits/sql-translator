@@ -36,42 +36,59 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
 # Test for differences
 my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'MySQL', $target_schema, 'MySQL', { no_batch_alters => 1, producer_options => { quote_table_names => 0 } } );
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
--- Convert schema 'create1.yml' to 'create2.yml':
+-- Convert schema 'create1.yml' to 'create2.yml':;
 
 BEGIN;
 
 SET foreign_key_checks=0;
 
-
 CREATE TABLE added (
   id integer(11)
 );
 
-
 SET foreign_key_checks=1;
 
-
 ALTER TABLE old_name RENAME TO new_name;
+
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E;
+
 ALTER TABLE person DROP INDEX UC_age_name;
+
 ALTER TABLE person DROP INDEX u_name;
+
 ALTER TABLE employee DROP COLUMN job_title;
+
 ALTER TABLE new_name ADD COLUMN new_field integer;
+
 ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT '1';
+
 ALTER TABLE person CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment;
+
 ALTER TABLE person CHANGE COLUMN name name varchar(20) NOT NULL;
+
 ALTER TABLE person CHANGE COLUMN age age integer(11) DEFAULT '18';
+
 ALTER TABLE person CHANGE COLUMN iq iq integer(11) DEFAULT '0';
+
 ALTER TABLE person CHANGE COLUMN description physical_description text;
+
 ALTER TABLE person ADD UNIQUE INDEX unique_name (name);
+
 ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
+
 ALTER TABLE person ADD UNIQUE UC_person_id (person_id);
+
 ALTER TABLE person ADD UNIQUE UC_age_name (age, name);
+
 ALTER TABLE person ENGINE=InnoDB;
+
 ALTER TABLE deleted DROP FOREIGN KEY fk_fake;
+
 DROP TABLE deleted;
 
+
 COMMIT;
+
 ## END OF DIFF
 
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schema, 'MySQL',
@@ -81,24 +98,23 @@ $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schem
     });
 
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
--- Convert schema 'create1.yml' to 'create2.yml':
+-- Convert schema 'create1.yml' to 'create2.yml':;
 
 BEGIN;
 
 SET foreign_key_checks=0;
 
-
 CREATE TABLE added (
   id integer(11)
 );
 
-
 SET foreign_key_checks=1;
 
-
 ALTER TABLE employee DROP COLUMN job_title;
+
 ALTER TABLE old_name RENAME TO new_name,
                      ADD COLUMN new_field integer;
+
 ALTER TABLE person DROP INDEX UC_age_name,
                    ADD COLUMN is_rock_star tinyint(4) DEFAULT '1',
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
@@ -109,10 +125,14 @@ ALTER TABLE person DROP INDEX UC_age_name,
                    ADD UNIQUE UC_person_id (person_id),
                    ADD UNIQUE UC_age_name (age, name),
                    ENGINE=InnoDB;
+
 ALTER TABLE deleted DROP FOREIGN KEY fk_fake;
+
 DROP TABLE deleted;
 
+
 COMMIT;
+
 ## END OF DIFF
 
 
@@ -120,9 +140,9 @@ COMMIT;
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
 
 eq_or_diff($out, <<'## END OF DIFF', "No differences found");
--- Convert schema 'create1.yml' to 'create1.yml':
+-- Convert schema 'create1.yml' to 'create1.yml':;
 
--- No differences found
+-- No differences found;
 
 ## END OF DIFF
 
@@ -148,24 +168,22 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
   $field->size(0);
   $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_options => { quote_table_names => 0 } } );
   eq_or_diff($out, <<'## END OF DIFF', "No differences found");
--- Convert schema 'create.sql' to 'create2.yml':
+-- Convert schema 'create.sql' to 'create2.yml':;
 
 BEGIN;
 
 SET foreign_key_checks=0;
 
-
 CREATE TABLE added (
   id integer(11)
 );
 
-
 SET foreign_key_checks=1;
-
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
                      DROP COLUMN job_title,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
+
 ALTER TABLE person DROP INDEX UC_age_name,
                    DROP INDEX u_name,
                    ADD COLUMN is_rock_star tinyint(4) DEFAULT '1',
@@ -178,9 +196,12 @@ ALTER TABLE person DROP INDEX UC_age_name,
                    ADD UNIQUE UC_person_id (person_id),
                    ADD UNIQUE UC_age_name (age, name),
                    ENGINE=InnoDB;
+
 DROP TABLE deleted;
 
+
 COMMIT;
+
 ## END OF DIFF
 }
 
@@ -218,16 +239,19 @@ COMMIT;
   my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
 
   eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB");
--- Convert schema 'Schema 1' to 'Schema 2':
+-- Convert schema 'Schema 1' to 'Schema 2':;
 
 BEGIN;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E_diff;
+
 ALTER TABLE employee ADD COLUMN new integer,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id) ON DELETE CASCADE,
                      ADD CONSTRAINT new_constraint FOREIGN KEY (employee_id) REFERENCES patty (fake);
 
+
 COMMIT;
+
 ## END OF DIFF
 }
 
@@ -265,7 +289,7 @@ COMMIT;
 
   my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
   eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table");
--- Convert schema 'Schema 3' to 'Schema 4':
+-- Convert schema 'Schema 3' to 'Schema 4':;
 
 BEGIN;
 
@@ -273,7 +297,9 @@ ALTER TABLE employee RENAME TO fnord,
                      DROP FOREIGN KEY bar_fk,
                      ADD CONSTRAINT foo_fk FOREIGN KEY (employee_id) REFERENCES foo (id);
 
+
 COMMIT;
+
 ## END OF DIFF
 
   # Test quoting works too.
@@ -281,7 +307,7 @@ COMMIT;
     { producer_options => { quote_table_names => '`' } }
   );
   eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on");
--- Convert schema 'Schema 3' to 'Schema 4':
+-- Convert schema 'Schema 3' to 'Schema 4':;
 
 BEGIN;
 
@@ -289,6 +315,8 @@ ALTER TABLE `employee` RENAME TO `fnord`,
                        DROP FOREIGN KEY bar_fk,
                        ADD CONSTRAINT foo_fk FOREIGN KEY (employee_id) REFERENCES `foo` (id);
 
+
 COMMIT;
+
 ## END OF DIFF
 }

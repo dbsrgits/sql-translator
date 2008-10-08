@@ -12,7 +12,7 @@ use SQL::Translator::Schema::Constants;
 
 
 BEGIN {
-    maybe_plan(1, 'SQL::Translator::Parser::XML::SQLFairy',
+    maybe_plan(2, 'SQL::Translator::Parser::XML::SQLFairy',
               'SQL::Translator::Producer::SQLite');
 }
 
@@ -33,13 +33,11 @@ my $sql = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-# print ">>$sql<<\n";
-
 eq_or_diff($sql, << "SQL");
 BEGIN TRANSACTION;
 
-
 DROP TABLE Basic;
+
 CREATE TABLE Basic (
   id INTEGER PRIMARY KEY NOT NULL,
   title varchar(100) NOT NULL DEFAULT 'hello',
@@ -54,18 +52,55 @@ CREATE TABLE Basic (
 );
 
 CREATE INDEX titleindex_Basic ON Basic (title);
+
 CREATE UNIQUE INDEX emailuniqueindex_Basic ON Basic (email);
 
 DROP TABLE Another;
+
 CREATE TABLE Another (
   id INTEGER PRIMARY KEY NOT NULL
 );
-
 
 DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
     SELECT email FROM Basic WHERE email IS NOT NULL;
 
-
 COMMIT;
 SQL
+
+# Test in list context
+my @sql = $sqlt->translate(
+    from     => 'XML-SQLFairy',
+    to       => 'SQLite',
+    filename => $xmlfile,
+) or die $sqlt->error;
+
+is_deeply(\@sql, 
+          [
+          'BEGIN TRANSACTION',
+          'DROP TABLE Basic',
+          'CREATE TABLE Basic (
+  id INTEGER PRIMARY KEY NOT NULL,
+  title varchar(100) NOT NULL DEFAULT \'hello\',
+  description text DEFAULT \'\',
+  email varchar(255),
+  explicitnulldef varchar,
+  explicitemptystring varchar DEFAULT \'\',
+  -- Hello emptytagdef
+  emptytagdef varchar DEFAULT \'\',
+  another_id int(10) DEFAULT \'2\',
+  timest timestamp
+)',
+          'CREATE INDEX titleindex_Basic02 ON Basic (title)',
+          'CREATE UNIQUE INDEX emailuniqueindex_Basic02 ON Basic (email)',
+          'DROP TABLE Another',
+          'CREATE TABLE Another (
+  id INTEGER PRIMARY KEY NOT NULL
+)',
+          'DROP VIEW IF EXISTS email_list;
+CREATE VIEW email_list AS
+    SELECT email FROM Basic WHERE email IS NOT NULL',
+          'COMMIT'
+          ], 'SQLite translate in list context matches');
+
+

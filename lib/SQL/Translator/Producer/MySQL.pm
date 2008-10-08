@@ -270,10 +270,10 @@ sub produce {
 
     debug("PKG: Beginning production\n");
     %used_names = ();
-    my $create; 
+    my $create = ''; 
     $create .= header_comment unless ($no_comments);
     # \todo Don't set if MySQL 3.x is set on command line
-    $create .= "SET foreign_key_checks=0;\n\n";
+    my @create = "SET foreign_key_checks=0";
 
     preprocess_schema($schema);
 
@@ -311,9 +311,9 @@ sub produce {
 
 
 #    print "@table_defs\n";
-    push @table_defs, "SET foreign_key_checks=1;\n\n";
+    push @table_defs, "SET foreign_key_checks=1";
 
-    return wantarray ? ($create, @table_defs) : $create . join ('', @table_defs);
+    return wantarray ? ($create ? $create : (), @create, @table_defs) : ($create . join('', map { $_ ? "$_;\n\n" : () } (@create, @table_defs)));
 }
 
 sub create_view {
@@ -355,7 +355,7 @@ sub create_view {
     if( my $sql = $view->sql ){
       $create .= " AS (\n    ${sql}\n  )";
     }
-    $create .= ";\n\n";
+#    $create .= "";
     return $create;
 }
 
@@ -375,7 +375,7 @@ sub create_table
     my $create = '';
     my $drop;
     $create .= "--\n-- Table: $qt$table_name$qt\n--\n" unless $options->{no_comments};
-    $drop = qq[DROP TABLE IF EXISTS $qt$table_name$qt;\n] if $options->{add_drop_table};
+    $drop = qq[DROP TABLE IF EXISTS $qt$table_name$qt] if $options->{add_drop_table};
     $create .= "CREATE TABLE $qt$table_name$qt (\n";
 
     #
@@ -420,7 +420,7 @@ sub create_table
     #
     $create .= "\n)";
     $create .= generate_table_options($table) || '';
-    $create .= ";\n\n";
+#    $create .= ";\n\n";
 
     return $drop ? ($drop,$create) : $create;
 }
@@ -803,14 +803,13 @@ sub batch_alter_table {
     } else { ( ) }
   } @{$diff_hash->{alter_create_constraint} };
 
-  my $drop_stmt = '';
+  my @drop_stmt;
   if (scalar keys %fks_to_alter) {
     $diff_hash->{alter_drop_constraint} = [
       grep { !$fks_to_alter{$_->name} } @{ $diff_hash->{alter_drop_constraint} }
     ];
 
-    $drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options) 
-               . "\n";
+    @drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options);
 
   }
 
@@ -837,7 +836,7 @@ sub batch_alter_table {
 
   return unless @stmts;
   # Just zero or one stmts. return now
-  return "$drop_stmt@stmts;" unless @stmts > 1;
+  return (@drop_stmt,@stmts) unless @stmts > 1;
 
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
@@ -854,7 +853,7 @@ sub batch_alter_table {
 
   my $padd = " " x length($alter_table);
 
-  return $drop_stmt . join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts) . ';';
+  return @drop_stmt, join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts);
 
 }
 
@@ -866,7 +865,8 @@ sub drop_table {
   # Drop (foreign key) constraints so table drops cleanly
   my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
 
-  return join("\n", @sql, "DROP TABLE $qt$table$qt;");
+  return (@sql, "DROP TABLE $qt$table$qt");
+#  return join("\n", @sql, "DROP TABLE $qt$table$qt");
 
 }
 
