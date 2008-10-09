@@ -60,6 +60,8 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
+    my $producer_args  = $translator->producer_args;
+    my $sqlite_version  = $producer_args->{sqlite_version} || 0;
 
     debug("PKG: Beginning production\n");
 
@@ -69,6 +71,7 @@ sub produce {
 
     for my $table ( $schema->get_tables ) {
         push @create, create_table($table, { no_comments => $no_comments,
+                                             sqlite_version => $sqlite_version,
                                           add_drop_table => $add_drop_table,});
     }
 
@@ -150,6 +153,7 @@ sub create_table
     my $table_name = $table->name;
     my $no_comments = $options->{no_comments};
     my $add_drop_table = $options->{add_drop_table};
+    my $sqlite_version = $options->{sqlite_version};
 
     debug("PKG: Looking at table '$table_name'\n");
 
@@ -160,9 +164,10 @@ sub create_table
     #
     # Header.
     #
+    my $exists = ($sqlite_version >= 3.3) ? ' IF EXISTS' : '';
     my @create;
     push @create, "--\n-- Table: $table_name\n--\n" unless $no_comments;
-    push @create, qq[DROP TABLE $table_name] if $add_drop_table;
+    push @create, qq[DROP TABLE$exists $table_name] if $add_drop_table;
     my $create_table = "CREATE ${temp}TABLE $table_name (\n";
 
     #
