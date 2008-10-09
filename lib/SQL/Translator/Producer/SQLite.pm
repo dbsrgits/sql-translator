@@ -287,17 +287,16 @@ sub create_field
 
     # Default?  XXX Need better quoting!
     my $default = $field->default_value;
-    if ( defined $default ) {
-        if ( uc $default eq 'NULL') {
-            $field_def .= ' DEFAULT NULL';
-        } elsif ( $default eq 'now()' ||
-                  $default eq 'CURRENT_TIMESTAMP' ) {
-            $field_def .= ' DEFAULT CURRENT_TIMESTAMP';
-        } elsif ( $default =~ /val\(/ ) {
-            next;
-        } else {
-            $field_def .= " DEFAULT '$default'";
-        }
+    if (defined $default) {
+        SQL::Translator::Producer->_apply_default_value(
+            \$field_def,
+            $default, 
+            [
+             'NULL'              => \'NULL',
+             'now()'             => 'now()',
+             'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
+            ],
+        );
     }
 
     return $field_def;

@@ -189,7 +189,6 @@ sub produce {
             my $list           = $extra{'list'} || [];
             # \todo deal with embedded quotes
             my $commalist      = join( ', ', map { qq['$_'] } @$list );
-            my $seq_name;
 
             if ( $data_type eq 'enum' ) {
                 my $check_name = mk_name(
@@ -256,13 +255,15 @@ sub produce {
             #
             my $default = $field->default_value;
             if ( defined $default ) {
-                $field_def .= sprintf( ' DEFAULT %s',
-                    ( $field->is_auto_increment && $seq_name )
-                    ? qq[nextval('"$seq_name"'::text)] :
-                    ( $default =~ m/null/i ) ? 'NULL' : "'$default'"
+                SQL::Translator::Producer->_apply_default_value(
+                  \$field_def,
+                  $default, 
+                  [
+                    'NULL'       => \'NULL',
+                  ],
                 );
             }
-            
+
             push @field_defs, $field_def;            
         }
 

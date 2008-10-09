@@ -1,6 +1,7 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
+* Applied patch from rjbs with minor changes, now we support scalar refs in default values!
 * Fixed SQLite producer to end index statements in newlines, in scalar context
 * Decreed that all list context statements shall not end in ; or ;\n
 * Fixed SQLite, Diff and MySQL producers to agree with Decree.

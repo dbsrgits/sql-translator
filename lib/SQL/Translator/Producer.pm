@@ -26,6 +26,37 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
 
 sub produce { "" }
 
+# Do not rely on this if you are not bundled with SQL::Translator.
+# -- rjbs, 2008-09-30
+## $exceptions contains an arrayref of paired values
+## Each pair contains a pattern match or string, and a value to be used as
+## the default if matched.
+## They are special per Producer, and provide support for the old 'now()'
+## default value exceptions
+sub _apply_default_value {
+  my (undef, $field_ref, $default, $exceptions) = @_;
+
+  if ($exceptions and ! ref $default) {
+    for (my $i = 0; $i < @$exceptions; $i += 2) {
+      my ($pat, $val) = @$exceptions[ $i, $i + 1 ];
+      if (ref $pat and $default =~ $pat) {
+          $default = $val;
+          last;
+      } elsif (lc $default eq lc $pat) {
+          $default = $val;
+          last
+      }
+    }
+  }
+
+  if (ref $default) {
+      $$field_ref .= " DEFAULT $$default";
+  } else {
+      $$field_ref .= " DEFAULT '$default'";
+  }
+
+}
+
 1;
 
 # -------------------------------------------------------------------

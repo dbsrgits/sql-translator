@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(9,
+    maybe_plan(13,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -22,7 +22,7 @@ BEGIN {
 use Test::Differences;
 use SQL::Translator;
 
-
+my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
 
 my $table = SQL::Translator::Schema::Table->new( name => 'mytable');
 
@@ -103,6 +103,76 @@ my $field5 = SQL::Translator::Schema::Field->new( name => 'enum_field',
 my $field5_sql = SQL::Translator::Producer::PostgreSQL::create_field($field5,{ postgres_version => 8.3 });
 
 is($field5_sql, 'enum_field mytable_enum_field_type NOT NULL', 'Create real enum field works');
+
+{
+    # let's test default values! -- rjbs, 2008-09-30
+    my %field = (
+        table => $table,
+        data_type => 'VARCHAR',
+        size => 10,
+        is_auto_increment => 0,
+        is_nullable => 1,
+        is_foreign_key => 0,
+        is_unique => 0,
+    );
+
+    {
+        my $simple_default = SQL::Translator::Schema::Field->new(
+            %field,
+            name => 'str_default',
+            default_value => 'foo',
+        );
+
+        is(
+            $PRODUCER->($simple_default),
+            q{str_default character varying(10) DEFAULT 'foo'},
+            'default str',
+        );
+    }
+
+    {
+        my $null_default = SQL::Translator::Schema::Field->new(
+            %field,
+            name => 'null_default',
+            default_value => \'NULL',
+        );
+
+        is(
+            $PRODUCER->($null_default),
+            q{null_default character varying(10) DEFAULT NULL},
+            'default null',
+        );
+    }
+
+    {
+        my $null_default = SQL::Translator::Schema::Field->new(
+            %field,
+            name => 'null_default_2',
+            default_value => 'NULL', # XXX: this should go away
+        );
+
+        is(
+            $PRODUCER->($null_default),
+            q{null_default_2 character varying(10) DEFAULT NULL},
+            'default null from special cased string',
+        );
+    }
+
+    {
+        my $func_default = SQL::Translator::Schema::Field->new(
+            %field,
+            name => 'func_default',
+            default_value => \'func(funky)',
+        );
+
+        is(
+            $PRODUCER->($func_default),
+            q{func_default character varying(10) DEFAULT func(funky)},
+            'unquoted default from scalar ref',
+        );
+    }
+}
+
 
 my $view1 = SQL::Translator::Schema::View->new(
     name   => 'view_foo',

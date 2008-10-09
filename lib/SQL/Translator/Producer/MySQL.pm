@@ -554,11 +554,13 @@ sub create_field
     # Default?  XXX Need better quoting!
     my $default = $field->default_value;
     if ( defined $default ) {
-        if ( uc $default eq 'NULL') {
-            $field_def .= ' DEFAULT NULL';
-        } else {
-            $field_def .= " DEFAULT '$default'";
-        }
+        SQL::Translator::Producer->_apply_default_value(
+          \$field_def,
+          $default, 
+          [
+            'NULL'       => \'NULL',
+          ],
+        );
     }
 
     if ( my $comments = $field->comments ) {

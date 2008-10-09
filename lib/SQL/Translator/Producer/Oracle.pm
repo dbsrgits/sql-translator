@@ -548,7 +548,11 @@ sub create_field {
         # then sub "1/0," otherwise just test the truthity of the
         # argument and use that (naive?).
         #
-        if ( 
+        if (ref $default and defined $$default) {
+          $default = $$default;
+        } elsif (ref $default) {
+          $default = 'NULL';
+        } elsif ( 
             $data_type =~ /^number$/i && 
             $default   !~ /^-?\d+$/     &&
             $default   !~ m/null/i

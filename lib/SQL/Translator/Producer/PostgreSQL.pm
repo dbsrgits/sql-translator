@@ -485,7 +485,6 @@ sub create_view {
         my $list      = $extra{'list'} || [];
         # todo deal with embedded quotes
         my $commalist = join( ', ', map { qq['$_'] } @$list );
-        my $seq_name;
 
         if ($postgres_version >= 8.3 && $field->data_type eq 'enum') {
             my $type_name = $field->table->name . '_' . $field->name . '_type';
@@ -497,20 +496,19 @@ sub create_view {
         }
 
         #
-        # Default value -- disallow for timestamps
+        # Default value 
         #
-#        my $default = $data_type =~ /(timestamp|date)/i
-#            ? undef : $field->default_value;
         my $default = $field->default_value;
         if ( defined $default ) {
-            my $qd = "'";
-            $qd = '' if ($default eq 'now()' || 
-                         $default eq 'CURRENT_TIMESTAMP');
-            $field_def .= sprintf( ' DEFAULT %s',
-                                   ( $field->is_auto_increment && $seq_name )
-                                   ? qq[nextval('"$seq_name"'::text)] :
-                                   ( $default =~ m/null/i ) ? 'NULL' : "$qd$default$qd"
-                                   );
+            SQL::Translator::Producer->_apply_default_value(
+              \$field_def,
+              $default,
+              [
+                'NULL'              => \'NULL',
+                'now()'             => 'now()',
+                'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
+              ],
+            );
         }
 
         #
