@@ -43,10 +43,16 @@ is( $f3->size, 1, 'Size is "1"' );
 is( $f3->is_primary_key, 0, 'Field is not PK' );
 
 my $f4 = shift @fields;
-is( $f4->name, 'math', 'Fourth field name is "math"' );
-is( lc $f4->data_type, 'float', 'Data type is "float"' );
-is( $f4->size, '3,1', 'Size is "3,1"' );
-is( $f4->is_primary_key, 0, 'Field is not PK' );
+TODO: {
+    eval { require Spreadsheet::ParseExcel };
+       todo_skip "Bug in Spreadsheet::ParseExcel, http://rt.cpan.org/Public/Bug/Display.html?id=39892", 4 
+               if ($Spreadsheet::ParseExcel::VERSION > 0.32);
+
+       is( $f4->name, 'math', 'Fourth field name is "math"' );
+       is( lc $f4->data_type, 'float', 'Data type is "float"' );
+       is( $f4->size, '3,1', 'Size is "3,1"' );
+       is( $f4->is_primary_key, 0, 'Field is not PK' );
+}
 
 my $f5 = shift @fields;
 is( $f5->name, 'bitmap', 'Fifth field name is "bitmap"' );
