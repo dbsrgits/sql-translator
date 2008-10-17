@@ -26,7 +26,7 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.09001';
+$VERSION  = '0.09002';
 $REVISION = sprintf "%d.%02d", q$Revision: 1.73 $ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
@@ -39,6 +39,7 @@ use File::Find;
 use File::Spec::Functions qw(catfile);
 use File::Basename qw(dirname);
 use IO::Dir;
+use SQL::Translator::Producer;
 use SQL::Translator::Schema;
 
 # ----------------------------------------------------------------------
