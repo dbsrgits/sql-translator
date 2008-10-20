@@ -69,6 +69,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.43 $ =~ /(\d+)\.(\d+)/;
     CHECK_C
     FOREIGN_KEY
     FULL_TEXT
+    SPATIAL
     NOT_NULL
     NORMAL
     NULL
@@ -84,6 +85,8 @@ use constant CHECK_C => 'CHECK';
 use constant FOREIGN_KEY => 'FOREIGN KEY';
 
 use constant FULL_TEXT => 'FULLTEXT';
+
+use constant SPATIAL => 'SPATIAL';
 
 use constant NOT_NULL => 'NOT NULL';
 

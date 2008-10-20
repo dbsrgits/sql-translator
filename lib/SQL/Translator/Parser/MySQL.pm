@@ -534,6 +534,7 @@ reference_option: /restrict/i |
 
 index : normal_index
     | fulltext_index
+    | spatial_index
     | <error>
 
 table_name   : NAME
@@ -680,6 +681,16 @@ fulltext_index : /fulltext/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/)
         } 
     }
 
+spatial_index : /spatial/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
+    { 
+        $return       = { 
+            supertype => 'index',
+            type      => 'spatial',
+            name      => $item{'index_name(?)'}[0],
+            fields    => $item[5],
+        } 
+    }
+
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
 
@@ -727,7 +738,7 @@ COMMA : ','
 
 BACKTICK : '`'
 
-NAME    : BACKTICK /\w+/ BACKTICK
+NAME    : BACKTICK /[^`]+/ BACKTICK
     { $item[2] }
     | /\w+/
     { $item[1] }

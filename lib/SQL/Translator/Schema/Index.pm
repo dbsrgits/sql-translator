@@ -59,6 +59,7 @@ my %VALID_INDEX_TYPE = (
     UNIQUE,    1,
     NORMAL,    1,
     FULL_TEXT, 1, # MySQL only (?)
+    SPATIAL,   1, # MySQL only (?)
 );
 
 # ----------------------------------------------------------------------
