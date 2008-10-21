@@ -153,7 +153,7 @@ sub create_table
     my $table_name = $table->name;
     my $no_comments = $options->{no_comments};
     my $add_drop_table = $options->{add_drop_table};
-    my $sqlite_version = $options->{sqlite_version};
+    my $sqlite_version = $options->{sqlite_version} || 0;
 
     debug("PKG: Looking at table '$table_name'\n");
 
