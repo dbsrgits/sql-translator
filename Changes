@@ -1,6 +1,8 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
+* Applied patch from rbo to add support of multiple database events on a trigger
+* Applied patch from lukes to allow drop if exists in sqlite producer, with version >= 3.3
 * Applied patch from rjbs with minor changes, now we support scalar refs in default values!
 * Fixed SQLite producer to end index statements in newlines, in scalar context
 * Decreed that all list context statements shall not end in ; or ;\n

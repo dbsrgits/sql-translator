@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 229;
+use Test::More tests => 238;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator' );
@@ -613,6 +613,38 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $t1, 'SQL::Translator::Schema::Trigger', 'Trigger' );
     is( $t1->name, $name, qq[Name is "$name"] );
 
+
+
+	my $s2                   = SQL::Translator::Schema->new(name => 'TrigTest2');
+    $s2->add_table(name=>'foo') or die "Couldn't create table: ", $s2->error;
+    my $t2                   = $s2->add_trigger(
+        name                => 'foo_trigger',
+        perform_action_when => 'after',
+        database_events     => [qw/insert update/],
+        on_table            => 'foo',
+        action              => 'update modified=timestamp();',
+    ) or die $s2->error;
+	isa_ok( $t2, 'SQL::Translator::Schema::Trigger', 'Trigger' );
+    isa_ok( $t2->schema, 'SQL::Translator::Schema', 'Schema' );
+    is( $t2->schema->name, 'TrigTest2', qq[Schema name is "'TrigTest2'"] );
+    is( $t2->name, 'foo_trigger', qq[Name is "foo_trigger"] );
+	is_deeply($t2->database_events,[qw/insert update/],"Database events are [qw/insert update/] ");
+	isa_ok($t2->database_events,'ARRAY','Database events');
+	
+	#
+	# Trigger equal tests
+	#
+	isnt($t1->equals($t2),1,'Compare two Triggers with database_event and database_events');
+	
+	$t2->database_events([]);
+	$t2->database_event($database_event);
+	is($t1->equals($t2),1,'Compare two Triggers with database_event');
+
+	$t2->database_event('');
+	$t1->database_events([qw/update insert/]);
+	$t2->database_events([qw/insert update/]);
+	is($t1->equals($t2),1,'Compare two Triggers with database_events');
+	
     #
     # $schema-> drop_trigger
     #

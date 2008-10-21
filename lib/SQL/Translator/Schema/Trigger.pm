@@ -32,7 +32,8 @@ SQL::Translator::Schema::Trigger - SQL::Translator trigger object
   my $trigger = SQL::Translator::Schema::Trigger->new(
       name                => 'foo',
       perform_action_when => 'before', # or after
-      database_event      => 'insert', # or update, update_on, delete
+      database_event      => 'insert', # Obsolete please use database_events!
+	  database_events     => [qw/update instert/], # or update, update_on, delete
       fields              => [],       # fields if event is "update"
       on_table            => 'foo',    # table name
       action              => '...',    # text of trigger
@@ -59,7 +60,7 @@ $VERSION = sprintf "%d.%02d", q$Revision: 1.9 $ =~ /(\d+)\.(\d+)/;
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
-    name schema perform_action_when database_event fields table on_table action
+    name schema perform_action_when database_event database_events fields table on_table action
     order
 /);
 
@@ -111,27 +112,53 @@ sub database_event {
 
 =head2 database_event
 
-Gets or sets the event that triggers the trigger.
+Obosolete please use database_events!
+
+=cut
+    
+	my $self = shift;
+	
+	
+	if ( my $arg = shift ) {
+		$self->database_events( [$arg] );
+	}
+
+	return $self->error("Please use database_events the trigger has more then one events!") if (scalar @{$self->{'database_events'}} > 1);
+	
+    warn 'database_event is obsolete please use database_events';
+	return (@{ $self->{'database_events'} })[0];
+}
+# ----------------------------------------------------------------------
+sub database_events {
+
+=pod
+
+=head2 database_events
+
+Gets or sets the events that triggers the trigger.
 
   my $ok = $trigger->database_event('insert');
 
 =cut
 
-    my $self = shift;
+	my $self = shift;
+	
+	if ( my $arg = shift ) {
+		if (ref $arg eq "ARRAY"){
+			map  {
+				$_ = lc; 
+				$_ =~ s/\s+/ /g;  
+				return $self->error("Invalid event '$_' in database_events") unless ( $_ =~ /^(insert|update|update_on|delete)$/ );
+			} @$arg ;
+			@{ $self->{'database_events'} } = @$arg;
+			
+		}else{
+			return $self->error("Invalid argument to database_events");
+		};
+		
+	}
 
-    if ( my $arg = shift ) {
-        $arg =  lc $arg;
-        $arg =~ s/\s+/ /g;
-        if ( $arg =~ /^(insert|update|update_on|delete)$/ ) {
-            $self->{'database_event'} = $arg;
-        }
-        else {
-            return 
-                $self->error("Invalid argument '$arg' to database_event");
-        }
-    }
-
-    return $self->{'database_event'};
+	return $self->{'database_events'};
 }
 
 # ----------------------------------------------------------------------
@@ -332,6 +359,30 @@ Get or set the trigger's schema object.
 }
 
 # ----------------------------------------------------------------------
+sub compare_arrays {
+
+=pod
+
+=head2 compare_arrays
+
+Compare two arrays.
+
+=cut
+	
+	my ($first, $second) = @_;
+	no warnings;  # silence spurious -w undef complaints
+
+	return 0 unless (ref $first eq 'ARRAY' and ref $second eq 'ARRAY' ) ;
+	return 0 unless @$first == @$second;
+	my @first = sort @$first;
+	my @second = sort @$second;
+	for (my $i = 0; $i < scalar @first; $i++) {
+		return 0 if @first[$i] ne @second[$i];
+		}
+	return 1;
+}
+
+# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -352,7 +403,7 @@ Determines if this trigger is the same as another
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $self->perform_action_when eq $other->perform_action_when;
-    return 0 unless $self->database_event eq $other->database_event;
+    return 0 unless compare_arrays($self->database_events,$other->database_events) ;
     return 0 unless $self->on_table eq $other->on_table;
     return 0 unless $self->action eq $other->action;
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
