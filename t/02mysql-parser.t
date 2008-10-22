@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(244, "SQL::Translator::Parser::MySQL");
+    maybe_plan(265, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -660,3 +660,65 @@ for my $target (keys %$parse_as) {
 
 eval { SQL::Translator::Utils::parse_mysql_version ('bogus5.1') };
 ok ($@, 'Exception thrown on invalid version string');
+
+{
+    my $tr = SQL::Translator->new;
+    my $data = q|create table merge_example (
+       id int(11) NOT NULL auto_increment,
+       shape_field geometry NOT NULL,
+       PRIMARY KEY (id),
+       SPATIAL KEY shape_field (shape_field)
+    ) ENGINE=MRG_MyISAM UNION=(`sometable_0`,`sometable_1`,`sometable_2`);|;
+
+    my $val = parse($tr, $data);
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 1, 'Right number of tables (1)' );
+    my $table  = shift @tables;
+    is( $table->name, 'merge_example', 'Found "merge_example" table' );
+
+    my $tableTypeFound = 0;
+    my $unionFound = 0;
+    for my $t_option_ref ( $table->options ) {
+      my($key, $value) = %{$t_option_ref};
+      if ( $key eq 'ENGINE' ) {
+        is($value, 'MRG_MyISAM', 'Table has right table engine option' );
+        $tableTypeFound = 1;
+      } elsif ( $key eq 'UNION' ) {
+        is_deeply($value, [ 'sometable_0','sometable_1','sometable_2' ],
+          "UNION option has correct set");
+        $unionFound = 1;
+      }
+    }
+
+    fail('Table did not have a type option') unless $tableTypeFound;
+    fail('Table did not have a union option') unless $unionFound;
+
+    my @fields = $table->get_fields;
+    is( scalar @fields, 2, 'Right number of fields (2)' );
+    my $f1 = shift @fields;
+    my $f2 = shift @fields;
+    is( $f1->name, 'id', 'First field name is "id"' );
+    is( $f1->data_type, 'int', 'Type is "int"' );
+    is( $f1->size, 11, 'Size is "11"' );
+    is( $f1->is_nullable, 0, 'Field cannot be null' );
+    is( $f1->is_primary_key, 1, 'Field is PK' );
+
+    is( $f2->name, 'shape_field', 'Second field name is "shape_field"' );
+    is( $f2->data_type, 'geometry', 'Type is "geometry"' );
+    is( $f2->is_nullable, 0, 'Field cannot be null' );
+    is( $f2->is_primary_key, 0, 'Field is not PK' );
+
+    my @indices = $table->get_indices;
+    is( scalar @indices, 1, 'Right number of indices (1)' );
+    my $i1 = shift @indices;
+    is( $i1->name, 'shape_field', 'No name on index' );
+    is( $i1->type, SPATIAL, 'Spatial index' );
+
+    my @constraints = $table->get_constraints;
+    is( scalar @constraints, 1, 'Right number of constraints (1)' );
+    my $c = shift @constraints;
+    is( $c->type, PRIMARY_KEY, 'Constraint is a PK' );
+    is( join(',', $c->fields), 'id', 'Constraint is on "id"' );
+}

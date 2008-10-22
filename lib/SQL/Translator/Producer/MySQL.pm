@@ -419,7 +419,7 @@ sub create_table
     # Footer
     #
     $create .= "\n)";
-    $create .= generate_table_options($table) || '';
+    $create .= generate_table_options($table, $options) || '';
 #    $create .= ";\n\n";
 
     return $drop ? ($drop,$create) : $create;
@@ -427,12 +427,14 @@ sub create_table
 
 sub generate_table_options 
 {
-  my ($table) = @_;
+  my ($table, $options) = @_;
   my $create;
 
   my $table_type_defined = 0;
+  my $qf               = $options->{quote_field_names} ||= '';
   my $charset          = $table->extra('mysql_charset');
   my $collate          = $table->extra('mysql_collate');
+  my $union            = undef;
   for my $t1_option_ref ( $table->options ) {
     my($key, $value) = %{$t1_option_ref};
     $table_type_defined = 1
@@ -442,6 +444,9 @@ sub generate_table_options
       next;
     } elsif (uc $key eq 'COLLATE') {
       $collate = $value;
+      next;
+    } elsif (uc $key eq 'UNION') {
+      $union = "($qf". join("$qf, $qf", @$value) ."$qf)";
       next;
     }
     $create .= " $key=$value";
@@ -454,6 +459,7 @@ sub generate_table_options
 
   $create .= " DEFAULT CHARACTER SET $charset" if $charset;
   $create .= " COLLATE $collate" if $collate;
+  $create .= " UNION=$union" if $union;
   $create .= qq[ comment='$comments'] if $comments;
   return $create;
 }
@@ -730,7 +736,7 @@ sub alter_table
 
     my $qt = $options->{quote_table_names} || '';
 
-    my $table_options = generate_table_options($to_table) || '';
+    my $table_options = generate_table_options($to_table, $options) || '';
     my $out = sprintf('ALTER TABLE %s%s',
                       $qt . $to_table->name . $qt,
                       $table_options);

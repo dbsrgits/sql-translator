@@ -713,6 +713,10 @@ table_option : /comment/i /=/ /'.*?'/
     {
         $return = { 'COLLATE' => $item[2] }
     }
+    | /union/i /\s*=\s*/ '(' table_name(s /,/) ')'
+    { 
+        $return = { $item[1] => $item[4] };
+    }
     | WORD /\s*=\s*/ WORD
     { 
         $return = { $item[1] => $item[3] };
@@ -765,7 +769,6 @@ END_OF_GRAMMAR
 sub parse {
     my ( $translator, $data ) = @_;
     my $parser = Parse::RecDescent->new($GRAMMAR);
-
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
     local $DEBUG       = $translator->debug;
 
