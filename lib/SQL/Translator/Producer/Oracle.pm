@@ -216,7 +216,15 @@ sub produce {
         push @view_defs, create_view($view);
     }
 
-    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs) : $create . join ('', map { $_ ? "$_;\n\n" : () } @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
+    if (wantarray) {
+        return defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs;
+    }
+    else {
+        $create .= join ('', map { $_ ? "$_;\n\n" : () } @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
+        # triggers may NOT end with a semicolon
+        $create .= join "\n\n", @trigger_defs;
+        return $create;
+    }
 }
 
 sub create_table {
