@@ -634,7 +634,7 @@ sub create_field {
           " SELECT $seq_name.nextval\n" .
           " INTO :new." . $field->name."\n" .
           " FROM dual;\n" .
-          "END\n/";
+          "END;\n/";
         ;
     }
 
@@ -647,7 +647,7 @@ sub create_field {
           "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
           "BEGIN \n".
           " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
-          "END\n/";
+          "END;\n/";
     }
 
     push @field_defs, $field_def;
