@@ -1,6 +1,7 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
+* Fixed a few bugs in ::Producer::Oracle
 * Applied patch from jgoulah to support mysql's MERGE option
 * Applied patch from rbo to add support of multiple database events on a trigger
 * Applied patch from lukes to allow drop if exists in sqlite producer, with version >= 3.3
