@@ -202,7 +202,7 @@ sub produce {
         push @view_defs, create_view($view);
     }
 
-    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs) : $create . join ("\n\n", @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs, '');
+    return wantarray ? (defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs) : $create . join ('', map { $_ ? "$_;\n\n" : () } @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 }
 
 sub create_table {
@@ -214,7 +214,7 @@ sub create_table {
     my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
 
     push @create, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
-    push @create, qq[DROP TABLE $table_name CASCADE CONSTRAINTS;] if $options->{add_drop_table};
+    push @create, qq[DROP TABLE $table_name CASCADE CONSTRAINTS] if $options->{add_drop_table};
 
     my $table_name_ur = unreserve($table_name) or next;
 
@@ -326,7 +326,7 @@ sub create_table {
             #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
             #}
 
-            push @fk_defs, sprintf("ALTER TABLE %s ADD %s;", $table, $def);
+            push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table, $def);
             }
         }
 
@@ -375,7 +375,7 @@ sub create_table {
                 push @index_defs, 
                     "CREATE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
-                    ")$index_options;";
+                    ")$index_options";
             }
             elsif ( $index_type eq UNIQUE ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
@@ -383,7 +383,7 @@ sub create_table {
                 push @index_defs, 
                     "CREATE UNIQUE INDEX $index_name on $table_name_ur (".
                         join( ', ', @fields ).  
-                    ")$index_options;"; 
+                    ")$index_options"; 
             }
             else {
                 warn "Unknown index type ($index_type) on table $table_name.\n"
@@ -396,7 +396,7 @@ sub create_table {
                 next unless $comment;
                 $comment =~ s/'/''/g;
                 push @field_comments, "COMMENT ON TABLE $table_name_ur is\n '".
-                $comment . "';" unless $options->{no_comments}
+                $comment . "'" unless $options->{no_comments}
                 ;
             }
         }
@@ -406,9 +406,9 @@ sub create_table {
     push @create, "CREATE TABLE $table_name_ur (\n" .
             join( ",\n", map { "  $_" } @field_defs,
             ($options->{delay_constraints} ? () : @constraint_defs) ) .
-            "\n)$table_options;";
+            "\n)$table_options";
 
-    @constraint_defs = map { 'ALTER TABLE '.$table_name_ur.' ADD '.$_.';'  }
+    @constraint_defs = map { 'ALTER TABLE '.$table_name_ur.' ADD '.$_  }
       @constraint_defs;
 
     if ( $WARN ) {
@@ -596,8 +596,8 @@ sub create_field {
         my $seq_name     = mk_name( $base_name, 'sq' );
         my $trigger_name = mk_name( $base_name, 'ai' );
 
-        push @create, qq[DROP SEQUENCE $seq_name;] if $options->{add_drop_table};
-        push @create, "CREATE SEQUENCE $seq_name;";
+        push @create, qq[DROP SEQUENCE $seq_name] if $options->{add_drop_table};
+        push @create, "CREATE SEQUENCE $seq_name";
         push @trigger_defs, 
           "CREATE OR REPLACE TRIGGER $trigger_name\n" .
           "BEFORE INSERT ON $table_name_ur\n" .
@@ -609,7 +609,7 @@ sub create_field {
           " SELECT $seq_name.nextval\n" .
           " INTO :new." . $field->name."\n" .
           " FROM dual;\n" .
-          "END;\n/";
+          "END\n/";
         ;
     }
 
@@ -622,7 +622,7 @@ sub create_field {
           "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
           "BEGIN \n".
           " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
-          "END;\n/";
+          "END\n/";
     }
 
     push @field_defs, $field_def;
