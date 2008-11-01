@@ -151,6 +151,20 @@ my %ora_reserved = map { $_, 1 } qw(
     WHENEVER WHERE WITH
 );
 
+#
+# Oracle 8/9 max size of data types from:
+# http://www.ss64.com/orasyntax/datatypes.html
+#
+my %max_size = (
+    char      => 2000,
+    nchar     => 2000,
+    nvarchar2 => 4000,
+    number    => [ 38, 127 ],
+    raw       => 2000,
+    varchar   => 4000,          # only synonym for varchar2
+    varchar2  => 4000,
+);
+
 my $max_id_length    = 30;
 my %used_identifiers = ();
 my %global_names;
@@ -505,6 +519,17 @@ sub create_field {
           $translate{ $data_type } :
             $data_type;
         $data_type ||= 'varchar2';
+    }
+    
+    # ensure size is not bigger than max size oracle allows for data type
+    if ( defined $max_size{$data_type} ) {
+        for ( my $i = 0 ; $i < scalar @size ; $i++ ) {
+            my $max =
+              ref( $max_size{$data_type} ) eq 'ARRAY'
+              ? $max_size{$data_type}->[$i]
+              : $max_size{$data_type};
+            $size[$i] = $max if $size[$i] > $max;
+        }
     }
 
     #
