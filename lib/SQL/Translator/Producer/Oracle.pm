@@ -213,10 +213,10 @@ sub create_table {
     my $drop;
     my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
 
-    push @create, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
-    push @create, qq[DROP TABLE $table_name CASCADE CONSTRAINTS] if $options->{add_drop_table};
-
     my $table_name_ur = unreserve($table_name) or next;
+
+    push @create, "--\n-- Table: $table_name_ur\n--" unless $options->{no_comments};
+    push @create, qq[DROP TABLE $table_name_ur CASCADE CONSTRAINTS] if $options->{add_drop_table};
 
         my ( %field_name_scope, @field_comments );
         for my $field ( $table->get_fields ) {
