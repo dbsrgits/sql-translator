@@ -311,7 +311,7 @@ sub create_table {
                 push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
-            $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
+                $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
@@ -335,12 +335,12 @@ sub create_table {
                     $def .= ' ON DELETE '.join( ' ', $c->on_delete );
                 }
 
-            # disabled by plu 2007-12-29 - doesn't exist for oracle
-            #if ( $c->on_update ) {
-            #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
-            #}
+                # disabled by plu 2007-12-29 - doesn't exist for oracle
+                #if ( $c->on_update ) {
+                #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+                #}
 
-            push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table, $def);
+                push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_ur, $def);
             }
         }
 
