@@ -14,6 +14,10 @@
 * Added proper argument parsing and documentation to MySQL Parser and Producer (ribasushi)
 * Using DROP VIEW instead of OR REPLACE clause in the Pg producer, as replace only allows replacement with same number of columns (wreis)
 * Added support for DROP VIEW and fixed CREATE VIEW statement in the sqlite producer (wreis)
+* Removed source_db and target_db accessors from Diff (throwback to old version, only output_db is used)
+
+
+* Support for longer varchar fields in My
 
 # ----------------------------------------------------------
 # 0.09001 2008-08-19
