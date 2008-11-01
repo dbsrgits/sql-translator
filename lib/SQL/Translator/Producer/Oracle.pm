@@ -195,13 +195,14 @@ sub produce {
     }
 
     for my $table ( $schema->get_tables ) { 
-        my ( $table_def, $fk_def, $trigger_def, $index_def, $constraint_def) = create_table(
+        my ( $table_def, $fk_def, $trigger_def, $index_def, $constraint_def ) = create_table(
             $table,
             {
-                add_drop_table => $add_drop_table,
-                show_warnings  => $WARN,
-                no_comments    => $no_comments,
-                delay_constraints => $delay_constraints
+                add_drop_table    => $add_drop_table,
+                show_warnings     => $WARN,
+                no_comments       => $no_comments,
+                delay_constraints => $delay_constraints,
+                wantarray         => wantarray ? 1 : 0,
             }
         );
         push @table_defs, @$table_def;
@@ -631,7 +632,7 @@ sub create_field {
 
         push @create, qq[DROP SEQUENCE $seq_name] if $options->{add_drop_table};
         push @create, "CREATE SEQUENCE $seq_name";
-        push @trigger_defs, 
+        my $trigger =
           "CREATE OR REPLACE TRIGGER $trigger_name\n" .
           "BEFORE INSERT ON $table_name_ur\n" .
           "FOR EACH ROW WHEN (\n" .
@@ -642,20 +643,35 @@ sub create_field {
           " SELECT $seq_name.nextval\n" .
           " INTO :new." . $field->name."\n" .
           " FROM dual;\n" .
-          "END;\n/";
-        ;
+          "END;\n";
+        
+        #
+        # If wantarray is set we have to omit the last "/" in this statement so it
+        # can be executed by DBI->do() directly.
+        #
+        $trigger .= "/" unless $options->{wantarray};
+        
+        push @trigger_defs, $trigger;
     }
 
     if ( lc $field->data_type eq 'timestamp' ) {
         my $base_name = $table_name_ur . "_". $field_name_ur;
         my $trig_name = mk_name( $base_name, 'ts' );
-        push @trigger_defs, 
+        my $trigger = 
           "CREATE OR REPLACE TRIGGER $trig_name\n".
           "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
           "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
           "BEGIN \n".
           " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
-          "END;\n/";
+          "END;\n";
+
+          #
+          # If wantarray is set we have to omit the last "/" in this statement so it
+          # can be executed by DBI->do() directly.
+          #
+          $trigger .= "/" unless $options->{wantarray};
+
+          push @trigger_defs, $trigger;
     }
 
     push @field_defs, $field_def;
