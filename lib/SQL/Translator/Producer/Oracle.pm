@@ -46,6 +46,56 @@ CREATE TABLE statement and adds ALTER TABLEs at the end with it.
 
 =back
 
+=head1 NOTES
+
+=head2 Autoincremental primary keys
+
+This producer uses sequences and triggers to autoincrement primary key
+columns, if necessary. SQLPlus and DBI expect a slightly different syntax
+of CREATE TRIGGER statement. You might have noticed that this
+producer returns a scalar containing all statements concatenated by
+newlines or an array of single statements depending on the context
+(scalar, array) it has been called in.
+
+SQLPlus expects following trigger syntax:
+
+    CREATE OR REPLACE TRIGGER ai_person_id
+    BEFORE INSERT ON person
+    FOR EACH ROW WHEN (
+     new.id IS NULL OR new.id = 0
+    )
+    BEGIN
+     SELECT sq_person_id.nextval
+     INTO :new.id
+     FROM dual;
+    END;
+    /
+
+Whereas if you want to create the same trigger using L<DBI/do>, you need
+to omit the last slash:
+
+    my $dbh = DBI->connect('dbi:Oracle:mysid', 'scott', 'tiger');
+    $dbh->do("
+        CREATE OR REPLACE TRIGGER ai_person_id
+        BEFORE INSERT ON person
+        FOR EACH ROW WHEN (
+         new.id IS NULL OR new.id = 0
+        )
+        BEGIN
+         SELECT sq_person_id.nextval
+         INTO :new.id
+         FROM dual;
+        END;
+    ");
+
+If you call this producer in array context, we expect you want to process
+the returned array of statements using L<DBI> like
+L<DBIx::Class::Schema/deploy> does.
+
+To get this working we removed the slash in those statements in version
+0.09002 of L<SQL::Translator> when called in array context. In scalar
+context the slash will be still there to ensure compatibility with SQLPlus.
+
 =cut
 
 use strict;
