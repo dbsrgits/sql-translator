@@ -50,6 +50,10 @@ To translate a schema:
     --trace            Print parser trace info
     --show-warnings    Print warnings to STDERR
 
+  General Parser Options:
+
+    --skip             Comma-separated list of tables to skip (only implemented in some parsers)
+
   DBI Parser Options:
 
     --dsn              DSN for connecting to database
@@ -282,6 +286,7 @@ my $translator           =  SQL::Translator->new(
         db_user          => $db_user,
         db_password      => $db_password,
         mysql_parser_version => $mysql_parser_version,
+        skip => $skip,
     },
     producer_args   => {
         imap_file        => $imap_file,

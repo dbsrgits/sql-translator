@@ -51,11 +51,13 @@ sub parse {
     my ( $tr, $dbh ) = @_;
     my $schema       = $tr->schema;
     my @table_names  = @{ $dbh->selectcol_arrayref('show tables') };
+    my @skip_tables = defined $tr->parser_args->{skip}?split(/,/, $tr->parser_args->{skip}):();
 
     $dbh->{'FetchHashKeyName'} = 'NAME_lc';
 
     my $create;
     for my $table_name ( @table_names ) {
+        next if (grep /^$table_name$/, @skip_tables);
         my $sth = $dbh->prepare("show create table $table_name");
         $sth->execute;
         my $table = $sth->fetchrow_hashref;

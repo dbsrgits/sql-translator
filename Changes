@@ -1,6 +1,7 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
+* Add support for skip tables parser arg in Parser::DBI::MySQL (jgoulah)
 * Changed behaviour of ::Producer::Oracle when returning an array of statements to make it compatible to DBI->do()
 * Fixed a few bugs in ::Producer::Oracle
 * Applied patch from jgoulah to support mysql's MERGE option
