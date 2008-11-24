@@ -39,7 +39,7 @@ my $builder = Module::Build->new(
         'Graph::Directed'         => 0,
         'IO::File'                => 0,
         'IO::Scalar'              => 0,
-        'Spreadsheet::ParseExcel' => 0.2602,
+        'Spreadsheet::ParseExcel' => '>= 0.2602, != 0.33',
         'Text::ParseWords'        => 0,
         'Text::RecordParser'      => 0.02,
         'XML::Writer'             => 0.500,

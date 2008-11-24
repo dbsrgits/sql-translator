@@ -1,6 +1,7 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
+* Skip tests for buggy Spreadsheet::ParseExcel versions (rbo)
 * Add support for skip tables parser arg in Parser::DBI::MySQL (jgoulah)
 * Changed behaviour of ::Producer::Oracle when returning an array of statements to make it compatible to DBI->do()
 * Fixed a few bugs in ::Producer::Oracle

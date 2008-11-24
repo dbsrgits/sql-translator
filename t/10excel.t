@@ -46,7 +46,7 @@ my $f4 = shift @fields;
 TODO: {
     eval { require Spreadsheet::ParseExcel };
        todo_skip "Bug in Spreadsheet::ParseExcel, http://rt.cpan.org/Public/Bug/Display.html?id=39892", 4 
-               if ($Spreadsheet::ParseExcel::VERSION > 0.32);
+               if ( $Spreadsheet::ParseExcel::VERSION > 0.32 and $Spreadsheet::ParseExcel::VERSION < 0.41 );
 
        is( $f4->name, 'math', 'Fourth field name is "math"' );
        is( lc $f4->data_type, 'float', 'Data type is "float"' );
