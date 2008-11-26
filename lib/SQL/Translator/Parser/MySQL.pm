@@ -865,7 +865,19 @@ sub parse {
         }
 
         if ( my @options = @{ $tdata->{'table_options'} || [] } ) {
-            $table->options( \@options ) or die $table->error;
+            my @cleaned_options;
+            my @ignore_opts = $translator->parser_args->{ignore_opts}?split(/,/,$translator->parser_args->{ignore_opts}):();
+            if (@ignore_opts) {
+                my $ignores = { map { $_ => 1 } @ignore_opts };
+                foreach my $option (@options) {
+                    # make sure the option isn't in ignore list
+                    my ($option_key) = keys %$option;
+                    push(@cleaned_options, $option) unless (exists $ignores->{$option_key});
+                }
+            } else {
+                @cleaned_options = @options;
+            }
+            $table->options( \@cleaned_options ) or die $table->error;
         }
 
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
