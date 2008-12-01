@@ -34,7 +34,9 @@ sub produce { "" }
 ## They are special per Producer, and provide support for the old 'now()'
 ## default value exceptions
 sub _apply_default_value {
-  my (undef, $field_ref, $default, $exceptions) = @_;
+  my (undef, $field_ref, $default, $exceptions, $noquote) = @_;
+
+  my @noquote = (defined $noquote)?@$noquote:();
 
   if ($exceptions and ! ref $default) {
     for (my $i = 0; $i < @$exceptions; $i += 2) {
@@ -49,10 +51,11 @@ sub _apply_default_value {
     }
   }
 
+  my $qc = (grep m/$default/, @noquote)?"":"'"; 
   if (ref $default) {
       $$field_ref .= " DEFAULT $$default";
   } else {
-      $$field_ref .= " DEFAULT '$default'";
+      $$field_ref .= " DEFAULT $qc$default$qc";
   }
 
 }
