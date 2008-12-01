@@ -51,7 +51,7 @@ sub _apply_default_value {
     }
   }
 
-  my $qc = (grep m/$default/, @noquote)?"":"'"; 
+  my $qc = (grep m/^$default$/, @noquote)?"":"'"; 
   if (ref $default) {
       $$field_ref .= " DEFAULT $$default";
   } else {
