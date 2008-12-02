@@ -644,8 +644,25 @@ Determines if this field is the same as another
     }
 
     return 0 unless $self->size eq $other->size;
-    return 0 unless (!defined $self->default_value || $self->default_value eq 'NULL') eq (!defined $other->default_value || $other->default_value eq 'NULL');
-    return 0 if defined $self->default_value && $self->default_value ne $other->default_value;
+
+    {
+        my $lhs = $self->default_value;
+           $lhs = \'NULL' unless defined $lhs;
+        my $lhs_is_ref = ! ! ref $lhs;
+
+        my $rhs = $other->default_value;
+           $rhs = \'NULL' unless defined $rhs;
+        my $rhs_is_ref = ! ! ref $rhs;
+
+        # If only one is a ref, fail. -- rjbs, 2008-12-02
+        return 0 if $lhs_is_ref xor $rhs_is_ref;
+
+        my $effective_lhs = $lhs_is_ref ? $$lhs : $lhs;
+        my $effective_rhs = $rhs_is_ref ? $$rhs : $rhs;
+
+        return 0 if $effective_lhs ne $effective_rhs;
+    }
+
     return 0 unless $self->is_nullable eq $other->is_nullable;
 #    return 0 unless $self->is_unique eq $other->is_unique;
     return 0 unless $self->is_primary_key eq $other->is_primary_key;
