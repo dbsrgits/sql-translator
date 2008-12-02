@@ -581,7 +581,11 @@ BEGIN {
     my $t1f2 = shift @fields;
     is( $t1f2->data_type, 'timestamp', 'Field is a timestamp' );
     ok( !$t1f2->is_nullable, 'Field is not nullable' );
-    is( $t1f2->default_value, 'CURRENT_TIMESTAMP', 'Field has right default value' );
+    is_deeply(
+      $t1f2->default_value,
+      \'CURRENT_TIMESTAMP',
+      'Field has right default value' 
+    );
     is( $t1f2->extra('on update'), 'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
     
     my @views = $schema->get_views;
