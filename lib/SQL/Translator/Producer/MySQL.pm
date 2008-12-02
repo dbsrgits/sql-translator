@@ -566,9 +566,6 @@ sub create_field
           [
             'NULL'       => \'NULL',
           ],
-          [
-          'CURRENT_TIMESTAMP'
-          ],
         );
     }
 

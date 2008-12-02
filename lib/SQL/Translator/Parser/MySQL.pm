@@ -597,7 +597,7 @@ unsigned     : /unsigned/i { $return = 0 }
 default_val : 
     /default/i 'CURRENT_TIMESTAMP'
     {
-        $return =  $item[2];
+        $return =  \$item[2];
     }
     |
     /default/i /'(?:.*?\\')*.*?'|(?:')?[\w\d:.-]*(?:')?/

@@ -1,7 +1,7 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
-* Add param to _apply_default_value so that certain values can output without quotes (jgoulah)
+* parsing MySQL CURRENT_TIMESTAMP as scalar ref so it can be produced without quotes (jgoulah)
 * Add ignore_opts parser arg (to ignore table options) in Parser::MySQL (jgoulah)
 * Skip tests for buggy Spreadsheet::ParseExcel versions (rbo)
 * Add support for skip tables parser arg in Parser::DBI::MySQL (jgoulah)
