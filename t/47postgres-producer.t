@@ -52,17 +52,17 @@ my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
 
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1,
                                                                 $field2);
-is($alter_field, qq[ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL;
-ALTER TABLE mytable ALTER COLUMN myfield TYPE character varying(25);],
+is($alter_field, qq[ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL
+ALTER TABLE mytable ALTER COLUMN myfield TYPE character varying(25)],
  'Alter field works');
 
 $field1->name('field3');
 my $add_field = SQL::Translator::Producer::PostgreSQL::add_field($field1);
 
-is($add_field, 'ALTER TABLE mytable ADD COLUMN field3 character varying(10);', 'Add field works');
+is($add_field, 'ALTER TABLE mytable ADD COLUMN field3 character varying(10)', 'Add field works');
 
 my $drop_field = SQL::Translator::Producer::PostgreSQL::drop_field($field2);
-is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield;', 'Drop field works');
+is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
 
 my $field3 = SQL::Translator::Schema::Field->new( name      => 'time_field',
                                                   table => $table,
@@ -184,7 +184,7 @@ my $view1_sql1 = SQL::Translator::Producer::PostgreSQL::create_view($view1, $cre
 
 my $view_sql_replace = "CREATE VIEW view_foo ( id, name ) AS (
     SELECT id, name FROM thing
-  );\n\n";
+  )";
 is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
 
 my $view2 = SQL::Translator::Schema::View->new(
@@ -200,5 +200,5 @@ my $view2_sql1 = SQL::Translator::Producer::PostgreSQL::create_view($view2, $cre
 
 my $view2_sql_replace = "CREATE TEMPORARY VIEW view_foo2 AS (
     SELECT id, name FROM thing
-  ) WITH CASCADED CHECK OPTION;\n\n";
+  ) WITH CASCADED CHECK OPTION";
 is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');

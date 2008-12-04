@@ -1036,7 +1036,7 @@ sub parse {
                 name   => $idata->{'name'},
                 type   => uc $idata->{'type'},
                 fields => $idata->{'fields'},
-            ) or die $table->error;
+            ) or die $table->error . ' ' . $table->name;
         }
 
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {

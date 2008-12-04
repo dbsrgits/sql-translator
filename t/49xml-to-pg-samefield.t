@@ -38,8 +38,6 @@ CREATE TABLE "one" (
   "same" character varying(100) DEFAULT 'hello' NOT NULL
 );
 
-
-
 DROP TABLE "two" CASCADE;
 CREATE TABLE "two" (
   "same" character varying(100) DEFAULT 'hello' NOT NULL

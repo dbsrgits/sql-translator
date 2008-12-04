@@ -1,37 +1,49 @@
 # ----------------------------------------------------------
 # 
 # ----------------------------------------------------------
-* parsing MySQL CURRENT_TIMESTAMP as scalar ref so it can be produced without quotes (jgoulah)
+* parsing MySQL CURRENT_TIMESTAMP as scalar ref so it can be produced without 
+  quotes (jgoulah)
 * Add ignore_opts parser arg (to ignore table options) in Parser::MySQL (jgoulah)
 * Skip tests for buggy Spreadsheet::ParseExcel versions (rbo)
 * Add support for skip tables parser arg in Parser::DBI::MySQL (jgoulah)
-* Changed behaviour of ::Producer::Oracle when returning an array of statements to make it compatible to DBI->do()
+* Changed behaviour of ::Producer::Oracle when returning an array of statements 
+  to make it compatible to DBI->do()
 * Fixed a few bugs in ::Producer::Oracle
 * Applied patch from jgoulah to support mysql's MERGE option
 * Applied patch from rbo to add support of multiple database events on a trigger
-* Applied patch from lukes to allow drop if exists in sqlite producer, with version >= 3.3
-* Applied patch from rjbs with minor changes, now we support scalar refs in default values!
+* Applied patch from lukes to allow drop if exists in sqlite producer, with 
+  version >= 3.3
+* Applied patch from rjbs with minor changes, now we support scalar refs in 
+  default values!
 * Fixed SQLite producer to end index statements in newlines, in scalar context
 * Decreed that all list context statements shall not end in ; or ;\n
 * Fixed SQLite, Diff and MySQL producers to agree with Decree.
 * Added support for CREATE VIEW + tests in the Pg producer (wreis)
 * Added support for CREATE VIEW + tests in the sqlite producer (groditi)
-* Added proper argument parsing and documentation to MySQL Parser and Producer (ribasushi)
-* Using DROP VIEW instead of OR REPLACE clause in the Pg producer, as replace only allows replacement with same number of columns (wreis)
-* Added support for DROP VIEW and fixed CREATE VIEW statement in the sqlite producer (wreis)
-* Removed source_db and target_db accessors from Diff (throwback to old version, only output_db is used)
+* Added proper argument parsing and documentation to MySQL Parser and 
+  Producer (ribasushi)
+* Using DROP VIEW instead of OR REPLACE clause in the Pg producer, as replace 
+  only allows replacement with identical set of columns (wreis)
+* Added support for DROP VIEW and fixed CREATE VIEW statement in the sqlite 
+  producer (wreis)
+* Removed source_db and target_db accessors from Diff (throwback to old version, 
+  only output_db is used)
 
 
-* Support for longer varchar fields in My
+* Support for longer varchar fields in MySQL
 
 # ----------------------------------------------------------
 # 0.09001 2008-08-19
 # ----------------------------------------------------------
 * Added support for CREATE VIEW + tests in the mysql producer (groditi)
 * Added support for SET fields in the mysql producer + test (groditi)
-* Added support for proper booleans in the mysql producer, when a mysql version of at least 4.x is supplied
-* Added support for proper enums under pg (as of 8.3), with pg version check, and deferrable constraints
-* Added support to truncate long constraint and index names in the mysql producer, because of a change to DBIx::Class to produce such long names in some cases.
+* Added support for proper booleans in the mysql producer, when a mysql version 
+  of at least 4.x is supplied
+* Added support for proper enums under pg (as of 8.3), with pg version check, 
+  and deferrable constraints
+* Added support to truncate long constraint and index names in the mysql 
+  producer, because of a change to DBIx::Class to produce such long names in 
+  some cases.
 
 # ----------------------------------------------------------
 # 0.09000 2008-02-25
@@ -48,9 +60,13 @@
 * Major refactoring of SQL::Translator::Diff again:
 * Diff is no longer one huge monolithic function.                         
 * Added more tests for diff                                               
-* When producing diffs for MySQL you will (by default) get single alter statements per table
-* SQLite can also do remove columns (by creating a temp table as shown in http://sqlite.org/faq.html#q11
-* Columns can be renamed if the new schema is from a form that can have metadata (which is pretty much anything but an SQL file.) It does this by looking at renamed_from in the $field->extra                              
+* When producing diffs for MySQL you will (by default) get single alter 
+  statements per table
+* SQLite can also do remove columns (by creating a temp table as shown in 
+  http://sqlite.org/faq.html#q11
+* Columns can be renamed if the new schema is from a form that can have metadata
+  (which is pretty much anything but an SQL file.) It does this by looking at 
+  renamed_from in the $field->extra                              
 * Updated Oracle and Postgres producers
 * More tests!
 
@@ -72,7 +88,8 @@
 # 0.08 2006-12-07
 # -----------------------------------------------------------
 
-* Patched 18ttschema-producer.t and 33tt-table-producter.t to skip on TT 2.15, thanks Ash!
+* Patched 18ttschema-producer.t and 33tt-table-producter.t to skip on TT 2.15, 
+  thanks Ash!
 
 # -----------------------------------------------------------
 # 0.08_04 2006-11-10
@@ -94,7 +111,8 @@
 # 0.08_02    2006-11-03
 # -----------------------------------------------------------
 
-* Added patch from Ash to separate DROP statements in mysql producer in list-context
+* Added patch from Ash to separate DROP statements in mysql producer in 
+  list-context
 * Fixed up SQLites usage of no-comments
 
 # -----------------------------------------------------------
@@ -102,8 +120,10 @@
 # -----------------------------------------------------------
 
 * Made Trigger check that a give table exists in on_table - castaway
-* Split some producers (DB2, MySQL, SQLite, PostgreSQL) into sub methods (others to follow) - castaway
-* Add alter_* methods to some Producers and docs to Producer.pm (for use by Diff later) - castaway
+* Split some producers (DB2, MySQL, SQLite, PostgreSQL) into sub methods (others
+  to follow) - castaway
+* Add alter_* methods to some Producers and docs to Producer.pm (for use by Diff
+  later) - castaway
 * Made changes to allow producers to return a list of statements - castaway
 * Split sqlt-diff into script and module - castaway
 * Added quote_table_names and quote_field_names patch (omega, zamolxes) - castaway

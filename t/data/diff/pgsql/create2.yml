@@ -1,0 +1,262 @@
+---
+schema:
+  procedures: {}
+  tables:
+    added:
+      constraints: []
+      fields:
+        id:
+          data_type: int
+          default_value: ~
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: id
+          order: 10
+          size:
+            - 11
+      indices: []
+      name: added
+      options: []
+      order: 3
+    employee:
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields:
+            - employee_id
+          match_type: ''
+          name: FK5302D47D93FE702E_diff
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields:
+            - person_id
+          reference_table: person
+          type: FOREIGN KEY
+        - deferrable: 1
+          expression: ''
+          fields:
+            - employee_id
+            - position
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: PRIMARY KEY
+      fields:
+        employee_id:
+          data_type: int
+          default_value: ~
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 1
+          is_unique: 0
+          name: employee_id
+          order: 9
+          size:
+            - 11
+        position:
+          data_type: varchar
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 0
+          name: position
+          order: 8
+          size:
+            - 50
+      indices: []
+      name: employee
+      order: 2
+    new_name:
+      name: new_name
+      extra:
+        renamed_from: old_name
+      fields:
+        pk:
+          data_type: int
+          default_value: ~
+          extra: {}
+          is_auto_increment: 1
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 1
+          name: pk
+          order: 1
+        other:
+          data_type: int
+          name: new_field
+          order: 2
+      order: 4
+    person:
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields:
+            - person_id
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: PRIMARY KEY
+        - deferrable: 1
+          expression: ''
+          fields:
+            - person_id
+          match_type: ''
+          name: UC_person_id
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: UNIQUE
+        - deferrable: 1
+          expression: ''
+          fields:
+            - age
+            - name
+          match_type: ''
+          name: UC_age_name
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: UNIQUE
+      fields:
+        age:
+          data_type: int
+          default_value: 18
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 1
+          name: age
+          order: 3
+          size:
+            - 11
+        iq:
+          data_type: int
+          default_value: 0
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: iq
+          order: 5
+          size:
+            - 11
+        is_rock_star:
+          data_type: smallint
+          default_value: 1
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: is_rock_star
+          order: 6
+          size:
+            - 4
+        name:
+          data_type: varchar
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 1
+          name: name
+          order: 2
+          size:
+            - 20
+        person_id:
+          data_type: int
+          default_value: ~
+          extra: {}
+          is_auto_increment: 1
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 1
+          name: person_id
+          order: 1
+          size:
+            - 11
+        physical_description:
+          data_type: text
+          default_value: ~
+          extra:
+            renamed_from: 'description'
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: physical_description
+          order: 7
+          size:
+            - 65535
+        weight:
+          data_type: numeric
+          default_value: ~
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: weight
+          order: 4
+          size:
+            - 11
+            - 2
+      indices:
+        - fields:
+            - name
+          name: unique_name
+          options: []
+          type: UNIQUE
+      name: person
+      order: 1
+  triggers: {}
+  views: {}
+translator:
+  add_drop_table: 0
+  filename: t/data/pgsql/create2.sql
+  no_comments: 0
+  parser_args:
+    db_password: ~
+    db_user: ~
+    dsn: ~
+    field_separator: ~
+    mysql_parser_version: ~
+    record_separator: ~
+    scan_fields: 1
+    trim_fields: 1
+  parser_type: SQL::Translator::Parser::PostgreSQL
+  producer_args:
+    add_prefix: ~
+    add_truncate: ~
+    db_password: ~
+    db_user: ~
+    dsn: ~
+    imap_file: ~
+    imap_url: ~
+    indent: ~
+    newlines: ~
+    package_name: ~
+    prefix: ~
+    pretty: ~
+    skip: ~
+    skiplike: ~
+    title: ~
+    tt_conf: {}
+    tt_vars: {}
+    ttfile: ~
+  producer_type: SQL::Translator::Producer::YAML
+  show_warnings: 0
+  trace: 0
+  version: 0.0899_01
