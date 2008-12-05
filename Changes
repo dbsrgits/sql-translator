@@ -1,5 +1,5 @@
 # ----------------------------------------------------------
-# 
+# 0.09002 2008-12-05
 # ----------------------------------------------------------
 * parsing MySQL CURRENT_TIMESTAMP as scalar ref so it can be produced without 
   quotes (jgoulah)
