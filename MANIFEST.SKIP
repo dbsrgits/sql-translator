@@ -2,7 +2,8 @@
 .#.*
 .*.bak
 .*.swp
-.*.old
+.*\.old
+.*\.tar\.gz
 ^Makefile$
 ^_build/
 ^blib/
