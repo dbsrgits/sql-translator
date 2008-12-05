@@ -741,7 +741,7 @@ sub create_field {
 sub create_view {
     my ($view) = @_;
 
-    my $out = sprintf("CREATE VIEW %s AS\n%s;",
+    my $out = sprintf("CREATE VIEW %s AS\n%s",
                       $view->name,
                       $view->sql);
 
