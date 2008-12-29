@@ -392,6 +392,13 @@ sub create_table
         push @fks, @$fks;
     }
 
+
+    my $temporary = "";
+
+    if(exists $table->{extra}{temporary}) {
+        $temporary = $table->{extra}{temporary} ? "TEMPORARY " : "";
+    } 
+
     my $create_statement;
     $create_statement = join("\n", @comments);
     if ($add_drop_table) {
@@ -405,7 +412,7 @@ sub create_table
     }
     $create_statement .= join("\n", @type_defs) . "\n"
         if $postgres_version >= 8.3;
-    $create_statement .= qq[CREATE TABLE $qt$table_name_ur$qt (\n].
+    $create_statement .= qq[CREATE ${temporary}TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n)"
                             ;

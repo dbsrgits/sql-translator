@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(117, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(120, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -38,6 +38,24 @@ my $sql = q[
         f_int smallint,
         primary key (f_id),
         check (f_int between 1 and 5)
+    );
+
+    CREATE TABLE products_1 (
+        product_no integer,
+        name text,
+        price numeric
+    );
+    
+    CREATE TEMP TABLE products_2 (
+        product_no integer,
+        name text,
+        price numeric
+    );
+
+    CREATE TEMPORARY TABLE products_3 (
+        product_no integer,
+        name text,
+        price numeric
     );
 
     alter table t_test1 add f_fk2 integer;
@@ -80,7 +98,7 @@ my $schema = $t->schema;
 
 isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
 my @tables = $schema->get_tables;
-is( scalar @tables, 2, 'Two tables' );
+is( scalar @tables, 5, 'Five tables' );
 
 my $t1 = shift @tables;
 is( $t1->name, 't_test1', 'Table t_test1 exists' );
@@ -255,3 +273,8 @@ is( $t2_c2->type, PRIMARY_KEY, "Constraint is a PK" );
 
 my $t2_c3 = shift @t2_constraints;
 is( $t2_c3->type, CHECK_C, "Constraint is a 'CHECK'" );
+
+# test temporary tables
+is( exists $schema->get_table('products_1')->extra()->{'temporary'}, "", "Table is NOT temporary");
+is( $schema->get_table('products_2')->extra('temporary'), 1,"Table is TEMP");
+is( $schema->get_table('products_3')->extra('temporary'), 1,"Table is TEMPORARY");

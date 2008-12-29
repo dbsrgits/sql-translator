@@ -209,7 +209,7 @@ update : /update/i statement_body ';'
 #
 # Create table.
 #
-create : create_table table_name '(' create_definition(s? /,/) ')' table_option(s?) ';'
+create : CREATE temporary_table(?) TABLE table_name '(' create_definition(s? /,/) ')' table_option(s?) ';'
     {
         my $table_info  = $item{'table_name'};
         my $schema_name = $table_info->{'schema_name'};
@@ -218,13 +218,15 @@ create : create_table table_name '(' create_definition(s? /,/) ')' table_option(
         $tables{ $table_name }{'schema_name'} = $schema_name;
         $tables{ $table_name }{'table_name'}  = $table_name;
 
+        $tables{ $table_name }{'temporary'} = $item[2][0]; 
+
         if ( @table_comments ) {
             $tables{ $table_name }{'comments'} = [ @table_comments ];
             @table_comments = ();
         }
 
         my @constraints;
-        for my $definition ( @{ $item[4] } ) {
+        for my $definition ( @{ $item[6] } ) {
             if ( $definition->{'supertype'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
                 $tables{ $table_name }{'fields'}{ $field_name } = 
@@ -244,7 +246,7 @@ create : create_table table_name '(' create_definition(s? /,/) ')' table_option(
             }
         }
 
-        for my $option ( @{ $item[6] } ) {
+        for my $option ( @{ $item[8] } ) {
             $tables{ $table_name }{'table_options(s?)'}{ $option->{'type'} } = 
                 $option;
         }
@@ -782,6 +784,13 @@ alter : alter_sequence NAME /owned/i /by/i column_name ';'
 
 storage_type : /(plain|external|extended|main)/i
 
+temporary: /temp(orary)?\\b/i
+
+temporary_table: temporary
+    {
+        1;
+    }
+
 alter_default_val : SET default_val 
     { 
         $return = { value => $item[2]->{'value'} } 
@@ -1000,6 +1009,8 @@ sub parse {
             #schema => $tdata->{'schema_name'},
             name   => $tdata->{'table_name'},
         ) or die "Couldn't create table '$table_name': " . $schema->error;
+
+        $table->extra(temporary => 1) if $tdata->{'temporary'};
 
         $table->comments( $tdata->{'comments'} );
 
