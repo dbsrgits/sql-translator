@@ -56,10 +56,10 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 $VERSION = sprintf "%d.%02d", q$Revision: 1.18 $ =~ /(\d+)\.(\d+)/;
 
 my %VALID_INDEX_TYPE = (
-    UNIQUE,    1,
-    NORMAL,    1,
-    FULL_TEXT, 1, # MySQL only (?)
-    SPATIAL,   1, # MySQL only (?)
+  UNIQUE         => 1,
+  NORMAL         => 1,
+  FULL_TEXT      => 1, # MySQL only (?)
+  SPATIAL        => 1, # MySQL only (?)
 );
 
 # ----------------------------------------------------------------------
@@ -221,17 +221,24 @@ Get or set the index's type.
 
   my $type = $index->type('unique');
 
+Get or set the index's options (e.g., "using" or "where" for PG).  Returns
+
+Currently there are only four acceptable types: UNIQUE, NORMAL, FULL_TEXT,
+and SPATIAL. The latter two might be MySQL-specific. While both lowercase
+and uppercase types are acceptable input, this method returns the type in
+uppercase.
+
 =cut
 
     my $self = shift;
 
-    if ( my $type = shift ) {
+    if ( my $type = uc shift ) {
         return $self->error("Invalid index type: $type") 
             unless $VALID_INDEX_TYPE{ $type };
         $self->{'type'} = $type;
     }
 
-    return $self->{'type'} || NORMAL;
+    return $self->{'type'} || 'NORMAL';
 }
 
 # ----------------------------------------------------------------------
