@@ -460,7 +460,7 @@ ora_data_type :
     |
     /long\s+raw/i { $return = 'long raw' }
     |
-    /(long|date|timestamp|raw|rowid|urowid|mlslabel|clob|nclob|blob|bfile|float)/i { $item[1] }
+    /(long|date|timestamp|raw|rowid|urowid|mlslabel|clob|nclob|blob|bfile|float|double)/i { $item[1] }
 
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
