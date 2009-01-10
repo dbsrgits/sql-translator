@@ -178,6 +178,14 @@ set on each table. it describes the index types along with
 which columns are included in the index. this option requires
 that show_fields is a true value as well
 
+=item * show_index_name
+
+if show_indexes is set to a true value, then the value of this
+parameter determines whether or not to print names of indexes.
+if show_index_name is false, then a list of indexed columns
+will appear below the field list. otherwise, it will be a list
+prefixed with the name of each index. it defaults to true.
+
 =item * friendly_ints
 
 if set to a true value, each integer type field will be displayed
@@ -274,6 +282,7 @@ sub produce {
     my $show_datatypes   = $args->{'show_datatypes'};
     my $show_sizes       = $args->{'show_sizes'};
     my $show_indexes     = $args->{'show_indexes'};
+    my $show_index_name  = $args->{'show_index_name'} || 1;
     my $friendly_ints    = $args->{'friendly_ints'};
     my $show_constraints = $args->{'show_constraints'};
     my $join_pk_only     = $args->{'join_pk_only'};
@@ -412,14 +421,20 @@ sub produce {
           foreach my $index ($table->get_indices) {
             next unless $index->is_valid;
 
-            $index_str .= '*\ ' . $index->name . ': ';
+            $index_str .= '*\ ';
+            if ($show_index_name) {
+              $index_str .= $index->name . ': ';
+            }
             $index_str .= join(', ', $index->fields);
             if ($index->type eq 'UNIQUE') {
               $index_str .= '\ [U]';
             }
             $index_str .= '\l';
           }
-          $label .= '|' . $index_str;
+          # Only add the last box if index_str is non-null
+          if (length $index_str) {
+            $label .= '|' . $index_str;
+          }
         }
         $label .= '}';
 #        $gv->add_node( $table_name, label => $label );
