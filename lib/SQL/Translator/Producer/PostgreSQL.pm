@@ -42,6 +42,7 @@ use vars qw[ $DEBUG $WARN $VERSION %used_names ];
 $VERSION = sprintf "%d.%02d", q$Revision: 1.29 $ =~ /(\d+)\.(\d+)/;
 $DEBUG = 0 unless defined $DEBUG;
 
+use base qw(SQL::Translator::Producer);
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
 use Data::Dumper;
