@@ -116,11 +116,11 @@ sub produce {
                 }
 
                 if ( my $update = $c->on_update ) {
-                    $pod .= "=item * On update = $update";
+                    $pod .= "=item * On update = $update\n\n";
                 }
 
                 if ( my $delete = $c->on_delete ) {
-                    $pod .= "=item * On delete = $delete";
+                    $pod .= "=item * On delete = $delete\n\n";
                 }
 
                 $pod .= "=back\n\n";
