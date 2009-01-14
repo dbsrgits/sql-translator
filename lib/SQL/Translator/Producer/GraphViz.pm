@@ -189,10 +189,16 @@ prefixed with the name of each index. it defaults to true.
 =item * friendly_ints
 
 if set to a true value, each integer type field will be displayed
-as a tinyint, smallint, integer or bigint depending on the field's
+as a smallint, integer or bigint depending on the field's
 associated size parameter. this only applies for the 'integer'
 type (and not the lowercase 'int' type, which is assumed to be a
 32-bit integer).
+
+=item * friendly_ints_extended
+
+if set to a true value, the friendly ints displayed will take into
+account the non-standard types, 'tinyint' and 'mediumint' (which,
+as far as I am aware, is only implemented in MySQL)
 
 =back
 
@@ -284,6 +290,7 @@ sub produce {
     my $show_indexes     = $args->{'show_indexes'};
     my $show_index_name  = $args->{'show_index_name'} || 1;
     my $friendly_ints    = $args->{'friendly_ints'};
+    my $friendly_ints_ex = $args->{'friendly_ints_extended'};
     my $show_constraints = $args->{'show_constraints'};
     my $join_pk_only     = $args->{'join_pk_only'};
     my $skip_fields      = $args->{'skip_fields'} || '';
@@ -377,22 +384,35 @@ sub produce {
               # requested size, if a size is given.
               if ($friendly_ints && $dt eq 'integer' && $field->size) {
                 # Automatically translate to int2, int4, int8
-                # Type (Bits)     Max. Signed           Length
-                # tinyint (8)     128                   3
-                # smallint (16)   32767                 5
-                # int (32)        2147483647            10
-                # bigint (64)     9223372036854775807   19
-                if ($field->size > 10) {
+                # Type (Bits)     Max. Signed/Unsigned    Length
+                # tinyint* (8)    128                     3
+                #                 255                     3
+                # smallint (16)   32767                   5
+                #                 65535                   5
+                # mediumint* (24) 8388607                 7
+                #                 16777215                8
+                # int (32)        2147483647              10
+                #                 4294967295              10
+                # bigint (64)     9223372036854775807     19
+                #                 18446744073709551615    20
+                #
+                # * tinyint and mediumint are nonstandard extensions which are
+                #   only available under MySQL (to my knowledge)
+                my $size = $field->size;
+                if ($size > 10) {
                   $dt = 'bigint';
                 }
-                elsif ($field->size > 5) {
+                elsif ($size > 5) {
                   $dt = 'integer';
+                  if ($friendly_ints_ex && $size <= 8) {
+                    $dt = 'mediumint';
+                  }
                 }
-                elsif ($field->size > 3) {
+                else {
                   $dt = 'smallint';
-                }
-                else { # 8 bits
-                  $dt = 'tinyint';
+                  if ($friendly_ints_ex && $size <= 3) {
+                    $dt = 'tinyint';
+                  }
                 }
               }
 
@@ -534,6 +554,10 @@ sub produce {
 =head1 AUTHOR
 
 Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
+
+=head2 CONTRIBUTORS
+
+Jonathan Yu E<lt>frequency@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
