@@ -178,7 +178,7 @@ set on each table. it describes the index types along with
 which columns are included in the index. this option requires
 that show_fields is a true value as well
 
-=item * show_index_name
+=item * show_index_names
 
 if show_indexes is set to a true value, then the value of this
 parameter determines whether or not to print names of indexes.
@@ -287,7 +287,7 @@ sub produce {
     my $show_datatypes   = $args->{'show_datatypes'};
     my $show_sizes       = $args->{'show_sizes'};
     my $show_indexes     = $args->{'show_indexes'};
-    my $show_index_name  = defined $args->{'show_index_name'} ? $args->{'show_index_name'} : 1;
+    my $show_index_names = defined $args->{'show_index_names'} ? $args->{'show_index_names'} : 1;
     my $friendly_ints    = $args->{'friendly_ints'};
     my $friendly_ints_ex = $args->{'friendly_ints_extended'};
     my $show_constraints = $args->{'show_constraints'};
@@ -461,7 +461,7 @@ sub produce {
 
             push @fmt_indexes, join (' ',
               '*',
-              $show_index_name ? $index->name . ':' : (),
+              $show_index_names ? $index->name . ':' : (),
               join (', ', $index->fields),
               ($index->type eq 'UNIQUE') ? '[U]' : (),
             );
