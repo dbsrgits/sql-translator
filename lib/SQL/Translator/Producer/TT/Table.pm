@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::TT::Table;
 
 # -------------------------------------------------------------------
-# $Id: Table.pm,v 1.3 2004-08-19 20:58:05 grommit Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -178,7 +178,7 @@ whitespace either side, to be recognised.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use File::Path;

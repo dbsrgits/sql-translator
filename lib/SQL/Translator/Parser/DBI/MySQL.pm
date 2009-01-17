@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::MySQL;
 
 # -------------------------------------------------------------------
-# $Id: MySQL.pm,v 1.6 2006-02-22 22:52:51 kycl4rk Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -43,7 +43,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::MySQL;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

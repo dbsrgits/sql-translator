@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::Sybase;
 
 # -------------------------------------------------------------------
-# $Id: Sybase.pm,v 1.10 2005-06-28 16:39:41 mwz444 Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -40,7 +40,7 @@ DBI-Sybase parser included with SQL::Translator.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.10 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

@@ -11,6 +11,48 @@
 _blib$
 Build$
 (^|/)\.
+
+# Version control files and dirs.
+\bRCS\b
+\bCVS\b
+\bSCCS\b
+,v$
+\B\.svn\b
+\B\.git\b
+\B\.gitignore\b
+\b_darcs\b
+
+# Module::Build generated files and dirs.
+^Build$
+^_build/
+
+# Module::Install included files.
+^inc/Module/Install
+
+# Makemaker generated files and dirs.
+\bMANIFEST\.bak
+\bMakefile$
+\bblib/
+\bMakeMaker-\d
+\bpm_to_blib\.ts$
+\bpm_to_blib$
+\bblibdirs\.ts$         # 6.18 through 6.25 generated this
+
+# Temp, old and emacs backup files.
+~$
+\.old$
+\#$
+\b\.#
+\.bak$
+
+# Devel::Cover files.
+\bcover_db\b
+
+# Test::Kwalitee cache files.
+^Debian_CPANTS\.txt
+
+# I'm not sure why these are in here... perhaps we should
+# consider removal -jawnsy
 lib/SQL/Translator/Parser/XML/XMI.pm
 lib/SQL/Translator/Parser/XML/XMI/Rational.pm
 lib/SQL/Translator/Parser/XML/XMI/SQLFairy.pm

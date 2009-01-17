@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::SQLite;
 
 # -------------------------------------------------------------------
-# $Id: SQLite.pm,v 1.5 2004-02-09 22:23:40 kycl4rk Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -45,7 +45,7 @@ use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

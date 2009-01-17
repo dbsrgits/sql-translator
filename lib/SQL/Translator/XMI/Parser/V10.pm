@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser::V10;
 
 # -------------------------------------------------------------------
-# $Id: V10.pm,v 1.1 2003-09-29 12:02:36 grommit Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -31,7 +31,7 @@ SQL::Translator::XMI::Parser::V10 - Version 1.0 parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 use base qw(SQL::Translator::XMI::Parser);
 

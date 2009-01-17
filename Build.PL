@@ -1,4 +1,4 @@
-# $Id: Build.PL,v 1.13 2007-10-24 10:55:44 schiffbruechige Exp $
+# $Id$
 
 use strict;
 use lib './lib';

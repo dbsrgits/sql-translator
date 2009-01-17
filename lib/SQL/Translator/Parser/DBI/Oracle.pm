@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::DBI::Oracle;
 
 # -------------------------------------------------------------------
-# $Id: Oracle.pm,v 1.2 2006-03-09 20:18:05 cahille Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2006 SQLFairy Authors
 #
@@ -42,7 +42,7 @@ use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Constraint;
 
-our $VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+our $VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 # -------------------------------------------------------------------
 sub parse {

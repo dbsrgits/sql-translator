@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::SQLFairy;
 
 # -------------------------------------------------------------------
-# $Id: SQLFairy.pm,v 1.5 2003-10-17 19:49:47 dlc Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -29,7 +29,7 @@ SQL::Translator::Parser::XML::XMI::SQLFairy - Create Schema from UML Models.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 use Exporter;
 use base qw(Exporter);

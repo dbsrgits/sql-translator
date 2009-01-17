@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # -------------------------------------------------------------------
-# $Id: sqlt-dumper,v 1.5 2004-03-09 19:33:20 kycl4rk Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -63,7 +63,7 @@ use SQL::Translator;
 use File::Basename qw(basename);
 
 use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision: 1.5 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 my ( $help, $db, $skip, $skiplike, $db_user, $db_pass, $dsn );
 GetOptions(

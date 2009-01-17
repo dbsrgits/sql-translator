@@ -1,7 +1,7 @@
 package SQL::Translator::Filter::DefaultExtra;
 
 # -------------------------------------------------------------------
-# $Id: DefaultExtra.pm,v 1.1 2005-12-16 10:25:00 grommit Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #

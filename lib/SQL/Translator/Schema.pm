@@ -3,7 +3,7 @@ package SQL::Translator::Schema;
 # vim: sw=4: ts=4:
 
 # ----------------------------------------------------------------------
-# $Id: Schema.pm,v 1.27 2007-10-24 10:58:35 schiffbruechige Exp $
+# $Id$
 # ----------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -60,7 +60,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
 
-$VERSION = sprintf "%d.%02d", q$Revision: 1.27 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 __PACKAGE__->_attributes(qw/name database translator/);
 

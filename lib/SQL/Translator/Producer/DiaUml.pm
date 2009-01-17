@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::DiaUml;
 
 # -------------------------------------------------------------------
-# $Id: DiaUml.pm,v 1.2 2006-03-06 13:08:43 grommit Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2002-4 SQLFairy Authors
 #
@@ -59,7 +59,7 @@ automatically arrange them horizontally or vertically.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Utils 'debug';

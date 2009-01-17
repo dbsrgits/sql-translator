@@ -1,7 +1,7 @@
 package SQL::Translator::XMI::Parser;
 
 # -------------------------------------------------------------------
-# $Id: Parser.pm,v 1.8 2003-10-06 15:03:07 grommit Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -32,7 +32,7 @@ parser.
 use strict;
 use 5.006_001;
 use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 use Data::Dumper;
 use XML::XPath;

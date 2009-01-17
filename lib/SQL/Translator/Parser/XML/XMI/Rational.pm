@@ -1,7 +1,7 @@
 package SQL::Translator::Parser::XML::XMI::Rational;
 
 # -------------------------------------------------------------------
-# $Id: Rational.pm,v 1.6 2003-10-06 15:43:41 grommit Exp $
+# $Id$
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 #
@@ -30,7 +30,7 @@ Data Modeling Profile.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 use Exporter;
 use base qw(Exporter);
