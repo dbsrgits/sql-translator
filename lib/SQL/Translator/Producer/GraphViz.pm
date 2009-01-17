@@ -3,7 +3,7 @@ package SQL::Translator::Producer::GraphViz;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -206,7 +206,6 @@ as far as I am aware, is only implemented in MySQL)
 
 use strict;
 use GraphViz;
-use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
@@ -288,7 +287,7 @@ sub produce {
     my $show_datatypes   = $args->{'show_datatypes'};
     my $show_sizes       = $args->{'show_sizes'};
     my $show_indexes     = $args->{'show_indexes'};
-    my $show_index_name  = $args->{'show_index_name'} || 1;
+    my $show_index_name  = defined $args->{'show_index_name'} ? $args->{'show_index_name'} : 1;
     my $friendly_ints    = $args->{'friendly_ints'};
     my $friendly_ints_ex = $args->{'friendly_ints_extended'};
     my $show_constraints = $args->{'show_constraints'};
@@ -366,23 +365,25 @@ sub produce {
     my @fk_registry; # for locations of fields for foreign keys
 
     for my $table ( $schema->get_tables ) {
-        my $table_name = $table->name;
         my @fields     = $table->get_fields;
         if ( $show_fk_only ) {
             @fields = grep { $_->is_foreign_key } @fields;
         }
 
-        my $label = '{' . $table_name;
+        my $field_str = '';
         if ($show_fields) {
-          my $field_str = '';
+
+          my @fmt_fields;
           foreach my $field (@fields) {
-            $field_str .= '-\ ' . $field->name;
+
+            my $field_type;
             if ($show_datatypes) {
-              my $dt = lc($field->data_type);
+
+              $field_type = $field->data_type;
 
               # For the integer type, transform into different types based on
               # requested size, if a size is given.
-              if ($friendly_ints && $dt eq 'integer' && $field->size) {
+              if ($field->size and $friendly_ints and (lc $field_type) eq 'integer') {
                 # Automatically translate to int2, int4, int8
                 # Type (Bits)     Max. Signed/Unsigned    Length
                 # tinyint* (8)    128                     3
@@ -399,67 +400,116 @@ sub produce {
                 # * tinyint and mediumint are nonstandard extensions which are
                 #   only available under MySQL (to my knowledge)
                 my $size = $field->size;
-                if ($size > 10) {
-                  $dt = 'bigint';
+                if ($size <= 3 and $friendly_ints_ex) {
+                  $field_type = 'tinyint',
                 }
-                elsif ($size > 5) {
-                  $dt = 'integer';
-                  if ($friendly_ints_ex && $size <= 8) {
-                    $dt = 'mediumint';
-                  }
+                elsif ($size <= 5) {
+                  $field_type = 'smallint';
+                }
+                elsif ($size <= 8 and $friendly_ints_ex) {
+                  $field_type = 'mediumint';
+                }
+                elsif ($size <= 11) {
+                  $field_type = 'integer';
                 }
                 else {
-                  $dt = 'smallint';
-                  if ($friendly_ints_ex && $size <= 3) {
-                    $dt = 'tinyint';
-                  }
+                  $field_type = 'bigint';
                 }
               }
 
-              $field_str .= '\ ' . $dt;
-              if ($show_sizes && $field->size && ($dt =~ /^(var)?char2?$/ || $dt eq 'numeric' || $dt eq 'decimal')) {
-                $field_str .= '(' . $field->size . ')';
+              if (
+                $show_sizes
+                  and
+                $field->size
+                  and
+                ($field_type =~ /^(var)?char2?$/ or $field_type eq 'numeric' or $field_type eq 'decimal')
+              ) {
+                $field_type .= '(' . $field->size . ')';
               }
             }
 
+            my $constraints;
             if ($show_constraints) {
               my @constraints;
               push(@constraints, 'PK') if $field->is_primary_key;
               push(@constraints, 'FK') if $field->is_foreign_key;
               push(@constraints, 'U')  if $field->is_unique;
-              if (scalar(@constraints)) {
-                $field_str .= '\ [' . join(',\ ', @constraints) . ']';
-              }
+
+              $constraints = join (',', @constraints);
             }
-            $field_str .= '\l';
+
+            # construct the field line from all info gathered so far
+            push @fmt_fields, join (' ',
+              '-',
+              $field->name,
+              $field_type || (),
+              $constraints ? "[$constraints]" : (),
+            );
+
           }
-          $label .= '|' . $field_str;
+
+          # join field lines with graphviz formatting
+          $field_str = join ('\l', @fmt_fields) . '\l';
         }
 
+        my $index_str = '';
         if ($show_indexes) {
-          my $index_str = '';
+
+          my @fmt_indexes;
           foreach my $index ($table->get_indices) {
             next unless $index->is_valid;
 
-            $index_str .= '*\ ';
-            if ($show_index_name) {
-              $index_str .= $index->name . ': ';
-            }
-            $index_str .= join(', ', $index->fields);
-            if ($index->type eq 'UNIQUE') {
-              $index_str .= '\ [U]';
-            }
-            $index_str .= '\l';
+            push @fmt_indexes, join (' ',
+              '*',
+              $show_index_name ? $index->name . ':' : (),
+              join (', ', $index->fields),
+              ($index->type eq 'UNIQUE') ? '[U]' : (),
+            );
           }
-          # Only add the last box if index_str is non-null
-          if (length $index_str) {
-            $label .= '|' . $index_str;
-          }
+
+          # join index lines with graphviz formatting (if any indexes at all)
+          $index_str = join ('\l', @fmt_indexes) . '\l' if @fmt_indexes;
         }
-        $label .= '}';
-#        $gv->add_node( $table_name, label => $label );
-#        $gv->add_node( $table_name, label => $label, ($node_shape eq 'record' ? ( shape => $node_shape ) : ()) );
-        $gv->add_node( $table_name, label => $label, shape => $node_shape );
+
+        my $table_name = $table->name;
+        my $name_str = $table_name . '\n';
+
+        # escape spaces
+        for ($name_str, $field_str, $index_str) {
+          $_ =~ s/ /\\ /g;
+        }
+
+
+        # only the 'record' type supports nice formatting
+        if ($node_shape eq 'record') {
+
+            # the necessity to supply shape => 'record' is a graphviz bug 
+            $gv->add_node( $table_name,
+              shape => 'record',
+              label => sprintf ('{%s}',
+                join ('|',
+                  $name_str,
+                  $field_str || (),
+                  $index_str || (),
+                ),
+              ),
+            );
+        }
+        else {
+            my $sep = sprintf ('%s\n',
+                '-' x ( (length $table_name) + 2)
+            );
+
+            $gv->add_node( $table_name,
+                label => join ($sep,
+                    $name_str,
+                    $field_str || (),
+                    $index_str || (),
+                ),
+            );
+        }
+
+
         debug("Processing table '$table_name'");
 
         debug("Fields = ", join(', ', map { $_->name } @fields));
