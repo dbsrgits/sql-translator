@@ -1,7 +1,33 @@
 # $Id$
 
 use strict;
-use Module::Build::Compat;
+
+unless (eval "use Module::Build::Compat 0.02; 1" ) {
+  print "This module requires Module::Build to install itself.\n";
+  
+  require ExtUtils::MakeMaker;
+  my $yn = ExtUtils::MakeMaker::prompt
+    ('  Install Module::Build now from CPAN?', 'y');
+  
+  unless ($yn =~ /^y/i) {
+    die " *** Cannot install without Module::Build.  Exiting ...\n";
+  }
+  
+  require Cwd;
+  require File::Spec;
+  require CPAN;
+  
+  # Save this 'cause CPAN will chdir all over the place.
+  my $cwd = Cwd::cwd();
+  
+  CPAN::Shell->install('Module::Build::Compat');
+  CPAN::Shell->expand("Module", "Module::Build::Compat")->uptodate
+    or die "Couldn't install Module::Build, giving up.\n";
+  
+  chdir $cwd or die "Cannot chdir() back to $cwd: $!";
+}
+eval "use Module::Build::Compat 0.02; 1" or die $@;
 
 Module::Build::Compat->run_build_pl(args => \@ARGV);
-Module::Build::Compat->write_makefile();
+require Module::Build;
+Module::Build::Compat->write_makefile(build_class => 'Module::Build');
