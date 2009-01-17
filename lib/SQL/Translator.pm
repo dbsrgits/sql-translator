@@ -1309,6 +1309,8 @@ The following people have contributed to the SQLFairy project:
 
 =item * Ryan D Johnson <ryan@innerfence.com>
 
+=item * Jonathan Yu <frequency@cpan.org>
+
 =back
 
 If you would like to contribute to the project, you can send patches
