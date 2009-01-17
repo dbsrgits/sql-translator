@@ -58,8 +58,7 @@ automatically arrange them horizontally or vertically.
 
 use strict;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ $DEBUG @EXPORT_OK ];
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Utils 'debug';

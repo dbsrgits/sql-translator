@@ -3,7 +3,7 @@ package SQL::Translator::Producer::TT::Base;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -31,8 +31,7 @@ class.
 
 use strict;
 
-use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ @EXPORT_OK ];
 
 use Template;
 use Data::Dumper;

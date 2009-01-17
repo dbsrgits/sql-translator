@@ -21,8 +21,7 @@ use Data::Dumper;
 use SQL::Translator::Parser::DB2;
 use SQL::Translator::Schema::Constants;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-# $VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ $DEBUG @EXPORT_OK ];
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

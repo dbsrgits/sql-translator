@@ -3,7 +3,7 @@ package SQL::Translator::Parser::YAML;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,8 +21,6 @@ package SQL::Translator::Parser::YAML;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw($VERSION);
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);

@@ -3,7 +3,7 @@ package SQL::Translator::Producer::DiaUml;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -58,8 +58,7 @@ automatically arrange them horizontally or vertically.
 
 use strict;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ $DEBUG @EXPORT_OK ];
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Utils 'debug';

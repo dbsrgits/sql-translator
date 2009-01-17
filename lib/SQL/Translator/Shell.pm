@@ -8,7 +8,7 @@ package SQL::Translator::Shell;
 # ----------------------------------------------------------------------
 
 use strict;
-use vars qw($VERSION $REVISION $DEBUG);
+use vars qw($DEBUG);
 
 
 1;

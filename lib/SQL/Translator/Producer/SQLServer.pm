@@ -3,7 +3,7 @@ package SQL::Translator::Producer::SQLServer;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -55,8 +55,7 @@ List of values for an enum field.
 =cut
 
 use strict;
-use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ $DEBUG $WARN ];
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;

@@ -22,8 +22,8 @@ use constant HyperEdge => 'SQL::Translator::Schema::Graph::HyperEdge';
 use Class::MakeMethods::Template::Hash (
   'new --and_then_init' => 'new',
   object => [
-			 'translator' => {class => 'SQL::Translator'},
-			],
+   'translator' => {class => 'SQL::Translator'},
+  ],
   'hash' => [ qw( node ) ],
   'number --counter' => [ qw( order ) ],
 );

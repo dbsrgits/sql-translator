@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -37,9 +37,6 @@ all the parsers and producers of SQL::Translator.
 use strict;
 use CGI;
 use SQL::Translator;
-
-use vars '$VERSION';
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 my $q = CGI->new;
 
@@ -551,6 +548,7 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
-perl, SQL::Translator.
+L<perl>,
+L<SQL::Translator>
 
 =cut

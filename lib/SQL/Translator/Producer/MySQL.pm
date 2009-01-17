@@ -3,7 +3,7 @@ package SQL::Translator::Producer::MySQL;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -101,8 +101,7 @@ Set the fields charater set and collation order.
 
 use strict;
 use warnings;
-use vars qw[ $VERSION $DEBUG %used_names ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ $DEBUG %used_names ];
 $DEBUG   = 0 unless defined $DEBUG;
 
 # Maximum length for most identifiers is 64, according to:

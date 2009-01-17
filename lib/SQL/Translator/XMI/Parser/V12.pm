@@ -30,8 +30,6 @@ SQL::Translator::XMI::Parser::V12 - Version 1.2 parser.
 
 use strict;
 use 5.006_001;
-use vars qw/$VERSION/;
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 use base qw(SQL::Translator::XMI::Parser);
 

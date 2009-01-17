@@ -3,7 +3,7 @@ package SQL::Translator::Parser::Storable;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -40,9 +40,8 @@ the data into a database tables or graphs.
 =cut
 
 use strict;
-use vars qw($DEBUG $VERSION @EXPORT_OK);
+use vars qw($DEBUG @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 use Storable;
 use Exporter;

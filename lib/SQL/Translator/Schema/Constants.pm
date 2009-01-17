@@ -3,7 +3,7 @@ package SQL::Translator::Schema::Constants;
 # ----------------------------------------------------------------------
 # $Id$
 # ----------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -61,9 +61,8 @@ This module exports the following constants for Schema features;
 
 use strict;
 use base qw( Exporter );
-use vars qw( @EXPORT $VERSION );
+use vars qw( @EXPORT );
 require Exporter;
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 @EXPORT = qw[ 
     CHECK_C

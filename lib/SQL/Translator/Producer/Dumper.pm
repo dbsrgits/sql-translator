@@ -3,7 +3,7 @@ package SQL::Translator::Producer::Dumper;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-6 SQLFairy Authors
+# Copyright (C) 2002-2006 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -57,11 +57,8 @@ use Config;
 use SQL::Translator;
 use File::Temp 'tempfile';
 use Template;
-use vars qw($VERSION);
 
 use Data::Dumper;
-
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 sub produce {
     my $t              = shift;

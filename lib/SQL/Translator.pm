@@ -3,7 +3,7 @@ package SQL::Translator;
 # ----------------------------------------------------------------------
 # $Id$
 # ----------------------------------------------------------------------
-# Copyright (C) 2002-4 The SQLFairy Authors
+# Copyright (C) 2002-2009 The SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,13 +21,12 @@ package SQL::Translator;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw( $VERSION $REVISION $DEFAULT_SUB $DEBUG $ERROR );
+use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
 require 5.004;
 
 $VERSION  = '0.09002';
-$REVISION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 

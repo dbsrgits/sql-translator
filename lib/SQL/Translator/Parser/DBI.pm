@@ -3,7 +3,7 @@ package SQL::Translator::Parser::DBI;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -120,8 +120,7 @@ query Oracle directly and skip the parsing of a text file, too.
 
 use strict;
 use DBI;
-use vars qw($VERSION @EXPORT);
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw(@EXPORT);
 
 use constant DRIVERS => {
     mysql            => 'MySQL',

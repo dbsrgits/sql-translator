@@ -3,7 +3,7 @@ package SQL::Translator::Parser::DBI::Oracle;
 # -------------------------------------------------------------------
 # $Id$
 # -------------------------------------------------------------------
-# Copyright (C) 2006 SQLFairy Authors
+# Copyright (C) 2006-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -41,8 +41,6 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Constraint;
-
-our $VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
 
 # -------------------------------------------------------------------
 sub parse {

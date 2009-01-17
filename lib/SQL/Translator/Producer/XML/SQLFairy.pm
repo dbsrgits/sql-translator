@@ -164,8 +164,7 @@ To convert your old format files simply pass them through the translator :)
 =cut
 
 use strict;
-use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+use vars qw[ @EXPORT_OK ];
 
 use Exporter;
 use base qw(Exporter);
