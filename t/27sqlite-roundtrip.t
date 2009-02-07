@@ -19,33 +19,33 @@ BEGIN {
 my $file = "$Bin/data/sqlite/create.sql";
 
 {
-    local $/;
-    open my $fh, "<$file" or die "Can't read file '$file': $!\n";
-    my $data = <$fh>;
+    #local $/;
+    #open my $fh, "<$file" or die "Can't read file '$file': $!\n";
+    #my $data = <$fh>;
 
     my $t = SQL::Translator->new;
 
-    $t->translate (
+    my $schema1 = $t->translate (
         parser => 'SQLite',
-        data => \$data,
-    );
-    my $schema1 = $t->schema;
+        file => $file,
+        debug => 1
+    ) or die $t->error;
     isa_ok ($schema1, 'SQL::Translator::Schema', 'First parser pass produced a schema');
 
 
     my $data2 = $t->translate (
+        data => $schema1,
         producer => 'SQLite',
-    );
+    ) or die $t->error;
     like ($data2, qr/BEGIN.+COMMIT/is, 'Received some meaningful output from the producer');
 
     # get a new translator
     $t = SQL::Translator->new;
 
-    $t->translate (
+    my $schema2 = $t->translate (
         parser => 'SQLite',
         data => \$data2,
-    );
-    my $schema2 = $t->schema;
+    ) or die $t->error;
     isa_ok ($schema2, 'SQL::Translator::Schema', 'Second parser pass produced a schema');
 
     my @t1 = $schema1->get_tables;

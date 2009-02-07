@@ -38,6 +38,7 @@ This module will produce text output of the schema suitable for SQLite.
 =cut
 
 use strict;
+use warnings;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
@@ -47,10 +48,10 @@ use vars qw[ $DEBUG $WARN ];
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
-my %used_identifiers = ();
-my $max_id_length    = 30;
-my %global_names;
-my %truncated;
+our %used_identifiers = ();
+our $max_id_length    = 30;
+our %global_names;
+our %truncated;
 
 sub produce {
     my $translator     = shift;
@@ -66,7 +67,7 @@ sub produce {
 
     my @create = ();
     push @create, header_comment unless ($no_comments);
-    push @create, 'BEGIN TRANSACTION';
+    $create[0] .= "\n\nBEGIN TRANSACTION";
 
     for my $table ( $schema->get_tables ) {
         push @create, create_table($table, { no_comments => $no_comments,
@@ -81,6 +82,13 @@ sub produce {
       });
     }
 
+    for my $trigger ( $schema->get_triggers ) {
+      push @create, create_trigger($trigger, {
+        add_drop_trigger => $add_drop_table,
+        no_comments   => $no_comments,
+      });
+    }
+
     return wantarray ? (@create, "COMMIT") : join(";\n\n", (@create, "COMMIT;\n"));
 }
 
@@ -88,9 +96,11 @@ sub produce {
 sub mk_name {
     my ($basename, $type, $scope, $critical) = @_;
     my $basename_orig = $basename;
-    my $max_name      = $type 
-                        ? $max_id_length - (length($type) + 1) 
-                        : $max_id_length;
+    my $max_name      = !$max_id_length 
+                      ? length($type) + 1
+                      : $type 
+                      ? $max_id_length - (length($type) + 1) 
+                      : $max_id_length;
     $basename         = substr( $basename, 0, $max_name ) 
                         if length( $basename ) > $max_name;
     $basename         =~ s/\./_/g;
@@ -156,7 +166,7 @@ sub create_table
 
     debug("PKG: Looking at table '$table_name'\n");
 
-    my ( @index_defs, @constraint_defs, @trigger_defs );
+    my ( @index_defs, @constraint_defs );
     my @fields = $table->get_fields or die "No fields in $table_name";
 
     my $temp = $options->{temporary_table} ? 'TEMPORARY ' : '';
@@ -165,9 +175,15 @@ sub create_table
     #
     my $exists = ($sqlite_version >= 3.3) ? ' IF EXISTS' : '';
     my @create;
-    push @create, "--\n-- Table: $table_name\n--\n" unless $no_comments;
-    push @create, qq[DROP TABLE$exists $table_name] if $add_drop_table;
-    my $create_table = "CREATE ${temp}TABLE $table_name (\n";
+    my ($comment, $create_table) = "";
+    $comment =  "--\n-- Table: $table_name\n--\n" unless $no_comments;
+    if ($add_drop_table) {
+      push @create, $comment . qq[DROP TABLE$exists $table_name];
+    } else {
+      $create_table = $comment;
+    }
+
+    $create_table .= "CREATE ${temp}TABLE $table_name (\n";
 
     #
     # Comments
@@ -219,7 +235,7 @@ sub create_table
 
     $create_table .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
 
-    return (@create, $create_table, @index_defs, @constraint_defs, @trigger_defs );
+    return (@create, $create_table, @index_defs, @constraint_defs );
 }
 
 sub create_field
@@ -337,6 +353,44 @@ sub create_constraint
         ' (' . join( ', ', @fields ) . ')';
 
     return $c_def;
+}
+
+sub create_trigger {
+  my ($trigger, $options) = @_;
+  my $add_drop = $options->{add_drop_trigger};
+
+  my $name = $trigger->name;
+  my @create;
+
+  push @create,  "DROP TRIGGER IF EXISTS $name" if $add_drop;
+
+  my $events = $trigger->database_events;
+  die "Can't handle multiple events in triggers" if @$events > 1;
+
+  my $action = "";
+  
+  $action = $trigger->ation->{for_each} . " "
+    if $trigger->action->{for_each};
+
+  $action = $trigger->action->{when} . " "
+    if $trigger->action->{when};
+
+  my $steps = $trigger->action->{steps} || [];
+
+  $action .= "BEGIN ";
+  for (@$steps) {
+    $action .= $_ . "; "
+  }
+  $action .= "END";
+
+  push @create, "CREATE TRIGGER $name " .
+                $trigger->perform_action_when . " " .
+                $events->[0] .
+                " on " . $trigger->on_table . " " .
+                $action;
+
+  return @create;
+            
 }
 
 sub alter_table { } # Noop

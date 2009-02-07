@@ -53,6 +53,8 @@ use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
+use Carp;
+
 use vars qw($TABLE_COUNT $VIEW_COUNT);
 
 # ----------------------------------------------------------------------
@@ -121,9 +123,10 @@ Obosolete please use database_events!
 		$self->database_events( [$arg] );
 	}
 
-	return $self->error("Please use database_events the trigger has more then one events!") if (scalar @{$self->{'database_events'}} > 1);
-	
-    warn 'database_event is obsolete please use database_events';
+	return $self->error("Please use database_events the trigger has more then one events!") 
+    if (scalar @{$self->{'database_events'}} > 1);
+
+  carp 'database_event is obsolete please use database_events';
 	return (@{ $self->{'database_events'} })[0];
 }
 # ----------------------------------------------------------------------
@@ -135,7 +138,7 @@ sub database_events {
 
 Gets or sets the events that triggers the trigger.
 
-  my $ok = $trigger->database_event('insert');
+  my $ok = $trigger->database_events('insert');
 
 =cut
 

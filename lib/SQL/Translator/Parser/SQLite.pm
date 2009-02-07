@@ -418,7 +418,7 @@ create : CREATE TEMPORARY(?) TRIGGER NAME before_or_after(?) database_event ON t
             is_temporary => $item[2][0] ? 1 : 0,
             when         => $item[5][0],
             instead_of   => 0,
-            db_event     => $item[6],
+            db_events    => [ $item[6] ],
             action       => $item[9],
             on_table     => $table_name,
         }
@@ -432,7 +432,7 @@ create : CREATE TEMPORARY(?) TRIGGER NAME instead_of database_event ON view_name
             is_temporary => $item[2][0] ? 1 : 0,
             when         => undef,
             instead_of   => 1,
-            db_event     => $item[6],
+            db_events    => [ $item[6] ],
             action       => $item[9],
             on_table     => $table_name,
         }
@@ -451,7 +451,7 @@ trigger_action : for_each(?) when(?) BEGIN_C trigger_step(s) END_C
         }
     }
 
-for_each : /FOR EACH ROW/i | /FOR EACH STATEMENT/i
+for_each : /FOR EACH ROW/i
 
 when : WHEN expr { $item[2] }
 
@@ -634,7 +634,7 @@ sub parse {
         my $view                = $schema->add_trigger(
             name                => $def->{'name'},
             perform_action_when => $def->{'when'},
-            database_event      => $def->{'db_event'},
+            database_events     => $def->{'db_events'},
             action              => $def->{'action'},
             on_table            => $def->{'on_table'},
         );

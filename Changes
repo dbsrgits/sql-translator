@@ -1,4 +1,6 @@
 * Add support for temporary tables in Pg (nachos)
+* Create Trigger support for SQLite
+
 # ----------------------------------------------------------
 # 0.09002 2008-12-05
 # ----------------------------------------------------------
