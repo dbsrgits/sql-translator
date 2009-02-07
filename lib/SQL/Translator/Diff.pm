@@ -228,6 +228,7 @@ sub produce_diff_sql {
         # TODO: sort out options
         %{ $self->producer_options }
       );
+      $translator->producer_args->{no_transaction} = 1;
       my $schema = $translator->schema;
 
       $schema->add_table($_) for @tables;

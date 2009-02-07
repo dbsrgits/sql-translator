@@ -61,13 +61,14 @@ sub produce {
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
     my $producer_args  = $translator->producer_args;
-    my $sqlite_version  = $producer_args->{sqlite_version} || 0;
+    my $sqlite_version = $producer_args->{sqlite_version} || 0;
+    my $no_txn         = $producer_args->{no_transaction};
 
     debug("PKG: Beginning production\n");
 
     my @create = ();
     push @create, header_comment unless ($no_comments);
-    $create[0] .= "\n\nBEGIN TRANSACTION";
+    $create[0] .= "\n\nBEGIN TRANSACTION" unless $no_txn;
 
     for my $table ( $schema->get_tables ) {
         push @create, create_table($table, { no_comments => $no_comments,
@@ -89,7 +90,13 @@ sub produce {
       });
     }
 
-    return wantarray ? (@create, "COMMIT") : join(";\n\n", (@create, "COMMIT;\n"));
+    if (wantarray) {
+      push @create, "COMMIT" unless $no_txn;
+      return @create;
+    } else {
+      push @create, "COMMIT;\n" unless $no_txn;
+      return join(";\n\n", @create );
+    }
 }
 
 # -------------------------------------------------------------------
@@ -368,20 +375,25 @@ sub create_trigger {
   die "Can't handle multiple events in triggers" if @$events > 1;
 
   my $action = "";
-  
-  $action = $trigger->ation->{for_each} . " "
-    if $trigger->action->{for_each};
 
-  $action = $trigger->action->{when} . " "
-    if $trigger->action->{when};
+  $DB::single = 1;
+  unless (ref $trigger->action) {
+    $action .= "BEGIN " . $trigger->action . " END";
+  } else {
+    $action = $trigger->action->{for_each} . " "
+      if $trigger->action->{for_each};
 
-  my $steps = $trigger->action->{steps} || [];
+    $action = $trigger->action->{when} . " "
+      if $trigger->action->{when};
 
-  $action .= "BEGIN ";
-  for (@$steps) {
-    $action .= $_ . "; "
+    my $steps = $trigger->action->{steps} || [];
+
+    $action .= "BEGIN ";
+    for (@$steps) {
+      $action .= $_ . "; "
+    }
+    $action .= "END";
   }
-  $action .= "END";
 
   push @create, "CREATE TRIGGER $name " .
                 $trigger->perform_action_when . " " .

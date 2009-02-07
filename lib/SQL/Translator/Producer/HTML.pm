@@ -24,7 +24,7 @@ use strict;
 use Data::Dumper;
 use vars qw($NOWRAP $NOLINKTABLE $NAME);
 
-$NAME = join ', ', __PACKAGE__, $VERSION;
+$NAME = __PACKAGE__;
 $NOWRAP = 0 unless defined $NOWRAP;
 $NOLINKTABLE = 0 unless defined $NOLINKTABLE;
 

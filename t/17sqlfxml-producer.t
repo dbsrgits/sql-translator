@@ -208,7 +208,7 @@ EOXML
     my $t                   = $s->add_trigger(
         name                => $name,
         perform_action_when => $perform_action_when,
-        database_event      => $database_event,
+        database_events     => [$database_event],
         table               => $table,
         action              => $action,
         extra               => { hello => "world" },

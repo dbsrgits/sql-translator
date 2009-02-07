@@ -31,13 +31,14 @@ CREATE TABLE foo (
 |;
 
 my $tr = SQL::Translator->new(parser => 'MySQL', producer => 'HTML');
-my $parsed = $tr->translate(data => $create);
+my $parsed = $tr->translate(data => $create) or die $tr->error;
 my $status;
 
 eval {
     $status = $p->parse($parsed);    
 };
 if ($@) {
+    daig $@;
     fail("Unable to parse the output!");
 }
 

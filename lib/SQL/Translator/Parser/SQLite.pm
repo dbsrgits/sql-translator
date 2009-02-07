@@ -195,7 +195,7 @@ statement : begin_transaction
     | create
     | <error>
 
-begin_transaction : /begin transaction/i SEMICOLON
+begin_transaction : /begin/i TRANSACTION(?) SEMICOLON
 
 commit : /commit/i SEMICOLON
 
@@ -496,6 +496,8 @@ select_statement : SELECT /[^;]+/ SEMICOLON
 BEGIN_C : /begin/i
 
 END_C : /end/i
+
+TRANSACTION: /transaction/i
 
 CREATE : /create/i
 

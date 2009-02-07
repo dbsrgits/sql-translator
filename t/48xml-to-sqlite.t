@@ -34,6 +34,8 @@ my $sql = $sqlt->translate(
 ) or die $sqlt->error;
 
 eq_or_diff($sql, << "SQL");
+
+
 BEGIN TRANSACTION;
 
 DROP TABLE Basic;
@@ -65,6 +67,10 @@ DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
     SELECT email FROM Basic WHERE email IS NOT NULL;
 
+DROP TRIGGER IF EXISTS foo_trigger;
+
+CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END;
+
 COMMIT;
 SQL
 
@@ -75,9 +81,9 @@ my @sql = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-is_deeply(\@sql, 
+eq_or_diff(\@sql, 
           [
-          'BEGIN TRANSACTION',
+          "\n\nBEGIN TRANSACTION",
           'DROP TABLE Basic',
           'CREATE TABLE Basic (
   id INTEGER PRIMARY KEY NOT NULL,
@@ -100,6 +106,8 @@ is_deeply(\@sql,
           'DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
     SELECT email FROM Basic WHERE email IS NOT NULL',
+          'DROP TRIGGER IF EXISTS foo_trigger',
+          'CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END',
           'COMMIT'
           ], 'SQLite translate in list context matches');
 

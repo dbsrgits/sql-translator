@@ -590,7 +590,7 @@ require_ok( 'SQL::Translator::Schema' );
     my $t                   = $s->add_trigger(
         name                => $name,
         perform_action_when => $perform_action_when,
-        database_event      => $database_event,
+        database_events     => [$database_event],
         on_table            => $on_table,
         action              => $action,
     ) or die $s->error;
@@ -601,7 +601,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $t->name, $name, qq[Name is "$name"] );
     is( $t->perform_action_when, $perform_action_when, 
         qq[Perform action when is "$perform_action_when"] );
-    is( $t->database_event, $database_event, 
+    is( $t->database_events->[0], $database_event, 
         qq[Database event is "$database_event"] );
     isa_ok( $t->table, 'SQL::Translator::Schema::Table', qq[table is a Table"] );
     is( $t->action, $action, qq[Action is "$action"] );
