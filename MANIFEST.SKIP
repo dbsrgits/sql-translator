@@ -51,23 +51,3 @@ Build$
 # Test::Kwalitee cache files.
 ^Debian_CPANTS\.txt
 
-# I'm not sure why these are in here... perhaps we should
-# consider removal -jawnsy
-lib/SQL/Translator/Parser/XML/XMI.pm
-lib/SQL/Translator/Parser/XML/XMI/Rational.pm
-lib/SQL/Translator/Parser/XML/XMI/SQLFairy.pm
-lib/SQL/Translator/XMI/Parser.pm
-lib/SQL/Translator/XMI/Parser/V10.pm
-lib/SQL/Translator/XMI/Parser/V12.pm
-t/data/xmi/Foo.poseidon2.xmi
-t/data/xmi/Foo.poseidon2.zuml
-t/data/xmi/MAGE.poseidon.xmi
-t/data/xmi/MAGE.rose.xmi
-t/data/xmi/OrderDB.plain.poseidon2.zuml
-t/data/xmi/OrderDB.rationalprofile.poseidon2.xmi
-t/data/xmi/OrderDB.rationalprofile.poseidon2.zuml
-t/data/xmi/OrderDB.sqlfairy.poseidon2.xmi
-t/21xml-xmi-parser.t
-t/22xml-xmi-parser-visibility.t
-t/23xml-xmi-parser-rational.t
-t/28xml-xmi-parser-sqlfairy.t

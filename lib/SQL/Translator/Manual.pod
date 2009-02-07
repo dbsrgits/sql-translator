@@ -129,15 +129,13 @@ comma-separated file to an SQLite database, do the following:
 
   $ sqlt -f xSV --fs ',' -t SQLite foo.csv > foo-sqlite.sql
 
-Additionally, there are non-SQL represenations of relational schemas
-such as XML and XMI.  Currently the XMI support in SQLFairy is
-experimental and not released.  Additionally, the only XML supported
-is our own version;  however, it would be fairly easy to add an XML
-parser for something like the TorqueDB (http://db.apache.org/torque/)
-project.  The actual parsing of XML should be trivial given the number
-of XML parsers available, so all that would be left would be to map
-the specific concepts in the source file to the Schema objects in
-SQLFairy.  
+Additionally, there is a non-SQL represenation of relational schemas namely
+XML.  Additionally, the only XML supported is our own version;  however, it
+would be fairly easy to add an XML parser for something like the TorqueDB
+(http://db.apache.org/torque/) project.  The actual parsing of XML should be
+trivial given the number of XML parsers available, so all that would be left
+would be to map the specific concepts in the source file to the Schema objects
+in SQLFairy.  
 
 To convert a schema in SQLFairy's XML dialect to Oracle, do the following:
 
