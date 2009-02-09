@@ -139,6 +139,11 @@ my %translate  = (
     'long integer' => 'integer',
     'text'         => 'text',
     'datetime'     => 'datetime',
+
+    #
+    # PostgreSQL types
+    #
+    bytea => 'BLOB',
 );
 
 
