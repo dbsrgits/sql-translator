@@ -56,7 +56,9 @@ the GraphViz module).  It's nifty--you should try it!
 
 =item * out_file
 
-the name of the file where the graphviz graphic is to be written
+The name of the file where the resulting GraphViz output will be
+written. Alternatively an open filehandle can be supplied. If
+undefined (the default) - the result is returned as a string.
 
 =item * layout (DEFAULT: 'dot')
 
@@ -182,7 +184,7 @@ that show_fields is a true value as well
 
 if show_indexes is set to a true value, then the value of this
 parameter determines whether or not to print names of indexes.
-if show_index_name is false, then a list of indexed columns
+if show_index_names is false, then a list of indexed columns
 will appear below the field list. otherwise, it will be a list
 prefixed with the name of each index. it defaults to true.
 
@@ -208,6 +210,7 @@ use strict;
 use GraphViz;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
+use Scalar::Util qw/openhandle/;
 
 use vars qw[ $VERSION $DEBUG ];
 $VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
@@ -233,31 +236,6 @@ use constant VALID_NODE_SHAPE => {
     house         => 1, 
     hexagon       => 1, 
     octagon       => 1, 
-};
-
-use constant VALID_OUTPUT => {
-    canon => 1, 
-    text  => 1, 
-    ps    => 1, 
-    hpgl  => 1,
-    pcl   => 1, 
-    mif   => 1, 
-    pic   => 1, 
-    gd    => 1, 
-    gd2   => 1, 
-    gif   => 1, 
-    jpeg  => 1,
-    png   => 1, 
-    wbmp  => 1, 
-    cmap  => 1, 
-    ismap => 1, 
-    imap  => 1, 
-    vrml  => 1,
-    vtx   => 1, 
-    mp    => 1, 
-    fig   => 1, 
-    svg   => 1, 
-    plain => 1,
 };
 
 sub produce {
@@ -303,8 +281,6 @@ sub produce {
     ) if $natural_join;
 
     die "Invalid layout '$layout'" unless VALID_LAYOUT->{ $layout };
-    die "Invalid output type: '$output_type'"
-        unless VALID_OUTPUT->{ $output_type };
     die "Invalid node shape'$node_shape'" 
         unless VALID_NODE_SHAPE->{ $node_shape };
 
@@ -313,9 +289,6 @@ sub produce {
         $_ = 0 if $_ < 0;
     }
 
-    #
-    # Create GraphViz and see if we can produce the output type.
-    #
     my %args = (
         directed      => $natural_join ? 0 : 1,
         layout        => $layout,
@@ -359,7 +332,16 @@ sub produce {
         $args{'graph'}->{$key} = $val;
     }
 
-    my $gv =  GraphViz->new( %args ) or die "Can't create GraphViz object\n";
+    #
+    # Create a blank GraphViz object and see if we can produce the output type.
+    #
+    my $gv = GraphViz->new( %args ) or die "Can't create GraphViz object\n";
+    my $output_method = "as_$output_type";
+
+    # the generators are AUTOLOADed so can't use ->can ($output_method) 
+    eval { $gv->$output_method };
+    die "Invalid output type: '$output_type'" if $@;
+
 
     my %nj_registry; # for locations of fields for natural joins
     my @fk_registry; # for locations of fields for foreign keys
@@ -393,7 +375,7 @@ sub produce {
                 # mediumint* (24) 8388607                 7
                 #                 16777215                8
                 # int (32)        2147483647              10
-                #                 4294967295              10
+                #                 4294967295              11
                 # bigint (64)     9223372036854775807     19
                 #                 18446744073709551615    20
                 #
@@ -583,15 +565,19 @@ sub produce {
     #
     # Print the image.
     #
-    my $output_method = "as_$output_type";
     if ( $out_file ) {
+      if (openhandle ($out_file)) {
+        print $out_file $gv->$output_method;
+      }
+      else {
         open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
         binmode $fh;
         print $fh $gv->$output_method;
         close $fh;
+      }
     }
     else {
-        return $gv->$output_method;
+      return $gv->$output_method;
     }
 }
 
