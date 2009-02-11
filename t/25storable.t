@@ -2,7 +2,7 @@
 # vim: set ft=perl:
 
 # $Source: /home/faga/work/sqlfairy_svn/sqlfairy-cvsbackup/sqlfairy/t/25storable.t,v $
-# $Id$
+# $Id: 25storable.t 1433 2009-01-17 15:10:56Z jawnsy $
 
 use Test::More tests => 2;
 

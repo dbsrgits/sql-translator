@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::GraphViz;
 
 # -------------------------------------------------------------------
-# $Id$
+# $Id: GraphViz.pm 1451 2009-02-10 11:48:37Z ribasushi $
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
 #
@@ -213,7 +213,7 @@ use SQL::Translator::Utils qw(debug);
 use Scalar::Util qw/openhandle/;
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/;
+$VERSION = sprintf "%d.%02d", q$Revision: 1451 $ =~ /(\d+)\.(\d+)/;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {

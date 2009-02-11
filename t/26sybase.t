@@ -3,7 +3,7 @@
 #
 
 # $Source: /home/faga/work/sqlfairy_svn/sqlfairy-cvsbackup/sqlfairy/t/26sybase.t,v $
-# $Id$
+# $Id: 26sybase.t 1433 2009-01-17 15:10:56Z jawnsy $
 
 use strict;
 use Test::More;
