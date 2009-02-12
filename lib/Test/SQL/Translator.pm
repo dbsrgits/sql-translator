@@ -32,7 +32,7 @@ use warnings;
 use base qw(Exporter);
 
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = 1.8;
+$VERSION = '1.99';
 @EXPORT = qw(
     schema_ok
     table_ok
