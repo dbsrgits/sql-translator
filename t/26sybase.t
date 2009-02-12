@@ -1,7 +1,3 @@
-#!/usr/bin/perl
-# vim: set ft=perl ts=4 et:
-#
-
 # $Source: /home/faga/work/sqlfairy_svn/sqlfairy-cvsbackup/sqlfairy/t/26sybase.t,v $
 # $Id$
 
