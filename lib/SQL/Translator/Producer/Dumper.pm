@@ -57,8 +57,11 @@ use Config;
 use SQL::Translator;
 use File::Temp 'tempfile';
 use Template;
+use vars qw($VERSION);
 
 use Data::Dumper;
+
+$VERSION = '1.99';
 
 sub produce {
     my $t              = shift;

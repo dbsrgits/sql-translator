@@ -41,6 +41,11 @@ use base 'Class::Data::Inheritable';
 use base 'Class::Base';
 use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
+use vars qw[ $VERSION ];
+
+$VERSION = '1.99';
+
+
 =head1 Construction
 
 Derived classes should declare their attributes using the C<_attributes>

@@ -21,6 +21,8 @@ package SQL::Translator::Parser::YAML;
 # -------------------------------------------------------------------
 
 use strict;
+use vars qw($VERSION);
+$VERSION = '1.99';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);

@@ -62,6 +62,9 @@ use Getopt::Long;
 use SQL::Translator;
 use File::Basename qw(basename);
 
+use vars '$VERSION';
+$VERSION = '1.99';
+
 my ( $help, $db, $skip, $skiplike, $db_user, $db_pass, $dsn );
 GetOptions(
     'h|help'        => \$help,

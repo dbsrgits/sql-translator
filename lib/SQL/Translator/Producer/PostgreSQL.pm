@@ -38,7 +38,8 @@ producer.
 
 use strict;
 use warnings;
-use vars qw[ $DEBUG $WARN %used_names ];
+use vars qw[ $DEBUG $WARN $VERSION %used_names ];
+$VERSION = '1.99';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);

@@ -111,6 +111,9 @@ use SQL::Translator;
 use SQL::Translator::Diff;
 use SQL::Translator::Schema::Constants;
 
+use vars qw( $VERSION );
+$VERSION = '1.99';
+
 my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names, 
 	$ignore_constraint_names, $output_db, $mysql_parser_version,
 	$ignore_view_sql, $ignore_proc_sql, $no_batch_alters );

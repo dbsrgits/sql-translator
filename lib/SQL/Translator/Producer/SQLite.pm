@@ -43,8 +43,9 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
 
-use vars qw[ $DEBUG $WARN ];
+use vars qw[ $VERSION $DEBUG $WARN ];
 
+$VERSION = '1.99';
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 

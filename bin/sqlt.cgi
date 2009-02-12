@@ -38,6 +38,9 @@ use strict;
 use CGI;
 use SQL::Translator;
 
+use vars '$VERSION';
+$VERSION = '1.99';
+
 my $q = CGI->new;
 
 eval {

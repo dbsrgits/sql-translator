@@ -55,7 +55,8 @@ List of values for an enum field.
 =cut
 
 use strict;
-use vars qw[ $DEBUG $WARN ];
+use vars qw[ $DEBUG $WARN $VERSION ];
+$VERSION = '1.99';
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;

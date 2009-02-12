@@ -42,7 +42,8 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::MySQL;
 
-use vars qw[ $DEBUG @EXPORT_OK ];
+use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
+$VERSION = '1.99';
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

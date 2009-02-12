@@ -213,7 +213,7 @@ use SQL::Translator::Utils qw(debug);
 use Scalar::Util qw/openhandle/;
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = sprintf "%d.%02d", q$Revision: 1451 $ =~ /(\d+)\.(\d+)/;
+$VERSION = '1.99';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_LAYOUT => {

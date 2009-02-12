@@ -66,7 +66,8 @@ C<SQL::Translator::Utils::normalize_name>.
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw(@EXPORT);
+use vars qw($VERSION @EXPORT);
+$VERSION = '1.99';
 
 use Exporter;
 use Text::ParseWords qw(quotewords);

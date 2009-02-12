@@ -21,7 +21,8 @@ package SQL::Translator::Producer::ClassDBI;
 # -------------------------------------------------------------------
 
 use strict;
-use vars qw[ $DEBUG ];
+use vars qw[ $VERSION $DEBUG ];
+$VERSION = '1.99';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;

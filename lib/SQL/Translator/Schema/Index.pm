@@ -51,7 +51,9 @@ use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($TABLE_COUNT $VIEW_COUNT);
+use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+
+$VERSION = '1.99';
 
 my %VALID_INDEX_TYPE = (
   UNIQUE         => 1,

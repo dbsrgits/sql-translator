@@ -40,6 +40,8 @@ takes a long time.
 =cut
 
 use strict;
+use vars qw($VERSION);
+$VERSION = '1.99';
 
 use YAML qw(Dump);
 

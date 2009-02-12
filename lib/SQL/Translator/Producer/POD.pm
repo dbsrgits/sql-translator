@@ -41,6 +41,8 @@ interesting formats using Pod::POM or Template::Toolkit's POD plugin.
 =cut
 
 use strict;
+use vars qw[ $VERSION ];
+$VERSION = '1.99';
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);

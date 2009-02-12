@@ -61,8 +61,9 @@ This module exports the following constants for Schema features;
 
 use strict;
 use base qw( Exporter );
-use vars qw( @EXPORT );
+use vars qw( @EXPORT $VERSION );
 require Exporter;
+$VERSION = '1.99';
 
 @EXPORT = qw[ 
     CHECK_C

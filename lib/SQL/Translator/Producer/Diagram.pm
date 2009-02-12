@@ -41,7 +41,8 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 
-use vars qw[ $DEBUG ];
+use vars qw[ $VERSION $DEBUG ];
+$VERSION = '1.99';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use constant VALID_FONT_SIZE => {

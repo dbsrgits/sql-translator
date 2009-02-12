@@ -151,7 +151,8 @@ like-op::=
 =cut
 
 use strict;
-use vars qw[ $DEBUG $GRAMMAR @EXPORT_OK ];
+use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
+$VERSION = '1.99';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

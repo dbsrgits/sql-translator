@@ -22,7 +22,9 @@ package SQL::Translator::Producer::HTML;
 
 use strict;
 use Data::Dumper;
-use vars qw($NOWRAP $NOLINKTABLE $NAME);
+use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
+
+$VERSION = '1.99';
 
 $NAME = __PACKAGE__;
 $NOWRAP = 0 unless defined $NOWRAP;

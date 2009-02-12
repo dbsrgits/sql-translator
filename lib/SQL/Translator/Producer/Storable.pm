@@ -41,8 +41,9 @@ takes a long time.
 =cut
 
 use strict;
-use vars qw($DEBUG @EXPORT_OK);
+use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
+$VERSION = '1.99';
 
 use Storable;
 use Exporter;

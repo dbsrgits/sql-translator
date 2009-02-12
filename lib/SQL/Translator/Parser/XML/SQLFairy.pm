@@ -99,7 +99,8 @@ To convert your old format files simply pass them through the translator :)
 
 use strict;
 
-use vars qw[ $DEBUG @EXPORT_OK ];
+use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
+$VERSION = '1.99';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

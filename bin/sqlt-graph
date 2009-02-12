@@ -98,6 +98,9 @@ use GraphViz;
 use Pod::Usage;
 use SQL::Translator;
 
+use vars '$VERSION';
+$VERSION = '1.99';
+
 #
 # Get arguments.
 #

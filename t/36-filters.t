@@ -13,11 +13,10 @@ $INC{'SQL/Translator/Filter/Ok.pm'} = 'lib/SQL/Translator/Filter/Ok.pm';
 
 #=============================================================================
 # SQL::Translator::Filter::HelloWorld - Test filter in a package
-package SQL::Translator::Filter::HelloWorld;
+package   # hide from cpan
+    SQL::Translator::Filter::HelloWorld;
 
 use strict;
-use vars qw/$VERSION/;
-$VERSION=0.1;
 
 sub filter {
     my ($schema,%args) = (shift,@_);

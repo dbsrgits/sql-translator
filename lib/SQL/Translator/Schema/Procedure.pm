@@ -52,6 +52,10 @@ use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
+use vars qw($VERSION);
+
+$VERSION = '1.99';
+
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
