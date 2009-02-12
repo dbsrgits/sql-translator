@@ -1,8 +1,6 @@
 package Test::SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id$
-# ----------------------------------------------------------------------
 # Copyright (C) 2003 The SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or

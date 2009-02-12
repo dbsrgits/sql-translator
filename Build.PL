@@ -1,5 +1,3 @@
-# $Id$
-
 use strict;
 use lib './lib';
 use Module::Build;

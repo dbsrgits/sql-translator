@@ -1,8 +1,6 @@
 package SQL::Translator::Producer::Latex;
 
 # -------------------------------------------------------------------
-# $Id$
-# -------------------------------------------------------------------
 # Copyright (C) 2002-6 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or

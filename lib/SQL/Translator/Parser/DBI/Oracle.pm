@@ -1,8 +1,6 @@
 package SQL::Translator::Parser::DBI::Oracle;
 
 # -------------------------------------------------------------------
-# $Id$
-# -------------------------------------------------------------------
 # Copyright (C) 2006-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or

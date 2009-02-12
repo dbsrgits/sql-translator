@@ -1,6 +1,3 @@
-# $Source: /home/faga/work/sqlfairy_svn/sqlfairy-cvsbackup/sqlfairy/t/26sybase.t,v $
-# $Id$
-
 use strict;
 use Test::More;
 use Test::SQL::Translator qw(maybe_plan);

@@ -1,8 +1,6 @@
 package SQL::Translator;
 
 # ----------------------------------------------------------------------
-# $Id$
-# ----------------------------------------------------------------------
 # Copyright (C) 2002-2009 The SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or

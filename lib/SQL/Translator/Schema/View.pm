@@ -1,8 +1,6 @@
 package SQL::Translator::Schema::View;
 
 # ----------------------------------------------------------------------
-# $Id$
-# ----------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
