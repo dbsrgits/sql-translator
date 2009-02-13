@@ -51,7 +51,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = '1.99';
+$VERSION = '1.59';
 
 my %VALID_INDEX_TYPE = (
   UNIQUE         => 1,

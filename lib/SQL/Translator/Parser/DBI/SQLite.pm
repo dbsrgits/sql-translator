@@ -43,7 +43,7 @@ use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.99';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

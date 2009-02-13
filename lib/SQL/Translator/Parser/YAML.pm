@@ -20,7 +20,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.99';
+$VERSION = '1.59';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);

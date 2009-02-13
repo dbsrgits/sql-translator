@@ -55,7 +55,7 @@ use Carp;
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = '1.99';
+$VERSION = '1.59';
 
 # ----------------------------------------------------------------------
 

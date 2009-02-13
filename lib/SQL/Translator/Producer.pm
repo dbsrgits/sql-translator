@@ -20,7 +20,7 @@ package SQL::Translator::Producer;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.99';
+$VERSION = '1.59';
 
 sub produce { "" }
 

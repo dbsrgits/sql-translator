@@ -26,7 +26,7 @@ use Digest::SHA1 qw( sha1_hex );
 
 use Exporter;
 
-$VERSION = '1.99';
+$VERSION = '1.59';
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT parse_mysql_version

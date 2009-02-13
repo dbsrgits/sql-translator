@@ -41,7 +41,7 @@ use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
 use vars qw[ $VERSION ];
 
-$VERSION = '1.99';
+$VERSION = '1.59';
 
 
 =head1 Construction

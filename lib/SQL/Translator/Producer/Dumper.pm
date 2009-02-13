@@ -59,7 +59,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = '1.99';
+$VERSION = '1.59';
 
 sub produce {
     my $t              = shift;

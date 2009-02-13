@@ -44,7 +44,7 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = '1.99';
+$VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Producer::XML::SQLFairy;
