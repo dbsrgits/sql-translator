@@ -2,11 +2,11 @@ package SQL::Translator::Schema::Graph;
 
 use strict;
 
+use base 'Class::Base';
+
 use Data::Dumper;
 local $Data::Dumper::Maxdepth = 3;
 
-use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR) unless Log::Log4perl->initialized();
 use SQL::Translator::Schema::Graph::Node;
 use SQL::Translator::Schema::Graph::Edge;
 use SQL::Translator::Schema::Graph::Port;
@@ -27,6 +27,9 @@ use Class::MakeMethods::Template::Hash (
   'hash' => [ qw( node ) ],
   'number --counter' => [ qw( order ) ],
 );
+
+use vars qw/$DEBUG/;
+$DEBUG = 0 unless defined $DEBUG;
 
 sub init {
   my $self = shift;
@@ -173,7 +176,6 @@ sub init {
   }
 
   my $graph = $self; #hack
-  my $log   = Log::Log4perl->get_logger('SQL.Translator.Schema.Graph');
 
   #
   # create methods
@@ -208,8 +210,8 @@ sub init {
           $hyperedge->push_thatfield($edge->thisfield);
           $hyperedge->push_thatviafield($edge->thatfield);
         }
-        $log->debug($edge->thisfield->name);
-        $log->debug($edge->thatfield->name);
+        $self->debug($edge->thisfield->name);
+        $self->debug($edge->thatfield->name);
       }
 
       if ($hyperedge->count_thisnode == 1 and $hyperedge->count_thatnode == 1) {
@@ -222,18 +224,18 @@ sub init {
         $hyperedge->type('many2many');
       }
 
-      $log->debug($_) foreach sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
+      $self->debug($_) foreach sort keys %::SQL::Translator::Schema::Graph::HyperEdge::;
 
       #node_to won't always be defined b/c of multiple edges to a single other node
       if (defined($node_to)) {
-        $log->debug($node_from->name);
-        $log->debug($node_to->name);
+        $self->debug($node_from->name);
+        $self->debug($node_to->name);
 
         if (scalar($hyperedge->thisnode) > 1) {
-          $log->debug($hyperedge->type ." via ". $hyperedge->vianode->name);
+          $self->debug($hyperedge->type ." via ". $hyperedge->vianode->name);
           my $i = 0;
           foreach my $thisnode ( $hyperedge->thisnode ) {
-            $log->debug($thisnode->name .' '.
+            $self->debug($thisnode->name .' '.
                         $hyperedge->thisfield_index(0)->name .' -> '.
                         $hyperedge->thisviafield_index($i)->name .' '.
                         $hyperedge->vianode->name .' '.

@@ -31,7 +31,6 @@ $ERROR    = "";
 use Carp qw(carp);
 
 use Data::Dumper;
-use Class::Base;
 use File::Find;
 use File::Spec::Functions qw(catfile);
 use File::Basename qw(dirname);
