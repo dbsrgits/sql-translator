@@ -74,7 +74,7 @@ schema:
           name: idx_unique_name
 
     thing2:
-      name: thing2
+      name: some.thing2
       extra:
       order: 2
       fields:
@@ -142,8 +142,8 @@ my @stmts = (
   UNIQUE `idx_unique_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci",
 
-"DROP TABLE IF EXISTS `thing2`",
-"CREATE TABLE `thing2` (
+"DROP TABLE IF EXISTS `some`.`thing2`",
+"CREATE TABLE `some`.`thing2` (
   `id` integer,
   `foo` integer,
   `foo2` integer,

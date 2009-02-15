@@ -369,7 +369,7 @@ sub create_table
     my $qt = $options->{quote_table_names} || '';
     my $qf = $options->{quote_field_names} || '';
 
-    my $table_name = $table->name;
+    my $table_name = quote_table_name($table->name, $qt);
     debug("PKG: Looking at table '$table_name'\n");
 
     #
@@ -377,9 +377,9 @@ sub create_table
     #
     my $create = '';
     my $drop;
-    $create .= "--\n-- Table: $qt$table_name$qt\n--\n" unless $options->{no_comments};
-    $drop = qq[DROP TABLE IF EXISTS $qt$table_name$qt] if $options->{add_drop_table};
-    $create .= "CREATE TABLE $qt$table_name$qt (\n";
+    $create .= "--\n-- Table: $table_name\n--\n" unless $options->{no_comments};
+    $drop = qq[DROP TABLE IF EXISTS $table_name] if $options->{add_drop_table};
+    $create .= "CREATE TABLE $table_name (\n";
 
     #
     # Fields
@@ -426,6 +426,14 @@ sub create_table
 #    $create .= ";\n\n";
 
     return $drop ? ($drop,$create) : $create;
+}
+
+sub quote_table_name {
+  my ($table_name, $qt) = @_;
+
+  $table_name =~ s/\./$qt.$qt/g;
+
+  return "$qt$table_name$qt";
 }
 
 sub generate_table_options 
