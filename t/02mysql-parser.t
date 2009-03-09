@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(265, "SQL::Translator::Parser::MySQL");
+    maybe_plan(292, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -726,3 +726,51 @@ ok ($@, 'Exception thrown on invalid version string');
     is( $c->type, PRIMARY_KEY, 'Constraint is a PK' );
     is( join(',', $c->fields), 'id', 'Constraint is on "id"' );
 }
+
+{
+    my @data = (
+        q|create table quote (
+            id int(11) NOT NULL auto_increment,
+            PRIMARY KEY (id)
+        ) ENGINE="innodb";|,
+        q|create table quote (
+            id int(11) NOT NULL auto_increment,
+            PRIMARY KEY (id)
+        ) ENGINE='innodb';|,
+        q|create table quote (
+            id int(11) NOT NULL auto_increment,
+            PRIMARY KEY (id)
+        ) ENGINE=innodb;|,
+    );
+    for my $data (@data) {
+        my $tr = SQL::Translator->new;
+
+        my $val = parse($tr, $data);
+        my $schema = $tr->schema;
+        is( $schema->is_valid, 1, 'Schema is valid' );
+        my @tables = $schema->get_tables;
+        is( scalar @tables, 1, 'Right number of tables (1)' );
+        my $table  = shift @tables;
+        is( $table->name, 'quote', 'Found "quote" table' );
+
+        my $tableTypeFound = 0;
+        for my $t_option_ref ( $table->options ) {
+        my($key, $value) = %{$t_option_ref};
+        if ( $key eq 'ENGINE' ) {
+            is($value, 'innodb', 'Table has right table engine option' );
+            $tableTypeFound = 1;
+        }
+        }
+
+        fail('Table did not have a type option') unless $tableTypeFound;
+
+        my @fields = $table->get_fields;
+        my $f1 = shift @fields;
+        is( $f1->name, 'id', 'First field name is "id"' );
+        is( $f1->data_type, 'int', 'Type is "int"' );
+        is( $f1->size, 11, 'Size is "11"' );
+        is( $f1->is_nullable, 0, 'Field cannot be null' );
+        is( $f1->is_primary_key, 1, 'Field is PK' );
+    }
+}
+

@@ -715,11 +715,17 @@ table_option : /comment/i /=/ /'.*?'/
     { 
         $return = { $item[1] => $item[4] };
     }
-    | WORD /\s*=\s*/ WORD
-    { 
+    | WORD /\s*=\s*/ MAYBE_QUOTED_WORD
+    {
         $return = { $item[1] => $item[3] };
     }
-    
+
+MAYBE_QUOTED_WORD: /\w+/
+                 | /'(\w+)'/
+                 { $return = $1 }
+                 | /"(\w+)"/
+                 { $return = $1 }
+
 default : /default/i
 
 ADD : /add/i
