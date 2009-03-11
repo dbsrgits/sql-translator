@@ -171,6 +171,11 @@ like-named argument in the make_natural_join method (see
 natural_join above) of SQL::Translator::Schema, if either
 the natural_join or join_pk_only options has a true value
 
+=item * skip_tables
+
+Determines the tables that will be skipped.  Can be a list of 
+tables or a regular expression.
+
 =item * show_indexes
 
 if set to a true value, each record will also show the indexes
@@ -269,6 +274,7 @@ sub produce {
     my $show_constraints = $args->{'show_constraints'};
     my $join_pk_only     = $args->{'join_pk_only'};
     my $skip_fields      = $args->{'skip_fields'} || '';
+    my $skip_tables      = $args->{'skip_tables'} || '';
     my %skip             = map { s/^\s+|\s+$//g; length $_ ? ($_, 1) : () }
                            split ( /,/, $skip_fields );
     $natural_join      ||= $join_pk_only;
@@ -340,11 +346,22 @@ sub produce {
     eval { $gv->$output_method };
     die "Invalid output type: '$output_type'" if $@;
 
-
+    my %skip_table = map { $_, 1 } split /\s*,\s*/, $skip_tables;
     my %nj_registry; # for locations of fields for natural joins
     my @fk_registry; # for locations of fields for foreign keys
 
+    TABLE:
     for my $table ( $schema->get_tables ) {
+        my $tname = $table->name;
+
+        if ( %skip_table ) {
+            next TABLE if $skip_table{ $tname };
+
+            for my $t ( keys %skip_table ) {
+                next TABLE if $tname =~ /$t/;
+            }
+        }
+
         my @fields     = $table->get_fields;
         if ( $show_fk_only ) {
             @fields = grep { $_->is_foreign_key } @fields;
