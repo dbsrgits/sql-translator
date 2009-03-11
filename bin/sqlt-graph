@@ -59,6 +59,7 @@ sqlt-graph - Automatically create a graph from a database schema
     --show-sizes       Show column sizes for VARCHAR and CHAR fields
     --show-constraints Show list of constraints for each field
     -s|--skip          Fields to skip in natural joins
+    --skip-tables      Comma-separated list of regexen to exclude tables
     --debug            Print debugging information
 
 =head1 DESCRIPTION
@@ -106,7 +107,7 @@ my (
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
     $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
     $show_sizes, $show_constraints, $debug, $help, $height, $width,
-    $no_fields, $fontsize, $fontname
+    $no_fields, $fontsize, $fontname, $skip_tables
 );
 
 # multi-valued options:
@@ -132,6 +133,7 @@ GetOptions(
     'natural-join'     => \$natural_join,
     'natural-join-pk'  => \$join_pk_only,
     's|skip:s'         => \$skip_fields,
+    'skip-tables:s'    => \$skip_tables,
     'show-datatypes'   => \$show_datatypes,
     'show-sizes'       => \$show_sizes,
     'show-constraints' => \$show_constraints,
@@ -157,6 +159,7 @@ my $translator           =  SQL::Translator->new(
         natural_join     => $natural_join,
         natural_join_pk  => $join_pk_only,
         skip_fields      => $skip_fields,
+        skip_tables      => $skip_tables,
         show_datatypes   => $show_datatypes,
         show_sizes       => $show_sizes,
         show_constraints => $show_constraints,
