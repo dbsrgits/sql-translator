@@ -17,7 +17,7 @@ BEGIN {
 
 {
     my $tr = SQL::Translator->new;
-    my $data = q|create table sessions (
+    my $data = q|create table "sessions" (
         id char(32) not null default '0' primary key,
         a_session text,
         ssn varchar(12) unique key,
@@ -67,7 +67,7 @@ BEGIN {
     my $tr = SQL::Translator->new;
     my $data = parse($tr, 
         q[
-            CREATE TABLE check (
+            CREATE TABLE `check` (
               check_id int(7) unsigned zerofill NOT NULL default '0000000' 
                 auto_increment primary key,
               successful date NOT NULL default '0000-00-00',
