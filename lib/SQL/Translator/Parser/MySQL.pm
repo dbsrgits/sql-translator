@@ -159,8 +159,7 @@ use base qw(Exporter);
 
 use SQL::Translator::Utils qw/parse_mysql_version/;
 
-our %type_mapping = (
-);
+our %type_mapping = ();
 
 @EXPORT_OK = qw(parse);
 
@@ -174,7 +173,8 @@ use constant DEFAULT_PARSER_VERSION => 30000;
 $GRAMMAR = << 'END_OF_GRAMMAR';
 
 { 
-    my ( $database_name, %tables, $table_order, @table_comments, %views, $view_order, %procedures, $proc_order );
+    my ( $database_name, %tables, $table_order, @table_comments, %views,
+        $view_order, %procedures, $proc_order );
     my $delimiter = ';';
 }
 
@@ -185,7 +185,12 @@ $GRAMMAR = << 'END_OF_GRAMMAR';
 # failed. -ky
 #
 startrule : statement(s) eofile { 
-    { tables => \%tables, database_name => $database_name, views => \%views, procedures =>\%procedures } 
+    { 
+        database_name => $database_name, 
+        tables        => \%tables, 
+        views         => \%views, 
+        procedures    => \%procedures,
+    } 
 }
 
 eofile : /^\Z/
@@ -746,7 +751,11 @@ COMMA : ','
 
 BACKTICK : '`'
 
+DOUBLE_QUOTE: '"'
+
 NAME    : BACKTICK /[^`]+/ BACKTICK
+    { $item[2] }
+    | DOUBLE_QUOTE /[^"]+/ DOUBLE_QUOTE
     { $item[2] }
     | /\w+/
     { $item[1] }
@@ -781,11 +790,17 @@ sub parse {
             "instance: Bad grammer");
     }
     
-    # Preprocess for MySQL-specific and not-before-version comments from mysqldump
-    my $parser_version = 
-        parse_mysql_version ($translator->parser_args->{mysql_parser_version}, 'mysql') 
-        || DEFAULT_PARSER_VERSION;
-    while ( $data =~ s#/\*!(\d{5})?(.*?)\*/#($1 && $1 > $parser_version ? '' : $2)#es ) {}
+    # Preprocess for MySQL-specific and not-before-version comments
+    # from mysqldump
+    my $parser_version = parse_mysql_version(
+        $translator->parser_args->{mysql_parser_version}, 'mysql'
+    ) || DEFAULT_PARSER_VERSION;
+
+    while ( $data =~ 
+        s#/\*!(\d{5})?(.*?)\*/#($1 && $1 > $parser_version ? '' : $2)#es 
+    ) {
+        # do nothing; is there a better way to write this? -- ky
+    }
 
     my $result = $parser->startrule($data);
     return $translator->error( "Parse failed." ) unless defined $result;
@@ -870,13 +885,17 @@ sub parse {
 
         if ( my @options = @{ $tdata->{'table_options'} || [] } ) {
             my @cleaned_options;
-            my @ignore_opts = $translator->parser_args->{ignore_opts}?split(/,/,$translator->parser_args->{ignore_opts}):();
+            my @ignore_opts = $translator->parser_args->{'ignore_opts'}
+                ? split( /,/, $translator->parser_args->{'ignore_opts'} )
+                : ();
             if (@ignore_opts) {
                 my $ignores = { map { $_ => 1 } @ignore_opts };
                 foreach my $option (@options) {
                     # make sure the option isn't in ignore list
                     my ($option_key) = keys %$option;
-                    push(@cleaned_options, $option) unless (exists $ignores->{$option_key});
+                    if ( !exists $ignores->{$option_key} ) {
+                        push @cleaned_options, $option;
+                    }
                 }
             } else {
                 @cleaned_options = @options;
@@ -892,19 +911,25 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} 
+                                 || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} 
+                                 || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
 
-        # After the constrains and PK/idxs have been created, we normalize fields
+        # After the constrains and PK/idxs have been created, 
+        # we normalize fields
         normalize_field($_) for $table->get_fields;
     }
     
     my @procedures = sort { 
-        $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
+        $result->{procedures}->{ $a }->{'order'} 
+        <=> 
+        $result->{procedures}->{ $b }->{'order'}
     } keys %{ $result->{procedures} };
-    foreach my $proc_name (@procedures) {
+
+    for my $proc_name ( @procedures ) {
         $schema->add_procedure(
             name  => $proc_name,
             owner => $result->{procedures}->{$proc_name}->{owner},
@@ -913,12 +938,15 @@ sub parse {
     }
 
     my @views = sort { 
-        $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
+        $result->{views}->{ $a }->{'order'} 
+        <=> 
+        $result->{views}->{ $b }->{'order'}
     } keys %{ $result->{views} };
-    foreach my $view_name (keys %{ $result->{views} }) {
+
+    for my $view_name ( keys %{ $result->{'views'} } ) {
         $schema->add_view(
             name => $view_name,
-            sql  => $result->{views}->{$view_name}->{sql},
+            sql  => $result->{'views'}->{$view_name}->{sql},
         );
     }
 
@@ -958,8 +986,10 @@ sub normalize_field {
         }
         elsif ( lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ ) {
             my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
-            $changed = @$old_size != 2 || $old_size->[0] != 8 || $old_size->[1] != 2;
-            $size = [8,2];
+            $changed     = @$old_size != 2 
+                        || $old_size->[0] != 8 
+                        || $old_size->[1] != 2;
+            $size        = [8,2];
         }
     }
 
@@ -979,6 +1009,7 @@ sub normalize_field {
         $changed = $size != 4_294_967_295;
         $size = 4_294_967_295;
     }
+
     if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
         my %extra = $field->extra;
         my $longest = 0;
@@ -990,19 +1021,20 @@ sub normalize_field {
     }
 
 
-    if ($changed) {
-      # We only want to clone the field, not *everything*
-      { local $field->{table} = undef;
-        $field->parsed_field(dclone($field));
-        $field->parsed_field->{table} = $field->table;
-      }
-      $field->size($size);
-      $field->data_type($type);
-      $field->sql_data_type( $type_mapping{lc $type} ) if exists $type_mapping{lc $type};
-      $field->extra->{list} = $list if @$list;
+    if ( $changed ) {
+        # We only want to clone the field, not *everything*
+        {
+            local $field->{table} = undef;
+            $field->parsed_field( dclone( $field ) );
+            $field->parsed_field->{table} = $field->table;
+        }
+        $field->size( $size );
+        $field->data_type( $type );
+        $field->sql_data_type( $type_mapping{ lc $type } )
+            if exists $type_mapping{ lc $type };
+        $field->extra->{list} = $list if @$list;
     }
 }
-
 
 1;
 
