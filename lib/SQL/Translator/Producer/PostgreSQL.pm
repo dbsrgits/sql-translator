@@ -403,14 +403,14 @@ sub create_table
     if ($add_drop_table) {
         if ($postgres_version >= 8.2) {
             $create_statement .= qq[DROP TABLE IF EXISTS $qt$table_name_ur$qt CASCADE;\n];
-            $create_statement .= join ("\n", @type_drops) . "\n"
-                if $postgres_version >= 8.3;
+            $create_statement .= join (";\n", @type_drops) . ";\n"
+                if $postgres_version >= 8.3 && scalar @type_drops;
         } else {
             $create_statement .= qq[DROP TABLE $qt$table_name_ur$qt CASCADE;\n];
         }
     }
-    $create_statement .= join("\n", @type_defs) . "\n"
-        if $postgres_version >= 8.3;
+    $create_statement .= join(";\n", @type_defs) . ";\n"
+        if $postgres_version >= 8.3 && scalar @type_defs;
     $create_statement .= qq[CREATE ${temporary}TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n)"
