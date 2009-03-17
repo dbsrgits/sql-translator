@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(32,
+    maybe_plan(35,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -399,4 +399,27 @@ is (
     SELECT id, name FROM thing
   )";
   is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
+  
+  {
+    my %extra = $view1->extra;
+    is_deeply \%extra,
+      {
+        'mysql_algorithm' => 'MERGE',
+        'mysql_definer'   => 'CURRENT_USER',
+        'mysql_security'  => 'DEFINER'
+      },
+      'Extra attributes';
+  }
+
+  $view1->remove_extra(qw/mysql_definer mysql_security/);
+  {
+    my %extra = $view1->extra;
+    is_deeply \%extra, { 'mysql_algorithm' => 'MERGE', }, 'Extra attributes after first reset_extra call';
+  }
+
+  $view1->remove_extra();
+  {
+    my %extra = $view1->extra;
+    is_deeply \%extra, {}, 'Extra attributes completely removed';
+  }
 }

@@ -151,6 +151,32 @@ Returns a hash or a hashref.
     return wantarray ? %$extra : $extra;
 }
 
+# ----------------------------------------------------------------------
+sub remove_extra {
+
+=head2 remove_extra
+
+L</extra> can only be used to get or set "extra" attributes but not to
+remove some. Call with no args to remove all extra attributes that
+have been set before. Call with a list of key names to remove
+certain extra attributes only.
+
+  # remove all extra attributes
+  $field->remove_extra(); 
+  
+  # remove timezone and locale attributes only
+  $field->remove_extra(qw/timezone locale/);
+
+=cut
+
+    my ( $self, @keys ) = @_;
+    unless (@keys) {
+        $self->{'extra'} = {};
+    }
+    else {
+        delete $self->{'extra'}{$_} for @keys;
+    }
+}
 
 # ----------------------------------------------------------------------
 sub equals {
