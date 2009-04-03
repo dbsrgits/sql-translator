@@ -173,8 +173,12 @@ the natural_join or join_pk_only options has a true value
 
 =item * skip_tables
 
-Determines the tables that will be skipped.  Can be a list of 
-tables or a regular expression.
+A comma-separated list of table names that should be skipped.
+
+=item * skip_tables_like
+
+A comma-separated list of regular expressions describing table names
+that should be skipped.
 
 =item * show_indexes
 
@@ -268,13 +272,15 @@ sub produce {
     my $show_datatypes   = $args->{'show_datatypes'};
     my $show_sizes       = $args->{'show_sizes'};
     my $show_indexes     = $args->{'show_indexes'};
-    my $show_index_names = defined $args->{'show_index_names'} ? $args->{'show_index_names'} : 1;
+    my $show_index_names = defined $args->{'show_index_names'} 
+                         ? $args->{'show_index_names'} : 1;
     my $friendly_ints    = $args->{'friendly_ints'};
     my $friendly_ints_ex = $args->{'friendly_ints_extended'};
     my $show_constraints = $args->{'show_constraints'};
     my $join_pk_only     = $args->{'join_pk_only'};
-    my $skip_fields      = $args->{'skip_fields'} || '';
-    my $skip_tables      = $args->{'skip_tables'} || '';
+    my $skip_fields      = $args->{'skip_fields'}      || '';
+    my $skip_tables      = $args->{'skip_tables'}      || '';
+    my $skip_tables_like = $args->{'skip_tables_like'} || '';
     my %skip             = map { s/^\s+|\s+$//g; length $_ ? ($_, 1) : () }
                            split ( /,/, $skip_fields );
     $natural_join      ||= $join_pk_only;
@@ -346,7 +352,8 @@ sub produce {
     eval { $gv->$output_method };
     die "Invalid output type: '$output_type'" if $@;
 
-    my %skip_table = map { $_, 1 } split /\s*,\s*/, $skip_tables;
+    my %skip_table       = map { $_, 1 }  split /\s*,\s*/, $skip_tables;
+    my @skip_tables_like = map { qr/$_/ } split /\s*,\s*/, $skip_tables_like;
     my %nj_registry; # for locations of fields for natural joins
     my @fk_registry; # for locations of fields for foreign keys
 
@@ -357,8 +364,8 @@ sub produce {
         if ( %skip_table ) {
             next TABLE if $skip_table{ $tname };
 
-            for my $t ( keys %skip_table ) {
-                next TABLE if $tname =~ /$t/;
+            for my $regex ( @skip_tables_like ) {
+                next TABLE if $tname =~ $regex;
             }
         }
 
@@ -368,104 +375,102 @@ sub produce {
         }
 
         my $field_str = '';
-        if ($show_fields) {
+        if ( $show_fields ) {
+            my @fmt_fields;
+            for my $field ( @fields ) {
+                my $field_type;
+                if ($show_datatypes) {
+                    $field_type = $field->data_type;
 
-          my @fmt_fields;
-          foreach my $field (@fields) {
+                    # For the integer type, transform into different
+                    # types based on requested size, if a size is given.
+                    if (    $field->size
+                        and $friendly_ints
+                        and ( lc $field_type ) eq 'integer' 
+                    ) {
+                        # Automatically translate to int2, int4, int8
+                        # Type (Bits)     Max. Signed/Unsigned    Length
+                        # tinyint* (8)    128                     3
+                        #                 255                     3
+                        # smallint (16)   32767                   5
+                        #                 65535                   5
+                        # mediumint* (24) 8388607                 7
+                        #                 16777215                8
+                        # int (32)        2147483647              10
+                        #                 4294967295              11
+                        # bigint (64)     9223372036854775807     19
+                        #                 18446744073709551615    20
+                        #
+                        # * tinyint and mediumint are nonstandard extensions 
+                        # which are only available under MySQL (to my knowledge)
+                        my $size = $field->size;
+                        if ( $size <= 3 and $friendly_ints_ex ) {
+                            $field_type = 'tinyint',;
+                        }
+                        elsif ( $size <= 5 ) {
+                            $field_type = 'smallint';
+                        }
+                        elsif ( $size <= 8 and $friendly_ints_ex ) {
+                            $field_type = 'mediumint';
+                        }
+                        elsif ( $size <= 11 ) {
+                            $field_type = 'integer';
+                        }
+                        else {
+                            $field_type = 'bigint';
+                        }
+                    }
 
-            my $field_type;
-            if ($show_datatypes) {
+                    if (
+                            $show_sizes
+                        and $field->size
+                        and (  $field_type =~ /^(var)?char2?$/
+                            or $field_type eq 'numeric'
+                            or $field_type eq 'decimal' )
+                    ) {
+                        $field_type .= '(' . $field->size . ')';
+                    }
+                }
 
-              $field_type = $field->data_type;
+                my $constraints;
+                if ( $show_constraints ) {
+                    my @constraints;
 
-              # For the integer type, transform into different types based on
-              # requested size, if a size is given.
-              if ($field->size and $friendly_ints and (lc $field_type) eq 'integer') {
-                # Automatically translate to int2, int4, int8
-                # Type (Bits)     Max. Signed/Unsigned    Length
-                # tinyint* (8)    128                     3
-                #                 255                     3
-                # smallint (16)   32767                   5
-                #                 65535                   5
-                # mediumint* (24) 8388607                 7
-                #                 16777215                8
-                # int (32)        2147483647              10
-                #                 4294967295              11
-                # bigint (64)     9223372036854775807     19
-                #                 18446744073709551615    20
-                #
-                # * tinyint and mediumint are nonstandard extensions which are
-                #   only available under MySQL (to my knowledge)
-                my $size = $field->size;
-                if ($size <= 3 and $friendly_ints_ex) {
-                  $field_type = 'tinyint',
-                }
-                elsif ($size <= 5) {
-                  $field_type = 'smallint';
-                }
-                elsif ($size <= 8 and $friendly_ints_ex) {
-                  $field_type = 'mediumint';
-                }
-                elsif ($size <= 11) {
-                  $field_type = 'integer';
-                }
-                else {
-                  $field_type = 'bigint';
-                }
-              }
+                    push( @constraints, 'PK' ) if $field->is_primary_key;
+                    push( @constraints, 'FK' ) if $field->is_foreign_key;
+                    push( @constraints, 'U' )  if $field->is_unique;
 
-              if (
-                $show_sizes
-                  and
-                $field->size
-                  and
-                ($field_type =~ /^(var)?char2?$/ or $field_type eq 'numeric' or $field_type eq 'decimal')
-              ) {
-                $field_type .= '(' . $field->size . ')';
-              }
+                    $constraints = join( ',', @constraints );
+                }
+
+                # construct the field line from all info gathered so far
+                push @fmt_fields, join( ' ',
+                    '-', $field->name,
+                    $field_type || (),
+                    $constraints ? "[$constraints]" : (),
+                );
             }
 
-            my $constraints;
-            if ($show_constraints) {
-              my @constraints;
-              push(@constraints, 'PK') if $field->is_primary_key;
-              push(@constraints, 'FK') if $field->is_foreign_key;
-              push(@constraints, 'U')  if $field->is_unique;
-
-              $constraints = join (',', @constraints);
-            }
-
-            # construct the field line from all info gathered so far
-            push @fmt_fields, join (' ',
-              '-',
-              $field->name,
-              $field_type || (),
-              $constraints ? "[$constraints]" : (),
-            );
-
-          }
-
-          # join field lines with graphviz formatting
-          $field_str = join ('\l', @fmt_fields) . '\l';
+            # join field lines with graphviz formatting
+            $field_str = join( '\l', @fmt_fields ) . '\l';
         }
 
         my $index_str = '';
         if ($show_indexes) {
+            my @fmt_indexes;
+            for my $index ( $table->get_indices ) {
+                next unless $index->is_valid;
 
-          my @fmt_indexes;
-          foreach my $index ($table->get_indices) {
-            next unless $index->is_valid;
+                push @fmt_indexes, join( ' ',
+                    '*',
+                    $show_index_names ? $index->name . ':' : (),
+                    join( ', ', $index->fields ),
+                    ( $index->type eq 'UNIQUE' ) ? '[U]' : (),
+                );
+            }
 
-            push @fmt_indexes, join (' ',
-              '*',
-              $show_index_names ? $index->name . ':' : (),
-              join (', ', $index->fields),
-              ($index->type eq 'UNIQUE') ? '[U]' : (),
-            );
-          }
-
-          # join index lines with graphviz formatting (if any indexes at all)
-          $index_str = join ('\l', @fmt_indexes) . '\l' if @fmt_indexes;
+            # join index lines with graphviz formatting (if any indexes at all)
+            $index_str = join( '\l', @fmt_indexes ) . '\l' if @fmt_indexes;
         }
 
         my $table_name = $table->name;
@@ -473,23 +478,18 @@ sub produce {
 
         # escape spaces
         for ($name_str, $field_str, $index_str) {
-          $_ =~ s/ /\\ /g;
+            $_ =~ s/ /\\ /g;
         }
 
 
         # only the 'record' type supports nice formatting
-        if ($node_shape eq 'record') {
-
-            # the necessity to supply shape => 'record' is a graphviz bug 
+        if ( $node_shape eq 'record' ) {
+            # the necessity to supply shape => 'record' is a graphviz bug
             $gv->add_node( $table_name,
-              shape => 'record',
-              label => sprintf ('{%s}',
-                join ('|',
-                  $name_str,
-                  $field_str || (),
-                  $index_str || (),
+                shape => 'record',
+                label => sprintf( '{%s}',
+                    join( '|', $name_str, $field_str || (), $index_str || (), ),
                 ),
-              ),
             );
         }
         else {
@@ -505,7 +505,6 @@ sub produce {
                 ),
             );
         }
-
 
         debug("Processing table '$table_name'");
 
@@ -581,18 +580,18 @@ sub produce {
     # Print the image.
     #
     if ( $out_file ) {
-      if (openhandle ($out_file)) {
-        print $out_file $gv->$output_method;
-      }
-      else {
-        open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
-        binmode $fh;
-        print $fh $gv->$output_method;
-        close $fh;
-      }
+        if ( openhandle( $out_file ) ) {
+            print $out_file $gv->$output_method;
+        }
+        else {
+            open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
+            binmode $fh;
+            print $fh $gv->$output_method;
+            close $fh;
+        }
     }
     else {
-      return $gv->$output_method;
+        return $gv->$output_method;
     }
 }
 
@@ -604,14 +603,11 @@ sub produce {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>
-
-=head2 CONTRIBUTORS
-
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
 Jonathan Yu E<lt>frequency@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-SQL::Translator, GraphViz
+SQL::Translator, GraphViz.
 
 =cut
