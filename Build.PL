@@ -4,7 +4,7 @@ use Module::Build;
 
 my $builder = Module::Build->new(
   module_name           => 'SQL::Translator',
-  dist_author           => 'Ken Y. Clark <kclark@cpan.org>',
+  dist_author           => 'Ken Youens-Clark <kclark@cpan.org>',
   dist_version_from     => 'lib/SQL/Translator.pm',
   dist_abstract         => 'SQL DDL transformations and more',
   license               => 'gpl',
@@ -23,7 +23,7 @@ my $builder = Module::Build->new(
     'Class::MakeMethods'       => 0,
     'Digest::SHA1'             => 2.00,
     'IO::Dir'                  => 0,
-    'Parse::RecDescent'        => 1.94,
+    'Parse::RecDescent'        => 1.95,
     'Pod::Usage'               => 0,
     'Class::Accessor::Fast'    => 0,
     'DBI'                      => 0,
