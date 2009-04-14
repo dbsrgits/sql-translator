@@ -343,11 +343,16 @@ create : CREATE PROCEDURE NAME not_delimiter "$delimiter"
 PROCEDURE : /procedure/i
     | /function/i
 
-create : CREATE algorithm /view/i NAME not_delimiter "$delimiter"
+create : CREATE algorithm(?) /view/i NAME not_delimiter "$delimiter"
     {
         @table_comments = ();
         my $view_name = $item[4];
-        my $sql = "$item[1] $item[2] $item[3] $item[4] $item[5]";
+        my $sql;
+        if (scalar(@{$item[2]}) == 1) {
+	        $sql = "$item[1] $item[2][0] $item[3] $item[4] $item[5]";
+        } else {
+            $sql = "$item[1] $item[3] $item[4] $item[5]";
+        }
         
         # Hack to strip database from function calls in SQL
         $sql =~ s#`\w+`\.(`\w+`\()##g;
