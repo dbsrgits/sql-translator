@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
@@ -40,6 +40,7 @@ sqlt-graph - Automatically create a graph from a database schema
                        "png," "wbmp," "cmap," "ismap," "imap," "vrml,"
                        "vtx," "mp," "fig," "svg," "plain," default "png")
     -c|--color         Add colors
+    --cluster          Cluster tables
     --no-fields        Don't show field names
     --height           Image height (in inches, default "11",
                        set to "0" to undefine)
@@ -87,11 +88,16 @@ If the schema defines foreign keys, then the graph produced will be
 directed showing the direction of the relationship.  If the foreign
 keys are intuited via natural joins, the graph will be undirected.
 
+The syntax for clustering tables into groups is:
+
+  cluster1=table1,table2;cluster2=table3,table4
+
 =cut
 
 # -------------------------------------------------------------------
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Getopt::Long;
 use GraphViz;
@@ -108,7 +114,8 @@ my (
     $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
     $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
     $show_sizes, $show_constraints, $debug, $help, $height, $width,
-    $no_fields, $fontsize, $fontname, $skip_tables, $skip_tables_like
+    $no_fields, $fontsize, $fontname, $skip_tables, $skip_tables_like,
+    $cluster
 );
 
 # multi-valued options:
@@ -130,6 +137,7 @@ GetOptions(
     'edgeattr=s'         => \%edgeattrs,
     'graphattr=s'        => \%graphattrs,
     'c|color'            => \$add_color,
+    'cluster:s'          => \$cluster,
     'no-fields'          => \$no_fields,
     'natural-join'       => \$natural_join,
     'natural-join-pk'    => \$join_pk_only,
@@ -166,6 +174,7 @@ my $translator           =  SQL::Translator->new(
         show_datatypes   => $show_datatypes,
         show_sizes       => $show_sizes,
         show_constraints => $show_constraints,
+        cluster          => $cluster,
         height           => $height || 0,
         width            => $width  || 0,
         fontsize         => $fontsize,
@@ -194,7 +203,7 @@ for my $file (@files) {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
