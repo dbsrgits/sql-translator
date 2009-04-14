@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
@@ -68,6 +68,7 @@ to achieve this.
 =cut
 
 use strict;
+use warnings;
 use Data::Dumper;
 use Getopt::Long;
 use Pod::Usage;
@@ -145,6 +146,6 @@ for my $file (@files) {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

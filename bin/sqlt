@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
@@ -147,6 +147,7 @@ knows about, allowing you to easily substitute your own.
 # -------------------------------------------------------------------
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Pod::Usage;
 use SQL::Translator;

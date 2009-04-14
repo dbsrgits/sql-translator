@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
@@ -89,6 +89,7 @@ your target database.
 # -------------------------------------------------------------------
 
 use strict;
+use warnings;
 use Pod::Usage;
 use Data::Dumper;
 use SQL::Translator;
@@ -541,7 +542,7 @@ sub constraint_to_string {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

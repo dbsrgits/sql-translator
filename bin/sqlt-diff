@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
@@ -103,6 +103,7 @@ Currently (v0.0900), only MySQL is supported by this code.
 # -------------------------------------------------------------------
 
 use strict;
+use warnings;
 use Pod::Usage;
 use Data::Dumper;
 use SQL::Translator;
@@ -232,7 +233,7 @@ else
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

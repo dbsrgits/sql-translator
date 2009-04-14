@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
@@ -33,6 +33,7 @@ all the parsers and producers of SQL::Translator.
 # -------------------------------------------------------------------
 
 use strict;
+use warnings;
 use CGI;
 use SQL::Translator;
 
@@ -545,7 +546,7 @@ sub show_form {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
