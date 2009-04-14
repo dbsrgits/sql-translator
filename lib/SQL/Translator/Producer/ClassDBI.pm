@@ -35,18 +35,21 @@ my %CDBI_auto_pkgs = (
 
 # -------------------------------------------------------------------
 sub produce {
-    my $t      = shift;
-    my $create = undef;
-    local $DEBUG = $t->debug;
+    my $t             = shift;
+    local $DEBUG      = $t->debug;
     my $no_comments   = $t->no_comments;
     my $schema        = $t->schema;
     my $args          = $t->producer_args;
+    my @create;
+
     if ( my $fmt = $args->{'format_pkg_name'} ) {
         $t->format_package_name( $fmt );
     }
+
     if ( my $fmt = $args->{'format_fk_name'} ) {
         $t->format_fk_name( $fmt );
     }
+
     my $db_user       = $args->{'db_user'} || '';
     my $db_pass       = $args->{'db_password'} || '';
     my $main_pkg_name = $args->{'package_name'} ||
@@ -316,7 +319,7 @@ sub produce {
     # Now build up text of package.
     #
     my $base_pkg = sprintf( 'Class::DBI%s', $from ? "::$from" : '' );
-    $create .= join ( "\n",
+    push @create, join ( "\n",
         "package $main_pkg_name;\n",
         $header,
         "use strict;",
@@ -331,7 +334,7 @@ sub produce {
         my $pkg = $packages{$pkg_name} or next;
         next unless $pkg->{'pkg_name'};
 
-        $create .= join ( "\n",
+        push @create, join ( "\n",
             $sep,
             "package " . $pkg->{'pkg_name'} . ";",
             "use base '" . $pkg->{'base'} . "';",
@@ -339,40 +342,46 @@ sub produce {
         );
 
                 if ( $from ) {
-                    $create .= 
-                        $pkg->{'pkg_name'}."->set_up_table('".$pkg->{'table'}."');\n\n";
+                    push @create, join('',
+                        $pkg->{'pkg_name'},
+                        "->set_up_table('",
+                        $pkg->{'table'},
+                        "');\n\n"
+                    );
                 }
                 else {
                     my $table       = $schema->get_table( $pkg->{'table'} );
                     my @field_names = map { $_->name } $table->get_fields;
 					
-                    $create .= join("\n",
+                    push @create, join("\n",
                         $pkg_name."->table('".$pkg->{'table'}."');\n",
                         $pkg_name."->columns(All => qw/".
                         join(' ', @field_names)."/);\n\n",
                     );
                 }
 
-        $create .= "\n";
+        push @create, "\n";
 
         if ( my $pk = $pkg->{'pk_accessor'} ) {
-            $create .= $pk;
+            push @create, $pk;
         }
 
         if ( my @has_a = @{ $pkg->{'has_a'} || [] } ) {
-            $create .= $_ for @has_a;
+            push @create, $_ for @has_a;
         }
 
         foreach my $has_many_key ( keys %{ $pkg->{'has_many'} } ) {
             if ( my @has_many = @{ $pkg->{'has_many'}{$has_many_key} || [] } ) {
-                $create .= $_ for @has_many;
+                push @create, $_ for @has_many;
             }
         }
     }
 
-    $create .= "1;\n";
+    push @create, "1;\n";
 
-    return $create;
+    return wantarray
+        ? @create
+        : join('', @create);
 }
 
 1;
@@ -390,7 +399,7 @@ SQL::Translator::Producer::ClassDBI - create Class::DBI classes from schema
 Use this producer as you would any other from SQL::Translator.  See
 L<SQL::Translator> for details.
 
-This package utilizes SQL::Translator's formatting methods
+This package uses SQL::Translator's formatting methods
 format_package_name(), format_pk_name(), format_fk_name(), and
 format_table_name() as it creates classes, one per table in the schema
 provided.  An additional base class is also created for database connectivity
@@ -400,4 +409,4 @@ configuration.  See L<Class::DBI> for details on how this works.
 
 Allen Day E<lt>allenday@ucla.eduE<gt>,
 Ying Zhang E<lt>zyolive@yahoo.comE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
