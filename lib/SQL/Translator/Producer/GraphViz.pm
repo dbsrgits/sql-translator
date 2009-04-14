@@ -310,14 +310,17 @@ sub produce {
             fillcolor => 'white',
         },
     );
+
     $args{'width'}  = $width  if $width;
     $args{'height'} = $height if $height;
+
     # set fontsize for edge and node labels if specified
     if ($fontsize) {
         $args{'node'}->{'fontsize'} = $fontsize;
         $args{'edge'} = {} unless $args{'edge'};
         $args{'edge'}->{'fontsize'} = $fontsize;        
     }
+
     # set the font name globally for node, edge, and graph labels if
     # specified (use node, edge, or graph attributes for individual
     # font specification)
@@ -328,18 +331,51 @@ sub produce {
         $args{'graph'} = {} unless $args{'graph'};
         $args{'graph'}->{'fontname'} = $fontname;        
     }
+
     # set additional node, edge, and graph attributes; these may
     # possibly override ones set before
     while (my ($key,$val) = each %$nodeattrs) {
         $args{'node'}->{$key} = $val;
     }
+
     $args{'edge'} = {} if %$edgeattrs && !$args{'edge'};
+
     while (my ($key,$val) = each %$edgeattrs) {
         $args{'edge'}->{$key} = $val;
     }
+
     $args{'graph'} = {} if %$edgeattrs && !$args{'graph'};
+
     while (my ($key,$val) = each %$graphattrs) {
         $args{'graph'}->{$key} = $val;
+    }
+
+    my %cluster;
+    if ( defined $args->{'cluster'} ) {
+        my @clusters;
+        if ( ref $args->{'cluster'} eq 'ARRAY' ) {
+            @clusters = @{ $args->{'cluster'} };
+        }
+        else {
+            @clusters = split /\s*;\s*/, $args->{'cluster'};
+        }
+
+        for my $c ( @clusters ) {
+            my ( $cluster_name, @cluster_tables );
+            if ( ref $c eq 'HASH' ) {
+                $cluster_name   = $c->{'name'} || $c->{'cluster_name'};
+                @cluster_tables = @{ $c->{'tables'} || [] };
+            }
+            else {
+                my ( $name, $tables ) = split /\s*=\s*/, $c;
+                $cluster_name   = $name;
+                @cluster_tables = split /\s*,\s*/, $tables;
+            }
+
+            for my $table ( @cluster_tables ) {
+                $cluster{ $table } = $cluster_name;
+            }
+        }
     }
 
     #
@@ -369,12 +405,13 @@ sub produce {
             }
         }
 
-        my @fields     = $table->get_fields;
+        my @fields = $table->get_fields;
         if ( $show_fk_only ) {
             @fields = grep { $_->is_foreign_key } @fields;
         }
 
         my $field_str = '';
+        my $field_num = 0;
         if ( $show_fields ) {
             my @fmt_fields;
             for my $field ( @fields ) {
@@ -445,7 +482,8 @@ sub produce {
 
                 # construct the field line from all info gathered so far
                 push @fmt_fields, join( ' ',
-                    '-', $field->name,
+                    '-', 
+                    $field->name,
                     $field_type || (),
                     $constraints ? "[$constraints]" : (),
                 );
@@ -481,16 +519,21 @@ sub produce {
             $_ =~ s/ /\\ /g;
         }
 
-
         # only the 'record' type supports nice formatting
         if ( $node_shape eq 'record' ) {
             # the necessity to supply shape => 'record' is a graphviz bug
-            $gv->add_node( $table_name,
+            my %node_args = (
                 shape => 'record',
                 label => sprintf( '{%s}',
                     join( '|', $name_str, $field_str || (), $index_str || (), ),
                 ),
             );
+
+            if ( my $cluster_name = $cluster{ $table->name } ) {
+                $node_args{'cluster'} = $cluster_name;
+            }
+
+            $gv->add_node( $table_name, %node_args );
         }
         else {
             my $sep = sprintf ('%s\n',
@@ -565,13 +608,12 @@ sub produce {
 
         for my $i ( 0 .. $#tables ) {
             my $table1 = $tables[ $i ];
-            for my $j ( 0 .. $#tables ) {
+            for my $j ( 1 .. $#tables ) {
                 next if $i == $j;
                 my $table2 = $tables[ $j ];
                 next if $done{ $table1 }{ $table2 };
                 $gv->add_edge( $table2, $table1 );
                 $done{ $table1 }{ $table2 } = 1;
-                $done{ $table2 }{ $table1 } = 1;
             }
         }
     }
