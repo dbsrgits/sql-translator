@@ -190,8 +190,8 @@ sub produce {
     my $qf = '';
     $qf = '"' if ($translator->quote_field_names);
     
-    my $output;
-    $output .= header_comment unless ($no_comments);
+    my @output;
+    push @output, header_comment unless ($no_comments);
 
     my (@table_defs, @fks);
     for my $table ( $schema->get_tables ) {
@@ -216,10 +216,10 @@ sub produce {
       });
     }
 
-    $output  = join(";\n\n", @table_defs) . ";\n\n";
+    push @output, map { "$_;\n\n" } @table_defs;
     if ( @fks ) {
-        $output .= "--\n-- Foreign Key Definitions\n--\n\n" unless $no_comments;
-        $output .= join( ";\n\n", @fks ) . ";\n";
+        push @output, "--\n-- Foreign Key Definitions\n--\n\n" unless $no_comments;
+        push @output, map { "$_;\n\n" } @fks;
     }
 
     if ( $WARN ) {
@@ -235,7 +235,9 @@ sub produce {
         }
     }
 
-    return $output;
+    return wantarray
+        ? @output
+        : join ('', @output);
 }
 
 # -------------------------------------------------------------------
