@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(292, "SQL::Translator::Parser::MySQL");
+    maybe_plan(293, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -21,7 +21,8 @@ BEGIN {
         id char(32) not null default '0' primary key,
         a_session text,
         ssn varchar(12) unique key,
-        age int key
+        age int key,
+        fulltext key `session_fulltext` (a_session)
     );|;
 
     my $val = parse($tr, $data);
@@ -51,7 +52,9 @@ BEGIN {
     is( $f2->is_primary_key, 0, 'Field is not PK' );
 
     my @indices = $table->get_indices;
-    is( scalar @indices, 1, 'Right number of indices (1)' );
+    is( scalar @indices, 2, 'Right number of indices (2)' );
+    my $i = pop @indices;
+    is( $i->type, 'FULLTEXT', 'Found fulltext' );
 
     my @constraints = $table->get_constraints;
     is( scalar @constraints, 2, 'Right number of constraints (2)' );
