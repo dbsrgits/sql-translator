@@ -56,6 +56,7 @@ $VERSION = '1.59';
 my %VALID_INDEX_TYPE = (
   UNIQUE         => 1,
   NORMAL         => 1,
+  FULLTEXT       => 1, # MySQL only (?)
   FULL_TEXT      => 1, # MySQL only (?)
   SPATIAL        => 1, # MySQL only (?)
 );
