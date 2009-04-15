@@ -402,22 +402,39 @@ Determines if this trigger is the same as another
     
     return 0 unless $self->SUPER::equals($other);
 
-    return 0
-      unless $case_insensitive
-        ? uc( $self->name ) eq uc( $other->name )
-        : $self->name eq $other->name;
+    my %names;
+    for my $name ( $self->name, $other->name ) { 
+        $name = lc $name if $case_insensitive;
+        $names{ $name }++;
+    }
 
-    return 0 unless $self->perform_action_when eq $other->perform_action_when;
+    if ( keys %names > 1 ) {
+        return $self->error('Names not equal');
+    }
 
-    return 0
-      unless compare_arrays( $self->database_events, $other->database_events );
+    if ( !$self->perform_action_when eq $other->perform_action_when ) {
+        return $self->error('perform_action_when differs');
+    }
 
-    return 0 unless $self->on_table eq $other->on_table;
+    if ( 
+        !compare_arrays( [$self->database_events], [$other->database_events] ) 
+    ) {
+        return $self->error('database_events differ');
+    }
 
-    return 0 unless $self->action   eq $other->action;
+    if ( $self->on_table ne $other->on_table ) {
+        return $self->error('on_table differs');
+    }
 
-    return 0 unless $self->_compare_objects( scalar $self->extra,
-              scalar $other->extra );
+    if ( $self->action ne $other->action ) {
+        return $self->error('action differs');
+    }
+
+    if ( 
+        !$self->_compare_objects( scalar $self->extra, scalar $other->extra )
+    ) {
+        return $self->error('extras differ');
+    }
 
     return 1;
 }
