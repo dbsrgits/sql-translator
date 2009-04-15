@@ -28,14 +28,13 @@ SQL::Translator::Schema::Trigger - SQL::Translator trigger object
 
   use SQL::Translator::Schema::Trigger;
   my $trigger = SQL::Translator::Schema::Trigger->new(
-      name                => 'foo',
-      perform_action_when => 'before', # or after
-      database_event      => 'insert', # Obsolete please use database_events!
-	  database_events     => [qw/update instert/], # or update, update_on, delete
-      fields              => [],       # fields if event is "update"
-      on_table            => 'foo',    # table name
-      action              => '...',    # text of trigger
-      schema              => $schema,  # Schema object
+    name                => 'foo',
+    perform_action_when => 'before', # or after
+    database_events     => [qw/update insert/], # also update, update_on, delete
+    fields              => [],       # if event is "update"
+    on_table            => 'foo',    # table name
+    action              => '...',    # text of trigger
+    schema              => $schema,  # Schema object
   );
 
 =head1 DESCRIPTION
@@ -60,8 +59,8 @@ $VERSION = '1.59';
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
-    name schema perform_action_when database_event database_events fields table on_table action
-    order
+    name schema perform_action_when database_events database_event 
+    fields table on_table action order
 /);
 
 =pod
@@ -112,23 +111,15 @@ sub database_event {
 
 =head2 database_event
 
-Obosolete please use database_events!
+Obsolete please use database_events!
 
 =cut
     
-	my $self = shift;
-	
-	
-	if ( my $arg = shift ) {
-		$self->database_events( [$arg] );
-	}
+    my $self = shift;
 
-	return $self->error("Please use database_events the trigger has more then one events!") 
-    if (scalar @{$self->{'database_events'}} > 1);
-
-  carp 'database_event is obsolete please use database_events';
-	return (@{ $self->{'database_events'} })[0];
+    return $self->database_events( @_ );
 }
+    
 # ----------------------------------------------------------------------
 sub database_events {
 
@@ -142,24 +133,28 @@ Gets or sets the events that triggers the trigger.
 
 =cut
 
-	my $self = shift;
-	
-	if ( my $arg = shift ) {
-		if (ref $arg eq "ARRAY"){
-			map  {
-				$_ = lc; 
-				$_ =~ s/\s+/ /g;  
-				return $self->error("Invalid event '$_' in database_events") unless ( $_ =~ /^(insert|update|update_on|delete)$/ );
-			} @$arg ;
-			@{ $self->{'database_events'} } = @$arg;
-			
-		}else{
-			return $self->error("Invalid argument to database_events");
-		};
-		
-	}
+    my $self = shift;
+    my @args = ref $_[0] eq 'ARRAY' ? @{ $_[0] } : @_;
 
-	return $self->{'database_events'};
+    if ( @args ) {
+        @args       = map { s/\s+/ /g; lc $_ } @args;
+        my %valid   = map { $_, 1 } qw[ insert update update_on delete ];
+        my @invalid = grep { !defined $valid{ $_ } } @args;
+        
+        if ( @invalid ) {
+            return $self->error(
+                sprintf("Invalid events '%s' in database_events",
+                    join(', ', @invalid)
+                )
+            );
+        }
+
+        $self->{'database_events'} = [ @args ];
+    }
+
+    return wantarray 
+        ? @{ $self->{'database_events'} || [] }
+        : $self->{'database_events'};
 }
 
 # ----------------------------------------------------------------------
@@ -284,9 +279,9 @@ Determine whether the trigger is valid or not.
     my $self = shift;
 
     for my $attr ( 
-        qw[ name perform_action_when database_event on_table action ] 
+        qw[ name perform_action_when database_events on_table action ] 
     ) {
-        return $self->error("No $attr") unless $self->$attr();
+        return $self->error("Invalid: missing '$attr'") unless $self->$attr();
     }
     
     return $self->error("Missing fields for UPDATE ON") if 
@@ -369,18 +364,23 @@ sub compare_arrays {
 Compare two arrays.
 
 =cut
-	
-	my ($first, $second) = @_;
-	no warnings;  # silence spurious -w undef complaints
+    
+    my ($first, $second) = @_;
+    no warnings;  # silence spurious -w undef complaints
 
-	return 0 unless (ref $first eq 'ARRAY' and ref $second eq 'ARRAY' ) ;
-	return 0 unless @$first == @$second;
-	my @first = sort @$first;
-	my @second = sort @$second;
-	for (my $i = 0; $i < scalar @first; $i++) {
-		return 0 if @first[$i] ne @second[$i];
-		}
-	return 1;
+    return 0 unless (ref $first eq 'ARRAY' and ref $second eq 'ARRAY' ) ;
+
+    return 0 unless @$first == @$second;
+
+    my @first = sort @$first;
+
+    my @second = sort @$second;
+
+    for (my $i = 0; $i < scalar @first; $i++) {
+        return 0 if @first[$i] ne @second[$i];
+    }
+
+    return 1;
 }
 
 # ----------------------------------------------------------------------
@@ -392,22 +392,33 @@ sub equals {
 
 Determines if this trigger is the same as another
 
-  my $isIdentical = $trigger1->equals( $trigger2 );
+  my $is_identical = $trigger1->equals( $trigger2 );
 
 =cut
 
-    my $self = shift;
-    my $other = shift;
+    my $self             = shift;
+    my $other            = shift;
     my $case_insensitive = shift;
     
     return 0 unless $self->SUPER::equals($other);
-    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
-    #return 0 unless $self->is_valid eq $other->is_valid;
+
+    return 0
+      unless $case_insensitive
+        ? uc( $self->name ) eq uc( $other->name )
+        : $self->name eq $other->name;
+
     return 0 unless $self->perform_action_when eq $other->perform_action_when;
-    return 0 unless compare_arrays($self->database_events,$other->database_events) ;
+
+    return 0
+      unless compare_arrays( $self->database_events, $other->database_events );
+
     return 0 unless $self->on_table eq $other->on_table;
-    return 0 unless $self->action eq $other->action;
-    return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
+
+    return 0 unless $self->action   eq $other->action;
+
+    return 0 unless $self->_compare_objects( scalar $self->extra,
+              scalar $other->extra );
+
     return 1;
 }
 
@@ -423,8 +434,9 @@ sub DESTROY {
 
 =pod
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Anonymous,
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
