@@ -386,12 +386,13 @@ sub create_trigger
     my ($trigger) = @_;
 # create: CREATE TRIGGER trigger_name before type /ON/i table_name reference_b(?) /FOR EACH ROW/i 'MODE DB2SQL' triggered_action
 
+    my $db_events = join ', ', $trigger->database_events;
     my $out = sprintf('CREATE TRIGGER %s %s %s ON %s %s %s MODE DB2SQL %s',
                       $trigger->name,
                       $trigger->perform_action_when || 'AFTER',
-                      $trigger->database_event =~ /update_on/i ? 
+                      $db_events =~ /update_on/i ? 
                         ('UPDATE OF '. join(', ', $trigger->fields)) :
-                        $trigger->database_event || 'UPDATE',
+                        $db_events || 'UPDATE',
                       $trigger->table->name,
                       $trigger->extra->{reference} || 'REFERENCING OLD AS oldrow NEW AS newrow',
                       $trigger->extra->{granularity} || 'FOR EACH ROW',
