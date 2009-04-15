@@ -182,7 +182,7 @@ $ans = <<EOXML;
   </tables>
   <views></views>
   <triggers>
-    <trigger name="foo_trigger" database_event="insert" on_table="Basic" perform_action_when="after" order="1">
+    <trigger name="foo_trigger" database_events="insert" on_table="Basic" perform_action_when="after" order="1">
       <action>update modified=timestamp();</action>
       <extra hello="world" />
     </trigger>
