@@ -200,7 +200,8 @@ schema:
         steps:
           - update pet set name=name
         when: ~
-      database_event: insert
+      database_events:
+        - insert
       fields: ~
       name: pet_trig
       on_table: pet
@@ -236,8 +237,6 @@ my $tr   = SQL::Translator->new(
     parser   => 'SQLite',
     producer => 'YAML',
     data     => $data,
-#    debug    => 1,
-#    trace    => 1,
 );
 
 my $out;
