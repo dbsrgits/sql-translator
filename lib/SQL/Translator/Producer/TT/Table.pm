@@ -260,7 +260,9 @@ sub write_file {
         }
     }
     else {
-        warn "Creating $file.\n";
+        if ( my $interactive = -t STDIN && -t STDOUT ) {
+            warn "Creating $file.\n";
+        }
     }
 
     my ($dir) = $file =~ m!^(.*)/!; # Want greedy, eveything before the last /
