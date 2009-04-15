@@ -584,13 +584,13 @@ require_ok( 'SQL::Translator::Schema' );
     $s->add_table(name=>'foo') or die "Couldn't create table: ", $s->error;
     my $name                = 'foo_trigger';
     my $perform_action_when = 'after';
-    my $database_event      = 'insert';
+    my $database_events     = 'insert';
     my $on_table            = 'foo';
     my $action              = 'update modified=timestamp();';
     my $t                   = $s->add_trigger(
         name                => $name,
         perform_action_when => $perform_action_when,
-        database_events     => [$database_event],
+        database_events     => $database_events,
         on_table            => $on_table,
         action              => $action,
     ) or die $s->error;
@@ -601,8 +601,8 @@ require_ok( 'SQL::Translator::Schema' );
     is( $t->name, $name, qq[Name is "$name"] );
     is( $t->perform_action_when, $perform_action_when, 
         qq[Perform action when is "$perform_action_when"] );
-    is( $t->database_events->[0], $database_event, 
-        qq[Database event is "$database_event"] );
+    is( join(',', $t->database_events), $database_events, 
+        qq[Database event is "$database_events"] );
     isa_ok( $t->table, 'SQL::Translator::Schema::Table', qq[table is a Table"] );
     is( $t->action, $action, qq[Action is "$action"] );
 
@@ -628,19 +628,27 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $t2->schema, 'SQL::Translator::Schema', 'Schema' );
     is( $t2->schema->name, 'TrigTest2', qq[Schema name is "'TrigTest2'"] );
     is( $t2->name, 'foo_trigger', qq[Name is "foo_trigger"] );
-	is_deeply($t2->database_events,[qw/insert update/],"Database events are [qw/insert update/] ");
+	is_deeply(
+        [$t2->database_events],
+        [qw/insert update/],
+        "Database events are [qw/insert update/] "
+    );
 	isa_ok($t2->database_events,'ARRAY','Database events');
 	
 	#
 	# Trigger equal tests
 	#
-	isnt($t1->equals($t2),1,'Compare two Triggers with database_event and database_events');
-	
-	$t2->database_events([]);
-	$t2->database_event($database_event);
+	isnt(
+        $t1->equals($t2),
+        1,
+        'Compare two Triggers with database_event and database_events'
+    );
+
+	$t1->database_events($database_events);
+	$t2->database_events($database_events);
 	is($t1->equals($t2),1,'Compare two Triggers with database_event');
 
-	$t2->database_event('');
+	$t2->database_events('');
 	$t1->database_events([qw/update insert/]);
 	$t2->database_events([qw/insert update/]);
 	is($t1->equals($t2),1,'Compare two Triggers with database_events');
