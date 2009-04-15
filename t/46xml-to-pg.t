@@ -5,6 +5,7 @@ use FindBin qw/$Bin/;
 use Test::More;
 use Test::SQL::Translator;
 use Test::Exception;
+use Test::Differences;
 use Data::Dumper;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
@@ -32,7 +33,7 @@ my $sql = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-is($sql, << "SQL");
+eq_or_diff($sql, << "SQL");
 DROP TABLE "Basic" CASCADE;
 CREATE TABLE "Basic" (
   "id" serial NOT NULL,
@@ -63,4 +64,5 @@ CREATE VIEW "email_list" ( "email" ) AS (
 
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
+
 SQL
