@@ -4,11 +4,11 @@ use strict;
 use FindBin qw/$Bin/;
 use Test::More;
 use Test::SQL::Translator;
+use Test::Differences;
 use Test::Exception;
 use Data::Dumper;
 use SQL::Translator;
 use SQL::Translator::Schema::Constants;
-
 
 BEGIN {
     maybe_plan(1, 'SQL::Translator::Parser::XML::SQLFairy',
@@ -32,7 +32,7 @@ my $sql = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-is($sql, << "SQL");
+eq_or_diff($sql, << "SQL");
 DROP TABLE Basic;
 
 CREATE TABLE Basic (
