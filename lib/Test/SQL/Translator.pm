@@ -28,9 +28,10 @@ Test::SQL::Translator - Test::More test functions for the Schema objects.
 
 use strict;
 use warnings;
+use Test::More;
+use SQL::Translator::Schema::Constants;
 
 use base qw(Exporter);
-
 use vars qw($VERSION @EXPORT @EXPORT_OK);
 $VERSION = '1.59';
 @EXPORT = qw(
@@ -45,109 +46,114 @@ $VERSION = '1.59';
     maybe_plan
 );
 
-use Test::More;
-use SQL::Translator::Schema::Constants;
-
 # $ATTRIBUTES{ <schema_object_name> } = { <attribname> => <default>, ... }
-my %ATTRIBUTES;
-$ATTRIBUTES{field} = {
-    name => undef,
-    data_type => '',
-    default_value => undef,
-    size => '0',
-    is_primary_key => 0,
-    is_unique => 0,
-    is_nullable => 1,
-    is_foreign_key => 0,
-    is_auto_increment => 0,
-    comments => '',
-    extra => {},
-    # foreign_key_reference,
-    is_valid => 1,
-    # order
-};
-$ATTRIBUTES{constraint} = {
-    name => '',
-    type => '',
-    deferrable => 1,
-    expression => '',
-    is_valid => 1,
-    fields => [],
-    match_type => '',
-    options => [],
-    on_delete => '',
-    on_update => '',
-    reference_fields => [],
-    reference_table => '',
-    extra => {},
-};
-$ATTRIBUTES{'index'} = {
-    fields => [],
-    is_valid => 1,
-    name => "",
-    options => [],
-    type => NORMAL,
-    extra => {},
-};
-$ATTRIBUTES{'view'} = {
-    name => "",
-    sql => "",
-    fields => [],
-    is_valid  => 1,
-    extra => {},
-};
-$ATTRIBUTES{'trigger'} = {
-    name                => '',
-    perform_action_when => undef,
-    database_event      => undef,
-    on_table            => undef,
-    action              => undef,
-    is_valid            => 1,
-    extra => {},
-};
-$ATTRIBUTES{'procedure'} = {
-    name       => '',
-    sql        => '',
-    parameters => [],
-    owner      => '',
-    comments   => '',
-    extra => {},
-};
-$ATTRIBUTES{table} = {
-    comments   => undef,
-    name       => '',
-    #primary_key => undef, # pkey constraint
-    options    => [],
-    #order      => 0,
-    fields      => undef,
-    constraints => undef,
-    indices     => undef,
-    is_valid    => 1,
-    extra       => {},
-};
-$ATTRIBUTES{schema} = {
-    name       => '',
-    database   => '',
-    procedures => undef, # [] when set
-    tables     => undef, # [] when set
-    triggers   => undef, # [] when set
-    views      => undef, # [] when set
-    is_valid   => 1,
-    extra => {},
-};
-
-
+my %ATTRIBUTES = (
+    field => {
+        name              => undef,
+        data_type         => '',
+        default_value     => undef,
+        size              => '0',
+        is_primary_key    => 0,
+        is_unique         => 0,
+        is_nullable       => 1,
+        is_foreign_key    => 0,
+        is_auto_increment => 0,
+        comments          => '',
+        extra             => {},
+        # foreign_key_reference,
+        is_valid => 1,
+        # order
+    },
+    constraint => {
+        name             => '',
+        type             => '',
+        deferrable       => 1,
+        expression       => '',
+        is_valid         => 1,
+        fields           => [],
+        match_type       => '',
+        options          => [],
+        on_delete        => '',
+        on_update        => '',
+        reference_fields => [],
+        reference_table  => '',
+        extra            => {},
+    },
+    index => {
+        fields   => [],
+        is_valid => 1,
+        name     => "",
+        options  => [],
+        type     => NORMAL,
+        extra    => {},
+    },
+    view => {
+        name     => "",
+        sql      => "",
+        fields   => [],
+        is_valid => 1,
+        extra    => {},
+    },
+    trigger => {
+        name                => '',
+        perform_action_when => undef,
+        database_events     => undef,
+        on_table            => undef,
+        action              => undef,
+        is_valid            => 1,
+        extra               => {},
+    },
+    procedure => {
+        name       => '',
+        sql        => '',
+        parameters => [],
+        owner      => '',
+        comments   => '',
+        extra      => {},
+    },
+    table => {
+        comments    => undef,
+        name        => '',
+        #primary_key => undef, # pkey constraint
+        options     => [],
+        #order      => 0,
+        fields      => undef,
+        constraints => undef,
+        indices     => undef,
+        is_valid    => 1,
+        extra       => {},
+    },
+    schema => {
+        name       => '',
+        database   => '',
+        procedures => undef,    # [] when set
+        tables     => undef,    # [] when set
+        triggers   => undef,    # [] when set
+        views      => undef,    # [] when set
+        is_valid   => 1,
+        extra      => {},
+    }
+);
 
 # Given a test hash and schema object name set any attribute keys not present in
 # the test hash to their default value for that schema object type.
 # e.g. default_attribs( $test, "field" );
 sub default_attribs {
-    my ($foo, $what) = @_;
-    die "Can't add default attibs - unkown Scheam object type '$what'."
-    unless exists $ATTRIBUTES{$what};
-    $foo->{$_} = $ATTRIBUTES{$what}{$_}
-    foreach grep !exists($foo->{$_}), keys %{$ATTRIBUTES{$what}};
-    return $foo;
+    my ($hashref, $object_type) = @_;
+
+    if ( !exists $ATTRIBUTES{ $object_type } ) {
+        die "Can't add default attribs for unknown Schema " 
+        .   "object type '$object_type'.";
+    }
+
+    for my $attr ( 
+        grep { !exists $hashref->{ $_ } }
+        keys %{ $ATTRIBUTES{ $object_type } } 
+    ) {
+        $hashref->{ $attr } = $ATTRIBUTES{ $object_type }{ $attr }
+    }
+
+    return $hashref;
 }
 
 # Format test name so it will prepend the test names used below.
@@ -286,8 +292,12 @@ sub trigger_ok {
     is( $obj->perform_action_when, $test->{perform_action_when},
         "$t_name    perform_action_when is '$test->{perform_action_when}'" );
 
-    is( $obj->database_event, $test->{database_event},
-        "$t_name    database_event is '$test->{database_event}'" );
+    is( join(',', $obj->database_events), $test->{database_events},
+        sprintf("%s    database_events is '%s'",
+            $t_name,
+            $test->{'database_events'},
+        )
+    );
 
     is( $obj->on_table, $test->{on_table},
         "$t_name    on_table is '$test->{on_table}'" );
@@ -374,30 +384,34 @@ sub table_ok {
 
     # Constraints and Indices
     _test_kids($obj, $test, $name, {
-        constraint => "constraints",
-        'index'    => "indices",
+        constraint => 'constraints',
+        index      => 'indices',
     });
 }
 
 sub _test_kids {
-    my ($obj, $test, $name, $kids) = @_; 
-    my $t_name = t_name($name);
+    my ( $obj, $test, $name, $kids ) = @_;
+    my $t_name   = t_name($name);
     my $obj_name = ref $obj;
     ($obj_name) = $obj_name =~ m/^.*::(.*)$/;
 
-    while ( my($foo,$plural) = each %$kids ) {
-        next unless defined $test->{$plural};
-        if ( my @tfoo = @{$test->{$plural}} ) {
+    while ( my ( $object_type, $plural ) = each %$kids ) {
+        next unless defined $test->{ $plural };
+
+        if ( my @tests = @{ $test->{ $plural } } ) {
             my $meth = "get_$plural";
-            my @foo = $obj->$meth;
-            is(scalar(@foo), scalar(@tfoo),
-            "${t_name}$obj_name has ".scalar(@tfoo)." $plural");
-            foreach ( @foo ) {
-                my $ans = { lc($obj_name) => $obj->name, %{shift @tfoo}};
-                #my $ans = shift @tfoo;
-                my $meth = "${foo}_ok";
-                { no strict 'refs';
-                    $meth->( $_, $ans, $name  );
+            my @objects  = $obj->$meth;
+            is( scalar(@objects), scalar(@tests),
+                "${t_name}$obj_name has " . scalar(@tests) . " $plural" 
+            );
+
+            for my $object (@objects) {
+                my $ans = { lc($obj_name) => $obj->name, %{ shift @tests } };
+
+                my $meth = "${object_type}_ok";
+                {
+                    no strict 'refs';
+                    $meth->( $object, $ans, $name );
                 }
             }
         }
@@ -436,9 +450,9 @@ sub schema_ok {
 
     # Procedures, Triggers, Views
     _test_kids($obj, $test, $name, {
-        procedure  => "procedures",
-        trigger    => "triggers",
-        view       => "views",
+        procedure  => 'procedures',
+        trigger    => 'triggers',
+        view       => 'views',
     });
 }
 
@@ -614,7 +628,8 @@ schema file and test yaml file to compare it against.
 
 =head1 AUTHOR
 
-Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>, Darren Chamberlain <darren@cpan.org>.
+Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>, 
+Darren Chamberlain <darren@cpan.org>.
 
 Thanks to Ken Y. Clark for the original table and field test code taken from
 his mysql test.
