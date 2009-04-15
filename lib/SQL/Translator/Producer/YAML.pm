@@ -164,7 +164,7 @@ sub view_trigger {
         'order'               => scalar $trigger->order,
         'name'                => scalar $trigger->name,
         'perform_action_when' => scalar $trigger->perform_action_when,
-        'database_event'      => scalar $trigger->database_event,
+        'database_events'     => scalar $trigger->database_events,
         'fields'              => scalar $trigger->fields,
         'on_table'            => scalar $trigger->on_table,
         'action'              => scalar $trigger->action,
