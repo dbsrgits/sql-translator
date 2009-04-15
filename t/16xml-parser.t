@@ -211,7 +211,7 @@ schema_ok( $scma, {
         {
             name                => 'foo_trigger',
             perform_action_when => 'after',
-            database_event      => 'insert',
+            database_events     => 'insert',
             on_table            => 'Basic',
             action              => 'update modified=timestamp();',
             extra => {
