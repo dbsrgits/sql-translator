@@ -505,7 +505,7 @@ sub produce {
     #
     debug("imap file = '$imap_file'");
     if ( $imap_file && @imap_coords ) {
-        open my $fh, ">$imap_file" or die "Can't write '$imap_file': $!\n";
+        open my $fh, '>', $imap_file or die "Can't write '$imap_file': $!\n";
         print $fh qq[<html><body><img src="" usemap="#imap" border="0">\n].
             qq[<map name="imap">\n];
         for my $rec ( @imap_coords ) {
@@ -520,7 +520,7 @@ sub produce {
     # Print the image.
     #
     if ( $out_file ) {
-        open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
+        open my $fh, '>', $out_file or die "Can't write '$out_file': $!\n";
         print $fh $gd->$output_type;
         close $fh;
     }
@@ -537,6 +537,6 @@ sub produce {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
