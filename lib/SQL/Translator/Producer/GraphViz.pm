@@ -626,7 +626,7 @@ sub produce {
             print $out_file $gv->$output_method;
         }
         else {
-            open my $fh, ">$out_file" or die "Can't write '$out_file': $!\n";
+            open my $fh, '>', $out_file or die "Can't write '$out_file': $!\n";
             binmode $fh;
             print $fh $gv->$output_method;
             close $fh;
