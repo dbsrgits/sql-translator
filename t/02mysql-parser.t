@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(293, "SQL::Translator::Parser::MySQL");
+    maybe_plan(295, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -510,6 +510,32 @@ BEGIN {
 				`m`.`user_id` AS `user_access` 
 				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
 			DELIMITER ;;
+			/*!50001 CREATE */
+			/*! VIEW `vs_asset2` AS 
+				select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
+				`cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
+				`cfgmgmt_mig`.`ap_extract_asset`(`a`.`fq_name`) AS `asset_name`,
+				`a`.`annotation` AS `annotation`,`a`.`asset_type` AS `asset_type`,
+				`a`.`foreign_asset_id` AS `foreign_asset_id`,
+				`a`.`foreign_asset_id2` AS `foreign_asset_id2`,`a`.`dateCreated` AS `date_created`,
+				`a`.`dateModified` AS `date_modified`,`a`.`container_id` AS `container_id`,
+				`a`.`creator_id` AS `creator_id`,`a`.`modifier_id` AS `modifier_id`,
+				`m`.`user_id` AS `user_access` 
+				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
+			DELIMITER ;;
+			/*!50001 CREATE OR REPLACE */
+			/*! VIEW `vs_asset3` AS 
+				select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
+				`cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
+				`cfgmgmt_mig`.`ap_extract_asset`(`a`.`fq_name`) AS `asset_name`,
+				`a`.`annotation` AS `annotation`,`a`.`asset_type` AS `asset_type`,
+				`a`.`foreign_asset_id` AS `foreign_asset_id`,
+				`a`.`foreign_asset_id2` AS `foreign_asset_id2`,`a`.`dateCreated` AS `date_created`,
+				`a`.`dateModified` AS `date_modified`,`a`.`container_id` AS `container_id`,
+				`a`.`creator_id` AS `creator_id`,`a`.`modifier_id` AS `modifier_id`,
+				`m`.`user_id` AS `user_access` 
+				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
+			DELIMITER ;;
 			/*!50003 CREATE*/ /*!50020 DEFINER=`cmdomain`@`localhost`*/ /*!50003 FUNCTION `ap_from_millitime_nullable`( millis_since_1970 BIGINT ) RETURNS timestamp
     			DETERMINISTIC
 				BEGIN
@@ -592,9 +618,11 @@ BEGIN {
     is( $t1f2->extra('on update'), 'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
     
     my @views = $schema->get_views;
-    is( scalar @views, 1, 'Right number of views (1)' );
-    my $view1 = shift @views;
+    is( scalar @views, 3, 'Right number of views (3)' );
+    my ($view3, $view1, $view2) = @views;
     is( $view1->name, 'vs_asset', 'Found "vs_asset" view' );
+    is( $view2->name, 'vs_asset2', 'Found "vs_asset2" view' );
+    is( $view3->name, 'vs_asset3', 'Found "vs_asset3" view' );
 	like($view1->sql, qr/ALGORITHM=UNDEFINED/, "Detected algorithm");
 	like($view1->sql, qr/vs_asset/, "Detected view vs_asset");
 	unlike($view1->sql, qr/cfgmgmt_mig/, "Did not detect cfgmgmt_mig");

@@ -3,6 +3,7 @@
 # ----------------------------------------------------------
 * Properly quote absolute table names in the MySQL producer
 * Added semi-colon for (DROP|CREATE) TYPE statements in the Pg producer (wreis)
+* Added CREATE VIEW subrules for mysql parser (wreis)
 
 # ----------------------------------------------------------
 # 0.09004 2009-02-13
