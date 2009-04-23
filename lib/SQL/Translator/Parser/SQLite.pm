@@ -459,9 +459,9 @@ string :
 
 nonstring : /[^;\'"]+/
 
-statement_body : (string | nonstring)(s?)
+statement_body : string | nonstring
 
-trigger_step : /(select|delete|insert|update)/i statement_body SEMICOLON
+trigger_step : /(select|delete|insert|update)/i statement_body(s?) SEMICOLON
     {
         $return = join( ' ', $item[1], join ' ', @{ $item[2] || [] } )
     }   

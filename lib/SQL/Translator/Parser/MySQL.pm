@@ -231,9 +231,9 @@ string :
 
 nonstring : /[^;\'"]+/
 
-statement_body : (string | nonstring)(s?)
+statement_body : string | nonstring
 
-insert : /insert/i  statement_body "$delimiter"
+insert : /insert/i  statement_body(s?) "$delimiter"
 
 delimiter : /delimiter/i /[\S]+/
     { $delimiter = $item[2] }
@@ -347,7 +347,7 @@ create : CREATE replace(?) algorithm(?) /view/i NAME not_delimiter "$delimiter"
     {
         @table_comments = ();
         my $view_name = $item[5];
-        my $sql = join(q{ }, grep { length } $item[1], $item[2]->[0], $item[3]->[0])
+        my $sql = join(q{ }, grep { defined and length } $item[1], $item[2]->[0], $item[3]->[0])
             . " $item[4] $item[5] $item[6]";
         
         # Hack to strip database from function calls in SQL

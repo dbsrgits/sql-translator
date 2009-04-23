@@ -198,11 +198,11 @@ string :
 
 nonstring : /[^;\'"]+/
 
-statement_body : (string | nonstring)(s?)
+statement_body : string | nonstring
 
-insert : /insert/i statement_body ';'
+insert : /insert/i statement_body(s?) ';'
 
-update : /update/i statement_body ';'
+update : /update/i statement_body(s?) ';'
 
 #
 # Create table.
