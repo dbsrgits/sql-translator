@@ -739,6 +739,12 @@ sub alter_field
                        $to_field->name) if(!$to_field->is_nullable and
                                            $from_field->is_nullable);
 
+    push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL',
+                      $to_field->table->name,
+                      $to_field->name)
+       if ( !$from_field->is_nullable and $to_field->is_nullable );
+
+
     my $from_dt = convert_datatype($from_field);
     my $to_dt   = convert_datatype($to_field);
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
@@ -753,12 +759,32 @@ sub alter_field
 
     my $old_default = $from_field->default_value;
     my $new_default = $to_field->default_value;
+    my $default_value = $to_field->default_value;
+    
+    # fixes bug where output like this was created:
+    # ALTER TABLE users ALTER COLUMN column SET DEFAULT ThisIsUnescaped;
+    if(ref $default_value eq "SCALAR" ) {
+        $default_value = $$default_value;
+    } elsif( defined $default_value && $to_dt =~ /^(character|text)/xsmi ) {
+        $default_value =~ s/'/''/xsmg;
+        $default_value = q(') . $default_value . q(');
+    }
+    
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s',
                        $to_field->table->name,
                        $to_field->name,
-                       $to_field->default_value)
+                       $default_value)
         if ( defined $new_default &&
              (!defined $old_default || $old_default ne $new_default) );
+
+     # fixes bug where removing the DEFAULT statement of a column
+     # would result in no change
+    
+     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT',
+                       $to_field->table->name,
+                       $to_field->name)
+        if ( !defined $new_default && defined $old_default );
+    
 
     return wantarray ? @out : join("\n", @out);
 }
@@ -838,9 +864,16 @@ sub alter_drop_constraint {
 sub alter_create_constraint {
     my ($index, $options) = @_;
     my $qt = $options->{quote_table_names} || '';
-    return $index->type eq FOREIGN_KEY ? join(q{}, @{create_constraint(@_)})
+    my ($defs, $fks) = create_constraint(@_);
+    
+    # return if there are no constraint definitions so we don't run
+    # into output like this:
+    # ALTER TABLE users ADD ;
+        
+    return unless(@{$defs} || @{$fks});
+    return $index->type eq FOREIGN_KEY ? join(q{}, @{$fks})
         : join( ' ', 'ALTER TABLE', $qt.$index->table->name.$qt,
-              'ADD', join(q{}, map { @{$_} } create_constraint(@_))
+              'ADD', join(q{}, @{$defs}, @{$fks})
           );
 }
 
