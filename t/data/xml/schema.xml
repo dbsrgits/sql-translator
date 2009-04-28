@@ -24,7 +24,7 @@ Created on Fri Aug 15 15:08:18 2003
           <field
               name="description"
               size="0" data_type="text" order="3" default_value="" />
-          <field name="email" size="255" data_type="varchar" order="4">
+          <field name="email" size="500" data_type="varchar" order="4">
               <extra foo="bar" hello="world" bar="baz" />
           </field>
           <field name="explicitnulldef" size="0" data_type="varchar" order="5" />
