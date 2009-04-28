@@ -612,9 +612,15 @@ sub create_index
     my $qf = $options->{quote_field_names} || '';
 
     return join( ' ', 
-                 lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
-                 truncate_id_uniquely( $index->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ),
-                 '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
+                  lc $index->type eq 'normal' 
+                    ? 'INDEX' 
+                    : $index->type . ' INDEX'
+                  ,
+                  $index->name 
+                    ? (truncate_id_uniquely( $index->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ) )
+                    : ()
+                  ,
+                  '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
                  );
 
 }
