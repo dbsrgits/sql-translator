@@ -40,6 +40,33 @@ my $plan = [
     producer_args => {},
     parser_args => {},
   },
+  {
+    engine => 'Oracle',
+    producer_args => {},
+    parser_args => {},
+  },
+  {
+    engine => 'SQLServer',
+    producer_args => {},
+    parser_args => {},
+  },
+  {
+    engine => 'Sybase',
+    producer_args => {},
+    parser_args => {},
+  },
+  {
+    engine => 'DB2',
+    producer_args => {},
+    parser_args => {},
+  },
+
+# There is no Access producer
+#  {
+#    engine => 'Access',
+#    producer_args => {},
+#    parser_args => {},
+#  },
 ];
 
 
@@ -49,7 +76,7 @@ my $plan = [
 my $base_file = "$Bin/data/xml/schema.xml";
 
 my $base_t = SQL::Translator->new;
-$base_t->$_ (1) for qw/validate add_drop_table no_comments/;
+$base_t->$_ (1) for qw/add_drop_table no_comments/;
 
 my $base_schema = $base_t->translate (
   parser => 'XML',
@@ -87,7 +114,7 @@ sub check_roundtrip {
 
 # parse the sql back
   my $parser_t = SQL::Translator->new;
-  $parser_t->$_ (1) for qw/validate add_drop_table no_comments/;
+  $parser_t->$_ (1) for qw/add_drop_table no_comments/;
   my $mid_schema = $parser_t->translate (
     data => $base_sql,
     parser => $args->{engine},
@@ -109,7 +136,7 @@ sub check_roundtrip {
 # Producing a schema with a Translator different from the one the schema was generated
 # from does not work. This is arguably a bug, 61translator_agnostic.t works with that
 #  my $producer_t = SQL::Translator->new;
-#  $producer_t->$_ (1) for qw/validate add_drop_table no_comments/;
+#  $producer_t->$_ (1) for qw/add_drop_table no_comments/;
 
 #  my $rt_sql = $producer_t->translate (
 #    data => $mid_schema,
