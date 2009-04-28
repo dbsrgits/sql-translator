@@ -39,7 +39,7 @@ CREATE TABLE "Basic" (
   "id" serial NOT NULL,
   "title" character varying(100) DEFAULT 'hello' NOT NULL,
   "description" text DEFAULT '',
-  "email" character varying(255),
+  "email" character varying(500),
   "explicitnulldef" character varying,
   "explicitemptystring" character varying DEFAULT '',
   -- Hello emptytagdef

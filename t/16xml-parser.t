@@ -90,7 +90,7 @@ schema_ok( $scma, {
                 {
                     name => "email",
                     data_type => "varchar",
-                    size => 255,
+                    size => 500,
                     is_unique => 1,
                     default_value => undef,
                     is_nullable => 1,

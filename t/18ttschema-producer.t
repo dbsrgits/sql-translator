@@ -146,7 +146,7 @@ Fields
     
     email
         data_type:             varchar
-        size:                  255
+        size:                  500
         is_nullable:           1
         default_value:         
         is_primary_key:        0
