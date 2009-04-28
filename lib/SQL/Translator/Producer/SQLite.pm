@@ -371,7 +371,7 @@ sub create_trigger {
   push @create,  "DROP TRIGGER IF EXISTS $name" if $add_drop;
 
   my $events = $trigger->database_events;
-  die "Can't handle multiple events in triggers" if @$events > 1;
+  die "Can't handle multiple events in triggers" if @{ $events || [] } > 1;
 
   my $action = "";
 

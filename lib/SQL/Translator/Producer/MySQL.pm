@@ -45,7 +45,7 @@ provides the desired version for the target database. By default MySQL v3 is
 assumed, and statements pertaining to any features introduced in later versions
 (e.g. CREATE VIEW) are not produced.
 
-Valid version specifiers for C<mysql_parser_version> are listed L<here|SQL::Translator::Utils/parse_mysql_version> 
+Valid version specifiers for C<mysql_version> are listed L<here|SQL::Translator::Utils/parse_mysql_version> 
 
 =head2 Table Types
 
