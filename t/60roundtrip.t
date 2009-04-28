@@ -4,7 +4,6 @@ use warnings;
 use strict;
 use Test::More qw/no_plan/;
 use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 use SQL::Translator;
@@ -110,7 +109,10 @@ sub check_roundtrip {
     $base_sql,
     qr/^\s*CREATE TABLE/m,  #assume there is at least one create table statement
     "Received some meaningful output from the first $args->{name} production",
-  ) or diag ( _gen_diag ($base_t->error) );
+  ) or do {
+    diag ( _gen_diag ($base_t->error) );
+    return;
+  };
 
 # parse the sql back
   my $parser_t = SQL::Translator->new;
@@ -122,14 +124,17 @@ sub check_roundtrip {
   );
 
   isa_ok ($mid_schema, 'SQL::Translator::Schema', "First $args->{name} parser pass produced a schema:")
-    or diag (_gen_diag ( $parser_t->error, $base_sql ) );
+    or do {
+      diag (_gen_diag ( $parser_t->error, $base_sql ) );
+      return;
+    };
 
 # schemas should be comparable at least as far as table/field numbers go
   is_deeply (
     _get_table_info ($mid_schema->get_tables),
     _get_table_info ($base_schema->get_tables),
     "Schema tables generally match afer $args->{name} parser trip",
-  );
+  ) or return;
 
 # and produce sql once again
 
@@ -154,7 +159,10 @@ sub check_roundtrip {
     $rt_sql,
     qr/^\s*CREATE TABLE/m,  #assume there is at least one create table statement
     "Received some meaningful output from the second $args->{name} production",
-  ) or diag ( _gen_diag ( $parser_t->error ) );
+  ) or do {
+    diag ( _gen_diag ( $parser_t->error ) );
+    return;
+  };
 
 # the two sql strings should be identical
   my $msg = "$args->{name} SQL roundtrip successful - SQL statements match";
