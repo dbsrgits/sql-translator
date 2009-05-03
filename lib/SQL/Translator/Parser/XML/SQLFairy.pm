@@ -102,7 +102,7 @@ $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
-use Carp;
+use Carp::Clan qw/^SQL::Translator/;
 use Exporter;
 use base qw(Exporter);
 @EXPORT_OK = qw(parse);
@@ -238,8 +238,8 @@ sub parse {
         /);
 
         # back compat
-        if (my $evt = $data{database_event}) {
-          carp 'The database_event tag is deprecated - please use database_events, which can take multiple comma separated event names';
+        if (my $evt = $data{database_event} and $translator->{show_warnings}) {
+          carp 'The database_event tag is deprecated - please use database_events (which can take one or more comma separated event names)';
           $data{database_events} = join (', ',
             $data{database_events} || (),
             $evt,

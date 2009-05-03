@@ -38,7 +38,7 @@ use SQL::Translator::Producer::TTSchema;
 {
     my $obj;
     $obj = SQL::Translator->new(
-        show_warnings  => 1,
+        show_warnings  => 0,
         from           => "XML-SQLFairy",
         filename       => "$Bin/data/xml/schema.xml",
         to             => "TTSchema",
@@ -65,7 +65,7 @@ use SQL::Translator::Producer::TTSchema;
     [%- END %]};
     my $obj;
     $obj = SQL::Translator->new(
-        show_warnings  => 1,
+        show_warnings  => 0,
         from           => "XML-SQLFairy",
         filename       => "$Bin/data/xml/schema.xml",
         to             => "TTSchema",
