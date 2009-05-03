@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(204, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(212, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -39,12 +39,21 @@ $sqlt = SQL::Translator->new(
     add_drop_table => 1,
 );
 die "Can't find test schema $testschema" unless -e $testschema;
-my $sql = $sqlt->translate(
+
+my $sql;
+{
+  my @w;
+  local $SIG{__WARN__} = sub { push @w, $_[0] if $_[0] =~ /The database_event tag is deprecated - please use database_events/ };
+
+  $sql = $sqlt->translate(
     from     => 'XML-SQLFairy',
     to       => 'MySQL',
     filename => $testschema,
-) or die $sqlt->error;
-print $sql if DEBUG;
+  ) or die $sqlt->error;
+  print $sql if DEBUG;
+
+  ok (@w, 'database_event deprecation warning issued');
+}
 
 # Test the schema objs generted from the XML
 #
@@ -218,6 +227,16 @@ schema_ok( $scma, {
                 foo => "bar",
                 hello => "world",
                 bar => "baz",
+            },
+        },
+        {
+            name                => 'bar_trigger',
+            perform_action_when => 'before',
+            database_events     => 'insert,update',
+            on_table            => 'Basic',
+            action              => 'update modified2=timestamp();',
+            extra => {
+                hello => "aliens",
             },
         },
     ],

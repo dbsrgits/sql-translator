@@ -20,7 +20,7 @@ my $xmlfile = "$Bin/data/xml/schema.xml";
 my $sqlt;
 $sqlt = SQL::Translator->new(
     no_comments => 1,
-    show_warnings  => 1,
+    show_warnings  => 0,
     add_drop_table => 1,
 );
 
@@ -64,4 +64,6 @@ CREATE VIEW email_list AS
 SELECT email FROM Basic WHERE email IS NOT NULL;
 
 CREATE TRIGGER foo_trigger after insert ON Basic REFERENCING OLD AS oldrow NEW AS newrow FOR EACH ROW MODE DB2SQL update modified=timestamp();
+
+CREATE TRIGGER bar_trigger before insert, update ON Basic REFERENCING OLD AS oldrow NEW AS newrow FOR EACH ROW MODE DB2SQL update modified2=timestamp();
 SQL

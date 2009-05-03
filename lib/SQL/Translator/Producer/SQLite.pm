@@ -365,43 +365,53 @@ sub create_trigger {
   my ($trigger, $options) = @_;
   my $add_drop = $options->{add_drop_trigger};
 
-  my $name = $trigger->name;
-  my @create;
+  my @statements;
 
-  push @create,  "DROP TRIGGER IF EXISTS $name" if $add_drop;
-
+  my $trigger_name = $trigger->name;
   my $events = $trigger->database_events;
-  die "Can't handle multiple events in triggers" if @{ $events || [] } > 1;
+  for my $evt ( @$events ) {
 
-  my $action = "";
+    my $trig_name = $trigger_name;
+    if (@$events > 1) {
+      $trig_name .= "_$evt";
 
-  $DB::single = 1;
-  unless (ref $trigger->action) {
-    $action .= "BEGIN " . $trigger->action . " END";
-  } else {
-    $action = $trigger->action->{for_each} . " "
-      if $trigger->action->{for_each};
-
-    $action = $trigger->action->{when} . " "
-      if $trigger->action->{when};
-
-    my $steps = $trigger->action->{steps} || [];
-
-    $action .= "BEGIN ";
-    for (@$steps) {
-      $action .= $_ . "; "
+      warn "Multiple database events supplied for trigger '$trigger_name', ",
+        "creating trigger '$trig_name' for the '$evt' event.\n" if $WARN;
     }
-    $action .= "END";
+
+    push @statements,  "DROP TRIGGER IF EXISTS $trig_name" if $add_drop;
+
+
+    $DB::single = 1;
+    my $action = "";
+    if (not ref $trigger->action) {
+      $action .= "BEGIN " . $trigger->action . " END";
+    }
+    else {
+      $action = $trigger->action->{for_each} . " "
+        if $trigger->action->{for_each};
+
+      $action = $trigger->action->{when} . " "
+        if $trigger->action->{when};
+
+      my $steps = $trigger->action->{steps} || [];
+
+      $action .= "BEGIN ";
+      $action .= $_ . "; " for (@$steps);
+      $action .= "END";
+    }
+
+    push @statements, sprintf (
+      'CREATE TRIGGER %s %s %s on %s %s',
+      $trig_name,
+      $trigger->perform_action_when,
+      $evt,
+      $trigger->on_table,
+      $action
+    );
   }
 
-  push @create, "CREATE TRIGGER $name " .
-                $trigger->perform_action_when . " " .
-                $events->[0] .
-                " on " . $trigger->on_table . " " .
-                $action;
-
-  return @create;
-            
+  return @statements;
 }
 
 sub alter_table { } # Noop

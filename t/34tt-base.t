@@ -26,7 +26,7 @@ use lib ("$Bin/lib");
 my $obj;
 $obj = SQL::Translator->new(
     debug          => 0,
-    show_warnings  => 1,
+    show_warnings  => 0,
     add_drop_table => 1,
     from           => "XML-SQLFairy",
     filename       => "$Bin/data/xml/schema.xml",
