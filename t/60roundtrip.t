@@ -13,6 +13,9 @@ use SQL::Translator;
 # What tests to run - parser/producer name, and optional args
 my $plan = [
   {
+    engine => 'XML',
+  },
+  {
     engine => 'SQLite',
     producer_args => {},
     parser_args => {},
@@ -98,16 +101,19 @@ sub check_roundtrip {
   my ($args, $base_schema) = @_;
   my $base_t = $base_schema->translator;
 
-# create some sql from the submitted schema
-  my $base_sql = $base_t->translate (
+# create some output from the submitted schema
+  my $base_out = $base_t->translate (
     data => $base_schema,
     producer => $args->{engine},
     producer_args => $args->{producer_args},
   );
 
   like (
-    $base_sql,
-    qr/^\s*CREATE TABLE/m,  #assume there is at least one create table statement
+    $base_out,
+    $args->{engine} eq 'XML'  #assume there is at least one table
+      ? qr/<tables>\s*<table/m
+      : qr/^\s*CREATE TABLE/m
+    ,
     "Received some meaningful output from the first $args->{name} production",
   ) or do {
     diag ( _gen_diag ($base_t->error) );
@@ -118,14 +124,14 @@ sub check_roundtrip {
   my $parser_t = SQL::Translator->new;
   $parser_t->$_ (1) for qw/add_drop_table no_comments/;
   my $mid_schema = $parser_t->translate (
-    data => $base_sql,
+    data => $base_out,
     parser => $args->{engine},
     parser_args => $args->{parser_args},
   );
 
   isa_ok ($mid_schema, 'SQL::Translator::Schema', "First $args->{name} parser pass produced a schema:")
     or do {
-      diag (_gen_diag ( $parser_t->error, $base_sql ) );
+      diag (_gen_diag ( $parser_t->error, $base_out ) );
       return;
     };
 
@@ -149,15 +155,18 @@ sub check_roundtrip {
 #    producer_args => $args->{producer_args},
 #  );
 
-  my $rt_sql = $parser_t->translate (
+  my $rt_out = $parser_t->translate (
     data => $mid_schema,
     producer => $args->{engine},
     producer_args => $args->{producer_args},
   );
 
   like (
-    $rt_sql,
-    qr/^\s*CREATE TABLE/m,  #assume there is at least one create table statement
+    $rt_out,
+    $args->{engine} eq 'XML'  #assume there is at least one table
+      ? qr/<tables>\s*<table/m
+      : qr/^\s*CREATE TABLE/m
+    ,
     "Received some meaningful output from the second $args->{name} production",
   ) or do {
     diag ( _gen_diag ( $parser_t->error ) );
@@ -168,11 +177,11 @@ sub check_roundtrip {
   my $msg = "$args->{name} SQL roundtrip successful - SQL statements match";
   $ENV{SQLTTEST_RT_DEBUG}
     ? is_deeply (
-      [ split /\n/, $rt_sql ],
-      [ split /\n/, $base_sql ],
+      [ split /\n/, $rt_out ],
+      [ split /\n/, $base_out ],
       $msg,
     )
-    : ok ($rt_sql eq $base_sql, $msg)
+    : ok ($rt_out eq $base_out, $msg)
   ;
 }
 
@@ -193,25 +202,25 @@ sub _get_table_info {
   return \@info;
 }
 
-# takes an error string and an optional SQL block
+# takes an error string and an optional output block
 # returns the string conctenated with a line-numbered block for
 # easier reading
 sub _gen_diag {
-  my ($err, $sql) = @_;
+  my ($err, $out) = @_;
 
   return 'Unknown error' unless $err;
 
 
-  if ($sql and $ENV{SQLTTEST_RT_DEBUG}) {
-    my @sql_lines;
-    for (split /\n/, $sql) {
-      push @sql_lines, sprintf ('%03d: %s',
-        scalar @sql_lines + 1,
+  if ($out and $ENV{SQLTTEST_RT_DEBUG}) {
+    my @lines;
+    for (split /\n/, $out) {
+      push @lines, sprintf ('%03d: %s',
+        scalar @lines + 1,
         $_,
       );
     }
 
-    return "$err\n\n" . join ("\n", @sql_lines);
+    return "$err\n\n" . join ("\n", @lines);
   }
 
   return $err;
