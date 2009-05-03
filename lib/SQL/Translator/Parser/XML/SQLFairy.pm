@@ -102,6 +102,7 @@ $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
+use Carp;
 use Exporter;
 use base qw(Exporter);
 @EXPORT_OK = qw(parse);
@@ -232,9 +233,24 @@ sub parse {
     );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:", qw/
-            name perform_action_when database_event fields on_table action order
+            name perform_action_when database_event database_events fields on_table action order
             extra
         /);
+
+        # back compat
+        if (my $evt = $data{database_event}) {
+          carp 'The database_event tag is deprecated - please use database_events, which can take multiple comma separated event names';
+          $data{database_events} = join (', ',
+            $data{database_events} || (),
+            $evt,
+          );
+        }
+
+        # split into arrayref
+        if (my $evts = $data{database_events}) {
+          $data{database_events} = [split (/\s*,\s*/, $evts) ];
+        }
+
         $schema->add_trigger( %data ) or die $schema->error;
     }
 
