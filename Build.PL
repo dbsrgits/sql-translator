@@ -22,6 +22,7 @@ my $builder = Module::Build->new(
     'Class::Data::Inheritable' => 0.02,
     'Class::MakeMethods'       => 0,
     'Digest::SHA1'             => 2.00,
+    'Carp::Clan',              => 0,
     'IO::Dir'                  => 0,
     'Parse::RecDescent'        => 1.95,
     'Pod::Usage'               => 0,
