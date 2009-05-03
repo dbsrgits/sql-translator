@@ -61,7 +61,9 @@ q|CREATE TABLE Another (
 'CREATE VIEW email_list AS
 SELECT email FROM Basic WHERE email IS NOT NULL;',
 
-'CREATE TRIGGER foo_trigger after insert ON Basic REFERENCING OLD AS oldrow NEW AS newrow FOR EACH ROW MODE DB2SQL update modified=timestamp();'
+'CREATE TRIGGER foo_trigger after insert ON Basic REFERENCING OLD AS oldrow NEW AS newrow FOR EACH ROW MODE DB2SQL update modified=timestamp();',
+
+'CREATE TRIGGER bar_trigger before insert, update ON Basic REFERENCING OLD AS oldrow NEW AS newrow FOR EACH ROW MODE DB2SQL update modified2=timestamp();',
 ];
 
 is_deeply(\@sql, $want, 'Got correct DB2 statements in list context');
