@@ -71,6 +71,14 @@ DROP TRIGGER IF EXISTS foo_trigger;
 
 CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END;
 
+DROP TRIGGER IF EXISTS bar_trigger_insert;
+
+CREATE TRIGGER bar_trigger_insert before insert on Basic BEGIN update modified2=timestamp(); END;
+
+DROP TRIGGER IF EXISTS bar_trigger_update;
+
+CREATE TRIGGER bar_trigger_update before update on Basic BEGIN update modified2=timestamp(); END;
+
 COMMIT;
 SQL
 
@@ -108,7 +116,12 @@ CREATE VIEW email_list AS
     SELECT email FROM Basic WHERE email IS NOT NULL',
           'DROP TRIGGER IF EXISTS foo_trigger',
           'CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END',
-          'COMMIT'
+          'DROP TRIGGER IF EXISTS bar_trigger_insert',
+          'CREATE TRIGGER bar_trigger_insert before insert on Basic BEGIN update modified2=timestamp(); END',
+          'DROP TRIGGER IF EXISTS bar_trigger_update',
+          'CREATE TRIGGER bar_trigger_update before update on Basic BEGIN update modified2=timestamp(); END',
+          'COMMIT',
+
           ], 'SQLite translate in list context matches');
 
 
