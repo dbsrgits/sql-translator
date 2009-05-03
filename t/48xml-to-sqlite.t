@@ -44,7 +44,7 @@ CREATE TABLE Basic (
   id INTEGER PRIMARY KEY NOT NULL,
   title varchar(100) NOT NULL DEFAULT 'hello',
   description text DEFAULT '',
-  email varchar(255),
+  email varchar(500),
   explicitnulldef varchar,
   explicitemptystring varchar DEFAULT '',
   -- Hello emptytagdef
@@ -97,7 +97,7 @@ eq_or_diff(\@sql,
   id INTEGER PRIMARY KEY NOT NULL,
   title varchar(100) NOT NULL DEFAULT \'hello\',
   description text DEFAULT \'\',
-  email varchar(255),
+  email varchar(500),
   explicitnulldef varchar,
   explicitemptystring varchar DEFAULT \'\',
   -- Hello emptytagdef
