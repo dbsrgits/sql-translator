@@ -198,7 +198,13 @@ begin_transaction : /begin/i TRANSACTION(?) SEMICOLON
 
 commit : /commit/i SEMICOLON
 
-drop : /drop/i TABLE <commit> table_name SEMICOLON
+drop : /drop/i (tbl_drop | view_drop | trg_drop) SEMICOLON
+
+tbl_drop: TABLE <commit> table_name
+
+view_drop: VIEW if_exists(?) view_name
+
+trg_drop: TRIGGER if_exists(?) trigger_name
 
 comment : /^\s*(?:#|-{2}).*\n/
     {
@@ -265,22 +271,24 @@ create : CREATE TEMPORARY(?) TABLE table_name '(' definition(s /,/) ')' SEMICOLO
 
 definition : constraint_def | column_def 
 
-column_def: NAME type(?) column_constraint(s?)
+column_def: comment(s?) NAME type(?) column_constraint(s?)
     {
         my $column = {
             supertype      => 'column',
-            name           => $item[1],  
-            data_type      => $item[2][0]->{'type'},
-            size           => $item[2][0]->{'size'},
+            name           => $item[2],
+            data_type      => $item[3][0]->{'type'},
+            size           => $item[3][0]->{'size'},
             is_nullable    => 1,
             is_primary_key => 0,
             is_unique      => 0,
             check          => '',
             default        => undef,
-            constraints    => $item[3],
+            constraints    => $item[4],
+            comments       => $item[1],
         };
 
-        for my $c ( @{ $item[3] } ) {
+
+        for my $c ( @{ $item[4] } ) {
             if ( $c->{'type'} eq 'not_null' ) {
                 $column->{'is_nullable'} = 0;
             }
@@ -470,7 +478,11 @@ before_or_after : /(before|after)/i { $return = lc $1 }
 
 instead_of : /instead of/i
 
+if_exists : /if exists/i
+
 view_name : qualified_name
+
+trigger_name : qualified_name
 
 #
 # Create View
