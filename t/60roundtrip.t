@@ -4,6 +4,7 @@ use warnings;
 use strict;
 use Test::More qw/no_plan/;
 use Test::Exception;
+use Test::Differences;
 use FindBin qw/$Bin/;
 
 use SQL::Translator;
@@ -175,13 +176,9 @@ sub check_roundtrip {
 
 # the two sql strings should be identical
   my $msg = "$args->{name} SQL roundtrip successful - SQL statements match";
-  $ENV{SQLTTEST_RT_DEBUG}
-    ? is_deeply (
-      [ split /\n/, $rt_out ],
-      [ split /\n/, $base_out ],
-      $msg,
-    )
-    : ok ($rt_out eq $base_out, $msg)
+  $ENV{SQLTTEST_RT_DEBUG}     #stringify below because IO::Scalar does not behave nice
+    ? eq_or_diff ("$rt_out", "$base_out", $msg)
+    : ok ("$rt_out" eq "$base_out", $msg)
   ;
 }
 
