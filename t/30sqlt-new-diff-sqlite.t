@@ -66,11 +66,11 @@ ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT '1';
 
 -- SQL::Translator::Producer::SQLite cant rename_field;
 
-CREATE UNIQUE INDEX unique_name_person ON person (name);
+CREATE UNIQUE INDEX unique_name ON person (name);
 
-CREATE UNIQUE INDEX UC_person_id_person ON person (person_id);
+CREATE UNIQUE INDEX UC_person_id ON person (person_id);
 
-CREATE UNIQUE INDEX UC_age_name_person ON person (age, name);
+CREATE UNIQUE INDEX UC_age_name ON person (age, name);
 
 DROP TABLE deleted;
 
@@ -143,11 +143,11 @@ CREATE TABLE person (
   physical_description text
 );
 
-CREATE UNIQUE INDEX unique_name_person02 ON person (name);
+CREATE UNIQUE INDEX unique_name02 ON person (name);
 
-CREATE UNIQUE INDEX UC_person_id_person02 ON person (person_id);
+CREATE UNIQUE INDEX UC_person_id02 ON person (person_id);
 
-CREATE UNIQUE INDEX UC_age_name_person02 ON person (age, name);
+CREATE UNIQUE INDEX UC_age_name02 ON person (age, name);
 
 INSERT INTO person SELECT person_id, name, age, weight, iq, is_rock_star, physical_description FROM person_temp_alter;
 
@@ -160,6 +160,10 @@ COMMIT;
 
 ## END OF DIFF
 
+# Note the 02 in the 3 names above (end of diff) are an implementation
+# quirk - there is nothing to reset the global seen-names register
+# The rewrite should abolish this altogether, and carry the register in
+# the main schema object
 
 # Test for sameness
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );

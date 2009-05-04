@@ -53,9 +53,9 @@ CREATE TABLE Basic (
   timest timestamp
 );
 
-CREATE INDEX titleindex_Basic ON Basic (title);
+CREATE INDEX titleindex ON Basic (title);
 
-CREATE UNIQUE INDEX emailuniqueindex_Basic ON Basic (email);
+CREATE UNIQUE INDEX emailuniqueindex ON Basic (email);
 
 DROP TABLE Another;
 
@@ -105,8 +105,8 @@ eq_or_diff(\@sql,
   another_id int(10) DEFAULT \'2\',
   timest timestamp
 )',
-          'CREATE INDEX titleindex_Basic02 ON Basic (title)',
-          'CREATE UNIQUE INDEX emailuniqueindex_Basic02 ON Basic (email)',
+          'CREATE INDEX titleindex ON Basic (title)',
+          'CREATE UNIQUE INDEX emailuniqueindex ON Basic (email)',
           'DROP TABLE Another',
           'CREATE TABLE Another (
   id INTEGER PRIMARY KEY NOT NULL
