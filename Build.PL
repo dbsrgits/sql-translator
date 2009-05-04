@@ -48,7 +48,6 @@ my $builder = Module::Build->new(
     'Test::More'              => 0.6,
     'Test::Differences'       => 0,
     'Test::Exception'         => 0,
-    'Test::Differences'       => 0,
     'YAML'                    => 0.39,
   },
 
