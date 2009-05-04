@@ -43,26 +43,26 @@ my $plan = [
     producer_args => {},
     parser_args => {},
   },
-  {
-    engine => 'Oracle',
-    producer_args => {},
-    parser_args => {},
-  },
-  {
-    engine => 'SQLServer',
-    producer_args => {},
-    parser_args => {},
-  },
-  {
-    engine => 'Sybase',
-    producer_args => {},
-    parser_args => {},
-  },
-  {
-    engine => 'DB2',
-    producer_args => {},
-    parser_args => {},
-  },
+#  {
+#    engine => 'Oracle',
+#    producer_args => {},
+#    parser_args => {},
+#  },
+#  {
+#    engine => 'SQLServer',
+#    producer_args => {},
+#    parser_args => {},
+#  },
+#  {
+#    engine => 'Sybase',
+#    producer_args => {},
+#    parser_args => {},
+#  },
+#  {
+#    engine => 'DB2',
+#    producer_args => {},
+#    parser_args => {},
+#  },
 
 # There is no Access producer
 #  {
