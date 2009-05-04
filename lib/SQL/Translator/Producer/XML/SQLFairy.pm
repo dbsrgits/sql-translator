@@ -187,10 +187,12 @@ my @MAP_AS_ELEMENTS = qw/sql comments action extra/;
 my $Namespace = 'http://sqlfairy.sourceforge.net/sqlfairy.xml';
 my $Name      = 'sqlf';
 my $PArgs     = {};
+my $no_comments;
 
 sub produce {
     my $translator  = shift;
     my $schema      = $translator->schema;
+    $no_comments    = $translator->no_comments;
     $PArgs          = $translator->producer_args;
     my $newlines    = defined $PArgs->{newlines} ? $PArgs->{newlines} : 1;
     my $indent      = defined $PArgs->{indent}   ? $PArgs->{indent}   : 2;
@@ -210,7 +212,10 @@ sub produce {
 
     # Start the document
     $xml->xmlDecl('UTF-8');
-    $xml->comment(header_comment('', ''));
+
+    $xml->comment(header_comment('', ''))
+      unless $no_comments;
+
     xml_obj($xml, $schema,
         tag => "schema", methods => [qw/name database extra/], end_tag => 0 );
 
