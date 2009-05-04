@@ -74,7 +74,7 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: created
-          order: 3
+          order: 2
           size:
             - 0
         first_name:
@@ -85,7 +85,7 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: first_name
-          order: 2
+          order: 1
           size:
             - 0
         modified:
@@ -96,7 +96,7 @@ schema:
           is_primary_key: 0
           is_unique: 1
           name: modified
-          order: 4
+          order: 3
           size:
             - 0
       indices:

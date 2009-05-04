@@ -293,7 +293,7 @@ Fields
         is_foreign_key:        0
         foreign_key_reference: 
         is_valid:              1
-        order:                 10
+        order:                 1
         table:                 Another
     
 

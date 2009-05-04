@@ -47,7 +47,7 @@ use Data::Dumper;
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw( $VERSION $FIELD_ORDER );
+use vars qw( $VERSION );
 
 $VERSION = '1.59';
 
@@ -76,6 +76,20 @@ Object constructor.
   );
 
 =cut
+
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new (@_)
+    or return;
+
+  $self->{_order} = { map { $_ => 0 } qw/
+    field
+  /};
+
+  return $self;
+}
+
+
 
 # ----------------------------------------------------------------------
 sub add_constraint {
@@ -320,7 +334,7 @@ existing field, you will get an error and the field will not be created.
             $self->error( $field_class->error );
     }
 
-    $field->order( ++$FIELD_ORDER );
+    $field->order( ++$self->{_order}{field} );
     # We know we have a name as the Field->new above errors if none given.
     my $field_name = $field->name;
 
