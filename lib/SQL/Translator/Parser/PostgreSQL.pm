@@ -266,7 +266,6 @@ create : CREATE unique(?) /(index|key)/i index_name /on/i table_name using_metho
                 method    => $item{'using_method'}[0],
             }
         ;
-
     }
 
 #
@@ -479,7 +478,7 @@ name_with_opt_quotes : double_quote(?) NAME double_quote(?) { $item[2] }
 
 double_quote: /"/
 
-index_name : WORD
+index_name : name_with_opt_quotes
 
 data_type : pg_data_type parens_value_list(?)
     { 
@@ -625,7 +624,7 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
         my @comments   = ( @{ $item[1] }, @{ $item[-1] } );
 
         $return              =  {
-            name             => $item{'constraint_name'}[0] || '',
+            name             => $item[2][0] || '',
             supertype        => 'constraint',
             type             => $type,
             fields           => $type ne 'check' ? $fields : [],
