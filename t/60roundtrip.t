@@ -64,6 +64,11 @@ my $plan = [
 #    parser_args => {},
 #  },
 
+# YAML parsing/producing cycles result in some weird self referencing structure
+#  {
+#    engine => 'YAML',
+#  },
+
 # There is no Access producer
 #  {
 #    engine => 'Access',
@@ -86,6 +91,12 @@ my $base_schema = $base_t->translate (
   file => $base_file,
 ) or die $base_t->error;
 
+#assume there is at least one table
+my $string_re = {
+  XML => qr/<tables>\s*<table/,
+  YAML => qr/\A---\n.+tables\:/s,
+  SQL => qr/^\s*CREATE TABLE/m,
+};
 
 for my $args (@$plan) {
 
@@ -111,10 +122,7 @@ sub check_roundtrip {
 
   like (
     $base_out,
-    $args->{engine} eq 'XML'  #assume there is at least one table
-      ? qr/<tables>\s*<table/m
-      : qr/^\s*CREATE TABLE/m
-    ,
+    $string_re->{$args->{engine}} || $string_re->{SQL},
     "Received some meaningful output from the first $args->{name} production",
   ) or do {
     diag ( _gen_diag ($base_t->error) );
@@ -164,10 +172,7 @@ sub check_roundtrip {
 
   like (
     $rt_out,
-    $args->{engine} eq 'XML'  #assume there is at least one table
-      ? qr/<tables>\s*<table/m
-      : qr/^\s*CREATE TABLE/m
-    ,
+    $string_re->{$args->{engine}} || $string_re->{SQL},
     "Received some meaningful output from the second $args->{name} production",
   ) or do {
     diag ( _gen_diag ( $parser_t->error ) );
