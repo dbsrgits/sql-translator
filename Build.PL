@@ -40,7 +40,7 @@ my $builder = Module::Build->new(
     'Text::ParseWords'        => 0,
     'Text::RecordParser'      => 0.02,
     'XML::Writer'             => 0.500,
-    'XML::XPath'              => 1.13,
+    'XML::LibXML'             => 1.61,
   },
   build_requires => {
     'File::Basename'          => 0,
