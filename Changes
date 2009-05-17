@@ -5,6 +5,10 @@
 * Added semi-colon for (DROP|CREATE) TYPE statements in the Pg producer (wreis)
 * Added CREATE VIEW subrules for mysql parser (wreis)
 * ALTER TABLE/ALTER COLUMN/DROP DEFAULT support in Pg producer (mo)
+* XML parser support for multi-event triggers
+* SQLite producer support for multi-event triggers
+* XML parser switched from XML::XPath to XML::LibXML
+* Pg producer ALTER TABLE/COLUMN and DROP DEFAULT support
 
 # ----------------------------------------------------------
 # 0.09004 2009-02-13
