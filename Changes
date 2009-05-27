@@ -9,6 +9,9 @@
 * SQLite producer support for multi-event triggers
 * XML parser switched from XML::XPath to XML::LibXML
 * Pg producer ALTER TABLE/COLUMN and DROP DEFAULT support
+* MySQL producer skips length attribute for columns which do not support that
+  attribute. Currently following column types are added to that list:
+  date time timestamp datetime year
 
 # ----------------------------------------------------------
 # 0.09004 2009-02-13

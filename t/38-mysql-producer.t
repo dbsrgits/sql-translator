@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(35,
+    maybe_plan(40,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -422,4 +422,25 @@ is (
     my %extra = $view1->extra;
     is_deeply \%extra, {}, 'Extra attributes completely removed';
   }
+}
+
+{
+
+    # certain types do not support a size, see also:
+    # http://dev.mysql.com/doc/refman/5.1/de/create-table.html
+    for my $type (qw/date time timestamp datetime year/) {
+        my $field = SQL::Translator::Schema::Field->new(
+            name              => "my$type",
+            table             => $table,
+            data_type         => $type,
+            size              => 10,
+            default_value     => undef,
+            is_auto_increment => 0,
+            is_nullable       => 1,
+            is_foreign_key    => 0,
+            is_unique         => 0
+        );
+        my $sql = SQL::Translator::Producer::MySQL::create_field($field);
+        is($sql, "my$type $type", "Skip length param for type $type");
+    }
 }

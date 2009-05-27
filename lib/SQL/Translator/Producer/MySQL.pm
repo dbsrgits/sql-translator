@@ -145,6 +145,13 @@ my %translate  = (
     bytea => 'BLOB',
 );
 
+#
+# Column types that do not support lenth attribute
+#
+my @no_length_attr = qw/
+  date time timestamp datetime year
+  /;
+
 
 sub preprocess_schema {
     my ($schema) = @_;
@@ -547,7 +554,7 @@ sub create_field
     if ( lc($data_type) eq 'enum' || lc($data_type) eq 'set') {
         $field_def .= '(' . $commalist . ')';
     }
-    elsif ( defined $size[0] && $size[0] > 0 ) {
+    elsif ( defined $size[0] && $size[0] > 0 && ! grep $data_type eq $_, @no_length_attr  ) {
         $field_def .= '(' . join( ', ', @size ) . ')';
     }
 
