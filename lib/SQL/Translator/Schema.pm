@@ -716,7 +716,7 @@ the joins from primary keys to fields of the same name in other tables
 
 A list of fields to skip in the joins
 
-=back 4
+=back
 
   $schema->make_natural_joins(
       join_pk_only => 1,
