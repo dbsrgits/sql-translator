@@ -12,6 +12,7 @@
 * MySQL producer skips length attribute for columns which do not support that
   attribute. Currently following column types are added to that list:
   date time timestamp datetime year
+* Sitch to Module::Install (mandates minimum perl 5.005)
 
 # ----------------------------------------------------------
 # 0.09004 2009-02-13

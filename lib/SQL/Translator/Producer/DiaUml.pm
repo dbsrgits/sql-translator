@@ -60,17 +60,15 @@ use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
 $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
+use File::ShareDir qw/dist_dir/;
+
 use SQL::Translator::Utils 'debug';
 use base qw/SQL::Translator::Producer::TT::Base/;
 # Convert produce call into a method call on our class
 sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
-# Uses dir in lib with this mods name as the template dir
-my $_TEMPLATE_DIR = __FILE__;
-$_TEMPLATE_DIR =~ s/\.pm$//;
-
 sub tt_config {
-    ( INCLUDE_PATH => $_TEMPLATE_DIR );
+    ( INCLUDE_PATH => File::Spec->catdir (dist_dir('SQL-Translator'), 'DiaUml') );
 }
 
 sub tt_schema { 'schema.tt2' }
