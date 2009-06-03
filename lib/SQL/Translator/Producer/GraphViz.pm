@@ -245,10 +245,13 @@ sub produce {
     # translate legacy {node|edge|graph}attrs to just {node|edge|graph}
     for my $argtype (qw/node edge graph/) {
         my $old_arg = $argtype . 'attrs';
-        $args->{$argtype} = {
-          map { %{ $_ || {} } }
-          ( delete $args->{$old_arg}, $args->{$argtype} )
-        };
+
+        my %arglist = (map
+          { %{ $_ || {} } }
+          ( delete $args->{$old_arg}, delete $args->{$argtype} )
+        );
+
+        $args->{$argtype} = \%arglist if keys %arglist;
     }
 
     # explode font settings
@@ -340,7 +343,6 @@ sub produce {
             }
         }
     }
-
 
     #
     # Create a blank GraphViz object and see if we can produce the output type.
