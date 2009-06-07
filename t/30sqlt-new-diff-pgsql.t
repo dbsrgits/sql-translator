@@ -109,7 +109,7 @@ eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 
 BEGIN;
 
-CREATE TABLE added02 (
+CREATE TABLE added (
   id bigint
 );
 
@@ -119,9 +119,9 @@ ALTER TABLE person DROP CONSTRAINT UC_age_name;
 
 ALTER TABLE employee DROP COLUMN job_title;
 
-ALTER TABLE new_name ADD COLUMN new_field02 integer;
+ALTER TABLE new_name ADD COLUMN new_field integer;
 
-ALTER TABLE person ADD COLUMN is_rock_star02 smallint DEFAULT '1';
+ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT '1';
 
 ALTER TABLE person ALTER COLUMN person_id TYPE serial;
 

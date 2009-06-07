@@ -47,10 +47,8 @@ $VERSION = '1.59';
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
-our %used_identifiers = ();
 our $max_id_length    = 30;
-our %global_names;
-our %truncated;
+my %global_names;
 
 sub produce {
     my $translator     = shift;
@@ -64,6 +62,8 @@ sub produce {
     my $no_txn         = $producer_args->{no_transaction};
 
     debug("PKG: Beginning production\n");
+
+    %global_names = ();   #reset
 
     my @create = ();
     push @create, header_comment unless ($no_comments);
@@ -100,24 +100,7 @@ sub produce {
 
 # -------------------------------------------------------------------
 sub mk_name {
-    my ($basename, $type, $scope, $critical) = @_;
-    my $basename_orig = $basename;
-    my $max_name      = !$max_id_length 
-                      ? length($type) + 1
-                      : $type 
-                      ? $max_id_length - (length($type) + 1) 
-                      : $max_id_length;
-    $basename         = substr( $basename, 0, $max_name ) 
-                        if length( $basename ) > $max_name;
-    $basename         =~ s/\./_/g;
-    my $name          = $type ? "${type}_$basename" : $basename;
-
-    if ( $basename ne $basename_orig and $critical ) {
-        my $show_type = $type ? "+'$type'" : "";
-        warn "Truncating '$basename_orig'$show_type to $max_id_length ",
-            "character limit to make '$name'\n" if $WARN;
-        $truncated{ $basename_orig } = $name;
-    }
+    my ($name, $scope, $critical) = @_;
 
     $scope ||= \%global_names;
     if ( my $prev = $scope->{ $name } ) {
@@ -329,7 +312,7 @@ sub create_index
     my ($index, $options) = @_;
 
     my $name   = $index->name;
-    $name      = mk_name($index->table->name, $name);
+    $name      = mk_name($name);
 
     my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : ''; 
 
@@ -349,7 +332,7 @@ sub create_constraint
     my ($c, $options) = @_;
 
     my $name   = $c->name;
-    $name      = mk_name($c->table->name, $name);
+    $name      = mk_name($name);
     my @fields = $c->fields;
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;

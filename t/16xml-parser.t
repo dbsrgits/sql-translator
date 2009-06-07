@@ -99,7 +99,7 @@ schema_ok( $scma, {
                 {
                     name => "email",
                     data_type => "varchar",
-                    size => 255,
+                    size => 500,
                     is_unique => 1,
                     default_value => undef,
                     is_nullable => 1,
@@ -206,7 +206,7 @@ schema_ok( $scma, {
     views => [
         {
             name => 'email_list',
-            sql => "SELECT email FROM Basic WHERE email IS NOT NULL",
+            sql => "SELECT email FROM Basic WHERE (email IS NOT NULL)",
             fields => ['email'],
             extra => {
                 foo => "bar",

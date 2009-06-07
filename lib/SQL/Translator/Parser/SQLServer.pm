@@ -74,6 +74,7 @@ statement : create_table
     | create_index
     | create_constraint
     | comment
+    | drop
     | use
     | setuser
     | if
@@ -131,6 +132,12 @@ comment_start : m#^\s*\/\*#
 comment_end : m#\s*\*\/#
 
 comment_middle : m{([^*]+|\*(?!/))*}
+
+drop : if_exists(?) /drop/i tbl_drop END_STATEMENT
+
+tbl_drop : /table/i NAME
+
+if_exists : /if exists/i '(' /select/i 'name' /from/i 'sysobjects' /[^\)]+/ ')'
 
 #
 # Create table.
@@ -338,6 +345,16 @@ foreign_key_constraint : /constraint/i index_name(?) /foreign/i /key/i parens_fi
         } 
     }
 
+unique_constraint : /constraint/i index_name(?) /unique/i parens_field_list
+    {
+        $return = { 
+            supertype => 'constraint',
+            type      => 'unique',
+            name      => $item[2][0],
+            fields    => $item[4],
+        }
+    }
+
 unique_constraint : /unique/i clustered(?) INDEX(?) index_name(?) on_table(?) parens_field_list
     { 
         $return = { 
@@ -374,7 +391,7 @@ on_table : /on/i table_name
 on_system : /on/i /system/i
     { $return = 1 }
 
-index : clustered(?) INDEX index_name(?) on_table(?) parens_field_list ';'
+index : clustered(?) INDEX index_name(?) on_table(?) parens_field_list END_STATEMENT
     { 
         $return = { 
             supertype => 'index',

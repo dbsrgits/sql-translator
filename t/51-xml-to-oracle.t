@@ -45,7 +45,7 @@ my $want = [
   id number(10) NOT NULL,
   title varchar2(100) DEFAULT \'hello\' NOT NULL,
   description clob DEFAULT \'\',
-  email varchar2(255),
+  email varchar2(500),
   explicitnulldef varchar2,
   explicitemptystring varchar2 DEFAULT \'\',
   emptytagdef varchar2 DEFAULT \'\',
@@ -62,7 +62,7 @@ my $want = [
   PRIMARY KEY (id)
 )',
           'CREATE VIEW email_list AS
-SELECT email FROM Basic WHERE email IS NOT NULL',
+SELECT email FROM Basic WHERE (email IS NOT NULL)',
           'ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk FOREIGN KEY (another_id) REFERENCES Another (id)',
           'CREATE OR REPLACE TRIGGER ai_Basic_id
 BEFORE INSERT ON Basic
@@ -107,7 +107,7 @@ CREATE TABLE Basic (
   id number(10) NOT NULL,
   title varchar2(100) DEFAULT 'hello' NOT NULL,
   description clob DEFAULT '',
-  email varchar2(255),
+  email varchar2(500),
   explicitnulldef varchar2,
   explicitemptystring varchar2 DEFAULT '',
   emptytagdef varchar2 DEFAULT '',
@@ -129,7 +129,7 @@ CREATE TABLE Another (
 );
 
 CREATE VIEW email_list AS
-SELECT email FROM Basic WHERE email IS NOT NULL;
+SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk01 FOREIGN KEY (another_id) REFERENCES Another (id);
 

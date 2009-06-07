@@ -44,7 +44,7 @@ CREATE TABLE Basic (
   id INTEGER PRIMARY KEY NOT NULL,
   title varchar(100) NOT NULL DEFAULT 'hello',
   description text DEFAULT '',
-  email varchar(255),
+  email varchar(500),
   explicitnulldef varchar,
   explicitemptystring varchar DEFAULT '',
   -- Hello emptytagdef
@@ -53,9 +53,9 @@ CREATE TABLE Basic (
   timest timestamp
 );
 
-CREATE INDEX titleindex_Basic ON Basic (title);
+CREATE INDEX titleindex ON Basic (title);
 
-CREATE UNIQUE INDEX emailuniqueindex_Basic ON Basic (email);
+CREATE UNIQUE INDEX emailuniqueindex ON Basic (email);
 
 DROP TABLE Another;
 
@@ -65,7 +65,7 @@ CREATE TABLE Another (
 
 DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
-    SELECT email FROM Basic WHERE email IS NOT NULL;
+    SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 DROP TRIGGER IF EXISTS foo_trigger;
 
@@ -97,7 +97,7 @@ eq_or_diff(\@sql,
   id INTEGER PRIMARY KEY NOT NULL,
   title varchar(100) NOT NULL DEFAULT \'hello\',
   description text DEFAULT \'\',
-  email varchar(255),
+  email varchar(500),
   explicitnulldef varchar,
   explicitemptystring varchar DEFAULT \'\',
   -- Hello emptytagdef
@@ -105,15 +105,15 @@ eq_or_diff(\@sql,
   another_id int(10) DEFAULT \'2\',
   timest timestamp
 )',
-          'CREATE INDEX titleindex_Basic02 ON Basic (title)',
-          'CREATE UNIQUE INDEX emailuniqueindex_Basic02 ON Basic (email)',
+          'CREATE INDEX titleindex ON Basic (title)',
+          'CREATE UNIQUE INDEX emailuniqueindex ON Basic (email)',
           'DROP TABLE Another',
           'CREATE TABLE Another (
   id INTEGER PRIMARY KEY NOT NULL
 )',
           'DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
-    SELECT email FROM Basic WHERE email IS NOT NULL',
+    SELECT email FROM Basic WHERE (email IS NOT NULL)',
           'DROP TRIGGER IF EXISTS foo_trigger',
           'CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END',
           'DROP TRIGGER IF EXISTS bar_trigger_insert',

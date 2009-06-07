@@ -146,7 +146,7 @@ Fields
     
     email
         data_type:             varchar
-        size:                  255
+        size:                  500
         is_nullable:           1
         default_value:         
         is_primary_key:        0
@@ -293,7 +293,7 @@ Fields
         is_foreign_key:        0
         foreign_key_reference: 
         is_valid:              1
-        order:                 10
+        order:                 1
         table:                 Another
     
 

@@ -54,11 +54,26 @@ use SQL::Translator::Schema::View;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
-use vars qw[ $VERSION $TABLE_ORDER $VIEW_ORDER $TRIGGER_ORDER $PROC_ORDER ];
+use vars qw[ $VERSION ];
 
 $VERSION = '1.59';
 
 __PACKAGE__->_attributes(qw/name database translator/);
+
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new (@_)
+    or return;
+
+  $self->{_order} = { map { $_ => 0 } qw/
+    table
+    view
+    trigger
+    proc
+  /};
+
+  return $self;
+}
 
 # ----------------------------------------------------------------------
 sub as_graph {
@@ -143,7 +158,7 @@ not be created.
           or return $self->error( $table_class->error );
     }
 
-    $table->order( ++$TABLE_ORDER );
+    $table->order( ++$self->{_order}{table} );
 
     # We know we have a name as the Table->new above errors if none given.
     my $table_name = $table->name;
@@ -237,7 +252,7 @@ procedure will not be created.
           or return $self->error( $procedure_class->error );
     }
 
-    $procedure->order( ++$PROC_ORDER );
+    $procedure->order( ++$self->{_order}{proc} );
     my $procedure_name = $procedure->name
       or return $self->error('No procedure name');
 
@@ -323,7 +338,7 @@ not be created.
           or return $self->error( $trigger_class->error );
     }
 
-    $trigger->order( ++$TRIGGER_ORDER );
+    $trigger->order( ++$self->{_order}{trigger} );
 
     my $trigger_name = $trigger->name or return $self->error('No trigger name');
     if ( defined $self->{'triggers'}{$trigger_name} ) {
@@ -405,7 +420,7 @@ not be created.
         $view = $view_class->new( \%args ) or return $view_class->error;
     }
 
-    $view->order( ++$VIEW_ORDER );
+    $view->order( ++$self->{_order}{view} );
     my $view_name = $view->name or return $self->error('No view name');
 
     if ( defined $self->{'views'}{$view_name} ) {

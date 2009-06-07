@@ -48,7 +48,7 @@ List of values for an enum field.
 
  * !! Write some tests !!
  * Reserved words list needs updating to SQLServer.
- * Triggers, Procedures and Views havn't been tested at all.
+ * Triggers, Procedures and Views DO NOT WORK
 
 =cut
 
@@ -107,10 +107,8 @@ my %reserved = map { $_, 1 } qw[
 my @no_size = qw/tinyint smallint int integer bigint text bit image datetime/;
 
 my $max_id_length    = 128;
-my %used_identifiers = ();
 my %global_names;
 my %unreserve;
-my %truncated;
 
 =pod
 
@@ -128,6 +126,9 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
+
+    %global_names = (); #reset
+    %unreserve = ();
 
     my $output;
     $output .= header_comment."\n" unless ($no_comments);
@@ -153,7 +154,6 @@ sub produce {
     # Generate the CREATE sql
     for my $table ( $schema->get_tables ) {
         my $table_name    = $table->name or next;
-        $table_name       = mk_name( $table_name, '', undef, 1 );
         my $table_name_ur = unreserve($table_name) || '';
 
         my ( @comments, @field_defs, @index_defs, @constraint_defs );
@@ -168,9 +168,7 @@ sub produce {
         #
         my %field_name_scope;
         for my $field ( $table->get_fields ) {
-            my $field_name    = mk_name(
-                $field->name, '', \%field_name_scope, undef,1 
-            );
+            my $field_name    = $field->name;
             my $field_name_ur = unreserve( $field_name, $table_name );
             my $field_def     = qq["$field_name_ur"];
             $field_def        =~ s/\"//g;
@@ -189,11 +187,9 @@ sub produce {
             my $commalist      = join( ', ', map { qq['$_'] } @$list );
 
             if ( $data_type eq 'enum' ) {
-                my $check_name = mk_name(
-                    $table_name.'_'.$field_name, 'chk' ,undef, 1
-                );
+                my $check_name = mk_name( $field_name . '_chk' );
                 push @constraint_defs,
-                "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
+                  "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
                 $data_type .= 'character varying';
             }
             elsif ( $data_type eq 'set' ) {
@@ -269,11 +265,9 @@ sub produce {
         # Constraint Declarations
         #
         my @constraint_decs = ();
-        my $c_name_default;
         for my $constraint ( $table->get_constraints ) {
             my $name    = $constraint->name || '';
             # Make sure we get a unique name
-            $name       = mk_name( $name, undef, undef, 1 ) if $name;
             my $type    = $constraint->type || NORMAL;
             my @fields  = map { unreserve( $_, $table_name ) }
                 $constraint->fields;
@@ -283,33 +277,29 @@ sub produce {
 
 			my $c_def;
             if ( $type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name, 'pk', undef,1 );
+                $name ||= mk_name( $table_name . '_pk' );
                 $c_def = 
                     "CONSTRAINT $name PRIMARY KEY ".
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq FOREIGN_KEY ) {
-                $name ||= mk_name( $table_name, 'fk', undef,1 );
-                #$name = mk_name( ($name || $table_name), 'fk', undef,1 );
+                $name ||= mk_name( $table_name . '_fk' );
                 $c_def = 
                     "CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
                     ' (' . join( ', ', @rfields ) . ')';
                  my $on_delete = $constraint->on_delete;
-                 if ( defined $on_delete && $on_delete ne "NO ACTION") {
+                 if ( $on_delete && $on_delete ne "NO ACTION") {
                  	$c_def .= " ON DELETE $on_delete";
                  }
                  my $on_update = $constraint->on_update;
-                 if ( defined $on_update && $on_update ne "NO ACTION") {
+                 if ( $on_update && $on_update ne "NO ACTION") {
                  	$c_def .= " ON UPDATE $on_update";
                  }
             }
             elsif ( $type eq UNIQUE ) {
-                $name ||= mk_name(
-                    $table_name,
-                    $name || ++$c_name_default,undef, 1
-                );
+                $name ||= mk_name( $table_name . '_uc' );
                 $c_def = 
                     "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
@@ -321,7 +311,7 @@ sub produce {
         # Indices
         #
         for my $index ( $table->get_indices ) {
-            my $idx_name = $index->name || mk_name($table_name,'idx',undef,1);
+            my $idx_name = $index->name || mk_name($table_name . '_idx');
             push @index_defs,
                 "CREATE INDEX $idx_name ON $table_name (".
                 join( ', ', $index->fields ) . ");";
@@ -339,9 +329,13 @@ sub produce {
             @comments,
             $create_statement,
             @index_defs,
-            ''
         );
     }
+
+# create view/procedure are NOT prepended to the input $sql, needs
+# to be filled in with the proper syntax
+
+=pod
 
     # Text of view is already a 'create view' statement so no need to
     # be fancy
@@ -350,7 +344,7 @@ sub produce {
         $output .= "\n\n";
         $output .= "--\n-- View: $name\n--\n\n" unless $no_comments;
         my $text = $_->sql();
-		$text =~ s/\r//g;
+        $text =~ s/\r//g;
         $output .= "$text\nGO\n";
     }
 
@@ -366,43 +360,14 @@ sub produce {
 		$text =~ s/\r//g;
         $output .= "$text\nGO\n";
     }
-
-    # Warn out how we messed with the names.
-    if ( $WARN ) {
-        if ( %truncated ) {
-            warn "Truncated " . keys( %truncated ) . " names:\n";
-            warn "\t" . join( "\n\t", sort keys %truncated ) . "\n";
-        }
-        if ( %unreserve ) {
-            warn "Encounted " . keys( %unreserve ) .
-                " unsafe names in schema (reserved or invalid):\n";
-            warn "\t" . join( "\n\t", sort keys %unreserve ) . "\n";
-        }
-    }
+=cut
 
     return $output;
 }
 
 # -------------------------------------------------------------------
 sub mk_name {
-    my $basename      = shift || '';
-    my $type          = shift || '';
-    my $scope         = shift || '';
-    my $critical      = shift || '';
-    my $basename_orig = $basename;
-    my $max_name      = $type
-                        ? $max_id_length - (length($type) + 1)
-                        : $max_id_length;
-    $basename         = substr( $basename, 0, $max_name )
-                        if length( $basename ) > $max_name;
-    my $name          = $type ? "${type}_$basename" : $basename;
-
-    if ( $basename ne $basename_orig and $critical ) {
-        my $show_type = $type ? "+'$type'" : "";
-        warn "Truncating '$basename_orig'$show_type to $max_id_length ",
-            "character limit to make '$name'\n" if $WARN;
-        $truncated{ $basename_orig } = $name;
-    }
+    my ($name, $scope, $critical) = @_;
 
     $scope ||= \%global_names;
     if ( my $prev = $scope->{ $name } ) {

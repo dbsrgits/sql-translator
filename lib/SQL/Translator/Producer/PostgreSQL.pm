@@ -329,7 +329,6 @@ sub create_table
     my $postgres_version = $options->{postgres_version} || 0;
 
     my $table_name = $table->name or next;
-    $table_name    = mk_name( $table_name, '', undef, 1 );
     my ( $fql_tbl_name ) = ( $table_name =~ s/\W(.*)$// ) ? $1 : q{};
     my $table_name_ur = $qt ? $table_name
         : $fql_tbl_name ? join('.', $table_name, unreserve($fql_tbl_name))
@@ -449,7 +448,7 @@ sub create_view {
     }
 
     if ( my $sql = $view->sql ) {
-        $create .= " AS (\n    ${sql}\n  )";
+        $create .= " AS\n    ${sql}\n";
     }
 
     if ( $extra->{check_option} ) {
@@ -476,9 +475,7 @@ sub create_view {
         my $type_drops = $options->{type_drops} || [];
 
         $field_name_scope{$table_name} ||= {};
-        my $field_name    = mk_name(
-                                    $field->name, '', $field_name_scope{$table_name}, 1 
-                                    );
+        my $field_name    = $field->name;
         my $field_name_ur = $qf ? $field_name : unreserve($field_name, $table_name );
         $field->name($field_name_ur);
         my $field_comments = $field->comments 

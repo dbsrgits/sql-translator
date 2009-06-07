@@ -318,6 +318,7 @@ sub data {
                 $data = join '', @$data;
             }
             elsif (isa($data, 'GLOB')) {
+                seek ($data, 0, 0) if eof ($data);
                 local $/;
                 $data = <$data>;
             }
