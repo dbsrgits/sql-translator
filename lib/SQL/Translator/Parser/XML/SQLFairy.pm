@@ -2,6 +2,7 @@ package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
+# Copyright (C) 2009 Jonathan Yu <frequency@cpan.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -109,16 +110,17 @@ use base qw(Exporter);
 
 use base qw/SQL::Translator::Parser/;  # Doesnt do anything at the mo!
 use SQL::Translator::Utils 'debug';
-use XML::XPath;
-use XML::XPath::XMLParser;
+use XML::LibXML;
+use XML::LibXML::XPathContext;
 
 sub parse {
     my ( $translator, $data ) = @_;
     my $schema                = $translator->schema;
     local $DEBUG              = $translator->debug;
-    my $xp                    = XML::XPath->new(xml => $data);
+    my $doc                   = XML::LibXML->new->parse_string($data);
+    my $xp                    = XML::LibXML::XPathContext->new($doc);
 
-    $xp->set_namespace("sqlf", "http://sqlfairy.sourceforge.net/sqlfairy.xml");
+    $xp->registerNs("sqlf", "http://sqlfairy.sourceforge.net/sqlfairy.xml");
 
     #
     # Work our way through the tables
@@ -233,13 +235,15 @@ sub parse {
     );
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:", qw/
-            name perform_action_when database_event database_events fields on_table action order
-            extra
+            name perform_action_when database_event database_events fields
+            on_table action order extra
         /);
 
         # back compat
         if (my $evt = $data{database_event} and $translator->{show_warnings}) {
-          carp 'The database_event tag is deprecated - please use database_events (which can take one or more comma separated event names)';
+          carp 'The database_event tag is deprecated - please use ' .
+            'database_events (which can take one or more comma separated ' .
+            'event names)';
           $data{database_events} = join (', ',
             $data{database_events} || (),
             $evt,
@@ -288,27 +292,26 @@ sub get_tagfields {
 
         my $is_attrib = m/^(sql|comments|action|extra)$/ ? 0 : 1;
 
-        my $attrib_path = "\@$thisns$_";
+        my $attrib_path = "\@$_";
         my $tag_path    = "$thisns$_";
-        if ( $xp->exists($attrib_path,$node) ) {
-            $data{$_} = "".$xp->findvalue($attrib_path,$node);
+        if ( my $found = $xp->find($attrib_path,$node) ) {
+            $data{$_} = "".$found->to_literal;
             warn "Use of '$_' as an attribute is depricated."
                 ." Use a child tag instead."
                 ." To convert your file to the new version see the Docs.\n"
                 unless $is_attrib;
             debug "Got $_=".( defined $data{ $_ } ? $data{ $_ } : 'UNDEF' );
         }
-        elsif ( $xp->exists($tag_path,$node) ) {
+        elsif ( $found = $xp->find($tag_path,$node) ) {
             if ($_ eq "extra") {
                 my %extra;
-                my $extra_nodes = $xp->find($tag_path,$node);
-                foreach ( $extra_nodes->pop->getAttributes ) {
+                foreach ( $found->pop->getAttributes ) {
                     $extra{$_->getName} = $_->getData;
                 }
                 $data{$_} = \%extra;
             }
             else {
-                $data{$_} = "".$xp->findvalue($tag_path,$node);
+                $data{$_} = "".$found->to_literal;
             }
             warn "Use of '$_' as a child tag is depricated."
                 ." Use an attribute instead."
@@ -329,9 +332,9 @@ sub get_tagfields {
 
 =head1 BUGS
 
-Ignores the order attribute for Constraints, Views, Indices,
-Views, Triggers and Procedures, using the tag order instead. (This is the order
-output by the SQLFairy XML producer).
+Ignores the order attribute for Constraints, Views, Indices, Views, Triggers
+and Procedures, using the tag order instead. (This is the order output by the
+SQLFairy XML producer).
 
 =head1 SEE ALSO
 
@@ -358,6 +361,7 @@ Control over defaulting.
 
 =head1 AUTHOR
 
-Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>.
+Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>,
+Jonathan Yu E<lt>frequency@cpan.orgE<gt>
 
 =cut

@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(295, "SQL::Translator::Parser::MySQL");
+    maybe_plan(317, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -805,3 +805,47 @@ ok ($@, 'Exception thrown on invalid version string');
     }
 }
 
+{
+    my $tr = SQL::Translator->new;
+    my $data = q|create table "sessions" (
+        id char(32) not null default '0' primary key,
+        ssn varchar(12) NOT NULL default 'test single quotes like in you''re',
+        user varchar(20) NOT NULL default 'test single quotes escaped like you\'re',
+    );|;
+
+    my $val = parse($tr, $data);
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 1, 'Right number of tables (1)' );
+    my $table  = shift @tables;
+    is( $table->name, 'sessions', 'Found "sessions" table' );
+
+    my @fields = $table->get_fields;
+    is( scalar @fields, 3, 'Right number of fields (3)' );
+    my $f1 = shift @fields;
+    my $f2 = shift @fields;
+    my $f3 = shift @fields;
+    is( $f1->name, 'id', 'First field name is "id"' );
+    is( $f1->data_type, 'char', 'Type is "char"' );
+    is( $f1->size, 32, 'Size is "32"' );
+    is( $f1->is_nullable, 0, 'Field cannot be null' );
+    is( $f1->default_value, '0', 'Default value is "0"' );
+    is( $f1->is_primary_key, 1, 'Field is PK' );
+
+    is( $f2->name, 'ssn', 'Second field name is "ssn"' );
+    is( $f2->data_type, 'varchar', 'Type is "varchar"' );
+    is( $f2->size, 12, 'Size is "12"' );
+    is( $f2->is_nullable, 0, 'Field can not be null' );
+    is( $f2->default_value, "test single quotes like in you''re", "Single quote in default value is escaped properly" );
+    is( $f2->is_primary_key, 0, 'Field is not PK' );
+
+    # this is more of a sanity test because the original sqlt regex for default looked for an escaped quote represented as \'
+    # however in mysql 5.x (and probably other previous versions) still actually outputs that as '' 
+    is( $f3->name, 'user', 'Second field name is "user"' );
+    is( $f3->data_type, 'varchar', 'Type is "varchar"' );
+    is( $f3->size, 20, 'Size is "20"' );
+    is( $f3->is_nullable, 0, 'Field can not be null' );
+    is( $f3->default_value, "test single quotes escaped like you\\'re", "Single quote in default value is escaped properly" );
+    is( $f3->is_primary_key, 0, 'Field is not PK' );
+}

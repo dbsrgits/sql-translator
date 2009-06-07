@@ -100,6 +100,8 @@ by the parser.  It is expected to return a string.
 
 =item drop_field($table, $old_field)
 
+=back
+
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,

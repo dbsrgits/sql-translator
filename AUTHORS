@@ -1,26 +1,30 @@
 The following people have contributed to the SQLFairy project:
 
--   Mark Addison <grommit@users.sourceforge.net>
--   Sam Angiuoli <angiuoli@users.sourceforge.net>
+-   Allen Day <allenday@users.sourceforge.net>
+-   Anders Nor Berle <berle@cpan.org>
+-   Ben Faga <faga@cshl.edu>
+-   Chris Hilton <chilton@alterpoint.com>
+-   Chris Mungall <cjm@fruitfly.org>
+-   Chris To <christot@users.sourceforge.net>
+-   Daniel Ruoso <daniel@ruoso.com>
+-   Darren Chamberlain <dlc@users.sourceforge.net>
 -   Dave Cash <dave@gnofn.org>
 -   Geoff Cant <geoff@catalyst.net.nz>
--   Darren Chamberlain <dlc@users.sourceforge.net>
--   Ken Youens-Clark <kclark@cpan.org>
--   Allen Day <allenday@users.sourceforge.net>
--   Paul Harrington <phrrngtn@users.sourceforge.net>
--   Chris Hilton <chilton@alterpoint.com>
--   Ben Faga <faga@cshl.edu>
--   Mikey Melillo <mmelillo@users.sourceforge.net>
--   Chris Mungall <cjm@fruitfly.org>
--   Ross Smith II <rossta@users.sf.net>
 -   Gudmundur A. Thorisson <mummi@cshl.org>
--   Chris To <christot@users.sourceforge.net>
--   Jason Williams <smdwilliams@users.sourceforge.net>
--   Ying Zhang <zyolive@yahoo.com>
 -   Guillermo Roditi <groditi@cpan.org>
+-   Jason Williams <smdwilliams@users.sourceforge.net>
+-   Jonathan Yu <frequency@cpan.org>
+-   John Goulah <jgoulah@cpan.org>
+-   Ken Youens-Clark <kclark@cpan.org>
+-   Mark Addison <grommit@users.sourceforge.net>
+-   Mikey Melillo <mmelillo@users.sourceforge.net>
+-   Paul Harrington <phrrngtn@users.sourceforge.net>
+-   Peter Rabbitson <ribasushi@cpan.org>
+-   Ross Smith II <rossta@users.sf.net>
+-   Ryan D Johnson <ryan@innerfence.com>
+-   Sam Angiuoli <angiuoli@users.sourceforge.net>
 -   Wallace Reis <wreis@cpan.org>
--   Peter Rabbitson (ribasushi) <rabbit@rabbit.us>
--   Jonathan Yu (jawnsy) <frequency@cpan.org>
+-   Ying Zhang <zyolive@yahoo.com>
 
 If you would like to contribute to the project, you can send patches
 to the developers mailing list:

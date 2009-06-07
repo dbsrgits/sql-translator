@@ -24,7 +24,7 @@ use base 'Class::Base';
 
 require 5.004;
 
-$VERSION  = '0.10';
+$VERSION  = '0.09004';
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
@@ -1268,47 +1268,8 @@ Returns the version of the SQL::Translator release.
 
 =head1 AUTHORS
 
-The following people have contributed to the SQLFairy project:
-
-=over 4
-
-=item * Mark Addison <grommit@users.sourceforge.net>
-
-=item * Sam Angiuoli <angiuoli@users.sourceforge.net>
-
-=item * Anders Nor Berle <berle@cpan.org>
-
-=item * Dave Cash <dave@gnofn.org>
-
-=item * Darren Chamberlain <dlc@users.sourceforge.net>
-
-=item * Ken Y. Clark <kclark@cpan.org>
-
-=item * Allen Day <allenday@users.sourceforge.net>
-
-=item * Paul Harrington <phrrngtn@users.sourceforge.net>
-
-=item * Mikey Melillo <mmelillo@users.sourceforge.net>
-
-=item * Chris Mungall <cjm@fruitfly.org>
-
-=item * Ross Smith II <rossta@users.sf.net>
-
-=item * Gudmundur A. Thorisson <mummi@cshl.org>
-
-=item * Chris To <christot@users.sourceforge.net>
-
-=item * Jason Williams <smdwilliams@users.sourceforge.net>
-
-=item * Ying Zhang <zyolive@yahoo.com>
-
-=item * Daniel Ruoso <daniel@ruoso.com>
-
-=item * Ryan D Johnson <ryan@innerfence.com>
-
-=item * Jonathan Yu <frequency@cpan.org>
-
-=back
+See the included AUTHORS file:
+L<http://search.cpan.org/dist/SQL-Translator/AUTHORS>
 
 If you would like to contribute to the project, you can send patches
 to the developers mailing list:
