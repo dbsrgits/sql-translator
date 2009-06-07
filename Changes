@@ -13,7 +13,23 @@
 * MySQL producer skips length attribute for columns which do not support that
   attribute. Currently following column types are added to that list:
   date time timestamp datetime year
-* Sitch to Module::Install (mandates minimum perl 5.005)
+* Switch to Module::Install (mandates minimum perl 5.005)
+* Massive amount of fixes to SQLite/Pg/Mysql/MSSQL parsers/producers
+  Fix most of the problems uncovered by the roundtrip test framework
+  Some highlights:
+    - Rewind exhausted globs before attempting a read
+    - Do not add xml comment header if no_comments is set
+    - table/field counts are held per schema object, not globally
+    - no more variable table and column names in SQLite and MSSQL
+    - Disable MSSQL view/procedure production - they never worked in the first place
+    - VIEW support for Pg parser, also some cleanups
+    - The way we generate Pg create view statements was not standards compliant
+      (per RhodiumToad in #postgresql)
+    - MSSQL improvements: 
+    - SQLite/MSSQL improvements:
+      - Support parsing of all DROP clauses
+      - Support parsing of field-level comments
+      - When producing do not append table names to constraint/index names
 
 # ----------------------------------------------------------
 # 0.09004 2009-02-13

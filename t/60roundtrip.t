@@ -48,21 +48,24 @@ my $plan = [
     producer_args => {},
     parser_args => {},
   },
-#  {
-#    engine => 'Oracle',
-#    producer_args => {},
-#    parser_args => {},
-#  },
-#  {
-#    engine => 'Sybase',
-#    producer_args => {},
-#    parser_args => {},
-#  },
-#  {
-#    engine => 'DB2',
-#    producer_args => {},
-#    parser_args => {},
-#  },
+  {
+    engine => 'Oracle',
+    producer_args => {},
+    parser_args => {},
+    todo => 'Needs volunteers',
+  },
+  {
+    engine => 'Sybase',
+    producer_args => {},
+    parser_args => {},
+    todo => 'Needs volunteers',
+  },
+  {
+    engine => 'DB2',
+    producer_args => {},
+    parser_args => {},
+    todo => 'Needs volunteers',
+  },
 
 # YAML parsing/producing cycles result in some weird self referencing structure
 #  {
@@ -99,13 +102,16 @@ my $string_re = {
 };
 
 for my $args (@$plan) {
+  TODO: {
+    local $TODO = $args->{todo} if $args->{todo};
 
-  $args->{name} ||= $args->{engine};
+    $args->{name} ||= $args->{engine};
 
-  lives_ok (
-    sub { check_roundtrip ($args, $base_schema) },
-    "Round trip for $args->{name} did not throw an exception",
-  );
+    lives_ok (
+      sub { check_roundtrip ($args, $base_schema) },
+      "Round trip for $args->{name} did not throw an exception",
+    );
+  }
 }
 
 
