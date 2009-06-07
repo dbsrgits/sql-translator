@@ -235,9 +235,9 @@ my $view1 = SQL::Translator::Schema::View->new(
 my $create_opts = { add_replace_view => 1, no_comments => 1 };
 my $view1_sql1 = SQL::Translator::Producer::PostgreSQL::create_view($view1, $create_opts);
 
-my $view_sql_replace = "CREATE VIEW view_foo ( id, name ) AS (
+my $view_sql_replace = "CREATE VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-  )";
+";
 is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
 
 my $view2 = SQL::Translator::Schema::View->new(
@@ -251,7 +251,7 @@ my $view2 = SQL::Translator::Schema::View->new(
 my $create2_opts = { add_replace_view => 1, no_comments => 1 };
 my $view2_sql1 = SQL::Translator::Producer::PostgreSQL::create_view($view2, $create2_opts);
 
-my $view2_sql_replace = "CREATE TEMPORARY VIEW view_foo2 AS (
+my $view2_sql_replace = "CREATE TEMPORARY VIEW view_foo2 AS
     SELECT id, name FROM thing
-  ) WITH CASCADED CHECK OPTION";
+ WITH CASCADED CHECK OPTION";
 is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');

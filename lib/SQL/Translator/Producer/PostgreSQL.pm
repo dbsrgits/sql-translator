@@ -448,7 +448,7 @@ sub create_view {
     }
 
     if ( my $sql = $view->sql ) {
-        $create .= " AS (\n    ${sql}\n  )";
+        $create .= " AS\n    ${sql}\n";
     }
 
     if ( $extra->{check_option} ) {

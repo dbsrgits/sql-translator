@@ -58,9 +58,9 @@ CREATE TABLE "Another" (
 );
 
 DROP VIEW "email_list";
-CREATE VIEW "email_list" ( "email" ) AS (
+CREATE VIEW "email_list" ( "email" ) AS
     SELECT email FROM Basic WHERE (email IS NOT NULL)
-  );
+;
 
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
