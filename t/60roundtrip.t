@@ -43,13 +43,13 @@ my $plan = [
     producer_args => {},
     parser_args => {},
   },
+  {
+    engine => 'SQLServer',
+    producer_args => {},
+    parser_args => {},
+  },
 #  {
 #    engine => 'Oracle',
-#    producer_args => {},
-#    parser_args => {},
-#  },
-#  {
-#    engine => 'SQLServer',
 #    producer_args => {},
 #    parser_args => {},
 #  },
