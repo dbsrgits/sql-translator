@@ -65,7 +65,7 @@ CREATE TABLE Another (
 
 DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
-    SELECT email FROM Basic WHERE email IS NOT NULL;
+    SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 DROP TRIGGER IF EXISTS foo_trigger;
 
@@ -113,7 +113,7 @@ eq_or_diff(\@sql,
 )',
           'DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS
-    SELECT email FROM Basic WHERE email IS NOT NULL',
+    SELECT email FROM Basic WHERE (email IS NOT NULL)',
           'DROP TRIGGER IF EXISTS foo_trigger',
           'CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END',
           'DROP TRIGGER IF EXISTS bar_trigger_insert',

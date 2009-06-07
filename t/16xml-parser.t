@@ -206,7 +206,7 @@ schema_ok( $scma, {
     views => [
         {
             name => 'email_list',
-            sql => "SELECT email FROM Basic WHERE email IS NOT NULL",
+            sql => "SELECT email FROM Basic WHERE (email IS NOT NULL)",
             fields => ['email'],
             extra => {
                 foo => "bar",

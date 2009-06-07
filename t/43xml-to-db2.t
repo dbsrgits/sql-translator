@@ -61,7 +61,7 @@ ALTER TABLE Basic ADD FOREIGN KEY (another_id) REFERENCES Another(id);
 CREATE INDEX titleindex ON Basic ( title );
 
 CREATE VIEW email_list AS
-SELECT email FROM Basic WHERE email IS NOT NULL;
+SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 CREATE TRIGGER foo_trigger after insert ON Basic REFERENCING OLD AS oldrow NEW AS newrow FOR EACH ROW MODE DB2SQL update modified=timestamp();
 
