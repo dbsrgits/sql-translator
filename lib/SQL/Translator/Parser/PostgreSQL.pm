@@ -126,7 +126,7 @@ my $parser; # should we do this?  There's no programmic way to
 
 $GRAMMAR = q!
 
-{ my ( %tables, $table_order, $field_order, @table_comments) }
+{ my ( %tables, @views, $table_order, $field_order, @table_comments) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -134,7 +134,7 @@ $GRAMMAR = q!
 # won't cause the failure needed to know that the parse, as a whole,
 # failed. -ky
 #
-startrule : statement(s) eofile { \%tables }
+startrule : statement(s) eofile { { tables => \%tables, views => \@views } }
 
 eofile : /^\Z/
    
@@ -161,9 +161,9 @@ connect : /^\s*\\\connect.*\n/
 
 set : /set/i /[^;]*/ ';'
 
-revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_quotes(s /,/) ';'
+revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_id /from/i name_with_opt_quotes(s /,/) ';'
     {
-        my $table_info  = $item{'table_name'};
+        my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         push @{ $tables{ $table_name }{'permissions'} }, {
@@ -176,9 +176,9 @@ revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_name /from/i name_with_opt_q
 revoke : /revoke/i WORD(s /,/) /on/i SCHEMA(?) schema_name /from/i name_with_opt_quotes(s /,/) ';'
     { 1 }
 
-grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_name /to/i name_with_opt_quotes(s /,/) ';'
+grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_id /to/i name_with_opt_quotes(s /,/) ';'
     {
-        my $table_info  = $item{'table_name'};
+        my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         push @{ $tables{ $table_name }{'permissions'} }, {
@@ -207,16 +207,16 @@ update : /update/i statement_body(s?) ';'
 #
 # Create table.
 #
-create : CREATE temporary_table(?) TABLE table_name '(' create_definition(s? /,/) ')' table_option(s?) ';'
+create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' table_option(s?) ';'
     {
-        my $table_info  = $item{'table_name'};
+        my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         $tables{ $table_name }{'order'}       = ++$table_order;
         $tables{ $table_name }{'schema_name'} = $schema_name;
         $tables{ $table_name }{'table_name'}  = $table_name;
 
-        $tables{ $table_name }{'temporary'} = $item[2][0]; 
+        $tables{ $table_name }{'temporary'} = $item[2][0];
 
         if ( @table_comments ) {
             $tables{ $table_name }{'comments'} = [ @table_comments ];
@@ -252,9 +252,9 @@ create : CREATE temporary_table(?) TABLE table_name '(' create_definition(s? /,/
         1;
     }
 
-create : CREATE unique(?) /(index|key)/i index_name /on/i table_name using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
+create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
     {
-        my $table_info  = $item{'table_name'};
+        my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         push @{ $tables{ $table_name }{'indices'} },
@@ -266,6 +266,17 @@ create : CREATE unique(?) /(index|key)/i index_name /on/i table_name using_metho
                 method    => $item{'using_method'}[0],
             }
         ;
+    }
+
+create : CREATE or_replace(?) temporary(?) VIEW view_id view_fields(?) /AS/i view_target ';'
+    {
+        push @views, {
+            schema_name  => $item{view_id}{schema_name},
+            view_name    => $item{view_id}{view_name},
+            sql          => $item{view_target},
+            fields       => $item[6],
+            is_temporary => $item[3][0],
+        }
     }
 
 #
@@ -291,9 +302,9 @@ comment : /^\s*(?:#|-{2})(.*)\n/
         push @table_comments, $comment;
     }
 
-comment_on_table : /comment/i /on/i /table/i table_name /is/i comment_phrase ';'
+comment_on_table : /comment/i /on/i /table/i table_id /is/i comment_phrase ';'
     {
-        my $table_info  = $item{'table_name'};
+        my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         push @{ $tables{ $table_name }{'comments'} }, $item{'comment_phrase'};
@@ -405,6 +416,9 @@ field_comment : /^\s*(?:#|-{2})(.*)\n/
 field_meta : default_val
     | column_constraint
 
+view_fields : '(' field_name(s /,/) ')'
+    { $return = join (',', @{$item[2]} ) }
+
 column_constraint : constraint_name(?) column_constraint_type deferrable(?) deferred(?)
     {
         my $desc       = $item{'column_constraint_type'};
@@ -443,9 +457,9 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     /check/i '(' /[^)]+/ ')' 
         { $return = { type => 'check', expression => $item[3] } }
     |
-    /references/i table_name parens_word_list(?) match_type(?) key_action(s?)
+    /references/i table_id parens_word_list(?) match_type(?) key_action(s?)
     {
-        my $table_info  = $item{'table_name'};
+        my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
         my ( $on_delete, $on_update );
@@ -464,11 +478,27 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
         }
     }
 
-table_name : schema_qualification(?) name_with_opt_quotes {
-    $return = { schema_name => $item[1], table_name => $item[2] }
+table_id : schema_qualification(?) name_with_opt_quotes {
+    $return = { schema_name => $item[1][0], table_name => $item[2] }
 }
 
-  schema_qualification : name_with_opt_quotes '.'
+view_id : schema_qualification(?) name_with_opt_quotes {
+    $return = { schema_name => $item[1][0], view_name => $item[2] }
+}
+
+view_target : /select|with/i /[^;]+/ {
+    $return = "$item[1] $item[2]";
+}
+
+# SELECT views _may_ support outer parens, and we used to produce
+# such sql, although non-standard. Use ugly lookeahead to parse
+view_target : '('   /select/i    / [^;]+ (?= \) ) /x    ')'    {
+    $return = "$item[2] $item[3]"
+}
+
+view_target_spec :  
+
+schema_qualification : name_with_opt_quotes '.'
 
 schema_name : name_with_opt_quotes
 
@@ -664,7 +694,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
     |
-    /foreign key/i '(' name_with_opt_quotes(s /,/) ')' /references/i table_name parens_word_list(?) match_type(?) key_action(s?)
+    /foreign key/i '(' name_with_opt_quotes(s /,/) ')' /references/i table_id parens_word_list(?) match_type(?) key_action(s?)
     {
         my ( $on_delete, $on_update );
         for my $action ( @{ $item[9] || [] } ) {
@@ -725,7 +755,7 @@ key_mutation : /no action/i { $return = 'no_action' }
     |
     /set default/i { $return = 'set default' }
 
-alter : alter_table table_name add_column field ';' 
+alter : alter_table table_id add_column field ';' 
     { 
         my $field_def = $item[4];
         $tables{ $item[2]->{'table_name'} }{'fields'}{ $field_def->{'name'} } = {
@@ -734,7 +764,7 @@ alter : alter_table table_name add_column field ';'
         1;
     }
 
-alter : alter_table table_name ADD table_constraint ';' 
+alter : alter_table table_id ADD table_constraint ';' 
     { 
         my $table_name = $item[2]->{'table_name'};
         my $constraint = $item[4];
@@ -742,13 +772,13 @@ alter : alter_table table_name ADD table_constraint ';'
         1;
     }
 
-alter : alter_table table_name drop_column NAME restrict_or_cascade(?) ';' 
+alter : alter_table table_id drop_column NAME restrict_or_cascade(?) ';' 
     {
         $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'drop'} = 1;
         1;
     }
 
-alter : alter_table table_name alter_column NAME alter_default_val ';' 
+alter : alter_table table_id alter_column NAME alter_default_val ';' 
     {
         $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'default'} = 
             $item[5]->{'value'};
@@ -758,22 +788,22 @@ alter : alter_table table_name alter_column NAME alter_default_val ';'
 #
 # These will just parse for now but won't affect the structure. - ky
 #
-alter : alter_table table_name /rename/i /to/i NAME ';'
+alter : alter_table table_id /rename/i /to/i NAME ';'
     { 1 }
 
-alter : alter_table table_name alter_column NAME SET /statistics/i INTEGER ';' 
+alter : alter_table table_id alter_column NAME SET /statistics/i INTEGER ';' 
     { 1 }
 
-alter : alter_table table_name alter_column NAME SET /storage/i storage_type ';'
+alter : alter_table table_id alter_column NAME SET /storage/i storage_type ';'
     { 1 }
 
-alter : alter_table table_name rename_column NAME /to/i NAME ';'
+alter : alter_table table_id rename_column NAME /to/i NAME ';'
     { 1 }
 
-alter : alter_table table_name DROP /constraint/i NAME restrict_or_cascade ';'
+alter : alter_table table_id DROP /constraint/i NAME restrict_or_cascade ';'
     { 1 }
 
-alter : alter_table table_name /owner/i /to/i NAME ';'
+alter : alter_table table_id /owner/i /to/i NAME ';'
     { 1 }
 
 alter : alter_sequence NAME /owned/i /by/i column_name ';'
@@ -781,12 +811,12 @@ alter : alter_sequence NAME /owned/i /by/i column_name ';'
 
 storage_type : /(plain|external|extended|main)/i
 
-temporary: /temp(orary)?\\b/i
+temporary : /temp(orary)?\\b/i
+  {
+    1;
+  }
 
-temporary_table: temporary
-    {
-        1;
-    }
+or_replace : /or replace/i
 
 alter_default_val : SET default_val 
     { 
@@ -804,7 +834,7 @@ alter_default_val : SET default_val
 # particular order.  I'm going to leave the rule but disable the code 
 # for now. - ky
 #
-alter : alter_table table_name alter_column NAME alter_nullable ';'
+alter : alter_table table_id alter_column NAME alter_nullable ';'
     {
 #        my $table_name  = $item[2]->{'table_name'};
 #        my $field_name  = $item[4];
@@ -942,6 +972,8 @@ COLUMN : /column/i
 
 TABLE : /table/i
 
+VIEW : /view/i
+
 SCHEMA : /schema/i
 
 SEMICOLON : /\s*;\n?/
@@ -997,11 +1029,11 @@ sub parse {
 
     my $schema = $translator->schema;
     my @tables = sort { 
-        ( $result->{ $a }{'order'} || 0 ) <=> ( $result->{ $b }{'order'} || 0 )
-    } keys %{ $result };
+        ( $result->{tables}{ $a }{'order'} || 0 ) <=> ( $result->{tables}{ $b }{'order'} || 0 )
+    } keys %{ $result->{tables} };
 
     for my $table_name ( @tables ) {
-        my $tdata =  $result->{ $table_name };
+        my $tdata =  $result->{tables}{ $table_name };
         my $table =  $schema->add_table( 
             #schema => $tdata->{'schema_name'},
             name   => $tdata->{'table_name'},
@@ -1062,6 +1094,18 @@ sub parse {
                 $cdata->{'type'} .  "' to table '" . $table->name . 
                 "': " . $table->error;
         }
+    }
+
+    for my $vinfo (@{$result->{views}}) {
+      my $sql = $vinfo->{sql};
+      $sql =~ s/\A\s+|\s+\z//g;
+      my $view = $schema->add_view (
+        name => $vinfo->{view_name},
+        sql => $sql,
+        fields => $vinfo->{fields},
+      );
+
+      $view->extra ( temporary => 1 ) if $vinfo->{is_temporary};
     }
 
     return 1;
