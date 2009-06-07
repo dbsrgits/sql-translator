@@ -335,7 +335,7 @@ sub produce {
 # create view/procedure are NOT prepended to the input $sql, needs
 # to be filled in with the proper syntax
 
-=begin
+=pod
 
     # Text of view is already a 'create view' statement so no need to
     # be fancy
