@@ -27,6 +27,7 @@ Build$
 ^_build/
 
 # Makemaker generated files and dirs.
+\bMETA\.yml
 \bMANIFEST\.bak
 \bMakefile$
 \bblib/

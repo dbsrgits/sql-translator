@@ -8,21 +8,13 @@ use FindBin qw($Bin);
 use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
 
-my @script = qw(blib script sqlt-diff-old);
+my @script = qw(script sqlt-diff-old);
 my @create1 = qw(data sqlite create.sql);
 my @create2 = qw(data sqlite create2.sql);
 
-my $sqlt_diff = (-d "blib")
-    ? catfile($Bin, updir, @script)
-    : catfile($Bin, @script);
-
-my $create1 = (-d "t")
-    ? catfile($Bin, @create1)
-    : catfile($Bin, "t", @create1);
-
-my $create2 = (-d "t")
-    ? catfile($Bin, @create2)
-    : catfile($Bin, "t", @create2);
+my $sqlt_diff = catfile($Bin, updir, @script);
+my $create1 = catfile($Bin, @create1);
+my $create2 = catfile($Bin, @create2);
 
 BEGIN {
     maybe_plan(21,

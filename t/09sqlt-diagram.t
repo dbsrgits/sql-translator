@@ -1,7 +1,5 @@
-#!/usr/bin/perl
-# vim: set ft=perl:
-
 use strict;
+use warnings;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use File::Temp qw(mktemp);
@@ -18,16 +16,11 @@ BEGIN {
     );
 }
 
-my @script = qw(blib script sqlt-diagram);
+my @script = qw(script sqlt-diagram);
 my @data = qw(data mysql Apache-Session-MySQL.sql);
 
-my $sqlt_diagram = (-d "blib")
-    ? catfile($Bin, updir, @script)
-    : catfile($Bin, @script);
-
-my $test_data = (-d "t")
-    ? catfile($Bin, @data)
-    : catfile($Bin, "t", @data);
+my $sqlt_diagram = catfile($Bin, updir, @script);
+my $test_data = catfile($Bin, @data);
 
 my $tmp = mktemp('sqlXXXXX');
 

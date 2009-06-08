@@ -8,8 +8,9 @@ my $deps = {
     'Class::Data::Inheritable' => 0.02,
     'Class::MakeMethods'       => 0,
     'Digest::SHA1'             => 2.00,
-    'Carp::Clan',              => 0,
+    'Carp::Clan'               => 0,
     'IO::Dir'                  => 0,
+    'IO::Scalar'               => 2.110,
     'Parse::RecDescent'        => 1.096000,   # PBP ftw
     'Pod::Usage'               => 0,
     'Class::Accessor::Fast'    => 0,
@@ -63,12 +64,12 @@ for my $type (qw/requires recommends test_requires/) {
 tests_recursive ();
 
 install_script (qw|
-  bin/sqlt-diagram
-  bin/sqlt-diff
-  bin/sqlt-diff-old
-  bin/sqlt-dumper
-  bin/sqlt-graph
-  bin/sqlt
+  script/sqlt-diagram
+  script/sqlt-diff
+  script/sqlt-diff-old
+  script/sqlt-dumper
+  script/sqlt-graph
+  script/sqlt
 |);
 
 install_share();
