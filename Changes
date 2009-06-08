@@ -1,6 +1,11 @@
 # ----------------------------------------------------------
 # x.xxxxx xxxx-xx-xx
 # ----------------------------------------------------------
+
+
+# ----------------------------------------------------------
+# 0.09005 2009-06-08
+# ----------------------------------------------------------
 * Add parser support for MySQL default values with a single quote
 * Properly quote absolute table names in the MySQL producer
 * Added semi-colon for (DROP|CREATE) TYPE statements in the Pg producer (wreis)
@@ -14,6 +19,7 @@
   attribute. Currently following column types are added to that list:
   date time timestamp datetime year
 * Switch to Module::Install (mandates minimum perl 5.005)
+* Major cleanup of GraphViz proucer
 * Massive amount of fixes to SQLite/Pg/Mysql/MSSQL parsers/producers
   Fix most of the problems uncovered by the roundtrip test framework
   Some highlights:
@@ -21,11 +27,10 @@
     - Do not add xml comment header if no_comments is set
     - table/field counts are held per schema object, not globally
     - no more variable table and column names in SQLite and MSSQL
-    - Disable MSSQL view/procedure production - they never worked in the first place
     - VIEW support for Pg parser, also some cleanups
     - The way we generate Pg create view statements was not standards compliant
       (per RhodiumToad in #postgresql)
-    - MSSQL improvements: 
+    - Disable MSSQL view/procedure production - they never worked in the first place
     - SQLite/MSSQL improvements:
       - Support parsing of all DROP clauses
       - Support parsing of field-level comments

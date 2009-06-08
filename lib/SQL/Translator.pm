@@ -22,9 +22,9 @@ use strict;
 use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 
-require 5.004;
+require 5.005;
 
-$VERSION  = '0.09004';
+$VERSION  = '0.09005';
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 

@@ -26,9 +26,6 @@ Build$
 ^Build$
 ^_build/
 
-# Module::Install included files.
-^inc/Module/Install
-
 # Makemaker generated files and dirs.
 \bMANIFEST\.bak
 \bMakefile$
