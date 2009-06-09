@@ -480,8 +480,11 @@ sub maybe_plan {
             join ", ", @errors;
         plan skip_all => $msg;
     }
-    else {
+    elsif ($ntests and $ntests ne 'no_plan') {
         plan tests => $ntests;
+    }
+    else {
+        plan 'no_plan';
     }
 }
 

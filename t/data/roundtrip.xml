@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Created by SQL::Translator::Producer::SqlfXML
+Created on Fri Aug 15 15:08:18 2003
+
+ -->
+<schema xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
+    
+  <tables>
+      <table order="1" name="Basic">
+        <fields>
+          <field
+              name="id"
+              is_primary_key="1" is_foreign_key="0"
+              size="10" data_type="int" is_auto_increment="1" order="1"
+              is_nullable="0">
+              <extra ZEROFILL="1" />
+          </field>
+          <field
+              name="title"
+              is_primary_key="0" is_foreign_key="0"
+              size="100" is_auto_increment="0" data_type="varchar"
+              order="2" default_value="hello" is_nullable="0" />
+          <field
+              name="description"
+              size="0" data_type="text" order="3" default_value="" />
+          <field name="email" size="500" data_type="varchar" order="4">
+              <extra foo="bar" hello="world" bar="baz" />
+          </field>
+          <field name="explicitnulldef" size="0" data_type="varchar" order="5" />
+          <field name="explicitemptystring" size="0"
+              data_type="varchar" order="6" default_value="" />
+          <field name="emptytagdef" size="0"
+              data_type="varchar" order="7" default_value="" >
+              <comments>Hello emptytagdef</comments>
+          </field>
+          <field name="another_id" size="10"
+              data_type="int" default_value="2" />
+          <field name="timest" size="0"
+              data_type="timestamp" order="7" >
+          </field>
+        </fields>
+
+        <indices>
+          <index name="titleindex" fields="title" type="NORMAL">
+            <extra foo="bar" hello="world" bar="baz" />
+          </index>
+        </indices>
+
+        <constraints>
+          <constraint name="" type="PRIMARY KEY" fields="id"
+              reference_table="" options="" deferrable="1" match_type=""
+              expression="" on_update="" on_delete="">
+              <extra foo="bar" hello="world" bar="baz" />
+          </constraint>
+          <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
+          <constraint name="" type="FOREIGN KEY" fields="another_id"
+              reference_table="Another" options="" deferrable="1" match_type=""
+              expression="" on_update="" on_delete="">
+          </constraint>
+        </constraints>
+
+        <extra foo="bar" hello="world" bar="baz" mysql_table_type="InnoDB" />
+      </table>
+
+      <table order="1" name="Another">
+        <fields>
+          <field
+              name="id"
+              is_primary_key="1" is_foreign_key="0"
+              size="10" data_type="int" is_auto_increment="1" order="1"
+              is_nullable="0">
+          </field>
+        </fields>
+
+        <constraints>
+          <constraint name="" type="PRIMARY KEY" fields="id"
+              reference_table="" options="" deferrable="1" match_type=""
+              expression="" on_update="" on_delete="">
+          </constraint>
+        </constraints>
+
+        <extra foo="bar" hello="world" bar="baz" mysql_table_type="InnoDB" />
+      </table>
+  </tables>
+
+  <views>
+      <view name="email_list" fields="email" order="1">
+          <sql>SELECT email FROM Basic WHERE (email IS NOT NULL)</sql>
+          <extra foo="bar" hello="world" bar="baz" />
+      </view>
+  </views>
+
+  <triggers>
+      <trigger name="foo_trigger" database_event="insert" on_table="Basic"
+          perform_action_when="after" order="1">
+          <action>update modified=timestamp();</action>
+          <extra foo="bar" hello="world" bar="baz" />
+      </trigger>
+      <trigger name="bar_trigger" database_events="insert , update" on_table="Basic"
+          perform_action_when="before" order="1">
+          <action>update modified2=timestamp();</action>
+          <extra hello="aliens" />
+      </trigger>
+  </triggers>
+
+  <procedures>
+      <procedure name="foo_proc" order="1" owner="Nomar" parameters="foo,bar">
+          <sql>select foo from bar</sql>
+          <comments>Go Sox!</comments>
+          <extra foo="bar" hello="world" bar="baz" />
+      </procedure>
+  </procedures>
+
+</schema>
