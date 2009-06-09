@@ -1,8 +1,8 @@
 # ----------------------------------------------------------
 # x.xxxxx xxxx-xx-xx
 # ----------------------------------------------------------
-* Adjust two tests so they pass under prove -l
-* Add missing dependency on IO::Scalar
+* Multiple test and dependency adhustments to make smokers happy
+* Fix YAML producer wrt extra attribute
 * Added support for "time(stamp) (p) with time zone" for Pg producer (mo)
 
 
