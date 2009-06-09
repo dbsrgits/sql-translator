@@ -25,7 +25,7 @@ my $test_data = catfile($Bin, @data);
 my $tmp = mktemp('sqlXXXXX');
 
 ok(-e $sqlt_diagram); 
-my @cmd = ($sqlt_diagram, "-d", "MySQL", "-o", $tmp, $test_data);
+my @cmd = ($^X, $sqlt_diagram, "-d", "MySQL", "-o", $tmp, $test_data);
 eval { system(@cmd); };
 ok(!$@ && ($? == 0));
 ok(-e $tmp); 

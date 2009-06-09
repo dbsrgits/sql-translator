@@ -2,9 +2,14 @@
 
 use warnings;
 use strict;
-use Test::More qw/no_plan/;
-use Test::Exception;
+use Test::More;
+use Test::SQL::Translator;
 use FindBin qw/$Bin/;
+
+BEGIN {
+    maybe_plan(1, 'SQL::Translator::Parser::XML',
+                  'SQL::Translator::Producer::XML');
+}
 
 use SQL::Translator;
 

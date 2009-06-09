@@ -25,7 +25,7 @@ BEGIN {
 }
 
 ok(-e $sqlt_diff, 'Found sqlt-diff script'); 
-my @cmd = ($sqlt_diff, "$create1=SQLite", "$create2=SQLite");
+my @cmd = ($^X,  $sqlt_diff, "$create1=SQLite", "$create2=SQLite");
 my $out = `@cmd`;
 
 like($out, qr/-- Target database SQLite is untested/, "Detected 'untested' comment");
@@ -33,7 +33,7 @@ like($out, qr/ALTER TABLE person CHANGE iq/, "Detected altered 'iq' field");
 like($out, qr/ALTER TABLE person ADD is_rock_star/, 
     "Detected missing rock star field");
     
-@cmd = ($sqlt_diff, "$create1=SQLite", "$create1=SQLite");
+@cmd = ($^X, $sqlt_diff, "$create1=SQLite", "$create1=SQLite");
 $out = `@cmd`;
 
 like($out, qr/There were no differences/, "Properly detected no differences");
@@ -50,7 +50,7 @@ my $mysql_create2 = (-d "t")
     : catfile($Bin, "t", @mysql_create2);
 
 # Test for differences
-@cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
+@cmd = ($^X, $sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
 $out = `@cmd`;
 
 unlike($out, qr/-- Target database MySQL is untested/, "Did not detect 'untested' comment");
@@ -73,7 +73,7 @@ like($out, qr/ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff/,
 unlike($out, qr/ALTER TABLE employee ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
 
 # Test for sameness
-@cmd = ($sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
+@cmd = ($^X, $sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 $out = `@cmd`;
 
 like($out, qr/There were no differences/, "Properly detected no differences");
@@ -89,7 +89,7 @@ my $oracle_create2 = (-d "t")
     ? catfile($Bin, @oracle_create2)
     : catfile($Bin, "t", @oracle_create2);
 
-@cmd = ($sqlt_diff, "$oracle_create1=Oracle", "$oracle_create2=Oracle");
+@cmd = ($^X, $sqlt_diff, "$oracle_create1=Oracle", "$oracle_create2=Oracle");
 $out = `@cmd`;
 
 unlike($out, qr/-- Target database Oracle is untested/, "Did not detect 'untested' comment");
