@@ -9,13 +9,19 @@ use FindBin qw/$Bin/;
 
 use SQL::Translator;
 
+
 ### Set $ENV{SQLTTEST_RT_DEBUG} = 1 for more output
 
 # What tests to run - parser/producer name, and optional args
 my $plan = [
   {
     engine => 'XML',
+    req => 'XML::LibXML',
   },
+  {
+    engine => 'YAML',
+  },
+
   {
     engine => 'SQLite',
     producer_args => {},
@@ -48,6 +54,7 @@ my $plan = [
     producer_args => {},
     parser_args => {},
   },
+
   {
     engine => 'Oracle',
     producer_args => {},
@@ -67,11 +74,6 @@ my $plan = [
     todo => 'Needs volunteers',
   },
 
-# YAML parsing/producing cycles result in some weird self referencing structure
-#  {
-#    engine => 'YAML',
-#  },
-
 # There is no Access producer
 #  {
 #    engine => 'Access',
@@ -83,16 +85,17 @@ my $plan = [
 
 # This data file has the right mix of table/view/procedure/trigger
 # definitions, and lists enough quirks to trip up most combos
-# I am not sure if augmenting it will break other tests - experiment
-my $base_file = "$Bin/data/xml/schema.xml";
+my $base_file = "$Bin/data/roundtrip_autogen.yaml";
+open (my $base_fh, '<', $base_file) or die "$base_file: $!";
 
 my $base_t = SQL::Translator->new;
 $base_t->$_ (1) for qw/add_drop_table no_comments/;
 
 my $base_schema = $base_t->translate (
-  parser => 'XML',
-  file => $base_file,
+  parser => 'YAML',
+  data => do { local $/; <$base_fh>; },
 ) or die $base_t->error;
+
 
 #assume there is at least one table
 my $string_re = {
@@ -102,15 +105,30 @@ my $string_re = {
 };
 
 for my $args (@$plan) {
-  TODO: {
-    local $TODO = $args->{todo} if $args->{todo};
-
+  SKIP: {
     $args->{name} ||= $args->{engine};
 
-    lives_ok (
-      sub { check_roundtrip ($args, $base_schema) },
-      "Round trip for $args->{name} did not throw an exception",
-    );
+    my @req = ref $args->{req} ? @{$args->{req}} : $args->{req}||();
+    my @missing;
+    for (@req) {
+      eval "require $_";
+      push @missing, $_ if ($@);
+    }
+    if (@missing) {
+      skip sprintf ('Need %s for %s roundtrip test',
+        join (', ', @missing),
+        $args->{name},
+      );
+    }
+
+    TODO: {
+      local $TODO = $args->{todo} if $args->{todo};
+
+      lives_ok (
+        sub { check_roundtrip ($args, $base_schema) },
+        "Round trip for $args->{name} did not throw an exception",
+      );
+    }
   }
 }
 
