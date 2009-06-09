@@ -78,7 +78,8 @@ sub produce {
             show_warnings  => $translator->show_warnings,
             trace          => $translator->trace,
             version        => $translator->version,
-        }
+        },
+        keys %{$schema->extra} ? ('extra' => { $schema->extra } ) : (),
     });
 }
 
@@ -101,6 +102,7 @@ sub view_table {
             map { ($_->name => view_field($_)) }
                 $table->get_fields 
         },
+        keys %{$table->extra} ? ('extra' => { $table->extra } ) : (),
     };
 }
 
@@ -117,9 +119,10 @@ sub view_constraint {
         'options'          => scalar $constraint->options,
         'on_delete'        => scalar $constraint->on_delete,
         'on_update'        => scalar $constraint->on_update,
-        'reference_fields' => scalar $constraint->reference_fields,
+        'reference_fields' => [ map { ref $_ ? $_->name : $_ } $constraint->reference_fields ],
         'reference_table'  => scalar $constraint->reference_table,
         'type'             => scalar $constraint->type,
+        keys %{$constraint->extra} ? ('extra' => { $constraint->extra } ) : (),
     };
 }
 
@@ -138,7 +141,7 @@ sub view_field {
         'is_unique'         => scalar $field->is_unique,
         $field->is_auto_increment ? ('is_auto_increment' => 1) : (),
         $field->comments ? ('comments' => $field->comments) : (),
-        'extra'             => { $field->extra },
+        keys %{$field->extra} ? ('extra' => { $field->extra } ) : (),
     };
 }
 
@@ -153,6 +156,7 @@ sub view_procedure {
         'parameters' => scalar $procedure->parameters,
         'owner'      => scalar $procedure->owner,
         'comments'   => scalar $procedure->comments,
+        keys %{$procedure->extra} ? ('extra' => { $procedure->extra } ) : (),
     };
 }
 
@@ -168,6 +172,7 @@ sub view_trigger {
         'fields'              => scalar $trigger->fields,
         'on_table'            => scalar $trigger->on_table,
         'action'              => scalar $trigger->action,
+        keys %{$trigger->extra} ? ('extra' => { $trigger->extra } ) : (),
     };
 }
 
@@ -180,6 +185,7 @@ sub view_view {
         'name'   => scalar $view->name,
         'sql'    => scalar $view->sql,
         'fields' => scalar $view->fields,
+        keys %{$view->extra} ? ('extra' => { $view->extra } ) : (),
     };
 }
 
@@ -192,6 +198,7 @@ sub view_index {
         'type'      => scalar $index->type,
         'fields'    => scalar $index->fields,
         'options'   => scalar $index->options,
+        keys %{$index->extra} ? ('extra' => { $index->extra } ) : (),
     };
 }
 

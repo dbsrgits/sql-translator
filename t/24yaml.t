@@ -1,6 +1,4 @@
-#!/usr/local/bin/perl
-# vim: set ft=perl:
-
+use warnings;
 use strict;
 use Test::More;
 use Test::Differences;
@@ -50,7 +48,6 @@ schema:
         age:
           data_type: integer
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -61,7 +58,6 @@ schema:
         description:
           data_type: text
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -72,7 +68,6 @@ schema:
         iq:
           data_type: tinyint
           default_value: 0
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -83,7 +78,6 @@ schema:
         name:
           data_type: varchar
           default_value: ~
-          extra: {}
           is_nullable: 0
           is_primary_key: 0
           is_unique: 1
@@ -94,7 +88,6 @@ schema:
         person_id:
           data_type: INTEGER
           default_value: ~
-          extra: {}
           is_nullable: 0
           is_primary_key: 1
           is_unique: 0
@@ -105,7 +98,6 @@ schema:
         weight:
           data_type: double
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -148,7 +140,6 @@ schema:
         age:
           data_type: int
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -159,7 +150,6 @@ schema:
         name:
           data_type: varchar
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -170,7 +160,6 @@ schema:
         person_id:
           data_type: int
           default_value: ~
-          extra: {}
           is_nullable: 0
           is_primary_key: 1
           is_unique: 0
@@ -181,7 +170,6 @@ schema:
         pet_id:
           data_type: int
           default_value: ~
-          extra: {}
           is_nullable: 0
           is_primary_key: 1
           is_unique: 0

@@ -69,7 +69,6 @@ schema:
         created:
           data_type: timestamp
           default_value: ~
-          extra: {}
           is_nullable: 0
           is_primary_key: 0
           is_unique: 0
@@ -80,7 +79,6 @@ schema:
         first_name:
           data_type: foovar
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
@@ -91,7 +89,6 @@ schema:
         modified:
           data_type: timestamp
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 1

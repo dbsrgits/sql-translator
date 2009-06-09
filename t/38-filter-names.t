@@ -38,7 +38,6 @@ schema:
         First_name:
           data_type: foovar
           default_value: ~
-          extra: {}
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
