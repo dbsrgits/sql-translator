@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(17,
+    maybe_plan(22,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -155,6 +155,73 @@ $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field6,
                                                                 $field7);
 
 is($alter_field, q(ALTER TABLE mytable ALTER COLUMN character DROP NOT NULL), 'DROP NOT NULL');
+
+my $field8 = SQL::Translator::Schema::Field->new( name => 'ts_field',
+                                                   table => $table,
+                                                   data_type => 'timestamp with time zone',
+                                                   size => 6,
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field8_sql = SQL::Translator::Producer::PostgreSQL::create_field($field8,{ postgres_version => 8.3 });
+
+is($field8_sql, 'ts_field timestamp(6) with time zone NOT NULL', 'timestamp with precision');
+
+my $field9 = SQL::Translator::Schema::Field->new( name => 'time_field',
+                                                   table => $table,
+                                                   data_type => 'time with time zone',
+                                                   size => 6,
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field9_sql = SQL::Translator::Producer::PostgreSQL::create_field($field9,{ postgres_version => 8.3 });
+
+is($field9_sql, 'time_field time(6) with time zone NOT NULL', 'time with precision');
+
+my $field10 = SQL::Translator::Schema::Field->new( name => 'interval_field',
+                                                   table => $table,
+                                                   data_type => 'interval',
+                                                   size => 6,
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field10_sql = SQL::Translator::Producer::PostgreSQL::create_field($field10,{ postgres_version => 8.3 });
+
+is($field10_sql, 'interval_field interval(6) NOT NULL', 'time with precision');
+
+
+my $field11 = SQL::Translator::Schema::Field->new( name => 'time_field',
+                                                   table => $table,
+                                                   data_type => 'time without time zone',
+                                                   size => 6,
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field11_sql = SQL::Translator::Producer::PostgreSQL::create_field($field11,{ postgres_version => 8.3 });
+
+is($field11_sql, 'time_field time(6) without time zone NOT NULL', 'time with precision');
+
+
+
+my $field12 = SQL::Translator::Schema::Field->new( name => 'time_field',
+                                                   table => $table,
+                                                   data_type => 'timestamp',
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field12_sql = SQL::Translator::Producer::PostgreSQL::create_field($field12,{ postgres_version => 8.3 });
+
+is($field12_sql, 'time_field timestamp NOT NULL', 'time with precision');
 
 
 {

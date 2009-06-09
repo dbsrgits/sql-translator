@@ -680,7 +680,7 @@ sub convert_datatype
             $data_type;
     }
 
-    if ( $data_type =~ /timestamp/i ) {
+    if ( $data_type =~ /^time/i || $data_type =~ /^interval/i ) {
         if ( defined $size[0] && $size[0] > 6 ) {
             $size[0] = 6;
         }
@@ -711,12 +711,13 @@ sub convert_datatype
         }
     }
 
-    if ( defined $size[0] && $size[0] > 0 ) {
-        $data_type .= '(' . join( ',', @size ) . ')';
+    if (defined $size[0] && $size[0] > 0 && $data_type =~ /^time/i ) {
+        $data_type =~ s/^(time.*?)( with.*)?$/$1($size[0])/;
+        $data_type .= $2 if(defined $2);
+    } elsif ( defined $size[0] && $size[0] > 0 ) {
+            $data_type .= '(' . join( ',', @size ) . ')';
     }
-    elsif (defined $size[0] && $data_type eq 'timestamp' ) {
-        $data_type .= '(' . join( ',', @size ) . ')';
-    }
+    
 
 
     return $data_type;

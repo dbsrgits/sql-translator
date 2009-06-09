@@ -3,6 +3,8 @@
 # ----------------------------------------------------------
 * Adjust two tests so they pass under prove -l
 * Add missing dependency on IO::Scalar
+* Added support for "time(stamp) (p) with time zone" for Pg producer (mo)
+
 
 # ----------------------------------------------------------
 # 0.09005 2009-06-08
