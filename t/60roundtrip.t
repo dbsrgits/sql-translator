@@ -55,24 +55,24 @@ my $plan = [
     parser_args => {},
   },
 
-  {
-    engine => 'Oracle',
-    producer_args => {},
-    parser_args => {},
-    todo => 'Needs volunteers',
-  },
-  {
-    engine => 'Sybase',
-    producer_args => {},
-    parser_args => {},
-    todo => 'Needs volunteers',
-  },
-  {
-    engine => 'DB2',
-    producer_args => {},
-    parser_args => {},
-    todo => 'Needs volunteers',
-  },
+#  {
+#    engine => 'Oracle',
+#    producer_args => {},
+#    parser_args => {},
+#    todo => 'Needs volunteers',
+#  },
+#  {
+#    engine => 'Sybase',
+#    producer_args => {},
+#    parser_args => {},
+#    todo => 'Needs volunteers',
+#  },
+#  {
+#    engine => 'DB2',
+#    producer_args => {},
+#    parser_args => {},
+#    todo => 'Needs volunteers',
+#  },
 
 # There is no Access producer
 #  {
