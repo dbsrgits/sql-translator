@@ -261,7 +261,7 @@ sub produce {
         push (@output, join("\n\n",
                        @comments,
                        $procedure->sql(),
-                       ));
+                       ), "\n");
     }
 
 
@@ -673,7 +673,7 @@ sub create_trigger {
     my ($trigger) = @_;
     # CREATE TRIGGER tree_change_trig BEFORE DELETE or INSERT or UPDATE ON type FOR EACH ROW EXECUTE PROCEDURE type_tree_change();
     my $db_events = join ' or ', $trigger->database_events;
-    my $out = sprintf('CREATE TRIGGER %s %s %s ON %s',
+    my $out = sprintf('CREATE TRIGGER %s %s %s ON %s %s',
                       $trigger->name,
                       $trigger->perform_action_when || 'AFTER',
                       $db_events,
