@@ -65,9 +65,4 @@ CREATE VIEW "email_list" ( "email" ) AS
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
 
-CREATE TRIGGER foo_trigger after insert ON Basic update modified=timestamp();;
-
-CREATE TRIGGER bar_trigger before insert or update ON Basic update modified2=timestamp();;
-
-select foo from bar
 SQL
