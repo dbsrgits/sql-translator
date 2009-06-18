@@ -275,7 +275,7 @@ sub produce {
                 $constraint->reference_fields;
             next unless @fields;
 
-			my $c_def;
+            my $c_def;
             if ( $type eq PRIMARY_KEY ) {
                 $name ||= mk_name( $table_name . '_pk' );
                 $c_def = 
@@ -284,19 +284,26 @@ sub produce {
             }
             elsif ( $type eq FOREIGN_KEY ) {
                 $name ||= mk_name( $table_name . '_fk' );
+                my $on_delete = uc ($constraint->on_delete || '');
+                my $on_update = uc ($constraint->on_update || '');
+
+                # The default implicit constraint action in MSSQL is RESTRICT
+                # but you can not specify it explicitly. Go figure :)
+                for ($on_delete, $on_update) {
+                  undef $_ if $_ eq 'RESTRICT'
+                }
+
                 $c_def = 
                     "CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
                     ' (' . join( ', ', @rfields ) . ')';
-                 my $on_delete = $constraint->on_delete;
-                 if ( $on_delete && $on_delete ne "NO ACTION") {
-                 	$c_def .= " ON DELETE $on_delete";
-                 }
-                 my $on_update = $constraint->on_update;
-                 if ( $on_update && $on_update ne "NO ACTION") {
-                 	$c_def .= " ON UPDATE $on_update";
-                 }
+                if ( $on_delete && $on_delete ne "NO ACTION") {
+                  $c_def .= " ON DELETE $on_delete";
+                }
+                if ( $on_update && $on_update ne "NO ACTION") {
+                  $c_def .= " ON UPDATE $on_update";
+                }
             }
             elsif ( $type eq UNIQUE ) {
                 $name ||= mk_name( $table_name . '_uc' );
