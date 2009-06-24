@@ -181,10 +181,15 @@ create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_sys
         }
     }
 
-create_constraint : /create/i constraint 
+create_constraint : /create/i constraint
     {
         @table_comments = ();
         push @{ $tables{ $item[2]{'table'} }{'constraints'} }, $item[2];
+    }
+
+create_constraint : /alter/i /table/i ident /add/i foreign_key_constraint END_STATEMENT
+    {
+        push @{ $tables{ $item[3]{name} }{constraints} }, $item[5];
     }
 
 create_index : /create/i index

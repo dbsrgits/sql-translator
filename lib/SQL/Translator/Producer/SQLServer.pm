@@ -152,6 +152,9 @@ sub produce {
     }
 
     # Generate the CREATE sql
+
+    my @foreign_constraints = (); # these need to be added separately, as tables may not exist yet
+
     for my $table ( $schema->get_tables ) {
         my $table_name    = $table->name or next;
         my $table_name_ur = unreserve($table_name) || '';
@@ -194,6 +197,9 @@ sub produce {
             }
             elsif ( $data_type eq 'set' ) {
                 $data_type .= 'character varying';
+            }
+            elsif ( grep { $data_type eq $_ } qw/bytea blob clob/ ) {
+                $data_type = 'varbinary';
             }
             else {
                 if ( defined $translate{ $data_type } ) {
@@ -276,13 +282,7 @@ sub produce {
             next unless @fields;
 
             my $c_def;
-            if ( $type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name . '_pk' );
-                $c_def = 
-                    "CONSTRAINT $name PRIMARY KEY ".
-                    '(' . join( ', ', @fields ) . ')';
-            }
-            elsif ( $type eq FOREIGN_KEY ) {
+            if ( $type eq FOREIGN_KEY ) {
                 $name ||= mk_name( $table_name . '_fk' );
                 my $on_delete = uc ($constraint->on_delete || '');
                 my $on_update = uc ($constraint->on_update || '');
@@ -294,16 +294,31 @@ sub produce {
                 }
 
                 $c_def = 
-                    "CONSTRAINT $name FOREIGN KEY".
+                    "ALTER TABLE $table_name ADD CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
-                    ' (' . join( ', ', @rfields ) . ')';
+                    ' (' . join( ', ', @rfields ) . ')'
+                ;
+
                 if ( $on_delete && $on_delete ne "NO ACTION") {
                   $c_def .= " ON DELETE $on_delete";
                 }
                 if ( $on_update && $on_update ne "NO ACTION") {
                   $c_def .= " ON UPDATE $on_update";
                 }
+
+                $c_def .= ";";
+
+                push @foreign_constraints, $c_def;
+                next;
+            }
+
+
+            if ( $type eq PRIMARY_KEY ) {
+                $name ||= mk_name( $table_name . '_pk' );
+                $c_def = 
+                    "CONSTRAINT $name PRIMARY KEY ".
+                    '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq UNIQUE ) {
                 $name ||= mk_name( $table_name . '_uc' );
@@ -338,6 +353,9 @@ sub produce {
             @index_defs,
         );
     }
+
+# Add FK constraints
+    $output .= join ("\n", '', @foreign_constraints) if @foreign_constraints;
 
 # create view/procedure are NOT prepended to the input $sql, needs
 # to be filled in with the proper syntax

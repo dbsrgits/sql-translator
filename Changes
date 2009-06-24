@@ -4,6 +4,10 @@
 
 * Fixed Pg parser - caching the compiled P::RD schema is a *very*
   bad idea
+* Fix MSSQL handling of ON UPDATE/DELETE RESTRICT
+* Delay MSSQL FK constraint deployment until after all CREATE TABLE
+  statements
+* Coerce other engine's bytea/blob/clob datatypes to VarBinary
 
 # ----------------------------------------------------------
 # 0.09006 2009-06-10
