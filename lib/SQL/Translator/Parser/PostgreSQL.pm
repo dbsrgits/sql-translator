@@ -121,9 +121,6 @@ $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
 
-my $parser; # should we do this?  There's no programmic way to 
-            # change the grammar, so I think this is safe.
-
 $GRAMMAR = q!
 
 { my ( %tables, @views, $table_order, $field_order, @table_comments) }
@@ -1013,7 +1010,7 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 # -------------------------------------------------------------------
 sub parse {
     my ( $translator, $data ) = @_;
-    $parser ||= Parse::RecDescent->new($GRAMMAR);
+    my $parser = Parse::RecDescent->new($GRAMMAR);
 
     $::RD_TRACE  = $translator->trace ? 1 : undef;
     $DEBUG       = $translator->debug;
