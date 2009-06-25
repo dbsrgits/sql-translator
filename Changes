@@ -2,6 +2,9 @@
 # x.xxxxx xxxx-xx-xx
 # ----------------------------------------------------------
 
+# ----------------------------------------------------------
+# 0.09007 2009-06-25
+# ----------------------------------------------------------
 * Fixed Pg parser - caching the compiled P::RD schema is a *very*
   bad idea
 * Fix MSSQL handling of ON UPDATE/DELETE RESTRICT
