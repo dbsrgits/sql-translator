@@ -43,7 +43,7 @@ perl_version '5.005';
 name        'SQL-Translator';
 author      'Ken Youens-Clark <kclark@cpan.org>';
 abstract    'SQL DDL transformations and more';
-license     'http://fsf.org/licensing/licenses/gpl.html';
+license     'gpl';
 repository  'https://sqlfairy.svn.sourceforge.net/svnroot/sqlfairy';
 bugtracker  'http://rt.cpan.org/NoAuth/Bugs.html?Dist=SQL-Translator';
 
