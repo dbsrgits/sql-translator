@@ -511,7 +511,7 @@ Get or set the constraint's type.
 
     my $self = shift;
 
-    if ( my $type = uc shift ) {
+    if ( my $type = uc (shift || '') ) {
         $type =~ s/_/ /g;
         return $self->error("Invalid constraint type: $type") 
             unless $VALID_CONSTRAINT_TYPE{ $type };
