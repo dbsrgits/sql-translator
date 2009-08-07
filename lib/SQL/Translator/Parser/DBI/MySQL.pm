@@ -49,7 +49,9 @@ sub parse {
     my ( $tr, $dbh ) = @_;
     my $schema       = $tr->schema;
     my @table_names  = @{ $dbh->selectcol_arrayref('show tables') };
-    my @skip_tables = defined $tr->parser_args->{skip}?split(/,/, $tr->parser_args->{skip}):();
+    my @skip_tables  = defined $tr->parser_args->{skip}
+                       ? split(/,/, $tr->parser_args->{skip})
+                       : ();
 
     $dbh->{'FetchHashKeyName'} = 'NAME_lc';
 
