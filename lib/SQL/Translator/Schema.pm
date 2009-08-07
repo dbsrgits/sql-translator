@@ -152,7 +152,7 @@ not be created.
         $table->schema($self);
     }
     else {
-        my %args = @_;
+        my %args = ref $_[0] eq 'HASH' ? %{ $_[0] } : @_;
         $args{'schema'} = $self;
         $table = $table_class->new( \%args )
           or return $self->error( $table_class->error );
@@ -245,7 +245,7 @@ procedure will not be created.
         $procedure->schema($self);
     }
     else {
-        my %args = @_;
+        my %args = ref $_[0] eq 'HASH' ? %{ $_[0] } : @_;
         $args{'schema'} = $self;
         return $self->error('No procedure name') unless $args{'name'};
         $procedure = $procedure_class->new( \%args )
@@ -331,7 +331,7 @@ not be created.
         $trigger->schema($self);
     }
     else {
-        my %args = @_;
+        my %args = ref $_[0] eq 'HASH' ? %{ $_[0] } : @_;
         $args{'schema'} = $self;
         return $self->error('No trigger name') unless $args{'name'};
         $trigger = $trigger_class->new( \%args )
@@ -414,7 +414,7 @@ not be created.
         $view->schema($self);
     }
     else {
-        my %args = @_;
+        my %args = ref $_[0] eq 'HASH' ? %{ $_[0] } : @_;
         $args{'schema'} = $self;
         return $self->error('No view name') unless $args{'name'};
         $view = $view_class->new( \%args ) or return $view_class->error;
