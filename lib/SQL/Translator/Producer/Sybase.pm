@@ -443,6 +443,6 @@ SQL::Translator.
 
 Sam Angiuoli E<lt>angiuoli@users.sourceforge.netE<gt>,
 Paul Harrington E<lt>harringp@deshaw.comE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

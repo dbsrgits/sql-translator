@@ -525,7 +525,7 @@ SQL::Translator, http://www.sqlite.org/.
 
 =head1 AUTHOR
 
-Ken Y. Clark C<< <kclark@cpan.orgE> >>.
+Ken Youens-Clark C<< <kclark@cpan.orgE> >>.
 
 Diff code added by Ash Berlin C<< <ash@cpan.org> >>.
 

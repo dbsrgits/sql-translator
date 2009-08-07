@@ -213,6 +213,6 @@ SQL::Translator, YAML, http://www.yaml.org/.
 =head1 AUTHORS
 
 darren chamberlain E<lt>darren@cpan.orgE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

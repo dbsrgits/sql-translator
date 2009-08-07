@@ -332,7 +332,7 @@ insignificant whitespace and be generally smaller.
 
 =head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =cut
