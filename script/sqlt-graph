@@ -88,7 +88,9 @@ If the schema defines foreign keys, then the graph produced will be
 directed showing the direction of the relationship.  If the foreign
 keys are intuited via natural joins, the graph will be undirected.
 
-The syntax for clustering tables into groups is:
+Clustering of tables allows you to group and box tables according to 
+function or domain or whatever criteria you choose.  The syntax for 
+clustering tables is:
 
   cluster1=table1,table2;cluster2=table3,table4
 
