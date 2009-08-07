@@ -170,7 +170,7 @@ sub parse {
     my $pkg     = "SQL::Translator::Parser::DBI::$driver";
     my $sub     = $pkg.'::parse';
 
-    $tr->load( $pkg );
+    SQL::Translator::load( $pkg );
 
     eval {
         no strict 'refs';
