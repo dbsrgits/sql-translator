@@ -252,7 +252,14 @@ if ($use_same_auth) {
 	$producer_db_password = $db_password;
 }
 
-$from = 'DBI' if !defined $from && defined $dsn;
+if ( 
+    ( !defined $from && defined $dsn )
+    ||
+    $from =~ /^DBI.*/
+) {
+    $from = 'DBI';
+}
+
 my @files = @ARGV; # source files
 unless ( @files ) {
     if ( defined($from) && $from eq 'DBI' ) {
