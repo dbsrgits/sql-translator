@@ -37,8 +37,7 @@ my ($v1, $v2);
 }
 
 # XXX- Hack to remove Graph hack!
-delete $v1->{translator};
-delete $v2->{translator};
+$_->translator (undef) for ($v1, $v2);
 
 ok(length $v1, "passing string (filename) works");
 ok(length $v2, "passing string as SCALAR reference");
