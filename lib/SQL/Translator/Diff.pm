@@ -258,8 +258,12 @@ sub produce_diff_sql {
       if ( $self->output_db !~ /^(?:MySQL|SQLite|PostgreSQL)$/ ) {
         unshift(@diffs, "-- Output database @{[$self->output_db]} is untested/unsupported!!!");
       }
-      return join '', map { $_ ? ( $_ =~ /;$/xms ? $_ : "$_;\n\n" ) : "\n" }
-      ("-- Convert schema '$src_name' to '$tar_name':", @diffs);
+
+      my @return = 
+        map { $_ ? ( $_ =~ /;$/xms ? $_ : "$_;\n\n" ) : "\n" }
+        ("-- Convert schema '$src_name' to '$tar_name':", @diffs);
+
+      return wantarray ? @return : join('', @return);
     }
     return undef;
 
