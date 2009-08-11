@@ -7,7 +7,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
-maybe_plan(97, 'SQL::Translator::Parser::Oracle');
+maybe_plan(99, 'SQL::Translator::Parser::Oracle');
 SQL::Translator::Parser::Oracle->import('parse');
 
 my $t   = SQL::Translator->new( trace => 0 );
@@ -17,6 +17,8 @@ my $sql = q[
         qtl_trait_category_id       NUMBER(11)      NOT NULL    
             CONSTRAINT pk_qtl_trait_category PRIMARY KEY,
         trait_category              VARCHAR2(100)   NOT NULL,
+        CONSTRAINT AVCON_4287_PARAM_000 CHECK 
+            (trait_category IN ('S', 'A', 'E')) ENABLE,
         UNIQUE ( trait_category )
     );
     COMMENT ON TABLE qtl_trait_category IS 
@@ -149,7 +151,9 @@ my @t1_indices = $t1->get_indices;
 is( scalar @t1_indices, 0, '0 indices on table' );
 
 my @t1_constraints = $t1->get_constraints;
-is( scalar @t1_constraints, 2, '2 constraints on table' );
+#use Data::Dumper;
+#print STDERR Dumper(\@t1_constraints), "\n";
+is( scalar @t1_constraints, 3, '3 constraints on table' );
 
 my $c1 = $t1_constraints[0];
 is( $c1->name, 'pk_qtl_trait_category', 
@@ -159,8 +163,14 @@ is( join(',', $c1->fields), 'qtl_trait_category_id',
     'Constraint is on field "qtl_trait_category_id"' );
 
 my $c2 = $t1_constraints[1];
-is( $c2->type, UNIQUE, 'Second constraint is unique' );
-is( join(',', $c2->fields), 'trait_category', 
+is( $c2->type, CHECK_C, 'Second constraint is a check' );
+is( $c2->expression, 
+    "( trait_category IN ('S', 'A', 'E') ) ENABLE",
+    'Constraint is on field "trait_category"' );
+
+my $c3 = $t1_constraints[2];
+is( $c3->type, UNIQUE, 'Third constraint is unique' );
+is( join(',', $c3->fields), 'trait_category', 
     'Constraint is on field "trait_category"' );
 
 #
