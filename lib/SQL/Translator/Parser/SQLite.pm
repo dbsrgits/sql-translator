@@ -357,6 +357,15 @@ column_constraint : NOT_NULL conflict_clause(?)
             value => $item[2],
         }
     }
+    |
+    REFERENCES ref_def
+    {
+        $return   = {
+            type             => 'foreign_key',
+            reference_table  => $item[2]{'reference_table'},
+            reference_fields => $item[2]{'reference_fields'},
+        }
+    }
 
 constraint_def : PRIMARY_KEY parens_field_list conflict_clause(?)
     {
@@ -387,6 +396,9 @@ constraint_def : PRIMARY_KEY parens_field_list conflict_clause(?)
             on_conflict => $item[5][0],
         }
     }
+
+ref_def : /(\w+)\s*\((\w+)\)/
+    { $return = { reference_table => $1, reference_fields => $2 } }
 
 table_name : qualified_name
     
@@ -540,6 +552,8 @@ WORD : /\w+/
 
 WHEN : /when/i
 
+REFERENCES : /references/i
+
 UNIQUE : /unique/i { 1 }
 
 SEMICOLON : ';'
@@ -630,8 +644,10 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} 
+                                 || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} 
+                                 || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }
@@ -667,7 +683,7 @@ sub parse {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
