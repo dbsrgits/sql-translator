@@ -10,7 +10,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 BEGIN {
-    maybe_plan(5,
+    maybe_plan(9,
         'SQL::Translator::Parser::SQLite');
 }
 SQL::Translator::Parser::SQLite->import('parse');
@@ -34,6 +34,15 @@ my $file = "$Bin/data/sqlite/create.sql";
 
     my $t2 = shift @tables;
     is( $t2->name, 'pet', "'Pet' table" );
+
+    my @constraints = $t2->get_constraints;
+    is( scalar @constraints, 3, '3 constraints on pet' );
+
+    my $c1 = pop @constraints;
+    is( $c1->type, 'FOREIGN KEY', 'FK constraint' );
+    is( $c1->reference_table, 'person', 'References person table' );
+    is( join(',', $c1->reference_fields), 'person_id', 
+        'References person_id field' );
 
     my @views = $schema->get_views;
     is( scalar @views, 1, 'Parsed one views' );

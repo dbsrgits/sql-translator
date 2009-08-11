@@ -11,7 +11,7 @@ create unique index u_name on person (name);
 
 create table pet (
   pet_id int,
-  person_id int,
+  person_id int references person (person_id),
   name varchar(30),
   age int,
   check ( age < 100 ),
