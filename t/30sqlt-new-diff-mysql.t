@@ -13,11 +13,11 @@ use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator::Schema::Constants;
 use Storable 'dclone';
 
-plan tests => 8;
+plan tests => 9;
 
 use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
-my $tr            = SQL::Translator->new;
+my $tr = SQL::Translator->new;
 
 my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
     my $t = SQL::Translator->new;
@@ -34,7 +34,19 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
 } (qw( create1.yml create2.yml ));
 
 # Test for differences
-my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'MySQL', $target_schema, 'MySQL', { no_batch_alters => 1, producer_options => { quote_table_names => 0 } } );
+my @out = SQL::Translator::Diff::schema_diff( 
+    $source_schema, 'MySQL', 
+    $target_schema, 'MySQL',
+    { 
+        no_batch_alters  => 1, 
+        producer_options => { quote_table_names => 0 } 
+    } 
+);
+
+ok( @out, 'Got a list' );
+
+my $out = join('', @out);
+
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
