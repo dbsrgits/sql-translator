@@ -272,8 +272,8 @@ table_name : NAME '.' NAME
     | NAME 
     { $item[1] }
 
-create_definition : field
-    | table_constraint
+create_definition : table_constraint
+    | field
     | <error>
 
 table_comment : comment
@@ -393,8 +393,8 @@ column_constraint : constraint_name(?) column_constraint_type constraint_state(s
             name             => $item{'constraint_name(?)'}[0] || '',
             type             => $type,
             expression       => $type eq 'check' ? $expression : '',
-            deferrable       => $item{'deferrable'},
-            deferred         => $item{'deferred'},
+            deferrable       => $desc->{'deferrable'},
+            deferred         => $desc->{'deferred'},
             reference_table  => $desc->{'reference_table'},
             reference_fields => $desc->{'reference_fields'},
 #            match_type       => $desc->{'match_type'},
@@ -409,8 +409,13 @@ column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
         { $return = { type => 'unique' } }
     | /primary\s+key/i 
         { $return = { type => 'primary_key' } }
-    | /check/i '(' /[^)]+/ ')' 
-        { $return = { type => 'check', expression => $item[3] } }
+    | /check/i check_expression
+        { 
+            $return = { 
+                type       => 'check', 
+                expression => $item[2], 
+            };
+        }
     | /references/i table_name parens_word_list(?) on_delete(?) 
     {
         $return              =  {
@@ -420,6 +425,18 @@ column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
 #            match_type       => $item[4][0],
             on_delete     => $item[5][0],
         }
+    }
+
+LPAREN : '('
+
+RPAREN : ')'
+
+check_condition_text : /.+\s+in\s+\([^)]+\)/i
+    | /[^)]+/ 
+
+check_expression : LPAREN check_condition_text RPAREN 
+    { $return = join( ' ', map { $_ || () } 
+        $item[1], $item[2], $item[3], $item[4][0] ) 
     }
 
 constraint_state : deferrable { $return = { type => $item[1] } }
@@ -553,11 +570,11 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
         }
     }
     |
-    /check/ '(' /(.+)/ ')'
+    /check/i check_expression /^(en|dis)able/i
     {
         $return        =  {
             type       => 'check',
-            expression => $item[3],
+            expression => join(' ', $item[2], $item[3]),
         }
     }
     |
@@ -668,11 +685,14 @@ sub parse {
                 name             => $cdata->{'name'},
                 type             => $cdata->{'type'},
                 fields           => $cdata->{'fields'},
+                expression       => $cdata->{'expression'},
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
+                on_delete        => $cdata->{'on_delete'} 
+                                 || $cdata->{'on_delete_do'},
+                on_update        => $cdata->{'on_update'} 
+                                 || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }
@@ -712,7 +732,7 @@ sub parse {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
