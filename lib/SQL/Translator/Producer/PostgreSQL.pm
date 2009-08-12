@@ -702,13 +702,13 @@ sub convert_datatype
             $data_type = 'integer';
         }
     }
-    my @type_without_size = qw/bigint boolean box bytea cidr circle date inet
-                               integer smallint text line lseg macaddr money
-                               path point polygon real/;
-    foreach (@type_without_size) {
-        if ( $data_type =~ qr/$_/ ) {
-            undef @size; last;
-        }
+
+    my $type_with_size = join('|',
+        'bit', 'varbit', 'character', 'bit varying', 'character varying'
+    );
+
+    if ( $data_type !~ /$type_with_size/ ) {
+        @size = (); 
     }
 
     if (defined $size[0] && $size[0] > 0 && $data_type =~ /^time/i ) {
@@ -717,8 +717,6 @@ sub convert_datatype
     } elsif ( defined $size[0] && $size[0] > 0 ) {
             $data_type .= '(' . join( ',', @size ) . ')';
     }
-    
-
 
     return $data_type;
 }
