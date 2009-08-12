@@ -110,7 +110,8 @@ my $DEFAULT_MAX_ID_LENGTH = 64;
 
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment truncate_id_uniquely parse_mysql_version);
+use SQL::Translator::Utils qw(debug header_comment 
+    truncate_id_uniquely parse_mysql_version);
 
 #
 # Use only lowercase for the keys (e.g. "long" and not "LONG")
@@ -618,22 +619,23 @@ sub alter_create_index
 
 sub create_index
 {
-    my ($index, $options) = @_;
+    my ( $index, $options ) = @_;
 
     my $qf = $options->{quote_field_names} || '';
 
-    return join( ' ', 
-                  lc $index->type eq 'normal' 
-                    ? 'INDEX' 
-                    : $index->type . ' INDEX'
-                  ,
-                  $index->name 
-                    ? (truncate_id_uniquely( $index->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ) )
-                    : ()
-                  ,
-                  '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
-                 );
-
+    return join(
+        ' ',
+        lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
+        $index->name
+        ? (
+            truncate_id_uniquely(
+                $index->name,
+                $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
+            )
+          )
+        : '',
+        '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
+    );
 }
 
 sub alter_drop_index
