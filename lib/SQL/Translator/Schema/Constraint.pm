@@ -291,9 +291,10 @@ or "partial."
 
 =cut
 
-    my $self = shift;
+    my ( $self, $arg ) = @_;
     
-    if ( my $arg = lc shift ) {
+    if ( $arg ) {
+        $arg = lc $arg;
         return $self->error("Invalid match type: $arg")
             unless $arg eq 'full' || $arg eq 'partial';
         $self->{'match_type'} = $arg;
@@ -509,9 +510,10 @@ Get or set the constraint's type.
 
 =cut
 
-    my $self = shift;
+    my ( $self, $type ) = @_;
 
-    if ( my $type = uc (shift || '') ) {
+    if ( $type ) {
+        $type = uc $type;
         $type =~ s/_/ /g;
         return $self->error("Invalid constraint type: $type") 
             unless $VALID_CONSTRAINT_TYPE{ $type };
@@ -601,6 +603,6 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

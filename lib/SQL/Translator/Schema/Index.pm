@@ -229,9 +229,10 @@ uppercase.
 
 =cut
 
-    my $self = shift;
+    my ( $self, $type ) = @_;
 
-    if ( my $type = uc shift ) {
+    if ( $type ) {
+        $type = uc $type;
         return $self->error("Invalid index type: $type") 
             unless $VALID_INDEX_TYPE{ $type };
         $self->{'type'} = $type;
@@ -302,6 +303,6 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

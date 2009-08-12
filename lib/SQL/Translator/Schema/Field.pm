@@ -689,6 +689,6 @@ sub DESTROY {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

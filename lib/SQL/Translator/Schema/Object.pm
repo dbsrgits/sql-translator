@@ -231,6 +231,7 @@ sub _compare_objects {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>, Mark Addison E<lt>mark.addison@itn.co.ukE<gt> 
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>, 
+Mark Addison E<lt>mark.addison@itn.co.ukE<gt>.
 
 =cut

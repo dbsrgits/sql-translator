@@ -1122,7 +1122,7 @@ sub DESTROY {
 
 =head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
 Allen Day E<lt>allenday@ucla.eduE<gt>.
 
 =cut

@@ -292,7 +292,7 @@ sub DESTROY {
 
 =head1 AUTHORS
 
-Ken Y. Clark E<lt>kclark@cshl.orgE<gt>,
+Ken Youens-Clark E<lt>kclark@cshl.orgE<gt>,
 Paul Harrington E<lt>Paul-Harrington@deshaw.comE<gt>.
 
 =cut
