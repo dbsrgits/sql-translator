@@ -673,7 +673,7 @@ normal_index : KEY index_name_not_using(?) index_type(?) '(' name_with_opt_paren
     }
 
 index_name_not_using : QUOTED_NAME
-    | /\b([^u][^s]?[^i]?[^n]?[^g]?\w*?)\b/ { $return = $1 }
+    | /(\b(?!using)\w+\b)/ { $return = $1 }
 
 index_type : /using (btree|hash|rtree)/i { $return = uc $1 }
 
