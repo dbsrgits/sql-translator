@@ -594,12 +594,6 @@ not_null     : /not/i /null/i
 
 unsigned     : /unsigned/i { $return = 0 }
 
-#default_val  : /default/i /(?:')?[\s\w\d:.-]*(?:')?/ 
-#    { 
-#        $item[2] =~ s/'//g; 
-#        $return  =  $item[2];
-#    }
-
 default_val : 
     /default/i 'CURRENT_TIMESTAMP'
     {
@@ -667,15 +661,21 @@ unique_key_def : UNIQUE KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
         } 
     }
 
-normal_index : KEY index_name(?) '(' name_with_opt_paren(s /,/) ')'
+normal_index : KEY index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')'
     { 
         $return       = { 
             supertype => 'index',
             type      => 'normal',
-            name      => $item{'index_name(?)'}[0],
-            fields    => $item[4],
+            name      => $item[2][0],
+            fields    => $item[5],
+            options   => $item[3][0],
         } 
     }
+
+index_name_not_using : QUOTED_NAME
+    | /\b([^u][^s]?[^i]?[^n]?[^g]?\w*?)\b/ { $return = $1 }
+
+index_type : /using (btree|hash|rtree)/i { $return = uc $1 }
 
 fulltext_index : /fulltext/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     { 
@@ -756,14 +756,15 @@ BACKTICK : '`'
 
 DOUBLE_QUOTE: '"'
 
-NAME    : BACKTICK /[^`]+/ BACKTICK
+QUOTED_NAME : BACKTICK /[^`]+/ BACKTICK
     { $item[2] }
     | DOUBLE_QUOTE /[^"]+/ DOUBLE_QUOTE
     { $item[2] }
-    | /\w+/
-    { $item[1] }
 
-VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
+NAME: QUOTED_NAME
+    | /\w+/ 
+
+VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
     | /'.*?'/   
     { 
