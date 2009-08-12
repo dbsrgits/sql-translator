@@ -811,6 +811,7 @@ ok ($@, 'Exception thrown on invalid version string');
         id char(32) not null default '0' primary key,
         ssn varchar(12) NOT NULL default 'test single quotes like in you''re',
         user varchar(20) NOT NULL default 'test single quotes escaped like you\'re',
+        key using btree (ssn) 
     );|;
 
     my $val = parse($tr, $data);
