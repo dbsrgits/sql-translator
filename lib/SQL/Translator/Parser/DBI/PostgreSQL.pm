@@ -41,6 +41,13 @@ use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
 $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
+my $actions = {c => 'cascade',
+               r => 'restrict',
+               a => 'no action',
+               n => 'set null',
+               d => 'set default',
+           };
+
 # -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
@@ -70,6 +77,46 @@ sub parse {
           (SELECT oid FROM pg_namespace WHERE nspname='public')
           AND relkind='r';"
     );
+
+    my $fk_select = $dbh->prepare(
+        q/
+SELECT r.conname,
+       c.relname,
+       d.relname AS frelname,
+       r.conkey,
+       ARRAY(SELECT column_name::varchar
+               FROM information_schema.columns
+              WHERE ordinal_position = ANY  (r.conkey)
+                AND table_schema = n.nspname
+                AND table_name   =   c.relname ) AS fields,
+       r.confkey,
+       ARRAY(SELECT column_name::varchar
+               FROM information_schema.columns
+              WHERE ordinal_position = ANY  (r.confkey)
+                AND table_schema =   n.nspname
+                AND table_name   =   d.relname ) AS reference_fields,
+       r.confupdtype,
+       r.confdeltype,
+       r.confmatchtype
+
+FROM pg_catalog.pg_constraint r
+
+JOIN pg_catalog.pg_class c
+  ON c.oid = r.conrelid
+ AND r.contype = 'f'
+
+JOIN pg_catalog.pg_class d
+  ON d.oid = r.confrelid
+
+JOIN pg_catalog.pg_namespace n
+  ON n.oid = c.relnamespace
+
+WHERE pg_catalog.pg_table_is_visible(c.oid)
+  AND n.nspname = ?
+  AND c.relname = ?
+ORDER BY 1;
+        /) or die "Can't prepare: $@";
+    
     $table_select->execute();
 
     while ( my $tablehash = $table_select->fetchrow_hashref ) {
@@ -117,7 +164,7 @@ sub parse {
                 $table->get_field($col_name)->{is_primary_key}=1;
 
             } elsif ($$indexhash{'indisunique'}) {
-                $type = UNIQUE;    
+                $type = UNIQUE;
             } else {
                 $type = NORMAL;
             }
@@ -134,7 +181,29 @@ sub parse {
                               fields       => \@columns,
                              ) || die $table->error;
         }
+        
+        $fk_select->execute('public',$table_name) or die "Can't execute: $@";
+        my $fkeys = $fk_select->fetchall_arrayref({});
+        print Dumper $fkeys;
+        for my $con (@$fkeys){
+            my $con_name         = $con->{conname};
+            my $fields           = $con->{fields};
+            my $reference_fields = $con->{reference_fields};
+            my $reference_table  = $con->{frelname};
+            my $on_upd           = $con->{confupdtype};
+            my $on_del           = $con->{confdeltype};
+            $table->add_constraint(
+                                   name   => $con_name,
+                                   type   => 'foreign_key',
+                                   fields =>  $fields,
+                                   reference_fields => $reference_fields,
+                                   reference_table => $reference_table,
+                                   on_delete  => $actions->{$on_upd},
+                                   on_update  => $actions->{$on_del},
+                               );
+        }
     }
+    
 
     return 1;
 }
