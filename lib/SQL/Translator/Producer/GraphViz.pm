@@ -519,7 +519,7 @@ sub produce {
           $node_args->{cluster} = $cluster_name;
         }
 
-        $gv->add_node ($table_name, %$node_args);
+        $gv->add_node(qq["$table_name"], %$node_args);
 
         debug("Processing table '$table_name'");
 
