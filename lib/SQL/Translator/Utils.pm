@@ -21,16 +21,16 @@ package SQL::Translator::Utils;
 use strict;
 use base qw(Exporter);
 use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
-
 use Digest::SHA1 qw( sha1_hex );
-
 use Exporter;
+use Readonly;
 
 $VERSION = '1.59';
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT parse_mysql_version
 );
+Readonly my $COLLISION_TAG_LENGTH => 8;
 
 # ----------------------------------------------------------------------
 # debug(@msg)
@@ -151,13 +151,14 @@ sub parse_list_arg {
 # truncated name, giving a high probability that the symbol will be
 # unique.
 # ----------------------------------------------------------------------
-my $COLLISION_TAG_LENGTH = 8;
 sub truncate_id_uniquely {
     my ( $desired_name, $max_symbol_length ) = @_;
 
-    return $desired_name unless defined $desired_name && length $desired_name > $max_symbol_length;
+    return $desired_name
+      unless defined $desired_name && length $desired_name > $max_symbol_length;
 
-    my $truncated_name = substr $desired_name, 0, $max_symbol_length - $COLLISION_TAG_LENGTH - 1;
+    my $truncated_name = substr $desired_name, 0,
+      $max_symbol_length - $COLLISION_TAG_LENGTH - 1;
 
     # Hex isn't the most space-efficient, but it skirts around allowed
     # charset issues
