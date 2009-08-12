@@ -93,7 +93,7 @@ GetOptions(
     't|title:s'       => \$title,
     'c|columns:i'     => \$no_columns,
     'n|no-lines'      => \$no_lines,
-    'font-size:s'   => \$font_size,
+    'font-size:s'     => \$font_size,
     'gutter:i'        => \$gutter,
     'color'           => \$add_color,
     'show-fk-only'    => \$show_fk_only,
