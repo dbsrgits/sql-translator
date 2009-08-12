@@ -521,6 +521,7 @@ sub produce {
     #
     if ( $out_file ) {
         open my $fh, '>', $out_file or die "Can't write '$out_file': $!\n";
+        binmode $fh;
         print $fh $gd->$output_type;
         close $fh;
     }
