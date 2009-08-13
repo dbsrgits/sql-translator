@@ -174,21 +174,17 @@ and table_constraint is:
 
 # -------------------------------------------------------------------
 sub produce {
-    my $translator     = shift;
-    local $DEBUG             = $translator->debug;
-    local $WARN              = $translator->show_warnings;
-    my $no_comments    = $translator->no_comments;
-    my $add_drop_table = $translator->add_drop_table;
-    my $schema         = $translator->schema;
-    my $pargs          = $translator->producer_args;
-    local %used_names  = ();
-
+    my $translator       = shift;
+    local $DEBUG         = $translator->debug;
+    local $WARN          = $translator->show_warnings;
+    my $no_comments      = $translator->no_comments;
+    my $add_drop_table   = $translator->add_drop_table;
+    my $schema           = $translator->schema;
+    my $pargs            = $translator->producer_args;
     my $postgres_version = $pargs->{postgres_version} || 0;
 
-    my $qt = '';
-    $qt = '"' if ($translator->quote_table_names);
-    my $qf = '';
-    $qf = '"' if ($translator->quote_field_names);
+    my $qt = $translator->quote_table_names ? q{"} : q{};
+    my $qf = $translator->quote_field_names ? q{"} : q{};
     
     my @output;
     push @output, header_comment unless ($no_comments);
@@ -196,15 +192,16 @@ sub produce {
     my (@table_defs, @fks);
     for my $table ( $schema->get_tables ) {
 
-        my ($table_def, $fks) = create_table($table, 
-                                             { quote_table_names => $qt,
-                                               quote_field_names => $qf,
-                                               no_comments => $no_comments,
-                                               postgres_version => $postgres_version,
-                                               add_drop_table => $add_drop_table,});
+        my ($table_def, $fks) = create_table($table, { 
+            quote_table_names => $qt,
+            quote_field_names => $qf,
+            no_comments       => $no_comments,
+            postgres_version  => $postgres_version,
+            add_drop_table    => $add_drop_table,
+        });
+
         push @table_defs, $table_def;
         push @fks, @$fks;
-
     }
 
     for my $view ( $schema->get_views ) {
@@ -704,7 +701,8 @@ sub convert_datatype
     }
 
     my $type_with_size = join('|',
-        'bit', 'varbit', 'character', 'bit varying', 'character varying'
+        'bit', 'varbit', 'character', 'bit varying', 'character varying',
+        'time', 'timestamp', 'interval'
     );
 
     if ( $data_type !~ /$type_with_size/ ) {
@@ -715,7 +713,7 @@ sub convert_datatype
         $data_type =~ s/^(time.*?)( with.*)?$/$1($size[0])/;
         $data_type .= $2 if(defined $2);
     } elsif ( defined $size[0] && $size[0] > 0 ) {
-            $data_type .= '(' . join( ',', @size ) . ')';
+        $data_type .= '(' . join( ',', @size ) . ')';
     }
 
     return $data_type;
