@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(22,
+    maybe_plan(24,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -76,6 +76,42 @@ my $field3 = SQL::Translator::Schema::Field->new( name      => 'time_field',
 my $field3_sql = SQL::Translator::Producer::PostgreSQL::create_field($field3);
 
 is($field3_sql, 'time_field time NOT NULL', 'Create time field works');
+
+my $field3_datetime_with_TZ = SQL::Translator::Schema::Field->new(
+    name      => 'datetime_with_TZ',
+    table     => $table,
+    data_type => 'timestamp with time zone',
+    size      => 7,
+);
+
+my $field3_datetime_with_TZ_sql = 
+    SQL::Translator::Producer::PostgreSQL::create_field(
+        $field3_datetime_with_TZ
+    );
+
+is(
+    $field3_datetime_with_TZ_sql, 
+    'datetime_with_TZ timestamp(6) with time zone', 
+    'Create time field with time zone and size, works'
+);
+
+my $field3_time_without_TZ = SQL::Translator::Schema::Field->new(
+    name      => 'time_without_TZ',
+    table     => $table,
+    data_type => 'time without time zone',
+    size      => 2,
+);
+
+my $field3_time_without_TZ_sql 
+    = SQL::Translator::Producer::PostgreSQL::create_field(
+        $field3_time_without_TZ
+    );
+
+is(
+    $field3_time_without_TZ_sql, 
+    'time_without_TZ time(2) without time zone', 
+    'Create time field without time zone but with size, works'
+);
 
 my $field4 = SQL::Translator::Schema::Field->new( name      => 'bytea_field',
                                                   table => $table,
