@@ -299,21 +299,21 @@ sub unreserve {
 
 # -------------------------------------------------------------------
 sub next_unused_name {
-    my $name = shift || '';
-    if ( !defined( $used_names{$name} ) ) {
-        $used_names{$name} = $name;
-        return $name;
+    my $orig_name = shift or return;
+    my $name      = $orig_name;
+
+    my $suffix_gen = sub {
+        my $suffix = 0;
+        return ++$suffix ? '' : $suffix;
+    };
+
+    for (;;) {
+        $name = $orig_name . $suffix_gen->();
+        last if $used_names{ $name }++;
     }
 
-    my $i = 2;
-    while ( defined( $used_names{ $name . $i } ) ) {
-        ++$i;
-    }
-    $name .= $i;
-    $used_names{$name} = $name;
     return $name;
 }
-
 
 sub create_table 
 {
