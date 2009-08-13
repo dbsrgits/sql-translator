@@ -1,7 +1,7 @@
 create table person (
-  person_id INTEGER PRIMARY KEY,
-  name varchar(20) not null,
-  age integer,
+  person_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  'name' varchar(20) not null,
+  'age' integer,
   weight double(11,2),
   iq tinyint default '0',
   description text
@@ -10,10 +10,10 @@ create table person (
 create unique index u_name on person (name);
 
 create table pet (
-  pet_id int,
-  person_id int references person (person_id),
-  name varchar(30),
-  age int,
+  "pet_id" int,
+  "person_id" int references person (person_id),
+  "name" varchar(30),
+  "age" int,
   check ( age < 100 ),
   primary key (pet_id, person_id)
 );
