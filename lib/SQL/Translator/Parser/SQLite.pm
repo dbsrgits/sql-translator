@@ -224,7 +224,7 @@ comment : /\/\*/ /[^\*]+/ /\*\//
 #
 # Create Index
 #
-create : CREATE TEMPORARY(?) UNIQUE(?) INDEX WORD ON table_name parens_field_list conflict_clause(?) SEMICOLON
+create : CREATE TEMPORARY(?) UNIQUE(?) INDEX NAME ON table_name parens_field_list conflict_clause(?) SEMICOLON
     {
         my $db_name    = $item[7]->{'db_name'} || '';
         my $table_name = $item[7]->{'name'};
@@ -304,6 +304,9 @@ column_def: comment(s?) NAME type(?) column_constraint(s?)
             elsif ( $c->{'type'} eq 'default' ) {
                 $column->{'default'} = $c->{'value'};
             }
+            elsif ( $c->{'type'} eq 'autoincrement' ) {
+                $column->{'is_auto_inc'} = 1;
+            }
         }
 
         $column;
@@ -364,6 +367,13 @@ column_constraint : NOT_NULL conflict_clause(?)
             type             => 'foreign_key',
             reference_table  => $item[2]{'reference_table'},
             reference_fields => $item[2]{'reference_fields'},
+        }
+    }
+    |
+    AUTOINCREMENT
+    {
+        $return = {
+            type => 'autoincrement',
         }
     }
 
@@ -554,11 +564,13 @@ WHEN : /when/i
 
 REFERENCES : /references/i
 
+AUTOINCREMENT : /autoincrement/i
+
 UNIQUE : /unique/i { 1 }
 
 SEMICOLON : ';'
 
-NAME : /'?(\w+)'?/ { $return = $1 }
+NAME : /["']?(\w+)["']?/ { $return = $1 }
 
 VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
