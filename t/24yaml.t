@@ -88,6 +88,7 @@ schema:
         person_id:
           data_type: INTEGER
           default_value: ~
+          is_auto_increment: 1
           is_nullable: 0
           is_primary_key: 1
           is_unique: 0
@@ -136,6 +137,19 @@ schema:
           reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
+        - deferrable: 1
+          expression: ''
+          fields:
+            - person_id
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields:
+            - person_id
+          reference_table: person
+          type: FOREIGN KEY
       fields:
         age:
           data_type: int
