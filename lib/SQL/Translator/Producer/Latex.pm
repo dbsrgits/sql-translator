@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Latex;
 
 # -------------------------------------------------------------------
-# Copyright (C) 2002-6 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -57,7 +57,7 @@ automatically arrange them horizontally or vertically.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+$VERSION = '1.60';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Utils 'debug';
@@ -112,7 +112,7 @@ sub latex {
 
 =head1 AUTHOR
 
-Chris Mungall 
+Chris Mungall.
 
 =head1 SEE ALSO
 

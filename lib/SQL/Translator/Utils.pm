@@ -25,7 +25,7 @@ use Digest::SHA1 qw( sha1_hex );
 use Exporter;
 use Readonly;
 
-$VERSION = '1.59';
+$VERSION = '1.60';
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT parse_mysql_version
@@ -366,6 +366,6 @@ version specifications:
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut

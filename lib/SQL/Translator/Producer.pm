@@ -1,7 +1,7 @@
 package SQL::Translator::Producer;
 
 # -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
+# Copyright (C) 2002-2009 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -20,7 +20,7 @@ package SQL::Translator::Producer;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 sub produce { "" }
 
@@ -105,7 +105,7 @@ by the parser.  It is expected to return a string.
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

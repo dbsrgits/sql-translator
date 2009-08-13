@@ -38,7 +38,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+$VERSION = '1.60';
 $DEBUG   = 0 unless defined $DEBUG;
 
 my $actions = {c => 'cascade',

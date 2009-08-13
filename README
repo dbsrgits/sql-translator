@@ -18,19 +18,25 @@ parsed data via the built-in object model.  Presently only the
 definition parts of SQL are handled (CREATE, ALTER), not the
 manipulation of data (INSERT, UPDATE, DELETE).
 
-As of version 0.06, parsers exist for the following:
+As of version 0.10, parsers exist for the following:
 
     Databases:
+        Access
+        DB2
+        DBI-DB2
+        DBI-MySQL
+        DBI-Oracle
+        DBI-PostgreSQL
+        DBI-SQLServer
+        DBI-SQLite
+        DBI-Sybase
         MySQL
         Oracle
         PostgreSQL
+        SQLServer
         SQLite
+        Storable
         Sybase
-
-        DBI-MySQL
-        DBI-PostgreSQL
-        DBI-SQLite
-        DBI-Sybase
 
     Other:
         xSV          : arbitrarily delimited text files
@@ -41,20 +47,27 @@ As of version 0.06, parsers exist for the following:
 And the following producers exist:
 
     Databases:
+        DB2
         MySQL
         Oracle
         PostgreSQL
+        SQLServer
         SQLite
+        Storable
         Sybase
     
     Code Generators:
         ClassDBI     : Class::DBI classes
+        Dumper       : create a "mysqldump"-like dumper for database
+        DBIx-Class   : see the DBIx::Class distribution
 
     Documentation:
         Diagram      : quasi-ER diagrams using libgd
         GraphViz     : ER diagrams using GraphViz
         HTML         : HTML documentation of schema
         POD          : Plain Old Documenation of schema
+        Latex        : self-explanatory
+        DiaUml       : ditto
 
     Serialization:
         Storable     : using Perl's Storable module
@@ -68,12 +81,12 @@ Included in this distribution are a few scripts designed to be user
 interfaces for the actual SQL::Translator modules.  In the "bin"
 directory, you will find:
 
-*   sqlt-diagram: interface to Diagram producer
-*   sqlt-diff   : diff two schemas to generate schema mutation file 
-*   sqlt-graph  : interface to GraphViz producer
-*   sqlt-dumper : create a data dumper script from a schema
-*   sqlt        : command-line interface for text-to-text translations
-*   sqlt.cgi    : CGI interface for all SQLFairy functions
+*   sqlt         : command-line interface for text-to-text translations
+*   sqlt-diagram : interface to Diagram producer
+*   sqlt-diff    : diff two schemas to generate schema mutation file 
+*   sqlt-graph   : interface to GraphViz producer
+*   sqlt-dumper  : create a data dumper script from a schema
+*   sqlt.cgi     : CGI interface for all SQLFairy functions
 
 All scripts not ending in ".cgi" are meant to be run from the command
 line with various switches to control the input and output of the
@@ -95,11 +108,9 @@ manipulate the SQL::Translator::Schema objects.
 
 INSTALLATION
 
-    $ perl Build.PL
-    $ ./Build
-    $ ./Build test
-    $ su
-    # ./Build install
+    $ perl Makefile.PL
+    $ make && make test
+    $ sudo make install
 
 MANUAL
 

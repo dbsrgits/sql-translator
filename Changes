@@ -1,6 +1,34 @@
 # ----------------------------------------------------------
-# x.xxxxx xxxx-xx-xx
+# 0.10 2009-08-13
 # ----------------------------------------------------------
+* Resolved the following RT bugs (thanks to everyone for reporting!):
+25791   does not recognize PostgreSQL ON_ERROR_STOP 
+29265   sqlt-diagram: --natural-join needs Graph::Directed  
+37814   SQLite translator failing to parse schema   
+42548   Producer::PostgreSQL incorrectly inserts the size in
+        'time(stamp)? with(out) time zone' fields
+43173   SQL::Translator::Parser without versionnumber - will install 
+        old 0.09002    
+46805   (No subject)    
+47026   META.yml is not packaged due to MANIFEST.SKIP (easyfix) 
+32130   Move from XML::XPath to XML::LibXML::XPathContext   
+22261   MySQL parse 
+13915   missing optional prerequisite cause make test to fail   
+8847    Diagram.pm: BINMODE missing in printing of graphic file.    
+21065   GraphViz producer fails on tables named 'node'  
+35448   Producer::PostgreSQL types without size 
+22026   sqlt-diagram uses -f arg twice  
+47897   [PATCH] Fix uninitialized value within @_ in (uc|lc)    
+47668   Mysql Parser doesn't recognize key types    
+46448   sqlt-graph errors out on MySQL DDL with btree keys  
+47176   Add Foreign Key support to Parser::DBI::PostgreSQL.pm   
+48025   MySQL Producer: Case inconsistency between elements in 
+        @no_length_attr and $data_type   
+48569   sqlt-diagram fails to load SQLite schema    
+48596   SQL::Translator::Diff::schema_diff should produce a list in 
+        list context    
+44907   SQL::Translator::Producer::PostgreSQL produce() in list context 
+        should return a list of statements
 
 # ----------------------------------------------------------
 # 0.09007 2009-06-25
@@ -24,6 +52,10 @@
 # ----------------------------------------------------------
 * Add parser support for MySQL default values with a single quote
 * Properly quote absolute table names in the MySQL producer
+<<<<<<< .mine
+* Added CREATE VIEW subrules for mysql parser (wreis)
+* Many fixes to code and tests for trigger's "database_events"
+=======
 * Added semi-colon for (DROP|CREATE) TYPE statements in the Pg producer (wreis)
 * Added CREATE VIEW subrules for mysql parser (wreis)
 * ALTER TABLE/ALTER COLUMN/DROP DEFAULT support in Pg producer (mo)
@@ -51,6 +83,7 @@
       - Support parsing of all DROP clauses
       - Support parsing of field-level comments
       - When producing do not append table names to constraint/index names
+>>>>>>> .r1584
 
 # ----------------------------------------------------------
 # 0.09004 2009-02-13

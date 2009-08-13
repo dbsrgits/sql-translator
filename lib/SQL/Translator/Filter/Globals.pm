@@ -56,7 +56,7 @@ SQL::Translator::Filter::Globals - Add global fields and indices to all tables.
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 sub filter {
     my $schema = shift;
@@ -147,21 +147,22 @@ __END__
 
 =head1 DESCRIPTION
 
-Adds global fields, indices and constraints to all tables in the schema.
-The globals to add can either be defined in the filter args or using a _GLOBAL_
-table (see below).
+Adds global fields, indices and constraints to all tables in the
+schema.  The globals to add can either be defined in the filter args
+or using a _GLOBAL_ table (see below).
 
-If a table already contains a field with the same name as a global then it is
-skipped for that table.
+If a table already contains a field with the same name as a global
+then it is skipped for that table.
 
 =head2 The _GLOBAL_ Table
 
-An alternative to using the args is to add a table called C<_GLOBAL_> to the
-schema and then just use the filter. Any fields and indices defined on this table
-will be added to all the tables in the schema and the _GLOBAL_ table removed.
+An alternative to using the args is to add a table called C<_GLOBAL_>
+to the schema and then just use the filter. Any fields and indices
+defined on this table will be added to all the tables in the schema
+and the _GLOBAL_ table removed.
 
-The name of the global can be changed using a C<global_table> arg to the
-filter.
+The name of the global can be changed using a C<global_table> arg to
+the filter.
 
 =head1 SEE ALSO
 
@@ -169,16 +170,16 @@ L<perl(1)>, L<SQL::Translator>
 
 =head1 BUGS
 
-Will generate duplicate indices if an index already exists on a table the same
-as one added globally.
-
-Will generate duplicate constraints if a constraint already exists on a table
+Will generate duplicate indices if an index already exists on a table
 the same as one added globally.
+
+Will generate duplicate constraints if a constraint already exists on
+a table the same as one added globally.
 
 =head1 TODO
 
-Some extra data values that can be used to control the global addition. e.g.
-'skip_global'.
+Some extra data values that can be used to control the global
+addition. e.g.  'skip_global'.
 
 =head1 AUTHOR
 

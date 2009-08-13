@@ -40,7 +40,8 @@ use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Constraint;
 
-our $VERSION = '1.59';
+use vars qw[ $VERSION ];
+$VERSION = '1.60';
 
 # -------------------------------------------------------------------
 sub parse {

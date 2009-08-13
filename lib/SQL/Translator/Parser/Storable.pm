@@ -40,7 +40,7 @@ the data into a database tables or graphs.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 use Storable;
 use Exporter;

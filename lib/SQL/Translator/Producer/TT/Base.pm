@@ -30,7 +30,7 @@ class.
 use strict;
 
 use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 use Template;
 use Data::Dumper;

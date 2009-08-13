@@ -1,8 +1,12 @@
 package SQL::Translator::Parser::DB2;
+
 use Data::Dumper;
 use SQL::Translator::Parser::DB2::Grammar;
 use Exporter;
 use base qw(Exporter);
+
+use vars qw[ $VERSION ];
+$VERSION = '1.60';
 
 @EXPORT_OK = qw(parse);
 

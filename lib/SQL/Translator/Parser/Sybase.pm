@@ -38,7 +38,7 @@ DBI-Sybase parser included with SQL::Translator.
 use strict;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = '1.59';
+$VERSION = '1.60';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -416,7 +416,7 @@ sub parse {
 
 =head1 AUTHOR
 
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

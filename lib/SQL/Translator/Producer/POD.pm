@@ -40,7 +40,7 @@ interesting formats using Pod::POM or Template::Toolkit's POD plugin.
 
 use strict;
 use vars qw[ $VERSION ];
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);

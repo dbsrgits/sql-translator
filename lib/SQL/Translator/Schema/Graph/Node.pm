@@ -2,125 +2,149 @@ package SQL::Translator::Schema::Graph::Node;
 
 use strict;
 
+use vars qw[ $VERSION ];
+$VERSION = '1.60';
+
 use Class::MakeMethods::Template::Hash (
-  new => [ 'new' ],
-  'array_of_objects -class SQL::Translator::Schema::Graph::Edge' => [ qw( edges ) ],
-  'array_of_objects -class SQL::Translator::Schema::Graph::CompoundEdge' => [ qw( compoundedges ) ],
-  'array_of_objects -class SQL::Translator::Schema::Graph::HyperEdge' => [ qw( hyperedges ) ],
-  #'hash' => [ qw( many via has edgecount data_fields) ],
-  #'hash' => [ qw( many via has data_fields) ],
-  scalar => [ qw( base name order primary_key primary_key_accessor table is_trivial_link ) ],
-  number => [ qw( order ) ],
+    new => ['new'],
+    'array_of_objects -class SQL::Translator::Schema::Graph::Edge' =>
+      [qw( edges )],
+    'array_of_objects -class SQL::Translator::Schema::Graph::CompoundEdge' =>
+      [qw( compoundedges )],
+    'array_of_objects -class SQL::Translator::Schema::Graph::HyperEdge' =>
+      [qw( hyperedges )],
+
+    #'hash' => [ qw( many via has edgecount data_fields) ],
+    #'hash' => [ qw( many via has data_fields) ],
+    scalar => [
+        qw( base name order primary_key primary_key_accessor table is_trivial_link )
+    ],
+    number => [qw( order )],
 );
 
 sub many {
-  my($self) = shift;
+    my ($self) = shift;
 
-  $self->{_many} ||= {};
+    $self->{_many} ||= {};
 
-  if(scalar(@_) == 1){
-    my $k = shift;
-    return $self->{_many}{$k} || 0;
-  } elsif(@_) {
-    my %arg = @_;
-
-    foreach my $k (keys %arg){
-      #warn $a,"\t",$arg{$k};
-      $self->{_many}{$k} = $arg{$k};
+    if ( scalar(@_) == 1 ) {
+        my $k = shift;
+        return $self->{_many}{$k} || 0;
     }
+    elsif (@_) {
+        my %arg = @_;
 
-    return %arg;
-  } else {
-    return $self->{_many};
-  }
+        foreach my $k ( keys %arg ) {
+
+            #warn $a,"\t",$arg{$k};
+            $self->{_many}{$k} = $arg{$k};
+        }
+
+        return %arg;
+    }
+    else {
+        return $self->{_many};
+    }
 }
 
 sub via {
-  my($self) = shift;
+    my ($self) = shift;
 
-  $self->{_via} ||= {};
+    $self->{_via} ||= {};
 
-  if(scalar(@_) == 1){
-    my $k = shift;
-    return $self->{_via}{$k} || 0;
-  } elsif(@_) {
-    my %arg = @_;
-
-    foreach my $k (keys %arg){
-      #warn $a,"\t",$arg{$k};
-      $self->{_via}{$k} = $arg{$k};
+    if ( scalar(@_) == 1 ) {
+        my $k = shift;
+        return $self->{_via}{$k} || 0;
     }
+    elsif (@_) {
+        my %arg = @_;
 
-    return %arg;
-  } else {
-    return $self->{_via};
-  }
+        foreach my $k ( keys %arg ) {
+
+            #warn $a,"\t",$arg{$k};
+            $self->{_via}{$k} = $arg{$k};
+        }
+
+        return %arg;
+    }
+    else {
+        return $self->{_via};
+    }
 }
 
 sub has {
-  my($self) = shift;
+    my ($self) = shift;
 
-  $self->{_has} ||= {};
+    $self->{_has} ||= {};
 
-  if(scalar(@_) == 1){
-    my $k = shift;
-    return $self->{_has}{$k} || 0;
-  } elsif(@_) {
-    my %arg = @_;
-
-    foreach my $k (keys %arg){
-      #warn $a,"\t",$arg{$k};
-      $self->{_has}{$k} = $arg{$k};
+    if ( scalar(@_) == 1 ) {
+        my $k = shift;
+        return $self->{_has}{$k} || 0;
     }
+    elsif (@_) {
+        my %arg = @_;
 
-    return %arg;
-  } else {
-    return $self->{_has};
-  }
+        foreach my $k ( keys %arg ) {
+
+            #warn $a,"\t",$arg{$k};
+            $self->{_has}{$k} = $arg{$k};
+        }
+
+        return %arg;
+    }
+    else {
+        return $self->{_has};
+    }
 }
 
 sub edgecount {
-  my($self) = shift;
+    my ($self) = shift;
 
-  $self->{_edgecount} ||= {};
+    $self->{_edgecount} ||= {};
 
-  if(scalar(@_) == 1){
-    my $k = shift;
-    return $self->{_edgecount}{$k} || 0;
-  } elsif(@_) {
-    my %arg = @_;
-
-    foreach my $k (keys %arg){
-      #warn $a,"\t",$arg{$k};
-      $self->{_edgecount}{$k} = $arg{$k};
+    if ( scalar(@_) == 1 ) {
+        my $k = shift;
+        return $self->{_edgecount}{$k} || 0;
     }
+    elsif (@_) {
+        my %arg = @_;
 
-    return %arg;
-  } else {
-    return $self->{_edgecount};
-  }
+        foreach my $k ( keys %arg ) {
+
+            #warn $a,"\t",$arg{$k};
+            $self->{_edgecount}{$k} = $arg{$k};
+        }
+
+        return %arg;
+    }
+    else {
+        return $self->{_edgecount};
+    }
 }
 
 sub data_fields {
-  my($self) = shift;
+    my ($self) = shift;
 
-  $self->{_data_fields} ||= {};
+    $self->{_data_fields} ||= {};
 
-  if(scalar(@_) == 1){
-    my $k = shift;
-    return $self->{_data_fields}{$k};
-  } elsif(@_) {
-    my %arg = @_;
-
-    foreach my $k (keys %arg){
-      #warn $a,"\t",$arg{$k};
-      $self->{_data_fields}{$k} = $arg{$k};
+    if ( scalar(@_) == 1 ) {
+        my $k = shift;
+        return $self->{_data_fields}{$k};
     }
+    elsif (@_) {
+        my %arg = @_;
 
-    return %arg;
-  } else {
-    return $self->{_data_fields};
-  }
+        foreach my $k ( keys %arg ) {
+
+            #warn $a,"\t",$arg{$k};
+            $self->{_data_fields}{$k} = $arg{$k};
+        }
+
+        return %arg;
+    }
+    else {
+        return $self->{_data_fields};
+    }
 }
 
 1;

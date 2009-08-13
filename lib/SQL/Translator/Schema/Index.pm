@@ -46,19 +46,20 @@ Primary and unique keys are table constraints, not indices.
 use strict;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
+use Readonly;
 
 use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
-$VERSION = '1.59';
+$VERSION = '1.60';
 
-my %VALID_INDEX_TYPE = (
-  UNIQUE         => 1,
-  NORMAL         => 1,
-  FULLTEXT       => 1, # MySQL only (?)
-  FULL_TEXT      => 1, # MySQL only (?)
-  SPATIAL        => 1, # MySQL only (?)
+Readonly my %VALID_INDEX_TYPE => (
+    UNIQUE    => 1,
+    NORMAL    => 1,
+    FULLTEXT  => 1,    # MySQL only (?)
+    FULL_TEXT => 1,    # MySQL only (?)
+    SPATIAL   => 1,    # MySQL only (?)
 );
 
 # ----------------------------------------------------------------------

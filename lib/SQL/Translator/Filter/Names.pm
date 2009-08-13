@@ -47,7 +47,7 @@ SQL::Translator::Filter::Names - Tweak the names of schema objects.
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 sub filter {
     my $schema = shift;
@@ -99,15 +99,17 @@ sub _getfunc {
 
 
 # The name munging functions
-#=============================================================================
-# Get called with name to munge as first arg and return the new name. Die on
-# errors.
+# -------------------------------------------------------------------------
+# Get called with name to munge as first arg and return the new name. Die 
+# on errors.
 
 sub lc { lc shift; }
 sub uc { uc shift; }
 sub ucfirst { ucfirst shift; }
 
-1; #==========================================================================
+1; 
+
+# -------------------------------------------------------------------------
 
 __END__
 
@@ -116,8 +118,6 @@ __END__
 =head1 SEE ALSO
 
 L<perl(1)>, L<SQL::Translator>
-
-=head1 BUGS
 
 =head1 TODO
 
@@ -164,5 +164,7 @@ code it into the filter it's self.
 =back
 
 =head1 AUTHOR
+
+Unknown.
 
 =cut

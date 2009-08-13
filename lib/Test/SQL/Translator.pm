@@ -33,7 +33,7 @@ use SQL::Translator::Schema::Constants;
 
 use base qw(Exporter);
 use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = '1.59';
+$VERSION = '1.60';
 @EXPORT = qw(
     schema_ok
     table_ok
@@ -634,8 +634,8 @@ schema file and test yaml file to compare it against.
 Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>, 
 Darren Chamberlain <darren@cpan.org>.
 
-Thanks to Ken Y. Clark for the original table and field test code taken from
-his mysql test.
+Thanks to Ken YouensClark for the original table and field test code taken 
+from his mysql test.
 
 =head1 SEE ALSO
 

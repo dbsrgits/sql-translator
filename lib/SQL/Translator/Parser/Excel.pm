@@ -49,7 +49,7 @@ and field sizes.  True by default.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = '1.59';
+$VERSION = '1.60';
 
 use Spreadsheet::ParseExcel;
 use Exporter;
@@ -212,7 +212,7 @@ sub ET_to_ST {
 
 Mike Mellilo <mmelillo@users.sourceforge.net>,
 darren chamberlain E<lt>dlc@users.sourceforge.netE<gt>,
-Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
