@@ -625,6 +625,7 @@ sub create_index
 
     return join(
         ' ',
+        map { $_ || () }
         lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
         $index->name
         ? (
