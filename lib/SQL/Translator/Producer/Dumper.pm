@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Dumper;
 
 # -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
+# Copyright (C) 2002-2006 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -59,7 +59,7 @@ use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 sub produce {
     my $t              = shift;

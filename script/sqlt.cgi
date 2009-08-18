@@ -38,7 +38,7 @@ use CGI;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 my $q = CGI->new;
 

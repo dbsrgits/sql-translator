@@ -48,3 +48,15 @@ Build$
 # Test::Kwalitee cache files.
 ^Debian_CPANTS\.txt
 
+# Old tarballs etc
+^SQL-Translator
+
+# patch and diff files
+\.diff
+\.patch
+\.orig$
+\.rej$
+
+# junk
+\.log$
+\.tmp$

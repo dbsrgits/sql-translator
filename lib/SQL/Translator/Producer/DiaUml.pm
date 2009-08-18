@@ -57,7 +57,7 @@ automatically arrange them horizontally or vertically.
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use File::ShareDir qw/dist_dir/;

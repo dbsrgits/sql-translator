@@ -1,7 +1,6 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
 # -------------------------------------------------------------------
-# Copyright (C) 2002-2009 The SQLFairy Authors,
 # Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
 # Copyright (C) 2009 Jonathan Yu <frequency@cpan.org>
 #
@@ -100,7 +99,7 @@ To convert your old format files simply pass them through the translator :)
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

@@ -41,7 +41,7 @@ takes a long time.
 use strict;
 use vars qw($DEBUG $VERSION @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 use Storable;
 use Exporter;

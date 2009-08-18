@@ -41,7 +41,8 @@ use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
 use vars qw[ $VERSION ];
 
-$VERSION = '1.60';
+$VERSION = '1.59';
+
 
 =head1 Construction
 
@@ -201,11 +202,18 @@ Determines if this object is the same as another.
 
 # ----------------------------------------------------------------------
 sub _compare_objects {
-	my $self   = shift;
-	my $obj1   = shift;
-	my $obj2   = shift;
+	my $self = shift;
+	my $obj1 = shift;
+	my $obj2 = shift;
 	my $result = (ref_compare($obj1, $obj2) == 0);
-
+#	if ( !$result ) {
+#		use Carp qw(cluck);
+#		cluck("How did I get here?");
+#		use Data::Dumper;
+#		$Data::Dumper::Maxdepth = 1;
+#		print "obj1: ", Dumper($obj1), "\n";
+#		print "obj2: ", Dumper($obj2), "\n";
+#	}
 	return $result;
 }
 
@@ -214,6 +222,12 @@ sub _compare_objects {
 1;
 
 =pod
+
+=head1 SEE ALSO
+
+=head1 TODO
+
+=head1 BUGS
 
 =head1 AUTHOR
 

@@ -106,7 +106,7 @@ View table:
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -1119,7 +1119,7 @@ sub parse {
 
 =head1 AUTHORS
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>,
 Allen Day E<lt>allenday@ucla.eduE<gt>.
 
 =head1 SEE ALSO

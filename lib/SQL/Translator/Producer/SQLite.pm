@@ -40,15 +40,14 @@ use warnings;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
-use Readonly;
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
-$VERSION = '1.60';
-$DEBUG   = 0 if !defined $DEBUG;
-$WARN    = 0 if !defined $WARN;
+$VERSION = '1.59';
+$DEBUG = 0 unless defined $DEBUG;
+$WARN = 0 unless defined $WARN;
 
-Readonly my $MAX_ID_LENGTH => 30;
+our $max_id_length    = 30;
 my %global_names;
 
 sub produce {
@@ -107,8 +106,8 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $MAX_ID_LENGTH - 3) = "00" 
-            if length( $name ) > $MAX_ID_LENGTH;
+        substr($name, $max_id_length - 3) = "00" 
+            if length( $name ) > $max_id_length;
 
         warn "The name '$name_orig' has been changed to ",
              "'$name' to make it unique.\n" if $WARN;
@@ -526,7 +525,7 @@ SQL::Translator, http://www.sqlite.org/.
 
 =head1 AUTHOR
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark C<< <kclark@cpan.orgE> >>.
 
 Diff code added by Ash Berlin C<< <ash@cpan.org> >>.
 

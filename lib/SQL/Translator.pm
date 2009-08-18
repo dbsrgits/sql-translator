@@ -24,15 +24,16 @@ use base 'Class::Base';
 
 require 5.005;
 
-$VERSION = '0.10000';
-$DEBUG   = 0 unless defined $DEBUG;
-$ERROR   = "";
+$VERSION  = '0.11000';
+$DEBUG    = 0 unless defined $DEBUG;
+$ERROR    = "";
 
 use Carp qw(carp);
+
 use Data::Dumper;
-use File::Basename qw(dirname);
 use File::Find;
 use File::Spec::Functions qw(catfile);
+use File::Basename qw(dirname);
 use IO::Dir;
 use SQL::Translator::Producer;
 use SQL::Translator::Schema;

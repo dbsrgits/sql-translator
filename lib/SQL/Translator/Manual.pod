@@ -540,4 +540,4 @@ See L<SQL::Translator::Producer::TT::Base> for more details.
 
 =head1 AUTHOR
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.

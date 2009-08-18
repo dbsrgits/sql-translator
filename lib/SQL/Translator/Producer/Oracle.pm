@@ -98,7 +98,7 @@ context the slash will be still there to ensure compatibility with SQLPlus.
 
 use strict;
 use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;

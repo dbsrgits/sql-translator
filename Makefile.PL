@@ -18,8 +18,6 @@ my $deps = {
     'File::ShareDir'           => 1.0,
     'File::Spec'               => 0,
     'XML::Writer'              => 0.500,
-    'XML::LibXML'              => 1.69,
-    'YAML'                     => 0.66,
   },
   recommends => {
     'Template'                 => 2.10,
@@ -29,6 +27,8 @@ my $deps = {
     'Spreadsheet::ParseExcel'  => 0.41,
     'Text::ParseWords'         => 0,
     'Text::RecordParser'       => 0.02,
+    'XML::LibXML'              => 1.69,
+    'YAML'                     => 0.66,
   },
   test_requires => {
     'File::Basename'           => 0,

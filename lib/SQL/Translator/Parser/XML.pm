@@ -34,7 +34,7 @@ SQL::Translator::Parser::XML::SQLFairy.
 
 =head1 AUTHOR
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
 
@@ -42,7 +42,7 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 
 use strict;
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Parser::XML::SQLFairy;

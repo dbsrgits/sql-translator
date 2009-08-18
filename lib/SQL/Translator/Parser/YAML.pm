@@ -20,7 +20,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -154,4 +154,4 @@ C<SQL::Translator::Parser::YAML> parses a schema serialized with YAML.
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.

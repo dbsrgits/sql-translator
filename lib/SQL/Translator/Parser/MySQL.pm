@@ -147,7 +147,7 @@ More information about the MySQL comment-syntax: L<http://dev.mysql.com/doc/refm
 
 use strict;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

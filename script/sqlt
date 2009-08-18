@@ -153,7 +153,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars qw( $VERSION );
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 my $from;             # the original database
 my $to;               # the destination database

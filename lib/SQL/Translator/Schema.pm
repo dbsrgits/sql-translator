@@ -56,7 +56,7 @@ use SQL::Translator::Utils 'parse_list_arg';
 use base 'SQL::Translator::Schema::Object';
 use vars qw[ $VERSION ];
 
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 __PACKAGE__->_attributes(qw/name database translator/);
 

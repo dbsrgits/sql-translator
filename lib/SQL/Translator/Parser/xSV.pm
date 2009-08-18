@@ -65,7 +65,7 @@ C<SQL::Translator::Utils::normalize_name>.
 
 use strict;
 use vars qw($VERSION @EXPORT);
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 use Exporter;
 use Text::ParseWords qw(quotewords);
@@ -189,7 +189,7 @@ sub parse {
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

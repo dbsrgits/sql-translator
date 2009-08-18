@@ -119,7 +119,7 @@ query Oracle directly and skip the parsing of a text file, too.
 use strict;
 use DBI;
 use vars qw($VERSION @EXPORT);
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 use constant DRIVERS => {
     mysql            => 'MySQL',
@@ -191,7 +191,7 @@ sub parse {
 
 =head1 AUTHOR
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 

@@ -52,7 +52,7 @@ use base 'SQL::Translator::Schema::Object';
 
 use vars qw($VERSION);
 
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 # ----------------------------------------------------------------------
 

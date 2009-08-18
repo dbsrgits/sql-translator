@@ -41,7 +41,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::MySQL;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 # -------------------------------------------------------------------

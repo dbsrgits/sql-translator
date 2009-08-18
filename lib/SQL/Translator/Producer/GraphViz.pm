@@ -233,7 +233,7 @@ use SQL::Translator::Utils qw(debug);
 use Scalar::Util qw/openhandle/;
 
 use vars qw[ $VERSION $DEBUG ];
-$VERSION = '1.60';
+$VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 sub produce {
@@ -631,11 +631,12 @@ sub produce {
 
 =head1 AUTHOR
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
-Jonathan Yu E<lt>frequency@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>
+
+Jonathan Yu E<lt>frequency@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-SQL::Translator, GraphViz.
+SQL::Translator, GraphViz
 
 =cut

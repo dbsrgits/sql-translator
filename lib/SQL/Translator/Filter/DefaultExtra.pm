@@ -51,14 +51,14 @@ objects.
 
 use strict;
 use vars qw/$VERSION/;
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 sub filter {
     my $schema = shift;
     my %args = { +shift };
 
     # Tables
-    for ( $schema->get_tables ) {
+    foreach ( $schema->get_tables ) {
         my %extra = $_->extra;
 
         $extra{label} ||= ucfirst($_->name);
@@ -66,7 +66,7 @@ sub filter {
     }
 
     # Fields
-    for ( map { $_->get_fields } $schema->get_tables ) {
+    foreach ( map { $_->get_fields } $schema->get_tables ) {
         my %extra = $_->extra;
 
         $extra{label} ||= ucfirst($_->name);
@@ -80,15 +80,17 @@ __END__
 
 =head1 DESCRIPTION
 
-Maybe I'm trying to do too much in one go. Args set a match and then
-an update, if you want to set lots of things, use lots of filters!
+Maybe I'm trying to do too much in one go. Args set a match and then an update,
+if you want to set lots of things, use lots of filters!
 
 =head1 SEE ALSO
 
 L<perl(1)>, L<SQL::Translator>
 
-=head1 AUTHOR
+=head1 BUGS
 
-Unknown.
+=head1 TODO
+
+=head1 AUTHOR
 
 =cut

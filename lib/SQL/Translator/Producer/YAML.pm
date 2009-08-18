@@ -39,7 +39,7 @@ takes a long time.
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 use YAML qw(Dump);
 

@@ -61,7 +61,7 @@ use strict;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 @EXPORT = qw[ 
     CHECK_C

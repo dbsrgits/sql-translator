@@ -1,16 +1,14 @@
 package SQL::Translator::Diff;
 
+
 ## SQLT schema diffing code
 use strict;
 use warnings;
+
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 use base 'Class::Accessor::Fast';
-
-use vars qw[ $VERSION ];
-
-$VERSION = 1.60;
 
 # Input/option accessors
 __PACKAGE__->mk_accessors(qw/

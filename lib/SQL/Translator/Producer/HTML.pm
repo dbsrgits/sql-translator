@@ -22,7 +22,7 @@ use strict;
 use Data::Dumper;
 use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
 
-$VERSION = '1.60';
+$VERSION = '1.59';
 
 $NAME = __PACKAGE__;
 $NOWRAP = 0 unless defined $NOWRAP;

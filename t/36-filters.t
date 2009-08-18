@@ -42,7 +42,10 @@ use Test::SQL::Translator qw(maybe_plan);
 use Data::Dumper;
 
 BEGIN {
-    maybe_plan(16, 'Template', 'Test::Differences')
+    maybe_plan(16, 'Template', 'Test::Differences',
+               'SQL::Translator::Parser::YAML',
+              'SQL::Translator::Producer::YAML')
+
 }
 use Test::Differences;
 use SQL::Translator;

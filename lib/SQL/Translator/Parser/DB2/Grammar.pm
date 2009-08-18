@@ -1,8 +1,4 @@
 package SQL::Translator::Parser::DB2::Grammar;
-
-use vars qw[ $VERSION ];
-$VERSION = '1.60';
-
 use Parse::RecDescent;
 
 { my $ERRORS;
