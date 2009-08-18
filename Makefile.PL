@@ -28,9 +28,9 @@ my $deps = {
     'Text::ParseWords'         => 0,
     'Text::RecordParser'       => 0.02,
     'XML::LibXML'              => 1.69,
-    'YAML'                     => 0.66,
   },
   test_requires => {
+    'YAML'                     => 0.66,
     'File::Basename'           => 0,
     'Test::More'               => 0.6,
     'Test::Differences'        => 0,

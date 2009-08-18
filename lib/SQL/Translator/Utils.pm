@@ -23,7 +23,6 @@ use base qw(Exporter);
 use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 use Digest::SHA1 qw( sha1_hex );
 use Exporter;
-use Readonly;
 
 $VERSION = '1.59';
 $DEFAULT_COMMENT = '-- ';
