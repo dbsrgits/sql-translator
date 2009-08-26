@@ -43,6 +43,8 @@ sqlt-diagram - Automatically create a diagram from a database schema
     --natural-join     Perform natural joins
     --natural-join-pk  Perform natural joins from primary keys only
     -s|--skip          Fields to skip in natural joins
+    --skip-tables      Comma-separated list of table names to exclude 
+    --skip-tables-like Comma-separated list of regexen to exclude tables
     --debug            Print debugging information
 
 =head1 DESCRIPTION
@@ -81,27 +83,30 @@ $VERSION = '1.59';
 # Get arguments.
 #
 my ( 
-    $out_file, $image_type, $db_driver, $title, $no_columns, 
+    $out_file, $image_type, $db_driver, $title, $num_columns, 
     $no_lines, $font_size, $add_color, $debug, $show_fk_only,
-    $gutter, $natural_join, $join_pk_only, $skip_fields, $help
+    $gutter, $natural_join, $join_pk_only, $skip_fields, 
+    $skip_tables, $skip_tables_like, $help
 );
 
 GetOptions(
-    'd|db|f|from=s'   => \$db_driver,
-    'o|output:s'      => \$out_file,
-    'i|image:s'       => \$image_type,
-    't|title:s'       => \$title,
-    'c|columns:i'     => \$no_columns,
-    'n|no-lines'      => \$no_lines,
-    'font-size:s'     => \$font_size,
-    'gutter:i'        => \$gutter,
-    'color'           => \$add_color,
-    'show-fk-only'    => \$show_fk_only,
-    'natural-join'    => \$natural_join,
-    'natural-join-pk' => \$join_pk_only,
-    's|skip:s'        => \$skip_fields,
-    'debug'           => \$debug,
-    'h|help'          => \$help,
+    'd|db|f|from=s'      => \$db_driver,
+    'o|output:s'         => \$out_file,
+    'i|image:s'          => \$image_type,
+    't|title:s'          => \$title,
+    'c|columns:i'        => \$num_columns,
+    'n|no-lines'         => \$no_lines,
+    'font-size:s'        => \$font_size,
+    'gutter:i'           => \$gutter,
+    'color'              => \$add_color,
+    'show-fk-only'       => \$show_fk_only,
+    'natural-join'       => \$natural_join,
+    'natural-join-pk'    => \$join_pk_only,
+    's|skip:s'           => \$skip_fields,
+    'skip-tables:s'      => \$skip_tables,
+    'skip-tables-like:s' => \$skip_tables_like,
+    'debug'              => \$debug,
+    'h|help'             => \$help,
 ) or die pod2usage;
 my @files = @ARGV; # the create script(s) for the original db
 
@@ -114,18 +119,20 @@ my $translator       =  SQL::Translator->new(
     to               => 'Diagram',
     debug            => $debug || 0,
     producer_args    => {
-        out_file     => $out_file,
-        image_type   => $image_type,
-        gutter       => $gutter || 0,
-        title        => $title,
-        no_columns   => $no_columns,
-        no_lines     => $no_lines,
-        font_size    => $font_size,
-        add_color    => $add_color,
-        show_fk_only => $show_fk_only,
-        natural_join => $natural_join,
-        join_pk_only => $join_pk_only,
-        skip_fields  => $skip_fields,
+        out_file         => $out_file,
+        image_type       => $image_type,
+        gutter           => $gutter || 0,
+        title            => $title,
+        num_columns      => $num_columns,
+        no_lines         => $no_lines,
+        font_size        => $font_size,
+        add_color        => $add_color,
+        show_fk_only     => $show_fk_only,
+        natural_join     => $natural_join,
+        join_pk_only     => $join_pk_only,
+        skip_fields      => $skip_fields,
+        skip_tables      => $skip_tables,
+        skip_tables_like => $skip_tables_like,
     },
 ) or die SQL::Translator->error;
 
