@@ -28,8 +28,32 @@ Use via SQL::Translator:
 
   use SQL::Translator;
 
-  my $t = SQL::Translator->new( producer => 'Diagram', '...' );
+  my $t = SQL::Translator->new( 
+      from          => 'MySQL', 
+      to            => 'GraphViz',
+      producer_args => {
+          # All args are optional
+          out_file         => 'schema.png',# if not provided will go to STDOUT
+          output_type      => 'png',       # is default or 'jpeg'
+          title            => 'My Schema', # default is filename
+          font_size        => 'medium',    # is default or 'small,' 'large'
+          imap_file        => '',          # filename to write image map coords
+          imap_url         => '',          # base URL for image map
+          gutter           => 30           # is default, px distance b/w cols
+          num_columns      => 5,           # the number of columns
+          no_lines         => 1,           # do not draw lines to show FKs
+          add_color        => 1,           # give it some color
+          show_fk_only     => 1,           # show only fields used in FKs
+          join_pk_only     => 1,           # use only primary keys to figure PKs
+          natural_join     => 1,           # intuit FKs if not defined
+          skip_fields      => [...],       # list* of field names to exclude
+          skip_tables      => [...],       # list* of table names to exclude
+          skip_tables_like => [...],       # list* of regexen to exclude tables
+      }
+  ) or die SQL::Translator->error;
   $t->translate;
+
+* "list" can be either an array-ref or a comma-separated string
 
 =cut
 
@@ -64,22 +88,36 @@ sub produce {
     debug("Producer args =\n", Dumper( $args ));
 
     my $out_file     = $args->{'out_file'}     || '';
-    my $output_type  = $args->{'output_type'}   || 'png';
+    my $output_type  = $args->{'output_type'}  || 'png';
     my $title        = $args->{'title'}        || $t->filename;
     my $font_size    = $args->{'font_size'}    || 'medium';
     my $imap_file    = $args->{'imap_file'}    || '';
     my $imap_url     = $args->{'imap_url'}     || '';
     my $gutter       = $args->{'gutter'}       || 30; # distance b/w columns
-    my $no_columns   = $args->{'no_columns'};
+    my $num_columns  = $args->{'num_columns'}  || $args->{'no_columns'} || '';
     my $no_lines     = $args->{'no_lines'};
     my $add_color    = $args->{'add_color'};
     my $show_fk_only = $args->{'show_fk_only'};
     my $join_pk_only = $args->{'join_pk_only'};
     my $natural_join = $args->{'natural_join'} || $join_pk_only;
-    my $skip_fields  = $args->{'skip_fields'};
-    my %skip         = map { s/^\s+|\s+$//g; $_,1 } split (/,/, $skip_fields);
+    my %skip_field   = map { $_, 1 } (
+        ref $args->{'skip_fields'} eq 'ARRAY'
+        ? @{ $args->{'skip_fields'} }
+        : split ( /\s*,\s*/, $args->{'skip_fields'} )
+    );
 
-#    my @tables       = $schema->get_tables;
+    my %skip_table   = map { $_, 1 } (
+        ref $args->{'skip_tables'} eq 'ARRAY'
+        ? @{ $args->{'skip_tables'} }
+        : split ( /\s*,\s*/, $args->{'skip_tables'} )
+    );
+
+    my @skip_tables_like = map { qr/$_/ } (
+        ref $args->{'skip_tables_like'} eq 'ARRAY'
+        ? @{ $args->{'skip_tables_like'} }
+        : split ( /\s*,\s*/, $args->{'skip_tables_like'} )
+    );
+
     my @table_names;
     if ( $natural_join ) {
         $schema->make_natural_joins(
@@ -98,7 +136,7 @@ sub produce {
     }
 
     die "Invalid image type '$output_type'"
-        unless VALID_IMAGE_TYPE ->{ $output_type  };
+        unless VALID_IMAGE_TYPE->{ $output_type  };
     die "Invalid font size '$font_size'"
         unless VALID_FONT_SIZE->{ $font_size };
 
@@ -111,11 +149,11 @@ sub produce {
         : $font_size eq 'large'  ? gdLargeFont 
         :                          gdGiantFont;
 
-    my $no_tables    = scalar @table_names;
-    $no_columns      = 0 unless $no_columns =~ /^\d+$/;
-    $no_columns    ||= sprintf( "%.0f", sqrt( $no_tables ) + .5 );
-    $no_columns    ||= .5;
-    my $no_per_col   = sprintf( "%.0f", $no_tables/$no_columns + .5 );
+    my $num_tables   = scalar @table_names;
+    $num_columns     = 0 unless $num_columns =~ /^\d+$/;
+    $num_columns   ||= sprintf( "%.0f", sqrt( $num_tables ) + .5 );
+    $num_columns   ||= .5;
+    my $no_per_col   = sprintf( "%.0f", $num_tables/$num_columns + .5 );
 
     my @shapes;            
     my ( $max_x, $max_y );          # the furthest x and y used
@@ -132,8 +170,17 @@ sub produce {
     my @imap_coords;                # for making clickable image map
     my %legend;
 
+    TABLE:
     for my $table_name ( @table_names ) {
         my $table = $schema->get_table( $table_name );
+
+        if ( @skip_tables_like or keys %skip_table ) {
+            next TABLE if $skip_table{ $table_name };
+            for my $regex ( @skip_tables_like ) {
+                next TABLE if $table_name =~ $regex;
+            }
+        }
+
         my $top   = $y;
         push @shapes, 
             [ 'string', $font, $this_col_x, $y, $table_name, 'black' ];
@@ -210,7 +257,7 @@ sub produce {
 
             my $constraints = $table->{'fields'}{ $orig_name }{'constraints'};
 
-            if ( $natural_join && !$skip{ $orig_name } ) {
+            if ( $natural_join && !$skip_field{ $orig_name } ) {
                 push @{ $nj_registry{ $orig_name } }, $table_name;
             }
 
