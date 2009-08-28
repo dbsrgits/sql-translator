@@ -1,6 +1,9 @@
-use inc::Module::Install 0.89;
+use inc::Module::Install 0.91;
 use strict;
 use warnings;
+
+# to deal wuth x.y.z versions properly
+configure_requires 'ExtUtils::MakeMaker' => 6.54;
 
 my $deps = {
   requires => {
@@ -11,7 +14,7 @@ my $deps = {
     'Carp::Clan'               => 0,
     'IO::Dir'                  => 0,
     'IO::Scalar'               => 2.110,
-    'Parse::RecDescent'        => 1.096000,   # PBP ftw
+    'Parse::RecDescent'        => 1.962002,
     'Pod::Usage'               => 0,
     'Class::Accessor::Fast'    => 0,
     'DBI'                      => 0,
@@ -50,6 +53,7 @@ bugtracker  'http://rt.cpan.org/NoAuth/Bugs.html?Dist=SQL-Translator';
 resources Ratings => 'http://cpanratings.perl.org/d/SQL-Translator';
 
 all_from    'lib/SQL/Translator.pm';
+
 
 for my $type (qw/requires recommends test_requires/) {
   no strict qw/refs/;
