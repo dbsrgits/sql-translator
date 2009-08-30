@@ -1,5 +1,5 @@
 # ----------------------------------------------------------
-# 0.11002 2009-08-28
+# 0.11002 2009-08-30
 # ----------------------------------------------------------
 * Depend on fixed Parse::RecDescent
 * Added skip-tables and skip-tables-like options to Diagram
