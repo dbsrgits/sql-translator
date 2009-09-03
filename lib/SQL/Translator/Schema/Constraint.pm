@@ -285,7 +285,7 @@ sub match_type {
 =head2 match_type
 
 Get or set the constraint's match_type.  Only valid values are "full"
-or "partial."
+"partial" and "simple"
 
   my $match_type = $constraint->match_type('FULL');
 
@@ -296,7 +296,7 @@ or "partial."
     if ( $arg ) {
         $arg = lc $arg;
         return $self->error("Invalid match type: $arg")
-            unless $arg eq 'full' || $arg eq 'partial';
+            unless $arg eq 'full' || $arg eq 'partial' || $arg eq 'simple';
         $self->{'match_type'} = $arg;
     }
 

@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(120, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(122, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -63,7 +63,9 @@ my $sql = q[
     alter table only t_test1 add constraint c_u1 unique (f_varchar);
 
     alter table t_test1 add constraint "c_fk2" foreign key (f_fk2)
-    references t_test2 (f_id) on update no action on delete cascade;
+    references t_test2 (f_id) match simple
+    on update no action on delete cascade deferrable;
+
 
     alter table t_test1 drop column f_dropped restrict;
 
@@ -231,6 +233,8 @@ is( $c4->reference_table, 't_test2', 'Constraint is to table "t_test2"' );
 is( join(',', $c4->reference_fields), 'f_id', 'Constraint is to field "f_id"' );
 is( $c4->on_delete, 'cascade', 'On delete: cascade' );
 is( $c4->on_update, 'no_action', 'On delete: no action' );
+is( $c4->match_type, 'simple', 'Match type: simple' );
+is( $c4->deferrable, 1, 'Deferrable detected' );
 
 my $t2 = shift @tables;
 is( $t2->name, 't_test2', 'Table t_test2 exists' );
