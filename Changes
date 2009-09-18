@@ -1,4 +1,5 @@
 * Pg parser fixes to deal properly with MATCH <type>
+* Pg parser fixes to parse timestamp attributes correctly
 
 # ----------------------------------------------------------
 # 0.11002 2009-08-30

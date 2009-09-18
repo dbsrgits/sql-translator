@@ -610,9 +610,9 @@ pg_data_type :
             $return = { type => 'bytea' };
         }
     |
-    /(timestamptz|timestamp)(?:\(\d\))?( with(out)? time zone)?/i
+    /(timestamptz|timestamp)(?:\(\d\))?( with(?:out)? time zone)?/i
         { 
-            $return = { type => 'timestamp' };
+            $return = { type => 'timestamp' . ($2||'') };
         }
     |
     /text/i

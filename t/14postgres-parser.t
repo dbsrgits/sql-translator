@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(122, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(129, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -199,12 +199,22 @@ is( $fk_ref1->reference_table, 't_test2', 'FK is to "t_test2" table' );
 
 my $f11 = shift @t1_fields;
 is( $f11->name, 'f_timestamp', 'Eleventh field is "f_timestamp"' );
-is( $f11->data_type, 'timestamp', 'Field is a timestamp' );
+is( $f11->data_type, 'timestamp with time zone', 'Field is a timestamp with time zone' );
 is( $f11->is_nullable, 1, 'Field can be null' );
 is( $f11->size, 0, 'Size is "0"' );
 is( $f11->default_value, undef, 'Default value is "undef"' );
 is( $f11->is_primary_key, 0, 'Field is not PK' );
 is( $f11->is_foreign_key, 0, 'Field is not FK' );
+
+my $f12 = shift @t1_fields;
+is( $f12->name, 'f_timestamp2', '12th field is "f_timestamp2"' );
+is( $f12->data_type, 'timestamp without time zone', 'Field is a timestamp without time zone' );
+is( $f12->is_nullable, 1, 'Field can be null' );
+is( $f12->size, 0, 'Size is "0"' );
+is( $f12->default_value, undef, 'Default value is "undef"' );
+is( $f12->is_primary_key, 0, 'Field is not PK' );
+is( $f12->is_foreign_key, 0, 'Field is not FK' );
+
 # my $fk_ref2 = $f11->foreign_key_reference;
 # isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
 # is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
