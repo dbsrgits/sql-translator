@@ -54,7 +54,7 @@ Created on Fri Aug 15 15:08:18 2003
               <extra foo="bar" hello="world" bar="baz" />
           </constraint>
           <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
-          <constraint name="" type="FOREIGN KEY" fields="another_id"
+          <constraint name="Basic" type="FOREIGN KEY" fields="another_id"
               reference_table="Another" options="" deferrable="1" match_type=""
               expression="" on_update="" on_delete="">
           </constraint>
