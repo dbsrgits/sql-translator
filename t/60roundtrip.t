@@ -16,7 +16,7 @@ use SQL::Translator;
 my $plan = [
   {
     engine => 'XML',
-    req => 'XML::LibXML',
+    req => 'XML::LibXML 1.69',
   },
   {
     engine => 'YAML',
@@ -111,7 +111,7 @@ for my $args (@$plan) {
     my @req = ref $args->{req} ? @{$args->{req}} : $args->{req}||();
     my @missing;
     for (@req) {
-      eval "require $_";
+      eval "use $_ ()";
       push @missing, $_ if ($@);
     }
     if (@missing) {

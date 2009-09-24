@@ -110,7 +110,7 @@ use base qw(Exporter);
 
 use base qw/SQL::Translator::Parser/;  # Doesnt do anything at the mo!
 use SQL::Translator::Utils 'debug';
-use XML::LibXML;
+use XML::LibXML 1.69;
 use XML::LibXML::XPathContext;
 
 sub parse {
