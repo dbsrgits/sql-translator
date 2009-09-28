@@ -466,11 +466,16 @@ sub maybe_plan {
 
     for my $module (@modules) {
         eval "use $module;";
-        if ($@ && $@ =~ /Can't locate (\S+)/) {
+        next if !$@;
+
+        if ($@ =~ /Can't locate (\S+)/) {
             my $mod = $1;
             $mod =~ s/\.pm$//;
             $mod =~ s#/#::#g;
             push @errors, $mod;
+        }
+        elsif ($@ =~ /([\w\:]+ version [\d\.]+) required.+?this is only version/) {
+            push @errors, $1;
         }
     }
 
