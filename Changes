@@ -1,5 +1,7 @@
 * Pg parser fixes to deal properly with MATCH <type>
 * Pg parser fixes to parse timestamp attributes correctly
+* Fix broken default detection in script/sqlt (RT#27438)
+* Fix dependency issues with LibXML and TT
 
 # ----------------------------------------------------------
 # 0.11002 2009-08-30

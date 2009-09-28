@@ -16,16 +16,9 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    eval {require Template;};
-
-    if ( $@ ) {
-        plan skip_all => 'Template not installed?'
-    }
-
-    maybe_plan(6, 
-        'XML::XPath', 
+    maybe_plan(6,
         'SQL::Translator::Parser::XML::SQLFairy',
-        'Template', 
+        'Template 2.20',
         'Test::Differences'
     );
 }

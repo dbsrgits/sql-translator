@@ -23,7 +23,7 @@ my $deps = {
     'XML::Writer'              => 0.500,
   },
   recommends => {
-    'Template'                 => 2.10,
+    'Template'                 => 2.20,
     'GD'                       => 0,
     'GraphViz'                 => 0,
     'Graph::Directed'          => 0,

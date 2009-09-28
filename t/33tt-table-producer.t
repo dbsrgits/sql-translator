@@ -21,9 +21,7 @@ use File::Temp qw/tempdir/;
 #=============================================================================
 
 BEGIN {
-    eval {require Template;};
-
-    maybe_plan(8, 'Template', 'Test::Differences')
+    maybe_plan(8, 'Template 2.20', 'Test::Differences')
 }
 use Test::Differences;
 

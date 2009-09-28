@@ -10,8 +10,8 @@ use Test::Exception;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(4, 'Template', 
-               'Test::Differences', 
+    maybe_plan(4, 'Template 2.20',
+               'Test::Differences',
                'SQL::Translator::Parser::XML::SQLFairy')
 }
 use Test::Differences;
