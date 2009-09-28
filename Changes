@@ -1,3 +1,6 @@
+# ----------------------------------------------------------
+# 0.11003 2009-09-28
+# ----------------------------------------------------------
 * Pg parser fixes to deal properly with MATCH <type>
 * Pg parser fixes to parse timestamp attributes correctly
 * Fix broken default detection in script/sqlt (RT#27438)
