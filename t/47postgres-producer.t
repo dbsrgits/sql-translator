@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(24,
+    maybe_plan(25,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -112,6 +112,16 @@ is(
     'time_without_TZ time(2) without time zone', 
     'Create time field without time zone but with size, works'
 );
+
+my $field_num = SQL::Translator::Schema::Field->new( name => 'num',
+                                                  table => $table,
+                                                  data_type => 'numeric',
+                                                  size => [10,2],
+                                                  );
+my $fieldnum_sql = SQL::Translator::Producer::PostgreSQL::create_field($field_num);
+
+is($fieldnum_sql, 'num numeric(10,2)', 'Create numeric field works');
+
 
 my $field4 = SQL::Translator::Schema::Field->new( name      => 'bytea_field',
                                                   table => $table,

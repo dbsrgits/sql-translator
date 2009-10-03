@@ -702,7 +702,7 @@ sub convert_datatype
 
     my $type_with_size = join('|',
         'bit', 'varbit', 'character', 'bit varying', 'character varying',
-        'time', 'timestamp', 'interval'
+        'time', 'timestamp', 'interval', 'numeric'
     );
 
     if ( $data_type !~ /$type_with_size/ ) {

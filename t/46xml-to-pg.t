@@ -54,6 +54,7 @@ CREATE INDEX "titleindex" on "Basic" ("title");
 DROP TABLE "Another" CASCADE;
 CREATE TABLE "Another" (
   "id" serial NOT NULL,
+  "num" numeric(10,2),
   PRIMARY KEY ("id")
 );
 
