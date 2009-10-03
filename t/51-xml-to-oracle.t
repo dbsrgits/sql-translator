@@ -59,6 +59,7 @@ my $want = [
           'CREATE SEQUENCE sq_Another_id',
           'CREATE TABLE Another (
   id number(10) NOT NULL,
+  num number(10,2),
   PRIMARY KEY (id)
 )',
           'CREATE VIEW email_list AS
@@ -125,6 +126,7 @@ CREATE SEQUENCE sq_Another_id01;
 
 CREATE TABLE Another (
   id number(10) NOT NULL,
+  num number(10,2),
   PRIMARY KEY (id)
 );
 

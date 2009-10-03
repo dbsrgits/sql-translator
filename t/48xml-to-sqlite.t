@@ -60,7 +60,8 @@ CREATE UNIQUE INDEX emailuniqueindex ON Basic (email);
 DROP TABLE Another;
 
 CREATE TABLE Another (
-  id INTEGER PRIMARY KEY NOT NULL
+  id INTEGER PRIMARY KEY NOT NULL,
+  num numeric(10,2)
 );
 
 DROP VIEW IF EXISTS email_list;
@@ -109,7 +110,8 @@ eq_or_diff(\@sql,
           'CREATE UNIQUE INDEX emailuniqueindex ON Basic (email)',
           'DROP TABLE Another',
           'CREATE TABLE Another (
-  id INTEGER PRIMARY KEY NOT NULL
+  id INTEGER PRIMARY KEY NOT NULL,
+  num numeric(10,2)
 )',
           'DROP VIEW IF EXISTS email_list;
 CREATE VIEW email_list AS

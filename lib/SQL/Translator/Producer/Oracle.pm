@@ -616,7 +616,7 @@ sub create_field {
 
     $field_def .= " $data_type";
     if ( defined $size[0] && $size[0] > 0 ) {
-        $field_def .= '(' . join( ', ', @size ) . ')';
+        $field_def .= '(' . join( ',', @size ) . ')';
     }
 
     #
