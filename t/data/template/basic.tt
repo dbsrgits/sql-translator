@@ -12,7 +12,7 @@ Fields
     [%- FOREACH field = table.get_fields %]
     [% field %]
         data_type:             [% field.data_type %]
-        size:                  [% field.size %]
+        size:                  [% field.size.join(',') %]
         is_nullable:           [% field.is_nullable %]
         default_value:         [% field.default_value %]
         is_primary_key:        [% field.is_primary_key %]

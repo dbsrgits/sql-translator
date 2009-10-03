@@ -289,6 +289,20 @@ Fields
         order:                 1
         table:                 Another
     
+    num
+        data_type:             numeric
+        size:                  10,2
+        is_nullable:           1
+        default_value:         
+        is_primary_key:        0
+        is_unique:             0
+        is_auto_increment:     0
+        is_foreign_key:        0
+        foreign_key_reference: 
+        is_valid:              1
+        order:                 2
+        table:                 Another
+    
 
 Indices
     
