@@ -71,6 +71,11 @@ Created on Fri Aug 15 15:08:18 2003
               size="10" data_type="int" is_auto_increment="1" order="1"
               is_nullable="0">
           </field>
+          <field
+              name="num"
+              size="10,2" data_type="numeric" order="2"
+              is_nullable="1">
+          </field>
         </fields>
 
         <constraints>

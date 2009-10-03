@@ -297,6 +297,14 @@ $ans = <<EOXML;
           <extra ZEROFILL="1" />
           <comments></comments>
         </field>
+        <field name="bar" data_type="numeric" size="10,2" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="2">
+          <extra />
+          <comments></comments>
+        </field>
+        <field name="baz" data_type="decimal" size="8,3" is_nullable="1" is_auto_increment="0" is_primary_key="0" is_foreign_key="0" order="3">
+          <extra />
+          <comments></comments>
+        </field>
       </fields>
       <indices></indices>
       <constraints></constraints>
@@ -325,6 +333,18 @@ EOXML
         size      => "10",
     ) or die $t->error;
     $f->extra(ZEROFILL => "1");
+
+    $t->add_field(
+        name      => "bar",
+        data_type => "numeric",
+        size      => "10,2",
+    ) or die $t->error;
+    $t->add_field(
+        name      => "baz",
+        data_type => "decimal",
+        size      => [8,3],
+    ) or die $t->error;
+
 
     # As we have created a Schema we give translate a dummy string so that
     # it will run the produce.

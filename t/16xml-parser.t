@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(212, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(224, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -198,6 +198,12 @@ schema_ok( $scma, {
                     size => 10,
                     is_primary_key => 1,
                     is_auto_increment => 1,
+                },
+                {
+                    name => "num",
+                    data_type => "numeric",
+                    default_value => undef,
+                    size => '10,2',
                 },
             ],
         }, # end table Another
