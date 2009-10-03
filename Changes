@@ -1,3 +1,6 @@
+* Fix PG producer numeric precision regression (RT#49301)
+* Add DB2 producer numeric/decimal precision output
+
 # ----------------------------------------------------------
 # 0.11003 2009-09-28
 # ----------------------------------------------------------
