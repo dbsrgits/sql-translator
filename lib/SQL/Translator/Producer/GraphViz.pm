@@ -28,15 +28,15 @@ SQL::Translator::Producer::GraphViz - GraphViz producer for SQL::Translator
 
   use SQL::Translator;
 
-  my $trans = new SQL::Translator(
+  my $trans = SQL::Translator->new(
       from => 'MySQL',            # or your db of choice
-      to => 'GraphViz',
+      to   => 'GraphViz',
       producer_args => {
-          out_file => 'schema.png',
-          bgcolor => 'lightgoldenrodyellow',
+          out_file         => 'schema.png',
+          bgcolor          => 'lightgoldenrodyellow',
           show_constraints => 1,
-          show_datatypes => 1,
-          show_sizes => 1
+          show_datatypes   => 1,
+          show_sizes       => 1
       }
   ) or die SQL::Translator->error;
 
@@ -88,7 +88,22 @@ table names that should be skipped.
 
 =item * cluster
 
-POD PENDING
+Clustering of tables allows you to group and box tables according to
+function or domain or whatever criteria you choose.  The syntax for
+clustering tables is:
+
+  cluster => 'cluster1=table1,table2;cluster2=table3,table4'
+
+Or pass it as an arrayref like so:
+
+  cluster => [ 'cluster1=table1,table2', 'cluster2=table3,table4' ]
+
+Or like so:
+
+  cluster => [ 
+    { name => 'cluster1', tables => [ 'table1', 'table2' ] },
+    { name => 'cluster2', tables => [ 'table3', 'table4' ] },
+  ]
 
 =item * out_file
 
@@ -594,9 +609,10 @@ sub produce {
                 next if $i == $j;
                 my $table2 = $tables[ $j ];
                 next if $done{ $table1 }{ $table2 };
+                debug("Adding edge '$table2' -> '$table1'");
                 $gv->add_edge(
-                    $table2,
-                    $table1,
+                    qq["$table2"],
+                    qq["$table1"],
                     arrowhead => $optional_constraints{$bi} ? 'empty' : 'normal',
                 );
                 $done{ $table1 }{ $table2 } = 1;
