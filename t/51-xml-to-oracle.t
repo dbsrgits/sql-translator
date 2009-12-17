@@ -62,6 +62,7 @@ my $want = [
   num number(10,2),
   PRIMARY KEY (id)
 )',
+'DROP VIEW email_list',
           'CREATE VIEW email_list AS
 SELECT email FROM Basic WHERE (email IS NOT NULL)',
           'ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk FOREIGN KEY (another_id) REFERENCES Another (id)',
@@ -130,6 +131,8 @@ CREATE TABLE Another (
   PRIMARY KEY (id)
 );
 
+DROP VIEW email_list;
+
 CREATE VIEW email_list AS
 SELECT email FROM Basic WHERE (email IS NOT NULL);
 
@@ -167,4 +170,6 @@ BEGIN
  INTO :new.id
  FROM dual;
 END;
-/|);
+/
+
+|);

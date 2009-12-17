@@ -1,5 +1,7 @@
 * Fix PG producer numeric precision regression (RT#49301)
 * Add DB2 producer numeric/decimal precision output
+* Fix Oracle producer creating numeric precision statements that the test case expects (no whitespace)
+* Add Oracle producer creating drop view statements like PG producer does
 
 # ----------------------------------------------------------
 # 0.11003 2009-09-28

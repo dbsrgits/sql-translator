@@ -250,7 +250,6 @@ sub produce {
                 show_warnings     => $WARN,
                 no_comments       => $no_comments,
                 delay_constraints => $delay_constraints,
-                wantarray         => wantarray ? 1 : 0,
             }
         );
         push @table_defs, @$table_def;
@@ -262,7 +261,13 @@ sub produce {
 
     my (@view_defs);
     foreach my $view ( $schema->get_views ) {
-        push @view_defs, create_view($view);
+        my ( $view_def ) = create_view(
+            $view,
+            {
+                add_drop_view     => $add_drop_table,
+            }
+        );
+        push @view_defs, @$view_def;
     }
 
     if (wantarray) {
@@ -270,8 +275,12 @@ sub produce {
     }
     else {
         $create .= join ('', map { $_ ? "$_;\n\n" : () } @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
+        # If wantarray is not set we have to add "/" in this statement
+        # DBI->do() needs them omitted
         # triggers may NOT end with a semicolon
-        $create .= join "\n\n", @trigger_defs;
+        $create .= join "/\n\n", @trigger_defs;
+        # for last trigger
+        $create .= "/\n\n";
         return $create;
     }
 }
@@ -279,7 +288,7 @@ sub produce {
 sub create_table {
     my ($table, $options) = @_;
     my $table_name = $table->name;
-    
+
     my $item = '';
     my $drop;
     my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
@@ -693,12 +702,6 @@ sub create_field {
           " FROM dual;\n" .
           "END;\n";
         
-        #
-        # If wantarray is set we have to omit the last "/" in this statement so it
-        # can be executed by DBI->do() directly.
-        #
-        $trigger .= "/" unless $options->{wantarray};
-        
         push @trigger_defs, $trigger;
     }
 
@@ -712,12 +715,6 @@ sub create_field {
           "BEGIN \n".
           " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
           "END;\n";
-
-          #
-          # If wantarray is set we have to omit the last "/" in this statement so it
-          # can be executed by DBI->do() directly.
-          #
-          $trigger .= "/" unless $options->{wantarray};
 
           push @trigger_defs, $trigger;
     }
@@ -737,13 +734,18 @@ sub create_field {
 
 
 sub create_view {
-    my ($view) = @_;
+    my ($view, $options) = @_;
+    my $view_name = $view->name;
+    
+    my @create;
+    push @create, qq[DROP VIEW $view_name]
+        if $options->{add_drop_view};
 
-    my $out = sprintf("CREATE VIEW %s AS\n%s",
-                      $view->name,
+    push @create, sprintf("CREATE VIEW %s AS\n%s",
+                      $view_name,
                       $view->sql);
 
-    return $out;
+    return \@create;
 }
 
 # -------------------------------------------------------------------
