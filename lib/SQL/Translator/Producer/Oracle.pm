@@ -822,9 +822,10 @@ sub unreserve {
 Mad props to Tim Bunce for much of the logic stolen from his "mysql2ora"
 script.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
+Alexander Hartmaier E<lt>abraxxa@cpan.org<gt>.
 
 =head1 SEE ALSO
 
