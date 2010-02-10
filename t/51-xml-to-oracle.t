@@ -52,7 +52,7 @@ my $want = [
   another_id number(10) DEFAULT \'2\',
   timest date,
   PRIMARY KEY (id),
-  CONSTRAINT emailuniqueindex UNIQUE (email)
+  CONSTRAINT Basic_emailuniqueindex UNIQUE (email)
 )',
           'DROP TABLE Another CASCADE CONSTRAINTS',
           'DROP SEQUENCE sq_Another_id',
@@ -116,7 +116,7 @@ CREATE TABLE Basic (
   another_id number(10) DEFAULT '2',
   timest date,
   PRIMARY KEY (id),
-  CONSTRAINT emailuniqueindex UNIQUE (email)
+  CONSTRAINT Basic_emailuniqueindex UNIQUE (email)
 );
 
 DROP TABLE Another CASCADE CONSTRAINTS;

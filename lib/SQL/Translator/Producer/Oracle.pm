@@ -42,6 +42,15 @@ Creates an SQL DDL suitable for Oracle.
 This option remove the primary key and other key constraints from the
 CREATE TABLE statement and adds ALTER TABLEs at the end with it.
 
+=item quote_field_names
+
+Controls whether quotes are being used around column names in generated DDL.
+
+=item quote_table_names
+
+Controls whether quotes are being used around table, sequence and trigger names in
+generated DDL.
+
 =back
 
 =head1 NOTES
@@ -93,6 +102,27 @@ L<DBIx::Class::Schema/deploy> does.
 To get this working we removed the slash in those statements in version
 0.09002 of L<SQL::Translator> when called in array context. In scalar
 context the slash will be still there to ensure compatibility with SQLPlus.
+
+=head2 Quotes
+
+This producer will generate
+DDL with or without quotes if L<quote_table_names> and/or
+L<quote_field_names> are true.
+
+Quotes will be forced and names capitalised if C<quote_table_names==0> and/or C<quote_field_names==0>
+for the following reserved keywords:
+
+    ACCESS ADD ALL ALTER AND ANY AS ASC AUDIT BETWEEN BY CHAR CHECK
+    CLUSTER COLUMN COMMENT COMPRESS CONNECT CREATE CURRENT DATE DECIMAL
+    DEFAULT DELETE DESC DISTINCT DROP ELSE EXCLUSIVE EXISTS FILE FLOAT
+    FOR FROM GRANT GROUP HAVING IDENTIFIED IMMEDIATE IN INCREMENT
+    INDEX INITIAL INSERT INTEGER INTERSECT INTO IS LEVEL LIKE LOCK
+    LONG MAXEXTENTS MINUS MLSLABEL MODE MODIFY NOAUDIT NOCOMPRESS NOT
+    NOWAIT NULL NUMBER OF OFFLINE ON ONLINE OPTION OR ORDER PCTFREE
+    PRIOR PRIVILEGES PUBLIC RAW RENAME RESOURCE REVOKE ROW ROWID ROWNUM
+    ROWS SELECT SESSION SET SHARE SIZE SMALLINT START SUCCESSFUL SYNONYM
+    SYSDATE TABLE THEN TO TRIGGER UID UNION UNIQUE UPDATE USER VALIDATE
+    VALUES VARCHAR VARCHAR2 VIEW WHENEVER WHERE WITH
 
 =cut
 
@@ -216,8 +246,11 @@ my %max_size = (
 my $max_id_length    = 30;
 my %used_identifiers = ();
 my %global_names;
-my %unreserve;
 my %truncated;
+
+# Quote used to escape table, field, sequence and trigger names
+my $quote_char  = '"';
+my $name_sep    = '.';
 
 # -------------------------------------------------------------------
 sub produce {
@@ -227,10 +260,14 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
+    $quote_char        = $translator->producer_args->{'quote_char'} ||= '"';
+		$name_sep          = $translator->producer_args->{'name_sep'} ||= '.';
     my $delay_constraints = $translator->producer_args->{delay_constraints};
     my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 
     $create .= header_comment unless ($no_comments);
+		my $qt = $quote_char if $translator->quote_table_names;
+		my $qf = $quote_char if $translator->quote_field_names;
 
     if ( $translator->parser_type =~ /mysql/i ) {
         $create .= 
@@ -250,6 +287,8 @@ sub produce {
                 show_warnings     => $WARN,
                 no_comments       => $no_comments,
                 delay_constraints => $delay_constraints,
+								quote_table_names => $qt,
+								quote_field_names => $qf,
             }
         );
         push @table_defs, @$table_def;
@@ -274,7 +313,8 @@ sub produce {
         return defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs;
     }
     else {
-        $create .= join ('', map { $_ ? "$_;\n\n" : () } @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
+        $create .= join (";\n\n", @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
+				$create .= ";\n\n";
         # If wantarray is not set we have to add "/" in this statement
         # DBI->do() needs them omitted
         # triggers may NOT end with a semicolon
@@ -287,16 +327,17 @@ sub produce {
 
 sub create_table {
     my ($table, $options) = @_;
+		my $qt = $options->{quote_table_names};
+		my $qf = $options->{quote_field_names};
     my $table_name = $table->name;
+		my $table_name_q = quote($table_name,$qt);
 
     my $item = '';
     my $drop;
     my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
 
-    my $table_name_ur = unreserve($table_name) or next;
-
-    push @create, "--\n-- Table: $table_name_ur\n--" unless $options->{no_comments};
-    push @create, qq[DROP TABLE $table_name_ur CASCADE CONSTRAINTS] if $options->{add_drop_table};
+    push @create, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
+    push @create, qq[DROP TABLE $table_name_q CASCADE CONSTRAINTS] if $options->{add_drop_table};
 
         my ( %field_name_scope, @field_comments );
         for my $field ( $table->get_fields ) {
@@ -336,9 +377,8 @@ sub create_table {
         #
         for my $c ( $table->get_constraints ) {
             my $name    = $c->name || '';
-            my @fields  = map { unreserve( $_, $table_name ) } $c->fields;
-            my @rfields = map { unreserve( $_, $table_name ) } 
-                $c->reference_fields;
+            my @fields  = map { quote($_,$qf) } $c->fields;
+            my @rfields = quote($c->reference_fields,$qf);
             next if !@fields && $c->type ne CHECK_C;
 
             if ( $c->type eq PRIMARY_KEY ) {
@@ -355,8 +395,14 @@ sub create_table {
 					my $pk_fields = join(":", $pk->fields);
 					next if $u_fields eq $pk_fields;
             	}
-
-                $name ||= mk_name( $name || $table_name, 'u' );
+							if ($name) {
+								# Force prepend of table_name as ORACLE doesn't allow duplicate
+								# CONSTRAINT names even for different tables (ORA-02264)
+								$name = "${table_name}_$name" unless $name =~ /^$table_name/;
+							} else {
+                $name = mk_name( $table_name, 'u' );
+							}
+							$name = quote($name, $qf);
 
                 for my $f ( $c->fields ) {
                     my $field_def = $table->get_field( $f ) or next;
@@ -378,13 +424,14 @@ sub create_table {
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
                 $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
+								$name = quote($name, $qf);
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
                     $def .= '(' . join( ', ', @fields ) . ')';
                 }
 
-                my $ref_table = unreserve($c->reference_table);
+                my $ref_table = quote($c->reference_table,$qt);
 
                 $def .= " REFERENCES $ref_table";
 
@@ -406,7 +453,7 @@ sub create_table {
                 #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
                 #}
 
-                push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_ur, $def);
+                push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_q, $def);
             }
         }
 
@@ -417,8 +464,7 @@ sub create_table {
         for my $index ( $table->get_indices ) {
             my $index_name = $index->name || '';
             my $index_type = $index->type || NORMAL;
-            my @fields     = map { unreserve( $_, $table_name ) }
-                             $index->fields;
+            my @fields     = map { quote($_, $qf) } $index->fields;
             next unless @fields;
 
             my @index_options;
@@ -446,22 +492,25 @@ sub create_table {
             if ( $index_type eq PRIMARY_KEY ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, 'pk' );
+								$index_name = quote($index_name, $qf);
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $index_type eq NORMAL ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, $index_name || 'i' );
+								$index_name = quote($index_name, $qf);
                 push @index_defs, 
-                    "CREATE INDEX $index_name on $table_name_ur (".
+                    "CREATE INDEX $index_name on ".quote($table_name,$qt)." (".
                         join( ', ', @fields ).  
                     ")$index_options";
             }
             elsif ( $index_type eq UNIQUE ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, $index_name || 'i' );
+								$index_name = quote($index_name, $qf);
                 push @index_defs, 
-                    "CREATE UNIQUE INDEX $index_name on $table_name_ur (".
+                    "CREATE UNIQUE INDEX $index_name on $table_name (".
                         join( ', ', @fields ).  
                     ")$index_options"; 
             }
@@ -475,7 +524,7 @@ sub create_table {
             for my $comment ( @table_comments ) {
                 next unless $comment;
                 $comment =~ s/'/''/g;
-                push @field_comments, "COMMENT ON TABLE $table_name_ur is\n '".
+                push @field_comments, "COMMENT ON TABLE $table_name_q is\n '".
                 $comment . "'" unless $options->{no_comments}
                 ;
             }
@@ -483,24 +532,18 @@ sub create_table {
 
         my $table_options = @table_options 
             ? "\n".join("\n", @table_options) : '';
-    push @create, "CREATE TABLE $table_name_ur (\n" .
+    push @create, "CREATE TABLE $table_name_q (\n" .
             join( ",\n", map { "  $_" } @field_defs,
             ($options->{delay_constraints} ? () : @constraint_defs) ) .
             "\n)$table_options";
 
-    @constraint_defs = map { 'ALTER TABLE '.$table_name_ur.' ADD '.$_  }
+    @constraint_defs = map { "ALTER TABLE $table_name_q ADD $_"  }
       @constraint_defs;
 
     if ( $WARN ) {
         if ( %truncated ) {
             warn "Truncated " . keys( %truncated ) . " names:\n";
             warn "\t" . join( "\n\t", sort keys %truncated ) . "\n";
-        }
-
-        if ( %unreserve ) {
-            warn "Encounted " . keys( %unreserve ) .
-                " unsafe names in schema (reserved or invalid):\n";
-            warn "\t" . join( "\n\t", sort keys %unreserve ) . "\n";
         }
     }
 
@@ -521,9 +564,8 @@ sub alter_field {
     }
 
     my $table_name = $to_field->table->name;
-    my $table_name_ur = unreserve( $table_name );
 
-    return 'ALTER TABLE '.$table_name_ur.' MODIFY ( '.join('', @$field_defs).' )';
+    return 'ALTER TABLE '.$table_name.' MODIFY ( '.join('', @$field_defs).' )';
 }
 
 sub add_field {
@@ -533,21 +575,22 @@ sub add_field {
       create_field($new_field, $options, {});
 
     my $table_name = $new_field->table->name;
-    my $table_name_ur = unreserve( $table_name );
 
     my $out = sprintf('ALTER TABLE %s ADD ( %s )',
-                      $table_name_ur,
+                      $table_name,
                       join('', @$field_defs));
     return $out;
 }
 
 sub create_field {
     my ($field, $options, $field_name_scope) = @_;
+		my $qf = $options->{quote_field_names};
+		my $qt = $options->{quote_table_names};
 
     my (@create, @field_defs, @trigger_defs, @field_comments);
 
     my $table_name = $field->table->name;
-    my $table_name_ur = unreserve( $table_name );
+    my $table_name_q = quote($table_name, $qt);
 
     #
     # Field name
@@ -555,10 +598,9 @@ sub create_field {
     my $field_name    = mk_name(
                                 $field->name, '', $field_name_scope, 1
                                );
-
-    my $field_name_ur = unreserve( $field_name, $table_name );
-    my $field_def     = $field_name_ur;
-    $field->name( $field_name_ur );
+		my $field_name_q = quote($field_name, $qf);
+    my $field_def     = quote($field_name, $qf);
+    $field->name( $field_name );
 
     #
     # Datatype
@@ -572,7 +614,7 @@ sub create_field {
     my $commalist = join( ', ', map { qq['$_'] } @$list );
 
     if ( $data_type eq 'enum' ) {
-        $check = "CHECK ($field_name_ur IN ($commalist))";
+        $check = "CHECK ($field_name_q IN ($commalist))";
         $data_type = 'varchar2';
     }
     elsif ( $data_type eq 'set' ) {
@@ -683,22 +725,22 @@ sub create_field {
     # Auto_increment
     #
     if ( $field->is_auto_increment ) {
-        my $base_name    = $table_name_ur . "_". $field_name;
-        my $seq_name     = mk_name( $base_name, 'sq' );
-        my $trigger_name = mk_name( $base_name, 'ai' );
+        my $base_name    = $table_name . "_". $field_name;
+        my $seq_name     = quote(mk_name( $base_name, 'sq' ),$qt);
+        my $trigger_name = quote(mk_name( $base_name, 'ai' ),$qt);
 
         push @create, qq[DROP SEQUENCE $seq_name] if $options->{add_drop_table};
         push @create, "CREATE SEQUENCE $seq_name";
         my $trigger =
           "CREATE OR REPLACE TRIGGER $trigger_name\n" .
-          "BEFORE INSERT ON $table_name_ur\n" .
+          "BEFORE INSERT ON $table_name_q\n" .
           "FOR EACH ROW WHEN (\n" .
-          " new.$field_name_ur IS NULL".
-          " OR new.$field_name_ur = 0\n".
+          " new.$field_name_q IS NULL".
+          " OR new.$field_name_q = 0\n".
           ")\n".
           "BEGIN\n" .
           " SELECT $seq_name.nextval\n" .
-          " INTO :new." . $field->name."\n" .
+          " INTO :new." . $field_name_q."\n" .
           " FROM dual;\n" .
           "END;\n";
         
@@ -706,14 +748,14 @@ sub create_field {
     }
 
     if ( lc $field->data_type eq 'timestamp' ) {
-        my $base_name = $table_name_ur . "_". $field_name_ur;
-        my $trig_name = mk_name( $base_name, 'ts' );
+        my $base_name = $table_name . "_". $field_name;
+        my $trig_name = quote(mk_name( $base_name, 'ts' ), $qt);
         my $trigger = 
           "CREATE OR REPLACE TRIGGER $trig_name\n".
-          "BEFORE INSERT OR UPDATE ON $table_name_ur\n".
-          "FOR EACH ROW WHEN (new.$field_name_ur IS NULL)\n".
+          "BEFORE INSERT OR UPDATE ON $table_name_q\n".
+          "FOR EACH ROW WHEN (new.$field_name_q IS NULL)\n".
           "BEGIN \n".
-          " SELECT sysdate INTO :new.$field_name_ur FROM dual;\n".
+          " SELECT sysdate INTO :new.$field_name_q FROM dual;\n".
           "END;\n";
 
           push @trigger_defs, $trigger;
@@ -724,7 +766,7 @@ sub create_field {
     if ( my $comment = $field->comments ) {
         $comment =~ s/'/''/g;
         push @field_comments, 
-          "COMMENT ON COLUMN $table_name_ur.$field_name_ur is\n '" .
+          "COMMENT ON COLUMN $table_name.$field_name is\n '" .
             $comment . "';" unless $options->{no_comments};
     }
 
@@ -735,7 +777,9 @@ sub create_field {
 
 sub create_view {
     my ($view, $options) = @_;
-    my $view_name = $view->name;
+		my $qt = $options->{quote_table_names};
+		my $qf = $options->{quote_field_names};
+    my $view_name = quote($view->name,$qt);
     
     my @create;
     push @create, qq[DROP VIEW $view_name]
@@ -787,28 +831,23 @@ sub mk_name {
     return $name;
 }
 
+1;
+
 # -------------------------------------------------------------------
-sub unreserve {
-    my $name            = shift || '';
-    my $schema_obj_name = shift || '';
-
-    my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
-
-    # also trap fields that don't begin with a letter
-    return $name if !$ora_reserved{ uc $name } && $name =~ /^[a-z]/i; 
-
-    if ( $schema_obj_name ) {
-        ++$unreserve{"$schema_obj_name.$name"};
-    }
-    else {
-        ++$unreserve{"$name (table name)"};
-    }
-
-    my $unreserve = sprintf '%s_', $name;
-    return $unreserve.$suffix;
+sub quote {
+  my ($name, $q) = @_;
+	if ( $q ) {
+			"$q$name$q";
+	} elsif ($ora_reserved { uc $name }) {
+ 		# convert to upper case to be consistent with oracle
+		# when no quotes are being used
+		$name = uc $name;
+		"$quote_char$name$quote_char";
+	} else {
+		$name;
+	}
 }
 
-1;
 
 # -------------------------------------------------------------------
 # All bad art is the result of good intentions.
@@ -825,7 +864,8 @@ script.
 =head1 AUTHORS
 
 Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
-Alexander Hartmaier E<lt>abraxxa@cpan.org<gt>.
+Alexander Hartmaier E<lt>abraxxa@cpan.orgE<gt>,
+Fabien Wernli E<lt>faxmodem@cpan.orgE<gt>.
 
 =head1 SEE ALSO
 
