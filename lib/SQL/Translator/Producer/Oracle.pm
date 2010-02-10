@@ -103,27 +103,6 @@ To get this working we removed the slash in those statements in version
 0.09002 of L<SQL::Translator> when called in array context. In scalar
 context the slash will be still there to ensure compatibility with SQLPlus.
 
-=head2 Quotes
-
-This producer will generate
-DDL with or without quotes if L<quote_table_names> and/or
-L<quote_field_names> are true.
-
-Quotes will be forced and names capitalised if C<quote_table_names==0> and/or C<quote_field_names==0>
-for the following reserved keywords:
-
-    ACCESS ADD ALL ALTER AND ANY AS ASC AUDIT BETWEEN BY CHAR CHECK
-    CLUSTER COLUMN COMMENT COMPRESS CONNECT CREATE CURRENT DATE DECIMAL
-    DEFAULT DELETE DESC DISTINCT DROP ELSE EXCLUSIVE EXISTS FILE FLOAT
-    FOR FROM GRANT GROUP HAVING IDENTIFIED IMMEDIATE IN INCREMENT
-    INDEX INITIAL INSERT INTEGER INTERSECT INTO IS LEVEL LIKE LOCK
-    LONG MAXEXTENTS MINUS MLSLABEL MODE MODIFY NOAUDIT NOCOMPRESS NOT
-    NOWAIT NULL NUMBER OF OFFLINE ON ONLINE OPTION OR ORDER PCTFREE
-    PRIOR PRIVILEGES PUBLIC RAW RENAME RESOURCE REVOKE ROW ROWID ROWNUM
-    ROWS SELECT SESSION SET SHARE SIZE SMALLINT START SUCCESSFUL SYNONYM
-    SYSDATE TABLE THEN TO TRIGGER UID UNION UNIQUE UPDATE USER VALIDATE
-    VALUES VARCHAR VARCHAR2 VIEW WHENEVER WHERE WITH
-
 =cut
 
 use strict;
@@ -154,7 +133,7 @@ my %translate  = (
     mediumblob => 'blob',
     longblob   => 'blob',
     tinytext   => 'varchar2',
-    text       => 'clob',
+    text       => [ 'varchar2', 4000 ],
     longtext   => 'clob',
     mediumtext => 'clob',
     enum       => 'varchar2',
@@ -200,36 +179,6 @@ my %translate  = (
 );
 
 #
-# Oracle reserved words from:
-# http://technet.oracle.com/docs/products/oracle8i/doc_library/\
-# 817_doc/server.817/a85397/ap_keywd.htm
-#
-my %ora_reserved = map { $_, 1 } qw(
-    ACCESS ADD ALL ALTER AND ANY AS ASC AUDIT 
-    BETWEEN BY
-    CHAR CHECK CLUSTER COLUMN COMMENT COMPRESS CONNECT CREATE CURRENT
-    DATE DECIMAL DEFAULT DELETE DESC DISTINCT DROP
-    ELSE EXCLUSIVE EXISTS 
-    FILE FLOAT FOR FROM
-    GRANT GROUP 
-    HAVING
-    IDENTIFIED IMMEDIATE IN INCREMENT INDEX INITIAL INSERT
-    INTEGER INTERSECT INTO IS
-    LEVEL LIKE LOCK LONG 
-    MAXEXTENTS MINUS MLSLABEL MODE MODIFY 
-    NOAUDIT NOCOMPRESS NOT NOWAIT NULL NUMBER 
-    OF OFFLINE ON ONLINE OPTION OR ORDER
-    PCTFREE PRIOR PRIVILEGES PUBLIC
-    RAW RENAME RESOURCE REVOKE ROW ROWID ROWNUM ROWS
-    SELECT SESSION SET SHARE SIZE SMALLINT START 
-    SUCCESSFUL SYNONYM SYSDATE 
-    TABLE THEN TO TRIGGER 
-    UID UNION UNIQUE UPDATE USER
-    VALIDATE VALUES VARCHAR VARCHAR2 VIEW
-    WHENEVER WHERE WITH
-);
-
-#
 # Oracle 8/9 max size of data types from:
 # http://www.ss64.com/orasyntax/datatypes.html
 #
@@ -250,7 +199,6 @@ my %truncated;
 
 # Quote used to escape table, field, sequence and trigger names
 my $quote_char  = '"';
-my $name_sep    = '.';
 
 # -------------------------------------------------------------------
 sub produce {
@@ -260,8 +208,7 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
-    $quote_char        = $translator->producer_args->{'quote_char'} ||= '"';
-		$name_sep          = $translator->producer_args->{'name_sep'} ||= '.';
+    my $oracle_version  = $translator->producer_args->{oracle_version} || 0;
     my $delay_constraints = $translator->producer_args->{delay_constraints};
     my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 
@@ -406,7 +353,7 @@ sub create_table {
 
                 for my $f ( $c->fields ) {
                     my $field_def = $table->get_field( $f ) or next;
-                    my $dtype     = $translate{ $field_def->data_type } or next;
+                    my $dtype     = $translate{ ref $field_def->data_type eq "ARRAY" ? $field_def->data_type->[0] : $field_def->data_type} or next;
                     if ( $WARN && $dtype =~ /clob/i ) {
                         warn "Oracle will not allow UNIQUE constraints on " .
                              "CLOB field '" . $field_def->table->name . '.' .
@@ -623,10 +570,14 @@ sub create_field {
         $data_type = 'varchar2';
     }
     else {
-        $data_type  = defined $translate{ $data_type } ?
-          $translate{ $data_type } :
-            $data_type;
-        $data_type ||= 'varchar2';
+			if (defined $translate{ $data_type }) {
+				if (ref $translate{ $data_type } eq "ARRAY") {
+        	($data_type,$size[0])  = @{$translate{ $data_type }};
+				} else {
+        	$data_type  = $translate{ $data_type };
+				}
+			}
+      $data_type ||= 'varchar2';
     }
     
     # ensure size is not bigger than max size oracle allows for data type
@@ -836,16 +787,7 @@ sub mk_name {
 # -------------------------------------------------------------------
 sub quote {
   my ($name, $q) = @_;
-	if ( $q ) {
-			"$q$name$q";
-	} elsif ($ora_reserved { uc $name }) {
- 		# convert to upper case to be consistent with oracle
-		# when no quotes are being used
-		$name = uc $name;
-		"$quote_char$name$quote_char";
-	} else {
-		$name;
-	}
+	$q ? "$q$name$q" : $name;
 }
 
 
