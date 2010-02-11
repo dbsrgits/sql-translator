@@ -213,8 +213,8 @@ sub produce {
     my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 
     $create .= header_comment unless ($no_comments);
-		my $qt = $quote_char if $translator->quote_table_names;
-		my $qf = $quote_char if $translator->quote_field_names;
+		my $qt = 1 if $translator->quote_table_names;
+		my $qf = 1 if $translator->quote_field_names;
 
     if ( $translator->parser_type =~ /mysql/i ) {
         $create .= 
@@ -251,6 +251,7 @@ sub produce {
             $view,
             {
                 add_drop_view     => $add_drop_table,
+								quote_table_names => $qt,
             }
         );
         push @view_defs, @$view_def;
@@ -332,6 +333,7 @@ sub create_table {
                 # create a name if delay_constraints
                 $name ||= mk_name( $table_name, 'pk' )
                   if $options->{delay_constraints};
+								$name = quote($name,$qf);
                 push @constraint_defs, ($name ? "CONSTRAINT $name " : '') .
                 	'PRIMARY KEY (' . join( ', ', @fields ) . ')';
             }
@@ -366,6 +368,7 @@ sub create_table {
             }
             elsif ( $c->type eq CHECK_C ) {
                 $name ||= mk_name( $name || $table_name, 'ck' );
+								$name = quote($name, $qf);
                 my $expression = $c->expression || '';
                 push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
             }
@@ -448,7 +451,7 @@ sub create_table {
                     : mk_name( $table_name, $index_name || 'i' );
 								$index_name = quote($index_name, $qf);
                 push @index_defs, 
-                    "CREATE INDEX $index_name on ".quote($table_name,$qt)." (".
+                    "CREATE INDEX $index_name on $table_name_q (".
                         join( ', ', @fields ).  
                     ")$index_options";
             }
@@ -457,7 +460,7 @@ sub create_table {
                     : mk_name( $table_name, $index_name || 'i' );
 								$index_name = quote($index_name, $qf);
                 push @index_defs, 
-                    "CREATE UNIQUE INDEX $index_name on $table_name (".
+                    "CREATE UNIQUE INDEX $index_name on $table_name_q (".
                         join( ', ', @fields ).  
                     ")$index_options"; 
             }
@@ -500,6 +503,7 @@ sub create_table {
 sub alter_field {
     my ($from_field, $to_field, $options) = @_;
 
+		my $qt = $options->{quote_table_names};
     my ($field_create, $field_defs, $trigger_defs, $field_comments) =
       create_field($to_field, $options, {});
 
@@ -510,7 +514,7 @@ sub alter_field {
         @$field_defs = map { s/ NOT NULL//; $_} @$field_defs;
     }
 
-    my $table_name = $to_field->table->name;
+    my $table_name = quote($to_field->table->name,$qt);
 
     return 'ALTER TABLE '.$table_name.' MODIFY ( '.join('', @$field_defs).' )';
 }
@@ -518,10 +522,11 @@ sub alter_field {
 sub add_field {
     my ($new_field, $options) = @_;
 
+		my $qt = $options->{quote_table_names};
     my ($field_create, $field_defs, $trigger_defs, $field_comments) =
       create_field($new_field, $options, {});
 
-    my $table_name = $new_field->table->name;
+    my $table_name = quote($new_field->table->name,$qt);
 
     my $out = sprintf('ALTER TABLE %s ADD ( %s )',
                       $table_name,
@@ -717,7 +722,7 @@ sub create_field {
     if ( my $comment = $field->comments ) {
         $comment =~ s/'/''/g;
         push @field_comments, 
-          "COMMENT ON COLUMN $table_name.$field_name is\n '" .
+          "COMMENT ON COLUMN $table_name_q.$field_name_q is\n '" .
             $comment . "';" unless $options->{no_comments};
     }
 
@@ -729,7 +734,6 @@ sub create_field {
 sub create_view {
     my ($view, $options) = @_;
 		my $qt = $options->{quote_table_names};
-		my $qf = $options->{quote_field_names};
     my $view_name = quote($view->name,$qt);
     
     my @create;
@@ -787,7 +791,7 @@ sub mk_name {
 # -------------------------------------------------------------------
 sub quote {
   my ($name, $q) = @_;
-	$q ? "$q$name$q" : $name;
+	$q && $name ? "$quote_char$name$quote_char" : $name;
 }
 
 
