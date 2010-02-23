@@ -48,10 +48,10 @@ sub parse {
 
     my $schema = $tr->schema;
 
-    my $sth = $dbh->table_info();
+    my $db_user = uc $tr->parser_args()->{db_user};
+    my $sth = $dbh->table_info(undef, $db_user, '%', 'TABLE');
 
     while(my $table_info = $sth->fetchrow_hashref('NAME_uc')) {
-        next unless ($table_info->{TABLE_TYPE} eq 'TABLE');
         next if ($table_info->{TABLE_NAME} =~ /\$/);
 
         # create the table

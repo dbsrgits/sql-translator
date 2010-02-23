@@ -91,6 +91,8 @@ my $sql = q[
     alter table only t_test1 drop constraint foo cascade;
 
     alter table t_test1 owner to foo;
+
+    commit;
 ];
 
 $| = 1;

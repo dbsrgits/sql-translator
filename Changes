@@ -1,7 +1,16 @@
+* Fix Parser::DBI::Oracle reading too many tables (RT#49413)
+* Fix Parser::MySQL tripping up on PRIMARY KEY ... USING (currently value is ignored) (RT#50468)
+* Fix runaway debug trace (RT#52276)
+* Fix Parser::PostgreSQL choking on commit; statements in DDL (#RT52277)
+
+# ----------------------------------------------------------
+# 0.11004 2010-02-14
+# ----------------------------------------------------------
 * Fix PG producer numeric precision regression (RT#49301)
 * Add DB2 producer numeric/decimal precision output
 * Fix Oracle producer creating numeric precision statements that the test case expects (no whitespace)
 * Add Oracle producer creating drop view statements like PG producer does
+* Fix SQL::Translator::Diff to use producer_args instead of producer_options
 
 # ----------------------------------------------------------
 # 0.11003 2009-09-28

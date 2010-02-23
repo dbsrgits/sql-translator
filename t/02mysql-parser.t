@@ -234,7 +234,7 @@ BEGIN {
               tax                       decimal(8,2),
               shipping_charge           decimal(8,2),
               price_paid                decimal(8,2),
-              PRIMARY KEY (order_id),
+              PRIMARY KEY (order_id) USING BTREE,
               KEY (status),
               KEY (billing_address_id),
               KEY (shipping_address_id),

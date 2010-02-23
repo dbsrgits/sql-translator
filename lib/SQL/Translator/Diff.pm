@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
+use Carp::Clan qw/^SQL::Translator/;
 use SQL::Translator::Schema::Constants;
 
 use base 'Class::Accessor::Fast';
@@ -14,7 +15,7 @@ use base 'Class::Accessor::Fast';
 __PACKAGE__->mk_accessors(qw/
   ignore_index_names ignore_constraint_names ignore_view_sql
   ignore_proc_sql output_db source_schema target_schema 
-  case_insensitive no_batch_alters ignore_missing_methods producer_options
+  case_insensitive no_batch_alters ignore_missing_methods producer_args
 /);
 
 my @diff_arrays = qw/
@@ -63,7 +64,11 @@ sub new {
   $values->{$_} ||= [] foreach @diff_arrays;
   $values->{table_diff_hash} = {};
 
-  $values->{producer_options} ||= {};
+  $values->{producer_args} ||= {};
+  if ($values->{producer_options}) {
+    carp 'producer_options is deprecated. Please use producer_args';
+    $values->{producer_args} = { %{$values->{producer_options}}, %{$values->{producer_args}} };
+  }
   $values->{output_db} ||= $values->{source_db};
   return $class->SUPER::new($values);
 }
@@ -101,7 +106,7 @@ sub compute_differences {
           $self->table_diff_hash->{$tar_table_name}{table_renamed_from} = [ [$src_table, $tar_table] ];
         } else {
           delete $tar_table->extra->{renamed_from};
-          warn qq#Renamed table can't find old table "$old_name" for renamed table\n#;
+          carp qq#Renamed table can't find old table "$old_name" for renamed table\n#;
         }
       } else {
         $src_table = $source_schema->get_table( $tar_table_name, $self->case_insensitive );
@@ -181,7 +186,7 @@ sub produce_diff_sql {
               $func_map{$_} => $self->table_diff_hash->{$table}{$_}
             } keys %func_map 
           }, 
-          $self->producer_options
+          $self->producer_args
         );
       }
     } else {
@@ -200,7 +205,7 @@ sub produce_diff_sql {
             my $meth = $producer_class->can($_);
             
             $meth ? map { 
-                    my $sql = $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_options );
+                    my $sql = $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_args );
                     $sql ?  ("$sql") : (); 
                   } @{ $flattened_diffs{$_} }
                   : $self->ignore_missing_methods
@@ -226,7 +231,7 @@ sub produce_diff_sql {
         add_drop_table => 0,
         no_comments => 1,
         # TODO: sort out options
-        %{ $self->producer_options }
+        %{ $self->producer_args }
       );
       $translator->producer_args->{no_transaction} = 1;
       my $schema = $translator->schema;
@@ -241,7 +246,7 @@ sub produce_diff_sql {
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
       my $meth = $producer_class->can('drop_table');
       
-      push @diffs, $meth ? ( map { $meth->($_, $self->producer_options) } @tables_to_drop)
+      push @diffs, $meth ? ( map { $meth->($_, $self->producer_args) } @tables_to_drop)
                          : $self->ignore_missing_methods
                          ? "-- $producer_class cant drop_table"
                          : die "$producer_class cant drop_table";
@@ -343,7 +348,7 @@ sub diff_table_fields {
     if (my $old_name = $tar_table_field->extra->{renamed_from}) {
       my $src_table_field = $src_table->get_field( $old_name, $self->case_insensitive );
       unless ($src_table_field) {
-        warn qq#Renamed column can't find old column "@{[$src_table->name]}.$old_name" for renamed column\n#;
+        carp qq#Renamed column can't find old column "@{[$src_table->name]}.$old_name" for renamed column\n#;
         delete $tar_table_field->extra->{renamed_from};
       } else {
         push @{$self->table_diff_hash->{$tar_table}{fields_to_rename} }, [ $src_table_field, $tar_table_field ];
@@ -404,6 +409,13 @@ sub diff_table_options {
   # If there's a difference, just re-set all the options
   push @{ $self->table_diff_hash->{$tar_table}{table_options} }, $tar_table
     unless $src_table->_compare_objects( \@src_opts, \@tar_opts );
+}
+
+# support producer_options as an alias for producer_args for legacy code.
+sub producer_options {
+  my $self = shift;
+
+  return $self->producer_args( @_ );
 }
 
 1;

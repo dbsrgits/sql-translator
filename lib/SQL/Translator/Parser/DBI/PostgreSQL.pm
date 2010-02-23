@@ -184,7 +184,7 @@ ORDER BY 1;
         
         $fk_select->execute('public',$table_name) or die "Can't execute: $@";
         my $fkeys = $fk_select->fetchall_arrayref({});
-        print Dumper $fkeys;
+        $DEBUG and print Dumper $fkeys;
         for my $con (@$fkeys){
             my $con_name         = $con->{conname};
             my $fields           = $con->{fields};

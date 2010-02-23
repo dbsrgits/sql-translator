@@ -641,13 +641,14 @@ foreign_key_def_begin : /constraint/i /foreign key/i WORD
     /foreign key/i
     { $return = '' }
 
-primary_key_def : primary_key index_name(?) '(' name_with_opt_paren(s /,/) ')'
+primary_key_def : primary_key index_name(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     { 
         $return       = { 
             supertype => 'constraint',
             name      => $item{'index_name(?)'}[0],
             type      => 'primary_key',
             fields    => $item[4],
+            options   => $item[6][0],
         };
     }
 

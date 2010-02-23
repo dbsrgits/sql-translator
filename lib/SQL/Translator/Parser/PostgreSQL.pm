@@ -152,7 +152,10 @@ statement : create
   | select
   | copy
   | readin_symbol
+  | commit
   | <error>
+
+commit : /commit/i ';'
 
 connect : /^\s*\\\connect.*\n/
 
