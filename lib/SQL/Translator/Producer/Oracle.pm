@@ -213,8 +213,8 @@ sub produce {
     my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 
     $create .= header_comment unless ($no_comments);
-		my $qt = 1 if $translator->quote_table_names;
-		my $qf = 1 if $translator->quote_field_names;
+    my $qt = 1 if $translator->quote_table_names;
+    my $qf = 1 if $translator->quote_field_names;
 
     if ( $translator->parser_type =~ /mysql/i ) {
         $create .= 
@@ -234,8 +234,8 @@ sub produce {
                 show_warnings     => $WARN,
                 no_comments       => $no_comments,
                 delay_constraints => $delay_constraints,
-								quote_table_names => $qt,
-								quote_field_names => $qf,
+                quote_table_names => $qt,
+                quote_field_names => $qf,
             }
         );
         push @table_defs, @$table_def;
@@ -251,7 +251,7 @@ sub produce {
             $view,
             {
                 add_drop_view     => $add_drop_table,
-								quote_table_names => $qt,
+                quote_table_names => $qt,
             }
         );
         push @view_defs, @$view_def;
@@ -262,7 +262,7 @@ sub produce {
     }
     else {
         $create .= join (";\n\n", @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
-				$create .= ";\n\n";
+        $create .= ";\n\n";
         # If wantarray is not set we have to add "/" in this statement
         # DBI->do() needs them omitted
         # triggers may NOT end with a semicolon
@@ -275,10 +275,10 @@ sub produce {
 
 sub create_table {
     my ($table, $options) = @_;
-		my $qt = $options->{quote_table_names};
-		my $qf = $options->{quote_field_names};
+    my $qt = $options->{quote_table_names};
+    my $qf = $options->{quote_field_names};
     my $table_name = $table->name;
-		my $table_name_q = quote($table_name,$qt);
+    my $table_name_q = quote($table_name,$qt);
 
     my $item = '';
     my $drop;
@@ -333,25 +333,28 @@ sub create_table {
                 # create a name if delay_constraints
                 $name ||= mk_name( $table_name, 'pk' )
                   if $options->{delay_constraints};
-								$name = quote($name,$qf);
+                $name = quote($name,$qf);
                 push @constraint_defs, ($name ? "CONSTRAINT $name " : '') .
-                	'PRIMARY KEY (' . join( ', ', @fields ) . ')';
+                  'PRIMARY KEY (' . join( ', ', @fields ) . ')';
             }
             elsif ( $c->type eq UNIQUE ) {
-            	# Don't create UNIQUE constraints identical to the primary key
-            	if ( my $pk = $table->primary_key ) {
-					my $u_fields = join(":", @fields);
-					my $pk_fields = join(":", $pk->fields);
-					next if $u_fields eq $pk_fields;
-            	}
-							if ($name) {
-								# Force prepend of table_name as ORACLE doesn't allow duplicate
-								# CONSTRAINT names even for different tables (ORA-02264)
-								$name = "${table_name}_$name" unless $name =~ /^$table_name/;
-							} else {
+              # Don't create UNIQUE constraints identical to the primary key
+              if ( my $pk = $table->primary_key ) {
+                my $u_fields = join(":", @fields);
+                my $pk_fields = join(":", $pk->fields);
+                next if $u_fields eq $pk_fields;
+              }
+
+              if ($name) {
+                # Force prepend of table_name as ORACLE doesn't allow duplicate
+                # CONSTRAINT names even for different tables (ORA-02264)
+                $name = "${table_name}_$name" unless $name =~ /^$table_name/;
+              }
+              else {
                 $name = mk_name( $table_name, 'u' );
-							}
-							$name = quote($name, $qf);
+              }
+
+              $name = quote($name, $qf);
 
                 for my $f ( $c->fields ) {
                     my $field_def = $table->get_field( $f ) or next;
@@ -368,13 +371,13 @@ sub create_table {
             }
             elsif ( $c->type eq CHECK_C ) {
                 $name ||= mk_name( $name || $table_name, 'ck' );
-								$name = quote($name, $qf);
+                $name = quote($name, $qf);
                 my $expression = $c->expression || '';
                 push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
             }
             elsif ( $c->type eq FOREIGN_KEY ) {
                 $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
-								$name = quote($name, $qf);
+                $name = quote($name, $qf);
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
@@ -442,14 +445,14 @@ sub create_table {
             if ( $index_type eq PRIMARY_KEY ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, 'pk' );
-								$index_name = quote($index_name, $qf);
+                $index_name = quote($index_name, $qf);
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $index_type eq NORMAL ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, $index_name || 'i' );
-								$index_name = quote($index_name, $qf);
+                $index_name = quote($index_name, $qf);
                 push @index_defs, 
                     "CREATE INDEX $index_name on $table_name_q (".
                         join( ', ', @fields ).  
@@ -458,7 +461,7 @@ sub create_table {
             elsif ( $index_type eq UNIQUE ) {
                 $index_name = $index_name ? mk_name( $index_name ) 
                     : mk_name( $table_name, $index_name || 'i' );
-								$index_name = quote($index_name, $qf);
+                $index_name = quote($index_name, $qf);
                 push @index_defs, 
                     "CREATE UNIQUE INDEX $index_name on $table_name_q (".
                         join( ', ', @fields ).  
@@ -503,7 +506,7 @@ sub create_table {
 sub alter_field {
     my ($from_field, $to_field, $options) = @_;
 
-		my $qt = $options->{quote_table_names};
+    my $qt = $options->{quote_table_names};
     my ($field_create, $field_defs, $trigger_defs, $field_comments) =
       create_field($to_field, $options, {});
 
@@ -522,7 +525,7 @@ sub alter_field {
 sub add_field {
     my ($new_field, $options) = @_;
 
-		my $qt = $options->{quote_table_names};
+    my $qt = $options->{quote_table_names};
     my ($field_create, $field_defs, $trigger_defs, $field_comments) =
       create_field($new_field, $options, {});
 
@@ -536,8 +539,8 @@ sub add_field {
 
 sub create_field {
     my ($field, $options, $field_name_scope) = @_;
-		my $qf = $options->{quote_field_names};
-		my $qt = $options->{quote_table_names};
+    my $qf = $options->{quote_field_names};
+    my $qt = $options->{quote_table_names};
 
     my (@create, @field_defs, @trigger_defs, @field_comments);
 
@@ -550,7 +553,7 @@ sub create_field {
     my $field_name    = mk_name(
                                 $field->name, '', $field_name_scope, 1
                                );
-		my $field_name_q = quote($field_name, $qf);
+    my $field_name_q = quote($field_name, $qf);
     my $field_def     = quote($field_name, $qf);
     $field->name( $field_name );
 
@@ -575,16 +578,16 @@ sub create_field {
         $data_type = 'varchar2';
     }
     else {
-			if (defined $translate{ $data_type }) {
-				if (ref $translate{ $data_type } eq "ARRAY") {
-        	($data_type,$size[0])  = @{$translate{ $data_type }};
-				} else {
-        	$data_type  = $translate{ $data_type };
-				}
-			}
+      if (defined $translate{ $data_type }) {
+        if (ref $translate{ $data_type } eq "ARRAY") {
+          ($data_type,$size[0])  = @{$translate{ $data_type }};
+        } else {
+          $data_type  = $translate{ $data_type };
+        }
+      }
       $data_type ||= 'varchar2';
     }
-    
+
     # ensure size is not bigger than max size oracle allows for data type
     if ( defined $max_size{$data_type} ) {
         for ( my $i = 0 ; $i < scalar @size ; $i++ ) {
@@ -699,7 +702,7 @@ sub create_field {
           " INTO :new." . $field_name_q."\n" .
           " FROM dual;\n" .
           "END;\n";
-        
+
         push @trigger_defs, $trigger;
     }
 
@@ -733,7 +736,7 @@ sub create_field {
 
 sub create_view {
     my ($view, $options) = @_;
-		my $qt = $options->{quote_table_names};
+    my $qt = $options->{quote_table_names};
     my $view_name = quote($view->name,$qt);
     
     my @create;
@@ -791,7 +794,7 @@ sub mk_name {
 # -------------------------------------------------------------------
 sub quote {
   my ($name, $q) = @_;
-	$q && $name ? "$quote_char$name$quote_char" : $name;
+  $q && $name ? "$quote_char$name$quote_char" : $name;
 }
 
 

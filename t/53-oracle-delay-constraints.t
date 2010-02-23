@@ -21,8 +21,8 @@ $sqlt = SQL::Translator->new(
     show_warnings  => 0,
     add_drop_table => 0,
     producer_args  => { 'delay_constraints' => 1 },
-		quote_table_names => 0,
-		quote_field_names => 0,
+    quote_table_names => 0,
+    quote_field_names => 0,
 );
 
 my $sql_string = $sqlt->translate(

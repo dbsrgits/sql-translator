@@ -26,8 +26,8 @@ BEGIN {
 my $tr       = SQL::Translator->new(
     parser   => "MySQL",
     producer => "Oracle",
-		quote_table_names => 0,
-		quote_field_names => 0,
+    quote_table_names => 0,
+    quote_field_names => 0,
 );
 
 my $output = $tr->translate(\$create);
