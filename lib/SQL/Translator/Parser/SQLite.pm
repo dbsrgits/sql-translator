@@ -271,7 +271,7 @@ create : CREATE TEMPORARY(?) TABLE table_name '(' definition(s /,/) ')' SEMICOLO
 
 definition : constraint_def | column_def 
 
-column_def: comment(s?) NAME type(?) column_constraint(s?)
+column_def: comment(s?) NAME type(?) column_constraint_def(s?)
     {
         my $column = {
             supertype      => 'column',
@@ -319,6 +319,16 @@ type : WORD parens_value_list(?)
             size => $item[2][0],
         }
     }
+
+column_constraint_def : CONSTRAINT constraint_name column_constraint
+    {
+        $return = {
+            name => $item[2],
+            %{ $item[3] },
+        }
+    }
+    |
+    column_constraint
 
 column_constraint : NOT_NULL conflict_clause(?)
     {
@@ -377,7 +387,24 @@ column_constraint : NOT_NULL conflict_clause(?)
         }
     }
 
-constraint_def : PRIMARY_KEY parens_field_list conflict_clause(?)
+constraint_def : comment(s?) CONSTRAINT constraint_name table_constraint
+    {
+        $return = {
+            comments => $item[1],
+            name => $item[3],
+            %{ $item[4] },
+        }
+    }
+    |
+    comment(s?) table_constraint
+    {
+        $return = {
+            comments => $item[1],
+            %{ $item[2] },
+        }
+    }
+
+table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
     {
         $return         = {
             supertype   => 'constraint',
@@ -419,6 +446,8 @@ qualified_name : /(\w+)\.(\w+)/
     { $return = { db_name => $1, name => $2 } }
 
 field_name : NAME
+
+constraint_name : NAME
 
 conflict_clause : /on conflict/i conflict_algorigthm
 
@@ -563,6 +592,8 @@ WORD : /\w+/
 WHEN : /when/i
 
 REFERENCES : /references/i
+
+CONSTRAINT : /constraint/i
 
 AUTOINCREMENT : /autoincrement/i
 
