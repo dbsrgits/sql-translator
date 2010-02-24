@@ -1,8 +1,11 @@
+# ----------------------------------------------------------
+# 0.11005 2010-02-24
+# ----------------------------------------------------------
 * Fix Parser::DBI::Oracle reading too many tables (RT#49413)
 * Fix Parser::MySQL tripping up on PRIMARY KEY ... USING (currently value is ignored) (RT#50468)
 * Fix runaway debug trace (RT#52276)
 * Fix Parser::PostgreSQL choking on commit; statements in DDL (#RT52277)
-* Producer::Oracle now respects quot_field|table_names, and
+* Producer::Oracle now respects quote_field|table_names, and
   no longer does name munging of reserved table names
 * Producer::Oracle now correctly outputs databse-unique index names
 
