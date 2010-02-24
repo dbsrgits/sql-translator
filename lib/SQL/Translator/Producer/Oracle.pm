@@ -118,9 +118,9 @@ my %translate  = (
     # MySQL types
     #
     bigint     => 'number',
-    double     => 'number',
+    double     => [ 'float', 126 ],
     decimal    => 'number',
-    float      => 'number',
+    float      => 'float',
     int        => 'number',
     integer    => 'number',
     mediumint  => 'number',
@@ -184,6 +184,7 @@ my %translate  = (
 #
 my %max_size = (
     char      => 2000,
+    float     => 126,
     nchar     => 2000,
     nvarchar2 => 4000,
     number    => [ 38, 127 ],
