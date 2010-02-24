@@ -46,7 +46,7 @@ my $want = [
           'CREATE TABLE Basic (
   id number(10) NOT NULL,
   title varchar2(100) DEFAULT \'hello\' NOT NULL,
-  description varchar2 DEFAULT \'\',
+  description clob DEFAULT \'\',
   email varchar2(500),
   explicitnulldef varchar2,
   explicitemptystring varchar2 DEFAULT \'\',
@@ -110,7 +110,7 @@ CREATE SEQUENCE sq_Basic_id01;
 CREATE TABLE Basic (
   id number(10) NOT NULL,
   title varchar2(100) DEFAULT 'hello' NOT NULL,
-  description varchar2 DEFAULT '',
+  description clob DEFAULT '',
   email varchar2(500),
   explicitnulldef varchar2,
   explicitemptystring varchar2 DEFAULT '',
