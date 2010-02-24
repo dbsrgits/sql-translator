@@ -2,6 +2,8 @@
 * Fix Parser::MySQL tripping up on PRIMARY KEY ... USING (currently value is ignored) (RT#50468)
 * Fix runaway debug trace (RT#52276)
 * Fix Parser::PostgreSQL choking on commit; statements in DDL (#RT52277)
+* Producer::Oracle now respects quot_field|table_names, and
+  no longer does name munging of reserved table names
 
 # ----------------------------------------------------------
 # 0.11004 2010-02-14
