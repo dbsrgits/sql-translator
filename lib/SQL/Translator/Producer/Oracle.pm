@@ -118,7 +118,7 @@ my %translate  = (
     # MySQL types
     #
     bigint     => 'number',
-    double     => [ 'float', 126 ],
+    double     => 'float',
     decimal    => 'number',
     float      => 'float',
     int        => 'number',
