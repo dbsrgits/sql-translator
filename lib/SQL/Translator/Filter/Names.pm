@@ -125,7 +125,7 @@ L<perl(1)>, L<SQL::Translator>
 
 =item Name Groups
 
-Define a bunch of usefull groups to run the name filters over. e.g. all, fkeys,
+Define a bunch of useful groups to run the name filters over. e.g. all, fkeys,
 pkeys etc.
 
 =item More Functions

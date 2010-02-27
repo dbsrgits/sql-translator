@@ -424,7 +424,7 @@ __END__
 
 =head1 NAME
 
-SQL::Translator::Diff
+SQL::Translator::Diff - determine differences between two schemas
 
 =head1 DESCRIPTION
 

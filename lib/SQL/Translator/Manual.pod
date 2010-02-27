@@ -1,6 +1,6 @@
 =head1 NAME
 
-SQL::Translator::Manual
+SQL::Translator::Manual - sqlfairy user manual
 
 =head1 SYNOPSIS
 
@@ -530,7 +530,7 @@ of reading the DATA section:
 
  $ sqlt -f YAML -t Custom-Foo --template foo.tt foo.yaml
 
-This is usefull as you can set up a producer that adds a set of filters and
+This is useful as you can set up a producer that adds a set of filters and
 variables that you can then use in templates given on the command line. (There
 is also a tt_schema method to over ride if you need even finer control over the
 source of your template). Note that if you leave out the DATA section all

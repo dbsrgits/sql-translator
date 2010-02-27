@@ -53,12 +53,12 @@ the tag, except for sql, comments and action, which get mapped to child data
 elements.
 
 List valued attributes (such as the list of fields in an index)
-get mapped to comma seperated lists of values in the attribute.
+get mapped to comma separated lists of values in the attribute.
 
 Child objects, such as a tables fields, get mapped to child tags wrapped in a
 set of container tags using the plural of their contained classes name.
 
-An objects's extra attribute (a hash of arbitary data) is
+An objects' extra attribute (a hash of arbitrary data) is
 mapped to a tag called extra, with the hash of data as attributes, sorted into
 alphabetical order.
 

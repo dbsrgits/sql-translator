@@ -900,7 +900,7 @@ sub field_names {
 =head2 field_names
 
 Read-only method to return a list or array ref of the field names. Returns undef
-or an empty list if the table has no fields set. Usefull if you want to
+or an empty list if the table has no fields set. Useful if you want to
 avoid the overload magic of the Field objects returned by the get_fields method.
 
   my @names = $constraint->field_names;

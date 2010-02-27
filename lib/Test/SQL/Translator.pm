@@ -557,7 +557,7 @@ tests based on their dependencies.
 
 The data structures given to the test subs don't have to include all the
 possible values, only the ones you expect to have changed. Any left out will be
-tested to make sure they are still at their default value. This is a usefull
+tested to make sure they are still at their default value. This is a useful
 check that you your parser hasn't accidentally set schema values you didn't
 expect it to.
 

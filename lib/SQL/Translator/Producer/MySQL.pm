@@ -81,9 +81,9 @@ Set the type of the table e.g. 'InnoDB', 'MyISAM'. This will be
 automatically set for tables involved in foreign key constraints if it is
 not already set explicitly. See L<"Table Types">.
 
-Please note that the C<ENGINE> option is the prefered method of specifying
+Please note that the C<ENGINE> option is the preferred method of specifying
 the MySQL storage engine to use, but this method still works for backwards
-compatability.
+compatibility.
 
 =item B<table.mysql_charset>, B<table.mysql_collate>
 
