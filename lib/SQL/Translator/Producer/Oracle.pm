@@ -118,7 +118,7 @@ my %translate  = (
     # MySQL types
     #
     bigint     => 'number',
-    double     => [ 'float', 126 ],
+    double     => 'float',
     decimal    => 'number',
     float      => 'float',
     int        => 'number',
@@ -623,6 +623,16 @@ sub create_field {
     #
     if ( $data_type =~ /(date|clob)/i ) {
         undef @size;
+    }
+
+    #
+    # Fixes ORA-00906: missing right parenthesis
+		# if size is 0 or undefined
+    #
+    for (qw/varchar2/) {
+        if ( $data_type =~ /^($_)$/i ) {
+            $size[0] ||= $max_size{$_};
+        }
     }
 
     $field_def .= " $data_type";

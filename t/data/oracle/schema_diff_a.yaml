@@ -30,7 +30,7 @@ schema:
           size:
             - 0
         name:
-          data_type: varchar2(10)
+          data_type: varchar2
           default_value: ~
           extra: {}
           is_nullable: 0
@@ -39,9 +39,9 @@ schema:
           name: name
           order: 59
           size:
-            - 0
+            - 10
         other:
-          data_type: varchar2(10)
+          data_type: varchar2
           default_value: ~
           extra: {}
           is_nullable: 1
@@ -50,6 +50,6 @@ schema:
           name: other
           order: 59
           size:
-            - 0
+            - 10
       name: d_operator
       order: 11

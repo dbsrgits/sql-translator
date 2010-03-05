@@ -1,4 +1,10 @@
 # ----------------------------------------------------------
+# 0.11006
+# ----------------------------------------------------------
+* Fix Producer::Oracle varchar2 without size def (ORA-00906: missing right parenthesis)
+* Fix Producer::Oracle translate float and double to float instead of number
+
+# ----------------------------------------------------------
 # 0.11005 2010-02-24
 # ----------------------------------------------------------
 * Fix Parser::DBI::Oracle reading too many tables (RT#49413)
