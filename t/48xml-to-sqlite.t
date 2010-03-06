@@ -34,8 +34,6 @@ my $sql = $sqlt->translate(
 ) or die $sqlt->error;
 
 eq_or_diff($sql, << "SQL");
-
-
 BEGIN TRANSACTION;
 
 DROP TABLE Basic;
@@ -92,7 +90,7 @@ my @sql = $sqlt->translate(
 
 eq_or_diff(\@sql, 
           [
-          "\n\nBEGIN TRANSACTION",
+          'BEGIN TRANSACTION',
           'DROP TABLE Basic',
           'CREATE TABLE Basic (
   id INTEGER PRIMARY KEY NOT NULL,

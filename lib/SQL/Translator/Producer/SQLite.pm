@@ -65,9 +65,12 @@ sub produce {
 
     %global_names = ();   #reset
 
+
+    my $head = (header_comment() . "\n") unless $no_comments;
+
     my @create = ();
-    push @create, header_comment unless ($no_comments);
-    $create[0] .= "\n\nBEGIN TRANSACTION" unless $no_txn;
+
+    push @create, "BEGIN TRANSACTION" unless $no_txn;
 
     for my $table ( $schema->get_tables ) {
         push @create, create_table($table, { no_comments => $no_comments,
@@ -89,12 +92,16 @@ sub produce {
       });
     }
 
+    push @create, "COMMIT" unless $no_txn;
+
     if (wantarray) {
-      push @create, "COMMIT" unless $no_txn;
-      return @create;
+      return ($head||(), @create);
     } else {
-      push @create, "COMMIT;\n" unless $no_txn;
-      return join(";\n\n", @create );
+      return join ('',
+        $head||(),
+        join(";\n\n", @create ),
+        ";\n",
+      );
     }
 }
 
