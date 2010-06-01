@@ -1,3 +1,8 @@
+* Prettify output of SQLite producer (less bogus newlines)
+* Augment SQLite and Pg producers to accept a perl-formatted
+  (%d.%03d%03d) *_version producer args (to facilitate direct
+  use of the DBIC normalized rdbms version)
+
 # ----------------------------------------------------------
 # 0.11006
 # ----------------------------------------------------------
