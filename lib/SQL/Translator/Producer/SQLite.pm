@@ -39,7 +39,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment);
+use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
 
 use vars qw[ $VERSION $DEBUG $WARN ];
 
@@ -58,7 +58,9 @@ sub produce {
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
     my $producer_args  = $translator->producer_args;
-    my $sqlite_version = $producer_args->{sqlite_version} || 0;
+    my $sqlite_version = parse_dbms_version(
+        $producer_args->{sqlite_version}, 'perl'
+    );
     my $no_txn         = $producer_args->{no_transaction};
 
     debug("PKG: Beginning production\n");
@@ -169,7 +171,7 @@ sub create_table
     #
     # Header.
     #
-    my $exists = ($sqlite_version >= 3.3) ? ' IF EXISTS' : '';
+    my $exists = ($sqlite_version >= 3.003) ? ' IF EXISTS' : '';
     my @create;
     my ($comment, $create_table) = "";
     $comment =  "--\n-- Table: $table_name\n--\n" unless $no_comments;

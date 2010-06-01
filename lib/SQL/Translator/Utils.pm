@@ -27,7 +27,8 @@ use Exporter;
 $VERSION = '1.59';
 $DEFAULT_COMMENT = '-- ';
 @EXPORT_OK = qw(
-    debug normalize_name header_comment parse_list_arg truncate_id_uniquely $DEFAULT_COMMENT parse_mysql_version
+    debug normalize_name header_comment parse_list_arg truncate_id_uniquely
+    $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
@@ -217,6 +218,46 @@ sub parse_mysql_version {
     }
 }
 
+#---------------------------------------------------------------------
+# parse_dbms_version ( $version_string, $target )
+#
+# Attempts to parse either a native or perl-style version string into
+# a version number format as specified by $target, which can be either
+# 'perl' for a perl-style version number, or 'native' for an X.X.X
+# style version number.
+#---------------------------------------------------------------------
+sub parse_dbms_version {
+    my ($v, $target) = @_;
+
+    return undef unless $v;
+
+    my @vers;
+
+    # X.Y.Z style 
+    if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
+        push @vers, $1, $2, $3;
+    }
+
+    # XX.YYYZZZ (perl) style or simply X 
+    elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
+        push @vers, $1, $2, $3;
+    }
+    else {
+        #how do I croak sanely here?
+        die "Unparseable database server version '$v'";
+    }
+
+    if ($target eq 'perl') {
+        return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
+    }
+    elsif ($target eq 'native') {
+        return join '.' => map 0+$_, grep defined, @vers;
+    }
+    else {
+        #how do I croak sanely here?
+        die "Unknown version target '$target'";
+    }
+}
 
 1;
 

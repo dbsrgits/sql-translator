@@ -42,7 +42,7 @@ $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment);
+use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
 use Data::Dumper;
 
 my ( %translate, %index_name );
@@ -181,7 +181,9 @@ sub produce {
     my $add_drop_table   = $translator->add_drop_table;
     my $schema           = $translator->schema;
     my $pargs            = $translator->producer_args;
-    my $postgres_version = $pargs->{postgres_version} || 0;
+    my $postgres_version = parse_dbms_version(
+        $pargs->{postgres_version}, 'perl'
+    );
 
     my $qt = $translator->quote_table_names ? q{"} : q{};
     my $qf = $translator->quote_field_names ? q{"} : q{};
@@ -399,16 +401,16 @@ sub create_table
     my $create_statement;
     $create_statement = join("\n", @comments);
     if ($add_drop_table) {
-        if ($postgres_version >= 8.2) {
+        if ($postgres_version >= 8.002) {
             $create_statement .= qq[DROP TABLE IF EXISTS $qt$table_name_ur$qt CASCADE;\n];
             $create_statement .= join (";\n", @type_drops) . ";\n"
-                if $postgres_version >= 8.3 && scalar @type_drops;
+                if $postgres_version >= 8.003 && scalar @type_drops;
         } else {
             $create_statement .= qq[DROP TABLE $qt$table_name_ur$qt CASCADE;\n];
         }
     }
     $create_statement .= join(";\n", @type_defs) . ";\n"
-        if $postgres_version >= 8.3 && scalar @type_defs;
+        if $postgres_version >= 8.003 && scalar @type_defs;
     $create_statement .= qq[CREATE ${temporary}TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n)"
@@ -491,7 +493,7 @@ sub create_view {
         # todo deal with embedded quotes
         my $commalist = join( ', ', map { qq['$_'] } @$list );
 
-        if ($postgres_version >= 8.3 && $field->data_type eq 'enum') {
+        if ($postgres_version >= 8.003 && $field->data_type eq 'enum') {
             my $type_name = $field->table->name . '_' . $field->name . '_type';
             $field_def .= ' '. $type_name;
             push @$type_defs, "CREATE TYPE $type_name AS ENUM ($commalist)";
