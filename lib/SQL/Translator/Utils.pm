@@ -251,7 +251,7 @@ sub parse_dbms_version {
         return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
     }
     elsif ($target eq 'native') {
-        return join '.' => map 0+$_, grep defined, @vers;
+        return join '.' => grep defined, @vers;
     }
     else {
         #how do I croak sanely here?
