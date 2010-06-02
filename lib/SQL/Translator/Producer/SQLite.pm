@@ -137,19 +137,26 @@ sub create_view {
 
     # Header.  Should this look like what mysqldump produces?
     my $extra = $view->extra;
-    my $create = '';
-    $create .= "--\n-- View: ${view_name}\n--\n" unless $options->{no_comments};
-    $create .= "DROP VIEW IF EXISTS $view_name;\n" if $add_drop_view;
-    $create .= 'CREATE';
-    $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
-    $create .= ' VIEW';
-    $create .= " IF NOT EXISTS" if exists($extra->{if_not_exists}) && $extra->{if_not_exists};
-    $create .= " ${view_name}";
+    my @create;
+    push @create, "DROP VIEW IF EXISTS $view_name" if $add_drop_view;
+
+    my $create_view = 'CREATE';
+    $create_view .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create_view .= ' VIEW';
+    $create_view .= " IF NOT EXISTS" if exists($extra->{if_not_exists}) && $extra->{if_not_exists};
+    $create_view .= " ${view_name}";
 
     if( my $sql = $view->sql ){
-      $create .= " AS\n    ${sql}";
+      $create_view .= " AS\n    ${sql}";
     }
-    return $create;
+    push @create, $create_view;
+
+    # Tack the comment onto the first statement.
+    unless ($options->{no_comments}) {
+      $create[0] = "--\n-- View: ${view_name}\n--\n" . $create[0];
+    }
+
+    return @create;
 }
 
 

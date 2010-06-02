@@ -63,6 +63,7 @@ CREATE TABLE Another (
 );
 
 DROP VIEW IF EXISTS email_list;
+
 CREATE VIEW email_list AS
     SELECT email FROM Basic WHERE (email IS NOT NULL);
 
@@ -111,8 +112,8 @@ eq_or_diff(\@sql,
   id INTEGER PRIMARY KEY NOT NULL,
   num numeric(10,2)
 )',
-          'DROP VIEW IF EXISTS email_list;
-CREATE VIEW email_list AS
+          'DROP VIEW IF EXISTS email_list',
+          'CREATE VIEW email_list AS
     SELECT email FROM Basic WHERE (email IS NOT NULL)',
           'DROP TRIGGER IF EXISTS foo_trigger',
           'CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END',
