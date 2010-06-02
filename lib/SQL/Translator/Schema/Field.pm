@@ -199,8 +199,8 @@ assume an error like other methods.
 
 =cut
 
-    my ( $self, $arg ) = @_;
-    $self->{'default_value'} = $arg if defined $arg;
+    my $self = shift;
+    $self->{'default_value'} = shift if @_;
     return $self->{'default_value'};
 }
 

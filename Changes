@@ -4,6 +4,8 @@
 * Fix Producer::Oracle translate float and double to float instead of number
 * Fix Producer::Oracle generation of too long unique constraint names
 * Fix Producer::SQLite when generating VIEWs with add_drop_table => 1
+* Fix Field::default_value to behave like a real accessor (allow undef as
+  an unsetting argument)
 * Producer::Oracle tests now use Test::Differences
 * Prettify output of SQLite producer (less bogus newlines)
 * Augment SQLite and Pg producers to accept a perl-formatted (%d.%03d%03d)
