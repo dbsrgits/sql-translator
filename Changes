@@ -2,8 +2,7 @@
 * Producer::Oracle tests now use Test::Differences
 * Prettify output of SQLite producer (less bogus newlines)
 * Augment SQLite and Pg producers to accept a perl-formatted
-  (%d.%03d%03d) *_version producer args (to facilitate direct
-  use of the DBIC normalized rdbms version)
+  (%d.%03d%03d) and 3-part (X.X.X) *_version producer args
 
 # ----------------------------------------------------------
 # 0.11006
