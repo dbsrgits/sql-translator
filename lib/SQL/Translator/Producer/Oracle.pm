@@ -349,7 +349,7 @@ sub create_table {
               if ($name) {
                 # Force prepend of table_name as ORACLE doesn't allow duplicate
                 # CONSTRAINT names even for different tables (ORA-02264)
-                $name = "${table_name}_$name" unless $name =~ /^$table_name/;
+                $name = mk_name( "${table_name}_$name", 'u' ) unless $name =~ /^$table_name/;
               }
               else {
                 $name = mk_name( $table_name, 'u' );

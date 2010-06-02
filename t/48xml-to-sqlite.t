@@ -55,6 +55,8 @@ CREATE INDEX titleindex ON Basic (title);
 
 CREATE UNIQUE INDEX emailuniqueindex ON Basic (email);
 
+CREATE UNIQUE INDEX very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms ON Basic (title);
+
 DROP TABLE Another;
 
 CREATE TABLE Another (
@@ -107,6 +109,7 @@ eq_or_diff(\@sql,
 )',
           'CREATE INDEX titleindex ON Basic (title)',
           'CREATE UNIQUE INDEX emailuniqueindex ON Basic (email)',
+          'CREATE UNIQUE INDEX very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms ON Basic (title)',
           'DROP TABLE Another',
           'CREATE TABLE Another (
   id INTEGER PRIMARY KEY NOT NULL,

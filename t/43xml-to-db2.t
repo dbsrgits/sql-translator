@@ -46,7 +46,8 @@ CREATE TABLE Basic (
   another_id INTEGER DEFAULT 2,
   timest TIMESTAMP,
   PRIMARY KEY (id),
-  CONSTRAINT emailuniqueindex UNIQUE (email)
+  CONSTRAINT emailuniqueindex UNIQUE (email),
+  CONSTRAINT very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms UNIQUE (title)
 );
 
 DROP TABLE Another;

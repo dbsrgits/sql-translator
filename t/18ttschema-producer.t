@@ -115,7 +115,7 @@ Fields
         is_nullable:           0
         default_value:         hello
         is_primary_key:        0
-        is_unique:             0
+        is_unique:             1
         is_auto_increment:     0
         is_foreign_key:        0
         foreign_key_reference: 
@@ -248,6 +248,19 @@ Constraints
     emailuniqueindex
         type:             UNIQUE
         fields:           email
+        expression:       
+        match_type:       
+        reference_fields: 
+        reference_table:  
+        deferrable:       1
+        on_delete:        
+        on_update:        
+        options:          
+        is_valid:         1
+    
+    very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms
+        type:             UNIQUE
+        fields:           title
         expression:       
         match_type:       
         reference_fields: 

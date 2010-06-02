@@ -47,7 +47,8 @@ CREATE TABLE "Basic" (
   "another_id" integer DEFAULT '2',
   "timest" timestamp,
   PRIMARY KEY ("id"),
-  CONSTRAINT "emailuniqueindex" UNIQUE ("email")
+  CONSTRAINT "emailuniqueindex" UNIQUE ("email"),
+  CONSTRAINT "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" UNIQUE ("title")
 );
 CREATE INDEX "titleindex" on "Basic" ("title");
 

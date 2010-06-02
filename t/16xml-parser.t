@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(224, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(238, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -89,6 +89,7 @@ schema_ok( $scma, {
                     is_nullable => 0,
                     default_value => "hello",
                     size => 100,
+                    is_unique => 1,
                 },
                 {
                     name => "description",
@@ -160,6 +161,11 @@ schema_ok( $scma, {
                     name => 'emailuniqueindex',
                     type => UNIQUE,
                     fields => ["email"],
+                },
+                {
+                    name => 'very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms',
+                    type => UNIQUE,
+                    fields => ["title"],
                 },
                 {
                     type => FOREIGN_KEY,
