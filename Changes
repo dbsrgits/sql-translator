@@ -5,6 +5,7 @@
 * Fix Producer::Oracle generation of too long unique constraint names
 * Fix Producer::SQLite when generating VIEWs with add_drop_table => 1
 * Fix Producer::MySQL not quoting index names when requested (RT#56173)
+* Fix Producer::MySQL wrapping extra ()s around VIEW SELECT-ors (RT#56419)
 * Fix Field::default_value to behave like a real accessor (allow undef as
   an unsetting argument)
 * Producer::Oracle tests now use Test::Differences

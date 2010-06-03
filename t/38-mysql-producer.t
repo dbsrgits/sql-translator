@@ -379,13 +379,15 @@ is (
   my $create_opts = { add_replace_view => 1, no_comments => 1 };
   my $view1_sql1 = SQL::Translator::Producer::MySQL::create_view($view1, $create_opts);
 
-  my $view_sql_replace = "CREATE OR REPLACE
+  my $view_sql_replace = <<'EOV';
+CREATE OR REPLACE
    ALGORITHM = MERGE
    DEFINER = CURRENT_USER
    SQL SECURITY DEFINER
-  VIEW view_foo ( id, name ) AS (
+  VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-  )";
+EOV
+
   is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
 
 
@@ -394,12 +396,14 @@ is (
                                                   sql => 'SELECT id, name FROM thing',);
   my $create2_opts = { add_replace_view => 0, no_comments => 1 };
   my $view1_sql2 = SQL::Translator::Producer::MySQL::create_view($view2, $create2_opts);
-  my $view_sql_noreplace = "CREATE
-  VIEW view_foo ( id, name ) AS (
+  my $view_sql_noreplace = <<'EOV';
+CREATE
+  VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-  )";
+EOV
+
   is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
-  
+
   {
     my %extra = $view1->extra;
     is_deeply \%extra,

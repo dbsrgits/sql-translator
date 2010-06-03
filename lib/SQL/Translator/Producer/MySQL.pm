@@ -364,7 +364,9 @@ sub create_view {
       $create .= " ( ${list} )";
     }
     if( my $sql = $view->sql ){
-      $create .= " AS (\n    ${sql}\n  )";
+      # do not wrap parenthesis around the selector, mysql doesn't like this
+      # http://bugs.mysql.com/bug.php?id=9198
+      $create .= " AS\n    ${sql}\n";
     }
 #    $create .= "";
     return $create;
