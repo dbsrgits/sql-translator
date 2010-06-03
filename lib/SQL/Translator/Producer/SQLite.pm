@@ -305,19 +305,16 @@ sub create_field
     # Null?
     $field_def .= ' NOT NULL' unless $field->is_nullable;
 
-    # Default?  XXX Need better quoting!
-    my $default = $field->default_value;
-    if (defined $default) {
-        SQL::Translator::Producer->_apply_default_value(
-            \$field_def,
-            $default, 
-            [
-             'NULL'              => \'NULL',
-             'now()'             => 'now()',
-             'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
-            ],
-        );
-    }
+    # Default?
+    SQL::Translator::Producer->_apply_default_value(
+        $field,
+        \$field_def,
+        [
+         'NULL'              => \'NULL',
+         'now()'             => 'now()',
+         'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
+        ],
+    );
 
     return $field_def;
 

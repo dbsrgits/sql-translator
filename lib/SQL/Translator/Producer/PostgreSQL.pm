@@ -505,18 +505,15 @@ sub create_view {
         #
         # Default value 
         #
-        my $default = $field->default_value;
-        if ( defined $default ) {
-            SQL::Translator::Producer->_apply_default_value(
-              \$field_def,
-              $default,
-              [
-                'NULL'              => \'NULL',
-                'now()'             => 'now()',
-                'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
-              ],
-            );
-        }
+        SQL::Translator::Producer->_apply_default_value(
+          $field,
+          \$field_def,
+          [
+            'NULL'              => \'NULL',
+            'now()'             => 'now()',
+            'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
+          ],
+        );
 
         #
         # Not null constraint

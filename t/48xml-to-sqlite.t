@@ -47,7 +47,7 @@ CREATE TABLE Basic (
   explicitemptystring varchar DEFAULT '',
   -- Hello emptytagdef
   emptytagdef varchar DEFAULT '',
-  another_id int(10) DEFAULT '2',
+  another_id int(10) DEFAULT 2,
   timest timestamp
 );
 
@@ -104,7 +104,7 @@ eq_or_diff(\@sql,
   explicitemptystring varchar DEFAULT \'\',
   -- Hello emptytagdef
   emptytagdef varchar DEFAULT \'\',
-  another_id int(10) DEFAULT \'2\',
+  another_id int(10) DEFAULT 2,
   timest timestamp
 )',
           'CREATE INDEX titleindex ON Basic (title)',

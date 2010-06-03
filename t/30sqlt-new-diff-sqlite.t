@@ -60,7 +60,7 @@ DROP INDEX u_name;
 
 ALTER TABLE new_name ADD COLUMN new_field int;
 
-ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT '1';
+ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT 1;
 
 -- SQL::Translator::Producer::SQLite cant alter_field;
 
@@ -122,10 +122,10 @@ ALTER TABLE new_name ADD COLUMN new_field int;
 CREATE TEMPORARY TABLE person_temp_alter (
   person_id INTEGER PRIMARY KEY NOT NULL,
   name varchar(20) NOT NULL,
-  age int(11) DEFAULT '18',
+  age int(11) DEFAULT 18,
   weight double(11,2),
-  iq int(11) DEFAULT '0',
-  is_rock_star tinyint(4) DEFAULT '1',
+  iq int(11) DEFAULT 0,
+  is_rock_star tinyint(4) DEFAULT 1,
   physical_description text
 );
 
@@ -136,10 +136,10 @@ DROP TABLE person;
 CREATE TABLE person (
   person_id INTEGER PRIMARY KEY NOT NULL,
   name varchar(20) NOT NULL,
-  age int(11) DEFAULT '18',
+  age int(11) DEFAULT 18,
   weight double(11,2),
-  iq int(11) DEFAULT '0',
-  is_rock_star tinyint(4) DEFAULT '1',
+  iq int(11) DEFAULT 0,
+  is_rock_star tinyint(4) DEFAULT 1,
   physical_description text
 );
 

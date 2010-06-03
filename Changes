@@ -8,6 +8,8 @@
 * Fix Producer::MySQL wrapping extra ()s around VIEW SELECT-ors (RT#56419)
 * Fix Field::default_value to behave like a real accessor (allow undef as
   an unsetting argument)
+* Fix Mysql/Pg/SQLite/MSSQL producers to properly *not* quote numeric default
+  values (RT#57059)
 * Producer::Oracle tests now use Test::Differences
 * Prettify output of SQLite producer (less bogus newlines)
 * Augment SQLite and Pg producers to accept a perl-formatted (%d.%03d%03d)

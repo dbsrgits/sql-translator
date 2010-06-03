@@ -66,7 +66,7 @@ ALTER TABLE employee DROP COLUMN job_title;
 
 ALTER TABLE new_name ADD COLUMN new_field integer;
 
-ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT '1';
+ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 
 ALTER TABLE person ALTER COLUMN person_id TYPE serial;
 
@@ -121,7 +121,7 @@ ALTER TABLE employee DROP COLUMN job_title;
 
 ALTER TABLE new_name ADD COLUMN new_field integer;
 
-ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT '1';
+ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 
 ALTER TABLE person ALTER COLUMN person_id TYPE serial;
 

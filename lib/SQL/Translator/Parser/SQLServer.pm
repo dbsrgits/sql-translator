@@ -323,6 +323,8 @@ default_val : /default/i /null/i
     { $return = 'null' }
 	| /default/i /'[^']*'/ 
     { $item[2]=~ s/'//g; $return = $item[2] }
+	| /default/i WORD
+    { $return = $item[2] }
 
 auto_inc : /identity/i { 1 }
 

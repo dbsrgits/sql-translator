@@ -253,16 +253,13 @@ sub produce {
             #
             # Default value
             #
-            my $default = $field->default_value;
-            if ( defined $default ) {
-                SQL::Translator::Producer->_apply_default_value(
-                  \$field_def,
-                  $default, 
-                  [
-                    'NULL'       => \'NULL',
-                  ],
-                );
-            }
+            SQL::Translator::Producer->_apply_default_value(
+              $field,
+              \$field_def,
+              [
+                'NULL'       => \'NULL',
+              ],
+            );
 
             push @field_defs, $field_def;            
         }

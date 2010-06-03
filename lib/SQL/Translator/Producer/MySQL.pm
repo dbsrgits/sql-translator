@@ -582,17 +582,14 @@ sub create_field
     # Null?
     $field_def .= ' NOT NULL' unless $field->is_nullable;
 
-    # Default?  XXX Need better quoting!
-    my $default = $field->default_value;
-    if ( defined $default ) {
-        SQL::Translator::Producer->_apply_default_value(
-          \$field_def,
-          $default, 
-          [
-            'NULL'       => \'NULL',
-          ],
-        );
-    }
+    # Default?
+    SQL::Translator::Producer->_apply_default_value(
+      $field,
+      \$field_def,
+      [
+        'NULL'       => \'NULL',
+      ],
+    );
 
     if ( my $comments = $field->comments ) {
         $field_def .= qq[ comment '$comments'];
