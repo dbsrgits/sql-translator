@@ -628,12 +628,10 @@ sub create_index
         map { $_ || () }
         lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
         $index->name
-        ? (
-            truncate_id_uniquely(
+        ? $qf . truncate_id_uniquely(
                 $index->name,
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
-            )
-          )
+          ) . $qf
         : '',
         '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
     );
