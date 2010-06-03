@@ -24,7 +24,7 @@ use base 'Class::Base';
 
 require 5.005;
 
-$VERSION  = '0.11005';
+$VERSION  = '0.11006';
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
