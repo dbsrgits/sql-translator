@@ -20,6 +20,7 @@ my $deps = {
     'DBI'                      => 0,
     'File::ShareDir'           => 1.0,
     'File::Spec'               => 0,
+    'Scalar::Util'             => 0,
     'XML::Writer'              => 0.500,
   },
   recommends => {
