@@ -1,4 +1,4 @@
-use inc::Module::Install 0.91;
+use inc::Module::Install 1.00;
 use strict;
 use warnings;
 
