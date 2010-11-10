@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # vim:filetype=perl
 
 # Before `make install' is performed this script should be runnable with
@@ -16,7 +16,6 @@ use Data::Dumper;
 use SQL::Translator;
 use SQL::Translator::Schema;
 use SQL::Translator::Schema::Constants;
-use UNIVERSAL qw/isa/;
 
 # Simple options. -d for debug
 my %opt;
@@ -78,37 +77,30 @@ die "Test is schema is invalid! : ".$schema->err unless $schema->is_valid;
 # Testing 1,2,3,..
 #=============================================================================
 
-plan( tests => 14 );
+plan( tests => 15 );
 
 my (@flds,@cons);
 
 @flds = $tbl_order->pkey_fields;
 is( join(",",@flds), "order_id", "pkey_fields" );
-ok( isa($flds[0], "SQL::Translator::Schema::Field"),
-    "pkey_fields returns SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
 
 @flds = $tbl_order->fkey_fields;
 is( join(",",@flds), "customer_id", "fkey_fields" );
-ok( isa($flds[0], "SQL::Translator::Schema::Field"),
-    "fkey_fields returns SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
 
 @flds = $tbl_order->nonpkey_fields;
 is( join(",",@flds), "customer_id,invoice_number,notes", "nonpkey_fields" );
-ok(
-    isa($flds[0], "SQL::Translator::Schema::Field")
-    && isa($flds[1], "SQL::Translator::Schema::Field"),
-    "nonpkey_fields returns SQL::Translator::Schema::Field's" 
-);
+isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
+isa_ok( $flds[1], "SQL::Translator::Schema::Field" );
 
 @flds = $tbl_order->data_fields;
 is( join(",",@flds), "invoice_number,notes", "data_fields" );
-ok( isa($flds[0], "SQL::Translator::Schema::Field"),
-    "data_fields returns SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
 
 @flds = $tbl_order->unique_fields;
 is( join(",",@flds), "invoice_number", "unique_fields" );
-ok( isa($flds[0], "SQL::Translator::Schema::Field"),
-    "unique_fields returns SQL::Translator::Schema::Field" );
+isa_ok( $flds[0], "SQL::Translator::Schema::Field" );
 
 @cons = $tbl_order->unique_constraints;
 is( scalar @cons, 1, "Number of unique_constraints is 1" );

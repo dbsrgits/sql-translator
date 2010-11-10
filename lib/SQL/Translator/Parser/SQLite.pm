@@ -674,7 +674,7 @@ sub parse {
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
             my $index  =  $table->add_index(
                 name   => $idata->{'name'},
-                type   => uc $idata->{'type'},
+                type   => uc ($idata->{'type'}||''),
                 fields => $idata->{'fields'},
             ) or die $table->error;
         }
