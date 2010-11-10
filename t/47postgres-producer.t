@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(25,
+    maybe_plan(26,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -268,6 +268,20 @@ my $field12 = SQL::Translator::Schema::Field->new( name => 'time_field',
 my $field12_sql = SQL::Translator::Producer::PostgreSQL::create_field($field12,{ postgres_version => 8.3 });
 
 is($field12_sql, 'time_field timestamp NOT NULL', 'time with precision');
+
+my $field13 = SQL::Translator::Schema::Field->new( name => 'enum_field_with_type_name',
+                                                   table => $table,
+                                                   data_type => 'enum',
+                                                   extra => { list => [ 'Foo', 'Bar' ],
+                                                              custom_type_name => 'real_enum_type' },
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+my $field13_sql = SQL::Translator::Producer::PostgreSQL::create_field($field13,{ postgres_version => 8.3 });
+
+is($field13_sql, 'enum_field_with_type_name real_enum_type NOT NULL', 'Create real enum field works');
 
 
 {

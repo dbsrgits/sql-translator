@@ -2,6 +2,7 @@
 * Add explicit Scalar::Util to the deplist for really old perls
 * Add support for PostGIS Geometry and Geography data types in the Pg producer
 * Some minor fixes to squash warnings on new perls
+* Support a custom_type_name hint when creating enum types in PostgreSQL
 
 # ----------------------------------------------------------
 # 0.11006 2010-06-03
