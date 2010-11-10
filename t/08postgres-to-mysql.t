@@ -146,6 +146,23 @@ create table cvterm_dbxref (
 create index cvterm_dbxref_idx1 on cvterm_dbxref (cvterm_id);
 create index cvterm_dbxref_idx2 on cvterm_dbxref (dbxref_id);
 
+-- ================================================
+-- TABLE: cvterm_geom
+-- ================================================
+
+create table cvterm_geom (
+       cvterm_geom_id serial not null,
+       primary key (cvterm_geom_id),
+       cvterm_id int not null,
+       foreign key (cvterm_id) references cvterm (cvterm_id),
+       cvterm_geom geometry,
+	   constraint "enforce_dims_cvterm_geom" CHECK ((st_ndims(cvterm_geom) = 2)),
+	   constraint "enforce_srid_cvterm_geom" CHECK ((st_srid(cvterm_geom) = -1)),
+	   constraint "enforce_geotype_cvterm_geom" CHECK ((geometrytype(cvterm_geom) = 'POINT'::text OR cvterm_geom IS NULL)),
+       unique(cvterm_id)
+);
+
+
 |;
 
 my $tr = SQL::Translator->new(

@@ -32,6 +32,9 @@ SQL::Translator::Producer::PostgreSQL - PostgreSQL producer for SQL::Translator
 Creates a DDL suitable for PostgreSQL.  Very heavily based on the Oracle
 producer.
 
+Now handles PostGIS Geometry and Geography data types on table definitions.
+Does not yet support PostGIS Views.
+	
 =cut
 
 use strict;
@@ -317,6 +320,12 @@ sub next_unused_name {
     return $name;
 }
 
+sub is_geometry
+{
+	my $field = shift;
+	return 1 if $field->data_type eq 'geometry' || $field->data_type eq 'geography';
+}
+
 sub create_table 
 {
     my ($table, $options) = @_;
@@ -419,6 +428,15 @@ sub create_table
     $create_statement .= ( $create_statement =~ /;$/ ? "\n" : q{} )
         . join(";\n", @index_defs);
 
+	#
+	# Geometry
+	#
+	if(grep { is_geometry($_) } $table->get_fields){
+        $create_statement .= ";";
+		$create_statement .= "\n".join("\n", map { drop_geometry_column($_) if is_geometry($_); } $table->get_fields) if $options->{add_drop_table};
+		$create_statement .= "\n".join("\n", map { add_geometry_column($_) if is_geometry($_);} $table->get_fields);
+	}
+
     return $create_statement, \@fks;
 }
 
@@ -520,8 +538,51 @@ sub create_view {
         #
         $field_def .= ' NOT NULL' unless $field->is_nullable;
 
+		#
+		# Geometry constraints
+		#
+		if(is_geometry($field)){
+			foreach ( create_geometry_constraints($field) ) {
+				my ($cdefs, $fks) = create_constraint($_, 
+													  { 
+														  quote_field_names => $qf,
+														  quote_table_names => $qt,
+														  table_name => $table_name,
+													  });
+				push @$constraint_defs, @$cdefs;
+				push @$fks, @$fks;
+			}
+        }
+		
         return $field_def;
     }
+}
+
+sub create_geometry_constraints{
+	my $field = shift;
+
+	my @constraints;
+	push @constraints, SQL::Translator::Schema::Constraint->new(
+							name       => "enforce_dims_".$field->name,
+							expression => "(st_ndims($field) = ".$field->{extra}{dimensions}.")",
+							table 	   => $field->table,
+							type       => CHECK_C,
+						);
+						
+	push @constraints, SQL::Translator::Schema::Constraint->new(
+							name       => "enforce_srid_".$field->name,
+							expression => "(st_srid($field) = ".$field->{extra}{srid}.")",
+							table 	   => $field->table,
+							type       => CHECK_C,
+						);
+	push @constraints, SQL::Translator::Schema::Constraint->new(
+							name       => "enforce_geotype_".$field->name,
+							expression => "(geometrytype($field) = '".$field->{extra}{geometry_type}."'::text OR $field IS NULL)",
+							table 	   => $field->table,
+							type       => CHECK_C,
+						);
+						
+	return @constraints;
 }
 
 sub create_index
@@ -727,6 +788,11 @@ sub alter_field
         if($from_field->table->name ne $to_field->table->name);
 
     my @out;
+    
+    # drop geometry column and constraints
+	push @out, drop_geometry_column($from_field) if is_geometry($from_field);
+	push @out, drop_geometry_constraints($from_field) if is_geometry($from_field);
+    
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET NOT NULL',
                        $to_field->table->name,
                        $to_field->name) if(!$to_field->is_nullable and
@@ -778,7 +844,10 @@ sub alter_field
                        $to_field->name)
         if ( !defined $new_default && defined $old_default );
     
-
+	# add geometry column and contraints
+	push @out, add_geometry_column($to_field) if is_geometry($to_field);
+	push @out, add_geometry_constraints($to_field) if is_geometry($to_field);
+	
     return wantarray ? @out : join("\n", @out);
 }
 
@@ -791,6 +860,8 @@ sub add_field
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
                       $new_field->table->name,
                       create_field($new_field));
+    $out .= "\n".add_geometry_column($new_field) if is_geometry($new_field);
+    $out .= "\n".add_geometry_constraints($new_field) if is_geometry($new_field);
     return $out;
 
 }
@@ -802,8 +873,53 @@ sub drop_field
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $old_field->table->name,
                       $old_field->name);
-
+	$out .= "\n".drop_geometry_column($old_field) if is_geometry($old_field);
     return $out;    
+}
+
+sub add_geometry_column{
+	my ($field,$options) = @_;
+	
+	my $out = sprintf("INSERT INTO geometry_columns VALUES ('%s','%s','%s','%s','%s','%s','%s')",
+						'',
+						$field->table->schema->name,
+						$options->{table} ? $options->{table} : $field->table->name,
+						$field->name,
+						$field->{extra}{dimensions},
+						$field->{extra}{srid},
+						$field->{extra}{geometry_type});
+    return $out;
+}
+
+sub drop_geometry_column
+{
+	my $field = shift;
+	
+	my $out = sprintf("DELETE FROM geometry_columns WHERE f_table_schema = '%s' AND f_table_name = '%s' AND f_geometry_column = '%s'",
+						$field->table->schema->name,
+						$field->table->name,
+						$field->name);
+    return $out;
+}
+
+sub add_geometry_constraints{
+	my $field = shift;
+	
+	my @constraints = create_geometry_constraints($field);
+
+	my $out = join("\n", map { alter_create_constraint($_); } @constraints);
+	
+	return $out;
+}
+
+sub drop_geometry_constraints{
+	my $field = shift;
+	
+	my @constraints = create_geometry_constraints($field);
+	
+	my $out = join("\n", map { alter_drop_constraint($_); } @constraints);
+	
+	return $out;
 }
 
 sub alter_table {
@@ -812,6 +928,7 @@ sub alter_table {
     my $out = sprintf('ALTER TABLE %s %s',
                       $qt . $to_table->name . $qt,
                       $options->{alter_table_action});
+    $out .= "\n".$options->{geometry_changes} if $options->{geometry_changes};
     return $out;
 }
 
@@ -819,6 +936,13 @@ sub rename_table {
     my ($old_table, $new_table, $options) = @_;
     my $qt = $options->{quote_table_names} || '';
     $options->{alter_table_action} = "RENAME TO $qt$new_table$qt";
+
+	my @geometry_changes;
+	push @geometry_changes, map { drop_geometry_column($_); } grep { is_geometry($_) } $old_table->get_fields;
+	push @geometry_changes, map { add_geometry_column($_, { table => $new_table }); } grep { is_geometry($_) } $old_table->get_fields;
+	
+    $options->{geometry_changes} = join ("\n",@geometry_changes) if scalar(@geometry_changes);
+    
     return alter_table($old_table, $options);
 }
 
@@ -873,7 +997,12 @@ sub alter_create_constraint {
 sub drop_table {
     my ($table, $options) = @_;
     my $qt = $options->{quote_table_names} || '';
-    return "DROP TABLE $qt$table$qt CASCADE";
+    my $out = "DROP TABLE $qt$table$qt CASCADE";
+    
+    my @geometry_drops = map { drop_geometry_column($_); } grep { is_geometry($_) } $table->get_fields;
+
+    $out .= "\n".join("\n",@geometry_drops) if scalar(@geometry_drops);
+    return $out;
 }
 
 1;
