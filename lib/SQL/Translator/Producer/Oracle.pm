@@ -327,7 +327,8 @@ sub create_table {
         for my $c ( $table->get_constraints ) {
             my $name    = $c->name || '';
             my @fields  = map { quote($_,$qf) } $c->fields;
-            my @rfields = quote($c->reference_fields,$qf);
+            my @rfields = map { quote($_,$qf) } $c->reference_fields;
+
             next if !@fields && $c->type ne CHECK_C;
 
             if ( $c->type eq PRIMARY_KEY ) {
