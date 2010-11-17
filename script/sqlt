@@ -202,8 +202,8 @@ my $mysql_version; # MySQL version
 
 GetOptions(
     'add-drop-table'   => \$add_drop_table,
-    'quote_table_names'   => \$quote_table_names,
-    'quote_field_names'   => \$quote_field_names,
+    'quote-table-names|quote_table_names'   => \$quote_table_names,
+    'quote-field-names|quote_field_names'   => \$quote_field_names,
     'd|debug'          => \$debug,
     'f|from|parser:s'  => \$from,
     'fs:s'             => \$field_separator,
