@@ -512,7 +512,7 @@ sub create_view {
         if ($postgres_version >= 8.003 && $field->data_type eq 'enum') {
             my $type_name = $extra{'custom_type_name'} || $field->table->name . '_' . $field->name . '_type';
             $field_def .= ' '. $type_name;
-            my $new_type_def = "DROP TYPE IF EXISTS $type_name;\n" .
+            my $new_type_def = "DROP TYPE IF EXISTS $type_name CASCADE;\n" .
                                "CREATE TYPE $type_name AS ENUM ($commalist)";
             if (! exists $type_defs->{$type_name} ) {
                 $type_defs->{$type_name} = $new_type_def;
