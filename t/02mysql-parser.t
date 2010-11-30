@@ -616,17 +616,18 @@ BEGIN {
       'Field has right default value' 
     );
     is( $t1f2->extra('on update'), 'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
-    
+
     my @views = $schema->get_views;
     is( scalar @views, 3, 'Right number of views (3)' );
-    my ($view3, $view1, $view2) = @views;
+
+    my ($view1, $view2, $view3) = @views;
     is( $view1->name, 'vs_asset', 'Found "vs_asset" view' );
     is( $view2->name, 'vs_asset2', 'Found "vs_asset2" view' );
     is( $view3->name, 'vs_asset3', 'Found "vs_asset3" view' );
-	like($view1->sql, qr/ALGORITHM=UNDEFINED/, "Detected algorithm");
-	like($view1->sql, qr/vs_asset/, "Detected view vs_asset");
-	unlike($view1->sql, qr/cfgmgmt_mig/, "Did not detect cfgmgmt_mig");
-    
+    like($view1->sql, qr/ALGORITHM=UNDEFINED/, "Detected algorithm");
+    like($view1->sql, qr/vs_asset/, "Detected view vs_asset");
+    unlike($view1->sql, qr/cfgmgmt_mig/, "Did not detect cfgmgmt_mig");
+
     my @procs = $schema->get_procedures;
     is( scalar @procs, 2, 'Right number of procedures (2)' );
     my $proc1 = shift @procs;

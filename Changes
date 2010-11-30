@@ -5,8 +5,9 @@
 * Some minor fixes to squash warnings on new perls
 * Support a custom_type_name hint when creating enum types in PostgreSQL
 * Fix sqlt options/pod mismatch (RT#58318)
-* Add support for triggers in the MySQL producer
 * Oracle Producer multicolumn constraint support
+* Add support for triggers in the MySQL producer
+* Fix unstable order of View's in MySQL parser
 
 # ----------------------------------------------------------
 # 0.11006 2010-06-03

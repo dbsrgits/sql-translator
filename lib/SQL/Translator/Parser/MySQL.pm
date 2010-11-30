@@ -942,14 +942,13 @@ sub parse {
             sql   => $result->{procedures}->{$proc_name}->{sql},
         );
     }
-
     my @views = sort { 
         $result->{views}->{ $a }->{'order'} 
         <=> 
         $result->{views}->{ $b }->{'order'}
     } keys %{ $result->{views} };
 
-    for my $view_name ( keys %{ $result->{'views'} } ) {
+    for my $view_name ( @views ) {
         $schema->add_view(
             name => $view_name,
             sql  => $result->{'views'}->{$view_name}->{sql},
