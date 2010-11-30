@@ -320,11 +320,61 @@ sub produce {
       }
     }
 
+    if ($mysql_version >= 5.000002) {
+      for my $trigger ( $schema->get_triggers ) {
+        push @table_defs, create_trigger($trigger,
+                                         { add_drop_trigger  => $add_drop_table,
+                                           show_warnings        => $show_warnings,
+                                           no_comments          => $no_comments,
+                                           quote_table_names    => $qt,
+                                           quote_field_names    => $qf,
+                                           max_id_length        => $max_id_length,
+                                           mysql_version        => $mysql_version
+                                           });
+      }
+    }
+
 
 #    print "@table_defs\n";
     push @table_defs, "SET foreign_key_checks=1";
 
     return wantarray ? ($create ? $create : (), @create, @table_defs) : ($create . join('', map { $_ ? "$_;\n\n" : () } (@create, @table_defs)));
+}
+
+sub create_trigger {
+    my ($trigger, $options) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+
+    my $trigger_name = $trigger->name;
+    debug("PKG: Looking at trigger '${trigger_name}'\n");
+
+    my @statements;
+
+    my $events = $trigger->database_events;
+    for my $event ( @$events ) {
+        my $name = $trigger_name;
+        if (@$events > 1) {
+            $name .= "_$event";
+
+            warn "Multiple database events supplied for trigger '${trigger_name}', ",
+                "creating trigger '${name}'  for the '${event}' event\n"
+                    if $options->{show_warnings};
+        }
+
+        my $action = $trigger->action;
+        $action .= ";" unless $action =~ /;\s*\z/;
+
+        push @statements, "DROP TRIGGER IF EXISTS ${qt}${name}${qt}" if $options->{add_drop_trigger};
+        push @statements, sprintf(
+            "CREATE TRIGGER ${qt}%s${qt} %s %s ON ${qt}%s${qt}\n  FOR EACH ROW BEGIN %s END",
+            $name, $trigger->perform_action_when, $event, $trigger->on_table, $action,
+        );
+
+    }
+    # Tack the comment onto the first statement
+    $statements[0] = "--\n-- Trigger ${qt}${trigger_name}${qt}\n--\n" . $statements[0] unless $options->{no_comments};
+    return @statements;
 }
 
 sub create_view {
