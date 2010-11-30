@@ -244,9 +244,9 @@ sub action {
 
 =head2 action
 
-Gets or set the actions of the trigger.
+Gets or set the action of the trigger.
 
-  $trigger->actions(
+  $trigger->action(
       q[
         BEGIN
           select ...;

@@ -1,4 +1,5 @@
 
+* Fix POD typo in SQL/Translator/Schema/Trigger.pm
 * Add explicit Scalar::Util to the deplist for really old perls
 * Add support for PostGIS Geometry and Geography data types in the Pg producer
 * Some minor fixes to squash warnings on new perls
