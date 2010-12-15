@@ -102,12 +102,28 @@ is($drop_field, qq[ALTER TABLE mytable DROP COLUMN field3
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'mytable' AND f_geometry_column = 'field3'], 'Drop geometry field works');
 
 $table->add_field($field1);
+
+my $field4 = SQL::Translator::Schema::Field->new( name      => 'field4',
+                                                  table     => $table,
+                                                  data_type => 'geography',
+                                                  extra     => {
+												      geography_type => 'POINT',
+												      srid          => -1
+													},
+                                                  default_value     => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable       => 1,
+                                                  is_foreign_key    => 0,
+                                                  is_unique         => 0 );
+$table->add_field($field4);
+
 my ($create_table,$fks) = SQL::Translator::Producer::PostgreSQL::create_table($table);
 is($create_table,qq[--
 -- Table: mytable
 --
 CREATE TABLE mytable (
   field3 geometry,
+  field4 geography(POINT,-1),
   CONSTRAINT "enforce_dims_field3" CHECK ((st_ndims(field3) = 2)),
   CONSTRAINT "enforce_srid_field3" CHECK ((st_srid(field3) = -1)),
   CONSTRAINT "enforce_geotype_field3" CHECK ((geometrytype(field3) = 'POINT'::text OR field3 IS NULL))
@@ -123,3 +139,4 @@ $table->name("table2");
 my $drop_table = SQL::Translator::Producer::PostgreSQL::drop_table($table);
 is($drop_table, qq[DROP TABLE table2 CASCADE
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'table2' AND f_geometry_column = 'field3'], 'Drop table with geometry works.');
+

@@ -1,3 +1,5 @@
+* Correct postgis geography type insertion and linebreak fix for multiple geometry/geography columns
+
 # ----------------------------------------------------------
 # 0.11007 2010-11-30
 # ----------------------------------------------------------

@@ -326,7 +326,13 @@ sub next_unused_name {
 sub is_geometry
 {
 	my $field = shift;
-	return 1 if $field->data_type eq 'geometry' || $field->data_type eq 'geography';
+	return 1 if $field->data_type eq 'geometry';
+}
+
+sub is_geography
+{
+    my $field = shift;
+    return 1 if $field->data_type eq 'geography';
 }
 
 sub create_table 
@@ -432,8 +438,10 @@ sub create_table
 	#
 	if(grep { is_geometry($_) } $table->get_fields){
         $create_statement .= ";";
-		$create_statement .= "\n".join("\n", map { drop_geometry_column($_) if is_geometry($_); } $table->get_fields) if $options->{add_drop_table};
-		$create_statement .= "\n".join("\n", map { add_geometry_column($_) if is_geometry($_);} $table->get_fields);
+        my @geometry_columns;
+        foreach my $col ($table->get_fields) { push(@geometry_columns,$col) if is_geometry($col); }
+		$create_statement .= "\n".join("\n", map{ drop_geometry_column($_) } @geometry_columns) if $options->{add_drop_table};
+		$create_statement .= "\n".join("\n", map{ add_geometry_column($_) } @geometry_columns);
 	}
 
     return $create_statement, \@fks;
@@ -777,6 +785,13 @@ sub convert_datatype
         $data_type .= $2 if(defined $2);
     } elsif ( defined $size[0] && $size[0] > 0 ) {
         $data_type .= '(' . join( ',', @size ) . ')';
+    }
+
+    #
+    # Geography
+    #
+    if($data_type eq 'geography'){
+        $data_type .= '('.$field->{extra}{geography_type}.','. $field->{extra}{srid} .')'
     }
 
     return $data_type;
