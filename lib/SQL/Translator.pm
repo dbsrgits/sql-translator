@@ -1,23 +1,5 @@
 package SQL::Translator;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 The SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 use strict;
 use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
@@ -1268,8 +1250,74 @@ Returns the version of the SQL::Translator release.
 
 =head1 AUTHORS
 
-See the included AUTHORS file:
-L<http://search.cpan.org/dist/SQL-Translator/AUTHORS>
+Alexander Hartmaier <abraxxa@cpan.org>
+
+Allen Day <allenday@users.sourceforge.net>
+
+Anders Nor Berle <berle@cpan.org>
+
+Andrew Moore <amoore@cpan.org>
+
+Ben Faga <faga@cshl.edu>
+
+Chris Hilton <chilton@alterpoint.com>
+
+Chris Mungall <cjm@fruitfly.org>
+
+Chris To <christot@users.sourceforge.net>
+
+Daniel Ruoso <daniel@ruoso.com>
+
+Darren Chamberlain <dlc@users.sourceforge.net>
+
+Dave Cash <dave@gnofn.org>
+
+Fabien Wernli <faxmodem@cpan.org>
+
+Geoff Cant <geoff@catalyst.net.nz>
+
+Gudmundur A. Thorisson <mummi@cshl.org>
+
+Guillermo Roditi <groditi@cpan.org>
+
+Jason Williams <smdwilliams@users.sourceforge.net>
+
+Jonathan Yu <jawnsy@cpan.org>
+
+John Goulah <jgoulah@cpan.org>
+
+Ken Youens-Clark <kclark@cpan.org>
+
+Kevin McClellan <kdmcclel@gmail.com>
+
+Mark Addison <grommit@users.sourceforge.net>
+
+Mikey Melillo <mmelillo@users.sourceforge.net>
+
+Moritz Onken <onken@netcubed.de>
+
+Paul Harrington <phrrngtn@users.sourceforge.net>
+
+Peter Rabbitson <ribasushi@cpan.org>
+
+Ross Smith II <rossta@users.sf.net>
+
+Ryan D Johnson <ryan@innerfence.com>
+
+Sam Angiuoli <angiuoli@users.sourceforge.net>
+
+Stephen Bennett <stephen@freenode.net>
+
+Stephen Clouse <stephenclouse@gmail.com>
+
+Wallace Reis <wreis@cpan.org>
+
+Ying Zhang <zyolive@yahoo.com>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2002-2011 the SQL::Translator L</AUTHORS> as listed
+above.
 
 If you would like to contribute to the project, you can send patches
 to the developers mailing list:
@@ -1279,8 +1327,7 @@ to the developers mailing list:
 Or send us a message (with your Sourceforge username) asking to be
 added to the project and what you'd like to contribute.
 
-
-=head1 COPYRIGHT
+=head1 LICENSE
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
