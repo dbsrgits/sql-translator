@@ -107,21 +107,7 @@ To read the manual:
 
     $ perldoc SQL::Translator::Manual
 
-BUGS
-
-Please use http://rt.cpan.org/ for reporting bugs.
-
-PRAISE
-
-If you find this module useful, please use 
-"http://cpanratings.perl.org/rate/?distribution=SQL-Translator" to rate it.
-
-CONTRIBUTORS, COPYRIGHT and LICENSE
-
-For a full list of contributors and copyright holders, see the AUTHORS list
-in the main POD:
-
-  perldoc SQL::Translator
+COPYRIGHT
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -136,9 +122,22 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
+BUGS
+
+Please use http://rt.cpan.org/ for reporting bugs.
+
+PRAISE
+
+If you find this module useful, please use 
+"http://cpanratings.perl.org/rate/?distribution=SQL-Translator" to rate it.
+
 SEE ALSO
 
 Check out the SQLFairy homepage at Sourceforge for more information,
 mailing lists, etc.:
 
     http://sqlfairy.sourceforge.net/
+
+AUTHORS
+
+See the included AUTHORS file.
