@@ -131,7 +131,6 @@ my %reserved = map { $_, 1 } qw[
 # my $max_id_length    = 62;
 my %used_identifiers = ();
 my %global_names;
-my %unreserve;
 my %truncated;
 
 =pod
@@ -232,12 +231,6 @@ sub produce {
             warn "Truncated " . keys( %truncated ) . " names:\n";
             warn "\t" . join( "\n\t", sort keys %truncated ) . "\n";
         }
-
-        if ( %unreserve ) {
-            warn "Encounted " . keys( %unreserve ) .
-                " unsafe names in schema (reserved or invalid):\n";
-            warn "\t" . join( "\n\t", sort keys %unreserve ) . "\n";
-        }
     }
 
     return wantarray
@@ -285,27 +278,6 @@ sub mk_name {
 }
 
 # -------------------------------------------------------------------
-sub unreserve {
-    my $name            = shift || '';
-    my $schema_obj_name = shift || '';
-
-    my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
-
-    # also trap fields that don't begin with a letter
-    return $name if (!$reserved{ uc $name }) && $name =~ /^[a-z]/i; 
-
-    if ( $schema_obj_name ) {
-        ++$unreserve{"$schema_obj_name.$name"};
-    }
-    else {
-        ++$unreserve{"$name (table name)"};
-    }
-
-    my $unreserve = sprintf '%s_', $name;
-    return $unreserve.$suffix;
-}
-
-# -------------------------------------------------------------------
 sub next_unused_name {
     my $orig_name = shift or return;
     my $name      = $orig_name;
@@ -349,8 +321,8 @@ sub create_table
     my $table_name = $table->name or next;
     my ( $fql_tbl_name ) = ( $table_name =~ s/\W(.*)$// ) ? $1 : q{};
     my $table_name_ur = $qt ? $table_name
-        : $fql_tbl_name ? join('.', $table_name, unreserve($fql_tbl_name))
-        : unreserve($table_name);
+        : $fql_tbl_name ? join('.', $table_name, $fql_tbl_name)
+        : $table_name;
     $table->name($table_name_ur);
 
 # print STDERR "$table_name table_name\n";
@@ -499,13 +471,11 @@ sub create_view {
 
         $field_name_scope{$table_name} ||= {};
         my $field_name    = $field->name;
-        my $field_name_ur = $qf ? $field_name : unreserve($field_name, $table_name );
-        $field->name($field_name_ur);
         my $field_comments = $field->comments 
             ? "-- " . $field->comments . "\n  " 
             : '';
 
-        my $field_def     = $field_comments.qq[$qf$field_name_ur$qf];
+        my $field_def     = $field_comments.qq[$qf$field_name$qf];
 
         #
         # Datatype
@@ -603,7 +573,6 @@ sub create_index
     my $qt = $options->{quote_table_names} ||'';
     my $qf = $options->{quote_field_names} ||'';
     my $table_name = $index->table->name;
-#        my $table_name_ur = $qt ? unreserve($table_name) : $table_name;
 
     my ($index_def, @constraint_defs);
 
@@ -613,26 +582,20 @@ sub create_index
     );
 
     my $type = $index->type || NORMAL;
-    my @fields     = 
-        map { $_ =~ s/\(.+\)//; $_ }
-    map { $qt ? $_ : unreserve($_, $table_name ) }
-    $index->fields;
+    my @fields     =  $index->fields;
     next unless @fields;
 
-    my $def_start = qq[CONSTRAINT "$name" ];
+    my $def_start = qq[CONSTRAINT ${qf}$name${qf} ];
+    my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ($qf . $_ . $qf ) } @fields)) . ')';
     if ( $type eq PRIMARY_KEY ) {
-        push @constraint_defs, "${def_start}PRIMARY KEY ".
-            '(' .$qf . join( $qf. ', '.$qf, @fields ) . $qf . ')';
+        push @constraint_defs, "${def_start}PRIMARY KEY ".$field_names;
     }
     elsif ( $type eq UNIQUE ) {
-        push @constraint_defs, "${def_start}UNIQUE " .
-            '(' . $qf . join( $qf. ', '.$qf, @fields ) . $qf.')';
+        push @constraint_defs, "${def_start}UNIQUE " .$field_names;
     }
     elsif ( $type eq NORMAL ) {
         $index_def = 
-            "CREATE INDEX ${qf}${name}${qf} on ${qt}${table_name}${qt} (".
-            join( ', ', map { qq[$qf$_$qf] } @fields ).  
-            ')'
+            "CREATE INDEX ${qf}${name}${qf} on ${qt}${table_name}${qt} ".$field_names
             ; 
     }
     else {
@@ -657,34 +620,25 @@ sub create_constraint
         $name = next_unused_name($name);
     }
 
-    my @fields     = 
-        map { $_ =~ s/\(.+\)//; $_ }
-    map { $qt ? $_ : unreserve( $_, $table_name )}
-    $c->fields;
+    my @fields = grep { defined } $c->fields;
 
-    my @rfields     = 
-        map { $_ =~ s/\(.+\)//; $_ }
-    map { $qt ? $_ : unreserve( $_, $table_name )}
-    $c->reference_fields;
+    my @rfields = grep { defined } $c->reference_fields;
 
     next if !@fields && $c->type ne CHECK_C;
-    my $def_start = $name ? qq[CONSTRAINT "$name" ] : '';
+    my $def_start = $name ? qq[CONSTRAINT ${qf}$name${qf} ] : '';
+    my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ($qf . $_ . $qf ) } @fields)) . ')';
     if ( $c->type eq PRIMARY_KEY ) {
-        push @constraint_defs, "${def_start}PRIMARY KEY ".
-            '('.$qf . join( $qf.', '.$qf, @fields ) . $qf.')';
+        push @constraint_defs, "${def_start}PRIMARY KEY ".$field_names;
     }
     elsif ( $c->type eq UNIQUE ) {
-        $name = next_unused_name($name);
-        push @constraint_defs, "${def_start}UNIQUE " .
-            '('.$qf . join( $qf.', '.$qf, @fields ) . $qf.')';
+        push @constraint_defs, "${def_start}UNIQUE " .$field_names;
     }
     elsif ( $c->type eq CHECK_C ) {
         my $expression = $c->expression;
         push @constraint_defs, "${def_start}CHECK ($expression)";
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
-        my $def .= "ALTER TABLE ${qt}${table_name}${qt} ADD FOREIGN KEY (" . 
-            join( ', ', map { qq[$qf$_$qf] } @fields ) . ')' .
+        my $def .= "ALTER TABLE ${qt}${table_name}${qt} ADD FOREIGN KEY " . $field_names .
             "\n  REFERENCES " . $qt . $c->reference_table . $qt;
 
         if ( @rfields ) {

@@ -1,4 +1,7 @@
+
 * Correct postgis geography type insertion and linebreak fix for multiple geometry/geography columns
+* made PostgreSQL producer consistent with other producers in terms of
+  quoting and allowing functions in constraints and indices
 
 # ----------------------------------------------------------
 # 0.11007 2010-11-30

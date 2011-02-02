@@ -6,7 +6,7 @@ use warnings;
 use Test::More;
 use Test::Exception;
 use Test::SQL::Translator qw(maybe_plan);
-
+use SQL::Translator::Schema::Constants;
 use Data::Dumper;
 use FindBin qw/$Bin/;
 
@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(26,
+    maybe_plan(38,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -382,3 +382,56 @@ my $view2_sql_replace = "CREATE TEMPORARY VIEW view_foo2 AS
     SELECT id, name FROM thing
  WITH CASCADED CHECK OPTION";
 is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
+
+{
+    my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => [qw( foo  bar )] );
+    my $quote = { quote_table_names => '"', quote_field_names => '"' };
+
+    {
+        my $index = $table->add_index(name => 'myindex', fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX myindex on foobar (foo)", 'index created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
+        is($def, 'CREATE INDEX "myindex" on "foobar" ("foo")', 'index created w/ quotes');
+    }
+
+    {
+        my $index = $table->add_index(name => 'myindex', fields => ['lower(foo)']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX myindex on foobar (lower(foo))", 'index created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
+        is($def, 'CREATE INDEX "myindex" on "foobar" (lower(foo))', 'index created w/ quotes');
+    }
+
+    {
+        my $index = $table->add_index(name => 'myindex', fields => ['bar', 'lower(foo)']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX myindex on foobar (bar, lower(foo))", 'index created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
+        is($def, 'CREATE INDEX "myindex" on "foobar" ("bar", lower(foo))', 'index created w/ quotes');
+    }
+
+    {
+        my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
+        is($def->[0], 'CONSTRAINT constr UNIQUE (foo)', 'constraint created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
+        is($def->[0], 'CONSTRAINT "constr" UNIQUE ("foo")', 'constraint created w/ quotes');
+    }
+
+    {
+        my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['lower(foo)']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
+        is($def->[0], 'CONSTRAINT constr UNIQUE (lower(foo))', 'constraint created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
+        is($def->[0], 'CONSTRAINT "constr" UNIQUE (lower(foo))', 'constraint created w/ quotes');
+    }
+
+    {
+        my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['bar', 'lower(foo)']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
+        is($def->[0], 'CONSTRAINT constr UNIQUE (bar, lower(foo))', 'constraint created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
+        is($def->[0], 'CONSTRAINT "constr" UNIQUE ("bar", lower(foo))', 'constraint created w/ quotes');
+    }
+}
