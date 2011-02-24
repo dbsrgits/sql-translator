@@ -115,22 +115,21 @@ sub produce {
     my $output;
     $output .= header_comment."\n" unless ($no_comments);
 
-    # Generate the DROP statements. We do this in one block here as if we
-    # have fkeys we need to drop in the correct order otherwise they will fail
-    # due to the dependancies the fkeys setup. (There is no way to turn off
-    # fkey checking while we sort the schema like MySQL's set
-    # foreign_key_checks=0)
-    # We assume the tables are in the correct order to set them up as you need
-    # to have created a table to fkey to it. So the reverse order should drop
-    # them properly, fingers crossed...
+    # Generate the DROP statements.
     if ($add_drop_table) {
-        $output .= "--\n-- Drop tables\n--\n\n" unless $no_comments;
-        foreach my $table (
-            sort { $b->order <=> $a->order } $schema->get_tables
-        ) {
+        my @tables = sort { $b->order <=> $a->order } $schema->get_tables;
+        $output .= "--\n-- Turn off constraints\n--\n\n" unless $no_comments;
+        foreach my $table (@tables) {
             my $name = $table->name;
             my $q_name = unreserve($name);
-            $output .= qq{IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') DROP TABLE $q_name;\n\n}
+            $output .= "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') ALTER TABLE $q_name NOCHECK CONSTRAINT all;\n"
+        }
+        $output .= "\n";
+        $output .= "--\n-- Drop tables\n--\n\n" unless $no_comments;
+        foreach my $table (@tables) {
+            my $name = $table->name;
+            my $q_name = unreserve($name);
+            $output .= "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') DROP TABLE $q_name;\n"
         }
     }
 
