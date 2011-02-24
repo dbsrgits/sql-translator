@@ -22,6 +22,7 @@ my $deps = {
     'File::Spec'               => 0,
     'Scalar::Util'             => 0,
     'XML::Writer'              => 0.500,
+    'Moo'                      => 0.009007,
   },
   recommends => {
     'Template'                 => 2.20,
