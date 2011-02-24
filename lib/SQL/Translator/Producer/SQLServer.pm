@@ -108,7 +108,6 @@ my @no_size = qw/tinyint smallint int integer bigint text bit image datetime/;
 
 my $max_id_length    = 128;
 my %global_names;
-my %unreserve;
 
 =pod
 
@@ -128,7 +127,6 @@ sub produce {
     my $schema         = $translator->schema;
 
     %global_names = (); #reset
-    %unreserve = ();
 
     my $output;
     $output .= header_comment."\n" unless ($no_comments);
@@ -417,13 +415,6 @@ sub unreserve {
 
     # also trap fields that don't begin with a letter
     return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i; 
-
-    if ( $schema_obj_name ) {
-        ++$unreserve{"$schema_obj_name.$name"};
-    }
-    else {
-        ++$unreserve{"$name (table name)"};
-    }
 
     my $unreserve = sprintf '%s_', $name;
     return $unreserve.$suffix;
