@@ -6,6 +6,7 @@
 * Fix odd invocation of Test::More::pass() in t/36-filters.t (RT#64728)
 * Quote everything in SQL Server
 * Turn off constraints before dropping tables in SQL Server
+* Make true unique constraints if needed in SQL Server
 
 # ----------------------------------------------------------
 # 0.11007 2010-11-30

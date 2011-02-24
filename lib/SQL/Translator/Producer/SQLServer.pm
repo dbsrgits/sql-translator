@@ -302,9 +302,18 @@ sub produce {
             }
             elsif ( $type eq UNIQUE ) {
                 $name = $name_ur || mk_name( $table_name . '_uc' );
-                $c_def =
-                    "CONSTRAINT $name UNIQUE " .
-                    '(' . join( ', ', @fields ) . ')';
+                my @nullable = grep { $_->is_nullable } $constraint->fields;
+                if (!@nullable) {
+                  $c_def =
+                      "CONSTRAINT $name UNIQUE " .
+                      '(' . join( ', ', @fields ) . ')';
+                } else {
+                   push @index_defs,
+                       "CREATE UNIQUE NONCLUSTERED INDEX $name_ur ON $table_name_ur (" .
+                          join( ', ', @fields ) . ')' .
+                          ' WHERE ' . join( ' AND ', map unreserve($_->name) . ' IS NOT NULL', @nullable ) . ';';
+                   next;
+                }
             }
             push @constraint_defs, $c_def;
         }
