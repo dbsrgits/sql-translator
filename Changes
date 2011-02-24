@@ -4,6 +4,7 @@
   quoting and allowing functions in constraints and indices
 * Add distinction of autoinc and regular primary keys to the GraphViz producer
 * Fix odd invocation of Test::More::pass() in t/36-filters.t (RT#64728)
+* Quote everything in SQL Server
 
 # ----------------------------------------------------------
 # 0.11007 2010-11-30
@@ -184,32 +185,32 @@
 # ----------------------------------------------------------
 # 0.09002 2008-12-05
 # ----------------------------------------------------------
-* parsing MySQL CURRENT_TIMESTAMP as scalar ref so it can be produced without 
+* parsing MySQL CURRENT_TIMESTAMP as scalar ref so it can be produced without
   quotes (jgoulah)
 * Add ignore_opts parser arg (to ignore table options) in Parser::MySQL (jgoulah)
 * Skip tests for buggy Spreadsheet::ParseExcel versions (rbo)
 * Add support for skip tables parser arg in Parser::DBI::MySQL (jgoulah)
-* Changed behaviour of ::Producer::Oracle when returning an array of statements 
+* Changed behaviour of ::Producer::Oracle when returning an array of statements
   to make it compatible to DBI->do()
 * Fixed a few bugs in ::Producer::Oracle
 * Applied patch from jgoulah to support mysql's MERGE option
 * Applied patch from rbo to add support of multiple database events on a trigger
-* Applied patch from lukes to allow drop if exists in sqlite producer, with 
+* Applied patch from lukes to allow drop if exists in sqlite producer, with
   version >= 3.3
-* Applied patch from rjbs with minor changes, now we support scalar refs in 
+* Applied patch from rjbs with minor changes, now we support scalar refs in
   default values!
 * Fixed SQLite producer to end index statements in newlines, in scalar context
 * Decreed that all list context statements shall not end in ; or ;\n
 * Fixed SQLite, Diff and MySQL producers to agree with Decree.
 * Added support for CREATE VIEW + tests in the Pg producer (wreis)
 * Added support for CREATE VIEW + tests in the sqlite producer (groditi)
-* Added proper argument parsing and documentation to MySQL Parser and 
+* Added proper argument parsing and documentation to MySQL Parser and
   Producer (ribasushi)
-* Using DROP VIEW instead of OR REPLACE clause in the Pg producer, as replace 
+* Using DROP VIEW instead of OR REPLACE clause in the Pg producer, as replace
   only allows replacement with identical set of columns (wreis)
-* Added support for DROP VIEW and fixed CREATE VIEW statement in the sqlite 
+* Added support for DROP VIEW and fixed CREATE VIEW statement in the sqlite
   producer (wreis)
-* Removed source_db and target_db accessors from Diff (throwback to old version, 
+* Removed source_db and target_db accessors from Diff (throwback to old version,
   only output_db is used)
 
 
@@ -220,12 +221,12 @@
 # ----------------------------------------------------------
 * Added support for CREATE VIEW + tests in the mysql producer (groditi)
 * Added support for SET fields in the mysql producer + test (groditi)
-* Added support for proper booleans in the mysql producer, when a mysql version 
+* Added support for proper booleans in the mysql producer, when a mysql version
   of at least 4.x is supplied
-* Added support for proper enums under pg (as of 8.3), with pg version check, 
+* Added support for proper enums under pg (as of 8.3), with pg version check,
   and deferrable constraints
-* Added support to truncate long constraint and index names in the mysql 
-  producer, because of a change to DBIx::Class to produce such long names in 
+* Added support to truncate long constraint and index names in the mysql
+  producer, because of a change to DBIx::Class to produce such long names in
   some cases.
 
 # ----------------------------------------------------------
@@ -241,15 +242,15 @@
 # ----------------------------------------------------------
 
 * Major refactoring of SQL::Translator::Diff again:
-* Diff is no longer one huge monolithic function.                         
-* Added more tests for diff                                               
-* When producing diffs for MySQL you will (by default) get single alter 
+* Diff is no longer one huge monolithic function.
+* Added more tests for diff
+* When producing diffs for MySQL you will (by default) get single alter
   statements per table
-* SQLite can also do remove columns (by creating a temp table as shown in 
+* SQLite can also do remove columns (by creating a temp table as shown in
   http://sqlite.org/faq.html#q11
 * Columns can be renamed if the new schema is from a form that can have metadata
-  (which is pretty much anything but an SQL file.) It does this by looking at 
-  renamed_from in the $field->extra                              
+  (which is pretty much anything but an SQL file.) It does this by looking at
+  renamed_from in the $field->extra
 * Updated Oracle and Postgres producers
 * More tests!
 
@@ -271,7 +272,7 @@
 # 0.08 2006-12-07
 # -----------------------------------------------------------
 
-* Patched 18ttschema-producer.t and 33tt-table-producter.t to skip on TT 2.15, 
+* Patched 18ttschema-producer.t and 33tt-table-producter.t to skip on TT 2.15,
   thanks Ash!
 
 # -----------------------------------------------------------
@@ -294,7 +295,7 @@
 # 0.08_02    2006-11-03
 # -----------------------------------------------------------
 
-* Added patch from Ash to separate DROP statements in mysql producer in 
+* Added patch from Ash to separate DROP statements in mysql producer in
   list-context
 * Fixed up SQLites usage of no-comments
 
@@ -323,7 +324,7 @@
 *   All schema objects now support the extra attribute, so can
     have arbitary name/value data attached to them.
 
-*   Refactoring: Added SQL::Translator::Schema::Object - base 
+*   Refactoring: Added SQL::Translator::Schema::Object - base
     class for all Schema objects.
 
 *   Changes to MySQL Parser (Dave Howorth)
@@ -378,7 +379,7 @@
 # 0.04    2003-11-07
 # -----------------------------------------------------------
 
-*   Increased version of Constants module to 1.41 to avoid a problem 
+*   Increased version of Constants module to 1.41 to avoid a problem
     where 0.02 has 1.4 of that file and 0.03 had 1.06 which confused
     CPAN
 
@@ -389,7 +390,7 @@
 # 0.03    2003-11-06
 # -----------------------------------------------------------
 
-*   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL, 
+*   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL,
     DBI-PostgreSQL, DBI-SQLite, DBI-Sybase, Storable, YAML
 
 *   Added producers: XML::SQLFairy, TTSchema, Storable, YAML
@@ -401,7 +402,7 @@
 *   Added "sqlt-dumper" script to help create a script for dumping
     a database a la "mysqldump"
 
-*   Reversed the arrowheads on the graphical producers to show the 
+*   Reversed the arrowheads on the graphical producers to show the
     relationships in a more standard way
 
 *   Changes all included script names to start with "sqlt"
@@ -424,10 +425,10 @@
 
 *   Removed "Validator" class as the Schema classes validate themselves
 
-*   Improved all existing parsers and producers, expanding them to 
+*   Improved all existing parsers and producers, expanding them to
     handle foreign keys much better, produce better output, etc.
 
-*   Added sqlt-diagram.pl and sqlt-graphviz.pl as CLI frontends to the 
+*   Added sqlt-diagram.pl and sqlt-graphviz.pl as CLI frontends to the
     graphical producers
 
 *   Added sql_translator.cgi as a web-form frontend to graphical producers
@@ -438,7 +439,7 @@
 # 0.01    2003-02-27
 # -----------------------------------------------------------
 
-*   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL, 
+*   Added parsers: XML::SQLFairy, Sybase, SQLite, DBI-MySQL,
     DBI-PostgreSQL, DBI-SQLite, DBI-Sybase, Storable, YAML
 
 *   Added producers: XML::SQLFairy, TTSchema, Storable, YAML
@@ -450,7 +451,7 @@
 *   Added "sqlt-dumper" script to help create a script for dumping
     a database a la "mysqldump"
 
-*   Reversed the arrowheads on the graphical producers to show the 
+*   Reversed the arrowheads on the graphical producers to show the
     relationships in a more standard way
 
 *   Changes all included script names to start with "sqlt"

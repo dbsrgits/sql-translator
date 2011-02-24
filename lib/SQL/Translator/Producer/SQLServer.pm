@@ -60,6 +60,9 @@ $DEBUG = 1 unless defined $DEBUG;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
+use SQL::Translator::Shim;
+
+my $shim = SQL::Translator::Shim->new( quote_chars => ['[', ']'] );
 
 my %translate  = (
     date      => 'datetime',
@@ -83,25 +86,6 @@ my %translate  = (
     #char      => 'char',
     #long      => 'varchar',
 );
-
-# TODO - This is still the Sybase list!
-my %reserved = map { $_, 1 } qw[
-    ALL ANALYSE ANALYZE AND ANY AS ASC
-    BETWEEN BINARY BOTH
-    CASE CAST CHECK COLLATE COLUMN CONSTRAINT CROSS
-    CURRENT_DATE CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER
-    DEFAULT DEFERRABLE DESC DISTINCT DO
-    ELSE END EXCEPT
-    FALSE FOR FOREIGN FREEZE FROM FULL
-    GROUP HAVING
-    ILIKE IN INITIALLY INNER INTERSECT INTO IS ISNULL
-    JOIN LEADING LEFT LIKE LIMIT
-    NATURAL NEW NOT NOTNULL NULL
-    OFF OFFSET OLD ON ONLY OR ORDER OUTER OVERLAPS
-    PRIMARY PUBLIC REFERENCES RIGHT
-    SELECT SESSION_USER SOME TABLE THEN TO TRAILING TRUE
-    UNION UNIQUE USER USING VERBOSE WHEN WHERE
-];
 
 # If these datatypes have size appended the sql fails.
 my @no_size = qw/tinyint smallint int integer bigint text bit image datetime/;
@@ -144,8 +128,9 @@ sub produce {
         foreach my $table (
             sort { $b->order <=> $a->order } $schema->get_tables
         ) {
-            my $name = unreserve($table->name);
-            $output .= qq{IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') DROP TABLE $name;\n\n}
+            my $name = $table->name;
+            my $q_name = unreserve($name);
+            $output .= qq{IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') DROP TABLE $q_name;\n\n}
         }
     }
 
@@ -170,7 +155,7 @@ sub produce {
         my %field_name_scope;
         for my $field ( $table->get_fields ) {
             my $field_name    = $field->name;
-            my $field_name_ur = unreserve( $field_name, $table_name );
+            my $field_name_ur = unreserve( $field_name );
             my $field_def     = qq["$field_name_ur"];
             $field_def        =~ s/\"//g;
             if ( $field_def =~ /identity/ ){
@@ -268,11 +253,12 @@ sub produce {
         my @constraint_decs = ();
         for my $constraint ( $table->get_constraints ) {
             my $name    = $constraint->name || '';
+            my $name_ur = unreserve($name);
             # Make sure we get a unique name
             my $type    = $constraint->type || NORMAL;
-            my @fields  = map { unreserve( $_, $table_name ) }
+            my @fields  = map { unreserve( $_ ) }
                 $constraint->fields;
-            my @rfields = map { unreserve( $_, $table_name ) }
+            my @rfields = map { unreserve( $_ ) }
                 $constraint->reference_fields;
             next unless @fields;
 
@@ -289,9 +275,9 @@ sub produce {
                 }
 
                 $c_def =
-                    "ALTER TABLE $table_name ADD CONSTRAINT $name FOREIGN KEY".
+                    "ALTER TABLE $table_name_ur ADD CONSTRAINT $name_ur FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
-                    $constraint->reference_table.
+                    unreserve($constraint->reference_table).
                     ' (' . join( ', ', @rfields ) . ')'
                 ;
 
@@ -316,7 +302,7 @@ sub produce {
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq UNIQUE ) {
-                $name ||= mk_name( $table_name . '_uc' );
+                $name = $name_ur || mk_name( $table_name . '_uc' );
                 $c_def =
                     "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
@@ -329,9 +315,10 @@ sub produce {
         #
         for my $index ( $table->get_indices ) {
             my $idx_name = $index->name || mk_name($table_name . '_idx');
+            my $idx_name_ur = unreserve($idx_name);
             push @index_defs,
-                "CREATE INDEX $idx_name ON $table_name (".
-                join( ', ', $index->fields ) . ");";
+                "CREATE INDEX $idx_name_ur ON $table_name_ur (".
+                join( ', ', map unreserve($_), $index->fields ) . ");";
         }
 
         my $create_statement = "";
@@ -404,21 +391,11 @@ sub mk_name {
     $name = substr( $name, 0, $max_id_length )
                         if ((length( $name ) > $max_id_length) && $critical);
     $scope->{ $name }++;
-    return $name;
+    return unreserve($name);
 }
 
 # -------------------------------------------------------------------
-sub unreserve {
-    my $name            = shift || '';
-    my $schema_obj_name = shift || '';
-    my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
-
-    # also trap fields that don't begin with a letter
-    return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i;
-
-    my $unreserve = sprintf '%s_', $name;
-    return $unreserve.$suffix;
-}
+sub unreserve { $shim->quote($_[0]) }
 
 1;
 
