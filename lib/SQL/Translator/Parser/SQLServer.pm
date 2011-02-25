@@ -84,6 +84,7 @@ statement : create_table
     | create_index
     | create_constraint
     | comment
+    | disable_constraints
     | drop
     | use
     | setuser
@@ -105,6 +106,8 @@ if_command : grant
     | create_constraint
 
 object_not_null : /object_id/i '(' ident ')' /is not null/i
+
+field_not_null : /where/i field_name /is \s+ not \s+ null/ix
 
 print : /\s*/ /print/i /.*/
 
@@ -145,7 +148,7 @@ comment_middle : m{([^*]+|\*(?!/))*}
 
 drop : if_exists(?) /drop/i tbl_drop END_STATEMENT
 
-tbl_drop : /table/i NAME
+tbl_drop : /table/i ident
 
 if_exists : /if exists/i '(' /select/i 'name' /from/i 'sysobjects' /[^\)]+/ ')'
 
@@ -191,16 +194,28 @@ create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_sys
         }
     }
 
+disable_constraints : if_exists(?) /alter/i /table/i ident /nocheck/i /constraint/i /all/i END_STATEMENT
+
+# this is for the normal case 
+create_constraint : /create/i constraint END_STATEMENT
+    {
+        @table_comments = ();
+        push @{ $tables{ $item[2]{'table'} }{'constraints'} }, $item[2];
+    }
+
+# and this is for the BEGIN/END case
 create_constraint : /create/i constraint
     {
         @table_comments = ();
         push @{ $tables{ $item[2]{'table'} }{'constraints'} }, $item[2];
     }
 
+
 create_constraint : /alter/i /table/i ident /add/i foreign_key_constraint END_STATEMENT
     {
         push @{ $tables{ $item[3]{name} }{constraints} }, $item[5];
     }
+
 
 create_index : /create/i index
     {
@@ -299,10 +314,19 @@ constraint : primary_key_constraint
     | unique_constraint
 
 field_name : WORD
+   { $return = $item[1] }
+   | LQUOTE WORD RQUOTE
+   { $return = $item[2] }
 
 index_name : WORD
+   { $return = $item[1] }
+   | LQUOTE WORD RQUOTE
+   { $return = $item[2] }
 
 table_name : WORD
+ { $return = $item[1] }
+ | LQUOTE WORD RQUOTE
+ { $return = $item[2] }
 
 data_type : WORD field_size(?)
     {
@@ -372,7 +396,7 @@ unique_constraint : /constraint/i index_name(?) /unique/i parens_field_list
         }
     }
 
-unique_constraint : /unique/i clustered(?) INDEX(?) index_name(?) on_table(?) parens_field_list
+unique_constraint : /unique/i clustered(?) INDEX(?) index_name(?) on_table(?) parens_field_list field_not_null(?)
     {
         $return = {
             supertype => 'constraint',
@@ -423,8 +447,14 @@ index : clustered(?) INDEX index_name(?) on_table(?) parens_field_list END_STATE
 parens_field_list : '(' field_name(s /,/) ')'
     { $item[2] }
 
-ident : QUOTE(?) WORD '.' WORD QUOTE(?)
+ident : QUOTE WORD '.' WORD QUOTE | LQUOTE WORD '.' WORD RQUOTE
     { $return = { owner => $item[2], name => $item[4] } }
+    | LQUOTE WORD RQUOTE '.' LQUOTE WORD RQUOTE
+    { $return = { owner => $item[2], name => $item[6] } }
+    | LQUOTE WORD RQUOTE
+    { $return = { name  => $item[2] } }
+    | WORD '.' WORD
+    { $return = { owner => $item[1], name => $item[3] } }
     | WORD
     { $return = { name  => $item[1] } }
 
@@ -443,6 +473,10 @@ DIGITS : /\d+/
 COMMA : ','
 
 QUOTE : /'/
+
+LQUOTE : '['
+
+RQUOTE : ']'
 
 };
 

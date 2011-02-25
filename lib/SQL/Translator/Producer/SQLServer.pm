@@ -78,7 +78,7 @@ my %translate  = (
     #bit       => 'bit',
     #tinyint   => 'smallint',
     #float     => 'double precision',
-    #serial    => 'numeric', 
+    #serial    => 'numeric',
     #boolean   => 'varchar',
     #char      => 'char',
     #long      => 'varchar',
@@ -86,20 +86,20 @@ my %translate  = (
 
 # TODO - This is still the Sybase list!
 my %reserved = map { $_, 1 } qw[
-    ALL ANALYSE ANALYZE AND ANY AS ASC 
+    ALL ANALYSE ANALYZE AND ANY AS ASC
     BETWEEN BINARY BOTH
     CASE CAST CHECK COLLATE COLUMN CONSTRAINT CROSS
-    CURRENT_DATE CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER 
+    CURRENT_DATE CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER
     DEFAULT DEFERRABLE DESC DISTINCT DO
     ELSE END EXCEPT
-    FALSE FOR FOREIGN FREEZE FROM FULL 
-    GROUP HAVING 
-    ILIKE IN INITIALLY INNER INTERSECT INTO IS ISNULL 
-    JOIN LEADING LEFT LIKE LIMIT 
+    FALSE FOR FOREIGN FREEZE FROM FULL
+    GROUP HAVING
+    ILIKE IN INITIALLY INNER INTERSECT INTO IS ISNULL
+    JOIN LEADING LEFT LIKE LIMIT
     NATURAL NEW NOT NOTNULL NULL
     OFF OFFSET OLD ON ONLY OR ORDER OUTER OVERLAPS
-    PRIMARY PUBLIC REFERENCES RIGHT 
-    SELECT SESSION_USER SOME TABLE THEN TO TRAILING TRUE 
+    PRIMARY PUBLIC REFERENCES RIGHT
+    SELECT SESSION_USER SOME TABLE THEN TO TRAILING TRUE
     UNION UNIQUE USER USING VERBOSE WHEN WHERE
 ];
 
@@ -259,7 +259,7 @@ sub produce {
               ],
             );
 
-            push @field_defs, $field_def;            
+            push @field_defs, $field_def;
         }
 
         #
@@ -288,7 +288,7 @@ sub produce {
                   undef $_ if $_ eq 'RESTRICT'
                 }
 
-                $c_def = 
+                $c_def =
                     "ALTER TABLE $table_name ADD CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
@@ -310,14 +310,14 @@ sub produce {
 
 
             if ( $type eq PRIMARY_KEY ) {
-                $name ||= mk_name( $table_name . '_pk' );
-                $c_def = 
+                $name = ($name ? unreserve($name) : mk_name( $table_name . '_pk' ));
+                $c_def =
                     "CONSTRAINT $name PRIMARY KEY ".
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq UNIQUE ) {
                 $name ||= mk_name( $table_name . '_uc' );
-                $c_def = 
+                $c_def =
                     "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
@@ -336,7 +336,7 @@ sub produce {
 
         my $create_statement = "";
         $create_statement .= qq[CREATE TABLE $table_name_ur (\n].
-            join( ",\n", 
+            join( ",\n",
                 map { "  $_" } @field_defs, @constraint_defs
             ).
             "\n);"
@@ -377,7 +377,7 @@ sub produce {
         $output .= "\n\n";
         $output .= "--\n-- Procedure: $name\n--\n\n" unless $no_comments;
         my $text = $_->sql();
-		$text =~ s/\r//g;
+      $text =~ s/\r//g;
         $output .= "$text\nGO\n";
     }
 =cut
@@ -393,7 +393,7 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00" 
+        substr($name, $max_id_length - 3) = "00"
             if length( $name ) > $max_id_length;
 
         warn "The name '$name_orig' has been changed to ",
@@ -401,7 +401,7 @@ sub mk_name {
 
         $scope->{ $name_orig }++;
     }
-    $name = substr( $name, 0, $max_id_length ) 
+    $name = substr( $name, 0, $max_id_length )
                         if ((length( $name ) > $max_id_length) && $critical);
     $scope->{ $name }++;
     return $name;
@@ -414,7 +414,7 @@ sub unreserve {
     my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
 
     # also trap fields that don't begin with a letter
-    return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i; 
+    return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i;
 
     my $unreserve = sprintf '%s_', $name;
     return $unreserve.$suffix;
