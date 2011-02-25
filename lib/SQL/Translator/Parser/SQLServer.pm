@@ -55,6 +55,16 @@ $GRAMMAR = q{
 
 { 
     my ( %tables, @table_comments, $table_order, %procedures, $proc_order, %views, $view_order );
+
+    sub _err {
+      my $max_lines = 5;
+      my @up_to_N_lines = split (/\n/, $_[1], $max_lines + 1);
+      die sprintf ("Unable to parse line %d:\n%s\n",
+        $_[0],
+        join "\n", (map { "'$_'" } @up_to_N_lines[0..$max_lines - 1 ]), @up_to_N_lines > $max_lines ? '...' : ()
+      );
+    }
+
 }
 
 startrule : statement(s) eofile
@@ -81,7 +91,7 @@ statement : create_table
     | print
     | grant
     | exec
-    | <error>
+    | /^\Z/ | { _err ($thisline, $text) }
 
 use : /use/i WORD GO 
     { @table_comments = () }

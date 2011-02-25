@@ -165,6 +165,12 @@ sub check_roundtrip {
   isa_ok ($mid_schema, 'SQL::Translator::Schema', "First $args->{name} parser pass produced a schema:")
     or do {
       diag (_gen_diag ( $parser_t->error, $base_out ) );
+      my $i;
+      note join ("\n" . ( '=' x 76) . "\n",
+        'Unparseable DDL:',
+        (join ("\n", map { ++$i . ":\t$_" } split /\n/, $base_out) ),
+        ''
+      );
       return;
     };
 
