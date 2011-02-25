@@ -53,7 +53,7 @@ $::RD_HINT   = 1;
 
 $GRAMMAR = q{
 
-{ 
+{
     my ( %tables, @table_comments, $table_order, %procedures, $proc_order, %views, $view_order );
 
     sub _err {
@@ -68,13 +68,13 @@ $GRAMMAR = q{
 }
 
 startrule : statement(s) eofile
-	{
-		return {
-			tables     => \%tables,
-			procedures => \%procedures,
-			views      => \%views,
-		}
-	}
+   {
+      return {
+         tables     => \%tables,
+         procedures => \%procedures,
+         views      => \%views,
+      }
+   }
 
 eofile : /^\Z/
 
@@ -93,7 +93,7 @@ statement : create_table
     | exec
     | /^\Z/ | { _err ($thisline, $text) }
 
-use : /use/i WORD GO 
+use : /use/i WORD GO
     { @table_comments = () }
 
 setuser : /setuser/i NAME GO
@@ -120,8 +120,8 @@ exec : exec_statement(s) GO
 
 exec_statement : /exec/i /[^\n]+/
 
-comment : /^\s*(?:#|-{2}).*\n/ 
-    { 
+comment : /^\s*(?:#|-{2}).*\n/
+    {
         my $comment =  $item[1];
         $comment    =~ s/^\s*(#|--)\s*//;
         $comment    =~ s/\s*$//;
@@ -130,7 +130,7 @@ comment : /^\s*(?:#|-{2}).*\n/
     }
 
 comment : comment_start comment_middle comment_end
-    { 
+    {
         my $comment = $item[2];
         $comment =~ s/^\s*|\s*$//mg;
         $comment =~ s/^\**\s*//mg;
@@ -153,7 +153,7 @@ if_exists : /if exists/i '(' /select/i 'name' /from/i 'sysobjects' /[^\)]+/ ')'
 # Create table.
 #
 create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_system(?) END_STATEMENT
-    { 
+    {
         my $table_owner = $item[3]{'owner'};
         my $table_name  = $item[3]{'name'};
 
@@ -171,10 +171,10 @@ create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_sys
         for my $def ( @{ $item[5] } ) {
             if ( $def->{'supertype'} eq 'field' ) {
                 my $field_name = $def->{'name'};
-                $tables{ $table_name }{'fields'}{ $field_name } = 
+                $tables{ $table_name }{'fields'}{ $field_name } =
                     { %$def, order => $i };
                 $i++;
-        
+
                 if ( $def->{'is_primary_key'} ) {
                     push @{ $tables{ $table_name }{'constraints'} }, {
                         type   => 'primary_key',
@@ -214,7 +214,7 @@ create_procedure : /create/i PROCEDURE WORD not_go GO
         my $proc_name = $item[3];
         my $owner = '';
         my $sql = "$item[1] $item[2] $proc_name $item[4]";
-        
+
         $procedures{ $proc_name }{'order'}  = ++$proc_order;
         $procedures{ $proc_name }{'name'}   = $proc_name;
         $procedures{ $proc_name }{'owner'}  = $owner;
@@ -227,7 +227,7 @@ create_procedure : /create/i PROCEDURE '[' WORD '].' WORD not_go GO
         my $proc_name = $item[6];
         my $owner = $item[4];
         my $sql = "$item[1] $item[2] [$owner].$proc_name $item[7]";
-        
+
         $procedures{ $proc_name }{'order'}  = ++$proc_order;
         $procedures{ $proc_name }{'name'}   = $proc_name;
         $procedures{ $proc_name }{'owner'}  = $owner;
@@ -235,14 +235,14 @@ create_procedure : /create/i PROCEDURE '[' WORD '].' WORD not_go GO
     }
 
 PROCEDURE : /procedure/i
-	| /function/i
+   | /function/i
 
 create_view : /create/i /view/i WORD not_go GO
     {
         @table_comments = ();
         my $view_name = $item[3];
         my $sql = "$item[1] $item[2] $item[3] $item[4]";
-        
+
         $views{ $view_name }{'order'}  = ++$view_order;
         $views{ $view_name }{'name'}   = $view_name;
         $views{ $view_name }{'sql'}    = $sql;
@@ -257,41 +257,41 @@ create_def : constraint
 blank : /\s*/
 
 field : field_name data_type field_qualifier(s?)
-    { 
+    {
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
-        my $nullable = defined $qualifiers{'nullable'} 
+        my $nullable = defined $qualifiers{'nullable'}
                    ? $qualifiers{'nullable'} : 1;
-        $return = { 
+        $return = {
             supertype      => 'field',
-            name           => $item{'field_name'}, 
+            name           => $item{'field_name'},
             data_type      => $item{'data_type'}{'type'},
             size           => $item{'data_type'}{'size'},
-            nullable       => $nullable, 
-            default        => $qualifiers{'default_val'}, 
-            is_auto_inc    => $qualifiers{'is_auto_inc'}, 
-#            is_primary_key => $item{'primary_key'}[0], 
-        } 
+            nullable       => $nullable,
+            default        => $qualifiers{'default_val'},
+            is_auto_inc    => $qualifiers{'is_auto_inc'},
+#            is_primary_key => $item{'primary_key'}[0],
+        }
     }
 
 field_qualifier : nullable
-    { 
-        $return = { 
+    {
+        $return = {
              nullable => $item{'nullable'},
-        } 
+        }
     }
 
 field_qualifier : default_val
-    { 
-        $return = { 
+    {
+        $return = {
              default_val => $item{'default_val'},
-        } 
+        }
     }
 
 field_qualifier : auto_inc
-    { 
-        $return = { 
+    {
+        $return = {
              is_auto_inc => $item{'auto_inc'},
-        } 
+        }
     }
 
 constraint : primary_key_constraint
@@ -304,12 +304,12 @@ index_name : WORD
 
 table_name : WORD
 
-data_type : WORD field_size(?) 
-    { 
-        $return = { 
-            type => $item[1], 
+data_type : WORD field_size(?)
+    {
+        $return = {
+            type => $item[1],
             size => $item[2][0]
-        } 
+        }
     }
 
 lock : /lock/i /datarows/i
@@ -331,40 +331,40 @@ nullable : /not/i /null/i
 
 default_val : /default/i /null/i
     { $return = 'null' }
-	| /default/i /'[^']*'/ 
+   | /default/i /'[^']*'/
     { $item[2]=~ s/'//g; $return = $item[2] }
-	| /default/i WORD
+   | /default/i WORD
     { $return = $item[2] }
 
 auto_inc : /identity/i { 1 }
 
 primary_key_constraint : /constraint/i index_name(?) /primary/i /key/i parens_field_list
-    { 
-        $return = { 
+    {
+        $return = {
             supertype => 'constraint',
             name      => $item[2][0],
             type      => 'primary_key',
             fields    => $item[5],
-        } 
+        }
     }
 
 foreign_key_constraint : /constraint/i index_name(?) /foreign/i /key/i parens_field_list /references/i table_name parens_field_list(?) on_delete(?) on_update(?)
     {
-        $return = { 
+        $return = {
             supertype        => 'constraint',
             name             => $item[2][0],
             type             => 'foreign_key',
             fields           => $item[5],
             reference_table  => $item[7],
-            reference_fields => $item[8][0], 
+            reference_fields => $item[8][0],
             on_delete        => $item[9][0],
             on_update        => $item[10][0],
-        } 
+        }
     }
 
 unique_constraint : /constraint/i index_name(?) /unique/i parens_field_list
     {
-        $return = { 
+        $return = {
             supertype => 'constraint',
             type      => 'unique',
             name      => $item[2][0],
@@ -373,15 +373,15 @@ unique_constraint : /constraint/i index_name(?) /unique/i parens_field_list
     }
 
 unique_constraint : /unique/i clustered(?) INDEX(?) index_name(?) on_table(?) parens_field_list
-    { 
-        $return = { 
+    {
+        $return = {
             supertype => 'constraint',
             type      => 'unique',
             clustered => $item[2][0],
             name      => $item[4][0],
             table     => $item[5][0],
             fields    => $item[6],
-        } 
+        }
     }
 
 on_delete : /on delete/i reference_option
@@ -409,15 +409,15 @@ on_system : /on/i /system/i
     { $return = 1 }
 
 index : clustered(?) INDEX index_name(?) on_table(?) parens_field_list END_STATEMENT
-    { 
-        $return = { 
+    {
+        $return = {
             supertype => 'index',
             type      => 'normal',
             clustered => $item[1][0],
             name      => $item[3][0],
             table     => $item[4][0],
             fields    => $item[5],
-        } 
+        }
     }
 
 parens_field_list : '(' field_name(s /,/) ')'
@@ -429,7 +429,7 @@ ident : QUOTE(?) WORD '.' WORD QUOTE(?)
     { $return = { name  => $item[1] } }
 
 END_STATEMENT : ';'
-	| GO
+   | GO
 
 GO : /^go/i
 
@@ -464,19 +464,19 @@ sub parse {
     warn Dumper( $result ) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = sort { 
+    my @tables = sort {
         $result->{tables}->{ $a }->{'order'} <=> $result->{tables}->{ $b }->{'order'}
     } keys %{ $result->{tables} };
 
     for my $table_name ( @tables ) {
         my $tdata = $result->{tables}->{ $table_name };
-        my $table = $schema->add_table( name => $tdata->{'name'} ) 
+        my $table = $schema->add_table( name => $tdata->{'name'} )
                     or die "Can't create table '$table_name': ", $schema->error;
 
         $table->comments( $tdata->{'comments'} );
 
-        my @fields = sort { 
-            $tdata->{'fields'}->{$a}->{'order'} 
+        my @fields = sort {
+            $tdata->{'fields'}->{$a}->{'order'}
             <=>
             $tdata->{'fields'}->{$b}->{'order'}
         } keys %{ $tdata->{'fields'} };
@@ -539,26 +539,26 @@ sub parse {
             ) or die $table->error;
         }
     }
-    
-    my @procedures = sort { 
+
+    my @procedures = sort {
         $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
     } keys %{ $result->{procedures} };
     for my $proc_name (@procedures) {
-    	$schema->add_procedure(
-    		name  => $proc_name,
-    		owner => $result->{procedures}->{$proc_name}->{owner},
-    		sql   => $result->{procedures}->{$proc_name}->{sql},
-		);
+      $schema->add_procedure(
+         name  => $proc_name,
+         owner => $result->{procedures}->{$proc_name}->{owner},
+         sql   => $result->{procedures}->{$proc_name}->{sql},
+      );
     }
 
-    my @views = sort { 
+    my @views = sort {
         $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
     } keys %{ $result->{views} };
     for my $view_name (keys %{ $result->{views} }) {
-    	$schema->add_view(
-    		name => $view_name,
-    		sql  => $result->{views}->{$view_name}->{sql},
-		);
+      $schema->add_view(
+         name => $view_name,
+         sql  => $result->{views}->{$view_name}->{sql},
+      );
     }
 
     return 1;
