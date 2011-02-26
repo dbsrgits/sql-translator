@@ -33,7 +33,7 @@ objects.
       filters => [
         DefaultExtra => {
             # XXX - These should really be ordered
-            
+
             # Default widget for fields to basic text edit.
             'field.widget' => 'text',
             # idea:
@@ -42,7 +42,7 @@ objects.
             # Default label (human formated name) for fields and tables
             'field.label'  => '=ucfirst($name)',
             'table.label'  => '=ucfirst($name)',
-        }, 
+        },
       ],
   ) || die "SQLFairy error : ".SQL::Translator->error;
   my $sql = $sqlt->translate || die "SQLFairy error : ".$sqlt->error;

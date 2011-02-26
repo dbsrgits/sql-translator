@@ -81,8 +81,8 @@ SQL::Translator::Producer - describes how to write a producer
 
 Producer modules designed to be used with SQL::Translator need to
 implement a single function, called B<produce>.  B<produce> will be
-called with the SQL::Translator object from which it is expected to 
-retrieve the SQL::Translator::Schema object which has been populated 
+called with the SQL::Translator object from which it is expected to
+retrieve the SQL::Translator::Schema object which has been populated
 by the parser.  It is expected to return a string.
 
 =head1 METHODS

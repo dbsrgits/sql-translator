@@ -262,7 +262,7 @@ The L<SQL::Translator> object.
 WARNING: This method is Experimental so may change!
 
 Called with the L<SQL::Translator::Schema> object and should return one (it
-doesn't have to be the same one) that will become the C<schema> varibale used 
+doesn't have to be the same one) that will become the C<schema> varibale used
 in the template.
 
 Gets called from tt_default_vars.

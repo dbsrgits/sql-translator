@@ -205,7 +205,7 @@ Get or set the comments on a procedure.
     }
 
     if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray 
+        return wantarray
             ? @{ $self->{'comments'} || [] }
             : join( "\n", @{ $self->{'comments'} || [] } );
     }
@@ -255,10 +255,10 @@ Determines if this procedure is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_sql = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
-    
+
     unless ($ignore_sql) {
         my $selfSql = $self->sql;
         my $otherSql = $other->sql;
@@ -270,7 +270,7 @@ Determines if this procedure is the same as another
         $otherSql =~ s/\s+/ /sg;
         return 0 unless $selfSql eq $otherSql;
     }
-    
+
     return 0 unless $self->_compare_objects(scalar $self->parameters, scalar $other->parameters);
 #    return 0 unless $self->comments eq $other->comments;
 #    return 0 unless $case_insensitive ? uc($self->owner) eq uc($other->owner) : $self->owner eq $other->owner;

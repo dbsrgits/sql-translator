@@ -59,7 +59,7 @@ $VERSION = '1.59';
 # ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
-    name schema perform_action_when database_events database_event 
+    name schema perform_action_when database_events database_event
     fields table on_table action order
 /);
 
@@ -80,7 +80,7 @@ sub perform_action_when {
 
 =head2 perform_action_when
 
-Gets or sets whether the event happens "before" or "after" the 
+Gets or sets whether the event happens "before" or "after" the
 C<database_event>.
 
   $trigger->perform_action_when('after');
@@ -88,7 +88,7 @@ C<database_event>.
 =cut
 
     my $self = shift;
-    
+
     if ( my $arg = shift ) {
         $arg =  lc $arg;
         $arg =~ s/\s+/ /g;
@@ -96,7 +96,7 @@ C<database_event>.
             $self->{'perform_action_when'} = $arg;
         }
         else {
-            return 
+            return
                 $self->error("Invalid argument '$arg' to perform_action_when");
         }
     }
@@ -114,12 +114,12 @@ sub database_event {
 Obsolete please use database_events!
 
 =cut
-    
+
     my $self = shift;
 
     return $self->database_events( @_ );
 }
-    
+
 # ----------------------------------------------------------------------
 sub database_events {
 
@@ -140,7 +140,7 @@ Gets or sets the events that triggers the trigger.
         @args       = map { s/\s+/ /g; lc $_ } @args;
         my %valid   = map { $_, 1 } qw[ insert update update_on delete ];
         my @invalid = grep { !defined $valid{ $_ } } @args;
-        
+
         if ( @invalid ) {
             return $self->error(
                 sprintf("Invalid events '%s' in database_events",
@@ -152,7 +152,7 @@ Gets or sets the events that triggers the trigger.
         $self->{'database_events'} = [ @args ];
     }
 
-    return wantarray 
+    return wantarray
         ? @{ $self->{'database_events'} || [] }
         : $self->{'database_events'};
 }
@@ -208,7 +208,7 @@ Gets or set the table on which the trigger works, as a L<SQL::Translator::Schema
     my ($self, $arg) = @_;
     if ( @_ == 2 ) {
         $self->error("Table attribute of a ".__PACKAGE__.
-                     " must be a SQL::Translator::Schema::Table") 
+                     " must be a SQL::Translator::Schema::Table")
             unless ref $arg and $arg->isa('SQL::Translator::Schema::Table');
         $self->{table} = $arg;
     }
@@ -278,13 +278,13 @@ Determine whether the trigger is valid or not.
 
     my $self = shift;
 
-    for my $attr ( 
-        qw[ name perform_action_when database_events on_table action ] 
+    for my $attr (
+        qw[ name perform_action_when database_events on_table action ]
     ) {
         return $self->error("Invalid: missing '$attr'") unless $self->$attr();
     }
-    
-    return $self->error("Missing fields for UPDATE ON") if 
+
+    return $self->error("Missing fields for UPDATE ON") if
         $self->database_event eq 'update_on' && !$self->fields;
 
     return 1;
@@ -364,7 +364,7 @@ sub compare_arrays {
 Compare two arrays.
 
 =cut
-    
+
     my ($first, $second) = @_;
     no warnings;  # silence spurious -w undef complaints
 
@@ -399,11 +399,11 @@ Determines if this trigger is the same as another
     my $self             = shift;
     my $other            = shift;
     my $case_insensitive = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
 
     my %names;
-    for my $name ( $self->name, $other->name ) { 
+    for my $name ( $self->name, $other->name ) {
         $name = lc $name if $case_insensitive;
         $names{ $name }++;
     }
@@ -416,8 +416,8 @@ Determines if this trigger is the same as another
         return $self->error('perform_action_when differs');
     }
 
-    if ( 
-        !compare_arrays( [$self->database_events], [$other->database_events] ) 
+    if (
+        !compare_arrays( [$self->database_events], [$other->database_events] )
     ) {
         return $self->error('database_events differ');
     }
@@ -430,7 +430,7 @@ Determines if this trigger is the same as another
         return $self->error('action differs');
     }
 
-    if ( 
+    if (
         !$self->_compare_objects( scalar $self->extra, scalar $other->extra )
     ) {
         return $self->error('extras differ');

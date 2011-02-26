@@ -119,7 +119,7 @@ sub comments {
 
 =head2 comments
 
-Get or set the comments on a field.  May be called several times to 
+Get or set the comments on a field.  May be called several times to
 set and it will accumulate the comments.  Called in an array context,
 returns each comment individually; called in a scalar context, returns
 all the comments joined on newlines.
@@ -138,7 +138,7 @@ all the comments joined on newlines.
     }
 
     if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray 
+        return wantarray
             ? @{ $self->{'comments'} || [] }
             : join( "\n", @{ $self->{'comments'} || [] } );
     }
@@ -192,7 +192,7 @@ sub default_value {
 =head2 default_value
 
 Get or set the field's default value.  Will return undef if not defined
-and could return the empty string (it's a valid default value), so don't 
+and could return the empty string (it's a valid default value), so don't
 assume an error like other methods.
 
   my $default = $field->default_value('foo');
@@ -274,7 +274,7 @@ Get or set the field's C<is_auto_increment> attribute.
     unless ( defined $self->{'is_auto_increment'} ) {
         if ( my $table = $self->table ) {
             if ( my $schema = $table->schema ) {
-                if ( 
+                if (
                     $schema->database eq 'PostgreSQL' &&
                     $self->data_type eq 'serial'
                 ) {
@@ -327,7 +327,7 @@ sub is_nullable {
 
 =head2 is_nullable
 
-Get or set whether the field can be null.  If not defined, then 
+Get or set whether the field can be null.  If not defined, then
 returns "1" (assumes the field can be null).  The argument is evaluated
 by Perl for True or False, so the following are eqivalent:
 
@@ -348,8 +348,8 @@ foreign keys; checks) are represented as table constraints.
         $self->{'is_nullable'} = $arg ? 1 : 0;
     }
 
-    if ( 
-        defined $self->{'is_nullable'} && 
+    if (
+        defined $self->{'is_nullable'} &&
         $self->{'is_nullable'} == 1    &&
         $self->is_primary_key
     ) {
@@ -408,7 +408,7 @@ Determine whether the field has a UNIQUE constraint or not.
 =cut
 
     my $self = shift;
-    
+
     unless ( defined $self->{'is_unique'} ) {
         if ( my $table = $self->table ) {
             for my $c ( $table->get_constraints ) {
@@ -518,7 +518,7 @@ Get or set the field's order.
 # ----------------------------------------------------------------------
 sub schema {
 
-=head2 schema 
+=head2 schema
 
 Shortcut to get the fields schema ($field->table->schema) or undef if it
 doesn't have one.
@@ -565,7 +565,7 @@ numbers and returns a string.
         $self->{'size'} = \@new if @new; # only set if all OK
     }
 
-    return wantarray 
+    return wantarray
         ? @{ $self->{'size'} || [0] }
         : join( ',', @{ $self->{'size'} || [0] } )
     ;
@@ -598,7 +598,7 @@ also be used to get the table name.
 
 sub parsed_field {
 
-=head2 
+=head2
 
 Returns the field exactly as the parser found it
 
@@ -630,7 +630,7 @@ Determines if this field is the same as another
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
 

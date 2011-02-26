@@ -135,7 +135,7 @@ sub parse_list_arg {
     # This processes string-like arguments.
     #
     else {
-        return [ 
+        return [
             map { s/^\s+|\s+$//g; $_ }
             map { split /,/ }
             grep { defined && length } @$list
@@ -187,17 +187,17 @@ sub parse_mysql_version {
 
     my @vers;
 
-    # X.Y.Z style 
+    # X.Y.Z style
     if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
 
-    # XYYZZ (mysql) style 
+    # XYYZZ (mysql) style
     elsif ( $v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x ) {
         push @vers, $1, $2, $3;
     }
 
-    # XX.YYYZZZ (perl) style or simply X 
+    # XX.YYYZZZ (perl) style or simply X
     elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
@@ -233,12 +233,12 @@ sub parse_dbms_version {
 
     my @vers;
 
-    # X.Y.Z style 
+    # X.Y.Z style
     if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
 
-    # XX.YYYZZZ (perl) style or simply X 
+    # XX.YYYZZZ (perl) style or simply X
     elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
@@ -390,7 +390,7 @@ C<header_comment>.
 
 =head2 parse_mysql_version
 
-Used by both L<Parser::MySQL|SQL::Translator::Parser::MySQL> and 
+Used by both L<Parser::MySQL|SQL::Translator::Parser::MySQL> and
 L<Producer::MySQL|SQL::Translator::Producer::MySQL> in order to provide a
 consistent format for both C<< parser_args->{mysql_parser_version} >> and
 C<< producer_args->{mysql_version} >> respectively. Takes any of the following

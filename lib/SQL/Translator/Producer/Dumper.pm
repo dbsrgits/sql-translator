@@ -65,18 +65,18 @@ sub produce {
     my $t              = shift;
     my $args           = $t->producer_args;
     my $schema         = $t->schema;
-    my $add_truncate   = $args->{'add_truncate'}   || 0; 
+    my $add_truncate   = $args->{'add_truncate'}   || 0;
     my $skip           = $args->{'skip'}           || '';
     my $skiplike       = $args->{'skiplike'}       || '';
     my $db_user        = $args->{'db_user'}        || 'db_user';
     my $db_pass        = $args->{'db_password'}    || 'db_pass';
     my $parser_name    = $t->parser_type;
-    my %skip           = map { $_, 1 } map { s/^\s+|\s+$//; $_ } 
+    my %skip           = map { $_, 1 } map { s/^\s+|\s+$//; $_ }
                          split (/,/, $skip);
     my $sqlt_version   = $t->version;
 
-    if ( $parser_name  =~ /Parser::(\w+)$/ ) { 
-        $parser_name = $1 
+    if ( $parser_name  =~ /Parser::(\w+)$/ ) {
+        $parser_name = $1
     }
 
     my %type_to_dbd    = (
@@ -103,9 +103,9 @@ sub produce {
     my $template      = Template->new;
     my $template_text = template();
     my $out;
-    $template->process( 
-        \$template_text, 
-        { 
+    $template->process(
+        \$template_text,
+        {
             translator     => $t,
             schema         => $schema,
             db_user        => $db_user,
@@ -114,8 +114,8 @@ sub produce {
             perl           => $Config{'startperl'},
             skip           => \%skip,
             skiplike       => $skiplike,
-        }, 
-        \$out 
+        },
+        \$out
     ) or die $template->error;
 
     return $out;
@@ -141,7 +141,7 @@ use DBI;
 use Getopt::Long;
 use File::Spec::Functions 'catfile';
 
-my ( $help, $add_truncate, $skip, $skiplike, $no_comments, 
+my ( $help, $add_truncate, $skip, $skiplike, $no_comments,
     $takelike, $mysql_loadfile );
 GetOptions(
     'add-truncate'   => \$add_truncate,
@@ -198,13 +198,13 @@ FOREACH table IN schema.get_tables;
         types  => types,
         fields => field_names,
     });
-END 
+END
 -%]
 
 my $db     = DBI->connect(
-    '[% dsn %]', 
-    '[% db_user %]', 
-    '[% db_pass %]', 
+    '[% dsn %]',
+    '[% db_user %]',
+    '[% db_pass %]',
     { RaiseError => 1 }
 );
 my %skip   = map { $_, 1 } map { s/^\s+|\s+$//; $_ } split (/,/, $skip);
@@ -231,7 +231,7 @@ for my $table ( @tables ) {
     my ( $out_fh, $outfile );
     if ( $mysql_loadfile ) {
         $outfile = catfile( cwd(), "$table_name.txt" );
-        open $out_fh, ">$outfile" or 
+        open $out_fh, ">$outfile" or
             die "Can't write LOAD FILE to '$table_name': $!\n";
     }
 
@@ -264,14 +264,14 @@ for my $table ( @tables ) {
                 $val = defined $val ? $val : $mysql_loadfile ? '\N' : 'NULL';
             }
             push @vals, $val;
-        }        
+        }
 
         if ( $mysql_loadfile ) {
             print $out_fh join("\t", @vals), "\n";
         }
         else {
             print "INSERT INTO $table_name (".
-                join(', ', @{ $table->{'fields'} }) . 
+                join(', ', @{ $table->{'fields'} }) .
                 ') VALUES (', join(', ', @vals), ");\n";
         }
     }

@@ -202,7 +202,7 @@ sub parse {
             $table->add_index( %data ) or die $table->error;
         }
 
-        
+
         #
         # Comments
         #

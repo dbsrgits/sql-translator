@@ -115,7 +115,7 @@ sub parse {
         #
         # If directed, look at every field's values to guess size and type.
         #
-        unless ( 
+        unless (
             defined $args->{'scan_fields'} &&
             $args->{'scan_fields'} == 0
         ) {
@@ -123,12 +123,12 @@ sub parse {
 
             for(
                 my $iR = $ws->{'MinRow'} == 0 ? 1 : $ws->{'MinRow'};
-                defined $ws->{'MaxRow'} && $iR <= $ws->{'MaxRow'}; 
+                defined $ws->{'MaxRow'} && $iR <= $ws->{'MaxRow'};
                 $iR++
             ) {
-               for ( 
+               for (
                     my $iC = $ws->{'MinCol'};
-                    defined $ws->{'MaxCol'} && $iC <= $ws->{'MaxCol'}; 
+                    defined $ws->{'MaxCol'} && $iC <= $ws->{'MaxCol'};
                     $iC++
                 ) {
                     my $field = $field_names[ $iC ];
@@ -140,16 +140,16 @@ sub parse {
                     if ( $data =~ /^-?\d+$/ ) {
                         $type = 'integer';
                     }
-                    elsif ( 
-                        $data =~ /^-?[,\d]+\.[\d+]?$/ 
+                    elsif (
+                        $data =~ /^-?[,\d]+\.[\d+]?$/
                         ||
-                        $data =~ /^-?[,\d]+?\.\d+$/  
+                        $data =~ /^-?[,\d]+?\.\d+$/
                         ||
-                        $data =~ /^-?\.\d+$/  
+                        $data =~ /^-?\.\d+$/
                     ) {
                         $type = 'float';
-                        my ( $w, $d ) = 
-                            map { s/,//g; length $_ || 1 } 
+                        my ( $w, $d ) =
+                            map { s/,//g; length $_ || 1 }
                             split( /\./, $data )
                         ;
                         $size = [ $w + $d, $d ];
@@ -172,8 +172,8 @@ sub parse {
 
             for my $field ( keys %field_info ) {
                 my $size      = $field_info{ $field }{'size'} || [ 1 ];
-                my $data_type = 
-                    $field_info{ $field }{'char'}    ? 'char'    : 
+                my $data_type =
+                    $field_info{ $field }{'char'}    ? 'char'    :
                     $field_info{ $field }{'float'}   ? 'float'   :
                     $field_info{ $field }{'integer'} ? 'integer' : 'char';
 

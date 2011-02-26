@@ -31,9 +31,9 @@ SQL::Translator::Producer::POD - POD producer for SQL::Translator
 
 =head1 DESCRIPTION
 
-Creates a POD description of each table, field, index, and constraint.  
-A good starting point for text documentation of a schema.  You can 
-easily convert the output to HTML or text using "perldoc" or other 
+Creates a POD description of each table, field, index, and constraint.
+A good starting point for text documentation of a schema.  You can
+easily convert the output to HTML or text using "perldoc" or other
 interesting formats using Pod::POM or Template::Toolkit's POD plugin.
 
 =cut
@@ -89,7 +89,7 @@ sub produce {
             $pod .= "=head3 INDICES\n\n";
             for my $index ( @indices ) {
                 $pod .= "=head4 " . $index->type . "\n\n=over 4\n\n";
-                $pod .= "=item * Fields = " . 
+                $pod .= "=item * Fields = " .
                     join(', ', $index->fields ) . "\n\n";
                 $pod .= "=back\n\n";
             }
@@ -102,14 +102,14 @@ sub produce {
             $pod .= "=head3 CONSTRAINTS\n\n";
             for my $c ( @constraints ) {
                 $pod .= "=head4 " . $c->type . "\n\n=over 4\n\n";
-                $pod .= "=item * Fields = " . 
+                $pod .= "=item * Fields = " .
                     join(', ', $c->fields ) . "\n\n";
 
                 if ( $c->type eq FOREIGN_KEY ) {
-                    $pod .= "=item * Reference Table = L</" . 
+                    $pod .= "=item * Reference Table = L</" .
                         $c->reference_table . ">\n\n";
-                    $pod .= "=item * Reference Fields = " . 
-                        join(', ', map {"L</$_>"} $c->reference_fields ) . 
+                    $pod .= "=item * Reference Fields = " .
+                        join(', ', map {"L</$_>"} $c->reference_fields ) .
                         "\n\n";
                 }
 

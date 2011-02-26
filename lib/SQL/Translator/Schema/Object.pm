@@ -29,7 +29,7 @@ SQL::Translator::Schema::Object - Base class SQL::Translator Schema objects.
 =head1 DESCSIPTION
 
 Base class for Schema objects. Sub classes L<Class::Base> and adds the following
-extra functionality. 
+extra functionality.
 
 =cut
 
@@ -56,7 +56,7 @@ e.g. If we setup our class as follows;
 
  package SQL::Translator::Schema::Table;
  use base qw/SQL::Translator::Schema::Object/;
- 
+
  __PACKAGE__->_attributes( qw/schema name/ );
 
  sub name   { ... }
@@ -64,7 +64,7 @@ e.g. If we setup our class as follows;
 
 Then we can construct it with
 
- my $table  =  SQL::Translator::Schema::Table->new( 
+ my $table  =  SQL::Translator::Schema::Table->new(
      schema => $schema,
      name   => 'foo',
  );
@@ -84,7 +84,7 @@ API for the Schema objects.
 __PACKAGE__->mk_classdata("__attributes");
 
 # Define any global attributes here
-__PACKAGE__->__attributes([qw/extra/]); 
+__PACKAGE__->__attributes([qw/extra/]);
 
 # Set the classes attribute names. Multiple calls are cumulative.
 # We need to be careful to create a new ref so that all classes don't end up
@@ -98,10 +98,10 @@ sub _attributes {
 # Call accessors for any args in hashref passed
 sub init {
     my ( $self, $config ) = @_;
-    
+
     for my $arg ( $self->_attributes ) {
         next unless defined $config->{$arg};
-        defined $self->$arg( $config->{$arg} ) or return; 
+        defined $self->$arg( $config->{$arg} ) or return;
     }
 
     return $self;
@@ -126,19 +126,19 @@ returned as a scalar. Call with a hash or hashref to set extra attributes.
 Returns a hash or a hashref.
 
   $field->extra( qualifier => 'ZEROFILL' );
-  
+
   $qualifier = $field->extra('qualifier');
-  
+
   %extra = $field->extra;
   $extra = $field->extra;
-  
+
 =cut
 
     my $self = shift;
     @_ = %{$_[0]} if ref $_[0] eq "HASH";
     my $extra = $self->{'extra'} ||= {};
 
-    if (@_==1) { 
+    if (@_==1) {
         return exists($extra->{$_[0]}) ? $extra->{$_[0]} : undef ;
     }
     elsif (@_) {
@@ -147,7 +147,7 @@ Returns a hash or a hashref.
             $extra->{$key} = $value;
         }
     }
-    
+
     return wantarray ? %$extra : $extra;
 }
 
@@ -162,8 +162,8 @@ have been set before. Call with a list of key names to remove
 certain extra attributes only.
 
   # remove all extra attributes
-  $field->remove_extra(); 
-  
+  $field->remove_extra();
+
   # remove timezone and locale attributes only
   $field->remove_extra(qw/timezone locale/);
 
@@ -193,7 +193,7 @@ Determines if this object is the same as another.
 
     my $self = shift;
     my $other = shift;
-    
+
     return 0 unless $other;
     return 1 if overload::StrVal($self) eq overload::StrVal($other);
     return 0 unless $other->isa( __PACKAGE__ );
@@ -202,19 +202,19 @@ Determines if this object is the same as another.
 
 # ----------------------------------------------------------------------
 sub _compare_objects {
-	my $self = shift;
-	my $obj1 = shift;
-	my $obj2 = shift;
-	my $result = (ref_compare($obj1, $obj2) == 0);
-#	if ( !$result ) {
-#		use Carp qw(cluck);
-#		cluck("How did I get here?");
-#		use Data::Dumper;
-#		$Data::Dumper::Maxdepth = 1;
-#		print "obj1: ", Dumper($obj1), "\n";
-#		print "obj2: ", Dumper($obj2), "\n";
-#	}
-	return $result;
+   my $self = shift;
+   my $obj1 = shift;
+   my $obj2 = shift;
+   my $result = (ref_compare($obj1, $obj2) == 0);
+#  if ( !$result ) {
+#     use Carp qw(cluck);
+#     cluck("How did I get here?");
+#     use Data::Dumper;
+#     $Data::Dumper::Maxdepth = 1;
+#     print "obj1: ", Dumper($obj1), "\n";
+#     print "obj2: ", Dumper($obj2), "\n";
+#  }
+   return $result;
 }
 
 #=============================================================================
@@ -231,7 +231,7 @@ sub _compare_objects {
 
 =head1 AUTHOR
 
-Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>, 
+Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>,
 Mark Addison E<lt>mark.addison@itn.co.ukE<gt>.
 
 =cut

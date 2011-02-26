@@ -233,7 +233,7 @@ uppercase.
 
     if ( $type ) {
         $type = uc $type;
-        return $self->error("Invalid index type: $type") 
+        return $self->error("Invalid index type: $type")
             unless $VALID_INDEX_TYPE{ $type };
         $self->{'type'} = $type;
     }
@@ -258,7 +258,7 @@ Determines if this index is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_index_names = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
 
     unless ($ignore_index_names) {
@@ -269,17 +269,17 @@ Determines if this index is the same as another
     }
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $self->type eq $other->type;
-    
+
     # Check fields, regardless of order
-    my %otherFields = ();	# create a hash of the other fields
+    my %otherFields = ();  # create a hash of the other fields
     foreach my $otherField ($other->fields) {
-    	$otherField = uc($otherField) if $case_insensitive;
-    	$otherFields{$otherField} = 1;
+      $otherField = uc($otherField) if $case_insensitive;
+      $otherFields{$otherField} = 1;
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
-    	$selfField = uc($selfField) if $case_insensitive;
-    	return 0 unless $otherFields{$selfField};
-    	delete $otherFields{$selfField};
+      $selfField = uc($selfField) if $case_insensitive;
+      return 0 unless $otherFields{$selfField};
+      delete $otherFields{$selfField};
     }
     # Check all other fields were accounted for
     return 0 unless keys %otherFields == 0;

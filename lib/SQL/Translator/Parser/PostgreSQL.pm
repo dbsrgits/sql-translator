@@ -32,41 +32,41 @@ SQL::Translator::Parser::PostgreSQL - parser for PostgreSQL
 
 =head1 DESCRIPTION
 
-The grammar was started from the MySQL parsers.  Here is the description 
+The grammar was started from the MySQL parsers.  Here is the description
 from PostgreSQL:
 
 Table:
 (http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createtable.html)
 
   CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
-      { column_name data_type [ DEFAULT default_expr ] 
+      { column_name data_type [ DEFAULT default_expr ]
          [ column_constraint [, ... ] ]
       | table_constraint }  [, ... ]
   )
   [ INHERITS ( parent_table [, ... ] ) ]
   [ WITH OIDS | WITHOUT OIDS ]
-  
+
   where column_constraint is:
-  
+
   [ CONSTRAINT constraint_name ]
   { NOT NULL | NULL | UNIQUE | PRIMARY KEY |
     CHECK (expression) |
     REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL ]
       [ ON DELETE action ] [ ON UPDATE action ] }
-  [ DEFERRABLE | NOT DEFERRABLE ] 
+  [ DEFERRABLE | NOT DEFERRABLE ]
   [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
-  
+
   and table_constraint is:
-  
+
   [ CONSTRAINT constraint_name ]
   { UNIQUE ( column_name [, ... ] ) |
     PRIMARY KEY ( column_name [, ... ] ) |
     CHECK ( expression ) |
-    FOREIGN KEY ( column_name [, ... ] ) 
+    FOREIGN KEY ( column_name [, ... ] )
      REFERENCES reftable [ ( refcolumn [, ... ] ) ]
-      [ MATCH FULL | MATCH PARTIAL ] 
+      [ MATCH FULL | MATCH PARTIAL ]
       [ ON DELETE action ] [ ON UPDATE action ] }
-  [ DEFERRABLE | NOT DEFERRABLE ] 
+  [ DEFERRABLE | NOT DEFERRABLE ]
   [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
 Index:
@@ -93,10 +93,10 @@ Alter table:
       RENAME TO new_table
   ALTER TABLE table
       ADD table_constraint_definition
-  ALTER TABLE [ ONLY ] table 
+  ALTER TABLE [ ONLY ] table
           DROP CONSTRAINT constraint { RESTRICT | CASCADE }
   ALTER TABLE table
-          OWNER TO new_owner 
+          OWNER TO new_owner
 
 View table:
 
@@ -127,14 +127,14 @@ $GRAMMAR = q!
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
-# fails.  Otherwise, the first successful match by a "statement" 
+# fails.  Otherwise, the first successful match by a "statement"
 # won't cause the failure needed to know that the parse, as a whole,
 # failed. -ky
 #
 startrule : statement(s) eofile { { tables => \%tables, views => \@views } }
 
 eofile : /^\Z/
-   
+
 
 statement : create
   | comment_on_table
@@ -194,7 +194,7 @@ grant : /grant/i WORD(s /,/) /on/i SCHEMA(?) schema_name /to/i name_with_opt_quo
 drop : /drop/i /[^;]*/ ';'
 
 string :
-   /'(\\.|''|[^\\\'])*'/ 
+   /'(\\.|''|[^\\\'])*'/
 
 nonstring : /[^;\'"]+/
 
@@ -227,9 +227,9 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
         for my $definition ( @{ $item[6] } ) {
             if ( $definition->{'supertype'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
-                $tables{ $table_name }{'fields'}{ $field_name } = 
+                $tables{ $table_name }{'fields'}{ $field_name } =
                     { %$definition, order => $field_order++ };
-				
+
                 for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
                     $constraint->{'fields'} = [ $field_name ];
                     push @{ $tables{ $table_name }{'constraints'} },
@@ -245,7 +245,7 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
         }
 
         for my $option ( @{ $item[8] } ) {
-            $tables{ $table_name }{'table_options(s?)'}{ $option->{'type'} } = 
+            $tables{ $table_name }{'table_options(s?)'}{ $option->{'type'} } =
                 $option;
         }
 
@@ -293,8 +293,8 @@ create_definition : field
     | table_constraint
     | <error>
 
-comment : /^\s*(?:#|-{2})(.*)\n/ 
-    { 
+comment : /^\s*(?:#|-{2})(.*)\n/
+    {
         my $comment =  $item[1];
         $comment    =~ s/^\s*(#|-*)\s*//;
         $comment    =~ s/\s*$//;
@@ -315,7 +315,7 @@ comment_on_column : /comment/i /on/i /column/i column_name /is/i comment_phrase 
         my $table_name = $item[4]->{'table'};
         my $field_name = $item[4]->{'field'};
         if ($tables{ $table_name }{'fields'}{ $field_name } ) {
-          push @{ $tables{ $table_name }{'fields'}{ $field_name }{'comments'} }, 
+          push @{ $tables{ $table_name }{'fields'}{ $field_name }{'comments'} },
               $item{'comment_phrase'};
         }
         else {
@@ -362,8 +362,8 @@ comment_phrase_unquoted : /[^\']*/
     { $return = $item[1] }
 
 
-xxxcomment_phrase : /'.*?'|NULL/ 
-    { 
+xxxcomment_phrase : /'.*?'|NULL/
+    {
         my $val = $item[1] || '';
         $val =~ s/^'|'$//g;
         $return = $val;
@@ -392,7 +392,7 @@ field : field_comment(s?) field_name data_type field_meta(s?) field_comment(s?)
 
         $return = {
             supertype         => 'field',
-            name              => $item{'field_name'}, 
+            name              => $item{'field_name'},
             data_type         => $item{'data_type'}{'type'},
             size              => $item{'data_type'}{'size'},
             is_nullable       => $is_nullable,
@@ -401,12 +401,12 @@ field : field_comment(s?) field_name data_type field_meta(s?) field_comment(s?)
             comments          => [ @comments ],
             is_primary_key    => $is_pk || 0,
             is_auto_increment => $item{'data_type'}{'is_auto_increment'},
-        } 
+        }
     }
     | <error>
 
-field_comment : /^\s*(?:#|-{2})(.*)\n/ 
-    { 
+field_comment : /^\s*(?:#|-{2})(.*)\n/
+    {
         my $comment =  $item[1];
         $comment    =~ s/^\s*(#|-*)\s*//;
         $comment    =~ s/\s*$//;
@@ -438,7 +438,7 @@ column_constraint : constraint_name(?) column_constraint_type deferrable(?) defe
             match_type       => $desc->{'match_type'},
             on_delete        => $desc->{'on_delete'} || $desc->{'on_delete_do'},
             on_update        => $desc->{'on_update'} || $desc->{'on_update_do'},
-        } 
+        }
     }
 
 constraint_name : /constraint/i name_with_opt_quotes { $item[2] }
@@ -451,10 +451,10 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     /unique/i
         { $return = { type => 'unique' } }
     |
-    /primary key/i 
+    /primary key/i
         { $return = { type => 'primary_key' } }
     |
-    /check/i '(' /[^)]+/ ')' 
+    /check/i '(' /[^)]+/ ')'
         { $return = { type => 'check', expression => $item[3] } }
     |
     /references/i table_id parens_word_list(?) match_type(?) key_action(s?)
@@ -496,7 +496,7 @@ view_target : '('   /select/i    / [^;]+ (?= \) ) /x    ')'    {
     $return = "$item[2] $item[3]"
 }
 
-view_target_spec :  
+view_target_spec :
 
 schema_qualification : name_with_opt_quotes '.'
 
@@ -511,7 +511,7 @@ double_quote: /"/
 index_name : name_with_opt_quotes
 
 data_type : pg_data_type parens_value_list(?)
-    { 
+    {
         my $data_type = $item[1];
 
         #
@@ -526,17 +526,17 @@ data_type : pg_data_type parens_value_list(?)
 
 pg_data_type :
     /(bigint|int8)/i
-        { 
-            $return = { 
+        {
+            $return = {
                 type => 'integer',
                 size => 20,
             };
         }
     |
     /(smallint|int2)/i
-        { 
+        {
             $return = {
-                type => 'integer', 
+                type => 'integer',
                 size => 5,
             };
         }
@@ -547,87 +547,87 @@ pg_data_type :
         }
     |
     /(integer|int4?)/i # interval must come before this
-        { 
+        {
             $return = {
-                type => 'integer', 
+                type => 'integer',
                 size => 10,
             };
         }
-    |    
+    |
     /(real|float4)/i
-        { 
+        {
             $return = {
-                type => 'real', 
+                type => 'real',
                 size => 10,
             };
         }
     |
     /(double precision|float8?)/i
-        { 
+        {
             $return = {
-                type => 'float', 
+                type => 'float',
                 size => 20,
-            }; 
+            };
         }
     |
     /(bigserial|serial8)/i
-        { 
-            $return = { 
-                type              => 'integer', 
-                size              => 20, 
+        {
+            $return = {
+                type              => 'integer',
+                size              => 20,
                 is_auto_increment => 1,
             };
         }
     |
     /serial4?/i
-        { 
-            $return = { 
+        {
+            $return = {
                 type              => 'integer',
-                size              => 11, 
+                size              => 11,
                 is_auto_increment => 1,
             };
         }
     |
     /(bit varying|varbit)/i
-        { 
+        {
             $return = { type => 'varbit' };
         }
     |
     /character varying/i
-        { 
+        {
             $return = { type => 'varchar' };
         }
     |
     /char(acter)?/i
-        { 
+        {
             $return = { type => 'char' };
         }
     |
     /bool(ean)?/i
-        { 
+        {
             $return = { type => 'boolean' };
         }
     |
     /bytea/i
-        { 
+        {
             $return = { type => 'bytea' };
         }
     |
     /(timestamptz|timestamp)(?:\(\d\))?( with(?:out)? time zone)?/i
-        { 
+        {
             $return = { type => 'timestamp' . ($2||'') };
         }
     |
     /text/i
-        { 
-            $return = { 
+        {
+            $return = {
                 type => 'text',
                 size => 64_000,
             };
         }
     |
     /(bit|box|cidr|circle|date|inet|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar)/i
-        { 
+        {
             $return = { type => $item[1] };
         }
 
@@ -667,26 +667,26 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
             on_delete        => $desc->{'on_delete'} || $desc->{'on_delete_do'},
             on_update        => $desc->{'on_update'} || $desc->{'on_update_do'},
             comments         => [ @comments ],
-        } 
+        }
     }
 
-table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')' 
-    { 
+table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
+    {
         $return = {
             type   => 'primary_key',
             fields => $item[3],
         }
     }
     |
-    /unique/i '(' name_with_opt_quotes(s /,/) ')' 
-    { 
+    /unique/i '(' name_with_opt_quotes(s /,/) ')'
+    {
         $return    =  {
             type   => 'unique',
             fields => $item[3],
         }
     }
     |
-    /check/i '(' /[^)]+/ ')' 
+    /check/i '(' /[^)]+/ ')'
     {
         $return        =  {
             type       => 'check',
@@ -701,7 +701,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
             $on_delete = $action->{'action'} if $action->{'type'} eq 'delete';
             $on_update = $action->{'action'} if $action->{'type'} eq 'update';
         }
-        
+
         $return              =  {
             supertype        => 'constraint',
             type             => 'foreign_key',
@@ -714,8 +714,8 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
 
-deferrable : not(?) /deferrable/i 
-    { 
+deferrable : not(?) /deferrable/i
+    {
         $return = ( $item[1] =~ /not/i ) ? 0 : 1;
     }
 
@@ -723,21 +723,21 @@ deferred : /initially/i /(deferred|immediate)/i { $item[2] }
 
 match_type : /match/i /partial|full|simple/i { $item[2] }
 
-key_action : key_delete 
+key_action : key_delete
     |
     key_update
 
 key_delete : /on delete/i key_mutation
-    { 
-        $return = { 
+    {
+        $return = {
             type   => 'delete',
             action => $item[2],
         };
     }
 
 key_update : /on update/i key_mutation
-    { 
-        $return = { 
+    {
+        $return = {
             type   => 'update',
             action => $item[2],
         };
@@ -753,8 +753,8 @@ key_mutation : /no action/i { $return = 'no_action' }
     |
     /set default/i { $return = 'set default' }
 
-alter : alter_table table_id add_column field ';' 
-    { 
+alter : alter_table table_id add_column field ';'
+    {
         my $field_def = $item[4];
         $tables{ $item[2]->{'table_name'} }{'fields'}{ $field_def->{'name'} } = {
             %$field_def, order => $field_order++
@@ -762,23 +762,23 @@ alter : alter_table table_id add_column field ';'
         1;
     }
 
-alter : alter_table table_id ADD table_constraint ';' 
-    { 
+alter : alter_table table_id ADD table_constraint ';'
+    {
         my $table_name = $item[2]->{'table_name'};
         my $constraint = $item[4];
         push @{ $tables{ $table_name }{'constraints'} }, $constraint;
         1;
     }
 
-alter : alter_table table_id drop_column NAME restrict_or_cascade(?) ';' 
+alter : alter_table table_id drop_column NAME restrict_or_cascade(?) ';'
     {
         $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'drop'} = 1;
         1;
     }
 
-alter : alter_table table_id alter_column NAME alter_default_val ';' 
+alter : alter_table table_id alter_column NAME alter_default_val ';'
     {
-        $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'default'} = 
+        $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'default'} =
             $item[5]->{'value'};
         1;
     }
@@ -789,7 +789,7 @@ alter : alter_table table_id alter_column NAME alter_default_val ';'
 alter : alter_table table_id /rename/i /to/i NAME ';'
     { 1 }
 
-alter : alter_table table_id alter_column NAME SET /statistics/i INTEGER ';' 
+alter : alter_table table_id alter_column NAME SET /statistics/i INTEGER ';'
     { 1 }
 
 alter : alter_table table_id alter_column NAME SET /storage/i storage_type ';'
@@ -816,20 +816,20 @@ temporary : /temp(orary)?\\b/i
 
 or_replace : /or replace/i
 
-alter_default_val : SET default_val 
-    { 
-        $return = { value => $item[2]->{'value'} } 
+alter_default_val : SET default_val
+    {
+        $return = { value => $item[2]->{'value'} }
     }
-    | DROP DEFAULT 
-    { 
-        $return = { value => undef } 
-    } 
+    | DROP DEFAULT
+    {
+        $return = { value => undef }
+    }
 
 #
-# This is a little tricky to get right, at least WRT to making the 
+# This is a little tricky to get right, at least WRT to making the
 # tests pass.  The problem is that the constraints are stored just as
 # a list (no name access), and the tests expect the constraints in a
-# particular order.  I'm going to leave the rule but disable the code 
+# particular order.  I'm going to leave the rule but disable the code
 # for now. - ky
 #
 alter : alter_table table_id alter_column NAME alter_nullable ';'
@@ -838,7 +838,7 @@ alter : alter_table table_id alter_column NAME alter_nullable ';'
 #        my $field_name  = $item[4];
 #        my $is_nullable = $item[5]->{'is_nullable'};
 #
-#        $tables{ $table_name }{'fields'}{ $field_name }{'is_nullable'} = 
+#        $tables{ $table_name }{'fields'}{ $field_name }{'is_nullable'} =
 #            $is_nullable;
 #
 #        if ( $is_nullable ) {
@@ -849,8 +849,8 @@ alter : alter_table table_id alter_column NAME alter_nullable ';'
 #            };
 #        }
 #        else {
-#            for my $i ( 
-#                0 .. $#{ $tables{ $table_name }{'constraints'} || [] } 
+#            for my $i (
+#                0 .. $#{ $tables{ $table_name }{'constraints'} || [] }
 #            ) {
 #                my $c = $tables{ $table_name }{'constraints'}[ $i ] or next;
 #                my $fields = join( '', @{ $c->{'fields'} || [] } ) or next;
@@ -864,13 +864,13 @@ alter : alter_table table_id alter_column NAME alter_nullable ';'
         1;
     }
 
-alter_nullable : SET not_null 
-    { 
-        $return = { is_nullable => 0 } 
+alter_nullable : SET not_null
+    {
+        $return = { is_nullable => 0 }
     }
     | DROP not_null
-    { 
-        $return = { is_nullable => 1 } 
+    {
+        $return = { is_nullable => 1 }
     }
 
 not_null : /not/i /null/i
@@ -881,7 +881,7 @@ add_column : ADD COLUMN(?)
 
 alter_table : ALTER TABLE ONLY(?)
 
-alter_sequence : ALTER SEQUENCE 
+alter_sequence : ALTER SEQUENCE
 
 drop_column : DROP COLUMN(?)
 
@@ -889,16 +889,16 @@ alter_column : ALTER COLUMN(?)
 
 rename_column : /rename/i COLUMN(?)
 
-restrict_or_cascade : /restrict/i | 
+restrict_or_cascade : /restrict/i |
     /cascade/i
 
 # Handle functions that can be called
-select : SELECT select_function ';' 
+select : SELECT select_function ';'
     { 1 }
 
 # Read the setval function but don't do anything with it because this parser
 # isn't handling sequences
-select_function : schema_qualification(?) /setval/i '(' VALUE /,/ VALUE /,/ /(true|false)/i ')' 
+select_function : schema_qualification(?) /setval/i '(' VALUE /,/ VALUE /,/ /(true|false)/i ')'
     { 1 }
 
 # Skipping all COPY commands
@@ -919,9 +919,9 @@ create_table : CREATE TABLE
 create_index : CREATE /index/i
 
 default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+/
-    { 
+    {
         my $val =  defined $item[2] ? $item[2] : '';
-        $val    =~ s/^'|'$//g; 
+        $val    =~ s/^'|'$//g;
         $return =  {
             supertype => 'constraint',
             type      => 'default',
@@ -929,7 +929,7 @@ default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+/
         }
     }
     | /null/i
-    { 
+    {
         $return =  {
             supertype => 'constraint',
             type      => 'default',
@@ -945,7 +945,7 @@ unique : /unique/i { 1 }
 key : /key/i | /index/i
 
 table_option : /inherits/i '(' name_with_opt_quotes(s /,/) ')'
-    { 
+    {
         $return = { type => 'inherits', table_name => $item[3] }
     }
     |
@@ -1026,13 +1026,13 @@ sub parse {
     warn Dumper($result) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = sort { 
+    my @tables = sort {
         ( $result->{tables}{ $a }{'order'} || 0 ) <=> ( $result->{tables}{ $b }{'order'} || 0 )
     } keys %{ $result->{tables} };
 
     for my $table_name ( @tables ) {
         my $tdata =  $result->{tables}{ $table_name };
-        my $table =  $schema->add_table( 
+        my $table =  $schema->add_table(
             #schema => $tdata->{'schema_name'},
             name   => $tdata->{'table_name'},
         ) or die "Couldn't create table '$table_name': " . $schema->error;
@@ -1041,8 +1041,8 @@ sub parse {
 
         $table->comments( $tdata->{'comments'} );
 
-        my @fields = sort { 
-            $tdata->{'fields'}{ $a }{'order'} 
+        my @fields = sort {
+            $tdata->{'fields'}{ $a }{'order'}
             <=>
             $tdata->{'fields'}{ $b }{'order'}
         } keys %{ $tdata->{'fields'} };
@@ -1089,7 +1089,7 @@ sub parse {
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
                 expression       => $cdata->{'expression'},
             ) or die "Can't add constraint of type '" .
-                $cdata->{'type'} .  "' to table '" . $table->name . 
+                $cdata->{'type'} .  "' to table '" . $table->name .
                 "': " . $table->error;
         }
     }
@@ -1113,7 +1113,7 @@ sub parse {
 
 # -------------------------------------------------------------------
 # Rescue the drowning and tie your shoestrings.
-# Henry David Thoreau 
+# Henry David Thoreau
 # -------------------------------------------------------------------
 
 =pod

@@ -39,7 +39,7 @@ SQL::Translator::Filter::Globals - Add global fields and indices to all tables.
                 }
             ],
             indices => [
-                { 
+                {
                     fields => 'modifed',
                 },
             ]

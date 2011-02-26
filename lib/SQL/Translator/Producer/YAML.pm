@@ -50,20 +50,20 @@ sub produce {
 
     return Dump({
         schema => {
-            tables => { 
+            tables => {
                 map { ($_->name => view_table($_)) }
                     $schema->get_tables,
             },
-            views => { 
+            views => {
                 map { ($_->name => view_view($_)) }
                     $schema->get_views,
             },
-            triggers => { 
+            triggers => {
                 map { ($_->name => view_trigger($_)) }
                     $schema->get_triggers,
             },
-            procedures => { 
-                map { ($_->name => view_procedure($_)) } 
+            procedures => {
+                map { ($_->name => view_procedure($_)) }
                     $schema->get_procedures,
             },
         },
@@ -98,9 +98,9 @@ sub view_table {
         'indices'     => [
             map { view_index($_) } $table->get_indices
         ],
-        'fields'      => { 
+        'fields'      => {
             map { ($_->name => view_field($_)) }
-                $table->get_fields 
+                $table->get_fields
         },
         keys %{$table->extra} ? ('extra' => { $table->extra } ) : (),
     };

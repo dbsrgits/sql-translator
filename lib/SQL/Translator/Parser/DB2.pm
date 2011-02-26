@@ -29,15 +29,15 @@ sub parse {
     warn Dumper( $result ) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = 
+    my @tables =
         map   { $_->[1] }
-        sort  { $a->[0] <=> $b->[0] } 
+        sort  { $a->[0] <=> $b->[0] }
         map   { [ $result->{'tables'}{ $_ }->{'order'}, $_ ] }
         keys %{ $result->{'tables'} };
 
     for my $table_name ( @tables ) {
         my $tdata =  $result->{'tables'}{ $table_name };
-        my $table =  $schema->add_table( 
+        my $table =  $schema->add_table(
             name  => $tdata->{'name'},
         ) or die $schema->error;
 

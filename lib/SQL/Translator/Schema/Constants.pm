@@ -63,7 +63,7 @@ use vars qw( @EXPORT $VERSION );
 require Exporter;
 $VERSION = '1.59';
 
-@EXPORT = qw[ 
+@EXPORT = qw[
     CHECK_C
     FOREIGN_KEY
     FULL_TEXT

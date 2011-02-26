@@ -70,7 +70,7 @@ __PACKAGE__->_attributes( qw/schema name comments options order/ );
 
 Object constructor.
 
-  my $table  =  SQL::Translator::Schema::Table->new( 
+  my $table  =  SQL::Translator::Schema::Table->new(
       schema => $schema,
       name   => 'foo',
   );
@@ -98,7 +98,7 @@ sub add_constraint {
 
 =head2 add_constraint
 
-Add a constraint to the table.  Returns the newly created 
+Add a constraint to the table.  Returns the newly created
 C<SQL::Translator::Schema::Constraint> object.
 
   my $c1     = $table->add_constraint(
@@ -123,7 +123,7 @@ C<SQL::Translator::Schema::Constraint> object.
     else {
         my %args = @_;
         $args{'table'} = $self;
-        $constraint = $constraint_class->new( \%args ) or 
+        $constraint = $constraint_class->new( \%args ) or
            return $self->error( $constraint_class->error );
     }
 
@@ -136,7 +136,7 @@ C<SQL::Translator::Schema::Constraint> object.
     if ( $pk && $constraint->type eq PRIMARY_KEY ) {
         $self->primary_key( $constraint->fields );
         $pk->name($constraint->name) if $constraint->name;
-        my %extra = $constraint->extra; 
+        my %extra = $constraint->extra;
         $pk->extra(%extra) if keys %extra;
         $constraint = $pk;
         $ok         = 0;
@@ -149,20 +149,20 @@ C<SQL::Translator::Schema::Constraint> object.
         }
     }
     #
-    # See if another constraint of the same type 
+    # See if another constraint of the same type
     # covers the same fields.  -- This doesn't work!  ky
     #
 #    elsif ( $constraint->type ne CHECK_C ) {
 #        my @field_names = $constraint->fields;
-#        for my $c ( 
-#            grep { $_->type eq $constraint->type } 
-#            $self->get_constraints 
+#        for my $c (
+#            grep { $_->type eq $constraint->type }
+#            $self->get_constraints
 #        ) {
 #            my %fields = map { $_, 1 } $c->fields;
 #            for my $field_name ( @field_names ) {
 #                if ( $fields{ $field_name } ) {
 #                    $constraint = $c;
-#                    $ok = 0; 
+#                    $ok = 0;
 #                    last;
 #                }
 #            }
@@ -203,7 +203,7 @@ an index name or an C<SQL::Translator::Schema::Constraint> object.
         $constraint_name = shift;
     }
 
-    if ( ! grep { $_->name eq $constraint_name } @ { $self->{'constraints'} } ) { 
+    if ( ! grep { $_->name eq $constraint_name } @ { $self->{'constraints'} } ) {
         return $self->error(qq[Can't drop constraint: "$constraint_name" doesn't exist]);
     }
 
@@ -246,7 +246,7 @@ C<SQL::Translator::Schema::Index> object.
     else {
         my %args = @_;
         $args{'table'} = $self;
-        $index = $index_class->new( \%args ) or return 
+        $index = $index_class->new( \%args ) or return
             $self->error( $index_class->error );
     }
     foreach my $ex_index ($self->get_indices) {
@@ -282,7 +282,7 @@ an index name of an C<SQL::Translator::Schema::Index> object.
         $index_name = shift;
     }
 
-    if ( ! grep { $_->name eq  $index_name } @{ $self->{'indices'} }) { 
+    if ( ! grep { $_->name eq  $index_name } @{ $self->{'indices'} }) {
         return $self->error(qq[Can't drop index: "$index_name" doesn't exist]);
     }
 
@@ -301,8 +301,8 @@ sub add_field {
 =head2 add_field
 
 Add an field to the table.  Returns the newly created
-C<SQL::Translator::Schema::Field> object.  The "name" parameter is 
-required.  If you try to create a field with the same name as an 
+C<SQL::Translator::Schema::Field> object.  The "name" parameter is
+required.  If you try to create a field with the same name as an
 existing field, you will get an error and the field will not be created.
 
   my $f1        =  $table->add_field(
@@ -311,8 +311,8 @@ existing field, you will get an error and the field will not be created.
       size      => 11,
   );
 
-  my $f2     =  SQL::Translator::Schema::Field->new( 
-      name   => 'name', 
+  my $f2     =  SQL::Translator::Schema::Field->new(
+      name   => 'name',
       table  => $table,
   );
   $f2 = $table->add_field( $field2 ) or die $table->error;
@@ -330,7 +330,7 @@ existing field, you will get an error and the field will not be created.
     else {
         my %args = @_;
         $args{'table'} = $self;
-        $field = $field_class->new( \%args ) or return 
+        $field = $field_class->new( \%args ) or return
             $self->error( $field_class->error );
     }
 
@@ -338,7 +338,7 @@ existing field, you will get an error and the field will not be created.
     # We know we have a name as the Field->new above errors if none given.
     my $field_name = $field->name;
 
-    if ( exists $self->{'fields'}{ $field_name } ) { 
+    if ( exists $self->{'fields'}{ $field_name } ) {
         return $self->error(qq[Can't create field: "$field_name" exists]);
     }
     else {
@@ -354,8 +354,8 @@ sub drop_field {
 
 =head2 drop_field
 
-Remove a field from the table. Returns the field object if the field was 
-found and removed, an error otherwise. The single parameter can be either 
+Remove a field from the table. Returns the field object if the field was
+found and removed, an error otherwise. The single parameter can be either
 a field name or an C<SQL::Translator::Schema::Field> object.
 
   $table->drop_field('myfield');
@@ -407,7 +407,7 @@ sub comments {
 
 =head2 comments
 
-Get or set the comments on a table.  May be called several times to 
+Get or set the comments on a table.  May be called several times to
 set and it will accumulate the comments.  Called in an array context,
 returns each comment individually; called in a scalar context, returns
 all the comments joined on newlines.
@@ -427,11 +427,11 @@ all the comments joined on newlines.
     }
 
     if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray 
+        return wantarray
             ? @{ $self->{'comments'} }
             : join( "\n", @{ $self->{'comments'} } )
         ;
-    } 
+    }
     else {
         return wantarray ? () : undef;
     }
@@ -453,7 +453,7 @@ Returns all the constraint objects as an array or array reference.
     my $self = shift;
 
     if ( ref $self->{'constraints'} ) {
-        return wantarray 
+        return wantarray
             ? @{ $self->{'constraints'} } : $self->{'constraints'};
     }
     else {
@@ -478,8 +478,8 @@ Returns all the index objects as an array or array reference.
     my $self = shift;
 
     if ( ref $self->{'indices'} ) {
-        return wantarray 
-            ? @{ $self->{'indices'} } 
+        return wantarray
+            ? @{ $self->{'indices'} }
             : $self->{'indices'};
     }
     else {
@@ -505,11 +505,11 @@ Returns a field by the name provided.
     my $field_name = shift or return $self->error('No field name');
     my $case_insensitive = shift;
     if ( $case_insensitive ) {
-    	$field_name = uc($field_name);
-    	foreach my $field ( keys %{$self->{fields}} ) {
-    		return $self->{fields}{$field} if $field_name eq uc($field);
-    	}
-    	return $self->error(qq[Field "$field_name" does not exist]);
+      $field_name = uc($field_name);
+      foreach my $field ( keys %{$self->{fields}} ) {
+         return $self->{fields}{$field} if $field_name eq uc($field);
+      }
+      return $self->error(qq[Field "$field_name" does not exist]);
     }
     return $self->error( qq[Field "$field_name" does not exist] ) unless
         exists $self->{'fields'}{ $field_name };
@@ -530,7 +530,7 @@ Returns all the field objects as an array or array reference.
 =cut
 
     my $self = shift;
-    my @fields = 
+    my @fields =
         map  { $_->[1] }
         sort { $a->[0] <=> $b->[0] }
         map  { [ $_->order, $_ ] }
@@ -562,8 +562,8 @@ Determine whether the view is valid or not.
     return $self->error('No name')   unless $self->name;
     return $self->error('No fields') unless $self->get_fields;
 
-    for my $object ( 
-        $self->get_fields, $self->get_indices, $self->get_constraints 
+    for my $object (
+        $self->get_fields, $self->get_indices, $self->get_constraints
     ) {
         return $object->error unless $object->is_valid;
     }
@@ -591,15 +591,15 @@ True if table has no data (non-key) fields and only uses single key joins.
     my %fk = ();
 
     foreach my $field ( $self->get_fields ) {
-	  next unless $field->is_foreign_key;
-	  $fk{$field->foreign_key_reference->reference_table}++;
-	}
+     next unless $field->is_foreign_key;
+     $fk{$field->foreign_key_reference->reference_table}++;
+   }
 
     foreach my $referenced (keys %fk){
-	if($fk{$referenced} > 1){
-	  $self->{'is_trivial_link'} = 0;
-	  last;
-	}
+   if($fk{$referenced} > 1){
+     $self->{'is_trivial_link'} = 0;
+     last;
+   }
     }
 
     return $self->{'is_trivial_link'};
@@ -680,7 +680,7 @@ Determine whether the table can link two arg tables via many-to-many.
         $self->{'can_link'}{ $table1->name }{ $table2->name } =
           [ 'one2one', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-        # non-trivial traversal.  one way to link table2, 
+        # non-trivial traversal.  one way to link table2,
         # many ways to link table1
     }
     elsif ( scalar( @{ $fk{ $table1->name } } > 1 )
@@ -691,7 +691,7 @@ Determine whether the table can link two arg tables via many-to-many.
         $self->{'can_link'}{ $table2->name }{ $table1->name } =
           [ 'one2many', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-        # non-trivial traversal.  one way to link table1, 
+        # non-trivial traversal.  one way to link table1,
         # many ways to link table2
     }
     elsif ( scalar( @{ $fk{ $table1->name } } == 1 )
@@ -712,7 +712,7 @@ Determine whether the table can link two arg tables via many-to-many.
         $self->{'can_link'}{ $table2->name }{ $table1->name } =
           [ 'many2many', $fk{ $table2->name }, $fk{ $table1->name } ];
 
-        # one of the tables didn't export a key 
+        # one of the tables didn't export a key
         # to this table, no linking possible
     }
     else {
@@ -812,7 +812,7 @@ These are eqivalent:
     my $constraint;
     if ( @$fields ) {
         for my $f ( @$fields ) {
-            return $self->error(qq[Invalid field "$f"]) unless 
+            return $self->error(qq[Invalid field "$f"]) unless
                 $self->get_field($f);
         }
 
@@ -822,7 +822,7 @@ These are eqivalent:
                 $has_pk = 1;
                 $c->fields( @{ $c->fields }, @$fields );
                 $constraint = $c;
-            } 
+            }
         }
 
         unless ( $has_pk ) {
@@ -908,7 +908,7 @@ avoid the overload magic of the Field objects returned by the get_fields method.
 =cut
 
     my $self = shift;
-    my @fields = 
+    my @fields =
         map  { $_->name }
         sort { $a->order <=> $b->order }
         values %{ $self->{'fields'} || {} };
@@ -938,7 +938,7 @@ Determines if this table is the same as another
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     return 0 unless $self->_compare_objects(scalar $self->options, scalar $other->options);
@@ -948,14 +948,14 @@ Determines if this table is the same as another
     # Go through our fields
     my %checkedFields;
     foreach my $field ( $self->get_fields ) {
-    	my $otherField = $other->get_field($field->name, $case_insensitive);
-    	return 0 unless $field->equals($otherField, $case_insensitive);
-    	$checkedFields{$field->name} = 1;
+      my $otherField = $other->get_field($field->name, $case_insensitive);
+      return 0 unless $field->equals($otherField, $case_insensitive);
+      $checkedFields{$field->name} = 1;
     }
     # Go through the other table's fields
     foreach my $otherField ( $other->get_fields ) {
-    	next if $checkedFields{$otherField->name};
-    	return 0;
+      next if $checkedFields{$otherField->name};
+      return 0;
     }
 
     # Constraints
@@ -963,24 +963,24 @@ Determines if this table is the same as another
     my %checkedConstraints;
 CONSTRAINT:
     foreach my $constraint ( $self->get_constraints ) {
-    	foreach my $otherConstraint ( $other->get_constraints ) {
-    		if ( $constraint->equals($otherConstraint, $case_insensitive) ) {
-    			$checkedConstraints{$otherConstraint} = 1;
-    			next CONSTRAINT;
-    		}
-    	}
-    	return 0;
+      foreach my $otherConstraint ( $other->get_constraints ) {
+         if ( $constraint->equals($otherConstraint, $case_insensitive) ) {
+            $checkedConstraints{$otherConstraint} = 1;
+            next CONSTRAINT;
+         }
+      }
+      return 0;
     }
     # Go through the other table's constraints
 CONSTRAINT2:
     foreach my $otherConstraint ( $other->get_constraints ) {
-    	next if $checkedFields{$otherConstraint};
-    	foreach my $constraint ( $self->get_constraints ) {
-    		if ( $otherConstraint->equals($constraint, $case_insensitive) ) {
-    			next CONSTRAINT2;
-    		}
-    	}
-    	return 0;
+      next if $checkedFields{$otherConstraint};
+      foreach my $constraint ( $self->get_constraints ) {
+         if ( $otherConstraint->equals($constraint, $case_insensitive) ) {
+            next CONSTRAINT2;
+         }
+      }
+      return 0;
     }
 
     # Indices
@@ -988,35 +988,35 @@ CONSTRAINT2:
     my %checkedIndices;
 INDEX:
     foreach my $index ( $self->get_indices ) {
-    	foreach my $otherIndex ( $other->get_indices ) {
-    		if ( $index->equals($otherIndex, $case_insensitive) ) {
-    			$checkedIndices{$otherIndex} = 1;
-    			next INDEX;
-    		}
-    	}
-    	return 0;
+      foreach my $otherIndex ( $other->get_indices ) {
+         if ( $index->equals($otherIndex, $case_insensitive) ) {
+            $checkedIndices{$otherIndex} = 1;
+            next INDEX;
+         }
+      }
+      return 0;
     }
     # Go through the other table's indices
 INDEX2:
     foreach my $otherIndex ( $other->get_indices ) {
-    	next if $checkedIndices{$otherIndex};
-    	foreach my $index ( $self->get_indices ) {
-    		if ( $otherIndex->equals($index, $case_insensitive) ) {
-    			next INDEX2;
-    		}
-    	}
-    	return 0;
+      next if $checkedIndices{$otherIndex};
+      foreach my $index ( $self->get_indices ) {
+         if ( $otherIndex->equals($index, $case_insensitive) ) {
+            next INDEX2;
+         }
+      }
+      return 0;
     }
 
-	return 1;
+   return 1;
 }
 
 # ----------------------------------------------------------------------
 
 =head1 LOOKUP METHODS
 
-The following are a set of shortcut methods for getting commonly used lists of 
-fields and constraints. They all return lists or array refs of Field or 
+The following are a set of shortcut methods for getting commonly used lists of
+fields and constraints. They all return lists or array refs of Field or
 Constraint objects.
 
 =over 4

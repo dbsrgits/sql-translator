@@ -34,7 +34,7 @@ SQL::Translator::Parser::xSV - parser for arbitrarily delimited text files
 
 =head1 DESCRIPTION
 
-Parses arbitrarily delimited text files.  See the 
+Parses arbitrarily delimited text files.  See the
 Text::RecordParser manpage for arguments on how to parse the file
 (e.g., C<field_separator>, C<record_separator>).  Other arguments
 include:
@@ -50,13 +50,13 @@ and field sizes.  True by default.
 
 =item * trim_fields
 
-A shortcut to sending filters to Text::RecordParser, will create 
+A shortcut to sending filters to Text::RecordParser, will create
 callbacks that trim leading and trailing spaces from fields and headers.
 True by default.
 
 =back
 
-Field names will automatically be normalized by 
+Field names will automatically be normalized by
 C<SQL::Translator::Utils::normalize_name>.
 
 =cut
@@ -88,7 +88,7 @@ sub parse {
         header_filter    => \&normalize_name,
     );
 
-    $parser->field_filter( sub { $_ = shift || ''; s/^\s+|\s+$//g; $_ } ) 
+    $parser->field_filter( sub { $_ = shift || ''; s/^\s+|\s+$//g; $_ } )
         unless defined $args->{'trim_fields'} && $args->{'trim_fields'} == 0;
 
     my $schema = $tr->schema;
@@ -119,7 +119,7 @@ sub parse {
     #
     # If directed, look at every field's values to guess size and type.
     #
-    unless ( 
+    unless (
         defined $args->{'scan_fields'} &&
         $args->{'scan_fields'} == 0
     ) {
@@ -133,15 +133,15 @@ sub parse {
                 if ( $data =~ /^-?\d+$/ ) {
                     $type = 'integer';
                 }
-                elsif ( 
-                    $data =~ /^-?[,\d]+\.[\d+]?$/ 
+                elsif (
+                    $data =~ /^-?[,\d]+\.[\d+]?$/
                     ||
-                    $data =~ /^-?[,\d]+?\.\d+$/  
+                    $data =~ /^-?[,\d]+?\.\d+$/
                     ||
-                    $data =~ /^-?\.\d+$/  
+                    $data =~ /^-?\.\d+$/
                 ) {
                     $type = 'float';
-                    my ( $w, $d ) = 
+                    my ( $w, $d ) =
                         map { s/,//g; length $_ || 1 } split( /\./, $data );
                     $size = [ $w + $d, $d ];
                 }
@@ -163,8 +163,8 @@ sub parse {
 
         for my $field ( keys %field_info ) {
             my $size      = $field_info{ $field }{'size'} || [ 1 ];
-            my $data_type = 
-                $field_info{ $field }{'char'}    ? 'char'  : 
+            my $data_type =
+                $field_info{ $field }{'char'}    ? 'char'  :
                 $field_info{ $field }{'float'}   ? 'float' :
                 $field_info{ $field }{'integer'} ? 'integer' : 'char';
 

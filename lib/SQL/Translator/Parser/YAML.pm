@@ -39,7 +39,7 @@ sub parse {
     #
     # Tables
     #
-    my @tables = 
+    my @tables =
         map   { $data->{'tables'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'tables'}{ $_ }{'order'} || 0, $_ ] }
@@ -47,14 +47,14 @@ sub parse {
     ;
 
     for my $tdata ( @tables ) {
-  
+
         my $table = $schema->add_table(
             map {
               $tdata->{$_} ? ($_ => $tdata->{$_}) : ()
             } (qw/name extra options/)
         ) or die $schema->error;
 
-        my @fields = 
+        my @fields =
             map   { $tdata->{'fields'}{ $_->[1] } }
             sort  { $a->[0] <=> $b->[0] }
             map   { [ $tdata->{'fields'}{ $_ }{'order'}, $_ ] }
@@ -63,7 +63,7 @@ sub parse {
 
         for my $fdata ( @fields ) {
             $table->add_field( %$fdata ) or die $table->error;
-            $table->primary_key( $fdata->{'name'} ) 
+            $table->primary_key( $fdata->{'name'} )
                 if $fdata->{'is_primary_key'};
         }
 
@@ -79,7 +79,7 @@ sub parse {
     #
     # Views
     #
-    my @views = 
+    my @views =
         map   { $data->{'views'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'views'}{ $_ }{'order'}, $_ ] }
@@ -93,7 +93,7 @@ sub parse {
     #
     # Triggers
     #
-    my @triggers = 
+    my @triggers =
         map   { $data->{'triggers'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'triggers'}{ $_ }{'order'}, $_ ] }
@@ -107,7 +107,7 @@ sub parse {
     #
     # Procedures
     #
-    my @procedures = 
+    my @procedures =
         map   { $data->{'procedures'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'procedures'}{ $_ }{'order'}, $_ ] }

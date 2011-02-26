@@ -103,7 +103,7 @@ sub latex {
     $s =~ s/([\&\_\$\{\#])/\\$1/g;
     return $s;
 }
- 
+
 1;
 
 # -------------------------------------------------------------------
@@ -112,7 +112,7 @@ sub latex {
 
 =head1 AUTHOR
 
-Chris Mungall 
+Chris Mungall
 
 =head1 SEE ALSO
 

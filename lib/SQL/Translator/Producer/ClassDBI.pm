@@ -58,9 +58,9 @@ sub produce {
     my $header        = header_comment( __PACKAGE__, "# " );
     my $parser_type   = ( split /::/, $t->parser_type )[-1];
     my $from          = $CDBI_auto_pkgs{$parser_type} || '';
-    my $dsn           = $args->{'dsn'} || sprintf( 'dbi:%s:_', 
-        $CDBI_auto_pkgs{ $parser_type } 
-        ? $CDBI_auto_pkgs{ $parser_type } : $parser_type 
+    my $dsn           = $args->{'dsn'} || sprintf( 'dbi:%s:_',
+        $CDBI_auto_pkgs{ $parser_type }
+        ? $CDBI_auto_pkgs{ $parser_type } : $parser_type
     );
     my $sep           = '# ' . '-' x 67;
 
@@ -180,11 +180,11 @@ sub produce {
                 {
                     next unless $field->is_foreign_key;
 
-                    next unless ( 
+                    next unless (
                         $field->foreign_key_reference->reference_table eq
                            $table_name
-                        || 
-                        $field->foreign_key_reference->reference_table eq $link 
+                        ||
+                        $field->foreign_key_reference->reference_table eq $link
                     );
 
                     push @lk_fields,
@@ -273,7 +273,7 @@ sub produce {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
 #                my $fk_method  = $t->format_fk_name( $table_name, $field_name );
-                my $fk_method  = join('::', $table_pkg_name, 
+                my $fk_method  = join('::', $table_pkg_name,
                     $t->format_fk_name( $table_name, $field_name )
                 );
                 my $fk         = $field->foreign_key_reference;
@@ -352,7 +352,7 @@ sub produce {
                 else {
                     my $table       = $schema->get_table( $pkg->{'table'} );
                     my @field_names = map { $_->name } $table->get_fields;
-					
+
                     push @create, join("\n",
                         $pkg_name."->table('".$pkg->{'table'}."');\n",
                         $pkg_name."->columns(All => qw/".

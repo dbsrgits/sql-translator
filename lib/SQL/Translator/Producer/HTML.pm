@@ -57,7 +57,7 @@ sub produce {
                             import CGI::Pretty;
                                    CGI::Pretty->new }
                     : do { require CGI;
-                            import CGI; 
+                            import CGI;
                                    CGI->new };
     my ($table, @table_names);
 
@@ -72,7 +72,7 @@ sub produce {
             $q->hr;
     }
 
-    @table_names = grep { length $_->name } $schema->get_tables; 
+    @table_names = grep { length $_->name } $schema->get_tables;
 
     if ($linktable) {
         # Generate top menu, with links to full table information
@@ -80,7 +80,7 @@ sub produce {
         $count = sprintf "%d table%s", $count, $count == 1 ? '' : 's';
 
         # Leading table of links
-        push @html, 
+        push @html,
             $q->comment("Table listing ($count)"),
             $q->a({ -name => 'top' }),
             $q->start_table({ -width => '100%', -class => 'LinkTable'}),
@@ -96,7 +96,7 @@ sub produce {
 
         for my $table (@table_names) {
             my $table_name = $table->name;
-            push @html, 
+            push @html,
                 $q->comment("Start link to table '$table_name'"),
                 $q->Tr({ -class => 'LinkTableRow' },
                     $q->td({ -class => 'LinkTableCell' },
@@ -138,15 +138,15 @@ sub produce {
             $q->start_table({ -border => 1 }),
                 $q->Tr(
                     $q->th({ -class => 'FieldHeader' },
-                           [ 
-                            'Field Name', 
-                            'Data Type', 
-                            'Size', 
-                            'Default Value', 
-                            'Other', 
-                            'Foreign Key' 
+                           [
+                            'Field Name',
+                            'Data Type',
+                            'Size',
+                            'Default Value',
+                            'Other',
+                            'Foreign Key'
                            ]
-                    ) 
+                    )
                 );
 
         my $i = 0;
@@ -155,7 +155,7 @@ sub produce {
                $name      = qq[<a name="$table_name-$name">$name</a>];
             my $data_type = $field->data_type || '';
             my $size      = defined $field->size ? $field->size : '';
-            my $default   = defined $field->default_value 
+            my $default   = defined $field->default_value
                             ? $field->default_value : '';
             my $comment   = $field->comments  || '';
             my $fk        = '';
@@ -164,7 +164,7 @@ sub produce {
                 my $c         = $field->foreign_key_reference;
                 my $ref_table = $c->reference_table       || '';
                 my $ref_field = ($c->reference_fields)[0] || '';
-                $fk           = 
+                $fk           =
                 qq[<a href="#$ref_table-$ref_field">$ref_table.$ref_field</a>];
             }
 
@@ -191,11 +191,11 @@ sub produce {
         # Indices
         #
         if ( my @indices = $table->get_indices ) {
-            push @html, 
+            push @html,
                 $q->h3('Indices'),
                 $q->start_table({ -border => 1 }),
                     $q->Tr({ -class => 'IndexRow' },
-                        $q->th([ 'Name', 'Fields' ]) 
+                        $q->th([ 'Name', 'Fields' ])
                     );
 
             for my $index ( @indices ) {
@@ -214,14 +214,14 @@ sub produce {
         #
         # Constraints
         #
-        my @constraints = 
+        my @constraints =
             grep { $_->type ne PRIMARY_KEY } $table->get_constraints;
         if ( @constraints ) {
-            push @html, 
+            push @html,
                 $q->h3('Constraints'),
                 $q->start_table({ -border => 1 }),
                     $q->Tr({ -class => 'IndexRow' },
-                        $q->th([ 'Type', 'Fields' ]) 
+                        $q->th([ 'Type', 'Fields' ])
                     );
 
             for my $c ( @constraints ) {

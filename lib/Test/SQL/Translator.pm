@@ -142,13 +142,13 @@ sub default_attribs {
     my ($hashref, $object_type) = @_;
 
     if ( !exists $ATTRIBUTES{ $object_type } ) {
-        die "Can't add default attribs for unknown Schema " 
+        die "Can't add default attribs for unknown Schema "
         .   "object type '$object_type'.";
     }
 
-    for my $attr ( 
+    for my $attr (
         grep { !exists $hashref->{ $_ } }
-        keys %{ $ATTRIBUTES{ $object_type } } 
+        keys %{ $ATTRIBUTES{ $object_type } }
     ) {
         $hashref->{ $attr } = $ATTRIBUTES{ $object_type }{ $attr }
     }
@@ -254,7 +254,7 @@ sub constraint_ok {
 
     is_deeply( [$obj->options], $test->{options},
     "$t_name    options are '".join(",",@{$test->{options}})."'" );
-    
+
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
@@ -275,7 +275,7 @@ sub index_ok {
 
     is_deeply( [$obj->options], $test->{options},
     "$t_name    options are '".join(",",@{$test->{options}})."'" );
-    
+
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
@@ -303,7 +303,7 @@ sub trigger_ok {
         "$t_name    on_table is '$test->{on_table}'" );
 
     is( $obj->action, $test->{action}, "$t_name    action is '$test->{action}'" );
-    
+
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
@@ -323,7 +323,7 @@ sub view_ok {
 
     is_deeply( [$obj->fields], $test->{fields},
     "$t_name    fields are '".join(",",@{$test->{fields}})."'" );
-    
+
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
@@ -341,11 +341,11 @@ sub procedure_ok {
     is_deeply( [$obj->parameters], $test->{parameters},
     "$t_name    parameters are '".join(",",@{$test->{parameters}})."'" );
 
-    is( $obj->comments, $test->{comments}, 
+    is( $obj->comments, $test->{comments},
         "$t_name    comments is '$test->{comments}'" );
 
     is( $obj->owner, $test->{owner}, "$t_name    owner is '$test->{owner}'" );
-   
+
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 }
 
@@ -366,7 +366,7 @@ sub table_ok {
     # Fields
     if ( $arg{fields} ) {
         my @fldnames = map {$_->{name}} @{$arg{fields}};
-        is_deeply( 
+        is_deeply(
             [ map {$_->name}   $obj->get_fields ],
             [ @fldnames ],
             "${t_name}    field names are ".join(", ",@fldnames)
@@ -402,7 +402,7 @@ sub _test_kids {
             my $meth = "get_$plural";
             my @objects  = $obj->$meth;
             is( scalar(@objects), scalar(@tests),
-                "${t_name}$obj_name has " . scalar(@tests) . " $plural" 
+                "${t_name}$obj_name has " . scalar(@tests) . " $plural"
             );
 
             for my $object (@objects) {
@@ -427,7 +427,7 @@ sub schema_ok {
 
     is( $obj->database, $test->{database},
         "$t_name    database is '$test->{database}'" );
-    
+
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
 
     is( $obj->is_valid, $test->{is_valid},
@@ -636,7 +636,7 @@ schema file and test yaml file to compare it against.
 
 =head1 AUTHOR
 
-Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>, 
+Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>,
 Darren Chamberlain <darren@cpan.org>.
 
 Thanks to Ken Y. Clark for the original table and field test code taken from

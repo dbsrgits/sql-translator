@@ -60,7 +60,7 @@ source code for existing SQL::Translator::Parser::* modules.
 
 =head1 AUTHORS
 
-Ken Youens-Clark, E<lt>kclark@cpan.org<gt>, 
+Ken Youens-Clark, E<lt>kclark@cpan.org<gt>,
 darren chamberlain E<lt>darren@cpan.orgE<gt>.
 
 =head1 SEE ALSO

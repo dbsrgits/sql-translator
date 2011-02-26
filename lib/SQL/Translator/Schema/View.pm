@@ -224,11 +224,11 @@ Determines if this view is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_sql = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     #return 0 unless $self->is_valid eq $other->is_valid;
-    
+
     unless ($ignore_sql) {
         my $selfSql = $self->sql;
         my $otherSql = $other->sql;
@@ -240,7 +240,7 @@ Determines if this view is the same as another
         $otherSql =~ s/\s+/ /sg;
         return 0 unless $selfSql eq $otherSql;
     }
-    
+
     my $selfFields = join(":", $self->fields);
     my $otherFields = join(":", $other->fields);
     return 0 unless $case_insensitive ? uc($selfFields) eq uc($otherFields) : $selfFields eq $otherFields;

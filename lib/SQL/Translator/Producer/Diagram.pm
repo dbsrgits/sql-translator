@@ -28,8 +28,8 @@ Use via SQL::Translator:
 
   use SQL::Translator;
 
-  my $t = SQL::Translator->new( 
-      from          => 'MySQL', 
+  my $t = SQL::Translator->new(
+      from          => 'MySQL',
       to            => 'GraphViz',
       producer_args => {
           # All args are optional
@@ -125,11 +125,11 @@ sub produce {
             skip_fields  => $args->{'skip_fields'},
         );
 
-        my $g = $schema->as_graph_pm; 
+        my $g = $schema->as_graph_pm;
         my $d = Graph::Traversal::DFS->new( $g, next_alphabetic => 1 );
         $d->preorder;
 
-        @table_names = $d->dfs;        
+        @table_names = $d->dfs;
     }
     else {
         @table_names = map { $_->name } $schema->get_tables;
@@ -144,9 +144,9 @@ sub produce {
     # Layout the image.
     #
     my $font
-        = $font_size eq 'small'  ? gdTinyFont  
-        : $font_size eq 'medium' ? gdSmallFont 
-        : $font_size eq 'large'  ? gdLargeFont 
+        = $font_size eq 'small'  ? gdTinyFont
+        : $font_size eq 'medium' ? gdSmallFont
+        : $font_size eq 'large'  ? gdLargeFont
         :                          gdGiantFont;
 
     my $num_tables   = scalar @table_names;
@@ -155,7 +155,7 @@ sub produce {
     $num_columns   ||= .5;
     my $no_per_col   = sprintf( "%.0f", $num_tables/$num_columns + .5 );
 
-    my @shapes;            
+    my @shapes;
     my ( $max_x, $max_y );          # the furthest x and y used
     my $orig_y      = 40;           # used to reset y for each column
     my ( $x, $y )   = (30,$orig_y); # where to start
@@ -182,12 +182,12 @@ sub produce {
         }
 
         my $top   = $y;
-        push @shapes, 
+        push @shapes,
             [ 'string', $font, $this_col_x, $y, $table_name, 'black' ];
         $y                   += $font->height + 2;
         my $below_table_name  = $y;
         $y                   += 2;
-        my $this_max_x        = 
+        my $this_max_x        =
             $this_col_x + ($font->width * length($table_name));
 
         debug("Processing table '$table_name'");
@@ -232,7 +232,7 @@ sub produce {
             my $desc = $f->data_type;
             $desc   .= '('.$f->size.')' if $f->size &&
                        $f->data_type =~ /^(VAR)?CHAR2?$/i;
-            
+
             my $nlen  = length $name;
             my $dlen  = length $desc;
             $max_name = $nlen if $nlen > $max_name;
@@ -271,7 +271,7 @@ sub produce {
                 fld_name => $orig_name,
             };
 
-            push @imap_coords, [ 
+            push @imap_coords, [
                 $imap_url."#$table_name-$orig_name",
                 $this_col_x, $y - $font->height, $length, $y_link,
             ];
@@ -296,20 +296,20 @@ sub produce {
 
         $this_max_x += 5;
         $table_x{ $table_name } = $this_max_x + 5;
-        push @shapes, [ 'line', $this_col_x - 5, $below_table_name, 
+        push @shapes, [ 'line', $this_col_x - 5, $below_table_name,
             $this_max_x, $below_table_name, 'black' ];
         my @bounds = ( $this_col_x - 5, $top - 5, $this_max_x, $y + 5 );
         if ( $add_color ) {
-            unshift @shapes, [ 
-                'filledRectangle', 
+            unshift @shapes, [
+                'filledRectangle',
                 $bounds[0], $bounds[1],
                 $this_max_x, $below_table_name,
-                'khaki' 
+                'khaki'
             ];
             unshift @shapes, [ 'filledRectangle', @bounds, 'white' ];
         }
 
-        push @imap_coords, [ 
+        push @imap_coords, [
             $imap_url."#$table_name",
             $bounds[0], $bounds[1], $this_max_x, $below_table_name,
         ];
@@ -317,7 +317,7 @@ sub produce {
         push @shapes, [ 'rectangle', @bounds, 'black' ];
         $max_x = $this_max_x if $this_max_x > $max_x;
         $y    += 25;
-        
+
         if ( ++$no_this_col == $no_per_col ) {# if we've filled up this column
             $cur_col++;                       # up the column number
             $no_this_col = 0;                 # reset the number of tables
@@ -339,7 +339,7 @@ sub produce {
         if ( $natural_join ) {
             for my $field_name ( keys %nj_registry ) {
                 my @positions;
-                my @table_names = 
+                my @table_names =
                     @{ $nj_registry{ $field_name } || [] } or next;
                 next if scalar @table_names == 1;
 
@@ -353,7 +353,7 @@ sub produce {
         }
         else {
             for my $pair ( @fk_registry ) {
-                push @position_bunches, [ 
+                push @position_bunches, [
                     $coords{$pair->[0][0]}{ $pair->[0][1] }{'coords'},
                     $coords{$pair->[1][0]}{ $pair->[1][1] }{'coords'},
                 ];
@@ -417,7 +417,7 @@ sub produce {
                     my $diff = 0;
                     if ( $x1 == $x2 ) {
                         while ( $horz_taken{ $x1 + $diff } ) {
-                            $diff = $side1 eq 'left' ? $diff - 2 : $diff + 2; 
+                            $diff = $side1 eq 'left' ? $diff - 2 : $diff + 2;
                         }
                         $horz_taken{ $x1 + $diff } = 1;
                     }
@@ -431,16 +431,16 @@ sub produce {
 
                     if ( $side2 eq 'left' ) {
                         $end = $x2 - $offset + $diff;
-                    } 
+                    }
                     else {
                         $end = $col2_right + $diff;
-                    } 
+                    }
 
-                    push @shapes, 
+                    push @shapes,
                         [ 'line', $x1,    $y1, $start, $y1, 'cadetblue' ];
-                    push @shapes, 
+                    push @shapes,
                         [ 'line', $start, $y1, $end,   $y2, 'cadetblue' ];
-                    push @shapes, 
+                    push @shapes,
                         [ 'line', $end,   $y2, $x2,    $y2, 'cadetblue' ];
 
                     if ( $is_directed ) {
@@ -449,27 +449,27 @@ sub produce {
                             ||
                             $side1 eq 'left' && $side2 eq 'left'
                         ) {
-                            push @shapes, [ 
-                                'line', $x2 - 3, $y2 - 3, $x2, $y2, 'cadetblue' 
+                            push @shapes, [
+                                'line', $x2 - 3, $y2 - 3, $x2, $y2, 'cadetblue'
                             ];
-                            push @shapes, [ 
-                                'line', $x2 - 3, $y2 + 3, $x2, $y2, 'cadetblue' 
+                            push @shapes, [
+                                'line', $x2 - 3, $y2 + 3, $x2, $y2, 'cadetblue'
                             ];
-                            push @shapes, [ 
-                                'line', $x2 - 3, $y2 - 3, $x2 - 3, $y2 +3, 
-                                'cadetblue' 
+                            push @shapes, [
+                                'line', $x2 - 3, $y2 - 3, $x2 - 3, $y2 +3,
+                                'cadetblue'
                             ];
                         }
                         else {
-                            push @shapes, [ 
-                                'line', $x2 + 3, $y2 - 3, $x2, $y2, 'cadetblue' 
+                            push @shapes, [
+                                'line', $x2 + 3, $y2 - 3, $x2, $y2, 'cadetblue'
                             ];
-                            push @shapes, [ 
-                                'line', $x2 + 3, $y2 + 3, $x2, $y2, 'cadetblue' 
+                            push @shapes, [
+                                'line', $x2 + 3, $y2 + 3, $x2, $y2, 'cadetblue'
                             ];
-                            push @shapes, [ 
-                                'line', $x2 + 3, $y2 - 3, $x2 + 3, $y2 +3, 
-                                'cadetblue' 
+                            push @shapes, [
+                                'line', $x2 + 3, $y2 - 3, $x2 + 3, $y2 +3,
+                                'cadetblue'
                             ];
                         }
                     }
@@ -486,27 +486,27 @@ sub produce {
     #
     my $large_font = gdLargeFont;
     my $title_len  = $large_font->width * length $title;
-    push @shapes, [ 
-        'string', $large_font, $max_x/2 - $title_len/2, 10, $title, 'black' 
+    push @shapes, [
+        'string', $large_font, $max_x/2 - $title_len/2, 10, $title, 'black'
     ];
 
     if ( %legend ) {
         $max_y += 5;
-        push @shapes, [ 
+        push @shapes, [
             'string', $font, $x, $max_y - $font->height - 4, 'Legend', 'black'
         ];
         $max_y += $font->height + 4;
 
         my $longest;
         for my $len ( map { length $_ } values %legend ) {
-            $longest = $len if $len > $longest; 
+            $longest = $len if $len > $longest;
         }
         $longest += 2;
 
         while ( my ( $key, $shape ) = each %legend ) {
             my $space = $longest - length $shape;
-            push @shapes, [ 
-                'string', $font, $x, $max_y - $font->height - 4, 
+            push @shapes, [
+                'string', $font, $x, $max_y - $font->height - 4,
                 join( '', $shape, ' ' x $space, $key ), 'black'
             ];
 
@@ -516,8 +516,8 @@ sub produce {
 
     my $sig     = 'Created by SQL::Translator ' . $t->version;
     my $sig_len = $font->width * length $sig;
-    push @shapes, [ 
-        'string', $font, $max_x - $sig_len, $max_y - $font->height - 4, 
+    push @shapes, [
+        'string', $font, $max_x - $sig_len, $max_y - $font->height - 4,
         $sig, 'black'
     ];
 
@@ -558,7 +558,7 @@ sub produce {
         for my $rec ( @imap_coords ) {
             my $href = shift @$rec;
             print $fh q[<area coords="].join(',', @$rec).qq[" href="$href">\n];
-        } 
+        }
         print $fh qq[</body></html>];
         close $fh;
     }

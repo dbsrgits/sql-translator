@@ -100,7 +100,7 @@ Or pass it as an arrayref like so:
 
 Or like so:
 
-  cluster => [ 
+  cluster => [
     { name => 'cluster1', tables => [ 'table1', 'table2' ] },
     { name => 'cluster2', tables => [ 'table3', 'table4' ] },
   ]
@@ -113,14 +113,14 @@ undefined (the default) - the result is returned as a string.
 
 =item * output_type (DEFAULT: 'png')
 
-This determines which 
+This determines which
 L<output method|GraphViz/as_canon,_as_text,_as_gif_etc._methods>
 will be invoked to generate the graph: C<png> translates to
 C<as_png>, C<ps> to C<as_ps> and so on.
 
 =item * fontname
 
-This sets the global font name (or full path to font file) for 
+This sets the global font name (or full path to font file) for
 node, edge, and graph labels
 
 =item * fontsize
@@ -319,7 +319,7 @@ sub produce {
       );
 
     # join_pk_only/skip_fields implies natural_join
-    $args->{natural_join} = 1 
+    $args->{natural_join} = 1
       if ($args->{join_pk_only} or scalar keys %skip_fields);
 
     # usually we do not want direction when using natural join
@@ -480,7 +480,7 @@ sub produce {
             push @fmt_indexes, join (' ',
               '*',
               $args->{show_index_names}
-                ? $index->name . ':' 
+                ? $index->name . ':'
                 : ()
               ,
               join (', ', $index->fields),

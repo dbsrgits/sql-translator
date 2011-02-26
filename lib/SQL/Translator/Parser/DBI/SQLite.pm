@@ -31,8 +31,8 @@ See SQL::Translator::Parser::DBI.
 Queries the "sqlite_master" table for schema definition.  The schema
 is held in this table simply as CREATE statements for the database
 objects, so it really just builds up a string of all these and passes
-the result to the regular SQLite parser.  Therefore there is no gain 
-(at least in performance) to using this module over simply dumping the 
+the result to the regular SQLite parser.  Therefore there is no gain
+(at least in performance) to using this module over simply dumping the
 schema to a text file and parsing that.
 
 =cut

@@ -142,9 +142,9 @@ Earl Cahill E<lt>cpan@spack.netE<gt>.
 
 =head1 ACKNOWLEDGEMENT
 
-Initial revision of this module came almost entirely from work done by 
+Initial revision of this module came almost entirely from work done by
 Todd Hepler E<lt>thepler@freeshell.orgE<gt>.  My changes were
-quite minor (ensuring NAME_uc, changing a couple variable names, 
+quite minor (ensuring NAME_uc, changing a couple variable names,
 skipping tables with a $ in them).
 
 Todd claimed his work to be an almost verbatim copy of

@@ -28,7 +28,7 @@ See SQL::Translator::Parser::DBI.
 
 =head1 DESCRIPTION
 
-Uses DBI to query PostgreSQL system tables to determine schema structure.   
+Uses DBI to query PostgreSQL system tables to determine schema structure.
 
 =cut
 
@@ -64,7 +64,7 @@ sub parse {
        WHERE a.attrelid=? AND attnum>0
          AND a.atttypid=t.oid
        ORDER BY a.attnum"
-    ); 
+    );
 
     my $index_select  = $dbh->prepare(
       "SELECT oid, c.relname, i.indkey, i.indnatts, i.indisunique,
@@ -125,13 +125,13 @@ WHERE pg_catalog.pg_table_is_visible(c.oid)
   AND c.relname = ?
 ORDER BY 1;
         /) or die "Can't prepare: $@";
-    
+
     $table_select->execute();
 
     while ( my $tablehash = $table_select->fetchrow_hashref ) {
 
         my $table_name = $$tablehash{'relname'};
-        my $table_oid  = $$tablehash{'oid'}; 
+        my $table_oid  = $$tablehash{'oid'};
         my $table = $schema->add_table(
                                        name => $table_name,
               #what is type?               type => $table_info->{TABLE_TYPE},
@@ -143,7 +143,7 @@ ORDER BY 1;
 
         while (my $columnhash = $column_select->fetchrow_hashref ) {
 
-            #data_type seems to not be populated; perhaps there needs to 
+            #data_type seems to not be populated; perhaps there needs to
             #be a mapping of query output to reserved constants in sqlt?
 
             my $col = $table->add_field(
@@ -164,7 +164,7 @@ ORDER BY 1;
         my @column_names = $table->field_names();
         while (my $indexhash = $index_select->fetchrow_hashref ) {
               #don't deal with function indexes at the moment
-            next if ($$indexhash{'indkey'} eq '' 
+            next if ($$indexhash{'indkey'} eq ''
                      or !defined($$indexhash{'indkey'}) );
 
             my $type;
@@ -191,7 +191,7 @@ ORDER BY 1;
                               fields       => \@columns,
                              ) || die $table->error;
         }
-        
+
         $fk_select->execute('public',$table_name) or die "Can't execute: $@";
         my $fkeys = $fk_select->fetchall_arrayref({});
         $DEBUG and print Dumper $fkeys;
@@ -213,7 +213,7 @@ ORDER BY 1;
                                );
         }
     }
-    
+
 
     return 1;
 }
@@ -229,7 +229,7 @@ ORDER BY 1;
 
 =head1 AUTHOR
 
-Scott Cain E<lt>cain@cshl.eduE<gt>, previous author: 
+Scott Cain E<lt>cain@cshl.eduE<gt>, previous author:
 Paul Harrington E<lt>harringp@deshaw.comE<gt>.
 
 =head1 SEE ALSO

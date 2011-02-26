@@ -207,19 +207,19 @@ sub produce {
         %$pargs,        # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
 
-	for my $tbl ( sort {$a->order <=> $b->order} $scma->get_tables ) {
-		my $outtmp;
+   for my $tbl ( sort {$a->order <=> $b->order} $scma->get_tables ) {
+      my $outtmp;
         $tt->process( $file, {
             translator => $Translator,
             schema     => $scma,
             table      => $tbl,
-        }, \$outtmp ) 
-		or die "Error processing template '$file' for table '".$tbl->name
-	          ."': ".$tt->error;
+        }, \$outtmp )
+      or die "Error processing template '$file' for table '".$tbl->name
+             ."': ".$tt->error;
         $out .= $outtmp;
 
         # Write out the file...
-		write_file(  table_file($tbl), $outtmp ) if $pargs->{mk_files};
+      write_file(  table_file($tbl), $outtmp ) if $pargs->{mk_files};
     }
 
     return $out;
@@ -236,7 +236,7 @@ sub table_file {
 
 # Write the src given to the file given, handling the on_exists arg.
 sub write_file {
-	my ($file, $src) = @_;
+   my ($file, $src) = @_;
     my $pargs = $Translator->producer_args;
     my $root = $pargs->{mk_files_base};
 
@@ -266,12 +266,12 @@ sub write_file {
     }
 
     my ($dir) = $file =~ m!^(.*)/!; # Want greedy, eveything before the last /
-	if ( $dir and not -d $dir and $pargs->{mk_file_dir} ) { mkpath($dir); }
+   if ( $dir and not -d $dir and $pargs->{mk_file_dir} ) { mkpath($dir); }
 
     debug "Writing to $file\n";
-	open( FILE, ">$file") or die "Error opening file $file : $!\n";
-	print FILE $src;
-	close(FILE);
+   open( FILE, ">$file") or die "Error opening file $file : $!\n";
+   print FILE $src;
+   close(FILE);
 }
 
 # Reads file and inserts code between the insert comments and returns the new

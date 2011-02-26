@@ -108,11 +108,11 @@ Returns a Graph::Directed object with the table names for nodes.
 
     my $self = shift;
     my $g    = Graph::Directed->new;
-    
-    for my $table ( $self->get_tables ) { 
+
+    for my $table ( $self->get_tables ) {
         my $tname  = $table->name;
         $g->add_vertex( $tname );
-    
+
         for my $field ( $table->get_fields ) {
             if ( $field->is_foreign_key ) {
                 my $fktable = $field->foreign_key_reference->reference_table;
@@ -134,7 +134,7 @@ sub add_table {
 
 Add a table object.  Returns the new SQL::Translator::Schema::Table object.
 The "name" parameter is required.  If you try to create a table with the
-same name as an existing table, you will get an error and the table will 
+same name as an existing table, you will get an error and the table will
 not be created.
 
   my $t1 = $schema->add_table( name => 'foo' ) or die $schema->error;
@@ -313,7 +313,7 @@ sub add_trigger {
 
 Add a trigger object.  Returns the new SQL::Translator::Schema::Trigger object.
 The "name" parameter is required.  If you try to create a trigger with the
-same name as an existing trigger, you will get an error and the trigger will 
+same name as an existing trigger, you will get an error and the trigger will
 not be created.
 
   my $t1 = $schema->add_trigger( name => 'foo' );
@@ -396,7 +396,7 @@ sub add_view {
 
 Add a view object.  Returns the new SQL::Translator::Schema::View object.
 The "name" parameter is required.  If you try to create a view with the
-same name as an existing view, you will get an error and the view will 
+same name as an existing view, you will get an error and the view will
 not be created.
 
   my $v1 = $schema->add_view( name => 'foo' );
@@ -575,11 +575,11 @@ Returns a table by the name provided.
     my $table_name = shift or return $self->error('No table name');
     my $case_insensitive = shift;
     if ( $case_insensitive ) {
-    	$table_name = uc($table_name);
-    	foreach my $table ( keys %{$self->{tables}} ) {
-    		return $self->{tables}{$table} if $table_name eq uc($table);
-    	}
-    	return $self->error(qq[Table "$table_name" does not exist]);
+      $table_name = uc($table_name);
+      foreach my $table ( keys %{$self->{tables}} ) {
+         return $self->{tables}{$table} if $table_name eq uc($table);
+      }
+      return $self->error(qq[Table "$table_name" does not exist]);
     }
     return $self->error(qq[Table "$table_name" does not exist])
       unless exists $self->{'tables'}{$table_name};
@@ -724,7 +724,7 @@ tables.  Accepts the following arguments:
 
 =item * join_pk_only
 
-A True or False argument which determins whether or not to perform 
+A True or False argument which determins whether or not to perform
 the joins from primary keys to fields of the same name in other tables
 
 =item * skip_fields

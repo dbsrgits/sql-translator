@@ -115,7 +115,7 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00" 
+        substr($name, $max_id_length - 3) = "00"
             if length( $name ) > $max_id_length;
 
         warn "The name '$name_orig' has been changed to ",
@@ -217,10 +217,10 @@ sub create_table
         push @field_defs, create_field($field);
     }
 
-    if ( 
-         scalar @pk_fields > 1 
-         || 
-         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs ) 
+    if (
+         scalar @pk_fields > 1
+         ||
+         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs )
          ) {
         push @field_defs, 'PRIMARY KEY (' . join(', ', @pk_fields ) . ')';
     }
@@ -241,7 +241,7 @@ sub create_table
         if ($c->type eq "FOREIGN KEY") {
             push @field_defs, create_foreignkey($c);
         }
-        next unless $c->type eq UNIQUE; 
+        next unless $c->type eq UNIQUE;
         push @constraint_defs, create_constraint($c);
     }
 
@@ -265,8 +265,8 @@ sub create_field
 
     my $field_name = $field->name;
     debug("PKG: Looking at field '$field_name'\n");
-    my $field_comments = $field->comments 
-        ? "-- " . $field->comments . "\n  " 
+    my $field_comments = $field->comments
+        ? "-- " . $field->comments . "\n  "
         : '';
 
     my $field_def = $field_comments.$field_name;
@@ -282,7 +282,7 @@ sub create_field
     }
 
 #             if ( $data_type =~ /timestamp/i ) {
-#                 push @trigger_defs, 
+#                 push @trigger_defs,
 #                     "CREATE TRIGGER ts_${table_name} ".
 #                     "after insert on $table_name\n".
 #                     "begin\n".
@@ -301,8 +301,8 @@ sub create_field
     my $pk        = $field->table->primary_key;
     my @pk_fields = $pk ? $pk->fields : ();
 
-    if ( 
-         $field->is_primary_key && 
+    if (
+         $field->is_primary_key &&
          scalar @pk_fields == 1 &&
          (
           $data_type =~ /int(eger)?$/i
@@ -315,7 +315,7 @@ sub create_field
 #        $pk_set    = 1;
     }
 
-    $field_def .= sprintf " %s%s", $data_type, 
+    $field_def .= sprintf " %s%s", $data_type,
     ( !$field->is_auto_increment && $size ) ? "($size)" : '';
 
     # Null?
@@ -343,13 +343,13 @@ sub create_index
     my $name   = $index->name;
     $name      = mk_name($name);
 
-    my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : ''; 
+    my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
 
     # strip any field size qualifiers as SQLite doesn't like these
     my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
     (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
-    my $index_def =  
+    my $index_def =
     "CREATE ${type}INDEX $name ON " . $index_table_name .
         ' (' . join( ', ', @fields ) . ')';
 
@@ -366,7 +366,7 @@ sub create_constraint
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
-    my $c_def =  
+    my $c_def =
     "CREATE UNIQUE INDEX $name ON " . $index_table_name .
         ' (' . join( ', ', @fields ) . ')';
 
@@ -490,12 +490,12 @@ sub batch_alter_table {
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
-#    return join("\n", map { 
-    return map { 
+#    return join("\n", map {
+    return map {
         my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
         map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql") : () } @{ $diffs->{$_} }
-        
-      } grep { @{$diffs->{$_}} } 
+
+      } grep { @{$diffs->{$_}} }
     qw/rename_table
        alter_drop_constraint
        alter_drop_index
@@ -511,7 +511,7 @@ sub batch_alter_table {
 
   my @sql;
   my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
-  
+
   do {
     local $table->{name} = $table_name . '_temp_alter';
     # We only want the table - dont care about indexes on tmp table
