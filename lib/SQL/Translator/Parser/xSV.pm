@@ -61,8 +61,6 @@ C<SQL::Translator::Utils::normalize_name>.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
 use vars qw($VERSION @EXPORT);
 $VERSION = '1.59';
@@ -183,7 +181,6 @@ sub parse {
 
 1;
 
-# -------------------------------------------------------------------
 =pod
 
 =head1 AUTHORS

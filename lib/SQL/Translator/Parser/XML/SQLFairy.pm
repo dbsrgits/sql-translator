@@ -94,8 +94,6 @@ To convert your old format files simply pass them through the translator :)
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
@@ -274,7 +272,6 @@ sub parse {
     return 1;
 }
 
-# -------------------------------------------------------------------
 sub get_tagfields {
 #
 # get_tagfields XP, NODE, NAMESPACE => qw/TAGNAMES/;
@@ -325,8 +322,6 @@ sub get_tagfields {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

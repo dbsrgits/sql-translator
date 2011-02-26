@@ -121,7 +121,6 @@ sub produce {
     return $out;
 }
 
-# -------------------------------------------------------------------
 sub template {
 #
 # Returns the template to be processed by Template Toolkit

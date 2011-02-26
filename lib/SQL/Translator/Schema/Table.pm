@@ -60,8 +60,6 @@ use overload
     fallback => 1,
 ;
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/schema name comments options order/ );
 
 =pod
@@ -89,9 +87,6 @@ sub new {
   return $self;
 }
 
-
-
-# ----------------------------------------------------------------------
 sub add_constraint {
 
 =pod
@@ -177,7 +172,6 @@ C<SQL::Translator::Schema::Constraint> object.
     return $constraint;
 }
 
-# ----------------------------------------------------------------------
 sub drop_constraint {
 
 =pod
@@ -214,7 +208,6 @@ an index name or an C<SQL::Translator::Schema::Constraint> object.
     return $constraint;
 }
 
-# ----------------------------------------------------------------------
 sub add_index {
 
 =pod
@@ -256,7 +249,6 @@ C<SQL::Translator::Schema::Index> object.
     return $index;
 }
 
-# ----------------------------------------------------------------------
 sub drop_index {
 
 =pod
@@ -293,7 +285,6 @@ an index name of an C<SQL::Translator::Schema::Index> object.
     return $index;
 }
 
-# ----------------------------------------------------------------------
 sub add_field {
 
 =pod
@@ -347,7 +338,7 @@ existing field, you will get an error and the field will not be created.
 
     return $field;
 }
-# ----------------------------------------------------------------------
+
 sub drop_field {
 
 =pod
@@ -400,7 +391,6 @@ a field name or an C<SQL::Translator::Schema::Field> object.
     return $field;
 }
 
-# ----------------------------------------------------------------------
 sub comments {
 
 =pod
@@ -437,7 +427,6 @@ all the comments joined on newlines.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_constraints {
 
 =pod
@@ -462,7 +451,6 @@ Returns all the constraint objects as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_indices {
 
 =pod
@@ -488,7 +476,6 @@ Returns all the index objects as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_field {
 
 =pod
@@ -516,7 +503,6 @@ Returns a field by the name provided.
     return $self->{'fields'}{ $field_name };
 }
 
-# ----------------------------------------------------------------------
 sub get_fields {
 
 =pod
@@ -545,7 +531,6 @@ Returns all the field objects as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -571,7 +556,6 @@ Determine whether the view is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub is_trivial_link {
 
 =pod
@@ -631,7 +615,6 @@ Returns true if the table has some non-key fields.
     return $self->{'is_data'};
 }
 
-# ----------------------------------------------------------------------
 sub can_link {
 
 =pod
@@ -723,7 +706,6 @@ Determine whether the table can link two arg tables via many-to-many.
     return $self->{'can_link'}{ $table1->name }{ $table2->name };
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -756,7 +738,6 @@ that name and disallows the change if one exists (setting the error to
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -779,7 +760,6 @@ Get or set the table's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub primary_key {
 
 =pod
@@ -845,7 +825,6 @@ These are eqivalent:
     return;
 }
 
-# ----------------------------------------------------------------------
 sub options {
 
 =pod
@@ -872,7 +851,6 @@ an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -894,7 +872,6 @@ Get or set the table's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub field_names {
 
 =head2 field_names
@@ -922,7 +899,6 @@ avoid the overload magic of the Field objects returned by the get_fields method.
     }
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -1011,8 +987,6 @@ INDEX2:
    return 1;
 }
 
-# ----------------------------------------------------------------------
-
 =head1 LOOKUP METHODS
 
 The following are a set of shortcut methods for getting commonly used lists of
@@ -1060,7 +1034,6 @@ sub pkey_fields {
     return wantarray ? @fields : \@fields;
 }
 
-# ----------------------------------------------------------------------
 sub fkey_fields {
     my $me = shift;
     my @fields;
@@ -1068,14 +1041,12 @@ sub fkey_fields {
     return wantarray ? @fields : \@fields;
 }
 
-# ----------------------------------------------------------------------
 sub nonpkey_fields {
     my $me = shift;
     my @fields = grep { !$_->is_primary_key } $me->get_fields;
     return wantarray ? @fields : \@fields;
 }
 
-# ----------------------------------------------------------------------
 sub data_fields {
     my $me = shift;
     my @fields =
@@ -1083,7 +1054,6 @@ sub data_fields {
     return wantarray ? @fields : \@fields;
 }
 
-# ----------------------------------------------------------------------
 sub unique_fields {
     my $me = shift;
     my @fields;
@@ -1091,21 +1061,18 @@ sub unique_fields {
     return wantarray ? @fields : \@fields;
 }
 
-# ----------------------------------------------------------------------
 sub unique_constraints {
     my $me = shift;
     my @cons = grep { $_->type eq UNIQUE } $me->get_constraints;
     return wantarray ? @cons : \@cons;
 }
 
-# ----------------------------------------------------------------------
 sub fkey_constraints {
     my $me = shift;
     my @cons = grep { $_->type eq FOREIGN_KEY } $me->get_constraints;
     return wantarray ? @cons : \@cons;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
@@ -1115,8 +1082,6 @@ sub DESTROY {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

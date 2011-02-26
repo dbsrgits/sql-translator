@@ -50,8 +50,6 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
 $VERSION = '1.59';
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/
     name sql fields schema order
 /);
@@ -66,7 +64,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -104,7 +101,6 @@ names and keep them in order by the first occurrence of a field name.
     return wantarray ? @{ $self->{'fields'} || [] } : ($self->{'fields'} || '');
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -125,7 +121,6 @@ Determine whether the view is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -143,7 +138,6 @@ Get or set the view's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -165,7 +159,6 @@ Get or set the view's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub sql {
 
 =pod
@@ -183,7 +176,6 @@ Get or set the view's SQL.
     return $self->{'sql'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -207,7 +199,6 @@ Get or set the view's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -248,15 +239,12 @@ Determines if this view is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

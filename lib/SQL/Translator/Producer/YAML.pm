@@ -43,7 +43,6 @@ $VERSION = '1.59';
 
 use YAML qw(Dump);
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator = shift;
     my $schema     = $translator->schema;
@@ -83,7 +82,6 @@ sub produce {
     });
 }
 
-# -------------------------------------------------------------------
 sub view_table {
     my $table = shift;
 
@@ -106,7 +104,6 @@ sub view_table {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_constraint {
     my $constraint = shift;
 
@@ -126,7 +123,6 @@ sub view_constraint {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_field {
     my $field = shift;
 
@@ -145,7 +141,6 @@ sub view_field {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_procedure {
     my $procedure = shift;
 
@@ -160,7 +155,6 @@ sub view_procedure {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_trigger {
     my $trigger = shift;
 
@@ -176,7 +170,6 @@ sub view_trigger {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_view {
     my $view = shift;
 
@@ -189,7 +182,6 @@ sub view_view {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_index {
     my $index = shift;
 
@@ -203,8 +195,6 @@ sub view_index {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =head1 SEE ALSO
 

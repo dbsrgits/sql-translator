@@ -191,7 +191,6 @@ sub parse {
     return 1;
 }
 
-# -------------------------------------------------------------------
 sub ET_to_ST {
     my $et = shift;
     $ET_to_ST{$et} || $ET_to_ST{'Text'};

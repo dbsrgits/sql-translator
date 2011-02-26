@@ -171,8 +171,6 @@ whitespace either side, to be recognised.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
@@ -299,8 +297,6 @@ sub insert_code {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

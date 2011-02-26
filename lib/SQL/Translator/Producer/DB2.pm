@@ -189,8 +189,6 @@ DELETE             LANGUAGE       RESET
 DESCRIPTOR         LC_CTYPE       RESIGNAL
 /;
 
-#------------------------------------------------------------------------------
-
 sub produce
 {
     my ($translator) = @_;

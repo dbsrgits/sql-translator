@@ -398,7 +398,6 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
 
 !;
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $translator, $data ) = @_;
     my $parser = Parse::RecDescent->new($GRAMMAR);

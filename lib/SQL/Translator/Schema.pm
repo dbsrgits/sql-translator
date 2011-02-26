@@ -75,7 +75,6 @@ sub new {
   return $self;
 }
 
-# ----------------------------------------------------------------------
 sub as_graph {
 
 =pod
@@ -93,7 +92,6 @@ Returns the schema as an L<SQL::Translator::Schema::Graph> object.
         translator => $self->translator );
 }
 
-# ----------------------------------------------------------------------
 sub as_graph_pm {
 
 =pod
@@ -125,7 +123,6 @@ Returns a Graph::Directed object with the table names for nodes.
     return $g;
 }
 
-# ----------------------------------------------------------------------
 sub add_table {
 
 =pod
@@ -173,7 +170,6 @@ not be created.
     return $table;
 }
 
-# ----------------------------------------------------------------------
 sub drop_table {
 
 =pod
@@ -218,7 +214,6 @@ can be set to 1 to also drop all triggers on the table, default is 0.
     return $table;
 }
 
-# ----------------------------------------------------------------------
 sub add_procedure {
 
 =pod
@@ -267,7 +262,6 @@ procedure will not be created.
     return $procedure;
 }
 
-# ----------------------------------------------------------------------
 sub drop_procedure {
 
 =pod
@@ -304,7 +298,6 @@ object.
     return $proc;
 }
 
-# ----------------------------------------------------------------------
 sub add_trigger {
 
 =pod
@@ -351,7 +344,6 @@ not be created.
     return $trigger;
 }
 
-# ----------------------------------------------------------------------
 sub drop_trigger {
 
 =pod
@@ -387,7 +379,6 @@ trigger name or an C<SQL::Translator::Schema::Trigger> object.
     return $trigger;
 }
 
-# ----------------------------------------------------------------------
 sub add_view {
 
 =pod
@@ -433,7 +424,6 @@ not be created.
     return $view;
 }
 
-# ----------------------------------------------------------------------
 sub drop_view {
 
 =pod
@@ -468,7 +458,6 @@ name or an C<SQL::Translator::Schema::View> object.
     return $view;
 }
 
-# ----------------------------------------------------------------------
 sub database {
 
 =pod
@@ -486,7 +475,6 @@ Get or set the schema's database.  (optional)
     return $self->{'database'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -510,7 +498,6 @@ Returns true if all the tables and views are valid.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub get_procedure {
 
 =pod
@@ -530,7 +517,6 @@ Returns a procedure by the name provided.
     return $self->{'procedures'}{$procedure_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_procedures {
 
 =pod
@@ -558,7 +544,6 @@ Returns all the procedures as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_table {
 
 =pod
@@ -586,7 +571,6 @@ Returns a table by the name provided.
     return $self->{'tables'}{$table_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_tables {
 
 =pod
@@ -614,7 +598,6 @@ Returns all the tables as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_trigger {
 
 =pod
@@ -634,7 +617,6 @@ Returns a trigger by the name provided.
     return $self->{'triggers'}{$trigger_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_triggers {
 
 =pod
@@ -662,7 +644,6 @@ Returns all the triggers as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_view {
 
 =pod
@@ -682,7 +663,6 @@ Returns a view by the name provided.
     return $self->{'views'}{$view_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_views {
 
 =pod
@@ -710,7 +690,6 @@ Returns all the views as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub make_natural_joins {
 
 =pod
@@ -782,7 +761,6 @@ A list of fields to skip in the joins
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -800,7 +778,6 @@ Get or set the schema's name.  (optional)
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub translator {
 
 =pod
@@ -816,7 +793,6 @@ Get the SQL::Translator instance that instantiated the parser.
     return $self->{'translator'};
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $_ for values %{ $self->{'tables'} };
@@ -824,8 +800,6 @@ sub DESTROY {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

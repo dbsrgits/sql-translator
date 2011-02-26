@@ -32,24 +32,6 @@ $DEFAULT_COMMENT = '-- ';
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
-# ----------------------------------------------------------------------
-# debug(@msg)
-#
-# Will send debugging messages to STDERR, if the caller's $DEBUG global
-# is set.
-#
-# This debug() function has a neat feature: Occurances of the strings
-# PKG, LINE, and SUB in each message will be replaced with elements
-# from caller():
-#
-#   debug("PKG: Bad things happened on line LINE!");
-#
-# Will be warned as:
-#
-#   [SQL::Translator: Bad things happened on line 643]
-#
-# If called from Translator.pm, on line 643.
-# ----------------------------------------------------------------------
 sub debug {
     my ($pkg, $file, $line, $sub) = caller(0);
     {
@@ -70,7 +52,6 @@ sub debug {
     }
 }
 
-# ----------------------------------------------------------------------
 sub normalize_name {
     my $name = shift or return '';
 
@@ -91,7 +72,6 @@ sub normalize_name {
     return $name;
 }
 
-# ----------------------------------------------------------------------
 sub header_comment {
     my $producer = shift || caller;
     my $comment_char = shift;
@@ -115,13 +95,6 @@ HEADER_COMMENT
     return $header_comment;
 }
 
-# ----------------------------------------------------------------------
-# parse_list_arg
-#
-# Meant to accept a list, an array reference, or a string of 
-# comma-separated values.  Retuns an array reference of the 
-# arguments.  Modified to also handle a list of references.
-# ----------------------------------------------------------------------
 sub parse_list_arg {
     my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
 
@@ -143,14 +116,6 @@ sub parse_list_arg {
     }
 }
 
-# ----------------------------------------------------------------------
-# truncate_id_uniquely( $desired_name, $max_symbol_length )
-#
-# Truncates the name $desired_name to the $max_symbol_length by
-# including part of the hash of the full name at the end of the
-# truncated name, giving a high probability that the symbol will be
-# unique.
-# ----------------------------------------------------------------------
 sub truncate_id_uniquely {
     my ( $desired_name, $max_symbol_length ) = @_;
 
@@ -171,13 +136,6 @@ sub truncate_id_uniquely {
 }
 
 
-#---------------------------------------------------------------------
-# parse_mysql_version ( $version_string, $result_target)
-#
-# Attempts to parse an arbitrary string as a mysql version number. 
-# Returns either a floating point perl style string, or a mysql style
-# 5 digit string, depending on the supplied $result_target
-#---------------------------------------------------------------------
 sub parse_mysql_version {
     my ($v, $target) = @_;
 
@@ -218,14 +176,6 @@ sub parse_mysql_version {
     }
 }
 
-#---------------------------------------------------------------------
-# parse_dbms_version ( $version_string, $target )
-#
-# Attempts to parse either a native or perl-style version string into
-# a version number format as specified by $target, which can be either
-# 'perl' for a perl-style version number, or 'native' for an X.X.X
-# style version number.
-#---------------------------------------------------------------------
 sub parse_dbms_version {
     my ($v, $target) = @_;
 
@@ -260,8 +210,6 @@ sub parse_dbms_version {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 
@@ -402,6 +350,12 @@ version specifications:
   5
   5.001005  (perl style)
   30201     (mysql style)
+
+=head2 parse_dbms_version
+
+Takes a version string (X.Y.Z) or perl style (XX.YYYZZZ) and a target ('perl'
+or 'native') transforms the string to the given target style.
+to
 
 =head1 AUTHORS
 

@@ -114,8 +114,6 @@ query Oracle directly and skip the parsing of a text file, too.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
 use DBI;
 use vars qw($VERSION @EXPORT);
@@ -186,7 +184,6 @@ sub parse {
 
 1;
 
-# -------------------------------------------------------------------
 =pod
 
 =head1 AUTHOR

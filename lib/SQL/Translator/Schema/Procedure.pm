@@ -54,8 +54,6 @@ use vars qw($VERSION);
 
 $VERSION = '1.59';
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/
     name sql parameters comments owner sql schema order
 /);
@@ -70,7 +68,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub parameters {
 
 =pod
@@ -106,7 +103,6 @@ Gets and set the parameters of the stored procedure.
     return wantarray ? @{ $self->{'parameters'} || [] } : ($self->{'parameters'} || '');
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -125,7 +121,6 @@ Get or set the procedure's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub sql {
 
 =pod
@@ -144,7 +139,6 @@ Get or set the procedure's SQL.
     return $self->{'sql'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -163,7 +157,6 @@ Get or set the order of the procedure.
     return $self->{'order'};
 }
 
-# ----------------------------------------------------------------------
 sub owner {
 
 =pod
@@ -182,7 +175,6 @@ Get or set the owner of the procedure.
     return $self->{'owner'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub comments {
 
 =pod
@@ -214,7 +206,6 @@ Get or set the comments on a procedure.
     }
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -238,7 +229,6 @@ Get or set the procedures's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -278,15 +268,12 @@ Determines if this procedure is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

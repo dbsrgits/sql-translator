@@ -38,8 +38,6 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
 use vars qw[ $VERSION $DEBUG ];
 $VERSION = '1.59';

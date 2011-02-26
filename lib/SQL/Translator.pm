@@ -38,26 +38,8 @@ use IO::Dir;
 use SQL::Translator::Producer;
 use SQL::Translator::Schema;
 
-# ----------------------------------------------------------------------
-# The default behavior is to "pass through" values (note that the
-# SQL::Translator instance is the first value ($_[0]), and the stuff
-# to be parsed is the second value ($_[1])
-# ----------------------------------------------------------------------
 $DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
 
-# ----------------------------------------------------------------------
-# init([ARGS])
-#   The constructor.
-#
-#   new takes an optional hash of arguments.  These arguments may
-#   include a parser, specified with the keys "parser" or "from",
-#   and a producer, specified with the keys "producer" or "to".
-#
-#   The values that can be passed as the parser or producer are
-#   given directly to the parser or producer methods, respectively.
-#   See the appropriate method description below for details about
-#   what each expects/accepts.
-# ----------------------------------------------------------------------
 sub init {
     my ( $self, $config ) = @_;
     #
@@ -131,9 +113,6 @@ sub init {
     return $self;
 }
 
-# ----------------------------------------------------------------------
-# add_drop_table([$bool])
-# ----------------------------------------------------------------------
 sub add_drop_table {
     my $self = shift;
     if ( defined (my $arg = shift) ) {
@@ -142,9 +121,6 @@ sub add_drop_table {
     return $self->{'add_drop_table'} || 0;
 }
 
-# ----------------------------------------------------------------------
-# no_comments([$bool])
-# ----------------------------------------------------------------------
 sub no_comments {
     my $self = shift;
     my $arg  = shift;
@@ -154,10 +130,6 @@ sub no_comments {
     return $self->{'no_comments'} || 0;
 }
 
-
-# ----------------------------------------------------------------------
-# quote_table_names([$bool])
-# ----------------------------------------------------------------------
 sub quote_table_names {
     my $self = shift;
     if ( defined (my $arg = shift) ) {
@@ -166,9 +138,6 @@ sub quote_table_names {
     return $self->{'quote_table_names'} || 0;
 }
 
-# ----------------------------------------------------------------------
-# quote_field_names([$bool])
-# ----------------------------------------------------------------------
 sub quote_field_names {
     my $self = shift;
     if ( defined (my $arg = shift) ) {
@@ -177,11 +146,6 @@ sub quote_field_names {
     return $self->{'quote_field_names'} || 0;
 }
 
-# ----------------------------------------------------------------------
-# producer([$producer_spec])
-#
-# Get or set the producer for the current translator.
-# ----------------------------------------------------------------------
 sub producer {
     shift->_tool({
             name => 'producer',
@@ -190,32 +154,10 @@ sub producer {
     }, @_);
 }
 
-# ----------------------------------------------------------------------
-# producer_type()
-#
-# producer_type is an accessor that allows producer subs to get
-# information about their origin.  This is poptentially important;
-# since all producer subs are called as subroutine references, there is
-# no way for a producer to find out which package the sub lives in
-# originally, for example.
-# ----------------------------------------------------------------------
 sub producer_type { $_[0]->{'producer_type'} }
 
-# ----------------------------------------------------------------------
-# producer_args([\%args])
-#
-# Arbitrary name => value pairs of paramters can be passed to a
-# producer using this method.
-#
-# If the first argument passed in is undef, then the hash of arguments
-# is cleared; all subsequent elements are added to the hash of name,
-# value pairs stored as producer_args.
-# ----------------------------------------------------------------------
 sub producer_args { shift->_args("producer", @_); }
 
-# ----------------------------------------------------------------------
-# parser([$parser_spec])
-# ----------------------------------------------------------------------
 sub parser {
     shift->_tool({
         name => 'parser',
@@ -228,17 +170,6 @@ sub parser_type { $_[0]->{'parser_type'}; }
 
 sub parser_args { shift->_args("parser", @_); }
 
-# ----------------------------------------------------------------------
-# e.g.
-#   $sqlt->filters => [
-#       sub { },
-#       [ "NormalizeNames", field => "lc", tabel => "ucfirst" ],
-#       [
-#           "DataTypeMap",
-#           "TEXT" => "BIGTEXT",
-#       ],
-#   ],
-# ----------------------------------------------------------------------
 sub filters {
     my $self = shift;
     my $filters = $self->{filters} ||= [];
@@ -261,7 +192,6 @@ sub filters {
     return @$filters;
 }
 
-# ----------------------------------------------------------------------
 sub show_warnings {
     my $self = shift;
     my $arg  = shift;
@@ -272,7 +202,6 @@ sub show_warnings {
 }
 
 
-# filename - get or set the filename
 sub filename {
     my $self = shift;
     if (@_) {
@@ -296,13 +225,6 @@ sub filename {
     $self->{'filename'};
 }
 
-# ----------------------------------------------------------------------
-# data([$data])
-#
-# if $self->{'data'} is not set, but $self->{'filename'} is, then
-# $self->{'filename'} is opened and read, with the results put into
-# $self->{'data'}.
-# ----------------------------------------------------------------------
 sub data {
     my $self = shift;
 
@@ -356,7 +278,6 @@ sub data {
     return $self->{'data'};
 }
 
-# ----------------------------------------------------------------------
 sub reset {
 #
 # Deletes the existing Schema object so that future calls to translate
@@ -367,7 +288,6 @@ sub reset {
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 #
 # Returns the SQL::Translator::Schema object
@@ -383,7 +303,6 @@ sub schema {
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub trace {
     my $self = shift;
     my $arg  = shift;
@@ -393,21 +312,6 @@ sub trace {
     return $self->{'trace'} || 0;
 }
 
-# ----------------------------------------------------------------------
-# translate([source], [\%args])
-#
-# translate does the actual translation.  The main argument is the
-# source of the data to be translated, which can be a filename, scalar
-# reference, or glob reference.
-#
-# Alternatively, translate takes optional arguements, which are passed
-# to the appropriate places.  Most notable of these arguments are
-# parser and producer, which can be used to set the parser and
-# producer, respectively.  This is the applications last chance to set
-# these.
-#
-# translate returns a string.
-# ----------------------------------------------------------------------
 sub translate {
     my $self = shift;
     my ($args, $parser, $parser_type, $producer, $producer_type);
@@ -550,36 +454,10 @@ sub translate {
     return wantarray ? @producer_output : $producer_output;
 }
 
-# ----------------------------------------------------------------------
-# list_parsers()
-#
-# Hacky sort of method to list all available parsers.  This has
-# several problems:
-#
-#   - Only finds things in the SQL::Translator::Parser namespace
-#
-#   - Only finds things that are located in the same directory
-#     as SQL::Translator::Parser.  Yeck.
-#
-# This method will fail in several very likely cases:
-#
-#   - Parser modules in different namespaces
-#
-#   - Parser modules in the SQL::Translator::Parser namespace that
-#     have any XS componenets will be installed in
-#     arch_lib/SQL/Translator.
-#
-# ----------------------------------------------------------------------
 sub list_parsers {
     return shift->_list("parser");
 }
 
-# ----------------------------------------------------------------------
-# list_producers()
-#
-# See notes for list_parsers(), above; all the problems apply to
-# list_producers as well.
-# ----------------------------------------------------------------------
 sub list_producers {
     return shift->_list("producer");
 }
@@ -794,22 +672,18 @@ sub _load_sub {
     return undef;
 }
 
-# ----------------------------------------------------------------------
 sub format_table_name {
     return shift->_format_name('_format_table_name', @_);
 }
 
-# ----------------------------------------------------------------------
 sub format_package_name {
     return shift->_format_name('_format_package_name', @_);
 }
 
-# ----------------------------------------------------------------------
 sub format_fk_name {
     return shift->_format_name('_format_fk_name', @_);
 }
 
-# ----------------------------------------------------------------------
 sub format_pk_name {
     return shift->_format_name('_format_pk_name', @_);
 }
@@ -835,28 +709,16 @@ sub _format_name {
     return @args ? $self->{$field}->(@args) : $self->{$field};
 }
 
-# ----------------------------------------------------------------------
-# isa($ref, $type)
-#
-# Calls UNIVERSAL::isa($ref, $type).  I think UNIVERSAL::isa is ugly,
-# but I like function overhead.
-# ----------------------------------------------------------------------
 sub isa($$) {
     my ($ref, $type) = @_;
     return UNIVERSAL::isa($ref, $type);
 }
 
-# ----------------------------------------------------------------------
-# version
-#
-# Returns the $VERSION of the main SQL::Translator package.
-# ----------------------------------------------------------------------
 sub version {
     my $self = shift;
     return $VERSION;
 }
 
-# ----------------------------------------------------------------------
 sub validate {
     my ( $self, $arg ) = @_;
     if ( defined $arg ) {

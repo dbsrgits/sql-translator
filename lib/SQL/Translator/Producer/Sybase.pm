@@ -132,7 +132,6 @@ and table_constraint is:
 
 =cut
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator     = shift;
     $DEBUG             = $translator->debug;
@@ -370,7 +369,6 @@ sub produce {
     return $output;
 }
 
-# -------------------------------------------------------------------
 sub mk_name {
     my $basename      = shift || '';
     my $type          = shift || '';
@@ -409,7 +407,6 @@ sub mk_name {
     return $name;
 }
 
-# -------------------------------------------------------------------
 sub unreserve {
     my $name            = shift || '';
     my $schema_obj_name = shift || '';
@@ -430,8 +427,6 @@ sub unreserve {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

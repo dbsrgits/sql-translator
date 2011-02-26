@@ -59,8 +59,6 @@ my %VALID_CONSTRAINT_TYPE = (
     NOT_NULL,    1,
 );
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/
     table name type fields reference_fields reference_table
     match_type on_delete on_update expression deferrable
@@ -95,7 +93,6 @@ Object constructor.
     $self->SUPER::init(@_);
 }
 
-# ----------------------------------------------------------------------
 sub deferrable {
 
 =pod
@@ -121,7 +118,6 @@ False, so the following are eqivalent:
     return defined $self->{'deferrable'} ? $self->{'deferrable'} : 1;
 }
 
-# ----------------------------------------------------------------------
 sub expression {
 
 =pod
@@ -144,7 +140,6 @@ Gets and set the expression used in a CHECK constraint.
     return $self->{'expression'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -207,7 +202,6 @@ Determine whether the constraint is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -260,7 +254,6 @@ Returns undef or an empty list if the constraint has no fields set.
     }
 }
 
-# ----------------------------------------------------------------------
 sub field_names {
 
 =head2 field_names
@@ -277,7 +270,6 @@ avoid the overload magic of the Field objects returned by the fields method.
     return wantarray ? @{ $self->{'fields'} || [] } : ($self->{'fields'} || '');
 }
 
-# ----------------------------------------------------------------------
 sub match_type {
 
 =pod
@@ -303,7 +295,6 @@ Get or set the constraint's match_type.  Only valid values are "full"
     return $self->{'match_type'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -322,7 +313,6 @@ Get or set the constraint's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub options {
 
 =pod
@@ -350,8 +340,6 @@ Returns an array or array reference.
     }
 }
 
-
-# ----------------------------------------------------------------------
 sub on_delete {
 
 =pod
@@ -374,7 +362,6 @@ Get or set the constraint's "on delete" action.
     return $self->{'on_delete'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub on_update {
 
 =pod
@@ -397,7 +384,6 @@ Get or set the constraint's "on update" action.
     return $self->{'on_update'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub reference_fields {
 
 =pod
@@ -456,7 +442,6 @@ arrayref; returns an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub reference_table {
 
 =pod
@@ -474,7 +459,6 @@ Get or set the table referred to by the constraint.
     return $self->{'reference_table'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -497,7 +481,6 @@ Get or set the constraint's table object.
     return $self->{'table'};
 }
 
-# ----------------------------------------------------------------------
 sub type {
 
 =pod
@@ -523,7 +506,6 @@ Get or set the constraint's type.
     return $self->{'type'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -589,15 +571,12 @@ Determines if this constraint is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

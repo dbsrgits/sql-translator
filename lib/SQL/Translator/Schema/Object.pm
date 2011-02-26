@@ -107,7 +107,6 @@ sub init {
     return $self;
 }
 
-# ----------------------------------------------------------------------
 sub extra {
 
 =pod
@@ -151,7 +150,6 @@ Returns a hash or a hashref.
     return wantarray ? %$extra : $extra;
 }
 
-# ----------------------------------------------------------------------
 sub remove_extra {
 
 =head2 remove_extra
@@ -178,7 +176,6 @@ certain extra attributes only.
     }
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -200,7 +197,6 @@ Determines if this object is the same as another.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub _compare_objects {
    my $self = shift;
    my $obj1 = shift;
@@ -216,8 +212,6 @@ sub _compare_objects {
 #  }
    return $result;
 }
-
-#=============================================================================
 
 1;
 

@@ -201,7 +201,6 @@ my %truncated;
 # Quote used to escape table, field, sequence and trigger names
 my $quote_char  = '"';
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator     = shift;
     $DEBUG             = $translator->debug;
@@ -764,7 +763,6 @@ sub create_view {
     return \@create;
 }
 
-# -------------------------------------------------------------------
 sub mk_name {
     my $basename      = shift || '';
     my $type          = shift || '';
@@ -805,7 +803,6 @@ sub mk_name {
 
 1;
 
-# -------------------------------------------------------------------
 sub quote {
   my ($name, $q) = @_;
   $q && $name ? "$quote_char$name$quote_char" : $name;

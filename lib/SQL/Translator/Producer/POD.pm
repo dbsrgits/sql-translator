@@ -45,7 +45,6 @@ $VERSION = '1.59';
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
 
-# -------------------------------------------------------------------
 sub produce {
     my $t           = shift;
     my $schema      = $t->schema;

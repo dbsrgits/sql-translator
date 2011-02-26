@@ -61,8 +61,6 @@ my %VALID_INDEX_TYPE = (
   SPATIAL        => 1, # MySQL only (?)
 );
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/
     name type fields table options
 /);
@@ -77,7 +75,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -115,7 +112,6 @@ names and keep them in order by the first occurrence of a field name.
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -141,7 +137,6 @@ Determine whether the index is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -159,7 +154,6 @@ Get or set the index's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub options {
 
 =pod
@@ -186,7 +180,6 @@ an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -209,7 +202,6 @@ Get or set the index's table object.
     return $self->{'table'};
 }
 
-# ----------------------------------------------------------------------
 sub type {
 
 =pod
@@ -241,7 +233,6 @@ uppercase.
     return $self->{'type'} || 'NORMAL';
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -289,15 +280,12 @@ Determines if this index is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

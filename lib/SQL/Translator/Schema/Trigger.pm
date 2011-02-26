@@ -56,8 +56,6 @@ use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
 
 $VERSION = '1.59';
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/
     name schema perform_action_when database_events database_event
     fields table on_table action order
@@ -73,7 +71,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub perform_action_when {
 
 =pod
@@ -104,7 +101,6 @@ C<database_event>.
     return $self->{'perform_action_when'};
 }
 
-# ----------------------------------------------------------------------
 sub database_event {
 
 =pod
@@ -120,7 +116,6 @@ Obsolete please use database_events!
     return $self->database_events( @_ );
 }
 
-# ----------------------------------------------------------------------
 sub database_events {
 
 =pod
@@ -157,7 +152,6 @@ Gets or sets the events that triggers the trigger.
         : $self->{'database_events'};
 }
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -193,7 +187,6 @@ Gets and set which fields to monitor for C<database_event>.
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -215,7 +208,6 @@ Gets or set the table on which the trigger works, as a L<SQL::Translator::Schema
     return $self->{table};
 }
 
-# ----------------------------------------------------------------------
 sub on_table {
 
 =pod
@@ -237,7 +229,6 @@ Gets or set the table name on which the trigger works, as a string.
     return $self->table->name;
 }
 
-# ----------------------------------------------------------------------
 sub action {
 
 =pod
@@ -263,7 +254,6 @@ Gets or set the action of the trigger.
     return $self->{'action'};
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -290,7 +280,6 @@ Determine whether the trigger is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -308,7 +297,6 @@ Get or set the trigger's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -330,7 +318,6 @@ Get or set the trigger's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -354,7 +341,6 @@ Get or set the trigger's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub compare_arrays {
 
 =pod
@@ -383,7 +369,6 @@ Compare two arrays.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -439,15 +424,12 @@ Determines if this trigger is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

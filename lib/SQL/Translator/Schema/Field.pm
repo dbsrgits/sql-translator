@@ -91,7 +91,6 @@ our %type_mapping = (
   text => SQL_LONGVARCHAR
 
 );
-# ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
     table name data_type size is_primary_key is_nullable
@@ -112,7 +111,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub comments {
 
 =pod
@@ -148,7 +146,6 @@ all the comments joined on newlines.
 }
 
 
-# ----------------------------------------------------------------------
 sub data_type {
 
 =pod
@@ -184,7 +181,6 @@ for more details.
 
 }
 
-# ----------------------------------------------------------------------
 sub default_value {
 
 =pod
@@ -204,7 +200,6 @@ assume an error like other methods.
     return $self->{'default_value'};
 }
 
-# ----------------------------------------------------------------------
 =pod
 
 =head2 extra
@@ -217,8 +212,6 @@ Accepts a hash(ref) of name/value pairs to store;  returns a hash.
 
 =cut
 
-
-# ----------------------------------------------------------------------
 sub foreign_key_reference {
 
 =pod
@@ -252,7 +245,6 @@ Get or set the field's foreign key reference;
     return $self->{'foreign_key_reference'};
 }
 
-# ----------------------------------------------------------------------
 sub is_auto_increment {
 
 =pod
@@ -287,7 +279,6 @@ Get or set the field's C<is_auto_increment> attribute.
     return $self->{'is_auto_increment'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_foreign_key {
 
 =pod
@@ -320,7 +311,6 @@ Returns whether or not the field is a foreign key.
     return $self->{'is_foreign_key'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_nullable {
 
 =pod
@@ -359,7 +349,6 @@ foreign keys; checks) are represented as table constraints.
     return defined $self->{'is_nullable'} ? $self->{'is_nullable'} : 1;
 }
 
-# ----------------------------------------------------------------------
 sub is_primary_key {
 
 =pod
@@ -394,7 +383,6 @@ a table constraint (should it?).
     return $self->{'is_primary_key'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_unique {
 
 =pod
@@ -426,7 +414,6 @@ Determine whether the field has a UNIQUE constraint or not.
     return $self->{'is_unique'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -446,7 +433,6 @@ Determine whether the field is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -493,7 +479,6 @@ e.g. "person.foo".
     return $self->table.".".$self->name;
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -515,7 +500,6 @@ Get or set the field's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =head2 schema
@@ -532,7 +516,6 @@ doesn't have one.
     return undef;
 }
 
-# ----------------------------------------------------------------------
 sub size {
 
 =pod
@@ -571,7 +554,6 @@ numbers and returns a string.
     ;
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -614,7 +596,6 @@ Returns the field exactly as the parser found it
     return $self->{parsed_field} || $self;
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -671,7 +652,6 @@ Determines if this field is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
 #
 # Destroy cyclical references.
@@ -682,8 +662,6 @@ sub DESTROY {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

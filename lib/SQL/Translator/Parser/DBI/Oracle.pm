@@ -42,7 +42,6 @@ use SQL::Translator::Schema::Constraint;
 
 our $VERSION = '1.59';
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
 

@@ -52,8 +52,6 @@ automatically arrange them horizontally or vertically.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
@@ -105,8 +103,6 @@ sub latex {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 
