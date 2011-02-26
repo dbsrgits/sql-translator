@@ -23,9 +23,9 @@ takes a long time.
 
 use strict;
 use warnings;
-use vars qw($DEBUG $VERSION @EXPORT_OK);
+our ( $DEBUG, @EXPORT_OK );
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 use Storable;
 use Exporter;

@@ -12,8 +12,8 @@ class.
 use strict;
 use warnings;
 
-use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our @EXPORT_OK;
+our $VERSION = '1.59';
 
 use Template;
 use Data::Dumper;

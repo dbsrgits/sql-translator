@@ -99,8 +99,8 @@ query Oracle directly and skip the parsing of a text file, too.
 use strict;
 use warnings;
 use DBI;
-use vars qw($VERSION @EXPORT);
-$VERSION = '1.59';
+our @EXPORT;
+our $VERSION = '1.59';
 
 use constant DRIVERS => {
     mysql            => 'MySQL',

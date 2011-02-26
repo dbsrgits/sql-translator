@@ -2,9 +2,8 @@ package SQL::Translator::Producer;
 
 use strict;
 use warnings;
-use vars qw($VERSION);
 use Scalar::Util ();
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 sub produce { "" }
 

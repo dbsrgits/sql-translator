@@ -21,8 +21,8 @@ Does not yet support PostGIS Views.
 
 use strict;
 use warnings;
-use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = '1.59';
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);

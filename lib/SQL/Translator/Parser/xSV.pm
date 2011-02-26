@@ -45,8 +45,8 @@ C<SQL::Translator::Utils::normalize_name>.
 
 use strict;
 use warnings;
-use vars qw($VERSION @EXPORT);
-$VERSION = '1.59';
+our @EXPORT;
+our $VERSION = '1.59';
 
 use Exporter;
 use Text::ParseWords qw(quotewords);

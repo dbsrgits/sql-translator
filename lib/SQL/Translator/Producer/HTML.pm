@@ -3,13 +3,11 @@ package SQL::Translator::Producer::HTML;
 use strict;
 use warnings;
 use Data::Dumper;
-use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
 
-$VERSION = '1.59';
-
-$NAME = __PACKAGE__;
-$NOWRAP = 0 unless defined $NOWRAP;
-$NOLINKTABLE = 0 unless defined $NOLINKTABLE;
+our $VERSION = '1.59';
+our $NAME = __PACKAGE__;
+our $NOWRAP = 0 unless defined $NOWRAP;
+our $NOLINKTABLE = 0 unless defined $NOLINKTABLE;
 
 # Emit XHTML by default
 $CGI::XHTML = $CGI::XHTML = 42;

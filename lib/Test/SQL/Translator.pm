@@ -14,9 +14,9 @@ use Test::More;
 use SQL::Translator::Schema::Constants;
 
 use base qw(Exporter);
-use vars qw($VERSION @EXPORT @EXPORT_OK);
-$VERSION = '1.59';
-@EXPORT = qw(
+our @EXPORT_OK;
+our $VERSION = '1.59';
+our @EXPORT = qw(
     schema_ok
     table_ok
     field_ok

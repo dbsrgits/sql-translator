@@ -23,9 +23,9 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
 
-use vars qw[ $VERSION $DEBUG $WARN ];
+our ( $DEBUG, $WARN );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 

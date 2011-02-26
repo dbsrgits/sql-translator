@@ -142,8 +142,8 @@ To convert your old format files simply pass them through the translator :)
 
 use strict;
 use warnings;
-use vars qw[ $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our @EXPORT_OK;
+our $VERSION = '1.59';
 
 use Exporter;
 use base qw(Exporter);

@@ -22,9 +22,7 @@ use base 'Class::Data::Inheritable';
 use base 'Class::Base';
 use Class::MakeMethods::Utility::Ref qw( ref_compare );
 
-use vars qw[ $VERSION ];
-
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 
 =head1 Construction

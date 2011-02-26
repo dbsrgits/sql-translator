@@ -42,11 +42,10 @@ This module exports the following constants for Schema features;
 use strict;
 use warnings;
 use base qw( Exporter );
-use vars qw( @EXPORT $VERSION );
 require Exporter;
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
-@EXPORT = qw[
+our @EXPORT = qw[
     CHECK_C
     FOREIGN_KEY
     FULL_TEXT

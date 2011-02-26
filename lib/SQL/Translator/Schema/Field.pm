@@ -29,9 +29,9 @@ use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is

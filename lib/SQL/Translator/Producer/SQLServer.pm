@@ -36,8 +36,8 @@ List of values for an enum field.
 
 use strict;
 use warnings;
-use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = '1.59';
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;

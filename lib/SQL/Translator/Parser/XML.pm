@@ -22,8 +22,8 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 
 use strict;
 use warnings;
-use vars qw[ $VERSION $DEBUG ];
-$VERSION = '1.59';
+our $DEBUG;
+our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Parser::XML::SQLFairy;

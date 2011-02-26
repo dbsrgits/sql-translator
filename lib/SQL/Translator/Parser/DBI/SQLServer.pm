@@ -20,8 +20,8 @@ use DBI;
 use SQL::Translator::Schema;
 use Data::Dumper;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our ( $DEBUG, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';

@@ -29,9 +29,9 @@ use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
     name sql fields schema order

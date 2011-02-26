@@ -29,7 +29,7 @@ use Class::MakeMethods::Template::Hash (
   'number --counter' => [ qw( order ) ],
 );
 
-use vars qw/$DEBUG/;
+our $DEBUG;
 $DEBUG = 0 unless defined $DEBUG;
 
 sub init {

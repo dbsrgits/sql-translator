@@ -81,8 +81,8 @@ Set the fields charater set and collation order.
 
 use strict;
 use warnings;
-use vars qw[ $VERSION $DEBUG %used_names ];
-$VERSION = '1.59';
+our ( $DEBUG, %used_names );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 # Maximum length for most identifiers is 64, according to:

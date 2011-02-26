@@ -19,8 +19,8 @@ This module will produce text output of the schema suitable for Sybase.
 
 use strict;
 use warnings;
-use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = '1.59';
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;

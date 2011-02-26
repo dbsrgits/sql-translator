@@ -29,8 +29,7 @@ SQL::Translator::Filter::Names - Tweak the names of schema objects.
 
 use strict;
 use warnings;
-use vars qw/$VERSION/;
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 sub filter {
     my $schema = shift;

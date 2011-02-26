@@ -35,9 +35,9 @@ use base 'SQL::Translator::Schema::Object';
 
 use Carp;
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
     name schema perform_action_when database_events database_event
