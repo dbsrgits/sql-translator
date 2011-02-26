@@ -40,6 +40,7 @@ Use via SQL::Translator:
 =cut
 
 use strict;
+use warnings;
 use GD;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
@@ -85,19 +86,19 @@ sub produce {
     my %skip_field   = map { $_, 1 } (
         ref $args->{'skip_fields'} eq 'ARRAY'
         ? @{ $args->{'skip_fields'} }
-        : split ( /\s*,\s*/, $args->{'skip_fields'} )
+        : split ( /\s*,\s*/, $args->{'skip_fields'}||'' )
     );
 
     my %skip_table   = map { $_, 1 } (
         ref $args->{'skip_tables'} eq 'ARRAY'
         ? @{ $args->{'skip_tables'} }
-        : split ( /\s*,\s*/, $args->{'skip_tables'} )
+        : split ( /\s*,\s*/, $args->{'skip_tables'}||'' )
     );
 
     my @skip_tables_like = map { qr/$_/ } (
         ref $args->{'skip_tables_like'} eq 'ARRAY'
         ? @{ $args->{'skip_tables_like'} }
-        : split ( /\s*,\s*/, $args->{'skip_tables_like'} )
+        : split ( /\s*,\s*/, $args->{'skip_tables_like'}||'' )
     );
 
     my @table_names;
@@ -217,8 +218,8 @@ sub produce {
 
             my $nlen  = length $name;
             my $dlen  = length $desc;
-            $max_name = $nlen if $nlen > $max_name;
-            $max_desc = $dlen if $dlen > $max_desc;
+            $max_name = $nlen if $nlen > ($max_name||0);
+            $max_desc = $dlen if $dlen > ($max_desc||0);
             push @fld_desc, [ $name, $desc, $f->{'name'}, $is_pk, $attr ];
         }
 
@@ -297,7 +298,7 @@ sub produce {
         ];
 
         push @shapes, [ 'rectangle', @bounds, 'black' ];
-        $max_x = $this_max_x if $this_max_x > $max_x;
+        $max_x = $this_max_x if $this_max_x > ($max_x||0);
         $y    += 25;
 
         if ( ++$no_this_col == $no_per_col ) {# if we've filled up this column
@@ -305,7 +306,7 @@ sub produce {
             $no_this_col = 0;                 # reset the number of tables
             $max_x      += $gutter;           # push the x over for next column
             $this_col_x  = $max_x;            # remember the max x for this col
-            $max_y       = $y if $y > $max_y; # note the max y
+            $max_y       = $y if $y > ($max_y||0); # note the max y
             $y           = $orig_y;           # reset the y for next column
         }
     }
@@ -481,7 +482,7 @@ sub produce {
 
         my $longest;
         for my $len ( map { length $_ } values %legend ) {
-            $longest = $len if $len > $longest;
+            $longest = $len if $len > ($longest||0);
         }
         $longest += 2;
 

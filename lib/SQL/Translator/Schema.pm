@@ -27,6 +27,7 @@ returns the database structure.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;

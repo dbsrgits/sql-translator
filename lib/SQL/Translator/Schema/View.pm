@@ -24,6 +24,7 @@ C<SQL::Translator::Schema::View> is the view object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';

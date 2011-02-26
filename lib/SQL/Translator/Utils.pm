@@ -1,6 +1,7 @@
 package SQL::Translator::Utils;
 
 use strict;
+use warnings;
 use base qw(Exporter);
 use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
 use Digest::SHA1 qw( sha1_hex );

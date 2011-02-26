@@ -88,6 +88,7 @@ context the slash will be still there to ensure compatibility with SQLPlus.
 =cut
 
 use strict;
+use warnings;
 use vars qw[ $VERSION $DEBUG $WARN ];
 $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;

@@ -16,6 +16,7 @@ extra functionality.
 =cut
 
 use strict;
+use warnings;
 use Class::Base;
 use base 'Class::Data::Inheritable';
 use base 'Class::Base';

@@ -23,6 +23,7 @@ C<SQL::Translator::Schema::Field> is the field object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 

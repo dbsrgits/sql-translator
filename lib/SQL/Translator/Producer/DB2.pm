@@ -19,6 +19,7 @@ Creates an SQL DDL suitable for DB2.
 
 use warnings;
 use strict;
+use warnings;
 use vars qw[ $VERSION $DEBUG $WARN ];
 $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;

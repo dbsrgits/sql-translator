@@ -10,6 +10,7 @@ class.
 =cut
 
 use strict;
+use warnings;
 
 use vars qw[ $VERSION @EXPORT_OK ];
 $VERSION = '1.59';

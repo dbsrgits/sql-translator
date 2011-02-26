@@ -20,6 +20,7 @@ C<SQL::Translator::Schema::Table> is the table object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Utils 'parse_list_arg';
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;

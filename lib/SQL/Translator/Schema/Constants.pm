@@ -40,6 +40,7 @@ This module exports the following constants for Schema features;
 =cut
 
 use strict;
+use warnings;
 use base qw( Exporter );
 use vars qw( @EXPORT $VERSION );
 require Exporter;

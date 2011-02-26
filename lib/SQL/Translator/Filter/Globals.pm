@@ -37,6 +37,7 @@ SQL::Translator::Filter::Globals - Add global fields and indices to all tables.
 =cut
 
 use strict;
+use warnings;
 use vars qw/$VERSION/;
 $VERSION = '1.59';
 

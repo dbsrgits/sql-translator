@@ -20,6 +20,7 @@ schema to a text file and parsing that.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use SQL::Translator::Parser::SQLite;
 use Data::Dumper;

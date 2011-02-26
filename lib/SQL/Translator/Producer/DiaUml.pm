@@ -35,6 +35,7 @@ automatically arrange them horizontally or vertically.
 =cut
 
 use strict;
+use warnings;
 
 use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
 $VERSION = '1.59';

@@ -44,6 +44,7 @@ C<SQL::Translator::Utils::normalize_name>.
 =cut
 
 use strict;
+use warnings;
 use vars qw($VERSION @EXPORT);
 $VERSION = '1.59';
 

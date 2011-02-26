@@ -1,6 +1,7 @@
 package SQL::Translator::Schema::Graph::Edge;
 
 use strict;
+use warnings;
 
 use Class::MakeMethods::Template::Hash (
   new => ['new'],

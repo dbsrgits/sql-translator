@@ -16,6 +16,7 @@ delegates to DBD::DB2.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use Data::Dumper;
 use SQL::Translator::Parser::DB2;

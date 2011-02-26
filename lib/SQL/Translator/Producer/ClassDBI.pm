@@ -1,6 +1,7 @@
 package SQL::Translator::Producer::ClassDBI;
 
 use strict;
+use warnings;
 use vars qw[ $VERSION $DEBUG ];
 $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;

@@ -1,6 +1,7 @@
 package SQL::Translator::Schema::Graph;
 
 use strict;
+use warnings;
 
 use base 'Class::Base';
 

@@ -76,6 +76,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 =cut
 
 use strict;
+use warnings;
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
 $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;

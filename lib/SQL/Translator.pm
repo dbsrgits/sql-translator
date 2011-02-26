@@ -1,6 +1,7 @@
 package SQL::Translator;
 
 use strict;
+use warnings;
 use vars qw( $VERSION $DEFAULT_SUB $DEBUG $ERROR );
 use base 'Class::Base';
 

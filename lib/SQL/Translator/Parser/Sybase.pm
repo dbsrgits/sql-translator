@@ -18,6 +18,7 @@ DBI-Sybase parser included with SQL::Translator.
 =cut
 
 use strict;
+use warnings;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
 $VERSION = '1.59';

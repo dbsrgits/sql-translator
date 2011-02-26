@@ -28,6 +28,7 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';

@@ -15,6 +15,7 @@ Uses DBI to query PostgreSQL system tables to determine schema structure.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;

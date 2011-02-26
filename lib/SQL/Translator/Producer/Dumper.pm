@@ -33,6 +33,7 @@ generated script, or part of the DSN can be intuited from the
 =cut
 
 use strict;
+use warnings;
 use Config;
 use SQL::Translator;
 use File::Temp 'tempfile';

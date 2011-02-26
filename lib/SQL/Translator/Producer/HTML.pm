@@ -1,6 +1,7 @@
 package SQL::Translator::Producer::HTML;
 
 use strict;
+use warnings;
 use Data::Dumper;
 use vars qw($VERSION $NOWRAP $NOLINKTABLE $NAME);
 

@@ -23,6 +23,7 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 =cut
 
 use strict;
+use warnings;
 use vars qw[ $VERSION $DEBUG ];
 $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;

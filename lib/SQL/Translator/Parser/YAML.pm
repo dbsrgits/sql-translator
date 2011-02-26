@@ -1,6 +1,7 @@
 package SQL::Translator::Parser::YAML;
 
 use strict;
+use warnings;
 use vars qw($VERSION);
 $VERSION = '1.59';
 

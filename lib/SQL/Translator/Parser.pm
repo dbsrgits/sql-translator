@@ -1,6 +1,7 @@
 package SQL::Translator::Parser;
 
 use strict;
+use warnings;
 use vars qw( $VERSION );
 $VERSION = '1.60';
 

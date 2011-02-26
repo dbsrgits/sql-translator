@@ -141,6 +141,7 @@ To convert your old format files simply pass them through the translator :)
 =cut
 
 use strict;
+use warnings;
 use vars qw[ $VERSION @EXPORT_OK ];
 $VERSION = '1.59';
 

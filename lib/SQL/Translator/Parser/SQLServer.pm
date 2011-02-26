@@ -17,6 +17,7 @@ should probably be considered a work in progress.
 =cut
 
 use strict;
+use warnings;
 
 use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
 $VERSION = '1.59';

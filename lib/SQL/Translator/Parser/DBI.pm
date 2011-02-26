@@ -97,6 +97,7 @@ query Oracle directly and skip the parsing of a text file, too.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use vars qw($VERSION @EXPORT);
 $VERSION = '1.59';

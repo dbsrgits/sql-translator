@@ -24,6 +24,7 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 

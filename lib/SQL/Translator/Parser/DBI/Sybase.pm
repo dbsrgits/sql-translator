@@ -15,6 +15,7 @@ Uses DBI Catalog Methods.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use SQL::Translator::Schema;
 use Data::Dumper;

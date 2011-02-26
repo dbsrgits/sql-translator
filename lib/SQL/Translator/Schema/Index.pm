@@ -26,6 +26,7 @@ Primary and unique keys are table constraints, not indices.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 

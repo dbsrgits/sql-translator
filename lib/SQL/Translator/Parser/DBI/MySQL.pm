@@ -17,6 +17,7 @@ a create file.  Should be much faster for larger schemas.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;

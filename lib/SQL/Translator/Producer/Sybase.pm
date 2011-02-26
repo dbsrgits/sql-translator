@@ -18,6 +18,7 @@ This module will produce text output of the schema suitable for Sybase.
 =cut
 
 use strict;
+use warnings;
 use vars qw[ $DEBUG $WARN $VERSION ];
 $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
