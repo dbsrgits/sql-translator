@@ -448,7 +448,7 @@ sub produce {
               my $constraints;
               if ($args->{show_constraints}) {
                 my @constraints;
-                push(@constraints, 'PK') if $field->is_primary_key;
+                push(@constraints, $field->is_auto_increment ? 'PA' : 'PK') if $field->is_primary_key;
                 push(@constraints, 'FK') if $field->is_foreign_key;
                 push(@constraints, 'U')  if $field->is_unique;
                 push(@constraints, 'N')  if $field->is_nullable;
