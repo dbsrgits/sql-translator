@@ -6,7 +6,9 @@
 package SQL::Translator::Filter::Ok;
 use strict;
 
-sub filter { Test::More::pass(@_) }
+sub filter { Test::More::pass(
+  'Filter called with args: ' . join ', ', @_
+) }
 
 # Hack to allow sqlt to see our module as it wasn't loaded from a .pm
 $INC{'SQL/Translator/Filter/Ok.pm'} = 'lib/SQL/Translator/Filter/Ok.pm';

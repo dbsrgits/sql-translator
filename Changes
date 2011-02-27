@@ -3,6 +3,7 @@
 * made PostgreSQL producer consistent with other producers in terms of
   quoting and allowing functions in constraints and indices
 * Add distinction of autoinc and regular primary keys to the GraphViz producer
+* Fix odd invocation of Test::More::pass() in t/36-filters.t (RT#64728)
 
 # ----------------------------------------------------------
 # 0.11007 2010-11-30
