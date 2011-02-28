@@ -1,4 +1,5 @@
 
+* Correctly create and parse FK constraints in SQLite
 * Correct postgis geography type insertion and linebreak fix for multiple geometry/geography columns
 * made PostgreSQL producer consistent with other producers in terms of
   quoting and allowing functions in constraints and indices

@@ -48,7 +48,8 @@ CREATE TABLE Basic (
   -- Hello emptytagdef
   emptytagdef varchar DEFAULT '',
   another_id int(10) DEFAULT 2,
-  timest timestamp
+  timest timestamp,
+  FOREIGN KEY(another_id) REFERENCES Another()
 );
 
 CREATE INDEX titleindex ON Basic (title);
@@ -105,7 +106,8 @@ eq_or_diff(\@sql,
   -- Hello emptytagdef
   emptytagdef varchar DEFAULT \'\',
   another_id int(10) DEFAULT 2,
-  timest timestamp
+  timest timestamp,
+  FOREIGN KEY(another_id) REFERENCES Another()
 )',
           'CREATE INDEX titleindex ON Basic (title)',
           'CREATE UNIQUE INDEX emailuniqueindex ON Basic (email)',

@@ -433,6 +433,17 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
             on_conflict => $item[5][0],
         }
     }
+    |
+    FOREIGN_KEY parens_field_list REFERENCES ref_def
+    {
+      $return = {
+        supertype        => 'constraint',
+        type             => 'foreign_key',
+        fields           => $item[2],
+        reference_table  => $item[4]{'reference_table'},
+        reference_fields => $item[4]{'reference_fields'},
+      }
+    }
 
 ref_def : /(\w+)\s*\((\w+)\)/
     { $return = { reference_table => $1, reference_fields => $2 } }
@@ -572,6 +583,8 @@ INDEX : /index/i
 NOT_NULL : /not null/i
 
 PRIMARY_KEY : /primary key/i
+
+FOREIGN_KEY : /foreign key/i
 
 CHECK_C : /check/i
 

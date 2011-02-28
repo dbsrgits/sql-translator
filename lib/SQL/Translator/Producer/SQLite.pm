@@ -234,6 +234,9 @@ sub create_table
     #
     my $c_name_default = 'A';
     for my $c ( $table->get_constraints ) {
+        if ($c->type eq "FOREIGN KEY") {
+            push @field_defs, create_foreignkey($c);
+        }
         next unless $c->type eq UNIQUE; 
         push @constraint_defs, create_constraint($c);
     }
@@ -241,6 +244,15 @@ sub create_table
     $create_table .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
 
     return (@create, $create_table, @index_defs, @constraint_defs );
+}
+
+sub create_foreignkey {
+    my $c = shift;
+
+    my $fk_sql = "FOREIGN KEY($c->{fields}[0]) REFERENCES ";
+    $fk_sql .= ( $c->{reference_table} || '' )."(".( $c->{reference_fields}[0] || '' ).")";
+
+    return $fk_sql;
 }
 
 sub create_field

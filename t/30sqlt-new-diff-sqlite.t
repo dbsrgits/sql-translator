@@ -98,7 +98,8 @@ CREATE TABLE added (
 CREATE TEMPORARY TABLE employee_temp_alter (
   position varchar(50) NOT NULL,
   employee_id int(11) NOT NULL,
-  PRIMARY KEY (position, employee_id)
+  PRIMARY KEY (position, employee_id),
+  FOREIGN KEY(employee_id) REFERENCES person(person_id)
 );
 
 INSERT INTO employee_temp_alter SELECT position, employee_id FROM employee;
@@ -108,7 +109,8 @@ DROP TABLE employee;
 CREATE TABLE employee (
   position varchar(50) NOT NULL,
   employee_id int(11) NOT NULL,
-  PRIMARY KEY (position, employee_id)
+  PRIMARY KEY (position, employee_id),
+  FOREIGN KEY(employee_id) REFERENCES person(person_id)
 );
 
 INSERT INTO employee SELECT position, employee_id FROM employee_temp_alter;
