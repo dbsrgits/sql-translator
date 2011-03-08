@@ -8,6 +8,18 @@ with 'SQL::Translator::Shim::Producer';
 
 sub _build_shim { SQL::Translator::ProducerUtils->new( quote_chars => [qw( [ ] )] ) }
 
+sub _build_numeric_types {
+   +{
+      int => 1,
+   }
+}
+
+sub _build_unquoted_defaults {
+   +{
+      NULL => 1,
+   }
+}
+
 sub _build_type_map {
    +{
       date => 'datetime',
