@@ -24,6 +24,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
 use SQL::Translator::Generator::Utils;
 my $util = SQL::Translator::Generator::Utils->new( quote_chars => q(") );
+use SQL::Translator::Generator::DDL::SQLite;
 
 our ( $DEBUG, $WARN );
 our $VERSION = '1.59';
@@ -32,6 +33,7 @@ $WARN = 0 unless defined $WARN;
 
 our $max_id_length    = 30;
 my %global_names;
+my $future = SQL::Translator::Generator::DDL::SQLite->new();
 
 sub produce {
     my $translator     = shift;
@@ -262,82 +264,7 @@ sub create_foreignkey {
     return $fk_sql;
 }
 
-sub create_field
-{
-    my ($field, $options) = @_;
-
-    my $field_name = $util->quote($field->name);
-    debug("PKG: Looking at field '$field_name'\n");
-    my $field_comments = $field->comments
-        ? "-- " . $field->comments . "\n  "
-        : '';
-
-    my $field_def = $field_comments.$field_name;
-
-    # data type and size
-    my $size      = $field->size;
-    my $data_type = $field->data_type;
-    $data_type    = 'varchar' if lc $data_type eq 'set';
-    $data_type  = 'blob' if lc $data_type eq 'bytea';
-
-    if ( lc $data_type =~ /(text|blob)/i ) {
-        $size = undef;
-    }
-
-#             if ( $data_type =~ /timestamp/i ) {
-#                 push @trigger_defs,
-#                     "CREATE TRIGGER ts_${table_name} ".
-#                     "after insert on $table_name\n".
-#                     "begin\n".
-#                     "  update $table_name set $field_name=timestamp() ".
-#                        "where id=new.id;\n".
-#                     "end;\n"
-#                 ;
-#
-#            }
-
-    #
-    # SQLite is generally typeless, but newer versions will
-    # make a field autoincrement if it is declared as (and
-    # *only* as) INTEGER PRIMARY KEY
-    #
-    my $pk        = $field->table->primary_key;
-    my @pk_fields = $pk ? $pk->fields : ();
-
-    if (
-         $field->is_primary_key &&
-         scalar @pk_fields == 1 &&
-         (
-          $data_type =~ /int(eger)?$/i
-          ||
-          ( $data_type =~ /^number?$/i && $size !~ /,/ )
-          )
-         ) {
-        $data_type = 'INTEGER PRIMARY KEY';
-        $size      = undef;
-#        $pk_set    = 1;
-    }
-
-    $field_def .= sprintf " %s%s", $data_type,
-    ( !$field->is_auto_increment && $size ) ? "($size)" : '';
-
-    # Null?
-    $field_def .= ' NOT NULL' unless $field->is_nullable;
-
-    # Default?
-    SQL::Translator::Producer->_apply_default_value(
-        $field,
-        \$field_def,
-        [
-         'NULL'              => \'NULL',
-         'now()'             => 'now()',
-         'CURRENT_TIMESTAMP' => 'CURRENT_TIMESTAMP',
-        ],
-    );
-
-    return $field_def;
-
-}
+sub create_field { return $future->field($_[0]) }
 
 sub create_index
 {
