@@ -44,8 +44,10 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
 use SQL::Translator::ProducerUtils;
+use SQL::Translator::Shim::Producer::SQLServer;
 
 my $util = SQL::Translator::ProducerUtils->new( quote_chars => ['[', ']'] );
+my $future = SQL::Translator::Shim::Producer::SQLServer->new();
 
 my %translate  = (
     date      => 'datetime',
@@ -136,18 +138,11 @@ sub produce {
         my %field_name_scope;
         for my $field ( $table->get_fields ) {
             my $field_name    = $field->name;
-            my $field_name_ur = unreserve( $field_name );
-            my $field_def     = qq["$field_name_ur"];
-            $field_def        =~ s/\"//g;
-            if ( $field_def =~ /identity/ ){
-                $field_def =~ s/identity/pidentity/;
-            }
 
             #
             # Datatype
             #
             my $data_type      = lc $field->data_type;
-            my $orig_data_type = $data_type;
             my %extra          = $field->extra;
             my $list           = $extra{'list'} || [];
             # \todo deal with embedded quotes
@@ -159,73 +154,8 @@ sub produce {
                   "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
                 $data_type .= 'character varying';
             }
-            elsif ( $data_type eq 'set' ) {
-                $data_type .= 'character varying';
-            }
-            elsif ( grep { $data_type eq $_ } qw/bytea blob clob/ ) {
-                $data_type = 'varbinary';
-            }
-            else {
-                if ( defined $translate{ $data_type } ) {
-                    $data_type = $translate{ $data_type };
-                }
-                else {
-                    warn "Unknown datatype: $data_type ",
-                        "($table_name.$field_name)\n" if $WARN;
-                }
-            }
 
-            my $size = $field->size;
-            if ( grep $_ eq $data_type, @no_size) {
-            # SQLServer doesn't seem to like sizes on some datatypes
-                $size = undef;
-            }
-            elsif ( !$size ) {
-                if ( $data_type =~ /numeric/ ) {
-                    $size = '9,0';
-                }
-                elsif ( $orig_data_type eq 'text' ) {
-                    #interpret text fields as long varchars
-                    $size = '255';
-                }
-                elsif (
-                    $data_type eq 'varchar' &&
-                    $orig_data_type eq 'boolean'
-                ) {
-                    $size = '6';
-                }
-                elsif ( $data_type eq 'varchar' ) {
-                    $size = '255';
-                }
-            }
-
-            $field_def .= " $data_type";
-            $field_def .= "($size)" if $size;
-
-            $field_def .= ' IDENTITY' if $field->is_auto_increment;
-
-            #
-            # Not null constraint
-            #
-            unless ( $field->is_nullable ) {
-                $field_def .= ' NOT NULL';
-            }
-            else {
-                $field_def .= ' NULL' if $data_type ne 'bit';
-            }
-
-            #
-            # Default value
-            #
-            SQL::Translator::Producer->_apply_default_value(
-              $field,
-              \$field_def,
-              [
-                'NULL'       => \'NULL',
-              ],
-            );
-
-            push @field_defs, $field_def;
+            push @field_defs, $future->field($field);
         }
 
         #
