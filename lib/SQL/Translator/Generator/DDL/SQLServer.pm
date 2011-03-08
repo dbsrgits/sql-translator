@@ -7,6 +7,18 @@ with 'SQL::Translator::Generator::Role::DDL';
 
 sub _build_shim { SQL::Translator::Generator::Utils->new( quote_chars => [qw( [ ] )] ) }
 
+sub _build_numeric_types {
+   +{
+      int => 1,
+   }
+}
+
+sub _build_unquoted_defaults {
+   +{
+      NULL => 1,
+   }
+}
+
 sub _build_type_map {
    +{
       date => 'datetime',
