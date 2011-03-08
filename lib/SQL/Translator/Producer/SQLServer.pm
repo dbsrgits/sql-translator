@@ -163,45 +163,12 @@ sub produce {
         #
         my @constraint_decs = ();
         for my $constraint ( $table->get_constraints ) {
-            my $name    = $constraint->name || '';
-            my $name_ur = unreserve($name);
-            # Make sure we get a unique name
             my $type    = $constraint->type || NORMAL;
-            my @fields  = map { unreserve( $_ ) }
-                $constraint->fields;
-            my @rfields = map { unreserve( $_ ) }
-                $constraint->reference_fields;
-            next unless @fields;
+            next unless $constraint->fields;
 
             my $c_def;
             if ( $type eq FOREIGN_KEY ) {
-                $name ||= mk_name( $table_name . '_fk' );
-                my $on_delete = uc ($constraint->on_delete || '');
-                my $on_update = uc ($constraint->on_update || '');
-
-                # The default implicit constraint action in MSSQL is RESTRICT
-                # but you can not specify it explicitly. Go figure :)
-                for ($on_delete, $on_update) {
-                  undef $_ if $_ eq 'RESTRICT'
-                }
-
-                $c_def =
-                    "ALTER TABLE $table_name_ur ADD CONSTRAINT $name_ur FOREIGN KEY".
-                    ' (' . join( ', ', @fields ) . ') REFERENCES '.
-                    unreserve($constraint->reference_table).
-                    ' (' . join( ', ', @rfields ) . ')'
-                ;
-
-                if ( $on_delete && $on_delete ne "NO ACTION") {
-                  $c_def .= " ON DELETE $on_delete";
-                }
-                if ( $on_update && $on_update ne "NO ACTION") {
-                  $c_def .= " ON UPDATE $on_update";
-                }
-
-                $c_def .= ";";
-
-                push @foreign_constraints, $c_def;
+                push @foreign_constraints, $future->foreign_key_constraint($constraint);
                 next;
             }
 

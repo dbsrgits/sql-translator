@@ -59,17 +59,17 @@ sub field_autoinc { ( $_[1]->is_auto_increment ? 'IDENTITY' : () ) }
 
 sub primary_key_constraint {
   'CONSTRAINT ' .
-    $_[0]->shim->quote($_[1]->name || $_[1]->table->name . '_pk') .
+    $_[0]->quote($_[1]->name || $_[1]->table->name . '_pk') .
     ' PRIMARY KEY (' .
-    join( ', ', map $_[0]->shim->quote($_), $_[1]->fields ) .
+    join( ', ', map $_[0]->quote($_), $_[1]->fields ) .
     ')'
 }
 
 sub index {
   'CREATE INDEX ' .
-   $_[0]->shim->quote($_[1]->name || $_[1]->table->name . '_idx') .
-   ' ON ' . $_[0]->shim->quote($_[1]->table->name) .
-   ' (' . join( ', ', map $_[0]->shim->quote($_), $_[1]->fields ) . ');'
+   $_[0]->quote($_[1]->name || $_[1]->table->name . '_idx') .
+   ' ON ' . $_[0]->quote($_[1]->table->name) .
+   ' (' . join( ', ', map $_[0]->quote($_), $_[1]->fields ) . ');'
 }
 
 sub unique_constraint_single {
@@ -77,12 +77,12 @@ sub unique_constraint_single {
 
   'CONSTRAINT ' .
    $self->unique_constraint_name($constraint) .
-   ' UNIQUE (' . join( ', ', $constraint->fields ) . ')'
+   ' UNIQUE (' . join( ', ', map $self->quote($_), $constraint->fields ) . ')'
 }
 
 sub unique_constraint_name {
   my ($self, $constraint) = @_;
-  $self->shim->quote($constraint->name || $constraint->table->name . '_uc' )
+  $self->quote($constraint->name || $constraint->table->name . '_uc' )
 }
 
 sub unique_constraint_multiple {
@@ -90,11 +90,41 @@ sub unique_constraint_multiple {
 
   'CREATE UNIQUE NONCLUSTERED INDEX ' .
    $self->unique_constraint_name($constraint) .
-   ' ON ' . $self->shim->quote($constraint->table->name) . ' (' .
+   ' ON ' . $self->quote($constraint->table->name) . ' (' .
    join( ', ', $constraint->fields ) . ')' .
    ' WHERE ' . join( ' AND ',
-    map $self->shim->quote($_->name) . ' IS NOT NULL',
+    map $self->quote($_->name) . ' IS NOT NULL',
     grep { $_->is_nullable } $constraint->fields ) . ';'
+}
+
+sub foreign_key_constraint {
+  my ($self, $constraint) = @_;
+
+  my $on_delete = uc ($constraint->on_delete || '');
+  my $on_update = uc ($constraint->on_update || '');
+
+  # The default implicit constraint action in MSSQL is RESTRICT
+  # but you can not specify it explicitly. Go figure :)
+  for (map uc $_ || '', $on_delete, $on_update) {
+    undef $_ if $_ eq 'RESTRICT'
+  }
+
+  'ALTER TABLE ' . $self->quote($constraint->table->name) .
+   ' ADD CONSTRAINT ' .
+   $self->quote($constraint->name || $constraint->table->name . '_fk') .
+   ' FOREIGN KEY' .
+   ' (' . join( ', ', map $self->quote($_), $constraint->fields ) . ') REFERENCES '.
+   $self->quote($constraint->reference_table) .
+   ' (' . join( ', ', map $self->quote($_), $constraint->reference_fields ) . ')'
+   . (
+     $on_delete && $on_delete ne "NO ACTION"
+       ? ' ON DELETE ' . $on_delete
+       : ''
+   ) . (
+     $on_update && $on_update ne "NO ACTION"
+       ? ' ON UPDATE ' . $on_update
+       : ''
+   ) . ';';
 }
 
 1;
