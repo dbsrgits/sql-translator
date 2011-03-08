@@ -207,10 +207,7 @@ sub produce {
 
 
             if ( $type eq PRIMARY_KEY ) {
-                $name = ($name ? unreserve($name) : mk_name( $table_name . '_pk' ));
-                $c_def =
-                    "CONSTRAINT $name PRIMARY KEY ".
-                    '(' . join( ', ', @fields ) . ')';
+                $c_def = $future->primary_key_constraint($constraint)
             }
             elsif ( $type eq UNIQUE ) {
                 $name = $name_ur || mk_name( $table_name . '_uc' );
@@ -234,11 +231,7 @@ sub produce {
         # Indices
         #
         for my $index ( $table->get_indices ) {
-            my $idx_name = $index->name || mk_name($table_name . '_idx');
-            my $idx_name_ur = unreserve($idx_name);
-            push @index_defs,
-                "CREATE INDEX $idx_name_ur ON $table_name_ur (".
-                join( ', ', map unreserve($_), $index->fields ) . ");";
+            push @index_defs, $future->index($index)
         }
 
         my $create_statement = "";
