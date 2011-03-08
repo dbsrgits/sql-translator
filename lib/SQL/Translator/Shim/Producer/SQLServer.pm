@@ -57,5 +57,20 @@ sub field_type_size {
 
 sub field_autoinc { ( $_[1]->is_auto_increment ? 'IDENTITY' : () ) }
 
+sub primary_key_constraint {
+  'CONSTRAINT ' .
+    $_[0]->shim->quote($_[1]->name || $_[1]->table->name . '_pk') .
+    ' PRIMARY KEY (' .
+    join( ', ', map $_[0]->shim->quote($_), $_[1]->fields ) .
+    ')'
+}
+
+sub index {
+  'CREATE INDEX ' .
+   $_[0]->shim->quote($_[1]->name || $_[1]->table->name . '_idx') .
+   ' ON ' . $_[0]->shim->quote($_[1]->table->name) .
+   ' (' . join( ', ', map $_[0]->shim->quote($_), $_[1]->fields ) . ');'
+}
+
 1;
 
