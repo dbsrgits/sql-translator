@@ -72,5 +72,30 @@ sub index {
    ' (' . join( ', ', map $_[0]->shim->quote($_), $_[1]->fields ) . ');'
 }
 
+sub unique_constraint_single {
+  my ($self, $constraint) = @_;
+
+  'CONSTRAINT ' .
+   $self->unique_constraint_name($constraint) .
+   ' UNIQUE (' . join( ', ', $constraint->fields ) . ')'
+}
+
+sub unique_constraint_name {
+  my ($self, $constraint) = @_;
+  $self->shim->quote($constraint->name || $constraint->table->name . '_uc' )
+}
+
+sub unique_constraint_multiple {
+  my ($self, $constraint) = @_;
+
+  'CREATE UNIQUE NONCLUSTERED INDEX ' .
+   $self->unique_constraint_name($constraint) .
+   ' ON ' . $self->shim->quote($constraint->table->name) . ' (' .
+   join( ', ', $constraint->fields ) . ')' .
+   ' WHERE ' . join( ' AND ',
+    map $self->shim->quote($_->name) . ' IS NOT NULL',
+    grep { $_->is_nullable } $constraint->fields ) . ';'
+}
+
 1;
 

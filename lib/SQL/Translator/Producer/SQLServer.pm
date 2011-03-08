@@ -210,17 +210,10 @@ sub produce {
                 $c_def = $future->primary_key_constraint($constraint)
             }
             elsif ( $type eq UNIQUE ) {
-                $name = $name_ur || mk_name( $table_name . '_uc' );
-                my @nullable = grep { $_->is_nullable } $constraint->fields;
-                if (!@nullable) {
-                  $c_def =
-                      "CONSTRAINT $name UNIQUE " .
-                      '(' . join( ', ', @fields ) . ')';
+                if (!grep { $_->is_nullable } $constraint->fields) {
+                  $c_def = $future->unique_constraint_single($constraint)
                 } else {
-                   push @index_defs,
-                       "CREATE UNIQUE NONCLUSTERED INDEX $name_ur ON $table_name_ur (" .
-                          join( ', ', @fields ) . ')' .
-                          ' WHERE ' . join( ' AND ', map unreserve($_->name) . ' IS NOT NULL', @nullable ) . ';';
+                   push @index_defs, $future->unique_constraint_multiple($constraint);
                    next;
                 }
             }
