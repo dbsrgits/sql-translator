@@ -10,6 +10,7 @@ requires 'field_type_size';
 
 has shim => (
    is => 'ro',
+   handles => [ 'quote' ],
    builder => '_build_shim',
 );
 
@@ -30,7 +31,7 @@ has unquoted_defaults => (
 
 # would also be handy to have a required size set if there is such a thing
 
-sub field_name { $_[0]->shim->quote($_[1]->name) }
+sub field_name { $_[0]->quote($_[1]->name) }
 
 sub field_comments {
    ( $_[1]->comments ? ('-- ' . $_[1]->comments . "\n ") : () )
