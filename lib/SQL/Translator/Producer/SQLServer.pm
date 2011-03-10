@@ -9,16 +9,12 @@ $DEBUG = 1 unless defined $DEBUG;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
-use SQL::Translator::Generator::Utils;
 use SQL::Translator::Generator::DDL::SQLServer;
 
-my $util = SQL::Translator::Generator::Utils->new( quote_chars => ['[', ']'] );
 my $future = SQL::Translator::Generator::DDL::SQLServer->new();
 
 sub produce {
     my $translator     = shift;
-    $DEBUG             = $translator->debug;
-    $WARN              = $translator->show_warnings;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
@@ -81,7 +77,7 @@ sub produce {
     return $output;
 }
 
-sub unreserve { $util->quote($_[0]) }
+sub unreserve { $future->quote($_[0]) }
 
 1;
 
