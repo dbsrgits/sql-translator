@@ -27,14 +27,11 @@ sub produce {
     if ($add_drop_table) {
         my @tables = sort { $b->order <=> $a->order } $schema->get_tables;
         $output .= "--\n-- Turn off constraints\n--\n\n" unless $no_comments;
-        foreach my $table (@tables) {
-            $output .= $future->remove_table_constraints($table)
-        }
+        $output .= join "\n", map $future->remove_table_constraints($_), @tables;
         $output .= "\n";
         $output .= "--\n-- Drop tables\n--\n\n" unless $no_comments;
-        foreach my $table (@tables) {
-            $output .= $future->drop_table($table);
-        }
+        $output .= join "\n", map $future->drop_table($_), @tables;
+        $output .= "\n";
     }
 
     # these need to be added separately, as tables may not exist yet

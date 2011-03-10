@@ -171,7 +171,7 @@ sub drop_table {
    my $name = $table->name;
    my $q_name = $self->quote($name);
    "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U')" .
-      " DROP TABLE $q_name;\n"
+      " DROP TABLE $q_name;"
 }
 
 sub remove_table_constraints {
@@ -179,7 +179,7 @@ sub remove_table_constraints {
    my $name = $table->name;
    my $q_name = $self->quote($name);
    "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U')" .
-   " ALTER TABLE $q_name NOCHECK CONSTRAINT all;\n"
+   " ALTER TABLE $q_name NOCHECK CONSTRAINT all;"
 }
 
 1;
