@@ -12,13 +12,10 @@ use SQL::Translator::Utils qw(debug header_comment);
 use SQL::Translator::ProducerUtils;
 use SQL::Translator::Shim::Producer::SQLServer;
 
-my $util = SQL::Translator::ProducerUtils->new( quote_chars => ['[', ']'] );
 my $future = SQL::Translator::Shim::Producer::SQLServer->new();
 
 sub produce {
     my $translator     = shift;
-    $DEBUG             = $translator->debug;
-    $WARN              = $translator->show_warnings;
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
@@ -81,7 +78,7 @@ sub produce {
     return $output;
 }
 
-sub unreserve { $util->quote($_[0]) }
+sub unreserve { $future->quote($_[0]) }
 
 1;
 
