@@ -49,35 +49,6 @@ use SQL::Translator::Generator::DDL::SQLServer;
 my $util = SQL::Translator::Generator::Utils->new( quote_chars => ['[', ']'] );
 my $future = SQL::Translator::Generator::DDL::SQLServer->new();
 
-my %translate  = (
-    date      => 'datetime',
-    'time'    => 'datetime',
-    # Sybase types
-    #integer   => 'numeric',
-    #int       => 'numeric',
-    #number    => 'numeric',
-    #money     => 'money',
-    #varchar   => 'varchar',
-    #varchar2  => 'varchar',
-    #timestamp => 'datetime',
-    #text      => 'varchar',
-    #real      => 'double precision',
-    #comment   => 'text',
-    #bit       => 'bit',
-    #tinyint   => 'smallint',
-    #float     => 'double precision',
-    #serial    => 'numeric',
-    #boolean   => 'varchar',
-    #char      => 'char',
-    #long      => 'varchar',
-);
-
-# If these datatypes have size appended the sql fails.
-my @no_size = qw/tinyint smallint int integer bigint text bit image datetime/;
-
-my $max_id_length    = 128;
-my %global_names;
-
 =pod
 
 =head1 SQLServer Create Table Syntax
@@ -93,8 +64,6 @@ sub produce {
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
-
-    %global_names = (); #reset
 
     my $output;
     $output .= header_comment."\n" unless ($no_comments);
@@ -182,27 +151,6 @@ sub produce {
         $output .= "$text\nGO\n";
     }
 =cut
-
-sub mk_name {
-    my ($name, $scope, $critical) = @_;
-
-    $scope ||= \%global_names;
-    if ( my $prev = $scope->{ $name } ) {
-        my $name_orig = $name;
-        $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00"
-            if length( $name ) > $max_id_length;
-
-        warn "The name '$name_orig' has been changed to ",
-             "'$name' to make it unique.\n" if $WARN;
-
-        $scope->{ $name_orig }++;
-    }
-    $name = substr( $name, 0, $max_id_length )
-                        if ((length( $name ) > $max_id_length) && $critical);
-    $scope->{ $name }++;
-    return unreserve($name);
-}
 
 sub unreserve { $util->quote($_[0]) }
 
