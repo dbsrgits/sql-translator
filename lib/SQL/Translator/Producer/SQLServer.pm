@@ -135,26 +135,8 @@ sub produce {
 
         $output .= join( "\n\n",
             @comments,
-            qq[CREATE TABLE $table_name_ur (\n].
-              join( ",\n",
-                  map { "  $_" }
-                  # field defs
-                  ( map $future->field($_), $table->get_fields ),
-                  # constraint defs
-                  (map $future->enum_constraint($_->name, { $_->extra }->{list} || []),
-                     grep { 'enum' eq lc $_->data_type } $table->get_fields),
-
-                  (map $future->primary_key_constraint($_),
-                     grep { $_->type eq PRIMARY_KEY } $table->get_constraints),
-
-                  (map $future->unique_constraint_single($_),
-                     grep {
-                       $_->type eq UNIQUE &&
-                       !grep { $_->is_nullable } $_->fields
-                     } $table->get_constraints),
-              ).
-              "\n);",
             # index defs
+            $future->table($table),
             (map $future->unique_constraint_multiple($_),
                grep {
                   $_->type eq UNIQUE &&
