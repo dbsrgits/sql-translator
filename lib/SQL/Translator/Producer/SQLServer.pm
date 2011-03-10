@@ -144,15 +144,9 @@ sub produce {
             #
             my $data_type      = lc $field->data_type;
             my %extra          = $field->extra;
-            my $list           = $extra{'list'} || [];
-            # \todo deal with embedded quotes
-            my $commalist      = join( ', ', map { qq['$_'] } @$list );
 
             if ( $data_type eq 'enum' ) {
-                my $check_name = mk_name( $field_name . '_chk' );
-                push @constraint_defs,
-                  "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
-                $data_type .= 'character varying';
+                push @constraint_defs, $future->enum_constraint($field_name, $extra{'list'} || [])
             }
 
             push @field_defs, $future->field($field);
