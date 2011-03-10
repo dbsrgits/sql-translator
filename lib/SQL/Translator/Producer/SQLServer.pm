@@ -117,89 +117,51 @@ sub produce {
         }
     }
 
-    # Generate the CREATE sql
+    # these need to be added separately, as tables may not exist yet
+    my @foreign_constraints = ();
 
-    my @foreign_constraints = (); # these need to be added separately, as tables may not exist yet
+    for my $table ( grep { $_->name } $schema->get_tables ) {
+        my $table_name_ur = unreserve($table->name);
 
-    for my $table ( $schema->get_tables ) {
-        my $table_name    = $table->name or next;
-        my $table_name_ur = unreserve($table_name) || '';
-
-        my ( @comments, @field_defs, @index_defs, @constraint_defs );
+        my ( @comments );
 
         push @comments, "\n\n--\n-- Table: $table_name_ur\n--"
-        unless $no_comments;
+           unless $no_comments;
 
         push @comments, map { "-- $_" } $table->comments;
 
-        #
-        # Fields
-        #
-        my %field_name_scope;
-        for my $field ( $table->get_fields ) {
-            my $field_name    = $field->name;
-
-            #
-            # Datatype
-            #
-            my $data_type      = lc $field->data_type;
-            my %extra          = $field->extra;
-
-            if ( $data_type eq 'enum' ) {
-                push @constraint_defs, $future->enum_constraint($field_name, $extra{'list'} || [])
-            }
-
-            push @field_defs, $future->field($field);
-        }
-
-        #
-        # Constraint Declarations
-        #
-        my @constraint_decs = ();
-        for my $constraint ( $table->get_constraints ) {
-            my $type    = $constraint->type || NORMAL;
-            next unless $constraint->fields;
-
-            my $c_def;
-            if ( $type eq FOREIGN_KEY ) {
-                push @foreign_constraints, $future->foreign_key_constraint($constraint);
-                next;
-            }
-
-
-            if ( $type eq PRIMARY_KEY ) {
-                $c_def = $future->primary_key_constraint($constraint)
-            }
-            elsif ( $type eq UNIQUE ) {
-                if (!grep { $_->is_nullable } $constraint->fields) {
-                  $c_def = $future->unique_constraint_single($constraint)
-                } else {
-                   push @index_defs, $future->unique_constraint_multiple($constraint);
-                   next;
-                }
-            }
-            push @constraint_defs, $c_def;
-        }
-
-        #
-        # Indices
-        #
-        for my $index ( $table->get_indices ) {
-            push @index_defs, $future->index($index)
-        }
-
-        my $create_statement = "";
-        $create_statement .= qq[CREATE TABLE $table_name_ur (\n].
-            join( ",\n",
-                map { "  $_" } @field_defs, @constraint_defs
-            ).
-            "\n);"
-        ;
+        push @foreign_constraints, map $future->foreign_key_constraint($_),
+           grep { $_->type eq FOREIGN_KEY } $table->get_constraints;
 
         $output .= join( "\n\n",
             @comments,
-            $create_statement,
-            @index_defs,
+            qq[CREATE TABLE $table_name_ur (\n].
+              join( ",\n",
+                  map { "  $_" }
+                  # field defs
+                  ( map $future->field($_), $table->get_fields ),
+                  # constraint defs
+                  (map $future->enum_constraint($_->name, { $_->extra }->{list} || []),
+                     grep { 'enum' eq lc $_->data_type } $table->get_fields),
+
+                  (map $future->primary_key_constraint($_),
+                     grep { $_->type eq PRIMARY_KEY } $table->get_constraints),
+
+                  (map $future->unique_constraint_single($_),
+                     grep {
+                       $_->type eq UNIQUE &&
+                       !grep { $_->is_nullable } $_->fields
+                     } $table->get_constraints),
+              ).
+              "\n);",
+            # index defs
+            (map $future->unique_constraint_multiple($_),
+               grep {
+                  $_->type eq UNIQUE &&
+                  grep { $_->is_nullable } $_->fields
+               } $table->get_constraints),
+
+            (map $future->index($_), $table->get_indices)
         );
     }
 
@@ -208,6 +170,9 @@ sub produce {
 
 # create view/procedure are NOT prepended to the input $sql, needs
 # to be filled in with the proper syntax
+
+    return $output;
+}
 
 =pod
 
@@ -235,9 +200,6 @@ sub produce {
         $output .= "$text\nGO\n";
     }
 =cut
-
-    return $output;
-}
 
 sub mk_name {
     my ($name, $scope, $critical) = @_;
