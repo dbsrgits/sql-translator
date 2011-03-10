@@ -1,39 +1,5 @@
 package SQL::Translator::Producer::SQLServer;
 
-=head1 NAME
-
-SQL::Translator::Producer::SQLServer - MS SQLServer producer for SQL::Translator
-
-=head1 SYNOPSIS
-
-  use SQL::Translator;
-
-  my $t = SQL::Translator->new( parser => '...', producer => 'SQLServer' );
-  $t->translate;
-
-=head1 DESCRIPTION
-
-B<WARNING>B This is still fairly early code, basically a hacked version of the
-Sybase Producer (thanks Sam, Paul and Ken for doing the real work ;-)
-
-=head1 Extra Attributes
-
-=over 4
-
-=item field.list
-
-List of values for an enum field.
-
-=back
-
-=head1 TODO
-
- * !! Write some tests !!
- * Reserved words list needs updating to SQLServer.
- * Triggers, Procedures and Views DO NOT WORK
-
-=cut
-
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
@@ -48,14 +14,6 @@ use SQL::Translator::Generator::DDL::SQLServer;
 
 my $util = SQL::Translator::Generator::Utils->new( quote_chars => ['[', ']'] );
 my $future = SQL::Translator::Generator::DDL::SQLServer->new();
-
-=pod
-
-=head1 SQLServer Create Table Syntax
-
-TODO
-
-=cut
 
 sub produce {
     my $translator     = shift;
@@ -125,7 +83,49 @@ sub produce {
     return $output;
 }
 
+sub unreserve { $util->quote($_[0]) }
+
+1;
+
 =pod
+
+=head1 SQLServer Create Table Syntax
+
+TODO
+
+
+=head1 NAME
+
+SQL::Translator::Producer::SQLServer - MS SQLServer producer for SQL::Translator
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+
+  my $t = SQL::Translator->new( parser => '...', producer => 'SQLServer' );
+  $t->translate;
+
+=head1 DESCRIPTION
+
+B<WARNING>B This is still fairly early code, basically a hacked version of the
+Sybase Producer (thanks Sam, Paul and Ken for doing the real work ;-)
+
+=head1 Extra Attributes
+
+=over 4
+
+=item field.list
+
+List of values for an enum field.
+
+=back
+
+=head1 TODO
+
+ * !! Write some tests !!
+ * Reserved words list needs updating to SQLServer.
+ * Triggers, Procedures and Views DO NOT WORK
+
 
     # Text of view is already a 'create view' statement so no need to
     # be fancy
@@ -150,13 +150,6 @@ sub produce {
       $text =~ s/\r//g;
         $output .= "$text\nGO\n";
     }
-=cut
-
-sub unreserve { $util->quote($_[0]) }
-
-1;
-
-=pod
 
 =head1 SEE ALSO
 
