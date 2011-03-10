@@ -127,5 +127,20 @@ sub foreign_key_constraint {
    ) . ';';
 }
 
+sub enum_constraint_name {
+  my ($self, $field_name) = @_;
+  $self->quote($field_name . '_chk' )
+}
+
+sub enum_constraint {
+  my ( $self, $field_name, $vals ) = @_;
+
+  return (
+     'CONSTRAINT ' . $self->enum_constraint_name($field_name) .
+       ' CHECK (' . $self->quote($field_name) .
+       ' IN (' . join( ',', map qq('$_'), @$vals ) . '))'
+  )
+}
+
 1;
 
