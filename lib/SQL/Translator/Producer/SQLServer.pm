@@ -28,9 +28,7 @@ sub produce {
         my @tables = sort { $b->order <=> $a->order } $schema->get_tables;
         $output .= "--\n-- Turn off constraints\n--\n\n" unless $no_comments;
         foreach my $table (@tables) {
-            my $name = $table->name;
-            my $q_name = unreserve($name);
-            $output .= "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') ALTER TABLE $q_name NOCHECK CONSTRAINT all;\n"
+            $output .= $future->remove_table_constraints($table)
         }
         $output .= "\n";
         $output .= "--\n-- Drop tables\n--\n\n" unless $no_comments;
