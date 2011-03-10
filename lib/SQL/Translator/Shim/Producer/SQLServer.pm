@@ -166,5 +166,13 @@ sub table {
      "\n);",
 }
 
+sub drop_table {
+   my ($self, $table) = @_;
+   my $name = $table->name;
+   my $q_name = $self->quote($name);
+   "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U')" .
+      " DROP TABLE $q_name;\n"
+}
+
 1;
 

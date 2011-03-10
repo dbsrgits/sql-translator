@@ -38,9 +38,7 @@ sub produce {
         $output .= "\n";
         $output .= "--\n-- Drop tables\n--\n\n" unless $no_comments;
         foreach my $table (@tables) {
-            my $name = $table->name;
-            my $q_name = unreserve($name);
-            $output .= "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U') DROP TABLE $q_name;\n"
+            $output .= $future->drop_table($table);
         }
     }
 
