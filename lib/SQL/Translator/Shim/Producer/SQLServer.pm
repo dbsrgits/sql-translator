@@ -186,5 +186,30 @@ sub remove_table_constraints {
    " ALTER TABLE $q_name NOCHECK CONSTRAINT all;"
 }
 
+sub drop_tables {
+   my ($self, $schema) = shift;
+
+   if ($self->add_drop_table) {
+      my @tables = sort { $b->order <=> $a->order } $schema->get_tables;
+      return join "\n", (
+         ( $self->add_comments ? (
+         '--',
+         '-- Turn off constraints',
+         '--',
+         '',
+         ) : () ),
+         (map $self->remove_table_constraints($_), @tables),
+         ( $self->add_comments ? (
+         '--',
+         '-- Drop tables',
+         '--',
+         '',
+         ) : () ),
+         (map $self->drop_table($_), @tables),
+      )
+   }
+   return '';
+}
+
 1;
 
