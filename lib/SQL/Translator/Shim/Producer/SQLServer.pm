@@ -211,5 +211,13 @@ sub drop_tables {
    return '';
 }
 
+sub foreign_key_constraints {
+   my ($self, $schema) = @_;
+   ( map $self->foreign_key_constraint($_),
+     grep { $_->type eq FOREIGN_KEY }
+     map $_->get_constraints,
+     $schema->get_tables )
+}
+
 1;
 

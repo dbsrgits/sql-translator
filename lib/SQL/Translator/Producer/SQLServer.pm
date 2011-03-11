@@ -18,19 +18,12 @@ sub produce {
       add_drop_tables => $translator->add_drop_table,
     );
 
-    my $no_comments    = $translator->no_comments;
-    my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
 
     my $output = $future->header_comments
       . $future->drop_tables($schema);
 
-    my @foreign_constraints = ();
-
     for my $table ( grep { $_->name } $schema->get_tables ) {
-        push @foreign_constraints, map $future->foreign_key_constraint($_),
-           grep { $_->type eq FOREIGN_KEY } $table->get_constraints;
-
         $output .= join( "\n\n",
             $future->table_comments($table),
             # index defs
@@ -45,11 +38,8 @@ sub produce {
         );
     }
 
-# Add FK constraints
+    my @foreign_constraints = $future->foreign_key_constraints($schema);
     $output .= join ("\n", '', @foreign_constraints) if @foreign_constraints;
-
-# create view/procedure are NOT prepended to the input $sql, needs
-# to be filled in with the proper syntax
 
     return $output;
 }
