@@ -8,33 +8,14 @@ $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
-use SQL::Translator::ProducerUtils;
 use SQL::Translator::Shim::Producer::SQLServer;
 
 sub produce {
     my $translator     = shift;
-    my $future = SQL::Translator::Shim::Producer::SQLServer->new(
+    SQL::Translator::Shim::Producer::SQLServer->new(
       add_comments    => !$translator->no_comments,
       add_drop_tables => $translator->add_drop_table,
-    );
-
-    my $schema         = $translator->schema;
-
-    my $output = $future->header_comments
-      . $future->drop_tables($schema);
-
-    for my $table ( grep { $_->name } $schema->get_tables ) {
-        $output .= join( "\n\n",
-            $future->table($table),
-            $future->unique_constraints_multiple($table),
-            $future->indices($table),
-        );
-    }
-
-    my @foreign_constraints = $future->foreign_key_constraints($schema);
-    $output .= join ("\n", '', @foreign_constraints) if @foreign_constraints;
-
-    return $output;
+    )->schema($translator->schema)
 }
 
 1;

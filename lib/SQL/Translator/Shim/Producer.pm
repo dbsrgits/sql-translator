@@ -50,11 +50,11 @@ sub table_comments {
    my ($self, $table) = @_;
    if ($self->add_comments) {
       return (
-         "\n",
-         "--\n",
-         "-- Table: " . $self->quote($table->name) . "\n",
-         "--\n",
-         map "-- $_\n", $table->comments
+         "",
+         "--",
+         "-- Table: " . $self->quote($table->name) . "",
+         "--",
+         map "-- $_", $table->comments
       )
    } else {
       return ()

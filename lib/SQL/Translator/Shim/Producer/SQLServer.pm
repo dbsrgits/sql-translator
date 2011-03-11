@@ -161,15 +161,17 @@ sub constraints {
 
 sub table {
    my ($self, $table) = @_;
+   join ( "\n", $self->table_comments($table), '' ) .
    join ( "\n\n",
-      $self->table_comments($table),
       'CREATE TABLE ' . $self->quote($table->name) . " (\n".
         join( ",\n",
            map { "  $_" }
            $self->fields($table),
            $self->constraints($table),
         ) .
-        "\n);"
+        "\n);",
+        $self->unique_constraints_multiple($table),
+        $self->indices($table),
    )
 }
 
@@ -229,6 +231,15 @@ sub foreign_key_constraints {
      grep { $_->type eq FOREIGN_KEY }
      map $_->get_constraints,
      $schema->get_tables )
+}
+
+sub schema {
+   my ($self, $schema) = @_;
+
+   $self->header_comments .
+      $self->drop_tables($schema) .
+      join("\n\n", map $self->table($_), grep { $_->name } $schema->get_tables) .
+      "\n" . join "\n", $self->foreign_key_constraints($schema)
 }
 
 1;
