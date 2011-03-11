@@ -11,10 +11,13 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
 use SQL::Translator::Generator::DDL::SQLServer;
 
-my $future = SQL::Translator::Generator::DDL::SQLServer->new();
-
 sub produce {
     my $translator     = shift;
+    my $future = SQL::Translator::Generator::DDL::SQLServer->new(
+      add_comments    => !$translator->no_comments,
+      add_drop_tables => $translator->add_drop_table,
+    );
+
     my $no_comments    = $translator->no_comments;
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
@@ -23,21 +26,13 @@ sub produce {
     $output .= header_comment."\n" unless ($no_comments);
 
     # Generate the DROP statements.
-    if ($add_drop_table) {
-        my @tables = sort { $b->order <=> $a->order } $schema->get_tables;
-        $output .= "--\n-- Turn off constraints\n--\n\n" unless $no_comments;
-        $output .= join "\n", map $future->remove_table_constraints($_), @tables;
-        $output .= "\n";
-        $output .= "--\n-- Drop tables\n--\n\n" unless $no_comments;
-        $output .= join "\n", map $future->drop_table($_), @tables;
-        $output .= "\n";
-    }
+    $output .= $future->drop_tables;
 
     # these need to be added separately, as tables may not exist yet
     my @foreign_constraints = ();
 
     for my $table ( grep { $_->name } $schema->get_tables ) {
-        my $table_name_ur = unreserve($table->name);
+        my $table_name_ur = $future->quote($table->name);
 
         my ( @comments );
 
@@ -71,8 +66,6 @@ sub produce {
 
     return $output;
 }
-
-sub unreserve { $future->quote($_[0]) }
 
 1;
 

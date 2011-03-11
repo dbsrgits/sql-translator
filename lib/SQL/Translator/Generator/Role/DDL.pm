@@ -29,6 +29,14 @@ has unquoted_defaults => (
    builder => '_build_unquoted_defaults',
 );
 
+has add_comments => (
+   is => 'ro',
+);
+
+has add_drop_table => (
+   is => 'ro',
+);
+
 # would also be handy to have a required size set if there is such a thing
 
 sub field_name { $_[0]->quote($_[1]->name) }
