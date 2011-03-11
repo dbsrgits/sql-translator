@@ -46,6 +46,21 @@ sub field_comments {
    ( $_[1]->comments ? ('-- ' . $_[1]->comments . "\n ") : () )
 }
 
+sub table_comments {
+   my ($self, $table) = @_;
+   if ($self->add_comments) {
+      return (
+         "\n",
+         "--\n",
+         "-- Table: " . $self->quote($table->name) . "\n",
+         "--\n",
+         map "-- $_\n", $table->comments
+      )
+   } else {
+      return ()
+   }
+}
+
 sub field_nullable { ($_[1]->is_nullable ? $_[0]->nullable : 'NOT NULL' ) }
 
 sub field_default {
