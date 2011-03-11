@@ -143,25 +143,29 @@ sub enum_constraint {
   )
 }
 
+sub constraints {
+  my ($self, $table) = @_;
+
+  (map $self->enum_constraint($_->name, { $_->extra }->{list} || []),
+     grep { 'enum' eq lc $_->data_type } $table->get_fields),
+
+  (map $self->primary_key_constraint($_),
+     grep { $_->type eq PRIMARY_KEY } $table->get_constraints),
+
+  (map $self->unique_constraint_single($_),
+     grep {
+       $_->type eq UNIQUE &&
+       !grep { $_->is_nullable } $_->fields
+     } $table->get_constraints),
+}
+
 sub table {
    my ($self, $table) = @_;
    'CREATE TABLE ' . $self->quote($table->name) . " (\n".
      join( ",\n",
         map { "  $_" }
-        # field defs
-        ( map $self->field($_), $table->get_fields ),
-        # constraint defs
-        (map $self->enum_constraint($_->name, { $_->extra }->{list} || []),
-           grep { 'enum' eq lc $_->data_type } $table->get_fields),
-
-        (map $self->primary_key_constraint($_),
-           grep { $_->type eq PRIMARY_KEY } $table->get_constraints),
-
-        (map $self->unique_constraint_single($_),
-           grep {
-             $_->type eq UNIQUE &&
-             !grep { $_->is_nullable } $_->fields
-           } $table->get_constraints),
+        $self->fields($table),
+        $self->constraints($table),
      ) .
      "\n);",
 }

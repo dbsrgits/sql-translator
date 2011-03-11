@@ -54,6 +54,11 @@ sub field_type {
    ($self->type_map->{$field_type} || $field_type).$self->field_type_size($field)
 }
 
+sub fields {
+  my ($self, $table) = @_;
+  ( map $self->field($_), $table->get_fields )
+}
+
 sub nullable { 'NULL' }
 
 1;
