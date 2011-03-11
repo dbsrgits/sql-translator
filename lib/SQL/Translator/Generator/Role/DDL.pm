@@ -1,6 +1,7 @@
 package SQL::Translator::Generator::Role::DDL;
 
 use Moo::Role;
+use SQL::Translator::Utils qw(header_comment);
 
 requires '_build_shim';
 requires '_build_type_map';
@@ -68,5 +69,7 @@ sub fields {
 }
 
 sub nullable { 'NULL' }
+
+sub header_comments { header_comment() . "\n" if $_[0]->add_comments }
 
 1;
