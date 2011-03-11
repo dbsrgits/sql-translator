@@ -6,7 +6,6 @@ our ( $DEBUG, $WARN );
 our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
-use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
 use SQL::Translator::ProducerUtils;
@@ -23,13 +22,9 @@ sub produce {
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
 
-    my $output;
-    $output .= header_comment."\n" unless ($no_comments);
+    my $output = $future->header_comments;
+    $output .= $future->drop_tables($schema);
 
-    # Generate the DROP statements.
-    $output .= $future->drop_tables;
-
-    # these need to be added separately, as tables may not exist yet
     my @foreign_constraints = ();
 
     for my $table ( grep { $_->name } $schema->get_tables ) {
