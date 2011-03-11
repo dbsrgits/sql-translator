@@ -25,16 +25,9 @@ sub produce {
 
     for my $table ( grep { $_->name } $schema->get_tables ) {
         $output .= join( "\n\n",
-            $future->table_comments($table),
-            # index defs
             $future->table($table),
-            (map $future->unique_constraint_multiple($_),
-               grep {
-                  $_->type eq UNIQUE &&
-                  grep { $_->is_nullable } $_->fields
-               } $table->get_constraints),
-
-            (map $future->index($_), $table->get_indices)
+            $future->unique_constraints_multiple($table),
+            $future->indices($table),
         );
     }
 

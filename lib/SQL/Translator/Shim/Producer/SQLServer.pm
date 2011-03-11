@@ -161,13 +161,25 @@ sub constraints {
 
 sub table {
    my ($self, $table) = @_;
-   'CREATE TABLE ' . $self->quote($table->name) . " (\n".
-     join( ",\n",
-        map { "  $_" }
-        $self->fields($table),
-        $self->constraints($table),
-     ) .
-     "\n);",
+   join ( "\n\n",
+      $self->table_comments($table),
+      'CREATE TABLE ' . $self->quote($table->name) . " (\n".
+        join( ",\n",
+           map { "  $_" }
+           $self->fields($table),
+           $self->constraints($table),
+        ) .
+        "\n);"
+   )
+}
+
+sub unique_constraints_multiple {
+  my ($self, $table) = @_;
+  (map $self->unique_constraint_multiple($_),
+     grep {
+        $_->type eq UNIQUE &&
+        grep { $_->is_nullable } $_->fields
+     } $table->get_constraints)
 }
 
 sub drop_table {
