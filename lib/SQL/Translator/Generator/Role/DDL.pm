@@ -83,6 +83,11 @@ sub fields {
   ( map $self->field($_), $table->get_fields )
 }
 
+sub indices {
+  my ($self, $table) = @_;
+  (map $self->index($_), $table->get_indices)
+}
+
 sub nullable { 'NULL' }
 
 sub header_comments { header_comment() . "\n" if $_[0]->add_comments }
