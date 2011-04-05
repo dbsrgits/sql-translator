@@ -545,20 +545,20 @@ sub create_geometry_constraints{
 	my @constraints;
 	push @constraints, SQL::Translator::Schema::Constraint->new(
 							name       => "enforce_dims_".$field->name,
-							expression => "(st_ndims($field) = ".$field->{extra}{dimensions}.")",
+							expression => "(ST_NDims($field) = ".$field->{extra}{dimensions}.")",
 							table 	   => $field->table,
 							type       => CHECK_C,
 						);
 						
 	push @constraints, SQL::Translator::Schema::Constraint->new(
 							name       => "enforce_srid_".$field->name,
-							expression => "(st_srid($field) = ".$field->{extra}{srid}.")",
+							expression => "(ST_SRID($field) = ".$field->{extra}{srid}.")",
 							table 	   => $field->table,
 							type       => CHECK_C,
 						);
 	push @constraints, SQL::Translator::Schema::Constraint->new(
 							name       => "enforce_geotype_".$field->name,
-							expression => "(geometrytype($field) = '".$field->{extra}{geometry_type}."'::text OR $field IS NULL)",
+							expression => "(GeometryType($field) = '".$field->{extra}{geometry_type}."'::text OR $field IS NULL)",
 							table 	   => $field->table,
 							type       => CHECK_C,
 						);
