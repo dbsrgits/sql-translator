@@ -39,7 +39,7 @@ Does not yet support PostGIS Views.
 
 use strict;
 use warnings;
-use vars qw[ $DEBUG $WARN $VERSION %used_names ];
+use vars qw[ $DEBUG $WARN $VERSION ];
 $VERSION = '1.59';
 $DEBUG = 0 unless defined $DEBUG;
 
@@ -274,24 +274,6 @@ sub mk_name {
     }
 
     $scope->{ $name }++;
-    return $name;
-}
-
-# -------------------------------------------------------------------
-sub next_unused_name {
-    my $orig_name = shift or return;
-    my $name      = $orig_name;
-
-    my $suffix_gen = sub {
-        my $suffix = 0;
-        return ++$suffix ? '' : $suffix;
-    };
-
-    for (;;) {
-        $name = $orig_name . $suffix_gen->();
-        last if $used_names{ $name }++;
-    }
-
     return $name;
 }
 
@@ -576,10 +558,9 @@ sub create_index
 
     my ($index_def, @constraint_defs);
 
-    my $name = next_unused_name(
-        $index->name 
-        || join('_', $table_name, 'idx', ++$index_name{ $table_name })
-    );
+    my $name
+        = $index->name
+        || join('_', $table_name, 'idx', ++$index_name{ $table_name });
 
     my $type = $index->type || NORMAL;
     my @fields     =  $index->fields;
@@ -616,9 +597,6 @@ sub create_constraint
     my (@constraint_defs, @fks);
 
     my $name = $c->name || '';
-    if ( $name ) {
-        $name = next_unused_name($name);
-    }
 
     my @fields = grep { defined } $c->fields;
 
@@ -638,8 +616,8 @@ sub create_constraint
         push @constraint_defs, "${def_start}CHECK ($expression)";
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
-        my $def .= "ALTER TABLE ${qt}${table_name}${qt} ADD FOREIGN KEY " . $field_names .
-            "\n  REFERENCES " . $qt . $c->reference_table . $qt;
+        my $def .= "ALTER TABLE $qt$table_name$qt ADD ${def_start}FOREIGN KEY $field_names"
+            . "\n  REFERENCES " . $qt . $c->reference_table . $qt;
 
         if ( @rfields ) {
             $def .= ' ('.$qf . join( $qf.', '.$qf, @rfields ) . $qf.')';
@@ -961,7 +939,9 @@ sub alter_drop_constraint {
         # for naming foreign keys, it names them uses the name of
         # the table as prefix and fkey as suffix, concatenated by a underscore
         $c->type eq FOREIGN_KEY
-            ? $qc . $c->table->name . '_' . ($c->fields)[0] . '_fkey' . $qc
+            ? $c->name
+                ? $qc . $c->name . $qc
+                : $qc . $c->table->name . '_' . ($c->fields)[0] . '_fkey' . $qc
             : $qc . $c->name . $qc
     );
 }

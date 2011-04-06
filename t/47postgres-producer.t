@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(45,
+    maybe_plan(48,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -76,23 +76,47 @@ my $field1_2 = SQL::Translator::Schema::Field->new( name => 'myfield_2',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
-my $fk_constraint = SQL::Translator::Schema::Constraint->new(
-    table => $table,
-    name   => 'foo',
-    fields => [qw(myfield)],
-    type   => 'FOREIGN_KEY',
-    reference_table => $table2,
-    reference_fields => [qw(myfield_2)],
-);
+# check named, and unnamed foreign keys
+for my $name ( 'foo', undef ) {
+    my $fk_constraint = SQL::Translator::Schema::Constraint->new(
+        table => $table,
+        name   => $name,
+        fields => [qw(myfield)],
+        type   => 'FOREIGN_KEY',
+        reference_table => $table2,
+        reference_fields => [qw(myfield_2)],
+    );
+    my $fk_constraint_2 = SQL::Translator::Schema::Constraint->new(
+        table => $table,
+        name   => $name,
+        fields => [qw(myfield)],
+        type   => 'FOREIGN_KEY',
+        reference_table => $table2,
+        reference_fields => [qw(myfield_2)],
+    );
 
-my  ($fk_constraint_def_ref, $fk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($fk_constraint);
+    my  ($fk_constraint_def_ref, $fk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($fk_constraint);
 
-ok(@{$fk_constraint_def_ref} == 0 && @{$fk_constraint_fk_ref} == 1,  'precheck of create_Foreign Key constraint');
-is($fk_constraint_fk_ref->[0], 'ALTER TABLE mytable ADD FOREIGN KEY (myfield)
-  REFERENCES mytable2 (myfield_2) DEFERRABLE', 'Create Foreign Key Constraint works');
+    ok(@{$fk_constraint_def_ref} == 0 && @{$fk_constraint_fk_ref} == 1,  'precheck of create_Foreign Key constraint');
 
-my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
-is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop Foreign Key constraint works');
+    if ( $name ) {
+        is($fk_constraint_fk_ref->[0], "ALTER TABLE mytable ADD CONSTRAINT $name FOREIGN KEY (myfield)
+  REFERENCES mytable2 (myfield_2) DEFERRABLE", 'Create Foreign Key Constraint works');
+
+        # ToDo: may we should check if the constraint name was valid, or if next
+        #       unused_name created has choosen a different one
+        my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
+        is($alter_fk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Foreign Key constraint works');
+    }
+    else {
+        is($fk_constraint_fk_ref->[0], 'ALTER TABLE mytable ADD FOREIGN KEY (myfield)
+  REFERENCES mytable2 (myfield_2) DEFERRABLE', 'Create named Foreign Key Constraint works');
+
+        my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
+        is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop named Foreign Key constraint works');
+    }
+}
+
 
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1,
                                                                 $field2);
