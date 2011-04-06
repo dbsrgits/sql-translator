@@ -57,7 +57,7 @@ CREATE TABLE added (
 
 ALTER TABLE old_name RENAME TO new_name;
 
-ALTER TABLE employee DROP CONSTRAINT employee_employee_id_fkey;
+ALTER TABLE employee DROP CONSTRAINT FK5302D47D93FE702E;
 
 ALTER TABLE person DROP CONSTRAINT UC_age_name;
 
@@ -81,7 +81,7 @@ ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD CONSTRAINT unique_name UNIQUE (name);
 
-ALTER TABLE employee ADD FOREIGN KEY (employee_id)
+ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id)
   REFERENCES person (person_id) DEFERRABLE;
 
 ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
