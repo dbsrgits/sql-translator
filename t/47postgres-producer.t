@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(38,
+    maybe_plan(45,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -50,11 +50,88 @@ my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
                                                   is_foreign_key => 0,
                                                   is_unique => 0 );
 
+my $pk_constraint = SQL::Translator::Schema::Constraint->new(
+    table => $table,
+    name   => 'foo',
+    fields => [qw(myfield)],
+    type   => 'PRIMARY_KEY',
+);
+
+my  ($pk_constraint_def_ref, $pk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($pk_constraint);
+ok(@{$pk_constraint_def_ref} == 1 && @{$pk_constraint_fk_ref} == 0,  'precheck of create_Primary Key constraint');
+is($pk_constraint_def_ref->[0], 'CONSTRAINT foo PRIMARY KEY (myfield)', 'Create Primary Key Constraint works');
+
+my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
+is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT foo', 'Alter drop Primary Key constraint works');
+
+my $table2 = SQL::Translator::Schema::Table->new( name => 'mytable2');
+
+my $field1_2 = SQL::Translator::Schema::Field->new( name => 'myfield_2',
+                                                  table => $table,
+                                                  data_type => 'VARCHAR',
+                                                  size => 10,
+                                                  default_value => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable => 1,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
+
+my $fk_constraint = SQL::Translator::Schema::Constraint->new(
+    table => $table,
+    name   => 'foo',
+    fields => [qw(myfield)],
+    type   => 'FOREIGN_KEY',
+    reference_table => $table2,
+    reference_fields => [qw(myfield_2)],
+);
+
+my  ($fk_constraint_def_ref, $fk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($fk_constraint);
+
+ok(@{$fk_constraint_def_ref} == 0 && @{$fk_constraint_fk_ref} == 1,  'precheck of create_Foreign Key constraint');
+is($fk_constraint_fk_ref->[0], 'ALTER TABLE mytable ADD FOREIGN KEY (myfield)
+  REFERENCES mytable2 (myfield_2) DEFERRABLE', 'Create Foreign Key Constraint works');
+
+my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
+is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop Foreign Key constraint works');
+
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1,
                                                                 $field2);
-is($alter_field, qq[ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL
+is($alter_field, qq[ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL;
 ALTER TABLE mytable ALTER COLUMN myfield TYPE character varying(25)],
  'Alter field works');
+
+my $field1_complex = SQL::Translator::Schema::Field->new(
+    name => 'my_complex_field',
+    table => $table,
+    data_type => 'VARCHAR',
+    size => 10,
+    default_value => undef,
+                                                  is_auto_increment => 0,
+    is_nullable => 1,
+    is_foreign_key => 0,
+    is_unique => 0
+);
+
+my $field2_complex = SQL::Translator::Schema::Field->new(
+    name      => 'my_altered_field',
+    table => $table,
+    data_type => 'VARCHAR',
+    size      => 60,
+    default_value => 'whatever',
+    is_auto_increment => 0,
+    is_nullable => 1,
+    is_foreign_key => 0,
+    is_unique => 0
+);
+
+my $alter_field_complex = SQL::Translator::Producer::PostgreSQL::alter_field($field1_complex, $field2_complex);
+is(
+    $alter_field_complex,
+    q{ALTER TABLE mytable RENAME COLUMN my_complex_field TO my_altered_field;
+ALTER TABLE mytable ALTER COLUMN my_altered_field TYPE character varying(60);
+ALTER TABLE mytable ALTER COLUMN my_altered_field SET DEFAULT 'whatever'},
+    'Complex Alter field works'
+);
 
 $field1->name('field3');
 my $add_field = SQL::Translator::Producer::PostgreSQL::add_field($field1);

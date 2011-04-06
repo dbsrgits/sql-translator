@@ -45,6 +45,7 @@ my $out = SQL::Translator::Diff::schema_diff(
      }
    }
 );
+
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
@@ -56,7 +57,7 @@ CREATE TABLE added (
 
 ALTER TABLE old_name RENAME TO new_name;
 
-ALTER TABLE employee DROP CONSTRAINT FK5302D47D93FE702E;
+ALTER TABLE employee DROP CONSTRAINT employee_employee_id_fkey;
 
 ALTER TABLE person DROP CONSTRAINT UC_age_name;
 

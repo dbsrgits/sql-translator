@@ -762,8 +762,19 @@ sub alter_field
     my @out;
     
     # drop geometry column and constraints
-	push @out, drop_geometry_column($from_field) if is_geometry($from_field);
-	push @out, drop_geometry_constraints($from_field) if is_geometry($from_field);
+    push @out, drop_geometry_column($from_field) if is_geometry($from_field);
+    push @out, drop_geometry_constraints($from_field) if is_geometry($from_field);
+
+    # it's necessary to start with rename column cause this would affect
+    # all of the following statements which would be broken if do the
+    # rename later
+    # BUT: drop geometry is done before the rename, cause it work's on the
+    # $from_field directly
+    push @out, sprintf('ALTER TABLE %s RENAME COLUMN %s TO %s',
+                       $to_field->table->name,
+                       $from_field->name,
+                       $to_field->name) if($from_field->name ne $to_field->name);
+
     
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET NOT NULL',
                        $to_field->table->name,
@@ -782,11 +793,6 @@ sub alter_field
                        $to_field->table->name,
                        $to_field->name,
                        $to_dt) if($to_dt ne $from_dt);
-
-    push @out, sprintf('ALTER TABLE %s RENAME COLUMN %s TO %s',
-                       $to_field->table->name,
-                       $from_field->name,
-                       $to_field->name) if($from_field->name ne $to_field->name);
 
     my $old_default = $from_field->default_value;
     my $new_default = $to_field->default_value;
@@ -820,7 +826,7 @@ sub alter_field
 	push @out, add_geometry_column($to_field) if is_geometry($to_field);
 	push @out, add_geometry_constraints($to_field) if is_geometry($to_field);
 	
-    return wantarray ? @out : join("\n", @out);
+    return wantarray ? @out : join(";\n", @out);
 }
 
 sub rename_field { alter_field(@_) }
@@ -840,12 +846,15 @@ sub add_field
 
 sub drop_field
 {
-    my ($old_field) = @_;
+    my ($old_field, $options) = @_;
+
+    my $qt = $options->{quote_table_names} ||'';
+    my $qf = $options->{quote_field_names} ||'';
 
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
-                      $old_field->table->name,
-                      $old_field->name);
-	$out .= "\n".drop_geometry_column($old_field) if is_geometry($old_field);
+                      $qt . $old_field->table->name . $qt,
+                      $qf . $old_field->name . $qf);
+        $out .= "\n".drop_geometry_column($old_field) if is_geometry($old_field);
     return $out;    
 }
 
@@ -944,10 +953,17 @@ sub alter_drop_constraint {
     my ($c, $options) = @_;
     my $qt = $options->{quote_table_names} || '';
     my $qc = $options->{quote_field_names} || '';
-    my $out = sprintf('ALTER TABLE %s DROP CONSTRAINT %s',
-                      $qt . $c->table->name . $qt,
-                      $qc . $c->name . $qc );
-    return $out;
+
+    return sprintf(
+        'ALTER TABLE %s DROP CONSTRAINT %s',
+        $qt . $c->table->name . $qt,
+        # attention: Postgres  has a very special naming structure
+        # for naming foreign keys, it names them uses the name of
+        # the table as prefix and fkey as suffix, concatenated by a underscore
+        $c->type eq FOREIGN_KEY
+            ? $qc . $c->table->name . '_' . ($c->fields)[0] . '_fkey' . $qc
+            : $qc . $c->name . $qc
+    );
 }
 
 sub alter_create_constraint {
