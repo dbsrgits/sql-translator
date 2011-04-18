@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(48,
+    maybe_plan(49,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -39,6 +39,20 @@ my $field1 = SQL::Translator::Schema::Field->new( name => 'myfield',
 my $field1_sql = SQL::Translator::Producer::PostgreSQL::create_field($field1);
 
 is($field1_sql, 'myfield character varying(10)', 'Create field works');
+
+my $field_array = SQL::Translator::Schema::Field->new( name => 'myfield',
+                                                  table => $table,
+                                                  data_type => 'character varying[]',
+                                                  size => 10,
+                                                  default_value => undef,
+                                                  is_auto_increment => 0,
+                                                  is_nullable => 1,
+                                                  is_foreign_key => 0,
+                                                  is_unique => 0 );
+
+my $field_array_sql = SQL::Translator::Producer::PostgreSQL::create_field($field_array);
+
+is($field_array_sql, 'myfield character varying(10)[]', 'Create field works');
 
 my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
                                                   table => $table,
