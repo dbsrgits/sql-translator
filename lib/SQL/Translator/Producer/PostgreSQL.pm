@@ -674,6 +674,7 @@ sub convert_datatype
 
     my @size      = $field->size;
     my $data_type = lc $field->data_type;
+    my $array = $data_type =~ s/\[\]$//;
 
     if ( $data_type eq 'enum' ) {
 #        my $len = 0;
@@ -739,6 +740,10 @@ sub convert_datatype
         $data_type .= $2 if(defined $2);
     } elsif ( defined $size[0] && $size[0] > 0 ) {
         $data_type .= '(' . join( ',', @size ) . ')';
+    }
+    if($array)
+    {
+        $data_type .= '[]';
     }
 
     #

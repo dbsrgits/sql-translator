@@ -8,6 +8,8 @@
 * Quote everything in SQL Server
 * Turn off constraints before dropping tables in SQL Server
 * Make true unique constraints if needed in SQL Server
+* Fixed Producer::PostgresSQL to output array type after type size, 
+  i.e. varchar(64)[] rather than varchar[](64)
 
 # ----------------------------------------------------------
 # 0.11007 2010-11-30
