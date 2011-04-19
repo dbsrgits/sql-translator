@@ -49,7 +49,7 @@ name        'SQL-Translator';
 author      'Ken Youens-Clark <kclark@cpan.org>';
 abstract    'SQL DDL transformations and more';
 license     'gpl';
-repository  'https://sqlfairy.svn.sourceforge.net/svnroot/sqlfairy';
+repository  'git://git.shadowcat.co.uk/dbsrgits/SQL-Translator.git';
 bugtracker  'http://rt.cpan.org/NoAuth/Bugs.html?Dist=SQL-Translator';
 
 resources Ratings => 'http://cpanratings.perl.org/d/SQL-Translator';
