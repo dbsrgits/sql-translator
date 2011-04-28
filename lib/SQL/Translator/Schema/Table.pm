@@ -29,7 +29,7 @@ SQL::Translator::Schema::Table - SQL::Translator table object
   use SQL::Translator::Schema::Table;
   my $table = SQL::Translator::Schema::Table->new( name => 'foo' );
 
-=head1 DESCSIPTION
+=head1 DESCRIPTION
 
 C<SQL::Translator::Schema::Table> is the table object.
 
