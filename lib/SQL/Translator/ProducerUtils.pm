@@ -1,4 +1,4 @@
-package SQL::Translator::Shim;
+package SQL::Translator::ProducerUtils;
 
 use Moo;
 use Sub::Quote 'quote_sub';

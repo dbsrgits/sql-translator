@@ -60,9 +60,9 @@ $DEBUG = 1 unless defined $DEBUG;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
-use SQL::Translator::Shim;
+use SQL::Translator::ProducerUtils;
 
-my $shim = SQL::Translator::Shim->new( quote_chars => ['[', ']'] );
+my $util = SQL::Translator::ProducerUtils->new( quote_chars => ['[', ']'] );
 
 my %translate  = (
     date      => 'datetime',
@@ -403,7 +403,7 @@ sub mk_name {
 }
 
 # -------------------------------------------------------------------
-sub unreserve { $shim->quote($_[0]) }
+sub unreserve { $util->quote($_[0]) }
 
 1;
 
