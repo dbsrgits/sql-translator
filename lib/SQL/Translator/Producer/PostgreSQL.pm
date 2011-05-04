@@ -431,7 +431,7 @@ sub create_view {
     my $create = '';
     $create .= "--\n-- View: ${qt}${view_name}${qt}\n--\n"
         unless $options->{no_comments};
-    $create .= "DROP VIEW ${qt}${view_name}${qt};\n" if $add_drop_view;
+    $create .= "DROP VIEW IF EXISTS ${qt}${view_name}${qt};\n" if $add_drop_view;
     $create .= 'CREATE';
 
     my $extra = $view->extra;

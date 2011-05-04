@@ -59,7 +59,7 @@ CREATE TABLE "Another" (
   PRIMARY KEY ("id")
 );
 
-DROP VIEW "email_list";
+DROP VIEW IF EXISTS "email_list";
 CREATE VIEW "email_list" ( "email" ) AS
     SELECT email FROM Basic WHERE (email IS NOT NULL)
 ;
