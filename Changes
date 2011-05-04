@@ -1,3 +1,6 @@
+# ----------------------------------------------------------
+# 0.11008 2011-05-04
+# ----------------------------------------------------------
 
 * Correctly create and parse FK constraints in SQLite
 * Correct postgis geography type insertion and linebreak fix for multiple geometry/geography columns
@@ -8,7 +11,7 @@
 * Quote everything in SQL Server
 * Turn off constraints before dropping tables in SQL Server
 * Make true unique constraints if needed in SQL Server
-* Fixed Producer::PostgresSQL to output array type after type size, 
+* Fixed Producer::PostgresSQL to output array type after type size,
   i.e. varchar(64)[] rather than varchar[](64)
 
 # ----------------------------------------------------------
