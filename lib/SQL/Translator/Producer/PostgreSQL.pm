@@ -212,6 +212,7 @@ sub produce {
 
     for my $view ( $schema->get_views ) {
       push @table_defs, create_view($view, {
+        postgres_version  => $postgres_version,
         add_drop_view     => $add_drop_table,
         quote_table_names => $qt,
         quote_field_names => $qf,
@@ -423,6 +424,7 @@ sub create_view {
     my ($view, $options) = @_;
     my $qt = $options->{quote_table_names} || '';
     my $qf = $options->{quote_field_names} || '';
+    my $postgres_version = $options->{postgres_version} || 0;
     my $add_drop_view = $options->{add_drop_view};
 
     my $view_name = $view->name;
@@ -431,7 +433,13 @@ sub create_view {
     my $create = '';
     $create .= "--\n-- View: ${qt}${view_name}${qt}\n--\n"
         unless $options->{no_comments};
-    $create .= "DROP VIEW ${qt}${view_name}${qt};\n" if $add_drop_view;
+    if ($add_drop_view) {
+        if ($postgres_version >= 8.002) {
+            $create .= "DROP VIEW IF EXISTS ${qt}${view_name}${qt};\n";
+        } else {
+            $create .= "DROP VIEW ${qt}${view_name}${qt};\n";
+        }
+    }
     $create .= 'CREATE';
 
     my $extra = $view->extra;

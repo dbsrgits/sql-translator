@@ -1,5 +1,9 @@
+
+* Add "if exists" to drop view statements in Pg.
+
 # ----------------------------------------------------------
 # 0.11009 2011-09-02
+# ----------------------------------------------------------
 
 * Fix MySQL producer to properly quote all table names on output (patch from geistteufel)
 
