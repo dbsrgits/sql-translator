@@ -683,12 +683,16 @@ sub create_trigger {
   push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s', $trigger->name )
     if $options->{add_drop_trigger};
 
+  my $scope = $trigger->scope || '';
+  $scope = " FOR EACH $scope" if $scope;
+
   push @statements, sprintf(
-    'CREATE TRIGGER %s %s %s ON %s %s',
+    'CREATE TRIGGER %s %s %s ON %s%s %s',
     $trigger->name,
     $trigger->perform_action_when,
     join( ' OR ', @{ $trigger->database_events } ),
     $trigger->on_table,
+    $scope,
     $trigger->action,
   );
 
