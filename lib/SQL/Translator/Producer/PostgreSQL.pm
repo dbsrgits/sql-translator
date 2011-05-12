@@ -552,7 +552,7 @@ sub create_index
 
     my $type = $index->type || NORMAL;
     my @fields     =  $index->fields;
-    next unless @fields;
+    return unless @fields;
 
     my $def_start = qq[CONSTRAINT ${qf}$name${qf} ];
     my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ($qf . $_ . $qf ) } @fields)) . ')';
