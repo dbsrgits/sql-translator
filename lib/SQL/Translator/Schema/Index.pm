@@ -195,7 +195,7 @@ Get or set the index's type.
 
   my $type = $index->type('unique');
 
-Get or set the index's options (e.g., "using" or "where" for PG).  Returns
+Get or set the index's type.
 
 Currently there are only four acceptable types: UNIQUE, NORMAL, FULL_TEXT,
 and SPATIAL. The latter two might be MySQL-specific. While both lowercase
