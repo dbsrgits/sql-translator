@@ -123,7 +123,7 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 
 $GRAMMAR = q!
 
-{ my ( %tables, @views, $table_order, $field_order, @table_comments) }
+{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -131,7 +131,13 @@ $GRAMMAR = q!
 # won't cause the failure needed to know that the parse, as a whole,
 # failed. -ky
 #
-startrule : statement(s) eofile { { tables => \%tables, views => \@views } }
+startrule : statement(s) eofile {
+    {
+        tables => \%tables,
+        views => \@views,
+        triggers => \@triggers,
+    }
+}
 
 eofile : /^\Z/
    
@@ -276,6 +282,28 @@ create : CREATE or_replace(?) temporary(?) VIEW view_id view_fields(?) /AS/i vie
             sql          => $item{view_target},
             fields       => $item[6],
             is_temporary => $item[3][0],
+        }
+    }
+
+trigger_name : name_with_opt_quotes
+
+trigger_scope : /FOR EACH (ROW|STATEMENT)/i
+
+before_or_after : /(before|after)/i { $return = lc $1 }
+
+trigger_action : /.*/
+
+database_events : /insert/i
+
+create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i table_id trigger_scope(?) trigger_action
+    {
+        push @triggers, {
+            name => $item{trigger_name},
+            perform_action_when => $item{before_or_after},
+            database_events => [ $item{database_events} ],
+            on_table => $item{table_id}{table_name},
+            scope => $item{trigger_scope},
+            action => $item{trigger_action},
         }
     }
 
@@ -509,6 +537,7 @@ name_with_opt_quotes : double_quote(?) NAME double_quote(?) { $item[2] }
 double_quote: /"/
 
 index_name : name_with_opt_quotes
+
 
 data_type : pg_data_type parens_value_list(?)
     { 
@@ -1104,6 +1133,10 @@ sub parse {
       );
 
       $view->extra ( temporary => 1 ) if $vinfo->{is_temporary};
+    }
+
+    for my $trigger (@{ $result->{triggers} }) {
+        $schema->add_trigger( %$trigger );
     }
 
     return 1;
