@@ -293,14 +293,15 @@ before_or_after : /(before|after)/i { $return = lc $1 }
 
 trigger_action : /.*/
 
-database_events : /insert/i
+database_event : /insert|update|delete/i
+database_events : database_event(s /OR/)
 
 create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i table_id trigger_scope(?) trigger_action
     {
         push @triggers, {
             name => $item{trigger_name},
             perform_action_when => $item{before_or_after},
-            database_events => [ $item{database_events} ],
+            database_events => $item{database_events},
             on_table => $item{table_id}{table_name},
             scope => $item{trigger_scope},
             action => $item{trigger_action},
