@@ -291,12 +291,12 @@ trigger_scope : /FOR/i /EACH/i /(ROW|STATEMENT)/i { $return = lc $1 }
 
 before_or_after : /(before|after)/i { $return = lc $1 }
 
-trigger_action : /.*/
+trigger_action : /[^;]+/
 
 database_event : /insert|update|delete/i
 database_events : database_event(s /OR/)
 
-create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i table_id trigger_scope(?) trigger_action
+create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i table_id trigger_scope(?) trigger_action SEMICOLON
     {
         push @triggers, {
             name => $item{trigger_name},
