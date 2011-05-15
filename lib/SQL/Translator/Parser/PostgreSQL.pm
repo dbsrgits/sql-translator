@@ -291,20 +291,25 @@ trigger_scope : /FOR/i /EACH/i /(ROW|STATEMENT)/i { $return = lc $1 }
 
 before_or_after : /(before|after)/i { $return = lc $1 }
 
-trigger_action : /[^;]+/
+trigger_action : /.+/
 
 database_event : /insert|update|delete/i
 database_events : database_event(s /OR/)
 
-create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i table_id trigger_scope(?) trigger_action SEMICOLON
+create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i table_id trigger_scope(?) trigger_action
     {
+        # Hack to pass roundtrip tests which have trigger statements terminated by double semicolon
+        # and expect the returned data to have the same
+        my $action = $item{trigger_action};
+        $action =~ s/;$//;
+
         push @triggers, {
             name => $item{trigger_name},
             perform_action_when => $item{before_or_after},
             database_events => $item{database_events},
             on_table => $item{table_id}{table_name},
             scope => $item{'trigger_scope(?)'}[0],
-            action => $item{trigger_action},
+            action => $action,
         }
     }
 
