@@ -287,7 +287,7 @@ create : CREATE or_replace(?) temporary(?) VIEW view_id view_fields(?) /AS/i vie
 
 trigger_name : name_with_opt_quotes
 
-trigger_scope : /FOR EACH (ROW|STATEMENT)/i
+trigger_scope : /FOR/i /EACH/i /(ROW|STATEMENT)/i { $return = lc $1 }
 
 before_or_after : /(before|after)/i { $return = lc $1 }
 
@@ -303,7 +303,7 @@ create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i ta
             perform_action_when => $item{before_or_after},
             database_events => $item{database_events},
             on_table => $item{table_id}{table_name},
-            scope => $item{trigger_scope},
+            scope => $item{'trigger_scope(?)'}[0],
             action => $item{trigger_action},
         }
     }

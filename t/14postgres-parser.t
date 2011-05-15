@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(131, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(133, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -305,3 +305,5 @@ is( $schema->get_table('products_3')->extra('temporary'), 1,"Table is TEMPORARY"
 my $trigger = $schema->get_trigger('test_trigger');
 is( $trigger->on_table, 'products_1', "Trigger is on correct table");
 is_deeply( scalar $trigger->database_events, [qw(insert update delete)], "Correct events for trigger");
+is( $trigger->perform_action_when, 'before', "Correct time for trigger");
+is( $trigger->scope, 'row', "Correct scope for trigger");
