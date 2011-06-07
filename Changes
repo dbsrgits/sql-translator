@@ -4,6 +4,7 @@
 * Fixed alter_drop_constraint for foreign keys and applying multiple changes
   via alter_field to a column in Postgres Producer
 * added a working mechanism for naming foreign keys in the PostgreSQL producer
+* Fix possible name duplication in SQLlite producer
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05

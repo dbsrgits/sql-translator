@@ -133,6 +133,8 @@ sub create_view {
     my $add_drop_view = $options->{add_drop_view};
 
     my $view_name = $view->name;
+    $global_names{$view_name} = 1;
+
     debug("PKG: Looking at view '${view_name}'\n");
 
     # Header.  Should this look like what mysqldump produces?
@@ -165,6 +167,8 @@ sub create_table
     my ($table, $options) = @_;
 
     my $table_name = $table->name;
+    $global_names{$table_name} = 1;
+
     my $no_comments = $options->{no_comments};
     my $add_drop_table = $options->{add_drop_table};
     my $sqlite_version = $options->{sqlite_version} || 0;
@@ -376,6 +380,8 @@ sub create_trigger {
   my @statements;
 
   my $trigger_name = $trigger->name;
+  $global_names{$trigger_name} = 1;
+
   my $events = $trigger->database_events;
   for my $evt ( @$events ) {
 
