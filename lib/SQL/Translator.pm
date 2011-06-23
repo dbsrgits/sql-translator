@@ -115,6 +115,8 @@ sub init {
 
     $self->add_drop_table( $config->{'add_drop_table'} );
 
+    $self->keep_existing_table( $config->{'keep_existing_table'} );
+
     $self->no_comments( $config->{'no_comments'} );
 
     $self->show_warnings( $config->{'show_warnings'} );
@@ -140,6 +142,17 @@ sub add_drop_table {
         $self->{'add_drop_table'} = $arg ? 1 : 0;
     }
     return $self->{'add_drop_table'} || 0;
+}
+
+# ----------------------------------------------------------------------
+# keep_existing_table([$bool])
+# ----------------------------------------------------------------------
+sub keep_existing_table {
+    my $self = shift;
+    if ( defined (my $arg = shift) ) {
+        $self->{'keep_existing_table'} = $arg ? 1 : 0;
+    }
+    return $self->{'keep_existing_table'} || 0;
 }
 
 # ----------------------------------------------------------------------
@@ -895,6 +908,8 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
       show_warnings       => 0,
       # Add "drop table" statements
       add_drop_table      => 1,
+      # Add "not if exists" statements
+      keep_existing_table => 1,
       # to quote or not to quote, thats the question
       quote_table_names     => 1,
       quote_field_names     => 1,
@@ -981,6 +996,10 @@ add_drop_table
 
 =item *
 
+keep_existing_table
+
+=item *
+
 quote_table_names
 
 =item *
@@ -1010,6 +1029,11 @@ advantage is gained by passing options to the constructor.
 =head2 add_drop_table
 
 Toggles whether or not to add "DROP TABLE" statements just before the 
+create definitions.
+
+=head2 keep_existing_table
+
+Toggles whether or not to add "IF NOT EXISTS" statements just before the
 create definitions.
 
 =head2 quote_table_names

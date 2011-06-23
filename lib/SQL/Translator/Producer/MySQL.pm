@@ -264,16 +264,17 @@ sub preprocess_schema {
 }
 
 sub produce {
-    my $translator     = shift;
-    local $DEBUG       = $translator->debug;
+    my $translator          = shift;
+    local $DEBUG            = $translator->debug;
     local %used_names;
-    my $no_comments    = $translator->no_comments;
-    my $add_drop_table = $translator->add_drop_table;
-    my $schema         = $translator->schema;
-    my $show_warnings  = $translator->show_warnings || 0;
-    my $producer_args  = $translator->producer_args;
-    my $mysql_version  = parse_mysql_version ($producer_args->{mysql_version}, 'perl') || 0;
-    my $max_id_length  = $producer_args->{mysql_max_id_length} || $DEFAULT_MAX_ID_LENGTH;
+    my $no_comments         = $translator->no_comments;
+    my $add_drop_table      = $translator->add_drop_table;
+    my $keep_existing_table = $translator->keep_existing_table;
+    my $schema              = $translator->schema;
+    my $show_warnings       = $translator->show_warnings || 0;
+    my $producer_args       = $translator->producer_args;
+    my $mysql_version       = parse_mysql_version ($producer_args->{mysql_version}, 'perl') || 0;
+    my $max_id_length       = $producer_args->{mysql_max_id_length} || $DEFAULT_MAX_ID_LENGTH;
 
     my ($qt, $qf, $qc) = ('','', '');
     $qt = '`' if $translator->quote_table_names;
@@ -296,13 +297,14 @@ sub produce {
     for my $table ( $schema->get_tables ) {
 #        print $table->name, "\n";
         push @table_defs, create_table($table, 
-                                       { add_drop_table    => $add_drop_table,
-                                         show_warnings     => $show_warnings,
-                                         no_comments       => $no_comments,
-                                         quote_table_names => $qt,
-                                         quote_field_names => $qf,
-                                         max_id_length     => $max_id_length,
-                                         mysql_version     => $mysql_version
+                                       { add_drop_table      => $add_drop_table,
+                                         keep_existing_table => $keep_existing_table,
+                                         show_warnings       => $show_warnings,
+                                         no_comments         => $no_comments,
+                                         quote_table_names   => $qt,
+                                         quote_field_names   => $qf,
+                                         max_id_length       => $max_id_length,
+                                         mysql_version       => $mysql_version
                                          });
     }
 
@@ -439,7 +441,9 @@ sub create_table
     my $drop;
     $create .= "--\n-- Table: $table_name\n--\n" unless $options->{no_comments};
     $drop = qq[DROP TABLE IF EXISTS $table_name] if $options->{add_drop_table};
-    $create .= "CREATE TABLE $table_name (\n";
+    $create .= "CREATE TABLE ";
+    $create .= "IF NOT EXISTS " if $options->{'keep_existing_table'};
+    $create .= "$table_name (\n";
 
     #
     # Fields
