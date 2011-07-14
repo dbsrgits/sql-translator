@@ -1,3 +1,4 @@
+* Proper quoting support in SQLite
 * Support for triggers in PostgreSQL producer and parser
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)
 * Fix index issue in SQLT::Parser::DBI::PostgreSQL

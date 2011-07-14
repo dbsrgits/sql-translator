@@ -438,8 +438,8 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
       }
     }
 
-ref_def : /(\w+)\s*\((\w+)\)/
-    { $return = { reference_table => $1, reference_fields => $2 } }
+ref_def : table_name parens_field_list
+    { $return = { reference_table => $item[1]{name}, reference_fields => $item[2] } }
 
 table_name : qualified_name
 

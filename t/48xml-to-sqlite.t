@@ -36,51 +36,51 @@ my $sql = $sqlt->translate(
 eq_or_diff($sql, << "SQL");
 BEGIN TRANSACTION;
 
-DROP TABLE Basic;
+DROP TABLE 'Basic';
 
-CREATE TABLE Basic (
-  id INTEGER PRIMARY KEY NOT NULL,
-  title varchar(100) NOT NULL DEFAULT 'hello',
-  description text DEFAULT '',
-  email varchar(500),
-  explicitnulldef varchar,
-  explicitemptystring varchar DEFAULT '',
+CREATE TABLE 'Basic' (
+  'id' INTEGER PRIMARY KEY NOT NULL,
+  'title' varchar(100) NOT NULL DEFAULT 'hello',
+  'description' text DEFAULT '',
+  'email' varchar(500),
+  'explicitnulldef' varchar,
+  'explicitemptystring' varchar DEFAULT '',
   -- Hello emptytagdef
-  emptytagdef varchar DEFAULT '',
-  another_id int(10) DEFAULT 2,
-  timest timestamp,
-  FOREIGN KEY(another_id) REFERENCES Another()
+  'emptytagdef' varchar DEFAULT '',
+  'another_id' int(10) DEFAULT 2,
+  'timest' timestamp,
+  FOREIGN KEY('another_id') REFERENCES 'Another'()
 );
 
-CREATE INDEX titleindex ON Basic (title);
+CREATE INDEX 'titleindex' ON 'Basic' ('title');
 
-CREATE UNIQUE INDEX emailuniqueindex ON Basic (email);
+CREATE UNIQUE INDEX 'emailuniqueindex' ON 'Basic' ('email');
 
-CREATE UNIQUE INDEX very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms ON Basic (title);
+CREATE UNIQUE INDEX 'very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms' ON 'Basic' ('title');
 
-DROP TABLE Another;
+DROP TABLE 'Another';
 
-CREATE TABLE Another (
-  id INTEGER PRIMARY KEY NOT NULL,
-  num numeric(10,2)
+CREATE TABLE 'Another' (
+  'id' INTEGER PRIMARY KEY NOT NULL,
+  'num' numeric(10,2)
 );
 
-DROP VIEW IF EXISTS email_list;
+DROP VIEW IF EXISTS 'email_list';
 
-CREATE VIEW email_list AS
+CREATE VIEW 'email_list' AS
     SELECT email FROM Basic WHERE (email IS NOT NULL);
 
-DROP TRIGGER IF EXISTS foo_trigger;
+DROP TRIGGER IF EXISTS 'foo_trigger';
 
-CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END;
+CREATE TRIGGER 'foo_trigger' after insert on 'Basic' BEGIN update modified=timestamp(); END;
 
-DROP TRIGGER IF EXISTS bar_trigger_insert;
+DROP TRIGGER IF EXISTS 'bar_trigger_insert';
 
-CREATE TRIGGER bar_trigger_insert before insert on Basic BEGIN update modified2=timestamp(); END;
+CREATE TRIGGER 'bar_trigger_insert' before insert on 'Basic' BEGIN update modified2=timestamp(); END;
 
-DROP TRIGGER IF EXISTS bar_trigger_update;
+DROP TRIGGER IF EXISTS 'bar_trigger_update';
 
-CREATE TRIGGER bar_trigger_update before update on Basic BEGIN update modified2=timestamp(); END;
+CREATE TRIGGER 'bar_trigger_update' before update on 'Basic' BEGIN update modified2=timestamp(); END;
 
 COMMIT;
 SQL
@@ -95,37 +95,37 @@ my @sql = $sqlt->translate(
 eq_or_diff(\@sql, 
           [
           'BEGIN TRANSACTION',
-          'DROP TABLE Basic',
-          'CREATE TABLE Basic (
-  id INTEGER PRIMARY KEY NOT NULL,
-  title varchar(100) NOT NULL DEFAULT \'hello\',
-  description text DEFAULT \'\',
-  email varchar(500),
-  explicitnulldef varchar,
-  explicitemptystring varchar DEFAULT \'\',
+          q<DROP TABLE 'Basic'>,
+          q<CREATE TABLE 'Basic' (
+  'id' INTEGER PRIMARY KEY NOT NULL,
+  'title' varchar(100) NOT NULL DEFAULT 'hello',
+  'description' text DEFAULT '',
+  'email' varchar(500),
+  'explicitnulldef' varchar,
+  'explicitemptystring' varchar DEFAULT '',
   -- Hello emptytagdef
-  emptytagdef varchar DEFAULT \'\',
-  another_id int(10) DEFAULT 2,
-  timest timestamp,
-  FOREIGN KEY(another_id) REFERENCES Another()
-)',
-          'CREATE INDEX titleindex ON Basic (title)',
-          'CREATE UNIQUE INDEX emailuniqueindex ON Basic (email)',
-          'CREATE UNIQUE INDEX very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms ON Basic (title)',
-          'DROP TABLE Another',
-          'CREATE TABLE Another (
-  id INTEGER PRIMARY KEY NOT NULL,
-  num numeric(10,2)
-)',
-          'DROP VIEW IF EXISTS email_list',
-          'CREATE VIEW email_list AS
-    SELECT email FROM Basic WHERE (email IS NOT NULL)',
-          'DROP TRIGGER IF EXISTS foo_trigger',
-          'CREATE TRIGGER foo_trigger after insert on Basic BEGIN update modified=timestamp(); END',
-          'DROP TRIGGER IF EXISTS bar_trigger_insert',
-          'CREATE TRIGGER bar_trigger_insert before insert on Basic BEGIN update modified2=timestamp(); END',
-          'DROP TRIGGER IF EXISTS bar_trigger_update',
-          'CREATE TRIGGER bar_trigger_update before update on Basic BEGIN update modified2=timestamp(); END',
+  'emptytagdef' varchar DEFAULT '',
+  'another_id' int(10) DEFAULT 2,
+  'timest' timestamp,
+  FOREIGN KEY('another_id') REFERENCES 'Another'()
+)>,
+          q<CREATE INDEX 'titleindex' ON 'Basic' ('title')>,
+          q<CREATE UNIQUE INDEX 'emailuniqueindex' ON 'Basic' ('email')>,
+          q<CREATE UNIQUE INDEX 'very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms' ON 'Basic' ('title')>,
+          q<DROP TABLE 'Another'>,
+          q<CREATE TABLE 'Another' (
+  'id' INTEGER PRIMARY KEY NOT NULL,
+  'num' numeric(10,2)
+)>,
+          q<DROP VIEW IF EXISTS 'email_list'>,
+          q<CREATE VIEW 'email_list' AS
+    SELECT email FROM Basic WHERE (email IS NOT NULL)>,
+          q<DROP TRIGGER IF EXISTS 'foo_trigger'>,
+          q<CREATE TRIGGER 'foo_trigger' after insert on 'Basic' BEGIN update modified=timestamp(); END>,
+          q<DROP TRIGGER IF EXISTS 'bar_trigger_insert'>,
+          q<CREATE TRIGGER 'bar_trigger_insert' before insert on 'Basic' BEGIN update modified2=timestamp(); END>,
+          q<DROP TRIGGER IF EXISTS 'bar_trigger_update'>,
+          q<CREATE TRIGGER 'bar_trigger_update' before update on 'Basic' BEGIN update modified2=timestamp(); END>,
           'COMMIT',
 
           ], 'SQLite translate in list context matches');
