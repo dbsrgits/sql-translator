@@ -400,12 +400,12 @@ sub create_table {
                 }
 
                 if ( $c->on_delete ) {
-                    $def .= ' ON DELETE '.join( ' ', $c->on_delete );
+                    $def .= ' ON DELETE '.$c->on_delete;
                 }
 
                 # disabled by plu 2007-12-29 - doesn't exist for oracle
                 #if ( $c->on_update ) {
-                #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+                #    $def .= ' ON UPDATE '. $c->on_update;
                 #}
 
                 push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_q, $def);

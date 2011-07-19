@@ -637,11 +637,11 @@ sub create_constraint
         }
 
         if ( $c->on_delete ) {
-            $def .= ' ON DELETE '.join( ' ', $c->on_delete );
+            $def .= ' ON DELETE '. $c->on_delete;
         }
 
         if ( $c->on_update ) {
-            $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+            $def .= ' ON UPDATE '. $c->on_update;
         }
 
         if ( $c->deferrable ) {
