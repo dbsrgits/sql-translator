@@ -380,6 +380,8 @@ sub create_table {
             elsif ( $c->type eq FOREIGN_KEY ) {
                 $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
                 $name = quote($name, $qf);
+                my $on_delete = uc ($c->on_delete || '');
+
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
@@ -399,7 +401,7 @@ sub create_table {
                         ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
                 }
 
-                if ( $c->on_delete ) {
+                if ( $on_delete && $on_delete ne "RESTRICT") {
                     $def .= ' ON DELETE '.$c->on_delete;
                 }
 

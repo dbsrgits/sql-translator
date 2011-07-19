@@ -5,6 +5,8 @@
   via alter_field to a column in Postgres Producer
 * added a working mechanism for naming foreign keys in the PostgreSQL producer
 * Fix possible name duplication in SQLlite producer
+* Oracle does not accept ON DELETE/UPDATE RESTRICT (though it is the actual default)
+  fix by not adding the ON DELETE/UPDATE clause at all
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
