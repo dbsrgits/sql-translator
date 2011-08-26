@@ -1,5 +1,4 @@
 package SQL::Translator::Producer::SQLite;
-
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
 #
@@ -109,11 +108,13 @@ sub produce {
 
 # -------------------------------------------------------------------
 sub mk_name {
+    print "HI\n";
     my ($name, $scope, $critical) = @_;
 
     $scope ||= \%global_names;
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
+        $name ||= 'SQLT_AUTONAME_';
         $name        .= sprintf( "%02d", ++$prev );
         substr($name, $max_id_length - 3) = "00" 
             if length( $name ) > $max_id_length;
@@ -425,6 +426,7 @@ sub create_trigger {
 sub alter_table { } # Noop
 
 sub add_field {
+    print "ADD FIELD Requested\n";
   my ($field) = @_;
 
   return sprintf("ALTER TABLE %s ADD COLUMN %s",
@@ -455,7 +457,6 @@ sub alter_drop_index {
 
 sub batch_alter_table {
   my ($table, $diffs) = @_;
-
   # If we have any of the following
   #
   #  rename_field
@@ -477,15 +478,13 @@ sub batch_alter_table {
   #
   # If we have rename_field we do similarly.
 
-  my $table_name = $table->name;
-  my $renaming = $diffs->{rename_table} && @{$diffs->{rename_table}};
-
+  my $table_name = $table->name;  
   if ( @{$diffs->{rename_field}} == 0 &&
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
 #    return join("\n", map { 
-    return map { 
+    return map {
         my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
         map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql") : () } @{ $diffs->{$_} }
         
@@ -504,7 +503,41 @@ sub batch_alter_table {
 
 
   my @sql;
-  my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
+  my $old_table;
+  my %old_fields_h;
+  my %omit_fields_h;
+  my %rename_h;
+  my @old_fields;
+  
+  my @ops = qw(add_field rename_field drop_field);
+  foreach my $op (@ops) {
+    if ( (my $obj = $diffs->{$op}->[0]) ) {
+      if (ref $obj eq 'ARRAY') {
+        $obj = $obj->[0];
+        next unless $obj;
+      }
+      print STDERR "New field here (op=$op): " . $obj->name . "\n";
+      $omit_fields_h{$obj->name} = undef;
+    }
+  }
+  $old_table ||= $table;
+  
+  @old_fields = $old_table->get_fields();
+  
+  for my $i (0..$#old_fields) {
+    if (exists $omit_fields_h{$old_fields[$i]}) {
+        #If we don't put NULL, we mess up the ordering..
+        $old_fields[$i] = 'NULL';
+    }
+  }
+  
+  @old_fields_h{$old_table->get_fields} = undef;
+  delete @old_fields_h{keys %omit_fields_h};
+  #@old_fields = keys %old_fields_h;
+  #print "OLD FIELDS: ", join(",", @old_fields) . "\n";
+  
+  #We have two sets of fields here, the new set of fields, and the old sets of fields
+  #which belong to both the new temporary table as well as the old table.
   
   do {
     local $table->{name} = $table_name . '_temp_alter';
@@ -512,13 +545,20 @@ sub batch_alter_table {
     my ($table_sql) = create_table($table, {no_comments => 1, temporary_table => 1});
     push @sql,$table_sql;
   };
-
-  push @sql, "INSERT INTO @{[$table_name]}_temp_alter SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$old_table]}",
+  
+  my $tbl_tmp = $table_name . "_temp_alter";
+  
+  push @sql, "INSERT INTO $tbl_tmp ".
+                "SELECT @{[ join(', ', @old_fields)]} FROM @{[$old_table]}",
+              
              "DROP TABLE @{[$old_table]}",
+             
              create_table($table, { no_comments => 1 }),
-             "INSERT INTO @{[$table_name]} SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$table_name]}_temp_alter",
+             
+             "INSERT INTO @{[$table_name]} SELECT @{[ join(', ', @old_fields)]} FROM @{[$table_name]}_temp_alter",
              "DROP TABLE @{[$table_name]}_temp_alter";
 
+  print join("\n", @sql);
   return @sql;
 #  return join("", @sql, "");
 }
