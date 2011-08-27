@@ -73,7 +73,11 @@ my %translate  = (
     clob       => 'varbinary',
     tinyblob   => 'varbinary',
     mediumblob => 'varbinary',
-    longblob   => 'varbinary'
+    longblob   => 'varbinary',
+    text       => 'varchar', # 'Text' datatype is deprecated in favor of 'varchar(max)'
+    tinytext   => 'varchar',
+    mediumtext => 'varchar',
+    longtext   => 'varchar',
 );
 
 # If these datatypes have size appended the sql fails.
@@ -321,7 +325,13 @@ sub alter_drop_index {
     my ($index, $options) = @_;
     my $table_name_q= $util->quote($index->table->name);
     my $index_name_q= $util->quote($index->name);
-    return "ALTER TABLE $table_name_q DROP $index_name_q";
+    return "ALTER TABLE $table_name_q DROP $index_name_q;";
+}
+
+sub drop_table {
+    my ($table, $options) = @_;
+    my $table_name_q= $util->quote($table->name);
+    return "DROP TABLE $table_name_q;";
 }
 
 sub build_field_clause {
@@ -358,21 +368,23 @@ sub build_field_clause {
     # SQLServer doesn't seem to like sizes on some datatypes
         $size = undef;
     }
-    elsif ( $data_type eq 'varbinary' ) {
-        $size ||= 255 if $orig_data_type eq 'tinyblob';
+    elsif ( $data_type eq 'varbinary' || $data_type eq 'varchar' ) {
         # SQL Server has a max specifyable size of 8000, but if you say 'max', you get 2^31.  Go figure.
-        # Note that 'max' was introduced in SQL Server 2005.  Before that, you need a type of 'image',
-        #   which is now deprecated.
-        # TODO: add version support and return 'image' for old versions
-        $size= 'max' if $size > 8000 || !$size;
+        # Note that 'max' was introduced in SQL Server 2005.  Before that, you need a type of 'image'
+        #   or 'text', which is now deprecated.
+        # TODO: add server-version support and return 'image'/'text' for older versions than 2005
+        if ($orig_data_type =~ /blob|text/) {
+            # mysql tinytext and tinyblob have size of 255, which is our default, below
+            # else we need 'max'
+            $size ||= 'max' unless $orig_data_type =~ /tiny/;
+        }
+        $size ||= 255;
+        # SQL Server barfs on any number greater than 8000, so switch these to 'max'
+        $size= 'max' if ($size =~ /[0-9]+/) && $size > 8000;
     }
     elsif ( !$size ) {
         if ( $data_type =~ /numeric/ ) {
             $size = '9,0';
-        }
-        elsif ( $orig_data_type eq 'text' ) {
-            #interpret text fields as long varchars
-            $size = 255;
         }
         elsif (
             $data_type eq 'varchar' &&
