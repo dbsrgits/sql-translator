@@ -738,6 +738,8 @@ sub create_constraint
     my $qt      = $options->{quote_table_names} || '';
     my $leave_name      = $options->{leave_name} || undef;
 
+    my $reference_table_name = quote_table_name($c->reference_table, $qt);
+
     my @fields = $c->fields or next;
 
     if ( $c->type eq PRIMARY_KEY ) {
@@ -767,7 +769,7 @@ sub create_constraint
 
         $def .= ' ('.$qf . join( "$qf, $qf", @fields ) . $qf . ')';
 
-        $def .= ' REFERENCES ' . $qt . $c->reference_table . $qt;
+        $def .= ' REFERENCES ' . $reference_table_name;
 
         my @rfields = map { $_ || () } $c->reference_fields;
         unless ( @rfields ) {
