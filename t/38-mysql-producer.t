@@ -127,6 +127,59 @@ schema:
           fields: foo2
           name: fk_thing
 
+    thing3:
+      name: some.thing3
+      extra:
+      order: 2
+      fields:
+        id:
+          name: id
+          data_type: int
+          is_primary_key: 0
+          order: 0
+          is_foreign_key: 1
+        foo:
+          name: foo
+          data_type: int
+          order: 1
+          is_not_null: 1
+        foo2:
+          name: foo2
+          data_type: int
+          order: 2
+          is_not_null: 1
+        bar_set:
+          name: bar_set
+          data_type: set
+          order: 3
+          is_not_null: 1
+          extra:
+            list:
+              - foo
+              - bar
+              - baz
+      indices:
+        - type: NORMAL
+          fields:
+            - id
+          name: index_1
+        - type: NORMAL
+          fields:
+            - id
+          name: really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaaaaaaaaaaaa
+      constraints:
+        - type: PRIMARY_KEY
+          fields:
+            - id
+            - foo
+        - reference_table: some.thing2
+          type: FOREIGN_KEY
+          fields: foo
+          name: fk_thing
+        - reference_table: some.thing2
+          type: FOREIGN_KEY
+          fields: foo2
+          name: fk_thing
 EOSCHEMA
 
 my @stmts = (
@@ -155,6 +208,21 @@ my @stmts = (
   PRIMARY KEY (`id`, `foo`),
   CONSTRAINT `fk_thing` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`),
   CONSTRAINT `fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
+) ENGINE=InnoDB",
+
+"DROP TABLE IF EXISTS `some`.`thing3`",
+"CREATE TABLE `some`.`thing3` (
+  `id` integer,
+  `foo` integer,
+  `foo2` integer,
+  `bar_set` set('foo', 'bar', 'baz'),
+  INDEX `index_1` (`id`),
+  INDEX `really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47` (`id`),
+  INDEX (`foo`),
+  INDEX (`foo2`),
+  PRIMARY KEY (`id`, `foo`),
+  CONSTRAINT `fk_thing_2` FOREIGN KEY (`foo`) REFERENCES `some`.`thing2` (`id`, `foo`),
+  CONSTRAINT `fk_thing_3` FOREIGN KEY (`foo2`) REFERENCES `some`.`thing2` (`id`, `foo`)
 ) ENGINE=InnoDB",
 
 "SET foreign_key_checks=1",
