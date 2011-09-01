@@ -657,10 +657,10 @@ sub alter_create_index
 
     my $qt = $options->{quote_table_names} || '';
     my $qf = $options->{quote_field_names} || '';
-
+    my $table_name = quote_table_name($index->table->name, $qt);
     return join( ' ',
                  'ALTER TABLE',
-                 $qt.$index->table->name.$qt,
+                 $table_name,
                  'ADD',
                  create_index(@_)
                  );
@@ -692,10 +692,11 @@ sub alter_drop_index
 
     my $qt = $options->{quote_table_names} || '';
     my $qf = $options->{quote_field_names} || '';
+    my $table_name = quote_table_name($index->table->name, $qt);
 
     return join( ' ', 
                  'ALTER TABLE',
-                 $qt.$index->table->name.$qt,
+                 $table_name,
                  'DROP',
                  'INDEX',
                  $index->name || $index->fields
@@ -709,9 +710,10 @@ sub alter_drop_constraint
 
     my $qt      = $options->{quote_table_names} || '';
     my $qc      = $options->{quote_field_names} || '';
+    my $table_name = quote_table_name($c->table->name, $qt);
 
     my $out = sprintf('ALTER TABLE %s DROP %s %s',
-                      $qt . $c->table->name . $qt,
+                      $table_name,
                       $c->type eq FOREIGN_KEY ? $c->type : "INDEX",
                       $qc . $c->name . $qc );
 
@@ -723,9 +725,10 @@ sub alter_create_constraint
     my ($index, $options) = @_;
 
     my $qt = $options->{quote_table_names} || '';
+    my $table_name = quote_table_name($index->table->name, $qt);
     return join( ' ',
                  'ALTER TABLE',
-                 $qt.$index->table->name.$qt,
+                 $table_name,
                  'ADD',
                  create_constraint(@_) );
 }
@@ -817,8 +820,9 @@ sub alter_table
     my $qt = $options->{quote_table_names} || '';
 
     my $table_options = generate_table_options($to_table, $options) || '';
+    my $table_name = quote_table_name($to_table->name, $qt);
     my $out = sprintf('ALTER TABLE %s%s',
-                      $qt . $to_table->name . $qt,
+                      $table_name,
                       $table_options);
 
     return $out;
@@ -831,9 +835,10 @@ sub alter_field
 
     my $qf = $options->{quote_field_names} || '';
     my $qt = $options->{quote_table_names} || '';
+    my $table_name = quote_table_name($to_field->table->name, $qt);
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
-                      $qt . $to_field->table->name . $qt,
+                      $table_name,
                       $qf . $from_field->name . $qf,
                       create_field($to_field, $options));
 
@@ -845,9 +850,10 @@ sub add_field
     my ($new_field, $options) = @_;
 
     my $qt = $options->{quote_table_names} || '';
+    my $table_name = quote_table_name($new_field->table->name, $qt);
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
-                      $qt . $new_field->table->name . $qt,
+                      $table_name,
                       create_field($new_field, $options));
 
     return $out;
@@ -860,9 +866,10 @@ sub drop_field
 
     my $qf = $options->{quote_field_names} || '';
     my $qt = $options->{quote_table_names} || '';
+    my $table_name = quote_table_name($old_field->table->name, $qt);
     
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
-                      $qt . $old_field->table->name . $qt,
+                      $table_name,
                       $qf . $old_field->name . $qf);
 
     return $out;
@@ -917,9 +924,12 @@ sub batch_alter_table {
        alter_create_constraint
        alter_table/;
 
+  #quote
+  my $qt = $options->{quote_table_names} || '';
+
   # rename_table makes things a bit more complex
   my $renamed_from = "";
-  $renamed_from = $diff_hash->{rename_table}[0][0]->name
+  $renamed_from = quote_table_name($diff_hash->{rename_table}[0][0]->name, $qt)
     if $diff_hash->{rename_table} && @{$diff_hash->{rename_table}};
 
   return unless @stmts;
@@ -928,12 +938,10 @@ sub batch_alter_table {
 
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
-  my $qt = $options->{quote_table_names} || '';
-  my $table_name = $qt . $table->name . $qt;
-
+  my $table_name = quote_table_name($table->name, $qt);
 
   my $re = $renamed_from 
-         ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$qt$renamed_from$qt\E) /
+         ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$renamed_from\E) /
             : qr/^ALTER TABLE \Q$table_name\E /;
 
   my $first = shift  @stmts;
@@ -953,8 +961,8 @@ sub drop_table {
   # Drop (foreign key) constraints so table drops cleanly
   my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
 
-  return (@sql, "DROP TABLE $qt$table$qt");
-#  return join("\n", @sql, "DROP TABLE $qt$table$qt");
+  my $table_name = quote_table_name($table, $qt);
+  return (@sql, "DROP TABLE $table");
 
 }
 
@@ -962,8 +970,10 @@ sub rename_table {
   my ($old_table, $new_table, $options) = @_;
 
   my $qt = $options->{quote_table_names} || '';
+  my $old_table_name = quote_table_name($old_table, $qt);
+  my $new_table_name = quote_table_name($new_table, $qt);
 
-  return "ALTER TABLE $qt$old_table$qt RENAME TO $qt$new_table$qt";
+  return "ALTER TABLE $old_table_name RENAME TO $new_table_name";
 }
 
 sub next_unused_name {
