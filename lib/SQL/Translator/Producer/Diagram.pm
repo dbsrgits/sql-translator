@@ -1,7 +1,7 @@
 package SQL::Translator::Producer::Diagram;
 
 # -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
+# Copyright (C) 2002-2011 SQLFairy Authors
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -33,7 +33,7 @@ Use via SQL::Translator:
       to            => 'GraphViz',
       producer_args => {
           # All args are optional
-          out_file         => 'schema.png',# if not provided will go to STDOUT
+          out_file         => 'schema.png',# if not provided will return from translate()
           output_type      => 'png',       # is default or 'jpeg'
           title            => 'My Schema', # default is filename
           font_size        => 'medium',    # is default or 'small,' 'large'
