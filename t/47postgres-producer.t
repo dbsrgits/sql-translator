@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(39,
+    maybe_plan(41,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -449,3 +449,23 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
         is($def->[0], 'CONSTRAINT "constr" UNIQUE ("bar", lower(foo))', 'constraint created w/ quotes');
     }
 }
+
+my $drop_view_opts1 = { add_drop_view => 1, no_comments => 1, postgres_version => 8.001 };
+my $drop_view_8_1_produced = SQL::Translator::Producer::PostgreSQL::create_view($view1, $drop_view_opts1);
+
+my $drop_view_8_1_expected = "DROP VIEW view_foo;
+CREATE VIEW view_foo ( id, name ) AS
+    SELECT id, name FROM thing
+";
+ 
+is($drop_view_8_1_produced, $drop_view_8_1_expected, "My DROP VIEW statement for 8.1 is correct");
+
+my $drop_view_opts2 = { add_drop_view => 1, no_comments => 1, postgres_version => 9.001 };
+my $drop_view_9_1_produced = SQL::Translator::Producer::PostgreSQL::create_view($view1, $drop_view_opts2);
+
+my $drop_view_9_1_expected = "DROP VIEW IF EXISTS view_foo;
+CREATE VIEW view_foo ( id, name ) AS
+    SELECT id, name FROM thing
+";
+ 
+is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
