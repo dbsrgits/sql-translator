@@ -297,21 +297,26 @@ sub create_field
     my $pk        = $field->table->primary_key;
     my @pk_fields = $pk ? $pk->fields : ();
 
-    if ( 
-         $field->is_primary_key && 
-         scalar @pk_fields == 1 &&
-         (
+    if(
+        $field->is_primary_key && (
           $data_type =~ /int(eger)?$/i
           ||
           ( $data_type =~ /^number?$/i && $size !~ /,/ )
-          )
-         ) {
-        $data_type = 'INTEGER PRIMARY KEY';
-        $size      = undef;
-#        $pk_set    = 1;
+        )
+    ) {
+        if(scalar @pk_fields == 1) {
+            $data_type = 'INTEGER PRIMARY KEY';
+            $size      = undef;
+#           $pk_set    = 1;
+
+        } elsif(scalar(@pk_fields) > 1 && $field->is_auto_increment) {
+            $data_type = 'INTEGER DEFAULT (LAST_INSERT_ROWID())';
+            $size      = undef;
+
+        }
     }
 
-    $field_def .= sprintf " %s%s", $data_type, 
+    $field_def .= sprintf " %s%s", $data_type,
     ( !$field->is_auto_increment && $size ) ? "($size)" : '';
 
     # Null?
