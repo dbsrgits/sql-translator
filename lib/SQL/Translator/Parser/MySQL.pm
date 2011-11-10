@@ -220,6 +220,10 @@ drop : /drop/i TABLE /[^;]+/ "$delimiter"
 drop : /drop/i WORD(s) "$delimiter"
     { @table_comments = () }
 
+bit:
+    /(b'[01]+')/ |
+    /(b"[01]+")/
+
 string :
   # MySQL strings, unlike common SQL strings, can be double-quoted or 
   # single-quoted, and you can escape the delmiters by doubling (but only the 
@@ -600,9 +604,20 @@ default_val :
         $return =  \$item[2];
     }
     |
-    /default/i /'(?:.*?(?:\\'|''))*.*?'|(?:')?[\w\d:.-]*(?:')?/
+    /default/i string
     {
-        $item[2] =~ s/^\s*'|'\s*$//g;
+        $item[2] =~ s/^\s*'|'\s*$//g or $item[2] =~ s/^\s*"|"\s*$//g;
+        $return  =  $item[2];
+    }
+    |
+    /default/i bit
+    {
+        $item[2] =~ s/b['"]([01]+)['"]/$1/g;
+        $return  =  $item[2];
+    }
+    |
+    /default/i /(?:')?[\w\d:.-]*(?:')?/
+    {
         $return  =  $item[2];
     }
 
