@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(317, "SQL::Translator::Parser::MySQL");
+    maybe_plan(329, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -77,11 +77,13 @@ BEGIN {
               unsuccessful date default '0000-00-00',
               i1 int(11) default '0' not null,
               s1 set('a','b','c') default 'b',
-              e1 enum('a','b','c') default 'c',
+              e1 enum('a','b','c') default "c",
               name varchar(30) default NULL,
               foo_type enum('vk','ck') NOT NULL default 'vk',
               date timestamp,
               time_stamp2 timestamp,
+              foo_enabled bit(1) default b'0',
+              bar_enabled bit(1) default b"1",
               KEY (i1),
               UNIQUE (date, i1) USING BTREE,
               KEY date_idx (date),
@@ -98,7 +100,7 @@ BEGIN {
     is( $table->name, 'check', 'Found "check" table' );
 
     my @fields = $table->get_fields;
-    is( scalar @fields, 10, 'Right number of fields (10)' );
+    is( scalar @fields, 12, 'Right number of fields (12)' );
     my $f1 = shift @fields;
     is( $f1->name, 'check_id', 'First field name is "check_id"' );
     is( $f1->data_type, 'int', 'Type is "int"' );
@@ -188,6 +190,22 @@ BEGIN {
     is( $f10->is_nullable, 1, 'Field can be null' );
     is( $f10->default_value, undef, 'Default value is undefined' );
     is( $f10->is_primary_key, 0, 'Field is not PK' );
+
+    my $f11 = shift @fields;
+    is( $f11->name, 'foo_enabled', 'Eleventh field name is "foo_enabled"' );
+    is( $f11->data_type, 'bit', 'Type is "bit"' );
+    is( $f11->size, 1, 'Size is "1"' );
+    is( $f11->is_nullable, 1, 'Field can be null' );
+    is( $f11->default_value, '0', 'Default value is 0' );
+    is( $f11->is_primary_key, 0, 'Field is not PK' );
+
+    my $f12 = shift @fields;
+    is( $f12->name, 'bar_enabled', 'Twelveth field name is "bar_enabled"' );
+    is( $f12->data_type, 'bit', 'Type is "bit"' );
+    is( $f12->size, 1, 'Size is "1"' );
+    is( $f12->is_nullable, 1, 'Field can be null' );
+    is( $f12->default_value, '1', 'Default value is 1' );
+    is( $f12->is_primary_key, 0, 'Field is not PK' );
 
     my @indices = $table->get_indices;
     is( scalar @indices, 3, 'Right number of indices (3)' );

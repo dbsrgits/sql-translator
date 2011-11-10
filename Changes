@@ -10,6 +10,7 @@
 * Oracle does not accept ON DELETE/UPDATE RESTRICT (though it is the actual default)
   fix by not adding the ON DELETE/UPDATE clause at all
 * Changed dependency on Digest::SHA1 to the core-bundled Digest::SHA (RT#67989)
+* Support for double quoted and bit strings as default values in MySQL parser
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
