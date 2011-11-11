@@ -77,11 +77,13 @@ BEGIN {
               unsuccessful date default '0000-00-00',
               i1 int(11) default '0' not null,
               s1 set('a','b','c') default 'b',
-              e1 enum('a','b','c') default 'c',
+              e1 enum('a','b','c') default "c",
               name varchar(30) default NULL,
               foo_type enum('vk','ck') NOT NULL default 'vk',
               date timestamp,
               time_stamp2 timestamp,
+              foo_enabled bit(1) default b'0',
+              bar_enabled bit(2) default b"10",
               KEY (i1),
               UNIQUE (date, i1) USING BTREE,
               KEY date_idx (date),
@@ -98,7 +100,7 @@ BEGIN {
     is( $table->name, 'check', 'Found "check" table' );
 
     my @fields = $table->get_fields;
-    is( scalar @fields, 10, 'Right number of fields (10)' );
+    is( scalar @fields, 12, 'Right number of fields (12)' );
     my $f1 = shift @fields;
     is( $f1->name, 'check_id', 'First field name is "check_id"' );
     is( $f1->data_type, 'int', 'Type is "int"' );
