@@ -247,6 +247,9 @@ create : CREATE /database/i WORD "$delimiter"
 create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) /(,\s*)?\)/ table_option(s?) "$delimiter"
     {
         my $table_name                       = $item{'table_name'};
+        die "There is more than one definition for $table_name"
+            if ($tables{$table_name});
+
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
 
