@@ -68,7 +68,7 @@ sub parse {
       "SELECT oid, c.relname, i.indkey, i.indnatts, i.indisunique,
               i.indisprimary, pg_get_indexdef(oid) AS create_string
        FROM pg_class c,pg_index i
-       WHERE c.relnamespace=2200 AND c.relkind='i'
+       WHERE c.relnamespace IN (SELECT oid FROM pg_namespace WHERE nspname='public') AND c.relkind='i'
          AND c.oid=i.indexrelid AND i.indrelid=?"
     );
 
