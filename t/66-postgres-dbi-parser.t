@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan table_ok);
 
 BEGIN {
-    maybe_plan(49, 'SQL::Translator::Parser::DBI::PostgreSQL');
+    maybe_plan(56, 'SQL::Translator::Parser::DBI::PostgreSQL');
     SQL::Translator::Parser::DBI::PostgreSQL->import('parse');
 }
 
@@ -26,7 +26,7 @@ my $dbh = eval {
 SKIP: {
     if (my $err = ($@ || $DBI::err )) {
       chomp $err;
-      skip "No connection to test db. DBI says '$err'", 48;
+      skip "No connection to test db. DBI says '$err'", 55;
     }
 
     ok($dbh, "dbh setup correctly");
@@ -41,9 +41,12 @@ my $sql = q[
     create table sqlt_test1 (
         f_serial serial NOT NULL primary key,
         f_varchar character varying(255),
-        f_text text default 'FOO'
+        f_text text default 'FOO',
+        f_to_drop integer,
+        f_last text
     );
 
+    create index sqlt_test1_f_last_idx on sqlt_test1 (f_last);
 
     create table sqlt_test2 (
         f_id integer NOT NULL,
@@ -57,6 +60,11 @@ my $sql = q[
         name text,
         price numeric
     );
+
+    -- drop a column, to not have a linear id 
+    -- When the table t_test1 is created, f_last get id 5 but
+    -- after this drop, there is only 4 columns.
+    alter table sqlt_test1 drop column f_to_drop;
 ];
 
 $| = 1;
@@ -73,7 +81,7 @@ my $t1 = $schema->get_table("sqlt_test1");
 is( $t1->name, 'sqlt_test1', 'Table sqlt_test1 exists' );
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 3, '3 fields in sqlt_test1' );
+is( scalar @t1_fields, 4, '4 fields in sqlt_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -102,6 +110,15 @@ is( $f3->size, 0, 'Size is 0' );
 is( $f3->default_value, "'FOO'::text", 'Default value is "FOO"' );
 is( $f3->is_primary_key, 0, 'Field is not PK' );
 is( $f3->is_auto_increment, 0, 'Field is not auto increment' );
+
+my $f4 = shift @t1_fields;
+is( $f4->name, 'f_last', 'Fouth field is "f_last"' );
+is( $f4->data_type, 'text', 'Field is a text' );
+is( $f4->is_nullable, 1, 'Field can be null' );
+is( $f4->size, 0, 'Size is 0' );
+is( $f4->default_value, undef, 'No default value' );
+is( $f4->is_primary_key, 0, 'Field is not PK' );
+is( $f4->is_auto_increment, 0, 'Field is not auto increment' );
 
 #TODO: no 'NOT NULL' constraint not set
 

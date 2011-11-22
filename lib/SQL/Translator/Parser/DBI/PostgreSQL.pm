@@ -66,6 +66,10 @@ sub parse {
 
     my $index_select  = $dbh->prepare(
       "SELECT oid, c.relname, i.indkey, i.indnatts, i.indisunique,
+              ARRAY(SELECT a.attname
+                  FROM pg_attribute a
+                  WHERE a.attrelid=i.indrelid AND a.attnum = ANY(i.indkey)
+              ) AS attname,
               i.indisprimary, pg_get_indexdef(oid) AS create_string
        FROM pg_class c,pg_index i
        WHERE c.relnamespace IN (SELECT oid FROM pg_namespace WHERE nspname='public') AND c.relkind='i'
@@ -170,11 +174,9 @@ ORDER BY 1;
                 $type = NORMAL;
             }
 
+
             my @column_ids = split /\s+/, $$indexhash{'indkey'};
-            my @columns;
-            foreach my $col (@column_ids) {
-                push @columns, $column_names[($col - 1)];
-            }
+            my @columns = split /\s+/, $$indexhash{'attname'};
 
             $table->add_index(
                               name         => $$indexhash{'relname'},

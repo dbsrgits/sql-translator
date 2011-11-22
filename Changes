@@ -1,4 +1,5 @@
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)
+* Fix index issue in SQLT::Parser::DBI::PostgreSQL
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
