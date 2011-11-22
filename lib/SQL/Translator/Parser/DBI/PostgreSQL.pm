@@ -55,8 +55,8 @@ sub parse {
     my $schema = $tr->schema;
 
     my $column_select = $dbh->prepare(
-      "SELECT a.attname, t.typname, a.attnum,a.atttypmod as length,
-              a.attnotnull, a.atthasdef, d.adsrc
+      "SELECT a.attname, format_type(t.oid, a.atttypmod) as typname, a.attnum,
+              a.atttypmod as length, a.attnotnull, a.atthasdef, d.adsrc
        FROM pg_type t,pg_attribute a
        LEFT JOIN pg_attrdef d ON (d.adrelid = a.attrelid AND a.attnum = d.adnum)
        WHERE a.attrelid=? AND attnum>0
@@ -143,7 +143,8 @@ ORDER BY 1;
                               order       => $$columnhash{'attnum'},
                              ) || die $table->error;
 
-            $col->{size} = [$$columnhash{'length'}] if $$columnhash{'length'}>0;
+            $col->{size} = [$$columnhash{'length'}]
+                if $$columnhash{'length'}>0 && $$columnhash{'length'}<=0xFFFF;
             $col->{is_nullable} = $$columnhash{'attnotnull'} ? 0 : 1;
         }
 

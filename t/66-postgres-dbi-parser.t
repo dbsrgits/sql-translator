@@ -40,7 +40,7 @@ my $sql = q[
 
     create table sqlt_test1 (
         f_serial serial NOT NULL primary key,
-        f_varchar character varying (255),
+        f_varchar character varying(255),
         f_text text default 'FOO'
     );
 
@@ -77,8 +77,7 @@ is( scalar @t1_fields, 3, '3 fields in sqlt_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
-#FIXME: it should better be 'INTEGER' instead of 'int4'
-is( $f1->data_type, 'int4', 'Field is an integer' );
+is( $f1->data_type, 'integer', 'Field is an integer' );
 is( $f1->is_nullable, 0, 'Field cannot be null' );
 is( $f1->default_value, "nextval('sqlt_test1_f_serial_seq'::regclass)", 'Default value is nextval()' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
@@ -87,7 +86,7 @@ is( $f1->is_primary_key, 1, 'Field is PK' );
 
 my $f2 = shift @t1_fields;
 is( $f2->name, 'f_varchar', 'Second field is "f_varchar"' );
-is( $f2->data_type, 'varchar', 'Field is a varchar' );
+is( $f2->data_type, 'character varying(255)', 'Field is a character varying(255)' );
 is( $f2->is_nullable, 1, 'Field can be null' );
 #FIXME: should not be 255?
 is( $f2->size, 259, 'Size is "259"' );
@@ -114,7 +113,7 @@ is( scalar @t2_fields, 3, '3 fields in sqlt_test2' );
 
 my $t2_f1 = shift @t2_fields;
 is( $t2_f1->name, 'f_id', 'First field is "f_id"' );
-is( $t2_f1->data_type, 'int4', 'Field is an integer' );
+is( $t2_f1->data_type, 'integer', 'Field is an integer' );
 is( $t2_f1->is_nullable, 0, 'Field cannot be null' );
 is( $t2_f1->size, 0, 'Size is "0"' );
 is( $t2_f1->default_value, undef, 'Default value is undefined' );
@@ -122,7 +121,7 @@ is( $t2_f1->is_primary_key, 1, 'Field is PK' );
 
 my $t2_f2= shift @t2_fields;
 is( $t2_f2->name, 'f_int', 'Third field is "f_int"' );
-is( $t2_f2->data_type, 'int2', 'Field is an integer' );
+is( $t2_f2->data_type, 'smallint', 'Field is an smallint' );
 is( $t2_f2->is_nullable, 1, 'Field can be null' );
 is( $t2_f2->size, 0, 'Size is "0"' );
 is( $t2_f2->default_value, undef, 'Default value is undefined' );
@@ -130,7 +129,7 @@ is( $t2_f2->is_primary_key, 0, 'Field is not PK' );
 
 my $t2_f3 = shift @t2_fields;
 is( $t2_f3->name, 'f_fk1', 'Third field is "f_fk1"' );
-is( $t2_f3->data_type, 'int4', 'Field is an integer' );
+is( $t2_f3->data_type, 'integer', 'Field is an integer' );
 is( $t2_f3->is_nullable, 0, 'Field cannot be null' );
 is( $t2_f3->size, 0, 'Size is "0"' );
 is( $t2_f3->default_value, undef, 'Default value is undefined' );
