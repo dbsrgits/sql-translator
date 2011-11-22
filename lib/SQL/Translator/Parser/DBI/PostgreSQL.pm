@@ -56,9 +56,11 @@ sub parse {
 
     my $column_select = $dbh->prepare(
       "SELECT a.attname, format_type(t.oid, a.atttypmod) as typname, a.attnum,
-              a.atttypmod as length, a.attnotnull, a.atthasdef, d.adsrc
-       FROM pg_type t,pg_attribute a
-       LEFT JOIN pg_attrdef d ON (d.adrelid = a.attrelid AND a.attnum = d.adnum)
+              a.atttypmod as length, a.attnotnull, a.atthasdef, ad.adsrc,
+              d.description
+       FROM pg_type t, pg_attribute a
+       LEFT JOIN pg_attrdef ad ON (ad.adrelid = a.attrelid AND a.attnum = ad.adnum)
+       LEFT JOIN pg_description d ON (a.attrelid=d.objoid AND a.attnum=d.objsubid)
        WHERE a.attrelid=? AND attnum>0
          AND a.atttypid=t.oid
        ORDER BY a.attnum"
@@ -77,7 +79,10 @@ sub parse {
     );
 
     my $table_select  = $dbh->prepare(
-      "SELECT oid,relname FROM pg_class WHERE relnamespace IN
+      "SELECT c.oid, c.relname, d.description
+       FROM pg_class c
+       LEFT JOIN pg_description d ON c.oid=d.objoid AND d.objsubid=0
+       WHERE relnamespace IN
           (SELECT oid FROM pg_namespace WHERE nspname='public')
           AND relkind='r';"
     );
@@ -127,11 +132,12 @@ ORDER BY 1;
 
         my $table_name = $$tablehash{'relname'};
         my $table_oid  = $$tablehash{'oid'}; 
-
         my $table = $schema->add_table(
                                        name => $table_name,
               #what is type?               type => $table_info->{TABLE_TYPE},
                                           ) || die $schema->error;
+
+        $table->comments($$tablehash{'description'}) if $$tablehash{'description'};
 
         $column_select->execute($table_oid);
 
@@ -150,6 +156,7 @@ ORDER BY 1;
             $col->{size} = [$$columnhash{'length'}]
                 if $$columnhash{'length'}>0 && $$columnhash{'length'}<=0xFFFF;
             $col->{is_nullable} = $$columnhash{'attnotnull'} ? 0 : 1;
+            $col->comments($$columnhash{'description'}) if $$columnhash{'description'};
         }
 
         $index_select->execute($table_oid);

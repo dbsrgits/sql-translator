@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan table_ok);
 
 BEGIN {
-    maybe_plan(56, 'SQL::Translator::Parser::DBI::PostgreSQL');
+    maybe_plan(60, 'SQL::Translator::Parser::DBI::PostgreSQL');
     SQL::Translator::Parser::DBI::PostgreSQL->import('parse');
 }
 
@@ -26,7 +26,7 @@ my $dbh = eval {
 SKIP: {
     if (my $err = ($@ || $DBI::err )) {
       chomp $err;
-      skip "No connection to test db. DBI says '$err'", 55;
+      skip "No connection to test db. DBI says '$err'", 59;
     }
 
     ok($dbh, "dbh setup correctly");
@@ -45,6 +45,9 @@ my $sql = q[
         f_to_drop integer,
         f_last text
     );
+
+    comment on table sqlt_test1 is 'this is a comment on the first table';
+    comment on column sqlt_test1.f_text is 'this is a comment on a field of the first table';
 
     create index sqlt_test1_f_last_idx on sqlt_test1 (f_last);
 
@@ -79,6 +82,7 @@ my @tables = $schema->get_tables;
 
 my $t1 = $schema->get_table("sqlt_test1");
 is( $t1->name, 'sqlt_test1', 'Table sqlt_test1 exists' );
+is( $t1->comments, 'this is a comment on the first table', 'First table has a comment');
 
 my @t1_fields = $t1->get_fields;
 is( scalar @t1_fields, 4, '4 fields in sqlt_test1' );
@@ -101,6 +105,7 @@ is( $f2->size, 259, 'Size is "259"' );
 is( $f2->default_value, undef, 'Default value is undefined' );
 is( $f2->is_primary_key, 0, 'Field is not PK' );
 is( $f2->is_auto_increment, 0, 'Field is not auto increment' );
+is( $f2->comments, '', 'There is no comment on the second field');
 
 my $f3 = shift @t1_fields;
 is( $f3->name, 'f_text', 'Third field is "f_text"' );
@@ -110,6 +115,7 @@ is( $f3->size, 0, 'Size is 0' );
 is( $f3->default_value, "'FOO'::text", 'Default value is "FOO"' );
 is( $f3->is_primary_key, 0, 'Field is not PK' );
 is( $f3->is_auto_increment, 0, 'Field is not auto increment' );
+is( $f3->comments, 'this is a comment on a field of the first table', 'There is a comment on the third field');
 
 my $f4 = shift @t1_fields;
 is( $f4->name, 'f_last', 'Fouth field is "f_last"' );
@@ -124,6 +130,7 @@ is( $f4->is_auto_increment, 0, 'Field is not auto increment' );
 
 my $t2 = $schema->get_table("sqlt_test2");
 is( $t2->name, 'sqlt_test2', 'Table sqlt_test2 exists' );
+is( $t2->comments, undef, 'No comment on table sqlt_test2');
 
 my @t2_fields = $t2->get_fields;
 is( scalar @t2_fields, 3, '3 fields in sqlt_test2' );
