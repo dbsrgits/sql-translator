@@ -862,6 +862,6 @@ ok ($@, 'Exception thrown on invalid version string');
     );|;
 
     my $val;
-    eval { $val = parse($tr,$data) };
-    ok ($@, 'Exception thrown on empty default');
+    eval { $val = parse($tr,$data) or die $tr->error };
+    ok ($@, "Error message: $@" );
 }
