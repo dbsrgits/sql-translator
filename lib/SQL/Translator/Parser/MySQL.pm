@@ -602,7 +602,7 @@ default_val :
         $return  =  $item[2];
     }
     |
-    /default/i /(?:')?[\w\d:.-]*(?:')?/
+    /default/i /[\w\d:.-]+/
     {
         $return  =  $item[2];
     }

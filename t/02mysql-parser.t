@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(329, "SQL::Translator::Parser::MySQL");
+    maybe_plan(333, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -830,7 +830,7 @@ ok ($@, 'Exception thrown on invalid version string');
         id char(32) not null default '0' primary key,
         ssn varchar(12) NOT NULL default 'test single quotes like in you''re',
         user varchar(20) NOT NULL default 'test single quotes escaped like you\'re',
-        key using btree (ssn) 
+        key using btree (ssn)
     );|;
 
     my $val = parse($tr, $data);
@@ -868,4 +868,37 @@ ok ($@, 'Exception thrown on invalid version string');
     is( $f3->is_nullable, 0, 'Field can not be null' );
     is( $f3->default_value, "test single quotes escaped like you\\'re", "Single quote in default value is escaped properly" );
     is( $f3->is_primary_key, 0, 'Field is not PK' );
+}
+
+{
+    # silence PR::D from spewing on STDERR
+    local ($::RD_ERRORS, $::RD_WARN,$::RD_HINT,$::RD_TRACE);
+    my $tr = SQL::Translator->new;
+    my $data = q|create table "sessions" (
+        id char(32) not null default,
+        ssn varchar(12) NOT NULL default 'test single quotes like in you''re',
+        user varchar(20) NOT NULL default 'test single quotes escaped like you\'re',
+        key using btree (ssn)
+    );|;
+
+    my $val= parse($tr,$data);
+    ok ($tr->error =~ /Parse failed\./, 'Parse failed error without default value');
+}
+
+{
+    # make sure empty string default value still works
+    my $tr = SQL::Translator->new;
+    my $data = q|create table "sessions" (
+        id char(32) not null DEFAULT '',
+        ssn varchar(12) NOT NULL default "",
+        key using btree (ssn)
+    );|;
+    my $val= parse($tr,$data);
+
+    my @fields = $tr->schema->get_table('sessions')->get_fields;
+    is (scalar @fields, 2, 'Both fields parsed correctly');
+    for (@fields) {
+      my $def = $_->default_value;
+      ok( (defined $def and $def eq ''), "Defaults on field $_ correct" );
+    }
 }
