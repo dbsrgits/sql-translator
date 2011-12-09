@@ -11,7 +11,7 @@ use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(318, "SQL::Translator::Parser::MySQL");
+    maybe_plan(330, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -83,7 +83,7 @@ BEGIN {
               date timestamp,
               time_stamp2 timestamp,
               foo_enabled bit(1) default b'0',
-              bar_enabled bit(2) default b"10",
+              bar_enabled bit(1) default b"1",
               KEY (i1),
               UNIQUE (date, i1) USING BTREE,
               KEY date_idx (date),
@@ -190,6 +190,22 @@ BEGIN {
     is( $f10->is_nullable, 1, 'Field can be null' );
     is( $f10->default_value, undef, 'Default value is undefined' );
     is( $f10->is_primary_key, 0, 'Field is not PK' );
+
+    my $f11 = shift @fields;
+    is( $f11->name, 'foo_enabled', 'Eleventh field name is "foo_enabled"' );
+    is( $f11->data_type, 'bit', 'Type is "bit"' );
+    is( $f11->size, 1, 'Size is "1"' );
+    is( $f11->is_nullable, 1, 'Field can be null' );
+    is( $f11->default_value, '0', 'Default value is 0' );
+    is( $f11->is_primary_key, 0, 'Field is not PK' );
+
+    my $f12 = shift @fields;
+    is( $f12->name, 'bar_enabled', 'Twelveth field name is "bar_enabled"' );
+    is( $f12->data_type, 'bit', 'Type is "bit"' );
+    is( $f12->size, 1, 'Size is "1"' );
+    is( $f12->is_nullable, 1, 'Field can be null' );
+    is( $f12->default_value, '1', 'Default value is 1' );
+    is( $f12->is_primary_key, 0, 'Field is not PK' );
 
     my @indices = $table->get_indices;
     is( scalar @indices, 3, 'Right number of indices (3)' );
