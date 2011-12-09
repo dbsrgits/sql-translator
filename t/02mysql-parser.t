@@ -855,6 +855,8 @@ ok ($@, 'Exception thrown on invalid version string');
 }
 
 {
+    # no effect?
+    local $::RD_ERRORS, $::RD_WARN,$::RD_HINT,$::RD_TRACE;
     my $tr = SQL::Translator->new;
     my $data = q|create table "sessions" (
         id char(32) not null default,
@@ -863,7 +865,6 @@ ok ($@, 'Exception thrown on invalid version string');
 	key using btree (ssn) 
     );|;
 
-    my $val;
-    eval { $val = parse($tr,$data) };
-    ok ($@, 'Exception thrown on empty default');
+    my $val= parse($tr,$data);
+    ok ($tr->error =~ /Parse failed\./, 'Parse failed error without default value');
 }
