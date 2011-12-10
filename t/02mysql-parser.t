@@ -9,9 +9,10 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw//;
 use Test::SQL::Translator qw(maybe_plan);
+use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(333, "SQL::Translator::Parser::MySQL");
+    maybe_plan(337, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -901,4 +902,14 @@ ok ($@, 'Exception thrown on invalid version string');
       my $def = $_->default_value;
       ok( (defined $def and $def eq ''), "Defaults on field $_ correct" );
     }
+}
+
+{
+    # test rt70437 and rt71468
+    my $file = "$Bin/data/mysql/cashmusic_db.sql";
+    ok (-f $file,"File exists");
+    my $tr = SQL::Translator->new( parser => 'MySQL');
+    ok ($tr->translate($file),'File translated');
+    ok (!$tr->error, 'no error');
+    ok (my $schema = $tr->schema, 'got schema');
 }
