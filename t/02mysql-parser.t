@@ -871,7 +871,6 @@ ok ($@, 'Exception thrown on invalid version string');
 }
 
 {
-    # no effect?
     local ($::RD_ERRORS,$::RD_WARN,$::RD_HINT,$::RD_TRACE);
     my $tr = SQL::Translator->new;
     my $data = q|create table "sessions" (
