@@ -971,29 +971,30 @@ sub parse {
 # Takes a field, and returns
 sub normalize_field {
     my ($field) = @_;
-    my ($size, $type, $list, $changed) = @_;
+    my ($size, $type, $list, $unsigned, $changed);
 
     $size = $field->size;
     $type = $field->data_type;
     $list = $field->extra->{list} || [];
+    $unsigned = defined($field->extra->{unsigned});
 
     if ( !ref $size && $size eq 0 ) {
         if ( lc $type eq 'tinyint' ) {
-            $changed = $size != 4;
-            $size = 4;
+            $changed = $size != 4 - $unsigned;
+            $size = 4 - $unsigned;
         }
         elsif ( lc $type eq 'smallint' ) {
-            $changed = $size != 6;
-            $size = 6;
+            $changed = $size != 6 - $unsigned;
+            $size = 6 - $unsigned;
         }
         elsif ( lc $type eq 'mediumint' ) {
-            $changed = $size != 9;
-            $size = 9;
+            $changed = $size != 9 - $unsigned;
+            $size = 9 - $unsigned;
         }
         elsif ( $type =~ /^int(eger)?$/i ) {
-            $changed = $size != 11 || $type ne 'int';
+            $changed = $size != 11 - $unsigned || $type ne 'int';
             $type = 'int';
-            $size = 11;
+            $size = 11 - $unsigned;
         }
         elsif ( lc $type eq 'bigint' ) {
             $changed = $size != 20;
