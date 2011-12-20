@@ -659,14 +659,24 @@ foreign_key_def_begin : /constraint/i /foreign key/i WORD
     /foreign key/i
     { $return = '' }
 
-primary_key_def : primary_key index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
+primary_key_def : primary_key index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     { 
         $return       = { 
             supertype => 'constraint',
-            name      => $item[2][0],
             type      => 'primary_key',
-            fields    => $item[5],
-            options   => $item[3][0] || $item[7][0],
+            fields    => $item[4],
+            options   => $item[2][0] || $item[6][0],
+        };
+    }
+    # In theory, and according to the doc, names should not be allowed here, but
+    # MySQL accept (and ignores) them, so we are not going to be less :)
+    | primary_key index_name_not_using(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
+    {
+        $return       = {
+            supertype => 'constraint',
+            type      => 'primary_key',
+            fields    => $item[4],
+            options   => $item[6][0],
         };
     }
 
