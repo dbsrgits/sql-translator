@@ -35,7 +35,7 @@ my @want = (
 
     q[DROP TABLE IF EXISTS `Basic`],
     q[CREATE TABLE `Basic` (
-  `id` integer(10) zerofill NOT NULL auto_increment,
+  `id` integer(10) zerofill auto_increment,
   `title` varchar(100) NOT NULL DEFAULT 'hello',
   `description` text DEFAULT '',
   `email` varchar(500),
@@ -54,7 +54,7 @@ my @want = (
 
     q[DROP TABLE IF EXISTS `Another`],
     q[CREATE TABLE `Another` (
-  `id` integer(10) NOT NULL auto_increment,
+  `id` integer(10) auto_increment,
   `num` numeric(10, 2),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB],

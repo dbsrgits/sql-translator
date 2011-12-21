@@ -612,7 +612,9 @@ sub create_field
     }
 
     # Null?
-    $field_def .= ' NOT NULL' unless $field->is_nullable;
+    if (not ($field->is_nullable || $field->is_primary_key)) {
+        $field_def .= ' NOT NULL';
+    }
 
     # Default?
     SQL::Translator::Producer->_apply_default_value(
