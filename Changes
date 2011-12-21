@@ -14,6 +14,7 @@
 * Check in MySQL parser to avoid trying to parse a table defined twice in the same
   file as indices (and probably other things) get messed up
 * Workaround for some MySQL quirks on primary key definitions
+* MySQL producer does not attempt to write out non-existent unique constraint names
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
