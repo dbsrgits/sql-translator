@@ -753,7 +753,8 @@ sub create_constraint
     elsif ( $c->type eq UNIQUE ) {
         return
         'UNIQUE '. 
-            (defined $c->name ? $qf.truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ).$qf.' ' : '').
+            ((defined $c->name && $c->name) ?
+				$qf.truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ).$qf.' ' : '').
             '(' . $qf . join("$qf, $qf", @fields). $qf . ')';
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
