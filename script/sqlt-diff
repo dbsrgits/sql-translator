@@ -53,6 +53,7 @@ Options:
   --ignore-proc-sql    Ignore procedure SQL differences
   --no-batch-alters    Do not clump multile alters to the same table into a
                        single ALTER TABLE statement where possible.
+  --quote-names        Quote all table and field names in statements
 
 =head1 DESCRIPTION
 
@@ -115,7 +116,7 @@ $VERSION = '1.59';
 
 my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names, 
 	$ignore_constraint_names, $output_db, $mysql_parser_version,
-	$ignore_view_sql, $ignore_proc_sql, $no_batch_alters );
+	$ignore_view_sql, $ignore_proc_sql, $no_batch_alters, $quote_names );
 for my $arg ( @ARGV ) {
     if ( $arg =~ m/^-?-l(ist)?$/ ) {
         $list = 1;
@@ -155,6 +156,9 @@ for my $arg ( @ARGV ) {
     }
     elsif ( $arg =~ m/^--no-batch-alters$/ ) {
       $no_batch_alters = 1;
+    }
+    elsif ( $arg =~ m/^--quote-names$/ ) {
+      $quote_names = 1;
     }
     else {
         pod2usage( msg => "Unknown argument '$arg'" );
@@ -214,7 +218,12 @@ my $result = SQL::Translator::Diff::schema_diff($source_schema, $source_db,
                                                   output_db               => $output_db,
                                                   no_batch_alters         => $no_batch_alters,
                                                   debug                   => $debug,
-                                                  trace                   => $trace });
+                                                  trace                   => $trace,
+                                                  producer_args => {
+                                                      quote_table_names   => $quote_names?'`':'',
+                                                      quote_field_names   => $quote_names?'`':'',
+                                                  },
+                                                  });
 if($result)
 {
     print $result;
