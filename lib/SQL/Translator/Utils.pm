@@ -21,7 +21,7 @@ package SQL::Translator::Utils;
 use strict;
 use base qw(Exporter);
 use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
-use Digest::SHA1 qw( sha1_hex );
+use Digest::SHA qw( sha1_hex );
 use Exporter;
 
 $VERSION = '1.59';
