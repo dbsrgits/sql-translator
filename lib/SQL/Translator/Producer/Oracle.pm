@@ -745,7 +745,6 @@ sub create_field {
 
 }
 
-
 sub create_view {
     my ($view, $options) = @_;
     my $qt = $options->{quote_table_names};
@@ -760,6 +759,284 @@ sub create_view {
                       $view->sql);
 
     return \@create;
+}
+
+sub alter_table {
+    my ( $to_table, $options ) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $out = sprintf(
+        'ALTER TABLE %s %s',
+        $qt . $to_table->name . $qt,
+        $options->{alter_table_action}
+    );
+    return $out;
+}
+
+sub drop_table {
+    my ( $table, $options ) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $out = "DROP TABLE $qt$table$qt CASCADE CONSTRAINTS";
+    return $out;
+}
+
+sub rename_table {
+    my ( $old_table, $new_table, $options ) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    $options->{alter_table_action} = "RENAME TO $qt$new_table$qt";
+    return alter_table( $old_table, $options );
+}
+
+sub create_index {
+    my ( $index, $options ) = @_;
+    my $qt           = $options->{quote_table_names};
+    my $qf           = $options->{quote_field_names};
+    my $table_name   = $index->table->name;
+    my $table_name_q = quote( $table_name, $qt );
+
+    my $index_name = $index->name || '';
+    my $index_type = $index->type || NORMAL;
+    my @fields = map { quote( $_, $qf ) } $index->fields;
+    return if !@fields;
+
+    my ( $index_def,     $constraint_def );
+    my ( @index_options, @table_options );
+    for my $opt ( $index->options ) {
+        if ( ref $opt eq 'HASH' ) {
+            my ( $key, $value ) = each %$opt;
+            if ( ref $value eq 'ARRAY' ) {
+                push @table_options, "$key\n(\n"
+                    . join( "\n",
+                    map {"  $_->[0]\t$_->[1]"}
+                    map { [ each %$_ ] } @$value )
+                    . "\n)";
+            }
+            elsif ( !defined $value ) {
+                push @index_options, $key;
+            }
+            else {
+                push @index_options, "$key    $value";
+            }
+        }
+    }
+    my $index_options
+        = @index_options ? "\n" . join( "\n", @index_options ) : '';
+
+    if ( $index_type eq PRIMARY_KEY ) {
+        $index_name
+            = $index_name
+            ? mk_name($index_name)
+            : mk_name( $table_name, 'pk' );
+        $index_name = quote( $index_name, $qf );
+        $constraint_def
+            = 'CONSTRAINT '
+            . $index_name
+            . ' PRIMARY KEY ' . '('
+            . join( ', ', @fields ) . ')';
+    }
+    elsif ( $index_type eq NORMAL ) {
+        $index_name
+            = $index_name
+            ? mk_name($index_name)
+            : mk_name( $table_name, $index_name || 'i' );
+        $index_name = quote( $index_name, $qf );
+        $index_def
+            = "CREATE INDEX $index_name on $table_name_q ("
+            . join( ', ', @fields )
+            . ")$index_options";
+    }
+    elsif ( $index_type eq UNIQUE ) {
+        $index_name
+            = $index_name
+            ? mk_name($index_name)
+            : mk_name( $table_name, $index_name || 'i' );
+        $index_name = quote( $index_name, $qf );
+        $index_def
+            = "CREATE UNIQUE INDEX $index_name on $table_name_q ("
+            . join( ', ', @fields )
+            . ")$index_options";
+    }
+    else {
+        warn "Unknown index type ($index_type) on table $table_name.\n"
+            if $WARN;
+    }
+    return $index_def, $constraint_def;
+}
+
+sub create_constraint {
+    my ( $c, $options ) = @_;
+
+    my $qf = $options->{quote_field_names} || '';
+    my $qt = $options->{quote_table_names} || '';
+    my $table        = $c->table;
+    my $table_name   = $c->table->name;
+    my $table_name_q = quote( $table_name, $qt );
+
+    my $name = $c->name || '';
+    my @fields  = map { quote( $_, $qf ) } $c->fields;
+    my @rfields = map { quote( $_, $qf ) } $c->reference_fields;
+
+    return if !@fields && $c->type ne CHECK_C;
+
+    my ( $constraint_def, $fk_def );
+    if ( $c->type eq PRIMARY_KEY ) {
+
+        # create a name if delay_constraints
+        $name ||= mk_name( $table_name, 'pk' )
+            if $options->{delay_constraints};
+        $name = quote( $name, $qf );
+        $constraint_def
+            = ( $name ? "CONSTRAINT $name " : '' )
+            . 'PRIMARY KEY ('
+            . join( ', ', @fields ) . ')';
+    }
+    elsif ( $c->type eq UNIQUE ) {
+
+        # Don't create UNIQUE constraints identical to the primary key
+        if ( my $pk = $table->primary_key ) {
+            my $u_fields  = join( ":", @fields );
+            my $pk_fields = join( ":", $pk->fields );
+            next if $u_fields eq $pk_fields;
+        }
+
+        if ($name) {
+
+            # Force prepend of table_name as ORACLE doesn't allow duplicate
+            # CONSTRAINT names even for different tables (ORA-02264)
+            $name = mk_name( "${table_name}_$name", 'u' )
+                unless $name =~ /^$table_name/;
+        }
+        else {
+            $name = mk_name( $table_name, 'u' );
+        }
+
+        $name = quote( $name, $qf );
+
+        for my $f ( $c->fields ) {
+            my $field_def = $table->get_field($f) or next;
+            my $dtype = $translate{
+                ref $field_def->data_type eq "ARRAY"
+                ? $field_def->data_type->[0]
+                : $field_def->data_type
+                }
+                or next;
+            if ( $WARN && $dtype =~ /clob/i ) {
+                warn "Oracle will not allow UNIQUE constraints on "
+                    . "CLOB field '"
+                    . $field_def->table->name . '.'
+                    . $field_def->name . ".'\n";
+            }
+        }
+
+        $constraint_def
+            = "CONSTRAINT $name UNIQUE " . '(' . join( ', ', @fields ) . ')';
+    }
+    elsif ( $c->type eq CHECK_C ) {
+        $name ||= mk_name( $name || $table_name, 'ck' );
+        $name = quote( $name, $qf );
+        my $expression = $c->expression || '';
+        $constraint_def = "CONSTRAINT $name CHECK ($expression)";
+    }
+    elsif ( $c->type eq FOREIGN_KEY ) {
+        $name = mk_name( join( '_', $table_name, $c->fields ) . '_fk' );
+        $name = quote( $name, $qf );
+        my $def = "CONSTRAINT $name FOREIGN KEY ";
+
+        if (@fields) {
+            $def .= '(' . join( ', ', @fields ) . ')';
+        }
+
+        my $ref_table = quote( $c->reference_table, $qt );
+
+        $def .= " REFERENCES $ref_table";
+
+        if (@rfields) {
+            $def .= ' (' . join( ', ', @rfields ) . ')';
+        }
+
+        if ( $c->match_type ) {
+            $def .=
+                  ' MATCH ' . ( $c->match_type =~ /full/i )
+                ? 'FULL'
+                : 'PARTIAL';
+        }
+
+        if ( $c->on_delete ) {
+            $def .= ' ON DELETE ' . join( ' ', $c->on_delete );
+        }
+
+        # disabled by plu 2007-12-29 - doesn't exist for oracle
+        #if ( $c->on_update ) {
+        #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+        #}
+
+        $fk_def = sprintf( "ALTER TABLE %s ADD %s", $table_name_q, $def );
+    }
+    return $constraint_def, $fk_def;
+}
+
+sub rename_field {
+    alter_field(@_);
+}
+
+sub drop_field {
+    my ($old_field) = @_;
+
+    my $out = sprintf( 'ALTER TABLE %s DROP COLUMN %s',
+        $old_field->table->name, $old_field->name );
+    return $out;
+}
+
+sub alter_create_index {
+    my ( $index, $options ) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $qf = $options->{quote_field_names} || '';
+    my ( $idef, $constraint ) = create_index(
+        $index,
+        {   quote_field_names => $qf,
+            quote_table_names => $qt,
+        }
+    );
+
+    return $index->type eq 'PRIMARY'
+        ? sprintf "ALTER TABLE %s ADD %s",
+        $qt . $index->table->name . $qt, $constraint
+        : $idef;
+
+}
+
+sub alter_drop_index {
+    my ( $index, $options ) = @_;
+    my $index_name = $index->name;
+    return "DROP INDEX $index_name";
+}
+
+sub alter_drop_constraint {
+    my ( $c, $options ) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my $qc = $options->{quote_field_names} || '';
+    my $out = sprintf(
+        'ALTER TABLE %s DROP CONSTRAINT %s',
+        $qt . $c->table->name . $qt,
+        $qc . $c->name . $qc
+    );
+    return $out;
+}
+
+sub alter_create_constraint {
+    my ( $index, $options ) = @_;
+    my $qt = $options->{quote_table_names} || '';
+    my ( $def, $fk ) = create_constraint(@_);
+
+    # return if there are no constraint definitions so we don't run
+    # into output like this:
+    # ALTER TABLE users ADD ;
+
+    return if !( $def || $fk );
+    return $index->type eq FOREIGN_KEY
+        ? $fk
+        : sprintf "ALTER TABLE %s ADD %s",
+        $qt . $index->table->name . $qt,
+        $def;
 }
 
 # -------------------------------------------------------------------
