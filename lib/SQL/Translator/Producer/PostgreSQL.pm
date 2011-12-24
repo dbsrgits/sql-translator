@@ -220,6 +220,13 @@ sub produce {
       });
     }
 
+    for my $trigger ( $schema->get_triggers ) {
+      push @table_defs, create_trigger( $trigger, {
+          add_drop_trigger => $add_drop_table,
+          no_comments      => $no_comments,
+        });
+    }
+
     push @output, map { "$_;\n\n" } values %type_defs;
     push @output, map { "$_;\n\n" } @table_defs;
     if ( @fks ) {
@@ -652,6 +659,30 @@ sub create_constraint
     }
 
     return \@constraint_defs, \@fks;
+}
+
+sub create_trigger {
+  my ($trigger,$options) = @_;
+
+  my @statements;
+
+  push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s', $trigger->name )
+    if $options->{add_drop_trigger};
+
+  my $scope = $trigger->scope || '';
+  $scope = " FOR EACH $scope" if $scope;
+
+  push @statements, sprintf(
+    'CREATE TRIGGER %s %s %s ON %s%s %s',
+    $trigger->name,
+    $trigger->perform_action_when,
+    join( ' OR ', @{ $trigger->database_events } ),
+    $trigger->on_table,
+    $scope,
+    $trigger->action,
+  );
+
+  return @statements;
 }
 
 sub convert_datatype

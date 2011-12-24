@@ -35,6 +35,7 @@ SQL::Translator::Schema::Trigger - SQL::Translator trigger object
     on_table            => 'foo',    # table name
     action              => '...',    # text of trigger
     schema              => $schema,  # Schema object
+    scope               => 'row',    # or statement
   );
 
 =head1 DESCRIPTION
@@ -60,7 +61,7 @@ $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
     name schema perform_action_when database_events database_event 
-    fields table on_table action order
+    fields table on_table action order scope
 /);
 
 =pod
@@ -328,6 +329,31 @@ Get or set the trigger's order.
     }
 
     return $self->{'order'} || 0;
+}
+
+# ----------------------------------------------------------------------
+sub scope {
+
+=pod
+
+=head2 scope
+
+Get or set the trigger's scope (row or statement).
+
+    my $scope = $trigger->scope('statement');
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    if ( defined $arg ) {
+        return $self->error( "Invalid scope '$arg'" )
+            unless $arg =~ /^(row|statement)$/i;
+
+        $self->{scope} = $arg;
+	}
+
+    return $self->{scope} || '';
 }
 
 # ----------------------------------------------------------------------
