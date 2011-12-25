@@ -198,8 +198,8 @@ drop : /drop/i WORD(s) "$delimiter"
     { @table_comments = () }
 
 bit:
-    /(b'[01]+')/ |
-    /(b"[01]+")/
+    /(b'[01]{1,64}')/ |
+    /(b"[01]{1,64}")/
 
 string :
   # MySQL strings, unlike common SQL strings, can be double-quoted or
