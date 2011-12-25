@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::YAML;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::YAML - A YAML producer for SQL::Translator
@@ -38,32 +20,31 @@ takes a long time.
 =cut
 
 use strict;
-use vars qw($VERSION);
-$VERSION = '1.59';
+use warnings;
+our $VERSION = '1.59';
 
 use YAML qw(Dump);
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator = shift;
     my $schema     = $translator->schema;
 
     return Dump({
         schema => {
-            tables => { 
+            tables => {
                 map { ($_->name => view_table($_)) }
                     $schema->get_tables,
             },
-            views => { 
+            views => {
                 map { ($_->name => view_view($_)) }
                     $schema->get_views,
             },
-            triggers => { 
+            triggers => {
                 map { ($_->name => view_trigger($_)) }
                     $schema->get_triggers,
             },
-            procedures => { 
-                map { ($_->name => view_procedure($_)) } 
+            procedures => {
+                map { ($_->name => view_procedure($_)) }
                     $schema->get_procedures,
             },
         },
@@ -83,7 +64,6 @@ sub produce {
     });
 }
 
-# -------------------------------------------------------------------
 sub view_table {
     my $table = shift;
 
@@ -98,15 +78,14 @@ sub view_table {
         'indices'     => [
             map { view_index($_) } $table->get_indices
         ],
-        'fields'      => { 
+        'fields'      => {
             map { ($_->name => view_field($_)) }
-                $table->get_fields 
+                $table->get_fields
         },
         keys %{$table->extra} ? ('extra' => { $table->extra } ) : (),
     };
 }
 
-# -------------------------------------------------------------------
 sub view_constraint {
     my $constraint = shift;
 
@@ -126,7 +105,6 @@ sub view_constraint {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_field {
     my $field = shift;
 
@@ -145,7 +123,6 @@ sub view_field {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_procedure {
     my $procedure = shift;
 
@@ -160,7 +137,6 @@ sub view_procedure {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_trigger {
     my $trigger = shift;
 
@@ -176,7 +152,6 @@ sub view_trigger {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_view {
     my $view = shift;
 
@@ -189,7 +164,6 @@ sub view_view {
     };
 }
 
-# -------------------------------------------------------------------
 sub view_index {
     my $index = shift;
 
@@ -203,8 +177,6 @@ sub view_index {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =head1 SEE ALSO
 

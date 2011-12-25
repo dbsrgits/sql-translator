@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::GraphViz;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -100,7 +82,7 @@ Or pass it as an arrayref like so:
 
 Or like so:
 
-  cluster => [ 
+  cluster => [
     { name => 'cluster1', tables => [ 'table1', 'table2' ] },
     { name => 'cluster2', tables => [ 'table3', 'table4' ] },
   ]
@@ -113,14 +95,14 @@ undefined (the default) - the result is returned as a string.
 
 =item * output_type (DEFAULT: 'png')
 
-This determines which 
+This determines which
 L<output method|GraphViz/as_canon,_as_text,_as_gif_etc._methods>
 will be invoked to generate the graph: C<png> translates to
 C<as_png>, C<ps> to C<as_ps> and so on.
 
 =item * fontname
 
-This sets the global font name (or full path to font file) for 
+This sets the global font name (or full path to font file) for
 node, edge, and graph labels
 
 =item * fontsize
@@ -247,8 +229,8 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
 use Scalar::Util qw/openhandle/;
 
-use vars qw[ $VERSION $DEBUG ];
-$VERSION = '1.59';
+our $DEBUG;
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 sub produce {
@@ -319,7 +301,7 @@ sub produce {
       );
 
     # join_pk_only/skip_fields implies natural_join
-    $args->{natural_join} = 1 
+    $args->{natural_join} = 1
       if ($args->{join_pk_only} or scalar keys %skip_fields);
 
     # usually we do not want direction when using natural join
@@ -480,7 +462,7 @@ sub produce {
             push @fmt_indexes, join (' ',
               '*',
               $args->{show_index_names}
-                ? $index->name . ':' 
+                ? $index->name . ':'
                 : ()
               ,
               join (', ', $index->fields),
@@ -640,8 +622,6 @@ sub produce {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

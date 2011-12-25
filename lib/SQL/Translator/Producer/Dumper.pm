@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::Dumper;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2006 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::Dumper - SQL Dumper producer for SQL::Translator
@@ -51,32 +33,32 @@ generated script, or part of the DSN can be intuited from the
 =cut
 
 use strict;
+use warnings;
 use Config;
 use SQL::Translator;
 use File::Temp 'tempfile';
 use Template;
-use vars qw($VERSION);
 
 use Data::Dumper;
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 sub produce {
     my $t              = shift;
     my $args           = $t->producer_args;
     my $schema         = $t->schema;
-    my $add_truncate   = $args->{'add_truncate'}   || 0; 
+    my $add_truncate   = $args->{'add_truncate'}   || 0;
     my $skip           = $args->{'skip'}           || '';
     my $skiplike       = $args->{'skiplike'}       || '';
     my $db_user        = $args->{'db_user'}        || 'db_user';
     my $db_pass        = $args->{'db_password'}    || 'db_pass';
     my $parser_name    = $t->parser_type;
-    my %skip           = map { $_, 1 } map { s/^\s+|\s+$//; $_ } 
+    my %skip           = map { $_, 1 } map { s/^\s+|\s+$//; $_ }
                          split (/,/, $skip);
     my $sqlt_version   = $t->version;
 
-    if ( $parser_name  =~ /Parser::(\w+)$/ ) { 
-        $parser_name = $1 
+    if ( $parser_name  =~ /Parser::(\w+)$/ ) {
+        $parser_name = $1
     }
 
     my %type_to_dbd    = (
@@ -103,9 +85,9 @@ sub produce {
     my $template      = Template->new;
     my $template_text = template();
     my $out;
-    $template->process( 
-        \$template_text, 
-        { 
+    $template->process(
+        \$template_text,
+        {
             translator     => $t,
             schema         => $schema,
             db_user        => $db_user,
@@ -114,14 +96,13 @@ sub produce {
             perl           => $Config{'startperl'},
             skip           => \%skip,
             skiplike       => $skiplike,
-        }, 
-        \$out 
+        },
+        \$out
     ) or die $template->error;
 
     return $out;
 }
 
-# -------------------------------------------------------------------
 sub template {
 #
 # Returns the template to be processed by Template Toolkit
@@ -141,7 +122,7 @@ use DBI;
 use Getopt::Long;
 use File::Spec::Functions 'catfile';
 
-my ( $help, $add_truncate, $skip, $skiplike, $no_comments, 
+my ( $help, $add_truncate, $skip, $skiplike, $no_comments,
     $takelike, $mysql_loadfile );
 GetOptions(
     'add-truncate'   => \$add_truncate,
@@ -198,13 +179,13 @@ FOREACH table IN schema.get_tables;
         types  => types,
         fields => field_names,
     });
-END 
+END
 -%]
 
 my $db     = DBI->connect(
-    '[% dsn %]', 
-    '[% db_user %]', 
-    '[% db_pass %]', 
+    '[% dsn %]',
+    '[% db_user %]',
+    '[% db_pass %]',
     { RaiseError => 1 }
 );
 my %skip   = map { $_, 1 } map { s/^\s+|\s+$//; $_ } split (/,/, $skip);
@@ -231,7 +212,7 @@ for my $table ( @tables ) {
     my ( $out_fh, $outfile );
     if ( $mysql_loadfile ) {
         $outfile = catfile( cwd(), "$table_name.txt" );
-        open $out_fh, ">$outfile" or 
+        open $out_fh, ">$outfile" or
             die "Can't write LOAD FILE to '$table_name': $!\n";
     }
 
@@ -264,14 +245,14 @@ for my $table ( @tables ) {
                 $val = defined $val ? $val : $mysql_loadfile ? '\N' : 'NULL';
             }
             push @vals, $val;
-        }        
+        }
 
         if ( $mysql_loadfile ) {
             print $out_fh join("\t", @vals), "\n";
         }
         else {
             print "INSERT INTO $table_name (".
-                join(', ', @{ $table->{'fields'} }) . 
+                join(', ', @{ $table->{'fields'} }) .
                 ') VALUES (', join(', ', @vals), ");\n";
         }
     }

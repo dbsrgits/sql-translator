@@ -1,26 +1,9 @@
 package SQL::Translator::Producer::ClassDBI;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 use strict;
-use vars qw[ $VERSION $DEBUG ];
-$VERSION = '1.59';
+use warnings;
+our $DEBUG;
+our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -33,7 +16,6 @@ my %CDBI_auto_pkgs = (
     Oracle     => 'Oracle',
 );
 
-# -------------------------------------------------------------------
 sub produce {
     my $t             = shift;
     local $DEBUG      = $t->debug;
@@ -58,9 +40,9 @@ sub produce {
     my $header        = header_comment( __PACKAGE__, "# " );
     my $parser_type   = ( split /::/, $t->parser_type )[-1];
     my $from          = $CDBI_auto_pkgs{$parser_type} || '';
-    my $dsn           = $args->{'dsn'} || sprintf( 'dbi:%s:_', 
-        $CDBI_auto_pkgs{ $parser_type } 
-        ? $CDBI_auto_pkgs{ $parser_type } : $parser_type 
+    my $dsn           = $args->{'dsn'} || sprintf( 'dbi:%s:_',
+        $CDBI_auto_pkgs{ $parser_type }
+        ? $CDBI_auto_pkgs{ $parser_type } : $parser_type
     );
     my $sep           = '# ' . '-' x 67;
 
@@ -180,11 +162,11 @@ sub produce {
                 {
                     next unless $field->is_foreign_key;
 
-                    next unless ( 
+                    next unless (
                         $field->foreign_key_reference->reference_table eq
                            $table_name
-                        || 
-                        $field->foreign_key_reference->reference_table eq $link 
+                        ||
+                        $field->foreign_key_reference->reference_table eq $link
                     );
 
                     push @lk_fields,
@@ -273,7 +255,7 @@ sub produce {
                 my $table_name = $table->name;
                 my $field_name = $field->name;
 #                my $fk_method  = $t->format_fk_name( $table_name, $field_name );
-                my $fk_method  = join('::', $table_pkg_name, 
+                my $fk_method  = join('::', $table_pkg_name,
                     $t->format_fk_name( $table_name, $field_name )
                 );
                 my $fk         = $field->foreign_key_reference;
@@ -352,7 +334,7 @@ sub produce {
                 else {
                     my $table       = $schema->get_table( $pkg->{'table'} );
                     my @field_names = map { $_->name } $table->get_fields;
-					
+
                     push @create, join("\n",
                         $pkg_name."->table('".$pkg->{'table'}."');\n",
                         $pkg_name."->columns(All => qw/".
@@ -385,8 +367,6 @@ sub produce {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

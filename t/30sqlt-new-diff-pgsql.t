@@ -45,6 +45,7 @@ my $out = SQL::Translator::Diff::schema_diff(
      }
    }
 );
+
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
@@ -80,7 +81,7 @@ ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD CONSTRAINT unique_name UNIQUE (name);
 
-ALTER TABLE employee ADD FOREIGN KEY (employee_id)
+ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id)
   REFERENCES person (person_id) DEFERRABLE;
 
 ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);

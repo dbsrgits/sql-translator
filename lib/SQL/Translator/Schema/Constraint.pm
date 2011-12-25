@@ -1,23 +1,5 @@
 package SQL::Translator::Schema::Constraint;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -42,14 +24,15 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+ our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 my %VALID_CONSTRAINT_TYPE = (
     PRIMARY_KEY, 1,
@@ -59,17 +42,15 @@ my %VALID_CONSTRAINT_TYPE = (
     NOT_NULL,    1,
 );
 
-# ----------------------------------------------------------------------
-
 __PACKAGE__->_attributes( qw/
-    table name type fields reference_fields reference_table 
+    table name type fields reference_fields reference_table
     match_type on_delete on_update expression deferrable
 /);
 
 # Override to remove empty arrays from args.
 # t/14postgres-parser breaks without this.
 sub init {
-    
+
 =pod
 
 =head2 new
@@ -95,7 +76,6 @@ Object constructor.
     $self->SUPER::init(@_);
 }
 
-# ----------------------------------------------------------------------
 sub deferrable {
 
 =pod
@@ -121,7 +101,6 @@ False, so the following are eqivalent:
     return defined $self->{'deferrable'} ? $self->{'deferrable'} : 1;
 }
 
-# ----------------------------------------------------------------------
 sub expression {
 
 =pod
@@ -135,7 +114,7 @@ Gets and set the expression used in a CHECK constraint.
 =cut
 
     my $self = shift;
-    
+
     if ( my $arg = shift ) {
         # check arg here?
         $self->{'expression'} = $arg;
@@ -144,7 +123,6 @@ Gets and set the expression used in a CHECK constraint.
     return $self->{'expression'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -179,7 +157,7 @@ Determine whether the constraint is valid or not.
         return $self->error('Only one field allowed for foreign key')
             if scalar @fields > 1;
 
-        my $ref_table_name  = $self->reference_table or 
+        my $ref_table_name  = $self->reference_table or
             return $self->error('No reference table');
 
         my $ref_table = $schema->get_table( $ref_table_name ) or
@@ -193,21 +171,20 @@ Determine whether the constraint is valid or not.
         for my $ref_field ( @ref_fields ) {
             next if $ref_table->get_field( $ref_field );
             return $self->error(
-                "Constraint from field(s) ", 
+                "Constraint from field(s) ",
                 join(', ', map {qq['$table_name.$_']} @fields),
                 " to non-existent field '$ref_table_name.$ref_field'"
             );
         }
     }
     elsif ( $type eq CHECK_C ) {
-        return $self->error('No expression for CHECK') unless 
+        return $self->error('No expression for CHECK') unless
             $self->expression;
     }
 
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -260,7 +237,6 @@ Returns undef or an empty list if the constraint has no fields set.
     }
 }
 
-# ----------------------------------------------------------------------
 sub field_names {
 
 =head2 field_names
@@ -277,7 +253,6 @@ avoid the overload magic of the Field objects returned by the fields method.
     return wantarray ? @{ $self->{'fields'} || [] } : ($self->{'fields'} || '');
 }
 
-# ----------------------------------------------------------------------
 sub match_type {
 
 =pod
@@ -292,7 +267,7 @@ Get or set the constraint's match_type.  Only valid values are "full"
 =cut
 
     my ( $self, $arg ) = @_;
-    
+
     if ( $arg ) {
         $arg = lc $arg;
         return $self->error("Invalid match type: $arg")
@@ -303,7 +278,6 @@ Get or set the constraint's match_type.  Only valid values are "full"
     return $self->{'match_type'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -322,14 +296,13 @@ Get or set the constraint's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub options {
 
 =pod
 
 =head2 options
 
-Gets or adds to the constraints's options (e.g., "INITIALLY IMMEDIATE").  
+Gets or adds to the constraints's options (e.g., "INITIALLY IMMEDIATE").
 Returns an array or array reference.
 
   $constraint->options('NORELY');
@@ -350,8 +323,6 @@ Returns an array or array reference.
     }
 }
 
-
-# ----------------------------------------------------------------------
 sub on_delete {
 
 =pod
@@ -365,7 +336,7 @@ Get or set the constraint's "on delete" action.
 =cut
 
     my $self = shift;
-    
+
     if ( my $arg = shift ) {
         # validate $arg?
         $self->{'on_delete'} = $arg;
@@ -374,7 +345,6 @@ Get or set the constraint's "on delete" action.
     return $self->{'on_delete'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub on_update {
 
 =pod
@@ -388,7 +358,7 @@ Get or set the constraint's "on update" action.
 =cut
 
     my $self = shift;
-    
+
     if ( my $arg = shift ) {
         # validate $arg?
         $self->{'on_update'} = $arg;
@@ -397,7 +367,6 @@ Get or set the constraint's "on update" action.
     return $self->{'on_update'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub reference_fields {
 
 =pod
@@ -428,11 +397,11 @@ arrayref; returns an array or array reference.
     unless ( ref $self->{'reference_fields'} ) {
         my $table   = $self->table   or return $self->error('No table');
         my $schema  = $table->schema or return $self->error('No schema');
-        if ( my $ref_table_name = $self->reference_table ) { 
+        if ( my $ref_table_name = $self->reference_table ) {
             my $ref_table  = $schema->get_table( $ref_table_name ) or
                 return $self->error("Can't find table '$ref_table_name'");
 
-            if ( my $constraint = $ref_table->primary_key ) { 
+            if ( my $constraint = $ref_table->primary_key ) {
                 $self->{'reference_fields'} = [ $constraint->fields ];
             }
             else {
@@ -447,8 +416,8 @@ arrayref; returns an array or array reference.
     }
 
     if ( ref $self->{'reference_fields'} ) {
-        return wantarray 
-            ?  @{ $self->{'reference_fields'} } 
+        return wantarray
+            ?  @{ $self->{'reference_fields'} }
             :     $self->{'reference_fields'};
     }
     else {
@@ -456,7 +425,6 @@ arrayref; returns an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub reference_table {
 
 =pod
@@ -474,7 +442,6 @@ Get or set the table referred to by the constraint.
     return $self->{'reference_table'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -497,7 +464,6 @@ Get or set the constraint's table object.
     return $self->{'table'};
 }
 
-# ----------------------------------------------------------------------
 sub type {
 
 =pod
@@ -515,7 +481,7 @@ Get or set the constraint's type.
     if ( $type ) {
         $type = uc $type;
         $type =~ s/_/ /g;
-        return $self->error("Invalid constraint type: $type") 
+        return $self->error("Invalid constraint type: $type")
             unless $VALID_CONSTRAINT_TYPE{ $type };
         $self->{'type'} = $type;
     }
@@ -523,7 +489,6 @@ Get or set the constraint's type.
     return $self->{'type'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -540,7 +505,7 @@ Determines if this constraint is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_constraint_names = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $self->type eq $other->type;
     unless ($ignore_constraint_names) {
@@ -549,33 +514,33 @@ Determines if this constraint is the same as another
     return 0 unless $self->deferrable eq $other->deferrable;
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $case_insensitive ? uc($self->table->name) eq uc($other->table->name)
-    	: $self->table->name eq $other->table->name;
+      : $self->table->name eq $other->table->name;
     return 0 unless $self->expression eq $other->expression;
-    
+
     # Check fields, regardless of order
-    my %otherFields = ();	# create a hash of the other fields
+    my %otherFields = ();  # create a hash of the other fields
     foreach my $otherField ($other->fields) {
-    	$otherField = uc($otherField) if $case_insensitive;
-    	$otherFields{$otherField} = 1;
+      $otherField = uc($otherField) if $case_insensitive;
+      $otherFields{$otherField} = 1;
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
-    	$selfField = uc($selfField) if $case_insensitive;
-    	return 0 unless $otherFields{$selfField};
-    	delete $otherFields{$selfField};
+      $selfField = uc($selfField) if $case_insensitive;
+      return 0 unless $otherFields{$selfField};
+      delete $otherFields{$selfField};
     }
     # Check all other fields were accounted for
     return 0 unless keys %otherFields == 0;
 
     # Check reference fields, regardless of order
-    my %otherRefFields = ();	# create a hash of the other reference fields
+    my %otherRefFields = ();  # create a hash of the other reference fields
     foreach my $otherRefField ($other->reference_fields) {
-    	$otherRefField = uc($otherRefField) if $case_insensitive;
-    	$otherRefFields{$otherRefField} = 1;
+      $otherRefField = uc($otherRefField) if $case_insensitive;
+      $otherRefFields{$otherRefField} = 1;
     }
     foreach my $selfRefField ($self->reference_fields) { # check for self reference fields in hash
-    	$selfRefField = uc($selfRefField) if $case_insensitive;
-    	return 0 unless $otherRefFields{$selfRefField};
-    	delete $otherRefFields{$selfRefField};
+      $selfRefField = uc($selfRefField) if $case_insensitive;
+      return 0 unless $otherRefFields{$selfRefField};
+      delete $otherRefFields{$selfRefField};
     }
     # Check all other reference fields were accounted for
     return 0 unless keys %otherRefFields == 0;
@@ -589,15 +554,12 @@ Determines if this constraint is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

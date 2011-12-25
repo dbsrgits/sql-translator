@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::DBI::Oracle;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2006-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::DBI::Oracle - parser for DBD::Oracle
@@ -42,7 +24,6 @@ use SQL::Translator::Schema::Constraint;
 
 our $VERSION = '1.59';
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
 
@@ -142,9 +123,9 @@ Earl Cahill E<lt>cpan@spack.netE<gt>.
 
 =head1 ACKNOWLEDGEMENT
 
-Initial revision of this module came almost entirely from work done by 
+Initial revision of this module came almost entirely from work done by
 Todd Hepler E<lt>thepler@freeshell.orgE<gt>.  My changes were
-quite minor (ensuring NAME_uc, changing a couple variable names, 
+quite minor (ensuring NAME_uc, changing a couple variable names,
 skipping tables with a $ in them).
 
 Todd claimed his work to be an almost verbatim copy of

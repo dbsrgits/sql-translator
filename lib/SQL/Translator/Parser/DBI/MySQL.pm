@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::DBI::MySQL;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::DBI::MySQL - parser for DBD::mysql
@@ -35,16 +17,16 @@ a create file.  Should be much faster for larger schemas.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Parser::MySQL;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our ( $DEBUG, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
     my $schema       = $tr->schema;

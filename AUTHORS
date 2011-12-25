@@ -1,11 +1,16 @@
 The following people have contributed to the SQLFairy project:
 
+-   Aaron Schrab <aaron@schrab.com>
 -   Alexander Hartmaier <abraxxa@cpan.org>
 -   Allen Day <allenday@users.sourceforge.net>
+-   Amiri Barksdale <amiri@roosterpirates.com>
 -   Anders Nor Berle <berle@cpan.org>
+-   Andreas 'ac0v' Specht <ac0v@sys-network.de>
 -   Andrew Moore <amoore@cpan.org>
+-   Andrew Pam <andrew.pam@strategicdata.com.au>
 -   Arthur Axel "fREW" Schmidt <frioux@gmail.com>
 -   Ben Faga <faga@cshl.edu>
+-   Cedric Carree <beg0@free.fr>
 -   Chris Hilton <chilton@alterpoint.com>
 -   Chris Mungall <cjm@fruitfly.org>
 -   Chris To <christot@users.sourceforge.net>
@@ -22,20 +27,23 @@ The following people have contributed to the SQLFairy project:
 -   John Goulah <jgoulah@cpan.org>
 -   Ken Youens-Clark <kclark@cpan.org>
 -   Kevin McClellan <kdmcclel@gmail.com>
+-   Lukas 'mauke' Mai <l.mai@web.de>
 -   Mark Addison <grommit@users.sourceforge.net>
+-   Michal Jurosz <mj@mj41.cz>
 -   Mikey Melillo <mmelillo@users.sourceforge.net>
 -   Moritz Onken <onken@netcubed.de>
 -   Paul Harrington <phrrngtn@users.sourceforge.net>
 -   Peter Rabbitson <ribasushi@cpan.org>
+-   Robert Bohne <rbo@openserv.org>
 -   Ross Smith II <rossta@users.sf.net>
 -   Ryan D Johnson <ryan@innerfence.com>
 -   Sam Angiuoli <angiuoli@users.sourceforge.net>
 -   Stephen Bennett <stephen@freenode.net>
 -   Stephen Clouse <stephenclouse@gmail.com>
+-   SymKat <symkat@symkat.com>
 -   Vincent Bachelier <geistteufel@yahoo.fr>
 -   Wallace Reis <wreis@cpan.org>
 -   Ying Zhang <zyolive@yahoo.com>
--   Amiri Barksdale <amiri@roosterpirates.com>
 
 If you would like to contribute to the project, you can send patches
 to the developers mailing list:

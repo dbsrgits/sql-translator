@@ -10,22 +10,22 @@ See SQL::Translator::Parser::DBI.
 
 =head1 DESCRIPTION
 
-Uses DBI methods to determine schema structure.  DBI, of course, 
+Uses DBI methods to determine schema structure.  DBI, of course,
 delegates to DBD::DB2.
 
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use Data::Dumper;
 use SQL::Translator::Parser::DB2;
 use SQL::Translator::Schema::Constants;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
+our ($DEBUG, $VERSION, @EXPORT_OK );
 # $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
 
@@ -86,17 +86,17 @@ WHERE tc.TABSCHEMA NOT LIKE 'SYS%' AND
 SQL
 
     my $indsth = $dbh->prepare(<<SQL);
-SELECT i.INDSCHEMA, 
-       i.INDNAME, 
-       i.TABSCHEMA, 
-       i.TABNAME, 
-       i.UNIQUERULE, 
-       i.INDEXTYPE, 
-       ic.COLNAME 
-FROM SYSCAT.INDEXES i 
-JOIN SYSCAT.INDEXCOLUSE ic ON i.INDSCHEMA = ic.INDSCHEMA AND 
-                              i.INDNAME = ic.INDNAME 
-WHERE i.TABSCHEMA NOT LIKE 'SYS%' AND 
+SELECT i.INDSCHEMA,
+       i.INDNAME,
+       i.TABSCHEMA,
+       i.TABNAME,
+       i.UNIQUERULE,
+       i.INDEXTYPE,
+       ic.COLNAME
+FROM SYSCAT.INDEXES i
+JOIN SYSCAT.INDEXCOLUSE ic ON i.INDSCHEMA = ic.INDSCHEMA AND
+                              i.INDNAME = ic.INDNAME
+WHERE i.TABSCHEMA NOT LIKE 'SYS%' AND
       i.INDEXTYPE <> 'P' AND
       i.TABNAME = ?
 SQL
@@ -104,7 +104,7 @@ SQL
     my $trigsth = $dbh->prepare(<<SQL);
 SELECT t.TRIGSCHEMA,
        t.TRIGNAME,
-       t.TABSCHEMA, 
+       t.TABSCHEMA,
        t.TRIGTIME,
        t.TRIGEVENT,
        t.GRANULARITY,
@@ -135,7 +135,7 @@ SQL
 
             $colsth->execute($table_info->{TABNAME});
             my $cols = $colsth->fetchall_hashref("COLNAME");
-      
+
             foreach my $c (values %{$cols}) {
                 print Dumper($c) if $DEBUG;
                 print $c->{COLNAME} if($DEBUG);
@@ -147,7 +147,7 @@ SQL
                                         size        => $c->{LENGTH},
                                          ) || die $table->error;
 
-                
+
                 $f->is_nullable($c->{NULLS} eq 'Y');
             }
 
@@ -157,7 +157,7 @@ SQL
 
             my @fields = map { $_->{COLNAME} } (values %{$cons});
             my $c = $cons->{$fields[0]};
-            
+
             print  $c->{CONSTNAME} if($DEBUG);
             my $con = $table->add_constraint(
                                            name   => $c->{CONSTNAME},
@@ -167,9 +167,9 @@ SQL
                                            FOREIGN_KEY : UNIQUE
                                          ) || die $table->error;
 
-            
+
             $con->deferrable($c->{CHECKEXISTINGDATA} eq 'D');
-            
+
             $indsth->execute($table_info->{TABNAME});
             my $inds = $indsth->fetchall_hashref("INDNAME");
             print Dumper($inds) if($DEBUG);
@@ -195,8 +195,8 @@ SQL
                                              type   => $index->{UNIQUERULE} eq 'U' ?
                                              UNIQUE : NORMAL
                                              ) || die $table->error;
-                
-            
+
+
             }
 
             $trigsth->execute($table_info->{TABNAME});
@@ -205,7 +205,7 @@ SQL
             next if(!%$trigs);
 
             foreach my $t (values %$trigs)
-            {         
+            {
                 print  $t->{TRIGNAME} if($DEBUG);
                 my $trig = $schema->add_trigger(
                      name                  => $t->{TRIGNAME},
@@ -214,12 +214,12 @@ SQL
                                               $t->{TRIGTIME} eq 'B' ? 'before':
                                               'instead',
                      database_event        => $t->{TRIGEVENT} eq 'I' ? 'insert'
-                                            : $t->{TRIGEVENT} eq 'D' ? 'delete' 
+                                            : $t->{TRIGEVENT} eq 'D' ? 'delete'
                                             : 'update',
                      action                => $t->{TEXT},
-                     on_table              => $t->{TABNAME} 
+                     on_table              => $t->{TABNAME}
                                               ) || die $schema->error;
-            
+
 #             $trig->extra( reference => $def->{'reference'},
 #                           condition => $def->{'condition'},
 #                           granularity => $def->{'granularity'} );

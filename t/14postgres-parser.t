@@ -8,12 +8,12 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(129, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(134, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
 my $t   = SQL::Translator->new( trace => 0 );
-my $sql = q[
+my $sql = q{
     -- comment on t_test1
     create table t_test1 (
         -- this is the primary key
@@ -45,7 +45,7 @@ my $sql = q[
         name text,
         price numeric
     );
-    
+
     CREATE TEMP TABLE products_2 (
         product_no integer,
         name text,
@@ -57,6 +57,12 @@ my $sql = q[
         name text,
         price numeric
     );
+
+  CREATE TRIGGER test_trigger
+    BEFORE INSERT OR UPDATE OR DELETE
+    ON products_1
+    FOR EACH ROW
+    EXECUTE PROCEDURE foo();
 
     alter table t_test1 add f_fk2 integer;
 
@@ -83,7 +89,7 @@ my $sql = q[
     alter table t_test1 alter f_char set statistics 10;
 
     alter table t_test1 alter f_text set storage extended;
-    
+
     alter table t_test1 rename column f_text to foo;
 
     alter table t_test1 rename to foo;
@@ -93,7 +99,7 @@ my $sql = q[
     alter table t_test1 owner to foo;
 
     commit;
-];
+};
 
 $| = 1;
 
@@ -294,3 +300,12 @@ is( $t2_c3->type, CHECK_C, "Constraint is a 'CHECK'" );
 is( exists $schema->get_table('products_1')->extra()->{'temporary'}, "", "Table is NOT temporary");
 is( $schema->get_table('products_2')->extra('temporary'), 1,"Table is TEMP");
 is( $schema->get_table('products_3')->extra('temporary'), 1,"Table is TEMPORARY");
+
+# test trigger
+my $trigger = $schema->get_trigger('test_trigger');
+is( $trigger->on_table, 'products_1', "Trigger is on correct table");
+is_deeply( scalar $trigger->database_events, [qw(insert update delete)], "Correct events for trigger");
+
+is( $trigger->perform_action_when, 'before', "Correct time for trigger");
+is( $trigger->scope, 'row', "Correct scope for trigger");
+is( $trigger->action, 'EXECUTE PROCEDURE foo()', "Correct action for trigger");

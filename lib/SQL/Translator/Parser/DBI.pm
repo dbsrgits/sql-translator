@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::DBI;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::DBI - "parser" for DBI handles
@@ -27,7 +9,7 @@ SQL::Translator::Parser::DBI - "parser" for DBI handles
   use DBI;
   use SQL::Translator;
 
-  my $dbh = DBI->connect('dsn', 'user', 'pass', 
+  my $dbh = DBI->connect('dsn', 'user', 'pass',
       {
           RaiseError       => 1,
           FetchHashKeyName => 'NAME_lc',
@@ -54,8 +36,8 @@ Or:
 
 =head1 DESCRIPTION
 
-This parser accepts an open database handle (or the arguments to create 
-one) and queries the database directly for the information.  
+This parser accepts an open database handle (or the arguments to create
+one) and queries the database directly for the information.
 
 The following are acceptable arguments:
 
@@ -63,8 +45,8 @@ The following are acceptable arguments:
 
 =item * dbh
 
-An open DBI database handle.  NB:  Be sure to create the database with the 
-"FetchHashKeyName => 'NAME_lc'" option as all the DBI parsers expect 
+An open DBI database handle.  NB:  Be sure to create the database with the
+"FetchHashKeyName => 'NAME_lc'" option as all the DBI parsers expect
 lowercased column names.
 
 =item * dsn
@@ -85,7 +67,7 @@ There is no need to specify which type of database you are querying as
 this is determined automatically by inspecting $dbh->{'Driver'}{'Name'}.
 If a parser exists for your database, it will be used automatically;
 if not, the code will fail automatically (and you can write the parser
-and contribute it to the project!).  
+and contribute it to the project!).
 
 Currently parsers exist for the following databases:
 
@@ -114,12 +96,11 @@ query Oracle directly and skip the parsing of a text file, too.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
+use warnings;
 use DBI;
-use vars qw($VERSION @EXPORT);
-$VERSION = '1.59';
+our @EXPORT;
+our $VERSION = '1.59';
 
 use constant DRIVERS => {
     mysql            => 'MySQL',
@@ -153,13 +134,13 @@ sub parse {
 
     unless ( $dbh ) {
         die 'No DSN' unless $dsn;
-        $dbh = DBI->connect( $dsn, $db_user, $db_password, 
+        $dbh = DBI->connect( $dsn, $db_user, $db_password,
             {
                 FetchHashKeyName => 'NAME_lc',
                 LongReadLen      => 3000,
                 LongTruncOk      => 1,
                 RaiseError       => 1,
-            } 
+            }
         );
     }
 
@@ -186,7 +167,6 @@ sub parse {
 
 1;
 
-# -------------------------------------------------------------------
 =pod
 
 =head1 AUTHOR

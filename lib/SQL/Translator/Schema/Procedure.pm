@@ -1,23 +1,5 @@
 package SQL::Translator::Schema::Procedure;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -46,15 +28,12 @@ stored procedures (and possibly other pieces of nameable SQL code?).
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION);
-
-$VERSION = '1.59';
-
-# ----------------------------------------------------------------------
+our $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
     name sql parameters comments owner sql schema order
@@ -70,7 +49,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub parameters {
 
 =pod
@@ -106,7 +84,6 @@ Gets and set the parameters of the stored procedure.
     return wantarray ? @{ $self->{'parameters'} || [] } : ($self->{'parameters'} || '');
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -125,7 +102,6 @@ Get or set the procedure's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub sql {
 
 =pod
@@ -144,7 +120,6 @@ Get or set the procedure's SQL.
     return $self->{'sql'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -163,7 +138,6 @@ Get or set the order of the procedure.
     return $self->{'order'};
 }
 
-# ----------------------------------------------------------------------
 sub owner {
 
 =pod
@@ -182,7 +156,6 @@ Get or set the owner of the procedure.
     return $self->{'owner'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub comments {
 
 =pod
@@ -205,7 +178,7 @@ Get or set the comments on a procedure.
     }
 
     if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray 
+        return wantarray
             ? @{ $self->{'comments'} || [] }
             : join( "\n", @{ $self->{'comments'} || [] } );
     }
@@ -214,7 +187,6 @@ Get or set the comments on a procedure.
     }
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -238,7 +210,6 @@ Get or set the procedures's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -255,10 +226,10 @@ Determines if this procedure is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_sql = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
-    
+
     unless ($ignore_sql) {
         my $selfSql = $self->sql;
         my $otherSql = $other->sql;
@@ -270,7 +241,7 @@ Determines if this procedure is the same as another
         $otherSql =~ s/\s+/ /sg;
         return 0 unless $selfSql eq $otherSql;
     }
-    
+
     return 0 unless $self->_compare_objects(scalar $self->parameters, scalar $other->parameters);
 #    return 0 unless $self->comments eq $other->comments;
 #    return 0 unless $case_insensitive ? uc($self->owner) eq uc($other->owner) : $self->owner eq $other->owner;
@@ -278,15 +249,12 @@ Determines if this procedure is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

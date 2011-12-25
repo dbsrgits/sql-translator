@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::TT::Table;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -171,12 +153,11 @@ whitespace either side, to be recognised.
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
+use warnings;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our ( $DEBUG, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use File::Path;
@@ -207,19 +188,19 @@ sub produce {
         %$pargs,        # Allow any TT opts to be passed in the producer_args
     ) || die "Failed to initialize Template object: ".Template->error;
 
-	for my $tbl ( sort {$a->order <=> $b->order} $scma->get_tables ) {
-		my $outtmp;
+   for my $tbl ( sort {$a->order <=> $b->order} $scma->get_tables ) {
+      my $outtmp;
         $tt->process( $file, {
             translator => $Translator,
             schema     => $scma,
             table      => $tbl,
-        }, \$outtmp ) 
-		or die "Error processing template '$file' for table '".$tbl->name
-	          ."': ".$tt->error;
+        }, \$outtmp )
+      or die "Error processing template '$file' for table '".$tbl->name
+             ."': ".$tt->error;
         $out .= $outtmp;
 
         # Write out the file...
-		write_file(  table_file($tbl), $outtmp ) if $pargs->{mk_files};
+      write_file(  table_file($tbl), $outtmp ) if $pargs->{mk_files};
     }
 
     return $out;
@@ -236,7 +217,7 @@ sub table_file {
 
 # Write the src given to the file given, handling the on_exists arg.
 sub write_file {
-	my ($file, $src) = @_;
+   my ($file, $src) = @_;
     my $pargs = $Translator->producer_args;
     my $root = $pargs->{mk_files_base};
 
@@ -266,12 +247,12 @@ sub write_file {
     }
 
     my ($dir) = $file =~ m!^(.*)/!; # Want greedy, eveything before the last /
-	if ( $dir and not -d $dir and $pargs->{mk_file_dir} ) { mkpath($dir); }
+   if ( $dir and not -d $dir and $pargs->{mk_file_dir} ) { mkpath($dir); }
 
     debug "Writing to $file\n";
-	open( FILE, ">$file") or die "Error opening file $file : $!\n";
-	print FILE $src;
-	close(FILE);
+   open( FILE, ">$file") or die "Error opening file $file : $!\n";
+   print FILE $src;
+   close(FILE);
 }
 
 # Reads file and inserts code between the insert comments and returns the new
@@ -299,8 +280,6 @@ sub insert_code {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

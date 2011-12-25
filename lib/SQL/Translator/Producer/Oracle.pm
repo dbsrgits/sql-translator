@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::Oracle;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::Oracle - Oracle SQL producer
@@ -106,8 +88,9 @@ context the slash will be still there to ensure compatibility with SQLPlus.
 =cut
 
 use strict;
-use vars qw[ $VERSION $DEBUG $WARN ];
-$VERSION = '1.59';
+use warnings;
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;
@@ -201,7 +184,6 @@ my %truncated;
 # Quote used to escape table, field, sequence and trigger names
 my $quote_char  = '"';
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator     = shift;
     $DEBUG             = $translator->debug;
@@ -218,16 +200,16 @@ sub produce {
     my $qf = 1 if $translator->quote_field_names;
 
     if ( $translator->parser_type =~ /mysql/i ) {
-        $create .= 
+        $create .=
             "-- We assume that default NLS_DATE_FORMAT has been changed\n".
             "-- but we set it here anyway to be self-consistent.\n"
             unless $no_comments;
 
-        $create .= 
+        $create .=
         "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';\n\n";
     }
 
-    for my $table ( $schema->get_tables ) { 
+    for my $table ( $schema->get_tables ) {
         my ( $table_def, $fk_def, $trigger_def, $index_def, $constraint_def ) = create_table(
             $table,
             {
@@ -307,7 +289,7 @@ sub create_table {
                 my ( $key, $value ) = each %$opt;
                 if ( ref $value eq 'ARRAY' ) {
                     push @table_options, "$key\n(\n".  join ("\n",
-                        map { "  $_->[0]\t$_->[1]" } 
+                        map { "  $_->[0]\t$_->[1]" }
                         map { [ each %$_ ] }
                         @$value
                     )."\n)";
@@ -380,6 +362,8 @@ sub create_table {
             elsif ( $c->type eq FOREIGN_KEY ) {
                 $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
                 $name = quote($name, $qf);
+                my $on_delete = uc ($c->on_delete || '');
+
                 my $def = "CONSTRAINT $name FOREIGN KEY ";
 
                 if ( @fields ) {
@@ -395,17 +379,17 @@ sub create_table {
                 }
 
                 if ( $c->match_type ) {
-                    $def .= ' MATCH ' . 
+                    $def .= ' MATCH ' .
                         ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
                 }
 
-                if ( $c->on_delete ) {
-                    $def .= ' ON DELETE '.join( ' ', $c->on_delete );
+                if ( $on_delete && $on_delete ne "RESTRICT") {
+                    $def .= ' ON DELETE '.$c->on_delete;
                 }
 
                 # disabled by plu 2007-12-29 - doesn't exist for oracle
                 #if ( $c->on_update ) {
-                #    $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+                #    $def .= ' ON UPDATE '. $c->on_update;
                 #}
 
                 push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_q, $def);
@@ -428,7 +412,7 @@ sub create_table {
                     my ( $key, $value ) = each %$opt;
                     if ( ref $value eq 'ARRAY' ) {
                         push @table_options, "$key\n(\n".  join ("\n",
-                            map { "  $_->[0]\t$_->[1]" } 
+                            map { "  $_->[0]\t$_->[1]" }
                             map { [ each %$_ ] }
                            @$value
                         )."\n)";
@@ -445,29 +429,29 @@ sub create_table {
               ? "\n".join("\n", @index_options) : '';
 
             if ( $index_type eq PRIMARY_KEY ) {
-                $index_name = $index_name ? mk_name( $index_name ) 
+                $index_name = $index_name ? mk_name( $index_name )
                     : mk_name( $table_name, 'pk' );
                 $index_name = quote($index_name, $qf);
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $index_type eq NORMAL ) {
-                $index_name = $index_name ? mk_name( $index_name ) 
+                $index_name = $index_name ? mk_name( $index_name )
                     : mk_name( $table_name, $index_name || 'i' );
                 $index_name = quote($index_name, $qf);
-                push @index_defs, 
+                push @index_defs,
                     "CREATE INDEX $index_name on $table_name_q (".
-                        join( ', ', @fields ).  
+                        join( ', ', @fields ).
                     ")$index_options";
             }
             elsif ( $index_type eq UNIQUE ) {
-                $index_name = $index_name ? mk_name( $index_name ) 
+                $index_name = $index_name ? mk_name( $index_name )
                     : mk_name( $table_name, $index_name || 'i' );
                 $index_name = quote($index_name, $qf);
-                push @index_defs, 
+                push @index_defs,
                     "CREATE UNIQUE INDEX $index_name on $table_name_q (".
-                        join( ', ', @fields ).  
-                    ")$index_options"; 
+                        join( ', ', @fields ).
+                    ")$index_options";
             }
             else {
                 warn "Unknown index type ($index_type) on table $table_name.\n"
@@ -485,7 +469,7 @@ sub create_table {
             }
         }
 
-        my $table_options = @table_options 
+        my $table_options = @table_options
             ? "\n".join("\n", @table_options) : '';
     push @create, "CREATE TABLE $table_name_q (\n" .
             join( ",\n", map { "  $_" } @field_defs,
@@ -575,7 +559,7 @@ sub create_field {
         $data_type = 'varchar2';
     }
     elsif ( $data_type eq 'set' ) {
-        # XXX add a CHECK constraint maybe 
+        # XXX add a CHECK constraint maybe
         # (trickier and slower, than enum :)
         $data_type = 'varchar2';
     }
@@ -602,7 +586,7 @@ sub create_field {
     }
 
     #
-    # Fixes ORA-02329: column of datatype LOB cannot be 
+    # Fixes ORA-02329: column of datatype LOB cannot be
     # unique or a primary key
     #
     if ( $data_type eq 'clob' && $field->is_primary_key ) {
@@ -628,7 +612,7 @@ sub create_field {
 
     #
     # Fixes ORA-00906: missing right parenthesis
-		# if size is 0 or undefined
+      # if size is 0 or undefined
     #
     for (qw/varchar2/) {
         if ( $data_type =~ /^($_)$/i ) {
@@ -647,7 +631,7 @@ sub create_field {
     my $default = $field->default_value;
     if ( defined $default ) {
         #
-        # Wherein we try to catch a string being used as 
+        # Wherein we try to catch a string being used as
         # a default value for a numerical field.  If "true/false,"
         # then sub "1/0," otherwise just test the truthity of the
         # argument and use that (naive?).
@@ -656,8 +640,8 @@ sub create_field {
           $default = $$default;
         } elsif (ref $default) {
           $default = 'NULL';
-        } elsif ( 
-            $data_type =~ /^number$/i && 
+        } elsif (
+            $data_type =~ /^number$/i &&
             $default   !~ /^-?\d+$/     &&
             $default   !~ m/null/i
            ) {
@@ -668,17 +652,17 @@ sub create_field {
             } else {
                 $default = $default ? "'1'" : "'0'";
             }
-        } elsif ( 
+        } elsif (
                  $data_type =~ /date/ && (
-                                          $default eq 'current_timestamp' 
+                                          $default eq 'current_timestamp'
                                           ||
-                                          $default eq 'now()' 
+                                          $default eq 'now()'
                                          )
                 ) {
             $default = 'SYSDATE';
         } else {
             $default = $default =~ m/null/i ? 'NULL' : "'$default'"
-        } 
+        }
 
         $field_def .= " DEFAULT $default",
     }
@@ -721,7 +705,7 @@ sub create_field {
     if ( lc $field->data_type eq 'timestamp' ) {
         my $base_name = $table_name . "_". $field_name;
         my $trig_name = quote(mk_name( $base_name, 'ts' ), $qt);
-        my $trigger = 
+        my $trigger =
           "CREATE OR REPLACE TRIGGER $trig_name\n".
           "BEFORE INSERT OR UPDATE ON $table_name_q\n".
           "FOR EACH ROW WHEN (new.$field_name_q IS NULL)\n".
@@ -736,7 +720,7 @@ sub create_field {
 
     if ( my $comment = $field->comments ) {
         $comment =~ s/'/''/g;
-        push @field_comments, 
+        push @field_comments,
           "COMMENT ON COLUMN $table_name_q.$field_name_q is\n '" .
             $comment . "';" unless $options->{no_comments};
     }
@@ -750,7 +734,7 @@ sub create_view {
     my ($view, $options) = @_;
     my $qt = $options->{quote_table_names};
     my $view_name = quote($view->name,$qt);
-    
+
     my @create;
     push @create, qq[DROP VIEW $view_name]
         if $options->{add_drop_view};
@@ -762,18 +746,17 @@ sub create_view {
     return \@create;
 }
 
-# -------------------------------------------------------------------
 sub mk_name {
-    my $basename      = shift || ''; 
-    my $type          = shift || ''; 
+    my $basename      = shift || '';
+    my $type          = shift || '';
        $type          = '' if $type =~ /^\d/;
-    my $scope         = shift || ''; 
+    my $scope         = shift || '';
     my $critical      = shift || '';
     my $basename_orig = $basename;
-    my $max_name      = $type 
-                        ? $max_id_length - (length($type) + 1) 
+    my $max_name      = $type
+                        ? $max_id_length - (length($type) + 1)
                         : $max_id_length;
-    $basename         = substr( $basename, 0, $max_name ) 
+    $basename         = substr( $basename, 0, $max_name )
                         if length( $basename ) > $max_name;
     my $name          = $type ? "${type}_$basename" : $basename;
 
@@ -803,7 +786,6 @@ sub mk_name {
 
 1;
 
-# -------------------------------------------------------------------
 sub quote {
   my ($name, $q) = @_;
   $q && $name ? "$quote_char$name$quote_char" : $name;

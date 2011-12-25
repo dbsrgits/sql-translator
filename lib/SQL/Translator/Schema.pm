@@ -1,23 +1,5 @@
 package SQL::Translator::Schema;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -45,6 +27,7 @@ returns the database structure.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
@@ -54,9 +37,7 @@ use SQL::Translator::Schema::View;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
-use vars qw[ $VERSION ];
-
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 __PACKAGE__->_attributes(qw/name database translator/);
 
@@ -75,7 +56,6 @@ sub new {
   return $self;
 }
 
-# ----------------------------------------------------------------------
 sub as_graph {
 
 =pod
@@ -93,7 +73,6 @@ Returns the schema as an L<SQL::Translator::Schema::Graph> object.
         translator => $self->translator );
 }
 
-# ----------------------------------------------------------------------
 sub as_graph_pm {
 
 =pod
@@ -108,11 +87,11 @@ Returns a Graph::Directed object with the table names for nodes.
 
     my $self = shift;
     my $g    = Graph::Directed->new;
-    
-    for my $table ( $self->get_tables ) { 
+
+    for my $table ( $self->get_tables ) {
         my $tname  = $table->name;
         $g->add_vertex( $tname );
-    
+
         for my $field ( $table->get_fields ) {
             if ( $field->is_foreign_key ) {
                 my $fktable = $field->foreign_key_reference->reference_table;
@@ -125,7 +104,6 @@ Returns a Graph::Directed object with the table names for nodes.
     return $g;
 }
 
-# ----------------------------------------------------------------------
 sub add_table {
 
 =pod
@@ -134,7 +112,7 @@ sub add_table {
 
 Add a table object.  Returns the new SQL::Translator::Schema::Table object.
 The "name" parameter is required.  If you try to create a table with the
-same name as an existing table, you will get an error and the table will 
+same name as an existing table, you will get an error and the table will
 not be created.
 
   my $t1 = $schema->add_table( name => 'foo' ) or die $schema->error;
@@ -173,7 +151,6 @@ not be created.
     return $table;
 }
 
-# ----------------------------------------------------------------------
 sub drop_table {
 
 =pod
@@ -218,7 +195,6 @@ can be set to 1 to also drop all triggers on the table, default is 0.
     return $table;
 }
 
-# ----------------------------------------------------------------------
 sub add_procedure {
 
 =pod
@@ -267,7 +243,6 @@ procedure will not be created.
     return $procedure;
 }
 
-# ----------------------------------------------------------------------
 sub drop_procedure {
 
 =pod
@@ -304,7 +279,6 @@ object.
     return $proc;
 }
 
-# ----------------------------------------------------------------------
 sub add_trigger {
 
 =pod
@@ -313,7 +287,7 @@ sub add_trigger {
 
 Add a trigger object.  Returns the new SQL::Translator::Schema::Trigger object.
 The "name" parameter is required.  If you try to create a trigger with the
-same name as an existing trigger, you will get an error and the trigger will 
+same name as an existing trigger, you will get an error and the trigger will
 not be created.
 
   my $t1 = $schema->add_trigger( name => 'foo' );
@@ -351,7 +325,6 @@ not be created.
     return $trigger;
 }
 
-# ----------------------------------------------------------------------
 sub drop_trigger {
 
 =pod
@@ -387,7 +360,6 @@ trigger name or an C<SQL::Translator::Schema::Trigger> object.
     return $trigger;
 }
 
-# ----------------------------------------------------------------------
 sub add_view {
 
 =pod
@@ -396,7 +368,7 @@ sub add_view {
 
 Add a view object.  Returns the new SQL::Translator::Schema::View object.
 The "name" parameter is required.  If you try to create a view with the
-same name as an existing view, you will get an error and the view will 
+same name as an existing view, you will get an error and the view will
 not be created.
 
   my $v1 = $schema->add_view( name => 'foo' );
@@ -433,7 +405,6 @@ not be created.
     return $view;
 }
 
-# ----------------------------------------------------------------------
 sub drop_view {
 
 =pod
@@ -468,7 +439,6 @@ name or an C<SQL::Translator::Schema::View> object.
     return $view;
 }
 
-# ----------------------------------------------------------------------
 sub database {
 
 =pod
@@ -486,7 +456,6 @@ Get or set the schema's database.  (optional)
     return $self->{'database'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -510,7 +479,6 @@ Returns true if all the tables and views are valid.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub get_procedure {
 
 =pod
@@ -530,7 +498,6 @@ Returns a procedure by the name provided.
     return $self->{'procedures'}{$procedure_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_procedures {
 
 =pod
@@ -558,7 +525,6 @@ Returns all the procedures as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_table {
 
 =pod
@@ -575,18 +541,17 @@ Returns a table by the name provided.
     my $table_name = shift or return $self->error('No table name');
     my $case_insensitive = shift;
     if ( $case_insensitive ) {
-    	$table_name = uc($table_name);
-    	foreach my $table ( keys %{$self->{tables}} ) {
-    		return $self->{tables}{$table} if $table_name eq uc($table);
-    	}
-    	return $self->error(qq[Table "$table_name" does not exist]);
+      $table_name = uc($table_name);
+      foreach my $table ( keys %{$self->{tables}} ) {
+         return $self->{tables}{$table} if $table_name eq uc($table);
+      }
+      return $self->error(qq[Table "$table_name" does not exist]);
     }
     return $self->error(qq[Table "$table_name" does not exist])
       unless exists $self->{'tables'}{$table_name};
     return $self->{'tables'}{$table_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_tables {
 
 =pod
@@ -614,7 +579,6 @@ Returns all the tables as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_trigger {
 
 =pod
@@ -634,7 +598,6 @@ Returns a trigger by the name provided.
     return $self->{'triggers'}{$trigger_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_triggers {
 
 =pod
@@ -662,7 +625,6 @@ Returns all the triggers as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub get_view {
 
 =pod
@@ -682,7 +644,6 @@ Returns a view by the name provided.
     return $self->{'views'}{$view_name};
 }
 
-# ----------------------------------------------------------------------
 sub get_views {
 
 =pod
@@ -710,7 +671,6 @@ Returns all the views as an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub make_natural_joins {
 
 =pod
@@ -724,7 +684,7 @@ tables.  Accepts the following arguments:
 
 =item * join_pk_only
 
-A True or False argument which determins whether or not to perform 
+A True or False argument which determins whether or not to perform
 the joins from primary keys to fields of the same name in other tables
 
 =item * skip_fields
@@ -782,7 +742,6 @@ A list of fields to skip in the joins
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -800,7 +759,6 @@ Get or set the schema's name.  (optional)
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub translator {
 
 =pod
@@ -816,7 +774,6 @@ Get the SQL::Translator instance that instantiated the parser.
     return $self->{'translator'};
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $_ for values %{ $self->{'tables'} };
@@ -824,8 +781,6 @@ sub DESTROY {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 
