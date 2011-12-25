@@ -3,7 +3,7 @@ package SQL::Translator::Utils;
 use strict;
 use warnings;
 use base qw(Exporter);
-use Digest::SHA1 qw( sha1_hex );
+use Digest::SHA qw( sha1_hex );
 use Exporter;
 
 our $VERSION = '1.59';
