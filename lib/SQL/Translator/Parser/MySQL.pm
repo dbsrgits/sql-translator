@@ -203,6 +203,10 @@ drop : /drop/i TABLE /[^;]+/ "$delimiter"
 drop : /drop/i WORD(s) "$delimiter"
     { @table_comments = () }
 
+bit:
+    /(b'[01]+')/ |
+    /(b"[01]+")/
+
 string :
   # MySQL strings, unlike common SQL strings, can be double-quoted or
   # single-quoted, and you can escape the delmiters by doubling (but only the
@@ -243,6 +247,9 @@ create : CREATE /database/i WORD "$delimiter"
 create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) /(,\s*)?\)/ table_option(s?) "$delimiter"
     {
         my $table_name                       = $item{'table_name'};
+        die "There is more than one definition for $table_name"
+            if ($tables{$table_name});
+
         $tables{ $table_name }{'order'}      = ++$table_order;
         $tables{ $table_name }{'table_name'} = $table_name;
 
@@ -583,9 +590,20 @@ default_val :
         $return =  \$item[2];
     }
     |
-    /default/i /'(?:.*?(?:\\'|''))*.*?'|(?:')?[\w\d:.-]*(?:')?/
+    /default/i string
     {
-        $item[2] =~ s/^\s*'|'\s*$//g;
+        $item[2] =~ s/^\s*'|'\s*$//g or $item[2] =~ s/^\s*"|"\s*$//g;
+        $return  =  $item[2];
+    }
+    |
+    /default/i bit
+    {
+        $item[2] =~ s/b['"]([01]+)['"]/$1/g;
+        $return  =  $item[2];
+    }
+    |
+    /default/i /[\w\d:.-]+/
+    {
         $return  =  $item[2];
     }
 
@@ -624,14 +642,24 @@ foreign_key_def_begin : /constraint/i /foreign key/i WORD
     /foreign key/i
     { $return = '' }
 
-primary_key_def : primary_key index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
+primary_key_def : primary_key index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
         $return       = {
             supertype => 'constraint',
-            name      => $item[2][0],
             type      => 'primary_key',
-            fields    => $item[5],
-            options   => $item[3][0] || $item[7][0],
+            fields    => $item[4],
+            options   => $item[2][0] || $item[6][0],
+        };
+    }
+    # In theory, and according to the doc, names should not be allowed here, but
+    # MySQL accept (and ignores) them, so we are not going to be less :)
+    | primary_key index_name_not_using(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
+    {
+        $return       = {
+            supertype => 'constraint',
+            type      => 'primary_key',
+            fields    => $item[4],
+            options   => $item[6][0],
         };
     }
 
@@ -943,29 +971,30 @@ sub parse {
 # Takes a field, and returns
 sub normalize_field {
     my ($field) = @_;
-    my ($size, $type, $list, $changed) = @_;
+    my ($size, $type, $list, $unsigned, $changed);
 
     $size = $field->size;
     $type = $field->data_type;
     $list = $field->extra->{list} || [];
+    $unsigned = defined($field->extra->{unsigned});
 
     if ( !ref $size && $size eq 0 ) {
         if ( lc $type eq 'tinyint' ) {
-            $changed = $size != 4;
-            $size = 4;
+            $changed = $size != 4 - $unsigned;
+            $size = 4 - $unsigned;
         }
         elsif ( lc $type eq 'smallint' ) {
-            $changed = $size != 6;
-            $size = 6;
+            $changed = $size != 6 - $unsigned;
+            $size = 6 - $unsigned;
         }
         elsif ( lc $type eq 'mediumint' ) {
-            $changed = $size != 9;
-            $size = 9;
+            $changed = $size != 9 - $unsigned;
+            $size = 9 - $unsigned;
         }
         elsif ( $type =~ /^int(eger)?$/i ) {
-            $changed = $size != 11 || $type ne 'int';
+            $changed = $size != 11 - $unsigned || $type ne 'int';
             $type = 'int';
-            $size = 11;
+            $size = 11 - $unsigned;
         }
         elsif ( lc $type eq 'bigint' ) {
             $changed = $size != 20;

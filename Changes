@@ -1,3 +1,4 @@
+* Proper quoting support in SQLite
 * Support for triggers in PostgreSQL producer and parser
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)
 * Fix index issue in SQLT::Parser::DBI::PostgreSQL
@@ -8,6 +9,14 @@
 * Fix possible name duplication in SQLlite producer
 * Oracle does not accept ON DELETE/UPDATE RESTRICT (though it is the actual default)
   fix by not adding the ON DELETE/UPDATE clause at all
+* Changed dependency on Digest::SHA1 to the core-bundled Digest::SHA (RT#67989)
+* Support for double quoted and bit strings as default values in MySQL parser
+* Check in MySQL parser to avoid trying to parse a table defined twice in the same
+  file as indices (and probably other things) get messed up
+* Workaround for some MySQL quirks on primary key definitions
+* MySQL producer does not attempt to write out non-existent unique constraint names
+* MySQL parser correctly differentiates between signed and unsigned integer column
+  display sizes
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05

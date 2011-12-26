@@ -731,10 +731,18 @@ sub create_constraint
         return 'PRIMARY KEY (' . $qf . join("$qf, $qf", @fields). $qf . ')';
     }
     elsif ( $c->type eq UNIQUE ) {
-        return
-        'UNIQUE '.
-            (defined $c->name ? $qf.truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ).$qf.' ' : '').
-            '(' . $qf . join("$qf, $qf", @fields). $qf . ')';
+        return sprintf 'UNIQUE %s(%s)',
+          ((defined $c->name && $c->name)
+            ? join ('',
+                $qf,
+                truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ),
+                $qf,
+                ' '
+              )
+            : ''
+          ),
+          ( join ', ', map { "${qf}${_}${qf}" } @fields ),
+        ;
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
         #

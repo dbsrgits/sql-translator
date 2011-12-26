@@ -152,6 +152,16 @@ $GRAMMAR = q!
 
 {
     my ( %tables, $table_order, @table_comments, @views, @triggers );
+
+    sub _err {
+      my $max_lines = 5;
+      my @up_to_N_lines = split (/\n/, $_[1], $max_lines + 1);
+      die sprintf ("Unable to parse line %d:\n%s\n",
+        $_[0],
+        join "\n", (map { "'$_'" } @up_to_N_lines[0..$max_lines - 1 ]), @up_to_N_lines > $max_lines ? '...' : ()
+      );
+    }
+
 }
 
 #
@@ -175,7 +185,7 @@ statement : begin_transaction
     | drop
     | comment
     | create
-    | <error>
+    | /^\Z/ | { _err ($thisline, $text) }
 
 begin_transaction : /begin/i TRANSACTION(?) SEMICOLON
 
@@ -428,8 +438,8 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
       }
     }
 
-ref_def : /(\w+)\s*\((\w+)\)/
-    { $return = { reference_table => $1, reference_fields => $2 } }
+ref_def : table_name parens_field_list
+    { $return = { reference_table => $item[1]{name}, reference_fields => $item[2] } }
 
 table_name : qualified_name
 
