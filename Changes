@@ -21,6 +21,7 @@
   display sizes
 * Replace Class::Accessor::Fast dependency with already-included Moo
 * Entire codebase is now free of tabs and trailing whitespace
+* Spellfixes (RT#68912)
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
