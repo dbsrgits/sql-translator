@@ -267,8 +267,8 @@ sub mk_name {
 
 sub is_geometry
 {
-   my $field = shift;
-   return 1 if $field->data_type eq 'geometry';
+    my $field = shift;
+    return 1 if $field->data_type eq 'geometry';
 }
 
 sub is_geography
@@ -357,6 +357,10 @@ sub create_table
     if(exists $table->{extra}{temporary}) {
         $temporary = $table->{extra}{temporary} ? "TEMPORARY " : "";
     }
+    my $inherits = "";
+    if(my $tlist = $table->extra('inherits')) {
+        $inherits = sprintf(' INHERITS (%s)', join(', ',@$tlist));
+    }
 
     my $create_statement;
     $create_statement = join("\n", @comments);
@@ -369,22 +373,22 @@ sub create_table
     }
     $create_statement .= qq[CREATE ${temporary}TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
-                            "\n)"
+                            "\n)$inherits"
                             ;
     $create_statement .= @index_defs ? ';' : q{};
     $create_statement .= ( $create_statement =~ /;$/ ? "\n" : q{} )
         . join(";\n", @index_defs);
 
-   #
-   # Geometry
-   #
-   if(grep { is_geometry($_) } $table->get_fields){
+    #
+    # Geometry
+    #
+    if(grep { is_geometry($_) } $table->get_fields){
         $create_statement .= ";";
         my @geometry_columns;
         foreach my $col ($table->get_fields) { push(@geometry_columns,$col) if is_geometry($col); }
-      $create_statement .= "\n".join("\n", map{ drop_geometry_column($_) } @geometry_columns) if $options->{add_drop_table};
-      $create_statement .= "\n".join("\n", map{ add_geometry_column($_) } @geometry_columns);
-   }
+        $create_statement .= "\n".join("\n", map{ drop_geometry_column($_) } @geometry_columns) if $options->{add_drop_table};
+        $create_statement .= "\n".join("\n", map{ add_geometry_column($_) } @geometry_columns);
+    }
 
     return $create_statement, \@fks;
 }
@@ -496,20 +500,20 @@ sub create_view {
         #
         $field_def .= ' NOT NULL' unless $field->is_nullable;
 
-      #
-      # Geometry constraints
-      #
-      if(is_geometry($field)){
-         foreach ( create_geometry_constraints($field) ) {
-            my ($cdefs, $fks) = create_constraint($_,
-                                         {
-                                            quote_field_names => $qf,
-                                            quote_table_names => $qt,
-                                            table_name => $table_name,
-                                         });
-            push @$constraint_defs, @$cdefs;
-            push @$fks, @$fks;
-         }
+        #
+        # Geometry constraints
+        #
+        if(is_geometry($field)){
+            foreach ( create_geometry_constraints($field) ) {
+                my ($cdefs, $fks) = create_constraint($_,
+                                                      {
+                                                          quote_field_names => $qf,
+                                                          quote_table_names => $qt,
+                                                          table_name => $table_name,
+                                                      });
+                push @$constraint_defs, @$cdefs;
+                push @$fks, @$fks;
+            }
         }
 
         return $field_def;
@@ -517,30 +521,30 @@ sub create_view {
 }
 
 sub create_geometry_constraints{
-   my $field = shift;
+    my $field = shift;
 
-   my @constraints;
-   push @constraints, SQL::Translator::Schema::Constraint->new(
-                     name       => "enforce_dims_".$field->name,
-                     expression => "(ST_NDims($field) = ".$field->{extra}{dimensions}.")",
-                     table       => $field->table,
-                     type       => CHECK_C,
-                  );
+    my @constraints;
+    push @constraints, SQL::Translator::Schema::Constraint->new(
+                            name       => "enforce_dims_".$field->name,
+                            expression => "(ST_NDims($field) = ".$field->{extra}{dimensions}.")",
+                            table        => $field->table,
+                            type       => CHECK_C,
+                        );
 
-   push @constraints, SQL::Translator::Schema::Constraint->new(
-                     name       => "enforce_srid_".$field->name,
-                     expression => "(ST_SRID($field) = ".$field->{extra}{srid}.")",
-                     table       => $field->table,
-                     type       => CHECK_C,
-                  );
-   push @constraints, SQL::Translator::Schema::Constraint->new(
-                     name       => "enforce_geotype_".$field->name,
-                     expression => "(GeometryType($field) = '".$field->{extra}{geometry_type}."'::text OR $field IS NULL)",
-                     table       => $field->table,
-                     type       => CHECK_C,
-                  );
+    push @constraints, SQL::Translator::Schema::Constraint->new(
+                            name       => "enforce_srid_".$field->name,
+                            expression => "(ST_SRID($field) = ".$field->{extra}{srid}.")",
+                            table        => $field->table,
+                            type       => CHECK_C,
+                        );
+    push @constraints, SQL::Translator::Schema::Constraint->new(
+                            name       => "enforce_geotype_".$field->name,
+                            expression => "(GeometryType($field) = '".$field->{extra}{geometry_type}."'::text OR $field IS NULL)",
+                            table        => $field->table,
+                            type       => CHECK_C,
+                        );
 
-   return @constraints;
+    return @constraints;
 }
 
 sub create_index
@@ -815,10 +819,10 @@ sub alter_field
         if ( defined $new_default &&
              (!defined $old_default || $old_default ne $new_default) );
 
-    # fixes bug where removing the DEFAULT statement of a column
-    # would result in no change
+     # fixes bug where removing the DEFAULT statement of a column
+     # would result in no change
 
-    push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT',
+     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT',
                        $to_field->table->name,
                        $to_field->name)
         if ( !defined $new_default && defined $old_default );
@@ -855,53 +859,53 @@ sub drop_field
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $qt . $old_field->table->name . $qt,
                       $qf . $old_field->name . $qf);
-        $out .= "\n".drop_geometry_column($old_field) if is_geometry($old_field);
+    $out .= "\n".drop_geometry_column($old_field) if is_geometry($old_field);
     return $out;
 }
 
 sub add_geometry_column{
-   my ($field,$options) = @_;
+    my ($field,$options) = @_;
 
-   my $out = sprintf("INSERT INTO geometry_columns VALUES ('%s','%s','%s','%s','%s','%s','%s')",
-                  '',
-                  $field->table->schema->name,
-                  $options->{table} ? $options->{table} : $field->table->name,
-                  $field->name,
-                  $field->{extra}{dimensions},
-                  $field->{extra}{srid},
-                  $field->{extra}{geometry_type});
+    my $out = sprintf("INSERT INTO geometry_columns VALUES ('%s','%s','%s','%s','%s','%s','%s')",
+                        '',
+                        $field->table->schema->name,
+                        $options->{table} ? $options->{table} : $field->table->name,
+                        $field->name,
+                        $field->{extra}{dimensions},
+                        $field->{extra}{srid},
+                        $field->{extra}{geometry_type});
     return $out;
 }
 
 sub drop_geometry_column
 {
-   my $field = shift;
+    my $field = shift;
 
-   my $out = sprintf("DELETE FROM geometry_columns WHERE f_table_schema = '%s' AND f_table_name = '%s' AND f_geometry_column = '%s'",
-                  $field->table->schema->name,
-                  $field->table->name,
-                  $field->name);
+    my $out = sprintf("DELETE FROM geometry_columns WHERE f_table_schema = '%s' AND f_table_name = '%s' AND f_geometry_column = '%s'",
+                        $field->table->schema->name,
+                        $field->table->name,
+                        $field->name);
     return $out;
 }
 
 sub add_geometry_constraints{
-   my $field = shift;
+    my $field = shift;
 
-   my @constraints = create_geometry_constraints($field);
+    my @constraints = create_geometry_constraints($field);
 
-   my $out = join("\n", map { alter_create_constraint($_); } @constraints);
+    my $out = join("\n", map { alter_create_constraint($_); } @constraints);
 
-   return $out;
+    return $out;
 }
 
 sub drop_geometry_constraints{
-   my $field = shift;
+    my $field = shift;
 
-   my @constraints = create_geometry_constraints($field);
+    my @constraints = create_geometry_constraints($field);
 
-   my $out = join("\n", map { alter_drop_constraint($_); } @constraints);
+    my $out = join("\n", map { alter_drop_constraint($_); } @constraints);
 
-   return $out;
+    return $out;
 }
 
 sub alter_table {
@@ -919,9 +923,9 @@ sub rename_table {
     my $qt = $options->{quote_table_names} || '';
     $options->{alter_table_action} = "RENAME TO $qt$new_table$qt";
 
-   my @geometry_changes;
-   push @geometry_changes, map { drop_geometry_column($_); } grep { is_geometry($_) } $old_table->get_fields;
-   push @geometry_changes, map { add_geometry_column($_, { table => $new_table }); } grep { is_geometry($_) } $old_table->get_fields;
+    my @geometry_changes;
+    push @geometry_changes, map { drop_geometry_column($_); } grep { is_geometry($_) } $old_table->get_fields;
+    push @geometry_changes, map { add_geometry_column($_, { table => $new_table }); } grep { is_geometry($_) } $old_table->get_fields;
 
     $options->{geometry_changes} = join ("\n",@geometry_changes) if scalar(@geometry_changes);
 
@@ -957,7 +961,7 @@ sub alter_drop_constraint {
 
     return sprintf(
         'ALTER TABLE %s DROP CONSTRAINT %s',
-        $qt . $c->table->name . $qt,
+                      $qt . $c->table->name . $qt,
         # attention: Postgres  has a very special naming structure
         # for naming foreign keys, it names them uses the name of
         # the table as prefix and fkey as suffix, concatenated by a underscore

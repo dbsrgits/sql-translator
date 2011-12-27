@@ -5,6 +5,8 @@
   closes RT#70734, RT#71283, RT#70378
 * Proper quoting support in SQLite
 * Support for triggers in PostgreSQL producer and parser
+* Support for INHERITS statements in PG parser/producer
+  (RT#49627, patch from Vincent Veselosky)
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)
 * Fix index issue in SQLT::Parser::DBI::PostgreSQL
 * Add column and table comments in SQLT::Parser::DBI::PostgreSQL(patch from Andrew Pam)
