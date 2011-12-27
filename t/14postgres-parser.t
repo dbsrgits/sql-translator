@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(144, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(147, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -43,6 +43,8 @@ my $sql = q{
     create table t_test3 (
         test_field varchar(25)
     ) inherits (t_test2);
+
+    create table t_test4 () inherits (t_test3);
 
     CREATE TABLE products_1 (
         product_no integer,
@@ -112,7 +114,7 @@ my $schema = $t->schema;
 
 isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
 my @tables = $schema->get_tables;
-is( scalar @tables, 6, 'Six tables' );
+is( scalar @tables, 7, 'Seven tables' );
 
 my $t1 = shift @tables;
 is( $t1->name, 't_test1', 'Table t_test1 exists' );
@@ -319,6 +321,10 @@ is( $t3_f1->is_primary_key, 0, 'Field is not PK' );
 my @t3_constraints = $t3->get_constraints;
 is( scalar @t3_constraints, 0, "No constraints on table" );
 
+my $t4 = shift @tables;
+is( $t4->name, 't_test4', 'Table t_test4 exists' );
+is( scalar $t4->get_fields, undef, 'No fields in t_test4' );
+is_deeply( $t4->extra->{inherits}, ['t_test3'], 'Table t_test4 inherits from t_test3' );
 
 # test temporary tables
 is( exists $schema->get_table('products_1')->extra()->{'temporary'}, "", "Table is NOT temporary");
