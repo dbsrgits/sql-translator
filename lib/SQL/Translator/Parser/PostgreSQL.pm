@@ -1055,6 +1055,8 @@ sub parse {
         ) or die "Couldn't create table '$table_name': " . $schema->error;
 
         $table->extra(temporary => 1) if $tdata->{'temporary'};
+        $table->extra(inherits => $tdata->{'table_options(s?)'}{inherits}{table_name})
+            if $tdata->{'table_options(s?)'}{inherits};
 
         $table->comments( $tdata->{'comments'} );
 

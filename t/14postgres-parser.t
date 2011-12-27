@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(134, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(144, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -40,12 +40,16 @@ my $sql = q{
         check (f_int between 1 and 5)
     );
 
+    create table t_test3 (
+        test_field varchar(25)
+    ) inherits (t_test2);
+
     CREATE TABLE products_1 (
         product_no integer,
         name text,
         price numeric
     );
-
+    
     CREATE TEMP TABLE products_2 (
         product_no integer,
         name text,
@@ -89,7 +93,7 @@ my $sql = q{
     alter table t_test1 alter f_char set statistics 10;
 
     alter table t_test1 alter f_text set storage extended;
-
+    
     alter table t_test1 rename column f_text to foo;
 
     alter table t_test1 rename to foo;
@@ -108,7 +112,7 @@ my $schema = $t->schema;
 
 isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
 my @tables = $schema->get_tables;
-is( scalar @tables, 5, 'Five tables' );
+is( scalar @tables, 6, 'Six tables' );
 
 my $t1 = shift @tables;
 is( $t1->name, 't_test1', 'Table t_test1 exists' );
@@ -295,6 +299,26 @@ is( $t2_c2->type, PRIMARY_KEY, "Constraint is a PK" );
 
 my $t2_c3 = shift @t2_constraints;
 is( $t2_c3->type, CHECK_C, "Constraint is a 'CHECK'" );
+
+# test table inheritance
+my $t3 = shift @tables;
+is( $t3->name, 't_test3', 'Table t_test3 exists' );
+is_deeply( $t3->extra->{inherits}, ['t_test2'], 'Table t_test3 inherits from t_test2' );
+
+my @t3_fields = $t3->get_fields;
+is( scalar @t3_fields, 1, '1 field in t_test3' );
+
+my $t3_f1 = shift @t3_fields;
+is( $t3_f1->name, 'test_field', 'First field is "test_field"' );
+is( $t3_f1->data_type, 'varchar', 'Field is an varchar' );
+is( $t3_f1->is_nullable, 1, 'Field can be null' );
+is( $t3_f1->size, 25, 'Size is "25"' );
+is( $t3_f1->default_value, undef, 'Default value is undefined' );
+is( $t3_f1->is_primary_key, 0, 'Field is not PK' );
+
+my @t3_constraints = $t3->get_constraints;
+is( scalar @t3_constraints, 0, "No constraints on table" );
+
 
 # test temporary tables
 is( exists $schema->get_table('products_1')->extra()->{'temporary'}, "", "Table is NOT temporary");
