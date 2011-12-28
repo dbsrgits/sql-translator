@@ -465,7 +465,6 @@ sub create_table
     #
     $create .= "\n)";
     $create .= generate_table_options($table, $options) || '';
-#    $create .= ";\n\n";
 
     return $drop ? ($drop,$create) : $create;
 }
@@ -656,6 +655,13 @@ sub create_index
 
     my $qf = $options->{quote_field_names} || '';
 
+    my $fields = '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')';
+    # Workaround for quoted index fields, as they are stored with the length
+    # postfixed to the name, they are quoted as `foo(length)` when they should
+    # be quoted as `foo`(length), the good fix would be to store the information
+    # in the parser and propagate it till here
+    $fields =~ s/\((\d+)\)$qf/$qf($1)/g;
+
     return join(
         ' ',
         map { $_ || () }
@@ -665,8 +671,7 @@ sub create_index
                 $index->name,
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
           ) . $qf
-        : '',
-        '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
+        : '', $fields
     );
 }
 
