@@ -54,8 +54,8 @@ like($out, qr/ADD CONSTRAINT FK5302D47D93FE702E_diff/,
 unlike($out, qr/ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
 
 # Test for quoted output
-my @cmd = ($^X, $sqlt_diff, '--quote=\`', "$mysql_create1=MySQL", "$mysql_create2=MySQL");
-my $out = `@cmd`;
+@cmd = ($^X, $sqlt_diff, '--quote=\`', "$mysql_create1=MySQL", "$mysql_create2=MySQL");
+$out = `@cmd`;
 
 like($out, qr/ALTER TABLE `person`/, "Quoted table name");
 like($out, qr/CHANGE COLUMN `person_id`/, "Quoted 'person_id' field");
