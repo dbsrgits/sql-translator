@@ -356,11 +356,11 @@ sub create_table
 
     if(exists $table->{extra}{temporary}) {
         $temporary = $table->{extra}{temporary} ? "TEMPORARY " : "";
-    } 
-    my $inherits = ""; #VV
+    }
+    my $inherits = "";
     if(my $tlist = $table->extra('inherits')) {
         $inherits = sprintf(' INHERITS (%s)', join(', ',@$tlist));
-    }#/VV
+    }
 
     my $create_statement;
     $create_statement = join("\n", @comments);
@@ -373,7 +373,7 @@ sub create_table
     }
     $create_statement .= qq[CREATE ${temporary}TABLE $qt$table_name_ur$qt (\n].
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
-                            "\n)$inherits" #VV
+                            "\n)$inherits"
                             ;
     $create_statement .= @index_defs ? ';' : q{};
     $create_statement .= ( $create_statement =~ /;$/ ? "\n" : q{} )
