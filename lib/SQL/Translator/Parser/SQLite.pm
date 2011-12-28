@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::SQLite;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::SQLite - parser for SQLite
@@ -32,7 +14,7 @@ SQL::Translator::Parser::SQLite - parser for SQLite
 
 =head1 DESCRIPTION
 
-This is a grammar for parsing CREATE statements for SQLite as 
+This is a grammar for parsing CREATE statements for SQLite as
 described here:
 
     http://www.sqlite.org/lang.html
@@ -40,7 +22,7 @@ described here:
 CREATE INDEX
 
 sql-statement ::=
-    CREATE [TEMP | TEMPORARY] [UNIQUE] INDEX index-name 
+    CREATE [TEMP | TEMPORARY] [UNIQUE] INDEX index-name
      ON [database-name .] table-name ( column-name [, column-name]* )
      [ ON CONFLICT conflict-algorithm ]
 
@@ -94,19 +76,19 @@ sql-statement ::=
     trigger-action
 
 database-event ::=
-    DELETE | 
-    INSERT | 
-    UPDATE | 
+    DELETE |
+    INSERT |
+    UPDATE |
     UPDATE OF column-list
 
 trigger-action ::=
-    [ FOR EACH ROW | FOR EACH STATEMENT ] [ WHEN expression ] 
-        BEGIN 
+    [ FOR EACH ROW | FOR EACH STATEMENT ] [ WHEN expression ]
+        BEGIN
             trigger-step ; [ trigger-step ; ]*
         END
 
 trigger-step ::=
-    update-statement | insert-statement | 
+    update-statement | insert-statement |
     delete-statement | select-statement
 
 CREATE VIEW
@@ -149,8 +131,9 @@ like-op::=
 =cut
 
 use strict;
-use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = '1.59';
+use warnings;
+our ( $DEBUG, $GRAMMAR, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -167,19 +150,29 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 
 $GRAMMAR = q!
 
-{ 
+{
     my ( %tables, $table_order, @table_comments, @views, @triggers );
+
+    sub _err {
+      my $max_lines = 5;
+      my @up_to_N_lines = split (/\n/, $_[1], $max_lines + 1);
+      die sprintf ("Unable to parse line %d:\n%s\n",
+        $_[0],
+        join "\n", (map { "'$_'" } @up_to_N_lines[0..$max_lines - 1 ]), @up_to_N_lines > $max_lines ? '...' : ()
+      );
+    }
+
 }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
-# fails.  Otherwise, the first successful match by a "statement" 
+# fails.  Otherwise, the first successful match by a "statement"
 # won't cause the failure needed to know that the parse, as a whole,
 # failed. -ky
 #
-startrule : statement(s) eofile { 
+startrule : statement(s) eofile {
     $return      = {
-        tables   => \%tables, 
+        tables   => \%tables,
         views    => \@views,
         triggers => \@triggers,
     }
@@ -192,7 +185,7 @@ statement : begin_transaction
     | drop
     | comment
     | create
-    | <error>
+    | /^\Z/ | { _err ($thisline, $text) }
 
 begin_transaction : /begin/i TRANSACTION(?) SEMICOLON
 
@@ -214,7 +207,7 @@ comment : /^\s*(?:#|-{2}).*\n/
         $return     = $comment;
     }
 
-comment : /\/\*/ /[^\*]+/ /\*\// 
+comment : /\/\*/ /[^\*]+/ /\*\//
     {
         my $comment = $item[2];
         $comment    =~ s/^\s*|\s*$//g;
@@ -229,7 +222,7 @@ create : CREATE TEMPORARY(?) UNIQUE(?) INDEX NAME ON table_name parens_field_lis
         my $db_name    = $item[7]->{'db_name'} || '';
         my $table_name = $item[7]->{'name'};
 
-        my $index        =  { 
+        my $index        =  {
             name         => $item[5],
             fields       => $item[8],
             on_conflict  => $item[9][0],
@@ -269,7 +262,7 @@ create : CREATE TEMPORARY(?) TABLE table_name '(' definition(s /,/) ')' SEMICOLO
         }
     }
 
-definition : constraint_def | column_def 
+definition : constraint_def | column_def
 
 column_def: comment(s?) NAME type(?) column_constraint_def(s?)
     {
@@ -342,7 +335,7 @@ column_constraint : NOT_NULL conflict_clause(?)
         $return = {
             type        => 'primary_key',
             sort_order  => $item[2][0],
-            on_conflict => $item[2][0], 
+            on_conflict => $item[2][0],
         }
     }
     |
@@ -350,7 +343,7 @@ column_constraint : NOT_NULL conflict_clause(?)
     {
         $return = {
             type        => 'unique',
-            on_conflict => $item[2][0], 
+            on_conflict => $item[2][0],
         }
     }
     |
@@ -359,7 +352,7 @@ column_constraint : NOT_NULL conflict_clause(?)
         $return = {
             type        => 'check',
             expression  => $item[3],
-            on_conflict => $item[5][0], 
+            on_conflict => $item[5][0],
         }
     }
     |
@@ -445,15 +438,15 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
       }
     }
 
-ref_def : /(\w+)\s*\((\w+)\)/
-    { $return = { reference_table => $1, reference_fields => $2 } }
+ref_def : table_name parens_field_list
+    { $return = { reference_table => $item[1]{name}, reference_fields => $item[2] } }
 
 table_name : qualified_name
-    
-qualified_name : NAME 
+
+qualified_name : NAME
     { $return = { name => $item[1] } }
 
-qualified_name : /(\w+)\.(\w+)/ 
+qualified_name : /(\w+)\.(\w+)/
     { $return = { db_name => $1, name => $2 } }
 
 field_name : NAME
@@ -525,7 +518,7 @@ for_each : /FOR EACH ROW/i
 when : WHEN expr { $item[2] }
 
 string :
-   /'(\\.|''|[^\\\'])*'/ 
+   /'(\\.|''|[^\\\'])*'/
 
 nonstring : /[^;\'"]+/
 
@@ -534,7 +527,7 @@ statement_body : string | nonstring
 trigger_step : /(select|delete|insert|update)/i statement_body(s?) SEMICOLON
     {
         $return = join( ' ', $item[1], join ' ', @{ $item[2] || [] } )
-    }   
+    }
 
 before_or_after : /(before|after)/i { $return = lc $1 }
 
@@ -549,11 +542,11 @@ trigger_name : qualified_name
 #
 # Create View
 #
-create : CREATE TEMPORARY(?) VIEW view_name AS select_statement 
+create : CREATE TEMPORARY(?) VIEW view_name AS select_statement
     {
         push @views, {
             name         => $item[4]->{'name'},
-            sql          => $item[6], 
+            sql          => $item[6],
             is_temporary => $item[2][0] ? 1 : 0,
         }
     }
@@ -618,9 +611,9 @@ NAME : /["']?(\w+)["']?/ { $return = $1 }
 
 VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
-    | /'.*?'/   
-    { 
-        # remove leading/trailing quotes 
+    | /'.*?'/
+    {
+        # remove leading/trailing quotes
         my $val = $item[1];
         $val    =~ s/^['"]|['"]$//g;
         $return = $val;
@@ -632,7 +625,6 @@ VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
 
 !;
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $translator, $data ) = @_;
     my $parser = Parse::RecDescent->new($GRAMMAR);
@@ -650,15 +642,15 @@ sub parse {
     warn Dumper( $result ) if $DEBUG;
 
     my $schema = $translator->schema;
-    my @tables = 
+    my @tables =
         map   { $_->[1] }
-        sort  { $a->[0] <=> $b->[0] } 
+        sort  { $a->[0] <=> $b->[0] }
         map   { [ $result->{'tables'}{ $_ }->{'order'}, $_ ] }
         keys %{ $result->{'tables'} };
 
     for my $table_name ( @tables ) {
         my $tdata =  $result->{'tables'}{ $table_name };
-        my $table =  $schema->add_table( 
+        my $table =  $schema->add_table(
             name  => $tdata->{'name'},
         ) or die $schema->error;
 
@@ -700,9 +692,9 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete'} 
+                on_delete        => $cdata->{'on_delete'}
                                  || $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update'} 
+                on_update        => $cdata->{'on_update'}
                                  || $cdata->{'on_update_do'},
             ) or die $table->error;
         }

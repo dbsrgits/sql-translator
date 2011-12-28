@@ -1,23 +1,5 @@
 package SQL::Translator::Schema::Field;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -41,14 +23,15 @@ C<SQL::Translator::Schema::Field> is the field object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 # Stringify to our name, being careful not to pass any args through so we don't
 # accidentally set it to undef. We also have to tweak bool so the object is
@@ -91,7 +74,6 @@ our %type_mapping = (
   text => SQL_LONGVARCHAR
 
 );
-# ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
     table name data_type size is_primary_key is_nullable
@@ -112,14 +94,13 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub comments {
 
 =pod
 
 =head2 comments
 
-Get or set the comments on a field.  May be called several times to 
+Get or set the comments on a field.  May be called several times to
 set and it will accumulate the comments.  Called in an array context,
 returns each comment individually; called in a scalar context, returns
 all the comments joined on newlines.
@@ -138,7 +119,7 @@ all the comments joined on newlines.
     }
 
     if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray 
+        return wantarray
             ? @{ $self->{'comments'} || [] }
             : join( "\n", @{ $self->{'comments'} || [] } );
     }
@@ -148,7 +129,6 @@ all the comments joined on newlines.
 }
 
 
-# ----------------------------------------------------------------------
 sub data_type {
 
 =pod
@@ -184,7 +164,6 @@ for more details.
 
 }
 
-# ----------------------------------------------------------------------
 sub default_value {
 
 =pod
@@ -192,7 +171,7 @@ sub default_value {
 =head2 default_value
 
 Get or set the field's default value.  Will return undef if not defined
-and could return the empty string (it's a valid default value), so don't 
+and could return the empty string (it's a valid default value), so don't
 assume an error like other methods.
 
   my $default = $field->default_value('foo');
@@ -204,7 +183,6 @@ assume an error like other methods.
     return $self->{'default_value'};
 }
 
-# ----------------------------------------------------------------------
 =pod
 
 =head2 extra
@@ -217,8 +195,6 @@ Accepts a hash(ref) of name/value pairs to store;  returns a hash.
 
 =cut
 
-
-# ----------------------------------------------------------------------
 sub foreign_key_reference {
 
 =pod
@@ -252,7 +228,6 @@ Get or set the field's foreign key reference;
     return $self->{'foreign_key_reference'};
 }
 
-# ----------------------------------------------------------------------
 sub is_auto_increment {
 
 =pod
@@ -274,7 +249,7 @@ Get or set the field's C<is_auto_increment> attribute.
     unless ( defined $self->{'is_auto_increment'} ) {
         if ( my $table = $self->table ) {
             if ( my $schema = $table->schema ) {
-                if ( 
+                if (
                     $schema->database eq 'PostgreSQL' &&
                     $self->data_type eq 'serial'
                 ) {
@@ -287,7 +262,6 @@ Get or set the field's C<is_auto_increment> attribute.
     return $self->{'is_auto_increment'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_foreign_key {
 
 =pod
@@ -320,14 +294,13 @@ Returns whether or not the field is a foreign key.
     return $self->{'is_foreign_key'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_nullable {
 
 =pod
 
 =head2 is_nullable
 
-Get or set whether the field can be null.  If not defined, then 
+Get or set whether the field can be null.  If not defined, then
 returns "1" (assumes the field can be null).  The argument is evaluated
 by Perl for True or False, so the following are eqivalent:
 
@@ -348,8 +321,8 @@ foreign keys; checks) are represented as table constraints.
         $self->{'is_nullable'} = $arg ? 1 : 0;
     }
 
-    if ( 
-        defined $self->{'is_nullable'} && 
+    if (
+        defined $self->{'is_nullable'} &&
         $self->{'is_nullable'} == 1    &&
         $self->is_primary_key
     ) {
@@ -359,7 +332,6 @@ foreign keys; checks) are represented as table constraints.
     return defined $self->{'is_nullable'} ? $self->{'is_nullable'} : 1;
 }
 
-# ----------------------------------------------------------------------
 sub is_primary_key {
 
 =pod
@@ -394,7 +366,6 @@ a table constraint (should it?).
     return $self->{'is_primary_key'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_unique {
 
 =pod
@@ -408,7 +379,7 @@ Determine whether the field has a UNIQUE constraint or not.
 =cut
 
     my $self = shift;
-    
+
     unless ( defined $self->{'is_unique'} ) {
         if ( my $table = $self->table ) {
             for my $c ( $table->get_constraints ) {
@@ -426,7 +397,6 @@ Determine whether the field has a UNIQUE constraint or not.
     return $self->{'is_unique'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -446,7 +416,6 @@ Determine whether the field is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -493,7 +462,6 @@ e.g. "person.foo".
     return $self->table.".".$self->name;
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -515,10 +483,9 @@ Get or set the field's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
-=head2 schema 
+=head2 schema
 
 Shortcut to get the fields schema ($field->table->schema) or undef if it
 doesn't have one.
@@ -532,7 +499,6 @@ doesn't have one.
     return undef;
 }
 
-# ----------------------------------------------------------------------
 sub size {
 
 =pod
@@ -565,13 +531,12 @@ numbers and returns a string.
         $self->{'size'} = \@new if @new; # only set if all OK
     }
 
-    return wantarray 
+    return wantarray
         ? @{ $self->{'size'} || [0] }
         : join( ',', @{ $self->{'size'} || [0] } )
     ;
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -598,7 +563,7 @@ also be used to get the table name.
 
 sub parsed_field {
 
-=head2 
+=head2
 
 Returns the field exactly as the parser found it
 
@@ -614,7 +579,6 @@ Returns the field exactly as the parser found it
     return $self->{parsed_field} || $self;
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -630,7 +594,7 @@ Determines if this field is the same as another
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
 
@@ -671,7 +635,6 @@ Determines if this field is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
 #
 # Destroy cyclical references.
@@ -682,8 +645,6 @@ sub DESTROY {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

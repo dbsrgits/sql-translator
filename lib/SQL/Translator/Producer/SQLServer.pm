@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::SQLServer;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::SQLServer - MS SQLServer producer for SQL::Translator
@@ -53,8 +35,9 @@ List of values for an enum field.
 =cut
 
 use strict;
-use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = '1.59';
+use warnings;
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -101,7 +84,6 @@ TODO
 
 =cut
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator     = shift;
     $DEBUG             = $translator->debug;
@@ -380,7 +362,6 @@ sub produce {
     return $output;
 }
 
-# -------------------------------------------------------------------
 sub mk_name {
     my ($name, $scope, $critical) = @_;
 
@@ -402,12 +383,9 @@ sub mk_name {
     return unreserve($name);
 }
 
-# -------------------------------------------------------------------
 sub unreserve { $util->quote($_[0]) }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

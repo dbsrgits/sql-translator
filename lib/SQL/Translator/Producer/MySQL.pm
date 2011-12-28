@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::MySQL;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::MySQL - MySQL-specific producer for SQL::Translator
@@ -34,18 +16,18 @@ Use via SQL::Translator:
 =head1 DESCRIPTION
 
 This module will produce text output of the schema suitable for MySQL.
-There are still some issues to be worked out with syntax differences 
+There are still some issues to be worked out with syntax differences
 between MySQL versions 3 and 4 ("SET foreign_key_checks," character sets
 for fields, etc.).
 
-=head1 ARGUMENTS 
+=head1 ARGUMENTS
 
-This producer takes a single optional producer_arg C<mysql_version>, which 
+This producer takes a single optional producer_arg C<mysql_version>, which
 provides the desired version for the target database. By default MySQL v3 is
 assumed, and statements pertaining to any features introduced in later versions
 (e.g. CREATE VIEW) are not produced.
 
-Valid version specifiers for C<mysql_version> are listed L<here|SQL::Translator::Utils/parse_mysql_version> 
+Valid version specifiers for C<mysql_version> are listed L<here|SQL::Translator::Utils/parse_mysql_version>
 
 =head2 Table Types
 
@@ -99,8 +81,8 @@ Set the fields charater set and collation order.
 
 use strict;
 use warnings;
-use vars qw[ $VERSION $DEBUG %used_names ];
-$VERSION = '1.59';
+our ( $DEBUG, %used_names );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 # Maximum length for most identifiers is 64, according to:
@@ -110,7 +92,7 @@ my $DEFAULT_MAX_ID_LENGTH = 64;
 
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment 
+use SQL::Translator::Utils qw(debug header_comment
     truncate_id_uniquely parse_mysql_version);
 
 #
@@ -170,11 +152,11 @@ sub preprocess_schema {
       # Now just to find if there is already an Engine or Type option...
       # and lets normalize it to ENGINE since:
       #
-      # The ENGINE table option specifies the storage engine for the table. 
+      # The ENGINE table option specifies the storage engine for the table.
       # TYPE is a synonym, but ENGINE is the preferred option name.
       #
 
-      # We have to use the hash directly here since otherwise there is no way 
+      # We have to use the hash directly here since otherwise there is no way
       # to remove options.
       my $options = ( $table->{options} ||= []);
 
@@ -183,7 +165,7 @@ sub preprocess_schema {
         OPT_NAME: for ( @$opt_name[1..$#$opt_name] ) {
           for my $idx ( 0..$#{$options} ) {
             my ($key, $value) = %{ $options->[$idx] };
-            
+
             if (uc $key eq $_) {
               $options->[$idx] = { $opt_name->[0] => $value };
               last OPT_NAME;
@@ -201,13 +183,13 @@ sub preprocess_schema {
         my ($key, $value) = %{ $options->[$idx] };
 
         next unless uc $key eq $opt_name;
-     
+
         # make sure case is right on option name
         delete $options->[$idx]{$key};
         return $options->[$idx]{$opt_name} = $value || $extra_type;
 
       }
-  
+
       if ($extra_type) {
         push @$options, { $opt_name => $extra_type };
         return $extra_type;
@@ -223,7 +205,7 @@ sub preprocess_schema {
     # constraints. We do this first as we need InnoDB at both ends.
     #
     foreach my $table ( $schema->get_tables ) {
-      
+
         $extra_to_options->($table, 'mysql_table_type', ['ENGINE', 'TYPE'] );
         $extra_to_options->($table, 'mysql_charset', 'CHARACTER SET' );
         $extra_to_options->($table, 'mysql_collate', 'COLLATE' );
@@ -236,7 +218,7 @@ sub preprocess_schema {
             # Give the constraint a name if it doesn't have one, so it doens't feel
             # left out
             $c_name   = $table->name . '_fk' unless length $c_name;
-            
+
             $c->name( next_unused_name($c_name) );
 
             for my $meth (qw/table reference_table/) {
@@ -281,7 +263,7 @@ sub produce {
 
     debug("PKG: Beginning production\n");
     %used_names = ();
-    my $create = ''; 
+    my $create = '';
     $create .= header_comment unless ($no_comments);
     # \todo Don't set if MySQL 3.x is set on command line
     my @create = "SET foreign_key_checks=0";
@@ -292,10 +274,10 @@ sub produce {
     # Generate sql
     #
     my @table_defs =();
-    
+
     for my $table ( $schema->get_tables ) {
 #        print $table->name, "\n";
-        push @table_defs, create_table($table, 
+        push @table_defs, create_table($table,
                                        { add_drop_table    => $add_drop_table,
                                          show_warnings     => $show_warnings,
                                          no_comments       => $no_comments,
@@ -467,14 +449,14 @@ sub create_table
     for my $c ( @constraints ) {
         my $constr = create_constraint($c, $options);
         push @constraint_defs, $constr if($constr);
-        
+
          unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY ) {
              push @index_defs, "INDEX ($qf" . ($c->fields())[0] . "$qf)";
              $indexed_fields{ ($c->fields())[0] } = 1;
          }
     }
 
-    $create .= join(",\n", map { "  $_" } 
+    $create .= join(",\n", map { "  $_" }
                     @field_defs, @index_defs, @constraint_defs
                     );
 
@@ -496,7 +478,7 @@ sub quote_table_name {
   return "$qt$table_name$qt";
 }
 
-sub generate_table_options 
+sub generate_table_options
 {
   my ($table, $options) = @_;
   my $create;
@@ -607,10 +589,10 @@ sub create_field
     if ( lc($data_type) eq 'enum' || lc($data_type) eq 'set') {
         $field_def .= '(' . $commalist . ')';
     }
-    elsif ( 
-        defined $size[0] && $size[0] > 0 
-        && 
-        ! grep lc($data_type) eq $_, @no_length_attr  
+    elsif (
+        defined $size[0] && $size[0] > 0
+        &&
+        ! grep lc($data_type) eq $_, @no_length_attr
     ) {
         $field_def .= '(' . join( ', ', @size ) . ')';
     }
@@ -696,7 +678,7 @@ sub alter_drop_index
     my $qf = $options->{quote_field_names} || '';
     my $table_name = quote_table_name($index->table->name, $qt);
 
-    return join( ' ', 
+    return join( ' ',
                  'ALTER TABLE',
                  $table_name,
                  'DROP',
@@ -751,11 +733,18 @@ sub create_constraint
         return 'PRIMARY KEY (' . $qf . join("$qf, $qf", @fields). $qf . ')';
     }
     elsif ( $c->type eq UNIQUE ) {
-        return
-        'UNIQUE '. 
-            ((defined $c->name && $c->name) ?
-				$qf.truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ).$qf.' ' : '').
-            '(' . $qf . join("$qf, $qf", @fields). $qf . ')';
+        return sprintf 'UNIQUE %s(%s)',
+          ((defined $c->name && $c->name)
+            ? join ('',
+                $qf,
+                truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ),
+                $qf,
+                ' '
+              )
+            : ''
+          ),
+          ( join ', ', map { "${qf}${_}${qf}" } @fields ),
+        ;
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
         #
@@ -765,10 +754,10 @@ sub create_constraint
         my $table = $c->table;
         my $c_name = truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH );
 
-        my $def = join(' ', 
-                       map { $_ || () } 
-                         'CONSTRAINT', 
-                         $qf . $c_name . $qf, 
+        my $def = join(' ',
+                       map { $_ || () }
+                         'CONSTRAINT',
+                         $qf . $c_name . $qf,
                          'FOREIGN KEY'
                       );
 
@@ -794,21 +783,21 @@ sub create_constraint
         }
         else {
             warn "FK constraint on " . $table->name . '.' .
-                join('', @fields) . " has no reference fields\n" 
+                join('', @fields) . " has no reference fields\n"
                 if $options->{show_warnings};
         }
 
         if ( $c->match_type ) {
-            $def .= ' MATCH ' . 
+            $def .= ' MATCH ' .
                 ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
         }
 
         if ( $c->on_delete ) {
-            $def .= ' ON DELETE '.join( ' ', $c->on_delete );
+            $def .= ' ON DELETE '. $c->on_delete;
         }
 
         if ( $c->on_update ) {
-            $def .= ' ON UPDATE '.join( ' ', $c->on_update );
+            $def .= ' ON UPDATE '. $c->on_update;
         }
         return $def;
     }
@@ -864,33 +853,33 @@ sub add_field
 }
 
 sub drop_field
-{ 
+{
     my ($old_field, $options) = @_;
 
     my $qf = $options->{quote_field_names} || '';
     my $qt = $options->{quote_table_names} || '';
     my $table_name = quote_table_name($old_field->table->name, $qt);
-    
+
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $table_name,
                       $qf . $old_field->name . $qf);
 
     return $out;
-    
+
 }
 
 sub batch_alter_table {
   my ($table, $diff_hash, $options) = @_;
 
-  # InnoDB has an issue with dropping and re-adding a FK constraint under the 
+  # InnoDB has an issue with dropping and re-adding a FK constraint under the
   # name in a single alter statment, see: http://bugs.mysql.com/bug.php?id=13741
   #
   # We have to work round this.
 
   my %fks_to_alter;
   my %fks_to_drop = map {
-    $_->type eq FOREIGN_KEY 
-              ? ( $_->name => $_ ) 
+    $_->type eq FOREIGN_KEY
+              ? ( $_->name => $_ )
               : ( )
   } @{$diff_hash->{alter_drop_constraint} };
 
@@ -943,7 +932,7 @@ sub batch_alter_table {
 
   my $table_name = quote_table_name($table->name, $qt);
 
-  my $re = $renamed_from 
+  my $re = $renamed_from
          ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$renamed_from\E) /
             : qr/^ALTER TABLE \Q$table_name\E /;
 
@@ -996,8 +985,6 @@ sub next_unused_name {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

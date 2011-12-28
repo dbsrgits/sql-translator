@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::SQLite;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::SQLite - SQLite producer for SQL::Translator
@@ -40,10 +22,11 @@ use warnings;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
+use SQL::Translator::ProducerUtils;
+my $util = SQL::Translator::ProducerUtils->new( quote_chars => q(') );
 
-use vars qw[ $VERSION $DEBUG $WARN ];
-
-$VERSION = '1.59';
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG = 0 unless defined $DEBUG;
 $WARN = 0 unless defined $WARN;
 
@@ -107,7 +90,6 @@ sub produce {
     }
 }
 
-# -------------------------------------------------------------------
 sub mk_name {
     my ($name, $scope, $critical) = @_;
 
@@ -115,7 +97,7 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00" 
+        substr($name, $max_id_length - 3) = "00"
             if length( $name ) > $max_id_length;
 
         warn "The name '$name_orig' has been changed to ",
@@ -125,14 +107,16 @@ sub mk_name {
     }
 
     $scope->{ $name }++;
-    return $name;
+    return $util->quote($name);
 }
 
 sub create_view {
     my ($view, $options) = @_;
     my $add_drop_view = $options->{add_drop_view};
 
-    my $view_name = $view->name;
+    my $view_name = $util->quote($view->name);
+    $global_names{$view->name} = 1;
+
     debug("PKG: Looking at view '${view_name}'\n");
 
     # Header.  Should this look like what mysqldump produces?
@@ -164,7 +148,9 @@ sub create_table
 {
     my ($table, $options) = @_;
 
-    my $table_name = $table->name;
+    my $table_name = $util->quote($table->name);
+    $global_names{$table->name} = 1;
+
     my $no_comments = $options->{no_comments};
     my $add_drop_table = $options->{add_drop_table};
     my $sqlite_version = $options->{sqlite_version} || 0;
@@ -213,12 +199,12 @@ sub create_table
         push @field_defs, create_field($field);
     }
 
-    if ( 
-         scalar @pk_fields > 1 
-         || 
-         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs ) 
+    if (
+         scalar @pk_fields > 1
+         ||
+         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs )
          ) {
-        push @field_defs, 'PRIMARY KEY (' . join(', ', @pk_fields ) . ')';
+        push @field_defs, 'PRIMARY KEY (' . join(', ', map $util->quote($_), @pk_fields ) . ')';
     }
 
     #
@@ -237,7 +223,7 @@ sub create_table
         if ($c->type eq "FOREIGN KEY") {
             push @field_defs, create_foreignkey($c);
         }
-        next unless $c->type eq UNIQUE; 
+        next unless $c->type eq UNIQUE;
         push @constraint_defs, create_constraint($c);
     }
 
@@ -249,8 +235,11 @@ sub create_table
 sub create_foreignkey {
     my $c = shift;
 
-    my $fk_sql = "FOREIGN KEY($c->{fields}[0]) REFERENCES ";
-    $fk_sql .= ( $c->{reference_table} || '' )."(".( $c->{reference_fields}[0] || '' ).")";
+    my $field = $util->quote($c->{fields}[0]);
+    my $table = $c->{reference_table} ? $util->quote($c->{reference_table}) : '';
+    my $ref   = $c->{reference_fields}[0] ? $util->quote($c->{reference_fields}[0]) : '';
+    my $fk_sql = "FOREIGN KEY($field) REFERENCES ";
+    $fk_sql .= "$table($ref)";
 
     return $fk_sql;
 }
@@ -259,10 +248,10 @@ sub create_field
 {
     my ($field, $options) = @_;
 
-    my $field_name = $field->name;
+    my $field_name = $util->quote($field->name);
     debug("PKG: Looking at field '$field_name'\n");
-    my $field_comments = $field->comments 
-        ? "-- " . $field->comments . "\n  " 
+    my $field_comments = $field->comments
+        ? "-- " . $field->comments . "\n  "
         : '';
 
     my $field_def = $field_comments.$field_name;
@@ -278,7 +267,7 @@ sub create_field
     }
 
 #             if ( $data_type =~ /timestamp/i ) {
-#                 push @trigger_defs, 
+#                 push @trigger_defs,
 #                     "CREATE TRIGGER ts_${table_name} ".
 #                     "after insert on $table_name\n".
 #                     "begin\n".
@@ -297,8 +286,8 @@ sub create_field
     my $pk        = $field->table->primary_key;
     my @pk_fields = $pk ? $pk->fields : ();
 
-    if ( 
-         $field->is_primary_key && 
+    if (
+         $field->is_primary_key &&
          scalar @pk_fields == 1 &&
          (
           $data_type =~ /int(eger)?$/i
@@ -311,7 +300,7 @@ sub create_field
 #        $pk_set    = 1;
     }
 
-    $field_def .= sprintf " %s%s", $data_type, 
+    $field_def .= sprintf " %s%s", $data_type,
     ( !$field->is_auto_increment && $size ) ? "($size)" : '';
 
     # Null?
@@ -339,13 +328,14 @@ sub create_index
     my $name   = $index->name;
     $name      = mk_name($name);
 
-    my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : ''; 
+    my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
 
     # strip any field size qualifiers as SQLite doesn't like these
-    my @fields = map { s/\(\d+\)$//; $_ } $index->fields;
+    my @fields = map { s/\(\d+\)$//; $util->quote($_) } $index->fields;
     (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
+    $index_table_name = $util->quote($index_table_name);
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
-    my $index_def =  
+    my $index_def =
     "CREATE ${type}INDEX $name ON " . $index_table_name .
         ' (' . join( ', ', @fields ) . ')';
 
@@ -358,11 +348,12 @@ sub create_constraint
 
     my $name   = $c->name;
     $name      = mk_name($name);
-    my @fields = $c->fields;
+    my @fields = map $util->quote($_), $c->fields;
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
+    $index_table_name = $util->quote($index_table_name);
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
-    my $c_def =  
+    my $c_def =
     "CREATE UNIQUE INDEX $name ON " . $index_table_name .
         ' (' . join( ', ', @fields ) . ')';
 
@@ -376,6 +367,8 @@ sub create_trigger {
   my @statements;
 
   my $trigger_name = $trigger->name;
+  $global_names{$trigger_name} = 1;
+
   my $events = $trigger->database_events;
   for my $evt ( @$events ) {
 
@@ -387,6 +380,7 @@ sub create_trigger {
         "creating trigger '$trig_name' for the '$evt' event.\n" if $WARN;
     }
 
+    $trig_name = $util->quote($trig_name);
     push @statements,  "DROP TRIGGER IF EXISTS $trig_name" if $add_drop;
 
 
@@ -414,7 +408,7 @@ sub create_trigger {
       $trig_name,
       $trigger->perform_action_when,
       $evt,
-      $trigger->on_table,
+      $util->quote($trigger->on_table),
       $action
     );
   }
@@ -428,7 +422,7 @@ sub add_field {
   my ($field) = @_;
 
   return sprintf("ALTER TABLE %s ADD COLUMN %s",
-      $field->table->name, create_field($field))
+      $util->quote($field->table->name), create_field($field))
 }
 
 sub alter_create_index {
@@ -450,7 +444,7 @@ sub alter_drop_index {
   my ($constraint) = @_;
 
   return sprintf("DROP INDEX %s",
-      $constraint->name);
+      $util->quote($constraint->name));
 }
 
 sub batch_alter_table {
@@ -484,12 +478,12 @@ sub batch_alter_table {
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
-#    return join("\n", map { 
-    return map { 
+#    return join("\n", map {
+    return map {
         my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
         map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql") : () } @{ $diffs->{$_} }
-        
-      } grep { @{$diffs->{$_}} } 
+
+      } grep { @{$diffs->{$_}} }
     qw/rename_table
        alter_drop_constraint
        alter_drop_index
@@ -505,7 +499,7 @@ sub batch_alter_table {
 
   my @sql;
   my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
-  
+
   do {
     local $table->{name} = $table_name . '_temp_alter';
     # We only want the table - dont care about indexes on tmp table
@@ -513,11 +507,11 @@ sub batch_alter_table {
     push @sql,$table_sql;
   };
 
-  push @sql, "INSERT INTO @{[$table_name]}_temp_alter SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$old_table]}",
-             "DROP TABLE @{[$old_table]}",
+  push @sql, "INSERT INTO @{[$util->quote($table_name.'_temp_alter')]} SELECT @{[ join(', ', map $util->quote($_), $old_table->get_fields)]} FROM @{[$util->quote($old_table)]}",
+             "DROP TABLE @{[$util->quote($old_table)]}",
              create_table($table, { no_comments => 1 }),
-             "INSERT INTO @{[$table_name]} SELECT @{[ join(', ', $old_table->get_fields)]} FROM @{[$table_name]}_temp_alter",
-             "DROP TABLE @{[$table_name]}_temp_alter";
+             "INSERT INTO @{[$util->quote($table_name)]} SELECT @{[ join(', ', map $util->quote($_), $old_table->get_fields)]} FROM @{[$util->quote($table_name.'_temp_alter')]}",
+             "DROP TABLE @{[$util->quote($table_name.'_temp_alter')]}";
 
   return @sql;
 #  return join("", @sql, "");
@@ -525,15 +519,17 @@ sub batch_alter_table {
 
 sub drop_table {
   my ($table) = @_;
+  $table = $util->quote($table);
   return "DROP TABLE $table";
 }
 
 sub rename_table {
   my ($old_table, $new_table, $options) = @_;
 
-  my $qt = $options->{quote_table_names} || '';
+  $old_table = $util->quote($old_table);
+  $new_table = $util->quote($new_table);
 
-  return "ALTER TABLE $qt$old_table$qt RENAME TO $qt$new_table$qt";
+  return "ALTER TABLE $old_table RENAME TO $new_table";
 
 }
 

@@ -1,27 +1,9 @@
 package SQL::Translator::Producer;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-4 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 use strict;
-use vars qw($VERSION);
+use warnings;
 use Scalar::Util ();
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 sub produce { "" }
 
@@ -81,8 +63,8 @@ SQL::Translator::Producer - describes how to write a producer
 
 Producer modules designed to be used with SQL::Translator need to
 implement a single function, called B<produce>.  B<produce> will be
-called with the SQL::Translator object from which it is expected to 
-retrieve the SQL::Translator::Schema object which has been populated 
+called with the SQL::Translator object from which it is expected to
+retrieve the SQL::Translator::Schema object which has been populated
 by the parser.  It is expected to return a string.
 
 =head1 METHODS

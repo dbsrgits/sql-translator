@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::POD;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::POD - POD producer for SQL::Translator
@@ -31,21 +13,20 @@ SQL::Translator::Producer::POD - POD producer for SQL::Translator
 
 =head1 DESCRIPTION
 
-Creates a POD description of each table, field, index, and constraint.  
-A good starting point for text documentation of a schema.  You can 
-easily convert the output to HTML or text using "perldoc" or other 
+Creates a POD description of each table, field, index, and constraint.
+A good starting point for text documentation of a schema.  You can
+easily convert the output to HTML or text using "perldoc" or other
 interesting formats using Pod::POM or Template::Toolkit's POD plugin.
 
 =cut
 
 use strict;
-use vars qw[ $VERSION ];
-$VERSION = '1.59';
+use warnings;
+our $VERSION = '1.59';
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);
 
-# -------------------------------------------------------------------
 sub produce {
     my $t           = shift;
     my $schema      = $t->schema;
@@ -89,7 +70,7 @@ sub produce {
             $pod .= "=head3 INDICES\n\n";
             for my $index ( @indices ) {
                 $pod .= "=head4 " . $index->type . "\n\n=over 4\n\n";
-                $pod .= "=item * Fields = " . 
+                $pod .= "=item * Fields = " .
                     join(', ', $index->fields ) . "\n\n";
                 $pod .= "=back\n\n";
             }
@@ -102,14 +83,14 @@ sub produce {
             $pod .= "=head3 CONSTRAINTS\n\n";
             for my $c ( @constraints ) {
                 $pod .= "=head4 " . $c->type . "\n\n=over 4\n\n";
-                $pod .= "=item * Fields = " . 
+                $pod .= "=item * Fields = " .
                     join(', ', $c->fields ) . "\n\n";
 
                 if ( $c->type eq FOREIGN_KEY ) {
-                    $pod .= "=item * Reference Table = L</" . 
+                    $pod .= "=item * Reference Table = L</" .
                         $c->reference_table . ">\n\n";
-                    $pod .= "=item * Reference Fields = " . 
-                        join(', ', map {"L</$_>"} $c->reference_fields ) . 
+                    $pod .= "=item * Reference Fields = " .
+                        join(', ', map {"L</$_>"} $c->reference_fields ) .
                         "\n\n";
                 }
 

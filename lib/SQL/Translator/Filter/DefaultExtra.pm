@@ -1,23 +1,5 @@
 package SQL::Translator::Filter::DefaultExtra;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Filter::DefaultExtra - Set default extra data values for schema
@@ -33,7 +15,7 @@ objects.
       filters => [
         DefaultExtra => {
             # XXX - These should really be ordered
-            
+
             # Default widget for fields to basic text edit.
             'field.widget' => 'text',
             # idea:
@@ -42,7 +24,7 @@ objects.
             # Default label (human formated name) for fields and tables
             'field.label'  => '=ucfirst($name)',
             'table.label'  => '=ucfirst($name)',
-        }, 
+        },
       ],
   ) || die "SQLFairy error : ".SQL::Translator->error;
   my $sql = $sqlt->translate || die "SQLFairy error : ".$sqlt->error;
@@ -50,8 +32,8 @@ objects.
 =cut
 
 use strict;
-use vars qw/$VERSION/;
-$VERSION = '1.59';
+use warnings;
+our $VERSION = '1.59';
 
 sub filter {
     my $schema = shift;

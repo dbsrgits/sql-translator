@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::DBI::SQLServer;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::DBI::SQLServer - parser for SQL Server through DBD::ODBC
@@ -33,17 +15,17 @@ Uses DBI Catalog Methods.
 =cut
 
 use strict;
+use warnings;
 use DBI;
 use SQL::Translator::Schema;
 use Data::Dumper;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our ( $DEBUG, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $tr, $dbh ) = @_;
 
@@ -213,7 +195,7 @@ $table_info->{TABLE_TYPE},
                             ->{columns};
 
             foreach my $c (values %{$cols}) {
-				my $is_auto_increment = $c->{TYPE_NAME} =~ s#(\(\))? identity##i;
+            my $is_auto_increment = $c->{TYPE_NAME} =~ s#(\(\))? identity##i;
                 my $f = $table->add_field(
                                           name        => $c->{COLUMN_NAME},
                                           data_type   => $c->{TYPE_NAME},
@@ -223,8 +205,8 @@ $table_info->{TABLE_TYPE},
                 $f->is_nullable($c->{NULLABLE} == 1);
                 $f->is_auto_increment($is_auto_increment);
                 if ( defined $c->{COLUMN_DEF}) {
-                	$c->{COLUMN_DEF} =~ s#\('?(.*?)'?\)#$1#;
-                	$f->default_value($c->{COLUMN_DEF});
+                  $c->{COLUMN_DEF} =~ s#\('?(.*?)'?\)#$1#;
+                  $f->default_value($c->{COLUMN_DEF});
                 }
             }
 
@@ -245,21 +227,21 @@ $table_info->{TABLE_NAME}", 'COLUMN_NAME');
             # add in foreign keys
             $h = $dbh->selectall_hashref("sp_fkeys NULL,
 \@fktable_name = '$table_info->{TABLE_NAME}'", 'FK_NAME');
-			foreach my $fk ( values %{$h} ) {
-				my $constraint = $table->add_constraint( name => $fk->{FK_NAME},
-					fields => [$fk->{FKCOLUMN_NAME}],
-				);
-				$constraint->type("FOREIGN_KEY");
-				$constraint->on_delete(
-					$fk->{DELETE_RULE} == 0 ? "CASCADE" :
-					$fk->{DELETE_RULE} == 1 ? "NO ACTION" : "SET_NULL"
-				);
-				$constraint->on_update(
-					$fk->{UPDATE_RULE} == 0 ? "CASCADE" :
-					$fk->{UPDATE_RULE} == 1 ? "NO ACTION" : "SET_NULL"
-				);
-				$constraint->reference_table($fk->{PKTABLE_NAME});
-			}
+         foreach my $fk ( values %{$h} ) {
+            my $constraint = $table->add_constraint( name => $fk->{FK_NAME},
+               fields => [$fk->{FKCOLUMN_NAME}],
+            );
+            $constraint->type("FOREIGN_KEY");
+            $constraint->on_delete(
+               $fk->{DELETE_RULE} == 0 ? "CASCADE" :
+               $fk->{DELETE_RULE} == 1 ? "NO ACTION" : "SET_NULL"
+            );
+            $constraint->on_update(
+               $fk->{UPDATE_RULE} == 0 ? "CASCADE" :
+               $fk->{UPDATE_RULE} == 1 ? "NO ACTION" : "SET_NULL"
+            );
+            $constraint->reference_table($fk->{PKTABLE_NAME});
+         }
 
             # add in any indexes ... how do we tell if the index has
             # already been created as part of a primary key or other
@@ -293,9 +275,9 @@ $_->{INDEX_NAME},
                 }
             }
         } elsif ($table_info->{TABLE_TYPE} eq 'VIEW') {
-        	next if $table_info->{TABLE_NAME} eq 'sysconstraints'
-        		|| $table_info->{TABLE_NAME} eq 'syssegments';
-        	next if !$stuff->{view}->{$table_info->{TABLE_NAME}}->{text};
+         next if $table_info->{TABLE_NAME} eq 'sysconstraints'
+            || $table_info->{TABLE_NAME} eq 'syssegments';
+         next if !$stuff->{view}->{$table_info->{TABLE_NAME}}->{text};
             my $view =  $schema->add_view(
                                           name =>
 $table_info->{TABLE_NAME},
@@ -321,7 +303,7 @@ $table_info->{TABLE_NAME},
     }
 
     foreach my $p (values %{$stuff->{procedures}}) {
-    	next if !$p->{text};
+      next if !$p->{text};
         my $proc = $schema->add_procedure(
                                name      => $p->{name},
                                owner     => $p->{PROCEDURE_OWNER},
@@ -340,8 +322,6 @@ $table_info->{TABLE_NAME},
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

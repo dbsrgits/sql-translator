@@ -1,23 +1,5 @@
 package SQL::Translator::Schema::Index;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -44,14 +26,15 @@ Primary and unique keys are table constraints, not indices.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 my %VALID_INDEX_TYPE = (
   UNIQUE         => 1,
@@ -60,8 +43,6 @@ my %VALID_INDEX_TYPE = (
   FULL_TEXT      => 1, # MySQL only (?)
   SPATIAL        => 1, # MySQL only (?)
 );
-
-# ----------------------------------------------------------------------
 
 __PACKAGE__->_attributes( qw/
     name type fields table options
@@ -77,7 +58,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -115,7 +95,6 @@ names and keep them in order by the first occurrence of a field name.
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -141,7 +120,6 @@ Determine whether the index is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -159,7 +137,6 @@ Get or set the index's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub options {
 
 =pod
@@ -186,7 +163,6 @@ an array or array reference.
     }
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -209,7 +185,6 @@ Get or set the index's table object.
     return $self->{'table'};
 }
 
-# ----------------------------------------------------------------------
 sub type {
 
 =pod
@@ -220,7 +195,7 @@ Get or set the index's type.
 
   my $type = $index->type('unique');
 
-Get or set the index's options (e.g., "using" or "where" for PG).  Returns
+Get or set the index's type.
 
 Currently there are only four acceptable types: UNIQUE, NORMAL, FULL_TEXT,
 and SPATIAL. The latter two might be MySQL-specific. While both lowercase
@@ -233,7 +208,7 @@ uppercase.
 
     if ( $type ) {
         $type = uc $type;
-        return $self->error("Invalid index type: $type") 
+        return $self->error("Invalid index type: $type")
             unless $VALID_INDEX_TYPE{ $type };
         $self->{'type'} = $type;
     }
@@ -241,7 +216,6 @@ uppercase.
     return $self->{'type'} || 'NORMAL';
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -258,7 +232,7 @@ Determines if this index is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_index_names = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
 
     unless ($ignore_index_names) {
@@ -269,17 +243,17 @@ Determines if this index is the same as another
     }
     #return 0 unless $self->is_valid eq $other->is_valid;
     return 0 unless $self->type eq $other->type;
-    
+
     # Check fields, regardless of order
-    my %otherFields = ();	# create a hash of the other fields
+    my %otherFields = ();  # create a hash of the other fields
     foreach my $otherField ($other->fields) {
-    	$otherField = uc($otherField) if $case_insensitive;
-    	$otherFields{$otherField} = 1;
+      $otherField = uc($otherField) if $case_insensitive;
+      $otherFields{$otherField} = 1;
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
-    	$selfField = uc($selfField) if $case_insensitive;
-    	return 0 unless $otherFields{$selfField};
-    	delete $otherFields{$selfField};
+      $selfField = uc($selfField) if $case_insensitive;
+      return 0 unless $otherFields{$selfField};
+      delete $otherFields{$selfField};
     }
     # Check all other fields were accounted for
     return 0 unless keys %otherFields == 0;
@@ -289,15 +263,12 @@ Determines if this index is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'table'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

@@ -1,55 +1,19 @@
 package SQL::Translator::Utils;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 use strict;
+use warnings;
 use base qw(Exporter);
-use vars qw($VERSION $DEFAULT_COMMENT @EXPORT_OK);
-use Digest::SHA1 qw( sha1_hex );
+use Digest::SHA qw( sha1_hex );
 use Exporter;
 
-$VERSION = '1.59';
-$DEFAULT_COMMENT = '-- ';
-@EXPORT_OK = qw(
+our $VERSION = '1.59';
+our $DEFAULT_COMMENT = '-- ';
+our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
-# ----------------------------------------------------------------------
-# debug(@msg)
-#
-# Will send debugging messages to STDERR, if the caller's $DEBUG global
-# is set.
-#
-# This debug() function has a neat feature: Occurances of the strings
-# PKG, LINE, and SUB in each message will be replaced with elements
-# from caller():
-#
-#   debug("PKG: Bad things happened on line LINE!");
-#
-# Will be warned as:
-#
-#   [SQL::Translator: Bad things happened on line 643]
-#
-# If called from Translator.pm, on line 643.
-# ----------------------------------------------------------------------
 sub debug {
     my ($pkg, $file, $line, $sub) = caller(0);
     {
@@ -70,7 +34,6 @@ sub debug {
     }
 }
 
-# ----------------------------------------------------------------------
 sub normalize_name {
     my $name = shift or return '';
 
@@ -91,7 +54,6 @@ sub normalize_name {
     return $name;
 }
 
-# ----------------------------------------------------------------------
 sub header_comment {
     my $producer = shift || caller;
     my $comment_char = shift;
@@ -115,13 +77,6 @@ HEADER_COMMENT
     return $header_comment;
 }
 
-# ----------------------------------------------------------------------
-# parse_list_arg
-#
-# Meant to accept a list, an array reference, or a string of 
-# comma-separated values.  Retuns an array reference of the 
-# arguments.  Modified to also handle a list of references.
-# ----------------------------------------------------------------------
 sub parse_list_arg {
     my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
 
@@ -135,7 +90,7 @@ sub parse_list_arg {
     # This processes string-like arguments.
     #
     else {
-        return [ 
+        return [
             map { s/^\s+|\s+$//g; $_ }
             map { split /,/ }
             grep { defined && length } @$list
@@ -143,14 +98,6 @@ sub parse_list_arg {
     }
 }
 
-# ----------------------------------------------------------------------
-# truncate_id_uniquely( $desired_name, $max_symbol_length )
-#
-# Truncates the name $desired_name to the $max_symbol_length by
-# including part of the hash of the full name at the end of the
-# truncated name, giving a high probability that the symbol will be
-# unique.
-# ----------------------------------------------------------------------
 sub truncate_id_uniquely {
     my ( $desired_name, $max_symbol_length ) = @_;
 
@@ -171,13 +118,6 @@ sub truncate_id_uniquely {
 }
 
 
-#---------------------------------------------------------------------
-# parse_mysql_version ( $version_string, $result_target)
-#
-# Attempts to parse an arbitrary string as a mysql version number. 
-# Returns either a floating point perl style string, or a mysql style
-# 5 digit string, depending on the supplied $result_target
-#---------------------------------------------------------------------
 sub parse_mysql_version {
     my ($v, $target) = @_;
 
@@ -187,17 +127,17 @@ sub parse_mysql_version {
 
     my @vers;
 
-    # X.Y.Z style 
+    # X.Y.Z style
     if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
 
-    # XYYZZ (mysql) style 
+    # XYYZZ (mysql) style
     elsif ( $v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x ) {
         push @vers, $1, $2, $3;
     }
 
-    # XX.YYYZZZ (perl) style or simply X 
+    # XX.YYYZZZ (perl) style or simply X
     elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
@@ -218,14 +158,6 @@ sub parse_mysql_version {
     }
 }
 
-#---------------------------------------------------------------------
-# parse_dbms_version ( $version_string, $target )
-#
-# Attempts to parse either a native or perl-style version string into
-# a version number format as specified by $target, which can be either
-# 'perl' for a perl-style version number, or 'native' for an X.X.X
-# style version number.
-#---------------------------------------------------------------------
 sub parse_dbms_version {
     my ($v, $target) = @_;
 
@@ -233,12 +165,12 @@ sub parse_dbms_version {
 
     my @vers;
 
-    # X.Y.Z style 
+    # X.Y.Z style
     if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
 
-    # XX.YYYZZZ (perl) style or simply X 
+    # XX.YYYZZZ (perl) style or simply X
     elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
         push @vers, $1, $2, $3;
     }
@@ -260,8 +192,6 @@ sub parse_dbms_version {
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 
@@ -390,7 +320,7 @@ C<header_comment>.
 
 =head2 parse_mysql_version
 
-Used by both L<Parser::MySQL|SQL::Translator::Parser::MySQL> and 
+Used by both L<Parser::MySQL|SQL::Translator::Parser::MySQL> and
 L<Producer::MySQL|SQL::Translator::Producer::MySQL> in order to provide a
 consistent format for both C<< parser_args->{mysql_parser_version} >> and
 C<< producer_args->{mysql_version} >> respectively. Takes any of the following
@@ -402,6 +332,12 @@ version specifications:
   5
   5.001005  (perl style)
   30201     (mysql style)
+
+=head2 parse_dbms_version
+
+Takes a version string (X.Y.Z) or perl style (XX.YYYZZZ) and a target ('perl'
+or 'native') transforms the string to the given target style.
+to
 
 =head1 AUTHORS
 

@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::Excel;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::Excel - parser for Excel
@@ -47,9 +29,10 @@ and field sizes.  True by default.
 =cut
 
 use strict;
-use vars qw($DEBUG $VERSION @EXPORT_OK);
+use warnings;
+our ($DEBUG, @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-$VERSION = '1.59';
+our $VERSION = '1.59';
 
 use Spreadsheet::ParseExcel;
 use Exporter;
@@ -115,7 +98,7 @@ sub parse {
         #
         # If directed, look at every field's values to guess size and type.
         #
-        unless ( 
+        unless (
             defined $args->{'scan_fields'} &&
             $args->{'scan_fields'} == 0
         ) {
@@ -123,12 +106,12 @@ sub parse {
 
             for(
                 my $iR = $ws->{'MinRow'} == 0 ? 1 : $ws->{'MinRow'};
-                defined $ws->{'MaxRow'} && $iR <= $ws->{'MaxRow'}; 
+                defined $ws->{'MaxRow'} && $iR <= $ws->{'MaxRow'};
                 $iR++
             ) {
-               for ( 
+               for (
                     my $iC = $ws->{'MinCol'};
-                    defined $ws->{'MaxCol'} && $iC <= $ws->{'MaxCol'}; 
+                    defined $ws->{'MaxCol'} && $iC <= $ws->{'MaxCol'};
                     $iC++
                 ) {
                     my $field = $field_names[ $iC ];
@@ -140,16 +123,16 @@ sub parse {
                     if ( $data =~ /^-?\d+$/ ) {
                         $type = 'integer';
                     }
-                    elsif ( 
-                        $data =~ /^-?[,\d]+\.[\d+]?$/ 
+                    elsif (
+                        $data =~ /^-?[,\d]+\.[\d+]?$/
                         ||
-                        $data =~ /^-?[,\d]+?\.\d+$/  
+                        $data =~ /^-?[,\d]+?\.\d+$/
                         ||
-                        $data =~ /^-?\.\d+$/  
+                        $data =~ /^-?\.\d+$/
                     ) {
                         $type = 'float';
-                        my ( $w, $d ) = 
-                            map { s/,//g; length $_ || 1 } 
+                        my ( $w, $d ) =
+                            map { s/,//g; length $_ || 1 }
                             split( /\./, $data )
                         ;
                         $size = [ $w + $d, $d ];
@@ -172,8 +155,8 @@ sub parse {
 
             for my $field ( keys %field_info ) {
                 my $size      = $field_info{ $field }{'size'} || [ 1 ];
-                my $data_type = 
-                    $field_info{ $field }{'char'}    ? 'char'    : 
+                my $data_type =
+                    $field_info{ $field }{'char'}    ? 'char'    :
                     $field_info{ $field }{'float'}   ? 'float'   :
                     $field_info{ $field }{'integer'} ? 'integer' : 'char';
 
@@ -191,7 +174,6 @@ sub parse {
     return 1;
 }
 
-# -------------------------------------------------------------------
 sub ET_to_ST {
     my $et = shift;
     $ET_to_ST{$et} || $ET_to_ST{'Text'};

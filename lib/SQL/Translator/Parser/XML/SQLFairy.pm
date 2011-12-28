@@ -1,24 +1,5 @@
 package SQL::Translator::Parser::XML::SQLFairy;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2003 Mark Addison <mark.addison@itn.co.uk>,
-# Copyright (C) 2009 Jonathan Yu <frequency@cpan.org>
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML.
@@ -94,12 +75,11 @@ To convert your old format files simply pass them through the translator :)
 
 =cut
 
-# -------------------------------------------------------------------
-
 use strict;
+use warnings;
 
-use vars qw[ $DEBUG $VERSION @EXPORT_OK ];
-$VERSION = '1.59';
+our ( $DEBUG, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -202,7 +182,7 @@ sub parse {
             $table->add_index( %data ) or die $table->error;
         }
 
-        
+
         #
         # Comments
         #
@@ -274,7 +254,6 @@ sub parse {
     return 1;
 }
 
-# -------------------------------------------------------------------
 sub get_tagfields {
 #
 # get_tagfields XP, NODE, NAMESPACE => qw/TAGNAMES/;
@@ -325,8 +304,6 @@ sub get_tagfields {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

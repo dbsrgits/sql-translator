@@ -1,23 +1,5 @@
 package SQL::Translator::Parser::MySQL;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Parser::MySQL - parser for MySQL
@@ -146,8 +128,9 @@ More information about the MySQL comment-syntax: L<http://dev.mysql.com/doc/refm
 =cut
 
 use strict;
-use vars qw[ $DEBUG $VERSION $GRAMMAR @EXPORT_OK ];
-$VERSION = '1.59';
+use warnings;
+our ( $DEBUG, $GRAMMAR, @EXPORT_OK );
+our $VERSION = '1.59';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -619,7 +602,7 @@ default_val :
         $return  =  $item[2];
     }
     |
-    /default/i /(?:')?[\w\d:.-]*(?:')?/
+    /default/i /[\w\d:.-]+/
     {
         $return  =  $item[2];
     }
@@ -812,7 +795,6 @@ CURRENT_TIMESTAMP : /current_timestamp(\(\))?/i
 
 END_OF_GRAMMAR
 
-# -------------------------------------------------------------------
 sub parse {
     my ( $translator, $data ) = @_;
     my $parser = Parse::RecDescent->new($GRAMMAR);
@@ -994,7 +976,7 @@ sub normalize_field {
     $size = $field->size;
     $type = $field->data_type;
     $list = $field->extra->{list} || [];
-	$unsigned = defined($field->extra->{unsigned});
+    $unsigned = defined($field->extra->{unsigned});
 
     if ( !ref $size && $size eq 0 ) {
         if ( lc $type eq 'tinyint' ) {

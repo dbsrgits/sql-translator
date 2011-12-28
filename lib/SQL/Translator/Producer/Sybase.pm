@@ -1,23 +1,5 @@
 package SQL::Translator::Producer::Sybase;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =head1 NAME
 
 SQL::Translator::Producer::Sybase - Sybase producer for SQL::Translator
@@ -36,8 +18,9 @@ This module will produce text output of the schema suitable for Sybase.
 =cut
 
 use strict;
-use vars qw[ $DEBUG $WARN $VERSION ];
-$VERSION = '1.59';
+use warnings;
+our ( $DEBUG, $WARN );
+our $VERSION = '1.59';
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;
@@ -61,27 +44,27 @@ my %translate  = (
     bit       => 'bit',
     tinyint   => 'smallint',
     float     => 'double precision',
-    serial    => 'numeric', 
+    serial    => 'numeric',
     boolean   => 'varchar',
     char      => 'char',
     long      => 'varchar',
 );
 
 my %reserved = map { $_, 1 } qw[
-    ALL ANALYSE ANALYZE AND ANY AS ASC 
+    ALL ANALYSE ANALYZE AND ANY AS ASC
     BETWEEN BINARY BOTH
     CASE CAST CHECK COLLATE COLUMN CONSTRAINT CROSS
-    CURRENT_DATE CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER 
+    CURRENT_DATE CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER
     DEFAULT DEFERRABLE DESC DISTINCT DO
     ELSE END EXCEPT
-    FALSE FOR FOREIGN FREEZE FROM FULL 
-    GROUP HAVING 
-    ILIKE IN INITIALLY INNER INTERSECT INTO IS ISNULL 
-    JOIN LEADING LEFT LIKE LIMIT 
+    FALSE FOR FOREIGN FREEZE FROM FULL
+    GROUP HAVING
+    ILIKE IN INITIALLY INNER INTERSECT INTO IS ISNULL
+    JOIN LEADING LEFT LIKE LIMIT
     NATURAL NEW NOT NOTNULL NULL
     OFF OFFSET OLD ON ONLY OR ORDER OUTER OVERLAPS
-    PRIMARY PUBLIC REFERENCES RIGHT 
-    SELECT SESSION_USER SOME TABLE THEN TO TRAILING TRUE 
+    PRIMARY PUBLIC REFERENCES RIGHT
+    SELECT SESSION_USER SOME TABLE THEN TO TRAILING TRUE
     UNION UNIQUE USER USING VERBOSE WHEN WHERE
 ];
 
@@ -132,7 +115,6 @@ and table_constraint is:
 
 =cut
 
-# -------------------------------------------------------------------
 sub produce {
     my $translator     = shift;
     $DEBUG             = $translator->debug;
@@ -161,7 +143,7 @@ sub produce {
         my %field_name_scope;
         for my $field ( $table->get_fields ) {
             my $field_name    = mk_name(
-                $field->name, '', \%field_name_scope, undef,1 
+                $field->name, '', \%field_name_scope, undef,1
             );
             my $field_name_ur = unreserve( $field_name, $table_name );
             my $field_def     = qq["$field_name_ur"];
@@ -182,10 +164,10 @@ sub produce {
             my $seq_name;
 
             if ( $data_type eq 'enum' ) {
-                my $check_name = mk_name( 
+                my $check_name = mk_name(
                     $table_name.'_'.$field_name, 'chk' ,undef, 1
                 );
-                push @constraint_defs, 
+                push @constraint_defs,
                 "CONSTRAINT $check_name CHECK ($field_name IN ($commalist))";
                 $data_type .= 'character varying';
             }
@@ -215,7 +197,7 @@ sub produce {
                     $size = '255';
                 }
                 elsif (
-                    $data_type eq 'varchar' && 
+                    $data_type eq 'varchar' &&
                     $orig_data_type eq 'boolean'
                 ) {
                     $size = '6';
@@ -269,24 +251,24 @@ sub produce {
 
             if ( $type eq PRIMARY_KEY ) {
                 $name ||= mk_name( $table_name, 'pk', undef,1 );
-                push @constraint_defs, 
+                push @constraint_defs,
                     "CONSTRAINT $name PRIMARY KEY ".
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ( $type eq FOREIGN_KEY ) {
                 $name ||= mk_name( $table_name, 'fk', undef,1 );
-                push @constraint_defs, 
+                push @constraint_defs,
                     "CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
                     ' (' . join( ', ', @rfields ) . ')';
             }
             elsif ( $type eq UNIQUE ) {
-                $name ||= mk_name( 
-                    $table_name, 
+                $name ||= mk_name(
+                    $table_name,
                     $name || ++$c_name_default,undef, 1
                 );
-                push @constraint_defs, 
+                push @constraint_defs,
                     "CONSTRAINT $name UNIQUE " .
                     '(' . join( ', ', @fields ) . ')';
             }
@@ -296,26 +278,26 @@ sub produce {
         # Indices
         #
         for my $index ( $table->get_indices ) {
-            push @index_defs, 
+            push @index_defs,
                 'CREATE INDEX ' . $index->name .
                 " ON $table_name (".
                 join( ', ', $index->fields ) . ");";
         }
 
         my $create_statement;
-        $create_statement  = qq[DROP TABLE $table_name_ur;\n] 
+        $create_statement  = qq[DROP TABLE $table_name_ur;\n]
             if $add_drop_table;
         $create_statement .= qq[CREATE TABLE $table_name_ur (\n].
-            join( ",\n", 
-                map { "  $_" } @field_defs, @constraint_defs 
+            join( ",\n",
+                map { "  $_" } @field_defs, @constraint_defs
             ).
             "\n);"
         ;
 
-        $output .= join( "\n\n", 
+        $output .= join( "\n\n",
             @comments,
-            $create_statement, 
-            @index_defs, 
+            $create_statement,
+            @index_defs,
             ''
         );
     }
@@ -340,7 +322,7 @@ sub produce {
         my (@comments, $procedure_name);
 
         $procedure_name = $procedure->name();
-        push @comments, 
+        push @comments,
             "--\n-- Procedure: $procedure_name\n--" unless $no_comments;
 
         # text of procedure  already has the 'create procedure' stuff
@@ -370,17 +352,16 @@ sub produce {
     return $output;
 }
 
-# -------------------------------------------------------------------
 sub mk_name {
-    my $basename      = shift || ''; 
-    my $type          = shift || ''; 
-    my $scope         = shift || ''; 
+    my $basename      = shift || '';
+    my $type          = shift || '';
+    my $scope         = shift || '';
     my $critical      = shift || '';
     my $basename_orig = $basename;
-    my $max_name      = $type 
-                        ? $max_id_length - (length($type) + 1) 
+    my $max_name      = $type
+                        ? $max_id_length - (length($type) + 1)
                         : $max_id_length;
-    $basename         = substr( $basename, 0, $max_name ) 
+    $basename         = substr( $basename, 0, $max_name )
                         if length( $basename ) > $max_name;
     my $name          = $type ? "${type}_$basename" : $basename;
 
@@ -395,7 +376,7 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00" 
+        substr($name, $max_id_length - 3) = "00"
             if length( $name ) > $max_id_length;
 
         warn "The name '$name_orig' has been changed to ",
@@ -403,20 +384,19 @@ sub mk_name {
 
         $scope->{ $name_orig }++;
     }
-    $name = substr( $name, 0, $max_id_length ) 
+    $name = substr( $name, 0, $max_id_length )
                         if ((length( $name ) > $max_id_length) && $critical);
     $scope->{ $name }++;
     return $name;
 }
 
-# -------------------------------------------------------------------
 sub unreserve {
     my $name            = shift || '';
     my $schema_obj_name = shift || '';
     my ( $suffix ) = ( $name =~ s/(\W.*)$// ) ? $1 : '';
 
     # also trap fields that don't begin with a letter
-    return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i; 
+    return $name if !$reserved{ uc $name } && $name =~ /^[a-z]/i;
 
     if ( $schema_obj_name ) {
         ++$unreserve{"$schema_obj_name.$name"};
@@ -430,8 +410,6 @@ sub unreserve {
 }
 
 1;
-
-# -------------------------------------------------------------------
 
 =pod
 

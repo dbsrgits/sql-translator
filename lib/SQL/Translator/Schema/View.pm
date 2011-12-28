@@ -1,23 +1,5 @@
 package SQL::Translator::Schema::View;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -42,15 +24,14 @@ C<SQL::Translator::Schema::View> is the view object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
-
-# ----------------------------------------------------------------------
+our $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
     name sql fields schema order
@@ -66,7 +47,6 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -104,7 +84,6 @@ names and keep them in order by the first occurrence of a field name.
     return wantarray ? @{ $self->{'fields'} || [] } : ($self->{'fields'} || '');
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -125,7 +104,6 @@ Determine whether the view is valid or not.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -143,7 +121,6 @@ Get or set the view's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -165,7 +142,6 @@ Get or set the view's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
 sub sql {
 
 =pod
@@ -183,7 +159,6 @@ Get or set the view's SQL.
     return $self->{'sql'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub schema {
 
 =pod
@@ -207,7 +182,6 @@ Get or set the view's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -224,11 +198,11 @@ Determines if this view is the same as another
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_sql = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
     #return 0 unless $self->is_valid eq $other->is_valid;
-    
+
     unless ($ignore_sql) {
         my $selfSql = $self->sql;
         my $otherSql = $other->sql;
@@ -240,7 +214,7 @@ Determines if this view is the same as another
         $otherSql =~ s/\s+/ /sg;
         return 0 unless $selfSql eq $otherSql;
     }
-    
+
     my $selfFields = join(":", $self->fields);
     my $otherFields = join(":", $other->fields);
     return 0 unless $case_insensitive ? uc($selfFields) eq uc($otherFields) : $selfFields eq $otherFields;
@@ -248,15 +222,12 @@ Determines if this view is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

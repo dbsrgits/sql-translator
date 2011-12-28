@@ -1,23 +1,5 @@
 package SQL::Translator::Schema::Trigger;
 
-# ----------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 =pod
 
 =head1 NAME
@@ -35,6 +17,7 @@ SQL::Translator::Schema::Trigger - SQL::Translator trigger object
     on_table            => 'foo',    # table name
     action              => '...',    # text of trigger
     schema              => $schema,  # Schema object
+    scope               => 'row',    # or statement
   );
 
 =head1 DESCRIPTION
@@ -46,21 +29,20 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 =cut
 
 use strict;
+use warnings;
 use SQL::Translator::Utils 'parse_list_arg';
 
 use base 'SQL::Translator::Schema::Object';
 
 use Carp;
 
-use vars qw($VERSION $TABLE_COUNT $VIEW_COUNT);
+our ( $TABLE_COUNT, $VIEW_COUNT );
 
-$VERSION = '1.59';
-
-# ----------------------------------------------------------------------
+our $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
-    name schema perform_action_when database_events database_event 
-    fields table on_table action order
+    name schema perform_action_when database_events database_event
+    fields table on_table action order scope
 /);
 
 =pod
@@ -73,14 +55,13 @@ Object constructor.
 
 =cut
 
-# ----------------------------------------------------------------------
 sub perform_action_when {
 
 =pod
 
 =head2 perform_action_when
 
-Gets or sets whether the event happens "before" or "after" the 
+Gets or sets whether the event happens "before" or "after" the
 C<database_event>.
 
   $trigger->perform_action_when('after');
@@ -88,7 +69,7 @@ C<database_event>.
 =cut
 
     my $self = shift;
-    
+
     if ( my $arg = shift ) {
         $arg =  lc $arg;
         $arg =~ s/\s+/ /g;
@@ -96,7 +77,7 @@ C<database_event>.
             $self->{'perform_action_when'} = $arg;
         }
         else {
-            return 
+            return
                 $self->error("Invalid argument '$arg' to perform_action_when");
         }
     }
@@ -104,7 +85,6 @@ C<database_event>.
     return $self->{'perform_action_when'};
 }
 
-# ----------------------------------------------------------------------
 sub database_event {
 
 =pod
@@ -114,13 +94,12 @@ sub database_event {
 Obsolete please use database_events!
 
 =cut
-    
+
     my $self = shift;
 
     return $self->database_events( @_ );
 }
-    
-# ----------------------------------------------------------------------
+
 sub database_events {
 
 =pod
@@ -140,7 +119,7 @@ Gets or sets the events that triggers the trigger.
         @args       = map { s/\s+/ /g; lc $_ } @args;
         my %valid   = map { $_, 1 } qw[ insert update update_on delete ];
         my @invalid = grep { !defined $valid{ $_ } } @args;
-        
+
         if ( @invalid ) {
             return $self->error(
                 sprintf("Invalid events '%s' in database_events",
@@ -152,12 +131,11 @@ Gets or sets the events that triggers the trigger.
         $self->{'database_events'} = [ @args ];
     }
 
-    return wantarray 
+    return wantarray
         ? @{ $self->{'database_events'} || [] }
         : $self->{'database_events'};
 }
 
-# ----------------------------------------------------------------------
 sub fields {
 
 =pod
@@ -193,7 +171,6 @@ Gets and set which fields to monitor for C<database_event>.
     return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
 }
 
-# ----------------------------------------------------------------------
 sub table {
 
 =pod
@@ -208,14 +185,13 @@ Gets or set the table on which the trigger works, as a L<SQL::Translator::Schema
     my ($self, $arg) = @_;
     if ( @_ == 2 ) {
         $self->error("Table attribute of a ".__PACKAGE__.
-                     " must be a SQL::Translator::Schema::Table") 
+                     " must be a SQL::Translator::Schema::Table")
             unless ref $arg and $arg->isa('SQL::Translator::Schema::Table');
         $self->{table} = $arg;
     }
     return $self->{table};
 }
 
-# ----------------------------------------------------------------------
 sub on_table {
 
 =pod
@@ -237,7 +213,6 @@ Gets or set the table name on which the trigger works, as a string.
     return $self->table->name;
 }
 
-# ----------------------------------------------------------------------
 sub action {
 
 =pod
@@ -263,7 +238,6 @@ Gets or set the action of the trigger.
     return $self->{'action'};
 }
 
-# ----------------------------------------------------------------------
 sub is_valid {
 
 =pod
@@ -278,19 +252,18 @@ Determine whether the trigger is valid or not.
 
     my $self = shift;
 
-    for my $attr ( 
-        qw[ name perform_action_when database_events on_table action ] 
+    for my $attr (
+        qw[ name perform_action_when database_events on_table action ]
     ) {
         return $self->error("Invalid: missing '$attr'") unless $self->$attr();
     }
-    
-    return $self->error("Missing fields for UPDATE ON") if 
+
+    return $self->error("Missing fields for UPDATE ON") if
         $self->database_event eq 'update_on' && !$self->fields;
 
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub name {
 
 =pod
@@ -308,7 +281,6 @@ Get or set the trigger's name.
     return $self->{'name'} || '';
 }
 
-# ----------------------------------------------------------------------
 sub order {
 
 =pod
@@ -330,7 +302,31 @@ Get or set the trigger's order.
     return $self->{'order'} || 0;
 }
 
-# ----------------------------------------------------------------------
+
+sub scope {
+
+=pod
+
+=head2 scope
+
+Get or set the trigger's scope (row or statement).
+
+    my $scope = $trigger->scope('statement');
+
+=cut
+
+    my ( $self, $arg ) = @_;
+
+    if ( defined $arg ) {
+        return $self->error( "Invalid scope '$arg'" )
+            unless $arg =~ /^(row|statement)$/i;
+
+        $self->{scope} = $arg;
+    }
+
+    return $self->{scope} || '';
+}
+
 sub schema {
 
 =pod
@@ -354,7 +350,6 @@ Get or set the trigger's schema object.
     return $self->{'schema'};
 }
 
-# ----------------------------------------------------------------------
 sub compare_arrays {
 
 =pod
@@ -364,7 +359,7 @@ sub compare_arrays {
 Compare two arrays.
 
 =cut
-    
+
     my ($first, $second) = @_;
     no warnings;  # silence spurious -w undef complaints
 
@@ -383,7 +378,6 @@ Compare two arrays.
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub equals {
 
 =pod
@@ -399,11 +393,11 @@ Determines if this trigger is the same as another
     my $self             = shift;
     my $other            = shift;
     my $case_insensitive = shift;
-    
+
     return 0 unless $self->SUPER::equals($other);
 
     my %names;
-    for my $name ( $self->name, $other->name ) { 
+    for my $name ( $self->name, $other->name ) {
         $name = lc $name if $case_insensitive;
         $names{ $name }++;
     }
@@ -416,8 +410,8 @@ Determines if this trigger is the same as another
         return $self->error('perform_action_when differs');
     }
 
-    if ( 
-        !compare_arrays( [$self->database_events], [$other->database_events] ) 
+    if (
+        !compare_arrays( [$self->database_events], [$other->database_events] )
     ) {
         return $self->error('database_events differ');
     }
@@ -430,7 +424,7 @@ Determines if this trigger is the same as another
         return $self->error('action differs');
     }
 
-    if ( 
+    if (
         !$self->_compare_objects( scalar $self->extra, scalar $other->extra )
     ) {
         return $self->error('extras differ');
@@ -439,15 +433,12 @@ Determines if this trigger is the same as another
     return 1;
 }
 
-# ----------------------------------------------------------------------
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
 
 1;
-
-# ----------------------------------------------------------------------
 
 =pod
 

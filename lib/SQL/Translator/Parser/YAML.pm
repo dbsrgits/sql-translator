@@ -1,26 +1,8 @@
 package SQL::Translator::Parser::YAML;
 
-# -------------------------------------------------------------------
-# Copyright (C) 2002-2009 SQLFairy Authors
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; version 2.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-# -------------------------------------------------------------------
-
 use strict;
-use vars qw($VERSION);
-$VERSION = '1.59';
+use warnings;
+our $VERSION = '1.59';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -39,7 +21,7 @@ sub parse {
     #
     # Tables
     #
-    my @tables = 
+    my @tables =
         map   { $data->{'tables'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'tables'}{ $_ }{'order'} || 0, $_ ] }
@@ -47,14 +29,14 @@ sub parse {
     ;
 
     for my $tdata ( @tables ) {
-  
+
         my $table = $schema->add_table(
             map {
               $tdata->{$_} ? ($_ => $tdata->{$_}) : ()
             } (qw/name extra options/)
         ) or die $schema->error;
 
-        my @fields = 
+        my @fields =
             map   { $tdata->{'fields'}{ $_->[1] } }
             sort  { $a->[0] <=> $b->[0] }
             map   { [ $tdata->{'fields'}{ $_ }{'order'}, $_ ] }
@@ -63,7 +45,7 @@ sub parse {
 
         for my $fdata ( @fields ) {
             $table->add_field( %$fdata ) or die $table->error;
-            $table->primary_key( $fdata->{'name'} ) 
+            $table->primary_key( $fdata->{'name'} )
                 if $fdata->{'is_primary_key'};
         }
 
@@ -79,7 +61,7 @@ sub parse {
     #
     # Views
     #
-    my @views = 
+    my @views =
         map   { $data->{'views'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'views'}{ $_ }{'order'}, $_ ] }
@@ -93,7 +75,7 @@ sub parse {
     #
     # Triggers
     #
-    my @triggers = 
+    my @triggers =
         map   { $data->{'triggers'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'triggers'}{ $_ }{'order'}, $_ ] }
@@ -107,7 +89,7 @@ sub parse {
     #
     # Procedures
     #
-    my @procedures = 
+    my @procedures =
         map   { $data->{'procedures'}{ $_->[1] } }
         sort  { $a->[0] <=> $b->[0] }
         map   { [ $data->{'procedures'}{ $_ }{'order'}, $_ ] }
