@@ -21,10 +21,10 @@ my $sql = q{
         f_varchar character varying (255),
         f_double double precision,
         f_bigint bigint not null,
-        f_char character(10) default 'FOO',
+        f_char character(10) default 'FOO'::character(10),
         f_bool boolean,
         f_bin bytea,
-        f_tz timestamp,
+        f_tz timestamp default '1970-01-01 00:00:00'::TIMESTAMP,
         f_text text,
         f_fk1 integer not null references t_test2 (f_id),
         f_dropped text,
@@ -182,7 +182,7 @@ is( $f8->name, 'f_tz', 'Eighth field is "f_tz"' );
 is( $f8->data_type, 'timestamp', 'Field is a timestamp' );
 is( $f8->is_nullable, 1, 'Field can be null' );
 is( $f8->size, 0, 'Size is "0"' );
-is( $f8->default_value, undef, 'Default value is undefined' );
+is( $f8->default_value, '1970-01-01 00:00:00', 'Default value is 1970-01-01 00:00:00' );
 is( $f8->is_primary_key, 0, 'Field is not PK' );
 
 my $f9 = shift @t1_fields;
