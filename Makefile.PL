@@ -17,7 +17,6 @@ my $deps = {
     'IO::Scalar'               => 2.110,
     'Parse::RecDescent'        => 1.962002,
     'Pod::Usage'               => 0,
-    'Class::Accessor::Fast'    => 0,
     'DBI'                      => 0,
     'File::ShareDir'           => 1.0,
     'File::Spec'               => 0,

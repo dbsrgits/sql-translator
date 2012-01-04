@@ -8,15 +8,59 @@ use warnings;
 use Data::Dumper;
 use Carp::Clan qw/^SQL::Translator/;
 use SQL::Translator::Schema::Constants;
+use Sub::Quote qw(quote_sub);
+use Moo;
 
-use base 'Class::Accessor::Fast';
-
-# Input/option accessors
-__PACKAGE__->mk_accessors(qw/
-  ignore_index_names ignore_constraint_names ignore_view_sql
-  ignore_proc_sql output_db source_schema target_schema
-  case_insensitive no_batch_alters ignore_missing_methods producer_args
-/);
+has ignore_index_names => (
+  is => 'rw',
+);
+has ignore_constraint_names => (
+  is => 'rw',
+);
+has ignore_view_sql => (
+  is => 'rw',
+);
+has ignore_proc_sql => (
+  is => 'rw',
+);
+has output_db => (
+  is => 'rw',
+);
+has source_schema => (
+  is => 'rw',
+);
+has target_schema => (
+  is => 'rw',
+);
+has case_insensitive => (
+  is => 'rw',
+);
+has no_batch_alters => (
+  is => 'rw',
+);
+has ignore_missing_methods => (
+  is => 'rw',
+);
+has producer_args => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '{}',
+);
+has tables_to_drop => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has tables_to_create => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has table_diff_hash => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '{}',
+);
 
 my @diff_arrays = qw/
   tables_to_drop
@@ -35,8 +79,6 @@ my @diff_hash_keys = qw/
   table_options
   table_renamed_from
 /;
-
-__PACKAGE__->mk_accessors(@diff_arrays, 'table_diff_hash');
 
 sub schema_diff {
     #  use Data::Dumper;
@@ -59,18 +101,19 @@ sub schema_diff {
     $obj->compute_differences->produce_diff_sql;
 }
 
-sub new {
-  my ($class, $values) = @_;
-  $values->{$_} ||= [] foreach @diff_arrays;
-  $values->{table_diff_hash} = {};
-
-  $values->{producer_args} ||= {};
-  if ($values->{producer_options}) {
+sub BUILD {
+  my ($self, $args) = @_;
+  if ($args->{producer_options}) {
     carp 'producer_options is deprecated. Please use producer_args';
-    $values->{producer_args} = { %{$values->{producer_options}}, %{$values->{producer_args}} };
+    $self->producer_args({
+      %{$args->{producer_options}},
+      %{$self->producer_args}
+    });
   }
-  $values->{output_db} ||= $values->{source_db};
-  return $class->SUPER::new($values);
+
+  if (! $self->output_db) {
+    $self->output_db($args->{source_db})
+  }
 }
 
 sub compute_differences {
