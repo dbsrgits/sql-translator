@@ -17,6 +17,7 @@
 * MySQL producer does not attempt to write out non-existent unique constraint names
 * MySQL parser correctly differentiates between signed and unsigned integer column
   display sizes
+* Replace Class::Accessor::Fast dependency with already-included Moo
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
