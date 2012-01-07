@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(72,
+    maybe_plan(73,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -763,4 +763,23 @@ EOV
             is($sql, "`my$type` $type", "Skip length param for type $type");
         }
     }
+}
+
+{ # test for rt62250
+    my $table = SQL::Translator::Schema::Table->new(name => 'table');
+    $table->add_field(
+        SQL::Translator::Schema::Field->new( name => 'mypk',
+                                             table => $table,
+                                             data_type => 'INT',
+                                             size => 10,
+                                             default_value => undef,
+                                             is_auto_increment => 1,
+                                             is_nullable => 0,
+                                             is_foreign_key => 0,
+                                             is_unique => 1 ));
+
+    my $constraint = $table->add_constraint(fields => ['mypk'], type => 'PRIMARY_KEY');
+    my $options = {quote_table_names => '`'};
+    is(SQL::Translator::Producer::MySQL::alter_drop_constraint($constraint,$options),
+       'ALTER TABLE `table` DROP PRIMARY KEY','valid drop primary key');
 }

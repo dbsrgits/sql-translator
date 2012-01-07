@@ -694,12 +694,15 @@ sub alter_drop_constraint
     my $qc      = $options->{quote_field_names} || '';
     my $table_name = quote_table_name($c->table->name, $qt);
 
-    my $out = sprintf('ALTER TABLE %s DROP %s %s',
-                      $table_name,
-                      $c->type eq FOREIGN_KEY ? $c->type : "INDEX",
-                      $qc . $c->name . $qc );
-
-    return $out;
+    my @out = ('ALTER','TABLE',$table_name,'DROP');
+    if($c->type eq PRIMARY_KEY) {
+        push @out, $c->type;
+    }
+    else {
+        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "INDEX"),
+            $qc . $c->name . $qc;
+    }
+    return join(' ',@out);
 }
 
 sub alter_create_constraint

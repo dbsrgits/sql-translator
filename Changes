@@ -20,6 +20,7 @@
 * Check in MySQL parser to avoid trying to parse a table defined twice in the same
   file as indices (and probably other things) get messed up
 * Workaround for some MySQL quirks on primary key definitions
+* Fix dropping primary keys in MySQL diffs (RT#62250, patch from Nick Bertrand)
 * MySQL producer does not attempt to write out non-existent unique constraint names
 * MySQL parser correctly differentiates between signed and unsigned integer column
   display sizes
