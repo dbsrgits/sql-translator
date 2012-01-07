@@ -7,7 +7,6 @@ configure_requires 'ExtUtils::MakeMaker' => 6.54;
 
 my $deps = {
   requires => {
-    'aliased'                  => '0.30',
     'Class::Base'              => 0,
     'Class::Data::Inheritable' => 0.02,
     'Class::MakeMethods'       => 0,
