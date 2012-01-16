@@ -21,17 +21,16 @@ the data into a database tables or graphs.
 
 use strict;
 use warnings;
-our ($DEBUG, @EXPORT_OK);
-$DEBUG = 0 unless defined $DEBUG;
 our $VERSION = '1.59';
 
+our $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
+
 use Storable;
-use Exporter;
 use SQL::Translator::Utils qw(debug normalize_name);
 
 use base qw(Exporter);
-
-@EXPORT_OK = qw(parse);
+our @EXPORT_OK = qw(parse);
 
 sub parse {
     my ($translator, $data) = @_;

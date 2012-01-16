@@ -1,3 +1,4 @@
+* All parser grammars are now precompiled for speed
 * Proper quoting support in SQLite
 * Support for triggers in PostgreSQL producer and parser
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)

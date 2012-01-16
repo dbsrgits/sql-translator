@@ -2,15 +2,18 @@ package SQL::Translator::Utils;
 
 use strict;
 use warnings;
-use base qw(Exporter);
 use Digest::SHA qw( sha1_hex );
-use Exporter;
+use File::Spec;
+use Class::Unload;
 
 our $VERSION = '1.59';
 our $DEFAULT_COMMENT = '-- ';
+
+use base qw(Exporter);
 our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
+    ddl_parser_instance
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
@@ -189,6 +192,97 @@ sub parse_dbms_version {
         #how do I croak sanely here?
         die "Unknown version target '$target'";
     }
+}
+
+my ($parsers_libdir, $checkout_dir);
+sub ddl_parser_instance {
+    my $type = shift;
+
+    # it may differ from our caller, even though currently this is not the case
+    eval "require SQL::Translator::Parser::$type"
+        or die "Unable to load grammar-spec container SQL::Translator::Parser::$type:\n$@";
+
+    unless ($parsers_libdir) {
+
+        # are we in a checkout?
+        if ($checkout_dir = _find_co_root()) {
+            $parsers_libdir = File::Spec->catdir($checkout_dir, 'share', 'PrecompiledParsers');
+        }
+        else {
+            require File::ShareDir;
+            $parsers_libdir = File::Spec->catdir(
+              File::ShareDir::dist_dir('SQL-Translator'),
+              'PrecompiledParsers'
+            );
+        }
+
+        unshift @INC, $parsers_libdir;
+    }
+
+    my $precompiled_mod = "Parse::RecDescent::DDL::SQLT::$type";
+
+    # FIXME FIXME FIXME
+    # Parse::RecDescent has horrible architecture where each precompiled parser
+    # instance shares global state with all its siblings
+    # What we do here is gross, but scarily efficient - the parser compilation
+    # is much much slower than an unload/reload cycle
+    Class::Unload->unload($precompiled_mod);
+
+    # There is also a sub-namespace that P::RD uses, but simply unsetting
+    # $^W to stop redefine warnings seems to be enough
+    #Class::Unload->unload("Parse::RecDescent::$precompiled_mod");
+
+    eval "local \$^W; require $precompiled_mod" or do {
+        if ($checkout_dir) {
+            die "Unable to find precompiled grammar for $type - run Makefile.PL to generate it\n";
+        }
+        else {
+            die "Unable to load precompiled grammar for $type... this is not supposed to happen if you are not in a checkout, please file a bugreport:\n$@"
+        }
+    };
+
+    my $grammar_spec_fn = $INC{"SQL/Translator/Parser/$type.pm"};
+    my $precompiled_fn = $INC{"Parse/RecDescent/DDL/SQLT/$type.pm"};
+
+    if (
+        (stat($grammar_spec_fn))[9]
+            >
+        (stat($precompiled_fn))[9]
+    ) {
+        die (
+            "Grammar spec '$grammar_spec_fn' is newer than precompiled parser '$precompiled_fn'"
+          . ($checkout_dir
+                ? " - run Makefile.PL to regenerate stale versions\n"
+                : "... this is not supposed to happen if you are not in a checkout, please file a bugreport\n"
+            )
+        );
+    }
+
+    return $precompiled_mod->new;
+}
+
+# Try to determine the root of a checkout/untar if possible
+# or return undef
+sub _find_co_root {
+
+    my @mod_parts = split /::/, (__PACKAGE__ . '.pm');
+    my $rel_path = join ('/', @mod_parts);  # %INC stores paths with / regardless of OS
+
+    return undef unless ($INC{$rel_path});
+
+    # a bit convoluted, but what we do here essentially is:
+    #  - get the file name of this particular module
+    #  - do 'cd ..' as many times as necessary to get to lib/SQL/Translator/../../..
+
+    my $root = (File::Spec::Unix->splitpath($INC{$rel_path}))[1];
+    for (1 .. @mod_parts) {
+        $root = File::Spec->catdir($root, File::Spec->updir);
+    }
+
+    return ( -f File::Spec->catfile($root, 'Makefile.PL') )
+        ? $root
+        : undef
+    ;
 }
 
 1;

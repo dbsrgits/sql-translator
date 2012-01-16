@@ -8,6 +8,7 @@ use Test::Differences;
 use FindBin qw/$Bin/;
 
 use SQL::Translator;
+use SQL::Translator::Utils qw/ddl_parser_instance/;
 
 
 ### Set $ENV{SQLTTEST_RT_DEBUG} = 1 for more output
@@ -17,9 +18,11 @@ my $plan = [
   {
     engine => 'XML',
     req => 'XML::LibXML 1.69',
+    no_grammar => 1,
   },
   {
     engine => 'YAML',
+    no_grammar => 1,
   },
 
   {
@@ -55,24 +58,24 @@ my $plan = [
     parser_args => {},
   },
 
-#  {
-#    engine => 'Oracle',
-#    producer_args => {},
-#    parser_args => {},
-#    todo => 'Needs volunteers',
-#  },
-#  {
-#    engine => 'Sybase',
-#    producer_args => {},
-#    parser_args => {},
-#    todo => 'Needs volunteers',
-#  },
-#  {
-#    engine => 'DB2',
-#    producer_args => {},
-#    parser_args => {},
-#    todo => 'Needs volunteers',
-#  },
+  {
+    engine => 'Oracle',
+    producer_args => {},
+    parser_args => {},
+    todo => 'Needs volunteers',
+  },
+  {
+    engine => 'Sybase',
+    producer_args => {},
+    parser_args => {},
+    todo => 'Needs volunteers',
+  },
+  {
+    engine => 'DB2',
+    producer_args => {},
+    parser_args => {},
+    todo => 'Needs volunteers',
+  },
 
 # There is no Access producer
 #  {
@@ -121,8 +124,20 @@ for my $args (@$plan) {
       );
     }
 
+    use_ok("SQL::Translator::Producer::$args->{engine}");
+    use_ok("SQL::Translator::Parser::$args->{engine}");
+
+    ok(ddl_parser_instance($args->{engine}), 'Got proper parser instance')
+      unless $args->{no_grammar};
+
     TODO: {
       local $TODO = $args->{todo} if $args->{todo};
+
+      no warnings 'once';
+      # silence PR::D from spewing on STDERR
+      local $::RD_ERRORS = 0 if $args->{todo};
+      local $::RD_WARN = 0 if $args->{todo};
+      local $::RD_HINT = 0 if $args->{todo};
 
       lives_ok (
         sub { check_roundtrip ($args, $base_schema) },

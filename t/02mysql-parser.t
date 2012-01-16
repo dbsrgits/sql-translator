@@ -873,7 +873,9 @@ ok ($@, 'Exception thrown on invalid version string');
 
 {
     # silence PR::D from spewing on STDERR
-    local ($::RD_ERRORS, $::RD_WARN,$::RD_HINT,$::RD_TRACE);
+    local $::RD_ERRORS = 0;
+    local $::RD_WARN = 0;
+    local $::RD_HINT = 0;
     my $tr = SQL::Translator->new;
     my $data = q|create table "sessions" (
         id char(32) not null default,

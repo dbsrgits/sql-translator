@@ -21,23 +21,19 @@ something similar to the output of mdbtools (http://mdbtools.sourceforge.net/).
 
 use strict;
 use warnings;
-our ( $DEBUG, $GRAMMAR, @EXPORT_OK );
+
 our $VERSION = '1.59';
-$DEBUG   = 0 unless defined $DEBUG;
+
+our $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use Data::Dumper;
-use Parse::RecDescent;
-use Exporter;
+use SQL::Translator::Utils qw/ddl_parser_instance/;
+
 use base qw(Exporter);
+our @EXPORT_OK = qw(parse);
 
-@EXPORT_OK = qw(parse);
-
-# Enable warnings within the Parse::RecDescent module.
-$::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
-$::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
-$::RD_HINT   = 1; # Give out hints to help fix problems.
-
-$GRAMMAR = q!
+our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 {
     my ( %tables, $table_order, @table_comments );
@@ -263,7 +259,7 @@ not_null     : /not/i /null/i { $return = 0 }
 
 unsigned     : /unsigned/i { $return = 0 }
 
-default_val : /default/i /'(?:.*?\\')*.*?'|(?:')?[\w\d:.-]*(?:')?/
+default_val : /default/i /'(?:.*?\')*.*?'|(?:')?[\w\d:.-]*(?:')?/
     {
         $item[2] =~ s/^\s*'|'\s*$//g;
         $return  =  $item[2];
@@ -379,19 +375,20 @@ VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
     | /NULL/
     { 'NULL' }
 
-!;
+END_OF_GRAMMAR
 
 sub parse {
     my ( $translator, $data ) = @_;
-    my $parser = Parse::RecDescent->new($GRAMMAR);
+
+    # Enable warnings within the Parse::RecDescent module.
+    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
+    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
 
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
     local $DEBUG       = $translator->debug;
 
-    unless (defined $parser) {
-        return $translator->error("Error instantiating Parse::RecDescent ".
-            "instance: Bad grammer");
-    }
+    my $parser = ddl_parser_instance('Access');
 
     my $result = $parser->startrule($data);
     return $translator->error( "Parse failed." ) unless defined $result;

@@ -19,22 +19,18 @@ should probably be considered a work in progress.
 use strict;
 use warnings;
 
-our ( $DEBUG ,$GRAMMAR, @EXPORT_OK );
 our $VERSION = '1.59';
+
+our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
-use Parse::RecDescent;
-use Exporter;
+use SQL::Translator::Utils qw/ddl_parser_instance/;
+
 use base qw(Exporter);
+our @EXPORT_OK = qw(parse);
 
-@EXPORT_OK = qw(parse);
-
-$::RD_ERRORS = 1;
-$::RD_WARN   = 1;
-$::RD_HINT   = 1;
-
-$GRAMMAR = q{
+our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 {
     my ( %tables, @table_comments, $table_order, %procedures, $proc_order, %views, $view_order );
@@ -461,19 +457,20 @@ LQUOTE : '['
 
 RQUOTE : ']'
 
-};
+END_OF_GRAMMAR
 
 sub parse {
     my ( $translator, $data ) = @_;
-    my $parser = Parse::RecDescent->new($GRAMMAR);
+
+    # Enable warnings within the Parse::RecDescent module.
+    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
+    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
 
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
     local $DEBUG       = $translator->debug;
 
-    unless (defined $parser) {
-        return $translator->error("Error instantiating Parse::RecDescent ".
-            "instance: Bad grammer");
-    }
+    my $parser = ddl_parser_instance('SQLServer');
 
     my $result = $parser->startrule($data);
     return $translator->error( "Parse failed." ) unless defined $result;

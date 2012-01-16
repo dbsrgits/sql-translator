@@ -132,23 +132,19 @@ like-op::=
 
 use strict;
 use warnings;
-our ( $DEBUG, $GRAMMAR, @EXPORT_OK );
+
 our $VERSION = '1.59';
+
+our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;
-use Parse::RecDescent;
-use Exporter;
+use SQL::Translator::Utils qw/ddl_parser_instance/;
+
 use base qw(Exporter);
+our @EXPORT_OK = qw(parse);
 
-@EXPORT_OK = qw(parse);
-
-# Enable warnings within the Parse::RecDescent module.
-$::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
-$::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
-$::RD_HINT   = 1; # Give out hints to help fix problems.
-
-$GRAMMAR = q!
+our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 {
     my ( %tables, $table_order, @table_comments, @views, @triggers );
@@ -518,7 +514,7 @@ for_each : /FOR EACH ROW/i
 when : WHEN expr { $item[2] }
 
 string :
-   /'(\\.|''|[^\\\'])*'/
+   /'(\.|''|[^\\'])*'/
 
 nonstring : /[^;\'"]+/
 
@@ -623,19 +619,21 @@ VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     | /CURRENT_TIMESTAMP/i
     { 'CURRENT_TIMESTAMP' }
 
-!;
+END_OF_GRAMMAR
+
 
 sub parse {
     my ( $translator, $data ) = @_;
-    my $parser = Parse::RecDescent->new($GRAMMAR);
+
+    # Enable warnings within the Parse::RecDescent module.
+    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
+    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
 
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
     local $DEBUG       = $translator->debug;
 
-    unless (defined $parser) {
-        return $translator->error("Error instantiating Parse::RecDescent ".
-            "instance: Bad grammer");
-    }
+    my $parser = ddl_parser_instance('SQLite');
 
     my $result = $parser->startrule($data);
     return $translator->error( "Parse failed." ) unless defined $result;
