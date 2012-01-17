@@ -83,7 +83,7 @@ $VERSION = '1.59';
 # Get arguments.
 #
 my (
-    $out_file, $image_type, $db_driver, $title, $num_columns,
+    $out_file, $output_type, $db_driver, $title, $num_columns,
     $no_lines, $font_size, $add_color, $debug, $show_fk_only,
     $gutter, $natural_join, $join_pk_only, $skip_fields,
     $skip_tables, $skip_tables_like, $help
@@ -92,7 +92,7 @@ my (
 GetOptions(
     'd|db|f|from=s'      => \$db_driver,
     'o|output:s'         => \$out_file,
-    'i|image:s'          => \$image_type,
+    'i|image:s'          => \$output_type,
     't|title:s'          => \$title,
     'c|columns:i'        => \$num_columns,
     'n|no-lines'         => \$no_lines,
@@ -120,7 +120,7 @@ my $translator       =  SQL::Translator->new(
     debug            => $debug || 0,
     producer_args    => {
         out_file         => $out_file,
-        image_type       => $image_type,
+        output_type      => $output_type,
         gutter           => $gutter || 0,
         title            => $title,
         num_columns      => $num_columns,
