@@ -12,7 +12,7 @@ Use via SQL::Translator:
 
   my $t = SQL::Translator->new(
       from          => 'MySQL',
-      to            => 'GraphViz',
+      to            => 'Diagram',
       producer_args => {
           # All args are optional
           out_file         => 'schema.png',# if not provided will return from translate()

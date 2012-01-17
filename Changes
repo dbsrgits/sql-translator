@@ -26,6 +26,7 @@
 * Replace Class::Accessor::Fast dependency with already-included Moo
 * Entire codebase is now free of tabs and trailing whitespace
 * Spellfixes (RT#68912)
+* Fix Diagram Producer POD (RT#71397, RT#71398)
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
