@@ -53,6 +53,8 @@ Options:
   --ignore-proc-sql    Ignore procedure SQL differences
   --no-batch-alters    Do not clump multile alters to the same table into a
                        single ALTER TABLE statement where possible.
+  --quote=<character>  Use <character> to quote all table and field
+                       names in statements
 
 =head1 DESCRIPTION
 
@@ -106,6 +108,7 @@ use strict;
 use warnings;
 use Pod::Usage;
 use Data::Dumper;
+use Getopt::Long;
 use SQL::Translator;
 use SQL::Translator::Diff;
 use SQL::Translator::Schema::Constants;
@@ -113,51 +116,42 @@ use SQL::Translator::Schema::Constants;
 use vars qw( $VERSION );
 $VERSION = '1.59';
 
-my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names, 
-	$ignore_constraint_names, $output_db, $mysql_parser_version,
-	$ignore_view_sql, $ignore_proc_sql, $no_batch_alters );
+my (
+    @input,
+    $list,
+    $help,
+    $debug,
+    $trace,
+    $caseopt,
+    $ignore_index_names,
+    $ignore_constraint_names,
+    $output_db,
+    $mysql_parser_version,
+    $ignore_view_sql,
+    $ignore_proc_sql,
+    $no_batch_alters,
+    $quote,
+);
+
+GetOptions(
+    'l|list' => \$list,
+    'h|help' => \$help,
+    'd|debug' => \$debug,
+    't|trace' => \$trace,
+    'c|case-insensitive' => \$caseopt, 
+    'ignore-index-names' => \$ignore_index_names,
+    'ignore-constraint-names' => \$ignore_constraint_names, 
+    'mysql_parser_version:s' => \$mysql_parser_version,
+    'output-db:s' => \$output_db,
+    'ignore-view-sql' => \$ignore_view_sql,
+    'ignore-proc-sql' => \$ignore_proc_sql,
+    'quote:s' => \$quote,
+    'no-batch-alters' => \$no_batch_alters, 
+) or pod2usage(2);
+
 for my $arg ( @ARGV ) {
-    if ( $arg =~ m/^-?-l(ist)?$/ ) {
-        $list = 1;
-    }
-    elsif ( $arg =~ m/^-?-h(elp)?$/ ) {
-        $help = 1;
-    }
-    elsif ( $arg =~ m/^-?-d(ebug)?$/ ) {
-        $debug = 1; 
-    }
-    elsif ( $arg =~ m/^-?-t(race)?$/ ) {
-        $trace = 1; 
-    }
-    elsif ( $arg =~ m/^-?-c(ase-insensitive)?$/ ) {
-        $caseopt = 1; 
-    }
-    elsif ( $arg =~ m/^--ignore-index-names$/ ) {
-        $ignore_index_names = 1; 
-    }
-    elsif ( $arg =~ m/^--ignore-constraint-names$/ ) {
-        $ignore_constraint_names = 1; 
-    }
-    elsif ( $arg =~ m/^--mysql-parser-version=(.+)$/ ) {
-        $mysql_parser_version = $1; 
-    }
-    elsif ( $arg =~ m/^--output-db=(.+)$/ ) {
-        $output_db = $1; 
-    }
-    elsif ( $arg =~ m/^--ignore-view-sql$/ ) {
-        $ignore_view_sql = 1; 
-    }
-    elsif ( $arg =~ m/^--ignore-proc-sql$/ ) {
-        $ignore_proc_sql = 1; 
-    }
-    elsif ( $arg =~ m/^([^=]+)=(.+)$/ ) {
+    if ( $arg =~ m/^([^=]+)=(.+)$/ ) {
         push @input, { file => $1, parser => $2 };
-    }
-    elsif ( $arg =~ m/^--no-batch-alters$/ ) {
-      $no_batch_alters = 1;
-    }
-    else {
-        pod2usage( msg => "Unknown argument '$arg'" );
     }
 }
 
@@ -169,12 +163,10 @@ sqlt-diff, please use sqlt-diff-old, and look into helping us make this one
 work for you
 EOM
 
-pod2usage(1) if $help || !@ARGV;
-pod2usage('Please specify only two schemas to diff') if scalar @input > 2;
-
 my $tr            = SQL::Translator->new;
 my @parsers       = $tr->list_parsers;
 my %valid_parsers = map { $_, 1 } @parsers;
+
 
 if ( $list ) {
     print "\nParsers:\n", map { "\t$_\n" } sort @parsers;
@@ -182,7 +174,8 @@ if ( $list ) {
     exit(0);
 }
 
-pod2usage( msg => 'Too many file args' ) if @input > 2;
+pod2usage(1) if $help || !@input;
+pod2usage(msg => 'Please specify two schemas to diff') if scalar @input != 2;
 
 my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     my $file   = $_->{'file'};
@@ -191,7 +184,9 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     die "Unable to read file '$file'\n" unless -r $file;
     die "'$parser' is an invalid parser\n" unless $valid_parsers{ $parser };
 
-    my $t = SQL::Translator->new(parser_args => {mysql_parser_version => $mysql_parser_version});
+    my $t = SQL::Translator->new(parser_args => {
+        mysql_parser_version => $mysql_parser_version
+    });
     $t->debug( $debug );
     $t->trace( $trace );
     $t->parser( $parser )            or die $tr->error;
@@ -204,17 +199,25 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     ($schema, $parser);
 } @input;
 
-my $result = SQL::Translator::Diff::schema_diff($source_schema, $source_db, 
-                                                $target_schema, $target_db,
-                                                { caseopt                 => $caseopt,
-                                                  ignore_index_names      => $ignore_index_names,
-                                                  ignore_constraint_names => $ignore_constraint_names,
-                                                  ignore_view_sql         => $ignore_view_sql,
-                                                  ignore_proc_sql         => $ignore_proc_sql,
-                                                  output_db               => $output_db,
-                                                  no_batch_alters         => $no_batch_alters,
-                                                  debug                   => $debug,
-                                                  trace                   => $trace });
+my $result = SQL::Translator::Diff::schema_diff(
+    $source_schema, $source_db,
+    $target_schema, $target_db,
+    {
+        caseopt                 => $caseopt || 0,
+        ignore_index_names      => $ignore_index_names || 0,
+        ignore_constraint_names => $ignore_constraint_names || 0,
+        ignore_view_sql         => $ignore_view_sql || 0,
+        ignore_proc_sql         => $ignore_proc_sql || 0,
+        output_db               => $output_db,
+        no_batch_alters         => $no_batch_alters || 0,
+        debug                   => $debug || 0,
+        trace                   => $trace || 0,
+        producer_args => {
+            quote_table_names   => $quote || '',
+            quote_field_names   => $quote || '',
+        },
+    }
+);
 if($result)
 {
     print $result;

@@ -12,7 +12,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(337, "SQL::Translator::Parser::MySQL");
+    maybe_plan(343, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -69,10 +69,10 @@ BEGIN {
 
 {
     my $tr = SQL::Translator->new;
-    my $data = parse($tr, 
+    my $data = parse($tr,
         q[
             CREATE TABLE `check` (
-              check_id int(7) unsigned zerofill NOT NULL default '0000000' 
+              check_id int(7) unsigned zerofill NOT NULL default '0000000'
                 auto_increment primary key,
               successful date NOT NULL default '0000-00-00',
               unsuccessful date default '0000-00-00',
@@ -85,6 +85,7 @@ BEGIN {
               time_stamp2 timestamp,
               foo_enabled bit(1) default b'0',
               bar_enabled bit(1) default b"1",
+              long_foo_enabled bit(10) default b'1010101',
               KEY (i1),
               UNIQUE (date, i1) USING BTREE,
               KEY date_idx (date),
@@ -92,7 +93,7 @@ BEGIN {
             ) TYPE=MyISAM PACK_KEYS=1;
         ]
     );
-    
+
     my $schema = $tr->schema;
     is( $schema->is_valid, 1, 'Schema is valid' );
     my @tables = $schema->get_tables;
@@ -101,7 +102,7 @@ BEGIN {
     is( $table->name, 'check', 'Found "check" table' );
 
     my @fields = $table->get_fields;
-    is( scalar @fields, 12, 'Right number of fields (12)' );
+    is( scalar @fields, 13, 'Right number of fields (13)' );
     my $f1 = shift @fields;
     is( $f1->name, 'check_id', 'First field name is "check_id"' );
     is( $f1->data_type, 'int', 'Type is "int"' );
@@ -208,6 +209,14 @@ BEGIN {
     is( $f12->default_value, '1', 'Default value is 1' );
     is( $f12->is_primary_key, 0, 'Field is not PK' );
 
+    my $f13 = shift @fields;
+    is( $f13->name, 'long_foo_enabled', 'Thirteenth field name is "long_foo_enabled"' );
+    is( $f13->data_type, 'bit', 'Type is "bit"' );
+    is( $f13->size, 10, 'Size is "10"' );
+    is( $f13->is_nullable, 1, 'Field can be null' );
+    is( $f13->default_value, '1010101', 'Default value is 1010101' );
+    is( $f13->is_primary_key, 0, 'Field is not PK' );
+
     my @indices = $table->get_indices;
     is( scalar @indices, 3, 'Right number of indices (3)' );
 
@@ -240,7 +249,7 @@ BEGIN {
 
 {
     my $tr = SQL::Translator->new;
-    my $data = parse($tr, 
+    my $data = parse($tr,
         q[
             CREATE TABLE orders (
               order_id                  integer NOT NULL auto_increment,
@@ -307,13 +316,13 @@ BEGIN {
     is( $f2->default_value, undef, 'Default value is undefined' );
 
     my $f3 = shift @fields;
-    is( $f3->name, 'billing_address_id', 
+    is( $f3->name, 'billing_address_id',
         'Third field name is "billing_address_id"' );
     is( $f3->data_type, 'int', 'Type is "int"' );
     is( $f3->size, 11, 'Size is "11"' );
 
     my $f4 = shift @fields;
-    is( $f4->name, 'shipping_address_id', 
+    is( $f4->name, 'shipping_address_id',
         'Fourth field name is "shipping_address_id"' );
     is( $f4->data_type, 'int', 'Type is "int"' );
     is( $f4->size, 11, 'Size is "11"' );
@@ -363,17 +372,17 @@ BEGIN {
 
     my $i2 = shift @indices;
     is( $i2->type, NORMAL, 'Second index is normal' );
-    is( join(',', $i2->fields), 'billing_address_id', 
+    is( join(',', $i2->fields), 'billing_address_id',
         'Index is on "billing_address_id"' );
 
     my $i3 = shift @indices;
     is( $i3->type, NORMAL, 'Third index is normal' );
-    is( join(',', $i3->fields), 'shipping_address_id', 
+    is( join(',', $i3->fields), 'shipping_address_id',
         'Index is on "shipping_address_id"' );
 
     my $i4 = shift @indices;
     is( $i4->type, NORMAL, 'Third index is normal' );
-    is( join(',', $i4->fields), 'member_id,store_id', 
+    is( join(',', $i4->fields), 'member_id,store_id',
         'Index is on "member_id,store_id"' );
 
     my @constraints = $t1->get_constraints;
@@ -391,25 +400,25 @@ BEGIN {
 
     my $c3 = shift @constraints;
     is( $c3->type, FOREIGN_KEY, 'Constraint is a FK' );
-    is( join(',', $c3->fields), 'billing_address_id', 
+    is( join(',', $c3->fields), 'billing_address_id',
         'Constraint is on "billing_address_id"' );
     is( $c3->reference_table, 'address', 'To table "address"' );
-    is( join(',', $c3->reference_fields), 'address_id', 
+    is( join(',', $c3->reference_fields), 'address_id',
         'To field "address_id"' );
 
     my $c4 = shift @constraints;
     is( $c4->type, FOREIGN_KEY, 'Constraint is a FK' );
-    is( join(',', $c4->fields), 'shipping_address_id', 
+    is( join(',', $c4->fields), 'shipping_address_id',
         'Constraint is on "shipping_address_id"' );
     is( $c4->reference_table, 'address', 'To table "address"' );
-    is( join(',', $c4->reference_fields), 'address_id', 
+    is( join(',', $c4->reference_fields), 'address_id',
         'To field "address_id"' );
 
     my $c5 = shift @constraints;
     is( $c5->type, FOREIGN_KEY, 'Constraint is a FK' );
     is( join(',', $c5->fields), 'store_id', 'Constraint is on "store_id"' );
     is( $c5->reference_table, 'store', 'To table "store"' );
-    is( join(',', map { $_ || '' } $c5->reference_fields), '', 
+    is( join(',', map { $_ || '' } $c5->reference_fields), '',
         'No reference fields defined' );
 
     my $t2  = shift @tables;
@@ -427,7 +436,7 @@ BEGIN {
 #
 {
     my $tr = SQL::Translator->new;
-    my $data = parse($tr, 
+    my $data = parse($tr,
         q[
             USE database_name;
 
@@ -500,7 +509,7 @@ BEGIN {
 #
 {
     my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
-    my $data = parse($tr, 
+    my $data = parse($tr,
         q[
         	DELIMITER ;;
             /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;;
@@ -517,7 +526,7 @@ BEGIN {
 
 			/*!50001 CREATE ALGORITHM=UNDEFINED */
 			/*!50013 DEFINER=`cmdomain`@`localhost` SQL SECURITY DEFINER */
-			/*! VIEW `vs_asset` AS 
+			/*! VIEW `vs_asset` AS
 				select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
 				`cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
 				`cfgmgmt_mig`.`ap_extract_asset`(`a`.`fq_name`) AS `asset_name`,
@@ -526,11 +535,11 @@ BEGIN {
 				`a`.`foreign_asset_id2` AS `foreign_asset_id2`,`a`.`dateCreated` AS `date_created`,
 				`a`.`dateModified` AS `date_modified`,`a`.`container_id` AS `container_id`,
 				`a`.`creator_id` AS `creator_id`,`a`.`modifier_id` AS `modifier_id`,
-				`m`.`user_id` AS `user_access` 
+				`m`.`user_id` AS `user_access`
 				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
 			DELIMITER ;;
 			/*!50001 CREATE */
-			/*! VIEW `vs_asset2` AS 
+			/*! VIEW `vs_asset2` AS
 				select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
 				`cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
 				`cfgmgmt_mig`.`ap_extract_asset`(`a`.`fq_name`) AS `asset_name`,
@@ -539,11 +548,11 @@ BEGIN {
 				`a`.`foreign_asset_id2` AS `foreign_asset_id2`,`a`.`dateCreated` AS `date_created`,
 				`a`.`dateModified` AS `date_modified`,`a`.`container_id` AS `container_id`,
 				`a`.`creator_id` AS `creator_id`,`a`.`modifier_id` AS `modifier_id`,
-				`m`.`user_id` AS `user_access` 
+				`m`.`user_id` AS `user_access`
 				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
 			DELIMITER ;;
 			/*!50001 CREATE OR REPLACE */
-			/*! VIEW `vs_asset3` AS 
+			/*! VIEW `vs_asset3` AS
 				select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
 				`cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
 				`cfgmgmt_mig`.`ap_extract_asset`(`a`.`fq_name`) AS `asset_name`,
@@ -552,7 +561,7 @@ BEGIN {
 				`a`.`foreign_asset_id2` AS `foreign_asset_id2`,`a`.`dateCreated` AS `date_created`,
 				`a`.`dateModified` AS `date_modified`,`a`.`container_id` AS `container_id`,
 				`a`.`creator_id` AS `creator_id`,`a`.`modifier_id` AS `modifier_id`,
-				`m`.`user_id` AS `user_access` 
+				`m`.`user_id` AS `user_access`
 				from (`asset` `a` join `M_ACCESS_CONTROL` `m` on((`a`.`acl_id` = `m`.`acl_id`))) */;
 			DELIMITER ;;
 			/*!50003 CREATE*/ /*!50020 DEFINER=`cmdomain`@`localhost`*/ /*!50003 FUNCTION `ap_from_millitime_nullable`( millis_since_1970 BIGINT ) RETURNS timestamp
@@ -606,18 +615,18 @@ BEGIN {
     is(scalar @fields, 2, 'Right number of fields (2) on table one');
     my $tableTypeFound = 0;
     my $charsetFound = 0;
-	for my $t1_option_ref ( $table1->options ) {
-		my($key, $value) = %{$t1_option_ref};
-		if ( $key eq 'TYPE' ) {
-			is($value, 'INNODB', 'Table has right table type option' );
-			$tableTypeFound = 1;
-		} elsif ( $key eq 'CHARACTER SET' ) {
-			is($value, 'latin1', 'Table has right character set option' );
-			$charsetFound = 1;
-		}
-	}
-	fail('Table did not have a type option') unless $tableTypeFound;
-	fail('Table did not have a character set option') unless $charsetFound;
+    for my $t1_option_ref ( $table1->options ) {
+        my($key, $value) = %{$t1_option_ref};
+        if ( $key eq 'TYPE' ) {
+            is($value, 'INNODB', 'Table has right table type option' );
+            $tableTypeFound = 1;
+        } elsif ( $key eq 'CHARACTER SET' ) {
+            is($value, 'latin1', 'Table has right character set option' );
+            $charsetFound = 1;
+        }
+    }
+    fail('Table did not have a type option') unless $tableTypeFound;
+    fail('Table did not have a character set option') unless $charsetFound;
 
     my $t1f1 = shift @fields;
     is( $t1f1->data_type, 'varchar', 'Field is a varchar' );
@@ -632,7 +641,7 @@ BEGIN {
     is_deeply(
       $t1f2->default_value,
       \'CURRENT_TIMESTAMP',
-      'Field has right default value' 
+      'Field has right default value'
     );
     is( $t1f2->extra('on update'), 'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
 
@@ -651,19 +660,19 @@ BEGIN {
     is( scalar @procs, 2, 'Right number of procedures (2)' );
     my $proc1 = shift @procs;
     is( $proc1->name, 'ap_from_millitime_nullable', 'Found "ap_from_millitime_nullable" procedure' );
-	like($proc1->sql, qr/CREATE FUNCTION ap_from_millitime_nullable/, "Detected procedure ap_from_millitime_nullable");
+    like($proc1->sql, qr/CREATE FUNCTION ap_from_millitime_nullable/, "Detected procedure ap_from_millitime_nullable");
     my $proc2 = shift @procs;
     is( $proc2->name, 'sp_update_security_acl', 'Found "sp_update_security_acl" procedure' );
-	like($proc2->sql, qr/CREATE PROCEDURE sp_update_security_acl/, "Detected procedure sp_update_security_acl");
+    like($proc2->sql, qr/CREATE PROCEDURE sp_update_security_acl/, "Detected procedure sp_update_security_acl");
 }
 
 # Tests for collate table option
 {
     my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
-    my $data = parse($tr, 
+    my $data = parse($tr,
         q[
           CREATE TABLE test ( id int ) DEFAULT CHARACTER SET latin1 COLLATE latin1_bin;
-         ] ); 
+         ] );
 
     my $schema = $tr->schema;
     is( $schema->is_valid, 1, 'Schema is valid' );
@@ -862,7 +871,7 @@ ok ($@, 'Exception thrown on invalid version string');
     is( $f2->is_primary_key, 0, 'Field is not PK' );
 
     # this is more of a sanity test because the original sqlt regex for default looked for an escaped quote represented as \'
-    # however in mysql 5.x (and probably other previous versions) still actually outputs that as '' 
+    # however in mysql 5.x (and probably other previous versions) still actually outputs that as ''
     is( $f3->name, 'user', 'Second field name is "user"' );
     is( $f3->data_type, 'varchar', 'Type is "varchar"' );
     is( $f3->size, 20, 'Size is "20"' );
