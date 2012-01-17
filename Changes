@@ -1,4 +1,8 @@
 * All parser grammars are now precompiled for speed
+* Fixes to SQLite foreign keys production (patch from Johan Viklund)
+  closes RT#16412, RT#44769
+* ON DELETE/UPDATE actions for SQLite (patch from Lukas Thiemeier)
+  closes RT#70734, RT#71283, RT#70378
 * Proper quoting support in SQLite
 * Support for triggers in PostgreSQL producer and parser
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)

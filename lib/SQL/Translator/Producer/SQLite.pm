@@ -235,11 +235,29 @@ sub create_table
 sub create_foreignkey {
     my $c = shift;
 
-    my $field = $util->quote($c->{fields}[0]);
-    my $table = $c->{reference_table} ? $util->quote($c->{reference_table}) : '';
-    my $ref   = $c->{reference_fields}[0] ? $util->quote($c->{reference_fields}[0]) : '';
-    my $fk_sql = "FOREIGN KEY($field) REFERENCES ";
-    $fk_sql .= "$table($ref)";
+    my @fields = $c->fields;
+    my @rfields = map { $_ || () } $c->reference_fields;
+    unless ( @rfields ) {
+        my $rtable_name = $c->reference_table;
+        if ( my $ref_table = $c->schema->get_table( $rtable_name ) ) {
+            push @rfields, $ref_table->primary_key;
+
+            die "FK constraint on " . $rtable_name . '.' . join('', @fields) . " has no reference fields\n"
+              unless @rfields;
+        }
+        else {
+            die "Can't find reference table '$rtable_name' in schema\n";
+        }
+    }
+
+    my $fk_sql = sprintf 'FOREIGN KEY (%s) REFERENCES %s(%s)',
+        join (', ', map { $util->quote($_) } @fields ),
+        $util->quote($c->reference_table),
+        join (', ', map { $util->quote($_) } @rfields )
+    ;
+
+    $fk_sql .= " ON DELETE " . $c->{on_delete} if $c->{on_delete};
+    $fk_sql .= " ON UPDATE " . $c->{on_update} if $c->{on_update};
 
     return $fk_sql;
 }
