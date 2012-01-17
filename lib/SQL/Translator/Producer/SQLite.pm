@@ -240,6 +240,8 @@ sub create_foreignkey {
     my $ref   = $c->{reference_fields}[0] ? $util->quote($c->{reference_fields}[0]) : '';
     my $fk_sql = "FOREIGN KEY($field) REFERENCES ";
     $fk_sql .= "$table($ref)";
+    $fk_sql .= " ON DELETE " . $c->{on_delete} if $c->{on_delete};
+    $fk_sql .= " ON UPDATE " . $c->{on_update} if $c->{on_update};
 
     return $fk_sql;
 }

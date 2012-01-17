@@ -364,12 +364,14 @@ column_constraint : NOT_NULL conflict_clause(?)
         }
     }
     |
-    REFERENCES ref_def
+    REFERENCES ref_def cascade_def(?)
     {
         $return   = {
             type             => 'foreign_key',
             reference_table  => $item[2]{'reference_table'},
             reference_fields => $item[2]{'reference_fields'},
+            on_delete        => $item[3][0]{'on_delete'},
+            on_update        => $item[3][0]{'on_update'},
         }
     }
     |
@@ -427,7 +429,7 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
         }
     }
     |
-    FOREIGN_KEY parens_field_list REFERENCES ref_def
+    FOREIGN_KEY parens_field_list REFERENCES ref_def cascade_def(?)
     {
       $return = {
         supertype        => 'constraint',
@@ -435,11 +437,25 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
         fields           => $item[2],
         reference_table  => $item[4]{'reference_table'},
         reference_fields => $item[4]{'reference_fields'},
+        on_delete        => $item[5][0]{'on_delete'},
+        on_update        => $item[5][0]{'on_update'},
       }
     }
 
 ref_def : table_name parens_field_list
     { $return = { reference_table => $item[1]{name}, reference_fields => $item[2] } }
+
+cascade_def : cascade_update_def cascade_delete_def(?)
+    { $return = {  on_update => $item[1], on_delete => $item[2][0] } }
+    |
+    cascade_delete_def cascade_update_def(?)
+    { $return = {  on_delete => $item[1], on_update => $item[2][0] } }
+
+cascade_delete_def : /on\s+delete\s+(\w+)/i
+    { $return = $1}
+
+cascade_update_def : /on\s+update\s+(\w+)/i
+    { $return = $1}
 
 table_name : qualified_name
 
