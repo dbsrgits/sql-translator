@@ -22,7 +22,7 @@ my ( $source_schema, $target_schema ) = map {
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff /, $_ ) )
       or die $tr->error;
-    
+
     my $schema = $t->schema;
     unless ( $schema->name ) {
         $schema->name( $_ );
@@ -41,7 +41,7 @@ my $diff = SQL::Translator::Diff->new({
 my $diff_hash = make_diff_hash();
 
 eq_or_diff($diff_hash->{employee},
-  { 
+  {
     constraints_to_create => [ 'FK5302D47D93FE702E_diff' ],
     constraints_to_drop => [ 'FK5302D47D93FE702E' ],
     fields_to_drop => [ 'job_title' ]
@@ -52,7 +52,7 @@ eq_or_diff($diff_hash->{person},
   {
     constraints_to_create => [ 'UC_person_id', 'UC_age_name' ],
     constraints_to_drop => [ 'UC_age_name' ],
-    fields_to_alter => [ 
+    fields_to_alter => [
       'person_id person_id',
       'name name',
       'age age',
@@ -91,7 +91,7 @@ $diff = SQL::Translator::Diff->new({
 $diff_hash = make_diff_hash();
 
 eq_or_diff($diff_hash->{employee},
-  { 
+  {
     fields_to_drop => [ 'job_title' ]
   },
   "Correct differences correct on employee table");
@@ -100,7 +100,7 @@ eq_or_diff($diff_hash->{person},
   {
     constraints_to_create => [ 'UC_person_id', 'UC_age_name' ],
     constraints_to_drop => [ 'UC_age_name' ],
-    fields_to_alter => [ 
+    fields_to_alter => [
       'person_id person_id',
       'name name',
       'age age',
@@ -139,14 +139,14 @@ sub make_diff_hash {
 
       my %table_diffs = (
         map {
-          
+
           my $opt = $table_diff->{$_};
           @$opt ? ( $_ => [ map {
                         (ref $_||'') eq 'ARRAY' ? "@$_" :
                         (ref $_)                ? $_->name
                                                 : "$_";
-                      } @$opt 
-                    ] ) 
+                      } @$opt
+                    ] )
                 : ()
         } keys %$table_diff
       );

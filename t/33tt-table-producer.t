@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # vim:filetype=perl
 
 # Before `make install' is performed this script should be runnable with
@@ -55,7 +55,11 @@ warn $obj->error unless $out;
 
 # Normal output looks ok
 local $/ = undef; # slurp
-eq_or_diff $out, <DATA>              ,"Output looks right";
+eq_or_diff
+  $out,
+  do { local (@ARGV, $/) = "$Bin/data/template/testresult_table.txt"; <> },
+  "Output looks right"
+;
 
 # File output
 my @files = glob("$tdir/*.txt");
@@ -66,7 +70,7 @@ is( $files[1], "$tdir/pet.txt"    , "Wrote pet.txt" );
 open(FILE, "$tdir/person.txt") || die "Couldn't open $tdir/person.txt : $!";
 eq_or_diff <FILE>, qq{Table: person
   Primary Key:  person_id
-  Foreign Keys: 
+  Foreign Keys:\x20
   Data Fields:  name, age, weight, iq, description
 
 }
@@ -76,25 +80,12 @@ close(FILE);
 open(FILE, "$tdir/pet.txt") || die "Couldn't open $tdir/pet.txt : $!";
 eq_or_diff <FILE>, qq{Table: pet
   Primary Key:  pet_id, person_id
-  Foreign Keys: 
+  Foreign Keys:\x20
   Data Fields:  name, age
 
 }
 , "pet.txt looks right";
 close(FILE);
 
-
 print $out if DEBUG;
 #print "Debug:", Dumper($obj) if DEBUG;
-
-__DATA__
-Table: person
-  Primary Key:  person_id
-  Foreign Keys: 
-  Data Fields:  name, age, weight, iq, description
-
-Table: pet
-  Primary Key:  pet_id, person_id
-  Foreign Keys: 
-  Data Fields:  name, age
-

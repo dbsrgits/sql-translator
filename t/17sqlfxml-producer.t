@@ -157,7 +157,7 @@ EOXML
     ok("$xml" ne ""                             ,"Produced something!");
     print "XML attrib_values=>1:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m; 
+    $xml =~ s/^([^\n]*\n){7}//m;
     eq_or_diff $xml, $ans                       ,"XML looks right";
 } # end View
 
@@ -220,7 +220,7 @@ EOXML
     ok("$xml" ne ""                             ,"Produced something!");
     print "XML attrib_values=>1:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m; 
+    $xml =~ s/^([^\n]*\n){7}//m;
     eq_or_diff $xml, $ans                       ,"XML looks right";
 } # end Trigger
 
@@ -276,7 +276,7 @@ EOXML
     ok("$xml" ne ""                             ,"Produced something!");
     print "XML attrib_values=>1:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m; 
+    $xml =~ s/^([^\n]*\n){7}//m;
     eq_or_diff $xml, $ans                       ,"XML looks right";
 } # end Procedure
 

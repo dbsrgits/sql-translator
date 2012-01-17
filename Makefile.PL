@@ -63,8 +63,6 @@ for my $type (qw/requires recommends test_requires/) {
   }
 }
 
-tests_recursive ();
-
 install_script (qw|
   script/sqlt-diagram
   script/sqlt-diff
@@ -76,7 +74,28 @@ install_script (qw|
 
 install_share();
 
-auto_provides();
+tests_recursive ();
+
+
+# temporary(?) until I get around to fix M::I wrt xt/
+# needs Module::Install::AuthorTests
+eval {
+  # this should not be necessary since the autoloader is supposed
+  # to work, but there were reports of it failing
+  require Module::Install::AuthorTests;
+  recursive_author_tests (qw/xt/);
+  1;
+} || do {
+  if ($Module::Install::AUTHOR) {
+    my $err = $@;
+
+    # better error message in case of missing dep
+    eval { require Module::Install::AuthorTests }
+      || die "\nYou need Module::Install::AuthorTests installed to run this Makefile.PL in author mode:\n\n$@\n";
+
+    die $err;
+  }
+};
 
 auto_install();
 

@@ -106,6 +106,6 @@ is( scalar @tables, 9, 'Nine tables' );
     is( scalar @constraints, 1, 'One constraint' );
 
     is( $constraints[0]->type, UNIQUE, 'Constraint is UNIQUE' );
-    is( join(',', $constraints[0]->fields), 
+    is( join(',', $constraints[0]->fields),
         'mdinfo,mdaver_end,srvver_end', 'On "mdinfo,mdaver_end,srvver_end"' );
 }

@@ -199,14 +199,14 @@ my $field3_datetime_with_TZ = SQL::Translator::Schema::Field->new(
     size      => 7,
 );
 
-my $field3_datetime_with_TZ_sql = 
+my $field3_datetime_with_TZ_sql =
     SQL::Translator::Producer::PostgreSQL::create_field(
         $field3_datetime_with_TZ
     );
 
 is(
-    $field3_datetime_with_TZ_sql, 
-    'datetime_with_TZ timestamp(6) with time zone', 
+    $field3_datetime_with_TZ_sql,
+    'datetime_with_TZ timestamp(6) with time zone',
     'Create time field with time zone and size, works'
 );
 
@@ -217,14 +217,14 @@ my $field3_time_without_TZ = SQL::Translator::Schema::Field->new(
     size      => 2,
 );
 
-my $field3_time_without_TZ_sql 
+my $field3_time_without_TZ_sql
     = SQL::Translator::Producer::PostgreSQL::create_field(
         $field3_time_without_TZ
     );
 
 is(
-    $field3_time_without_TZ_sql, 
-    'time_without_TZ time(2) without time zone', 
+    $field3_time_without_TZ_sql,
+    'time_without_TZ time(2) without time zone',
     'Create time field without time zone but with size, works'
 );
 
@@ -558,7 +558,7 @@ my $drop_view_8_1_expected = "DROP VIEW view_foo;
 CREATE VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
 ";
- 
+
 is($drop_view_8_1_produced, $drop_view_8_1_expected, "My DROP VIEW statement for 8.1 is correct");
 
 my $drop_view_opts2 = { add_drop_view => 1, no_comments => 1, postgres_version => 9.001 };
@@ -568,5 +568,5 @@ my $drop_view_9_1_expected = "DROP VIEW IF EXISTS view_foo;
 CREATE VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
 ";
- 
+
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");

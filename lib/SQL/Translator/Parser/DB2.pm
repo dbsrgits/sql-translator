@@ -33,7 +33,7 @@ startrule : statement(s) eofile {
 
 eofile : /^\Z/
 
-statement : 
+statement :
     comment
     | create
     | <error>
@@ -129,21 +129,21 @@ FULL: /full/i
 OUTER: /outer/i
 
 WHERE: /where/i
- 
+
 trigger_name: SCHEMA '.' NAME
     { $return = { schema => $item[1], name => $item[3] } }
     | NAME
-    { $return = { name => $item[1] } } 
+    { $return = { name => $item[1] } }
 
 table_name: SCHEMA '.' NAME
     { $return = { schema => $item[1], name => $item[3] } }
     | NAME
-    { $return = { name => $item[1] } } 
+    { $return = { name => $item[1] } }
 
 view_name: SCHEMA '.' NAME
     { $return = { schema => $item[1], name => $item[3] } }
     | NAME
-    { $return = { name => $item[1] } } 
+    { $return = { name => $item[1] } }
 
 column_name: NAME
 
@@ -160,7 +160,7 @@ SCHEMA: /\w{1,128}/
 NAME: /\w+/
 
 NAME: /\w{1,18}/
- 
+
 options: /WITH/i ( /CASCADED/i | /LOCAL/i ) /CHECK\s+OPTION/i
 
 # root_view_definition: /MODE\s+DB2SQL/i '(' oid_column ( /,/ with_options )(?) ')'
@@ -175,13 +175,13 @@ options: /WITH/i ( /CASCADED/i | /LOCAL/i ) /CHECK\s+OPTION/i
 
 common_table_expression: table_name column_list /AS/i get_bracketed
 {
-    $return = { name  => $item{table_name}{name}, 
+    $return = { name  => $item{table_name}{name},
                 query => $item[4]
                 };
 }
 
-get_bracketed:  
-{ 
+get_bracketed:
+{
     extract_bracketed($text, '(');
 }
 
@@ -189,7 +189,7 @@ common_table_expression: table_name column_list /AS/i '(' fullselect ')'
 
 # fullselect: ( subselect | '(' fullselect ')' | values_clause ) ( ( /UNION/i | /UNION/i /ALL/i | /EXCEPT/i | /EXCEPT/i /ALL/i | /INTERSECT/i | /INTERSECT/i /ALL/i ) ( subselect | '(' fullselect ')' | values_clause ) )(s)
 
-# values_clause: /VALUES/i values_row(s /,/) 
+# values_clause: /VALUES/i values_row(s /,/)
 
 # values_row: ( expression | /NULL/i ) | '(' ( expression | /NULL/i )(s /,/) ')'
 
@@ -201,37 +201,37 @@ common_table_expression: table_name column_list /AS/i '(' fullselect ')'
 
 # from_clause: /FROM/i table_reference(s /,/)
 
-# table_reference:  
-#     ( 
-#       ( nickname 
-#       | table_name 
-#       | view_name 
-#       ) 
+# table_reference:
+#     (
+#       ( nickname
+#       | table_name
+#       | view_name
+#       )
 #     | ( /ONLY/i
-#       | /OUTER/i 
-#       ) '(' 
-#       ( table_name 
-#       | view_name 
-#       ) ')' 
-#     ) correlation_clause(?) 
-#   | TABLE '(' function_name '(' expression(s? /,/) ')' ')'  correlation_clause 
-#   | TABLE(?) '(' fullselect ')' correlation_clause 
-#   | joined_table 
-  
+#       | /OUTER/i
+#       ) '('
+#       ( table_name
+#       | view_name
+#       ) ')'
+#     ) correlation_clause(?)
+#   | TABLE '(' function_name '(' expression(s? /,/) ')' ')'  correlation_clause
+#   | TABLE(?) '(' fullselect ')' correlation_clause
+#   | joined_table
+
 
 # correlation_clause: /AS/i(?) correlation_name column_list(?)
 
-# joined_table: 
-#    table_reference ( INNER 
-#                     | outer 
+# joined_table:
+#    table_reference ( INNER
+#                     | outer
 #                     )(?) JOIN table_reference ON join_condition
 #   | '(' joined_table ')'
-  
+
 # outer: ( LEFT | RIGHT | FULL ) OUTER(?)
 
 where_clause: WHERE search_condition
 
-# group_by_clause: /GROUP\s+BY/i ( grouping_expression 
+# group_by_clause: /GROUP\s+BY/i ( grouping_expression
 #                                | grouping_sets
 #                                | super_groups
 #                                )(s /,/)
@@ -245,27 +245,27 @@ where_clause: WHERE search_condition
 # # Name of one of the selected columns!
 # simple_column_name: NAME
 
-# simple_integer: /\d+/ 
+# simple_integer: /\d+/
 #   { $item[1] <= $numberofcolumns && $item[1] > 1 }
 
 # sort_key_expression: expression
 #   { expression from select columns list, grouping_expression, column function.. }
 
-# grouping_sets: /GROUPING\s+SETS/i '(' ( 
-#                                         ( grouping_expression 
-#                                         | super_groups 
-#                                         ) 
-#                                       | '(' ( grouping_expression 
-#                                             | super_groups 
-#                                             )(s /,/) ')' 
-#                                       )(s /,/) ')' 
+# grouping_sets: /GROUPING\s+SETS/i '(' (
+#                                         ( grouping_expression
+#                                         | super_groups
+#                                         )
+#                                       | '(' ( grouping_expression
+#                                             | super_groups
+#                                             )(s /,/) ')'
+#                                       )(s /,/) ')'
 
-# super_groups: /ROLLUP/i '(' grouping_expression_list ')' 
+# super_groups: /ROLLUP/i '(' grouping_expression_list ')'
 #            | /CUBE/i '(' grouping_expression_list ')'
 #            | grand_total
 
-# grouping_expression_list:  ( grouping_expression 
-#                            | '(' grouping_expression(s /,/) ')' 
+# grouping_expression_list:  ( grouping_expression
+#                            | '(' grouping_expression(s /,/) ')'
 #                            )(s /,/)
 
 # grand_total: '(' ')'
@@ -283,7 +283,7 @@ before: /NO CASCADE BEFORE/i
 
 after: /AFTER/i
 
-type: /UPDATE/i /OF/i column_name(s /,/) 
+type: /UPDATE/i /OF/i column_name(s /,/)
 { $return = { event  => 'update_on',
               fields => $item[3] }
 }
@@ -294,10 +294,10 @@ type: ( /INSERT/i | /DELETE/i | /UPDATE/i )
 reference_b: /REFERENCING/i old_new_corr(0..2)
 { $return = join(' ', $item[1], join(' ', @{$item[2]}) ) }
 
-reference_a: /REFERENCING/i old_new_corr(0..2) old_new_table(0..2) 
+reference_a: /REFERENCING/i old_new_corr(0..2) old_new_table(0..2)
 { $return = join(' ', $item[1], join(' ', @{$item[2]}), join(' ', @{$item[3]})  ) }
 
-old_new_corr: /OLD/i /(AS)?/i correlation_name 
+old_new_corr: /OLD/i /(AS)?/i correlation_name
 { $return = join(' ', @item[1..3] ) }
 | /NEW/i /(AS)?/i correlation_name
 { $return = join(' ', @item[1..3] ) }
@@ -310,17 +310,17 @@ old_new_table: /OLD_TABLE/i /(AS)?/i identifier
 # Just parsing simple search conditions for now.
 search_condition: /[^)]+/
 
-expression: ( 
-              ( '+' 
-              | '-' 
-              )(?) 
+expression: (
+              ( '+'
+              | '-'
+              )(?)
               ( function
               | '(' expression ')'
               | constant
               | column_name
               | host_variable
               | special_register
-              | '(' scalar_fullselect ')' 
+              | '(' scalar_fullselect ')'
               | labeled_duration
               | case_expression
               | cast_specification
@@ -328,15 +328,15 @@ expression: (
               | OLAP_function
               | method_invocation
               | subtype_treatment
-              | sequence_reference 
+              | sequence_reference
               )
             )(s /operator/)
 
-operator: ( /CONCAT/i | '||' ) | '/' | '*' | '+' | '-' 
+operator: ( /CONCAT/i | '||' ) | '/' | '*' | '+' | '-'
 
-function: ( /SYSIBM\.|/i sysibm_function 
+function: ( /SYSIBM\.|/i sysibm_function
           | /SYSFUN\.|/i sysfun_function
-          | userdefined_function 
+          | userdefined_function
           ) '(' func_args(s /,/)  ')'
 
 constant: int_const | float_const | dec_const | char_const | hex_const | grastr_const
@@ -493,83 +493,83 @@ scalar_fullselect: '(' fullselect ')'
 
 labeled_duration: ld_type ld_duration
 
-ld_type: function 
-       | '(' expression ')' 
-       | constant 
-       | column_name 
+ld_type: function
+       | '(' expression ')'
+       | constant
+       | column_name
        | host_variable
 
-ld_duration: /YEARS?/i 
-           | /MONTHS?/i 
-           | /DAYS?/i 
-           | /HOURS?/i 
+ld_duration: /YEARS?/i
+           | /MONTHS?/i
+           | /DAYS?/i
+           | /HOURS?/i
            | /MINUTES?/i
            | /SECONDS?/i
            | /MICROSECONDS?/i
 
-case_expression: /CASE/i ( searched_when_clause 
-                         | simple_when_clause 
-                         ) 
-                         ( /ELSE\s+NULL/i 
-                         | /ELSE/i result_expression 
+case_expression: /CASE/i ( searched_when_clause
+                         | simple_when_clause
+                         )
+                         ( /ELSE\s+NULL/i
+                         | /ELSE/i result_expression
                          )(?) /END/i
 
-searched_when_clause: ( /WHEN/i search_condition /THEN/i 
-                        ( result_expression 
+searched_when_clause: ( /WHEN/i search_condition /THEN/i
+                        ( result_expression
                         | /NULL/i
                         )
                       )(s)
 
-simple_when_clause: expression ( /WHEN/i search_condition /THEN/i 
-                                 ( result_expression 
+simple_when_clause: expression ( /WHEN/i search_condition /THEN/i
+                                 ( result_expression
                                  | /NULL/i
                                  )
                                )(s)
 
-result_expression: expression 
+result_expression: expression
 
-cast_specification: /CAST/i '(' ( expression 
+cast_specification: /CAST/i '(' ( expression
                                 | /NULL/i
                                 | parameter_marker
-                                ) /AS/i data_type 
-                                  ( /SCOPE/ ( typed_table_name 
+                                ) /AS/i data_type
+                                  ( /SCOPE/ ( typed_table_name
                                             | typed_view_name
                                             )
                                   )(?) ')'
 
-dereference_operation: scoped_reference_expression '->' name1 
+dereference_operation: scoped_reference_expression '->' name1
                       (  '(' expression(s) ')' )(?)
 #                         ( '(' expression(s /,/) ')' )(?)
 
 
 
-scoped_reference_expression: expression 
-{ # scoped, reference 
+scoped_reference_expression: expression
+{ # scoped, reference
 }
 
 name1: NAME
 
-OLAP_function: ranking_function 
+OLAP_function: ranking_function
              | numbering_function
              | aggregation_function
 
-ranking_function: ( /RANK/ '()' 
-                  | /DENSE_RANK|DENSERANK/i '()' 
+ranking_function: ( /RANK/ '()'
+                  | /DENSE_RANK|DENSERANK/i '()'
                   ) /OVER/i '(' window_partition_clause(?) window_order_clause ')'
 
-numbering_function: /ROW_NUMBER|ROWNUMBER/i '()' /OVER/i '(' window_partition_clause(?) 
-                      ( window_order_clause window_aggregation_group_clause(?) 
-                      )(?) 
-                      ( /RANGE\s+BETWEEN\s+UNBOUNDED\s+PRECEDING\s+AND\s+UNBBOUNDED\s+FOLLOWING/i 
+numbering_function: /ROW_NUMBER|ROWNUMBER/i '()' /OVER/i '(' window_partition_clause(?)
+                      ( window_order_clause window_aggregation_group_clause(?)
+                      )(?)
+                      ( /RANGE\s+BETWEEN\s+UNBOUNDED\s+PRECEDING\s+AND\s+UNBBOUNDED\s+FOLLOWING/i
                       | window_aggregation_group_clause
                       )(?) ')'
 
 window_partition_clause: /PARTITION\s+BY/i partitioning_expression(s /,/)
 
-window_order_clause: /ORDER\s+BY/i 
-                      ( sort_key_expression 
-                        ( asc_option 
-                        | desc_option 
+window_order_clause: /ORDER\s+BY/i
+                      ( sort_key_expression
+                        ( asc_option
+                        | desc_option
                         )(?)
                       )(s /,/)
 
@@ -579,42 +579,42 @@ desc_option: /DESC/i ( /NULLS\s+FIRST/i | /NULLS\s+LAST/i )(?)
 
 window_aggregation_group_clause: ( /ROWS/i
                                  | /RANGE/i
-                                 ) 
+                                 )
                                  ( group_start
                                  | group_between
                                  | group_end
                                  )
 
-group_start: /UNBOUNDED\s+PRECEDING/i 
+group_start: /UNBOUNDED\s+PRECEDING/i
            | unsigned_constant /PRECEDING/i
            | /CURRENT\s+ROW/i
 
 group_between: /BETWEEN/i group_bound1 /AND/i group_bound2
 
-group_bound1: /UNBOUNDED\s+PRECEDING/i 
+group_bound1: /UNBOUNDED\s+PRECEDING/i
            | unsigned_constant /PRECEDING/i
            | unsigned_constant /FOLLOWING/i
            | /CURRENT\s+ROW/i
 
-group_bound2: /UNBOUNDED\s+PRECEDING/i 
+group_bound2: /UNBOUNDED\s+PRECEDING/i
            | unsigned_constant /PRECEDING/i
            | unsigned_constant /FOLLOWING/i
            | /CURRENT\s+ROW/i
 
-group_end: /UNBOUNDED\s+PRECEDING/i 
-           | unsigned_constant /FOLLOWING/i 
+group_end: /UNBOUNDED\s+PRECEDING/i
+           | unsigned_constant /FOLLOWING/i
 
 method_invocation: subject_expression '..' method_name
-                    ( '(' expression(s) ')' 
-#                    ( '(' expression(s /,/) ')' 
+                    ( '(' expression(s) ')'
+#                    ( '(' expression(s /,/) ')'
                     )(?)
 
 subject_expression: expression
-{ # with static result type that is a used-defined struct type 
+{ # with static result type that is a used-defined struct type
 }
 
 method_name: NAME
-{ # must be a method of subject_expression 
+{ # must be a method of subject_expression
 }
 
 subtype_treatment: /TREAT/i '(' expression /AS/i data_type ')'
@@ -633,7 +633,7 @@ search_condition: /NOT|/i ( predicate ( /SELECTIVITY/i numeric_constant )(?) | '
 
 cond: ( /AND/i | /OR/i ) /NOT|/i ( predicate ( /SELECTIVITY/i numeric_constant )(?) | '(' search_condition ')' )
 
-predicate: basic_p | quantified_p | between_p | exists_p | in_p | like_p | null_p | type_p 
+predicate: basic_p | quantified_p | between_p | exists_p | in_p | like_p | null_p | type_p
 
 basic_p: expression /(=|<>|<|>|<=|=>|\^=|\^<|\^>|\!=)/ expression
 

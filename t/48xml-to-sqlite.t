@@ -92,7 +92,7 @@ my @sql = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-eq_or_diff(\@sql, 
+eq_or_diff(\@sql,
           [
           'BEGIN TRANSACTION',
           q<DROP TABLE 'Basic'>,

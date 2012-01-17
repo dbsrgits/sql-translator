@@ -79,7 +79,7 @@ my $sql = q{
 
     alter table t_test1 alter column f_char drop default;
 
-    -- The following are allowed by the grammar 
+    -- The following are allowed by the grammar
     -- but won\'t do anything... - ky
 
     alter table t_text1 alter column f_char set not null;

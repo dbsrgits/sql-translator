@@ -41,7 +41,7 @@ TODO: {
 
   like (
     $sql,
-    qr/^\s*CREATE TABLE/m,  #assume there is at least one create table statement 
+    qr/^\s*CREATE TABLE/m,  #assume there is at least one create table statement
     "Received some meaningful output from the producer",
   );
 }

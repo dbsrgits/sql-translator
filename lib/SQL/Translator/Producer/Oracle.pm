@@ -709,7 +709,7 @@ sub create_field {
           "CREATE OR REPLACE TRIGGER $trig_name\n".
           "BEFORE INSERT OR UPDATE ON $table_name_q\n".
           "FOR EACH ROW WHEN (new.$field_name_q IS NULL)\n".
-          "BEGIN \n".
+          "BEGIN\n".
           " SELECT sysdate INTO :new.$field_name_q FROM dual;\n".
           "END;\n";
 

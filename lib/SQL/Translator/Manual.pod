@@ -19,7 +19,7 @@ groupings:
 
 =item * Parsers
 
-The parsers are responsible for reading the input files and describing 
+The parsers are responsible for reading the input files and describing
 them to the Schema object middleware.
 
 =item * Producers
@@ -37,7 +37,7 @@ Indices, Constraints, etc.
 
 It's not necessary to understand how to write or manipulate any
 of these for most common tasks, but you should aware of the concepts
-as they will be referenced later in this document. 
+as they will be referenced later in this document.
 
 =head1 SQLFAIRY SCRIPTS
 
@@ -51,7 +51,7 @@ do:
 =item * sqlt
 
 This is the main interface for text-to-text translations, e.g.,
-converting a MySQL schema to Oracle.  
+converting a MySQL schema to Oracle.
 
 =item * sqlt-diagram
 
@@ -61,7 +61,7 @@ myriad options.
 =item * sqlt-diff
 
 This script will examine two schemas and report the SQL commands
-(ALTER, CREATE) needed to turn the first schema into the second. 
+(ALTER, CREATE) needed to turn the first schema into the second.
 
 =item * sqlt-dumper
 
@@ -135,11 +135,11 @@ would be fairly easy to add an XML parser for something like the TorqueDB
 (http://db.apache.org/torque/) project.  The actual parsing of XML should be
 trivial given the number of XML parsers available, so all that would be left
 would be to map the specific concepts in the source file to the Schema objects
-in SQLFairy.  
+in SQLFairy.
 
 To convert a schema in SQLFairy's XML dialect to Oracle, do the following:
 
-  $ sqlt -f XML-SQLFairy -t Oracle foo.xml > foo-oracle.sql 
+  $ sqlt -f XML-SQLFairy -t Oracle foo.xml > foo-oracle.sql
 
 =head1 SERIALIZING SCHEMAS
 
@@ -157,7 +157,7 @@ This can be accomplished like so:
   $ ...
 
 SQLFairy has three serialization producers, none of which is superior
-to the other in their description of a schema.  
+to the other in their description of a schema.
 
 =over 4
 
@@ -213,7 +213,7 @@ the "sqlt-graph" script for more information.
 
 =back
 
-=head1 AUTOMATED CODE-GENERATION 
+=head1 AUTOMATED CODE-GENERATION
 
 Given that so many applications interact with SQL databases, it's no
 wonder that people have automated code to deal with this interaction.
@@ -321,14 +321,14 @@ somewhat quirky:
   $ sqlt-diff foo-v1.sql=MySQL foo-v2.sql=Oracle > diff.sql
 
 As demonstrated, the schemas need not even be from the same vendor,
-though this is likely to produce some spurious results as 
+though this is likely to produce some spurious results as
 datatypes are not currently viewed equivalent unless they match
 exactly, even if they would be converted to the same.  For example,
 MySQL's "integer" data type would be converted to Oracle's "number,"
 but the differ isn't quite smart enough yet to figure this out.  Also,
 as the SQL to ALTER a field definition varies from database vendor to
 vendor, these statements are made using just the keyword "CHANGE" and
-will likely need to be corrected for the target database. 
+will likely need to be corrected for the target database.
 
 =head1 A UNIFIED GRAPHICAL INTERFACE
 
@@ -355,28 +355,28 @@ Please read the POD for SQL::Translator and SQL::Translator::Schema to
 learn the methods you can call.  Here is a very simple example:
 
   #!/usr/bin/perl
-  
+
   use strict;
   use SQL::Translator;
-  
+
   my $input = q[
       create table foo (
           foo_id int not null default '0' primary key,
           foo_name varchar(30) not null default ''
       );
-  
+
       create table bar (
           bar_id int not null default '0' primary key,
           bar_value varchar(100) not null default ''
       );
   ];
-  
+
   my $t = SQL::Translator->new;
   $t->parser('MySQL') or die $t->error;
   $t->producer( \&produce ) or die $t->error;
   my $output = $t->translate( \$input ) or die $t->error;
   print $output;
-  
+
   sub produce {
       my $tr     = shift;
       my $schema = $tr->schema;
@@ -389,7 +389,7 @@ learn the methods you can call.  Here is a very simple example:
 
 Executing this script produces the following:
 
-  $ ./my-producer.pl 
+  $ ./my-producer.pl
   Table = foo
   Table = bar
 
@@ -404,25 +404,25 @@ is that you have to decide how to parse the incoming data and then
 map the concepts in the data to the Schema object.
 
   #!/usr/bin/perl
-  
+
   use strict;
   use SQL::Translator;
-  
+
   my $input =
       "foo:foo_id int 11:foo_name varchar 30\n" .
       "bar:bar_id int 11:bar_value varchar 30"
   ;
-  
+
   my $t = SQL::Translator->new;
   $t->parser( \&parser ) or die $t->error;
   $t->producer('Oracle') or die $t->error;
   my $output = $t->translate( \$input ) or die $t->error;
   print $output;
-  
+
   sub parser {
       my ( $tr, $data ) = @_;
       my $schema = $tr->schema;
- 
+
       for my $line ( split( /\n/, $data ) ) {
           my ( $table_name, @fields ) = split( /:/, $line );
           my $table = $schema->add_table( name => $table_name )

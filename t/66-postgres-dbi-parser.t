@@ -64,7 +64,7 @@ my $sql = q[
         price numeric
     );
 
-    -- drop a column, to not have a linear id 
+    -- drop a column, to not have a linear id
     -- When the table t_test1 is created, f_last get id 5 but
     -- after this drop, there is only 4 columns.
     alter table sqlt_test1 drop column f_to_drop;

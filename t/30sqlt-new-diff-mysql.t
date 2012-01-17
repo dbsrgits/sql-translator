@@ -25,7 +25,7 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff/, $_ ) )
       or die $tr->error;
-    
+
     my $schema = $t->schema;
     unless ( $schema->name ) {
         $schema->name( $_ );
@@ -34,13 +34,13 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
 } (qw( create1.yml create2.yml ));
 
 # Test for differences
-my @out = SQL::Translator::Diff::schema_diff( 
-    $source_schema, 'MySQL', 
+my @out = SQL::Translator::Diff::schema_diff(
+    $source_schema, 'MySQL',
     $target_schema, 'MySQL',
-    { 
-        no_batch_alters  => 1, 
-        producer_args => { quote_table_names => 0 } 
-    } 
+    {
+        no_batch_alters  => 1,
+        producer_args => { quote_table_names => 0 }
+    }
 );
 
 ok( @out, 'Got a list' );
@@ -167,13 +167,13 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 
   # Lets remove the renamed table so we dont have to change the SQL or other tests
   $target_schema->drop_table('new_name');
-  
+
   my $schema = $t->schema;
   unless ( $schema->name ) {
       $schema->name( 'create.sql' );
   }
 
-  # Now lets change the type of one of the 'integer' columns so that it 
+  # Now lets change the type of one of the 'integer' columns so that it
   # matches what the mysql parser sees for '<col> interger'.
   my $field = $target_schema->get_table('employee')->get_field('employee_id');
   $field->data_type('integer');
@@ -268,7 +268,7 @@ COMMIT;
 }
 
 {
-  # Test other things about renaming tables to - namely that renames 
+  # Test other things about renaming tables to - namely that renames
   # constraints are still formated right.
 
   my $s1 = SQL::Translator::Schema->new;
@@ -315,7 +315,7 @@ COMMIT;
 ## END OF DIFF
 
   # Test quoting works too.
-  $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL', 
+  $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
     { producer_args => { quote_table_names => '`' } }
   );
   eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on");

@@ -18,7 +18,7 @@ local $SIG{__WARN__} = sub {
 };
 
 BEGIN {
-    maybe_plan(2, 
+    maybe_plan(2,
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Producer::XML::SQLFairy');
 }
@@ -42,7 +42,7 @@ SKIP: {
         require XML::Parser;
     };
     if ($@) {
-        skip "Can't load XML::Parser" => 1;        
+        skip "Can't load XML::Parser" => 1;
     }
 
     # Can't get XML::Parser::parsestring to do Useful Things

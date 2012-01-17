@@ -40,7 +40,7 @@ my $sql_string = $sqlt->translate(
     filename => $xmlfile,
 ) or die $sqlt->error;
 
-my $want = [ 
+my $want = [
 'DROP TABLE "Basic" CASCADE CONSTRAINTS',
           'DROP SEQUENCE "sq_Basic_id"',
           'CREATE SEQUENCE "sq_Basic_id"',
@@ -84,7 +84,7 @@ END;
           'CREATE OR REPLACE TRIGGER "ts_Basic_timest"
 BEFORE INSERT OR UPDATE ON "Basic"
 FOR EACH ROW WHEN (new."timest" IS NULL)
-BEGIN 
+BEGIN
  SELECT sysdate INTO :new."timest" FROM dual;
 END;
 ',
@@ -160,7 +160,7 @@ END;
 CREATE OR REPLACE TRIGGER "ts_Basic_timest01"
 BEFORE INSERT OR UPDATE ON "Basic"
 FOR EACH ROW WHEN (new."timest" IS NULL)
-BEGIN 
+BEGIN
  SELECT sysdate INTO :new."timest" FROM dual;
 END;
 /

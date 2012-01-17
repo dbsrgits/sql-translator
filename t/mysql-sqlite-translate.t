@@ -7,13 +7,13 @@ use_ok( "SQL::Translator::Parser::MySQL" );
 use_ok( "SQL::Translator::Producer::SQLite" );
 
 # This test reproduces a bug in SQL::Translator::Producer::SQLite.
-# 
+#
 # When tables are created their names are not added to %global_names, and
 # may be duplicated.
 #
 # SQL::Translator::Producer::SQLite version 1.59.
 # compliments of SymKat <symkat@symkat.com>
- 
+
 
 
 my $output = SQL::Translator
@@ -35,7 +35,7 @@ sub find_table_names {
 sub has_dupes {
     my ( @list ) = @_;
     my %hist;
-    
+
     for my $elem ( @list ) {
         return 0 if exists $hist{$elem};
         $hist{$elem} = 1;

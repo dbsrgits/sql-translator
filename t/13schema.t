@@ -14,7 +14,7 @@ require_ok( 'SQL::Translator::Schema' );
     #
     # Schema
     #
-    my $schema = SQL::Translator::Schema->new( 
+    my $schema = SQL::Translator::Schema->new(
         name => 'foo',
         database => 'MySQL',
     );
@@ -24,7 +24,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $schema->name('bar'), 'bar', 'Schema name changed to "bar"' );
 
     is( $schema->database, 'MySQL', 'Schema database is "MySQL"' );
-    is( $schema->database('PostgreSQL'), 'PostgreSQL', 
+    is( $schema->database('PostgreSQL'), 'PostgreSQL',
         'Schema database changed to "PostgreSQL"' );
 
     is( $schema->is_valid, undef, 'Schema not valid...' );
@@ -36,7 +36,7 @@ require_ok( 'SQL::Translator::Schema' );
     my $foo_table = $schema->add_table(name => 'foo') or warn $schema->error;
     isa_ok( $foo_table, 'SQL::Translator::Schema::Table', 'Table "foo"' );
 
-    my $bar_table = SQL::Translator::Schema::Table->new( name => 'bar' ) or 
+    my $bar_table = SQL::Translator::Schema::Table->new( name => 'bar' ) or
         warn SQL::Translator::Schema::Table->error;
     $bar_table = $schema->add_table( $bar_table );
     isa_ok( $bar_table, 'SQL::Translator::Schema::Table', 'Table "bar"' );
@@ -45,14 +45,14 @@ require_ok( 'SQL::Translator::Schema' );
     $schema = $bar_table->schema( $schema );
     isa_ok( $schema, 'SQL::Translator::Schema', 'Schema' );
 
-    is( $bar_table->name('foo'), undef, 
+    is( $bar_table->name('foo'), undef,
         q[Can't change name of table "bar" to "foo"...]);
-    like( $bar_table->error, qr/can't use table name/i, 
+    like( $bar_table->error, qr/can't use table name/i,
         q[...because "foo" exists] );
 
     my $redundant_table = $schema->add_table(name => 'foo');
     is( $redundant_table, undef, qq[Can't create another "foo" table...] );
-    like( $schema->error, qr/can't use table name/i, 
+    like( $schema->error, qr/can't use table name/i,
         '... because "foo" exists' );
 
     $redundant_table = $schema->add_table(name => '');
@@ -93,21 +93,21 @@ require_ok( 'SQL::Translator::Schema' );
     #
     # New table with args
     #
-    my $person_table = $schema->add_table( 
-        name     => 'person', 
+    my $person_table = $schema->add_table(
+        name     => 'person',
         comments => 'foo',
     );
     is( $person_table->name, 'person', 'Table name is "person"' );
     is( $person_table->is_valid, undef, 'Table is not yet valid' );
     is( $person_table->comments, 'foo', 'Comments = "foo"' );
-    is( join(',', $person_table->comments('bar')), 'foo,bar', 
+    is( join(',', $person_table->comments('bar')), 'foo,bar',
         'Table comments = "foo,bar"' );
     is( $person_table->comments, "foo\nbar", 'Table comments = "foo,bar"' );
 
     #
     # Field default new
     #
-    my $f1 = $person_table->add_field(name => 'foo') or 
+    my $f1 = $person_table->add_field(name => 'foo') or
         warn $person_table->error;
     isa_ok( $f1, 'SQL::Translator::Schema::Field', 'Field' );
     is( $f1->name, 'foo', 'Field name is "foo"' );
@@ -134,7 +134,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( $f2->is_nullable('0'), 0, 'Field cannot be NULL' );
     is( $f2->default_value(''), '', 'Field default is empty string' );
     is( $f2->comments, 'foo', 'Field comment = "foo"' );
-    is( join(',', $f2->comments('bar')), 'foo,bar', 
+    is( join(',', $f2->comments('bar')), 'foo,bar',
         'Field comment = "foo,bar"' );
     is( $f2->comments, "foo\nbar", 'Field comment = "foo,bar"' );
 
@@ -146,7 +146,7 @@ require_ok( 'SQL::Translator::Schema' );
 
     my $redundant_field = $person_table->add_field(name => 'f2');
     is( $redundant_field, undef, qq[Didn't create another "f2" field...] );
-    like( $person_table->error, qr/can't use field/i, 
+    like( $person_table->error, qr/can't use field/i,
         '... because it exists' );
 
     $redundant_field = $person_table->add_field(name => '');
@@ -217,7 +217,7 @@ require_ok( 'SQL::Translator::Schema' );
     my @indices = $person_table->get_indices;
     is( scalar @indices, 0, 'No indices' );
     like( $person_table->error, qr/no indices/i, 'Error for no indices' );
-    my $index1 = $person_table->add_index( name => "foo" ) 
+    my $index1 = $person_table->add_index( name => "foo" )
         or warn $person_table->error;
     isa_ok( $index1, 'SQL::Translator::Schema::Index', 'Index' );
     is( $index1->name, 'foo', 'Index name is "foo"' );
@@ -225,20 +225,20 @@ require_ok( 'SQL::Translator::Schema' );
     is( $index1->is_valid, undef, 'Index name is not valid...' );
     like( $index1->error, qr/no fields/i, '...because it has no fields' );
 
-    is( join(':', $index1->fields('foo,bar')), 'foo:bar', 
+    is( join(':', $index1->fields('foo,bar')), 'foo:bar',
         'Index accepts fields');
 
     is( $index1->is_valid, undef, 'Index name is not valid...' );
-    like( $index1->error, qr/does not exist in table/i, 
+    like( $index1->error, qr/does not exist in table/i,
         '...because it used fields not in the table' );
 
-    is( join(':', $index1->fields(qw[foo age])), 'foo:age', 
+    is( join(':', $index1->fields(qw[foo age])), 'foo:age',
         'Index accepts fields');
     is( $index1->is_valid, 1, 'Index name is now valid' );
 
     is( $index1->type, NORMAL, 'Index type is "normal"' );
 
-    my $index2 = SQL::Translator::Schema::Index->new( name => "bar" ) 
+    my $index2 = SQL::Translator::Schema::Index->new( name => "bar" )
         or warn SQL::Translator::Schema::Index->error;
     $index2    = $person_table->add_index( $index2 );
     isa_ok( $index2, 'SQL::Translator::Schema::Index', 'Index' );
@@ -268,9 +268,9 @@ require_ok( 'SQL::Translator::Schema' );
     #
     my @constraints = $person_table->get_constraints;
     is( scalar @constraints, 0, 'No constraints' );
-    like( $person_table->error, qr/no constraints/i, 
+    like( $person_table->error, qr/no constraints/i,
         'Error for no constraints' );
-    my $constraint1 = $person_table->add_constraint( name => 'foo' ) 
+    my $constraint1 = $person_table->add_constraint( name => 'foo' )
         or warn $person_table->error;
     isa_ok( $constraint1, 'SQL::Translator::Schema::Constraint', 'Constraint' );
     is( $constraint1->name, 'foo', 'Constraint name is "foo"' );
@@ -304,11 +304,11 @@ require_ok( 'SQL::Translator::Schema' );
     is( $fields, 'age,name', 'Constraint field_names = "age,name"' );
 
     is( $constraint1->match_type, '', 'Constraint match type is empty' );
-    is( $constraint1->match_type('foo'), undef, 
+    is( $constraint1->match_type('foo'), undef,
         'Constraint match type rejects bad arg...' );
     like( $constraint1->error, qr/invalid match type/i,
         '...because it is invalid');
-    is( $constraint1->match_type('FULL'), 'full', 
+    is( $constraint1->match_type('FULL'), 'full',
         'Constraint match type = "full"' );
 
     my $constraint2 = SQL::Translator::Schema::Constraint->new( name => 'bar' );
@@ -322,7 +322,7 @@ require_ok( 'SQL::Translator::Schema' );
     ) or die $person_table->error;
     isa_ok( $constraint3, 'SQL::Translator::Schema::Constraint', 'Constraint' );
     is( $constraint3->type, CHECK_C, 'Constraint type is "CHECK"' );
-    is( $constraint3->expression, 'foo bar', 
+    is( $constraint3->expression, 'foo bar',
         'Constraint expression is "foo bar"' );
 
     my $constraints = $person_table->get_constraints;
@@ -382,14 +382,14 @@ require_ok( 'SQL::Translator::Schema' );
     like( $schema->error, qr/no table/i, 'Error on no arg to get_table' );
 
     $bad_table = $schema->get_table('baz');
-    like( $schema->error, qr/does not exist/i, 
+    like( $schema->error, qr/does not exist/i,
         'Error on bad arg to get_table' );
 
     my $bad_view = $schema->get_view;
     like( $schema->error, qr/no view/i, 'Error on no arg to get_view' );
 
     $bad_view = $schema->get_view('bar');
-    like( $schema->error, qr/does not exist/i, 
+    like( $schema->error, qr/does not exist/i,
         'Error on bad arg to get_view' );
 
     my $good_table = $schema->get_table('foo');
@@ -413,8 +413,8 @@ require_ok( 'SQL::Translator::Schema' );
 #
 # Test ability to introspect some values
 #
-{ 
-    my $s        =  SQL::Translator::Schema->new( 
+{
+    my $s        =  SQL::Translator::Schema->new(
         name     => 'foo',
         database => 'PostgreSQL',
     );
@@ -450,7 +450,7 @@ require_ok( 'SQL::Translator::Schema' );
     is( join('', $c->fields('foo')), 'foo', 'Fields now = "foo"' );
 
     is( $c->is_valid, undef, 'Constraint on "person" not valid...');
-    like( $c->error, qr/non-existent field/i, 
+    like( $c->error, qr/non-existent field/i,
         q[...because field "foo" doesn't exist] );
 
     my $fk = $t->add_field( name => 'pet_id' );
@@ -461,18 +461,18 @@ require_ok( 'SQL::Translator::Schema' );
     $t->add_field( name => 'f2' );
     is( join(',', $c->fields('f1,f2')), 'f1,f2', 'Fields now = "f1,f2"' );
     is( $c->is_valid, undef, 'Constraint on "person" not valid...');
-    like( $c->error, qr/only one field/i, 
+    like( $c->error, qr/only one field/i,
         q[...because too many fields for FK] );
 
     $c->fields('f1');
 
     is( $c->is_valid, undef, 'Constraint on "person" not valid...');
-    like( $c->error, qr/no reference table/i, 
+    like( $c->error, qr/no reference table/i,
         q[...because there's no reference table] );
 
     is( $c->reference_table('foo'), 'foo', 'Reference table now = "foo"' );
     is( $c->is_valid, undef, 'Constraint on "person" not valid...');
-    like( $c->error, qr/no table named/i, 
+    like( $c->error, qr/no table named/i,
         q[...because reference table "foo" doesn't exist] );
 
     my $t2 = $s->add_table( name => 'pet' );
@@ -484,7 +484,7 @@ require_ok( 'SQL::Translator::Schema' );
     like( $c->error, qr/no reference fields/i,
         q[...because there're no reference fields]);
 
-    is( join('', $c->reference_fields('pet_id')), 'pet_id', 
+    is( join('', $c->reference_fields('pet_id')), 'pet_id',
         'Reference fields = "pet_id"' );
 
     is( $c->is_valid, undef, 'Constraint on "person" not valid...');
@@ -493,7 +493,7 @@ require_ok( 'SQL::Translator::Schema' );
 
     my $pet_id = $t2->add_field( name => 'pet_id' );
     is( $pet_id->name, 'pet_id', 'Added field "pet_id"' );
-    
+
     is( $c->is_valid, 1, 'Constraint now valid' );
 }
 
@@ -506,7 +506,7 @@ require_ok( 'SQL::Translator::Schema' );
 
     is( $t->primary_key, undef, 'No primary key' );
 
-    is( $t->primary_key('person_id'), undef, 
+    is( $t->primary_key('person_id'), undef,
             q[Can't make PK on "person_id"...] );
     like( $t->error, qr/invalid field/i, "...because it doesn't exist" );
 
@@ -519,7 +519,7 @@ require_ok( 'SQL::Translator::Schema' );
 
     $t->add_field( name => 'name' );
     $c = $t->primary_key('name');
-    is( join(',', $c->fields), 'person_id,name', 
+    is( join(',', $c->fields), 'person_id,name',
         'Constraint now on "person_id" and "name"' );
 
     is( scalar @{ $t->get_constraints }, 1, 'Found 1 constraint' );
@@ -599,9 +599,9 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $t->schema, 'SQL::Translator::Schema', 'Schema' );
     is( $t->schema->name, 'TrigTest', qq[Schema name is "'TrigTest'"] );
     is( $t->name, $name, qq[Name is "$name"] );
-    is( $t->perform_action_when, $perform_action_when, 
+    is( $t->perform_action_when, $perform_action_when,
         qq[Perform action when is "$perform_action_when"] );
-    is( join(',', $t->database_events), $database_events, 
+    is( join(',', $t->database_events), $database_events,
         qq[Database event is "$database_events"] );
     isa_ok( $t->table, 'SQL::Translator::Schema::Table', qq[table is a Table"] );
     is( $t->action, $action, qq[Action is "$action"] );
@@ -615,7 +615,7 @@ require_ok( 'SQL::Translator::Schema' );
 
 
 
-	my $s2                   = SQL::Translator::Schema->new(name => 'TrigTest2');
+    my $s2                   = SQL::Translator::Schema->new(name => 'TrigTest2');
     $s2->add_table(name=>'foo') or die "Couldn't create table: ", $s2->error;
     my $t2                   = $s2->add_trigger(
         name                => 'foo_trigger',
@@ -624,35 +624,35 @@ require_ok( 'SQL::Translator::Schema' );
         on_table            => 'foo',
         action              => 'update modified=timestamp();',
     ) or die $s2->error;
-	isa_ok( $t2, 'SQL::Translator::Schema::Trigger', 'Trigger' );
+    isa_ok( $t2, 'SQL::Translator::Schema::Trigger', 'Trigger' );
     isa_ok( $t2->schema, 'SQL::Translator::Schema', 'Schema' );
     is( $t2->schema->name, 'TrigTest2', qq[Schema name is "'TrigTest2'"] );
     is( $t2->name, 'foo_trigger', qq[Name is "foo_trigger"] );
-	is_deeply(
+    is_deeply(
         [$t2->database_events],
         [qw/insert update/],
         "Database events are [qw/insert update/] "
     );
-	isa_ok($t2->database_events,'ARRAY','Database events');
-	
-	#
-	# Trigger equal tests
-	#
-	isnt(
+    isa_ok($t2->database_events,'ARRAY','Database events');
+
+    #
+    # Trigger equal tests
+    #
+    isnt(
         $t1->equals($t2),
         1,
         'Compare two Triggers with database_event and database_events'
     );
 
-	$t1->database_events($database_events);
-	$t2->database_events($database_events);
-	is($t1->equals($t2),1,'Compare two Triggers with database_event');
+    $t1->database_events($database_events);
+    $t2->database_events($database_events);
+    is($t1->equals($t2),1,'Compare two Triggers with database_event');
 
-	$t2->database_events('');
-	$t1->database_events([qw/update insert/]);
-	$t2->database_events([qw/insert update/]);
-	is($t1->equals($t2),1,'Compare two Triggers with database_events');
-	
+    $t2->database_events('');
+    $t1->database_events([qw/update insert/]);
+    $t2->database_events([qw/insert update/]);
+    is($t1->equals($t2),1,'Compare two Triggers with database_events');
+
     #
     # $schema-> drop_trigger
     #
@@ -667,7 +667,7 @@ require_ok( 'SQL::Translator::Schema' );
 
     $s->add_trigger($t);
 }
- 
+
 #
 # Procedure
 #

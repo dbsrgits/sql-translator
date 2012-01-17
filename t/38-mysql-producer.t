@@ -37,8 +37,8 @@ schema:
     thing:
       name: thing
       extra:
-        mysql_charset: latin1 
-        mysql_collate: latin1_danish_ci 
+        mysql_charset: latin1
+        mysql_collate: latin1_danish_ci
       order: 1
       fields:
         id:
@@ -339,14 +339,14 @@ my $number_sizes = {
 };
 for my $size (keys %$number_sizes) {
     my $expected = $number_sizes->{$size};
-    my $number_field = SQL::Translator::Schema::Field->new( 
+    my $number_field = SQL::Translator::Schema::Field->new(
         name => "numberfield_$expected",
         table => $table,
         data_type => 'number',
         size => $size,
         is_nullable => 1,
         is_foreign_key => 0,
-        is_unique => 0 
+        is_unique => 0
     );
 
     is(
@@ -358,7 +358,7 @@ for my $size (keys %$number_sizes) {
 
 my $varchars;
 for my $size (qw/255 256 65535 65536/) {
-    $varchars->{$size} = SQL::Translator::Schema::Field->new( 
+    $varchars->{$size} = SQL::Translator::Schema::Field->new(
         name => "vch_$size",
         table => $table,
         data_type => 'varchar',
@@ -370,68 +370,68 @@ for my $size (qw/255 256 65535 65536/) {
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003 }),
-    'vch_255 varchar(255)', 
+    'vch_255 varchar(255)',
     'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0 }),
-    'vch_255 varchar(255)', 
+    'vch_255 varchar(255)',
     'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}),
-    'vch_255 varchar(255)', 
+    'vch_255 varchar(255)',
     'VARCHAR(255) is not substituted with TEXT when no version specified',
 );
 
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003 }),
-    'vch_256 varchar(256)', 
+    'vch_256 varchar(256)',
     'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0 }),
-    'vch_256 text', 
+    'vch_256 text',
     'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}),
-    'vch_256 text', 
+    'vch_256 text',
     'VARCHAR(256) is substituted with TEXT when no version specified',
 );
 
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003 }),
-    'vch_65535 varchar(65535)', 
+    'vch_65535 varchar(65535)',
     'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0 }),
-    'vch_65535 text', 
+    'vch_65535 text',
     'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}),
-    'vch_65535 text', 
+    'vch_65535 text',
     'VARCHAR(65535) is substituted with TEXT when no version specified',
 );
 
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003 }),
-    'vch_65536 text', 
+    'vch_65536 text',
     'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0 }),
-    'vch_65536 text', 
+    'vch_65536 text',
     'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}),
-    'vch_65536 text', 
+    'vch_65536 text',
     'VARCHAR(65536) is substituted with TEXT when no version specified',
 );
 
@@ -560,7 +560,7 @@ EOV
         quote_field_names => $qf,
     };
 
-    
+
     my $alter_field = SQL::Translator::Producer::MySQL::alter_field($field1, $field2, $options);
     is($alter_field, 'ALTER TABLE `mydb`.`mytable` CHANGE COLUMN `myfield` `myfield` VARCHAR(25) NOT NULL', 'Alter field works');
 
@@ -586,14 +586,14 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
     };
     for my $size (keys %$number_sizes) {
         my $expected = $number_sizes->{$size};
-        my $number_field = SQL::Translator::Schema::Field->new( 
+        my $number_field = SQL::Translator::Schema::Field->new(
             name => "numberfield_$expected",
             table => $table,
             data_type => 'number',
             size => $size,
             is_nullable => 1,
             is_foreign_key => 0,
-            is_unique => 0 
+            is_unique => 0
         );
 
         is(
@@ -605,7 +605,7 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
 
     my $varchars;
     for my $size (qw/255 256 65535 65536/) {
-        $varchars->{$size} = SQL::Translator::Schema::Field->new( 
+        $varchars->{$size} = SQL::Translator::Schema::Field->new(
             name => "vch_$size",
             table => $table,
             data_type => 'varchar',
@@ -617,68 +617,68 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003, %$options }),
-        '`vch_255` varchar(255)', 
+        '`vch_255` varchar(255)',
         'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0, %$options }),
-        '`vch_255` varchar(255)', 
+        '`vch_255` varchar(255)',
         'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{255}, $options),
-        '`vch_255` varchar(255)', 
+        '`vch_255` varchar(255)',
         'VARCHAR(255) is not substituted with TEXT when no version specified',
     );
 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003, %$options }),
-        '`vch_256` varchar(256)', 
+        '`vch_256` varchar(256)',
         'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0, %$options }),
-        '`vch_256` text', 
+        '`vch_256` text',
         'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{256}, $options),
-        '`vch_256` text', 
+        '`vch_256` text',
         'VARCHAR(256) is substituted with TEXT when no version specified',
     );
 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003, %$options }),
-        '`vch_65535` varchar(65535)', 
+        '`vch_65535` varchar(65535)',
         'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0, %$options }),
-        '`vch_65535` text', 
+        '`vch_65535` text',
         'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, $options),
-        '`vch_65535` text', 
+        '`vch_65535` text',
         'VARCHAR(65535) is substituted with TEXT when no version specified',
     );
 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003, %$options }),
-        '`vch_65536` text', 
+        '`vch_65536` text',
         'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0, %$options }),
-        '`vch_65536` text', 
+        '`vch_65536` text',
         'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, $options),
-        '`vch_65536` text', 
+        '`vch_65536` text',
         'VARCHAR(65536) is substituted with TEXT when no version specified',
     );
 

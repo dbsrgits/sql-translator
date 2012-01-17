@@ -175,7 +175,7 @@ create_table : /create/i /table/i ident '(' create_def(s /,/) ')' lock(?) on_sys
 
 disable_constraints : if_exists(?) /alter/i /table/i ident /nocheck/i /constraint/i /all/i END_STATEMENT
 
-# this is for the normal case 
+# this is for the normal case
 create_constraint : /create/i constraint END_STATEMENT
     {
         @table_comments = ();

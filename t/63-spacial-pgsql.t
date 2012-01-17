@@ -32,10 +32,10 @@ my $field1 = SQL::Translator::Schema::Field->new( name      => 'myfield',
                                                   table     => $table,
                                                   data_type => 'geometry',
                                                   extra     => {
-												      dimensions    => 2,
-												      geometry_type => 'POINT',
-												      srid          => -1
-													},
+                                                      dimensions    => 2,
+                                                      geometry_type => 'POINT',
+                                                      srid          => -1
+                                                  },
                                                   default_value     => undef,
                                                   is_auto_increment => 0,
                                                   is_nullable       => 1,
@@ -107,9 +107,9 @@ my $field4 = SQL::Translator::Schema::Field->new( name      => 'field4',
                                                   table     => $table,
                                                   data_type => 'geography',
                                                   extra     => {
-												      geography_type => 'POINT',
-												      srid          => -1
-													},
+                                                      geography_type => 'POINT',
+                                                      srid           => -1
+                                                  },
                                                   default_value     => undef,
                                                   is_auto_increment => 0,
                                                   is_nullable       => 1,

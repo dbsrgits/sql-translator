@@ -57,8 +57,8 @@ Options:
 =head1 DESCRIPTION
 
 sqlt-diff is a utility for creating a file of SQL commands necessary to
-transform the first schema provided to the second.  While not yet 
-exhaustive in its ability to mutate the entire schema, it will report the 
+transform the first schema provided to the second.  While not yet
+exhaustive in its ability to mutate the entire schema, it will report the
 following
 
 =over
@@ -71,24 +71,24 @@ indices).
 
 =item * Missing/altered fields
 
-Any fields missing or altered between the two schemas will be reported 
+Any fields missing or altered between the two schemas will be reported
 as:
 
-  ALTER TABLE <table_name> 
-    [DROP <field_name>] 
+  ALTER TABLE <table_name>
+    [DROP <field_name>]
     [CHANGE <field_name> <datatype> (<size>)] ;
 
 =item * Missing/altered indices
 
 Any indices missing or of a different type or on different fields will be
 indicated.  Indices that should be dropped will be reported as such:
- 
+
   DROP INDEX <index_name> ON <table_name> ;
 
-An index of a different type or on different fields will be reported as a 
+An index of a different type or on different fields will be reported as a
 new index as such:
 
-  CREATE [<index_type>] INDEX [<index_name>] ON <table_name> 
+  CREATE [<index_type>] INDEX [<index_name>] ON <table_name>
     ( <field_name>[,<field_name>] ) ;
 
 =back
@@ -113,9 +113,9 @@ use SQL::Translator::Schema::Constants;
 use vars qw( $VERSION );
 $VERSION = '1.59';
 
-my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names, 
-	$ignore_constraint_names, $output_db, $mysql_parser_version,
-	$ignore_view_sql, $ignore_proc_sql, $no_batch_alters );
+my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names,
+    $ignore_constraint_names, $output_db, $mysql_parser_version,
+    $ignore_view_sql, $ignore_proc_sql, $no_batch_alters );
 for my $arg ( @ARGV ) {
     if ( $arg =~ m/^-?-l(ist)?$/ ) {
         $list = 1;
@@ -124,31 +124,31 @@ for my $arg ( @ARGV ) {
         $help = 1;
     }
     elsif ( $arg =~ m/^-?-d(ebug)?$/ ) {
-        $debug = 1; 
+        $debug = 1;
     }
     elsif ( $arg =~ m/^-?-t(race)?$/ ) {
-        $trace = 1; 
+        $trace = 1;
     }
     elsif ( $arg =~ m/^-?-c(ase-insensitive)?$/ ) {
-        $caseopt = 1; 
+        $caseopt = 1;
     }
     elsif ( $arg =~ m/^--ignore-index-names$/ ) {
-        $ignore_index_names = 1; 
+        $ignore_index_names = 1;
     }
     elsif ( $arg =~ m/^--ignore-constraint-names$/ ) {
-        $ignore_constraint_names = 1; 
+        $ignore_constraint_names = 1;
     }
     elsif ( $arg =~ m/^--mysql-parser-version=(.+)$/ ) {
-        $mysql_parser_version = $1; 
+        $mysql_parser_version = $1;
     }
     elsif ( $arg =~ m/^--output-db=(.+)$/ ) {
-        $output_db = $1; 
+        $output_db = $1;
     }
     elsif ( $arg =~ m/^--ignore-view-sql$/ ) {
-        $ignore_view_sql = 1; 
+        $ignore_view_sql = 1;
     }
     elsif ( $arg =~ m/^--ignore-proc-sql$/ ) {
-        $ignore_proc_sql = 1; 
+        $ignore_proc_sql = 1;
     }
     elsif ( $arg =~ m/^([^=]+)=(.+)$/ ) {
         push @input, { file => $1, parser => $2 };
@@ -162,7 +162,7 @@ for my $arg ( @ARGV ) {
 }
 
 print STDERR <<'EOM';
-This code is experimental, currently the new code only supports MySQL or 
+This code is experimental, currently the new code only supports MySQL or
 SQLite diffing. To add support for other databases, please patch the relevant
 SQL::Translator::Producer:: module.  If you need compatibility with the old
 sqlt-diff, please use sqlt-diff-old, and look into helping us make this one
@@ -204,7 +204,7 @@ my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
     ($schema, $parser);
 } @input;
 
-my $result = SQL::Translator::Diff::schema_diff($source_schema, $source_db, 
+my $result = SQL::Translator::Diff::schema_diff($source_schema, $source_db,
                                                 $target_schema, $target_db,
                                                 { caseopt                 => $caseopt,
                                                   ignore_index_names      => $ignore_index_names,

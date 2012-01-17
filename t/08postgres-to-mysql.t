@@ -8,14 +8,14 @@ use Data::Dumper;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(1, 
+    maybe_plan(1,
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Producer::PostgreSQL');
 }
 
 my $create = q|
 
--- The cvterm module design is based on the ontology 
+-- The cvterm module design is based on the ontology
 
 -- ================================================
 -- TABLE: cv
@@ -48,7 +48,7 @@ create table cvterm (
 );
 create index cvterm_idx1 on cvterm (cv_id);
 -- the primary dbxref for this term.  Other dbxrefs may be cvterm_dbxref
--- The unique key on termname, termtype_id ensures that all terms are 
+-- The unique key on termname, termtype_id ensures that all terms are
 -- unique within a given cv
 
 
@@ -63,7 +63,7 @@ COMMENT ON COLUMN cvterm.termdefinition IS
  'A human-readable text definition';
 COMMENT ON COLUMN cvterm.dbxref_id IS
  'A human-readable text definition';
-COMMENT ON INDEX cvterm_c1 IS 
+COMMENT ON INDEX cvterm_c1 IS
  'the OBO identifier is globally unique';
 
 
@@ -125,7 +125,7 @@ create table cvtermsynonym (
        unique(cvterm_id, termsynonym)
 );
 
--- The table "cvterm_synonym" doesn't exist, so 
+-- The table "cvterm_synonym" doesn't exist, so
 -- creating an index on it screws things up!
 -- create index cvterm_synonym_idx1 on cvterm_synonym (cvterm_id);
 
@@ -156,9 +156,9 @@ create table cvterm_geom (
        cvterm_id int not null,
        foreign key (cvterm_id) references cvterm (cvterm_id),
        cvterm_geom geometry,
-	   constraint "enforce_dims_cvterm_geom" CHECK ((st_ndims(cvterm_geom) = 2)),
-	   constraint "enforce_srid_cvterm_geom" CHECK ((st_srid(cvterm_geom) = -1)),
-	   constraint "enforce_geotype_cvterm_geom" CHECK ((geometrytype(cvterm_geom) = 'POINT'::text OR cvterm_geom IS NULL)),
+       constraint "enforce_dims_cvterm_geom" CHECK ((st_ndims(cvterm_geom) = 2)),
+       constraint "enforce_srid_cvterm_geom" CHECK ((st_srid(cvterm_geom) = -1)),
+       constraint "enforce_geotype_cvterm_geom" CHECK ((geometrytype(cvterm_geom) = 'POINT'::text OR cvterm_geom IS NULL)),
        unique(cvterm_id)
 );
 

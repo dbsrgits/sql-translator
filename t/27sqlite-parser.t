@@ -47,7 +47,7 @@ my $file = "$Bin/data/sqlite/create.sql";
     my $c1 = pop @constraints;
     is( $c1->type, 'FOREIGN KEY', 'FK constraint' );
     is( $c1->reference_table, 'person', 'References person table' );
-    is( join(',', $c1->reference_fields), 'person_id', 
+    is( join(',', $c1->reference_fields), 'person_id',
         'References person_id field' );
 
     my @views = $schema->get_views;
@@ -80,7 +80,7 @@ $file = "$Bin/data/sqlite/named.sql";
     is( $c1->type, 'FOREIGN KEY', 'FK constraint' );
     is( $c1->reference_table, 'person', 'References person table' );
     is( $c1->name, 'fk_person_id', 'Constraint name fk_person_id' );
-    is( join(',', $c1->reference_fields), 'person_id', 
+    is( join(',', $c1->reference_fields), 'person_id',
         'References person_id field' );
 
 }

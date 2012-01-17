@@ -14,22 +14,22 @@ my $t   = SQL::Translator->new( trace => 0 );
 my $sql = q[
     CREATE TABLE qtl_trait_category
     (
-        qtl_trait_category_id       NUMBER(11)      NOT NULL    
+        qtl_trait_category_id       NUMBER(11)      NOT NULL
             CONSTRAINT pk_qtl_trait_category PRIMARY KEY,
         trait_category              VARCHAR2(100)   NOT NULL,
-        CONSTRAINT AVCON_4287_PARAM_000 CHECK 
+        CONSTRAINT AVCON_4287_PARAM_000 CHECK
             (trait_category IN ('S', 'A', 'E')) ENABLE,
         UNIQUE ( trait_category )
     );
-    COMMENT ON TABLE qtl_trait_category IS 
+    COMMENT ON TABLE qtl_trait_category IS
     'hey, hey, hey, hey';
-    comment on column qtl_trait_category.qtl_trait_category_id 
+    comment on column qtl_trait_category.qtl_trait_category_id
         is 'the primary key!';
 
     -- foo bar comment
     CREATE TABLE qtl_trait
     (
-        qtl_trait_id            NUMBER(11)      NOT NULL    
+        qtl_trait_id            NUMBER(11)      NOT NULL
             CONSTRAINT pk_qtl_trait PRIMARY KEY,
         trait_symbol            VARCHAR2(100 BYTE)   NOT NULL,
         trait_name              VARCHAR2(200 CHAR)   NOT NULL,
@@ -43,7 +43,7 @@ my $sql = q[
     CREATE TABLE qtl
     (
         /* qtl_id comment */
-        qtl_id              NUMBER(11)      NOT NULL    
+        qtl_id              NUMBER(11)      NOT NULL
             CONSTRAINT pk_qtl PRIMARY KEY,
         qtl_accession_id    VARCHAR2(20)    NOT NULL /* accession comment */,
         published_symbol    VARCHAR2(100),
@@ -61,7 +61,7 @@ my $sql = q[
 
     CREATE TABLE qtl_trait_synonym
     (
-        qtl_trait_synonym_id    NUMBER(11)      NOT NULL    
+        qtl_trait_synonym_id    NUMBER(11)      NOT NULL
             CONSTRAINT pk_qtl_trait_synonym PRIMARY KEY,
         trait_synonym           VARCHAR2(200)   NOT NULL,
         qtl_trait_id            NUMBER(11)      NOT NULL,
@@ -70,43 +70,41 @@ my $sql = q[
     );
 
 -- View and procedure testing
-	CREATE OR REPLACE PROCEDURE CMDOMAIN_LATEST.P_24_HOUR_EVENT_SUMMARY
-	IS
-	            ldate                   varchar2(10);
-	            user_added              INT;
-	            user_deleted            INT;
-	            workingsets_created     INT;
-	            change_executed         INT;
-	            change_detected         INT;
-	            reports_run             INT;
-	            backup_complete         INT;
-	            backup_failed           INT;
-	            devices_in_inventory    INT;
-	
-	
-	BEGIN
-	
-	           select CAST(TO_CHAR(sysdate,'MM/DD/YYYY') AS varchar2(10))  INTO ldate  from  dual;
-	END;
+    CREATE OR REPLACE PROCEDURE CMDOMAIN_LATEST.P_24_HOUR_EVENT_SUMMARY
+      IS
+        ldate                   varchar2(10);
+        user_added              INT;
+        user_deleted            INT;
+        workingsets_created     INT;
+        change_executed         INT;
+        change_detected         INT;
+        reports_run             INT;
+        backup_complete         INT;
+        backup_failed           INT;
+        devices_in_inventory    INT;
+
+    BEGIN
+        select CAST(TO_CHAR(sysdate,'MM/DD/YYYY') AS varchar2(10))  INTO ldate  from  dual;
+    END;
 /
-	
-	CREATE OR REPLACE FORCE VIEW CMDOMAIN_MIG.VS_ASSET (ASSET_ID, FQ_NAME, FOLDER_NAME, ASSET_NAME, ANNOTATION, ASSET_TYPE, FOREIGN_ASSET_ID, FOREIGN_ASSET_ID2, DATE_CREATED, DATE_MODIFIED, CONTAINER_ID, CREATOR_ID, MODIFIER_ID, USER_ACCESS) AS
-	  SELECT
-	    a.asset_id, a.fq_name,
-	    ap_extract_folder(a.fq_name) AS folder_name,
-	    ap_extract_asset(a.fq_name)  AS asset_name,
-	    a.annotation,
-	    a.asset_type,
-	    a.foreign_asset_id,
-	    a.foreign_asset_id2,
-	    a.dateCreated AS date_created,
-	    a.dateModified AS date_modified,
-	    a.container_id,
-	    a.creator_id,
-	    a.modifier_id,
-	    m.user_id AS user_access
-	from asset a
-	JOIN M_ACCESS_CONTROL m on a.acl_id = m.acl_id;
+
+    CREATE OR REPLACE FORCE VIEW CMDOMAIN_MIG.VS_ASSET (ASSET_ID, FQ_NAME, FOLDER_NAME, ASSET_NAME, ANNOTATION, ASSET_TYPE, FOREIGN_ASSET_ID, FOREIGN_ASSET_ID2, DATE_CREATED, DATE_MODIFIED, CONTAINER_ID, CREATOR_ID, MODIFIER_ID, USER_ACCESS) AS
+      SELECT
+        a.asset_id, a.fq_name,
+        ap_extract_folder(a.fq_name) AS folder_name,
+        ap_extract_asset(a.fq_name)  AS asset_name,
+        a.annotation,
+        a.asset_type,
+        a.foreign_asset_id,
+        a.foreign_asset_id2,
+        a.dateCreated AS date_created,
+        a.dateModified AS date_modified,
+        a.container_id,
+        a.creator_id,
+        a.modifier_id,
+        m.user_id AS user_access
+    from asset a
+    JOIN M_ACCESS_CONTROL m on a.acl_id = m.acl_id;
 
 ];
 
@@ -130,7 +128,7 @@ my @t1_fields = $t1->get_fields;
 is( scalar @t1_fields, 2, '2 fields in table' );
 
 my $f1 = shift @t1_fields;
-is( $f1->name, 'qtl_trait_category_id', 
+is( $f1->name, 'qtl_trait_category_id',
     'First field is "qtl_trait_category_id"' );
 is( $f1->data_type, 'number', 'Field is a number' );
 is( $f1->size, 11, 'Size is "11"' );
@@ -156,21 +154,21 @@ my @t1_constraints = $t1->get_constraints;
 is( scalar @t1_constraints, 3, '3 constraints on table' );
 
 my $c1 = $t1_constraints[0];
-is( $c1->name, 'pk_qtl_trait_category', 
+is( $c1->name, 'pk_qtl_trait_category',
     'Constraint name is "pk_qtl_trait_category"' );
 is( $c1->type, PRIMARY_KEY, 'First constraint is PK' );
-is( join(',', $c1->fields), 'qtl_trait_category_id', 
+is( join(',', $c1->fields), 'qtl_trait_category_id',
     'Constraint is on field "qtl_trait_category_id"' );
 
 my $c2 = $t1_constraints[1];
 is( $c2->type, CHECK_C, 'Second constraint is a check' );
-is( $c2->expression, 
+is( $c2->expression,
     "( trait_category IN ('S', 'A', 'E') ) ENABLE",
     'Constraint is on field "trait_category"' );
 
 my $c3 = $t1_constraints[2];
 is( $c3->type, UNIQUE, 'Third constraint is unique' );
-is( join(',', $c3->fields), 'trait_category', 
+is( join(',', $c3->fields), 'trait_category',
     'Constraint is on field "trait_category"' );
 
 #
@@ -206,7 +204,7 @@ is( $t2_f3->is_nullable, 0, 'Field cannot be null' );
 is( $t2_f3->is_foreign_key, 0, 'Field is not a FK' );
 
 my $t2_f4 = shift @t2_fields;
-is( $t2_f4->name, 'qtl_trait_category_id', 
+is( $t2_f4->name, 'qtl_trait_category_id',
     'Fourth field is "qtl_trait_category_id"' );
 is( $t2_f4->data_type, 'number', 'Field is a number' );
 is( $t2_f4->size, 11, 'Size is "11"' );
@@ -214,9 +212,9 @@ is( $t2_f4->is_nullable, 0, 'Field cannot be null' );
 is( $t2_f4->is_foreign_key, 1, 'Field is a FK' );
 my $f4_fk = $t2_f4->foreign_key_reference;
 isa_ok( $f4_fk, 'SQL::Translator::Schema::Constraint', 'FK' );
-is( $f4_fk->reference_table, 'qtl_trait_category', 
+is( $f4_fk->reference_table, 'qtl_trait_category',
     'FK references table "qtl_trait_category"' );
-is( join(',', $f4_fk->reference_fields), 'qtl_trait_category_id', 
+is( join(',', $f4_fk->reference_fields), 'qtl_trait_category_id',
     'FK references field "qtl_trait_category_id"' );
 
 my @t2_constraints = $t2->get_constraints;
@@ -240,11 +238,11 @@ is( join(',', $t2_c3->fields), 'trait_name', 'Fields = "trait_name"' );
 my $t2_c4 = shift @t2_constraints;
 is( $t2_c4->type, FOREIGN_KEY, 'Fourth constraint is FK' );
 is( $t2_c4->name, '', 'No name' );
-is( join(',', $t2_c4->fields), 'qtl_trait_category_id', 
+is( join(',', $t2_c4->fields), 'qtl_trait_category_id',
     'Fields = "qtl_trait_category_id"' );
-is( $t2_c4->reference_table, 'qtl_trait_category', 
+is( $t2_c4->reference_table, 'qtl_trait_category',
     'Reference table = "qtl_trait_category"' );
-is( join(',', $t2_c4->reference_fields), 'qtl_trait_category_id', 
+is( join(',', $t2_c4->reference_fields), 'qtl_trait_category_id',
     'Reference fields = "qtl_trait_category_id"' );
 
 
@@ -270,7 +268,7 @@ my $t3_f1     = shift @t3_fields;
 is( $t3_f1->comments, 'qtl_id comment', 'Comment "qtl_id comment" exists' );
 
 my $t3_f2     = shift @t3_fields;
-is( $t3_f2->comments, 'accession comment', 
+is( $t3_f2->comments, 'accession comment',
     'Comment "accession comment" exists' );
 
 my @t3_indices = $t3->get_indices;
@@ -295,13 +293,13 @@ is( scalar @t4_constraints, 3, '3 constraints on table' );
 my $t4_c3 = $t4_constraints[2];
 is( $t4_c3->type, FOREIGN_KEY, 'Third constraint is FK' );
 is( $t4_c3->name, '', 'No name' );
-is( join(',', $t4_c3->fields), 'qtl_trait_id', 
+is( join(',', $t4_c3->fields), 'qtl_trait_id',
     'Fields = "qtl_trait_id"' );
-is( $t4_c3->reference_table, 'qtl_trait', 
+is( $t4_c3->reference_table, 'qtl_trait',
     'Reference table = "qtl_trait"' );
-is( join(',', $t4_c3->reference_fields), 'qtl_trait_id', 
+is( join(',', $t4_c3->reference_fields), 'qtl_trait_id',
     'Reference fields = "qtl_trait_id"' );
-is( $t4_c3->on_delete, 'SET NULL', 
+is( $t4_c3->on_delete, 'SET NULL',
     'on_delete = "SET NULL"' );
 
 my @views = $schema->get_views;
@@ -310,7 +308,7 @@ my $view1 = shift @views;
 is( $view1->name, 'VS_ASSET', 'Found "VS_ASSET" view' );
 like($view1->sql, qr/VS_ASSET/, "Detected view VS_ASSET");
 unlike($view1->sql, qr/CMDOMAIN_MIG/, "Did not detect CMDOMAIN_MIG");
-    
+
 my @procs = $schema->get_procedures;
 is( scalar @procs, 1, 'Right number of procedures (1)' );
 my $proc1 = shift @procs;

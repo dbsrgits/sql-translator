@@ -21,7 +21,7 @@ BEGIN {
 
 my ($p, $tables, $classes);
 $p = HTML::Parser->new(api_version => 3);
-$p->strict_names(1); 
+$p->strict_names(1);
 
 my $create = q|
 CREATE TABLE foo (
@@ -35,7 +35,7 @@ my $parsed = $tr->translate(data => $create) or die $tr->error;
 my $status;
 
 eval {
-    $status = $p->parse($parsed);    
+    $status = $p->parse($parsed);
 };
 if ($@) {
     daig $@;
@@ -94,6 +94,6 @@ BEGIN {
                     $classes++;
                 }
             }, 'tagname,attr',
-        ], 
+        ],
     );
 }

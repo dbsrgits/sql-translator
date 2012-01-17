@@ -1,0 +1,10 @@
+Table: person
+  Primary Key:  person_id
+  Foreign Keys: 
+  Data Fields:  name, age, weight, iq, description
+
+Table: pet
+  Primary Key:  pet_id, person_id
+  Foreign Keys: 
+  Data Fields:  name, age
+

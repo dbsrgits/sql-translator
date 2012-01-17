@@ -25,7 +25,7 @@ sqlt.cgi - CGI front-end for SQL::Translator
 =head1 DESCRIPTION
 
 Place this script in your "cgi-bin" directory and point your browser
-to it.  This script is meant to be a simple graphical interface to 
+to it.  This script is meant to be a simple graphical interface to
 all the parsers and producers of SQL::Translator.
 
 =cut
@@ -58,18 +58,18 @@ eval {
         my $output_type = $producer eq 'Diagram'
             ? $q->param('diagram_output_type')
             : $producer eq 'GraphViz'
-            ? $q->param('graphviz_output_type') 
+            ? $q->param('graphviz_output_type')
             : ''
         ;
 
-        my $t                    =  SQL::Translator->new( 
+        my $t                    =  SQL::Translator->new(
             from                 => $q->param('parser'),
             producer_args        => {
                 add_drop_table   => $q->param('add_drop_table'),
                 output_type      => $output_type,
                 title            => $q->param('title')       || 'Schema',
-                natural_join     => $q->param('natural_join') eq 'no' ? 0 : 1, 
-                join_pk_only     => $q->param('natural_join') eq 'pk_only' 
+                natural_join     => $q->param('natural_join') eq 'no' ? 0 : 1,
+                join_pk_only     => $q->param('natural_join') eq 'pk_only'
                                     ? 1 : 0,
                 add_color        => $q->param('add_color'),
                 skip_fields      => $q->param('skip_fields'),
@@ -136,41 +136,41 @@ sub show_form {
     my $q     = shift;
     my $title = 'SQL::Translator';
 
-    print $q->header, 
+    print $q->header,
         $q->start_html( -title => $title ),
         $q->h1( qq[<a href="http://sqlfairy.sourceforge.net">$title</a>] ),
         $q->start_form(-enctype => 'multipart/form-data'),
         $q->table( { -border => 1 },
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Upload your schema file:',
                     $q->filefield( -name => 'schema_file'),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Or paste your schema here:',
-                    $q->textarea( 
-                        -name    => 'schema', 
-                        -rows    => 5, 
+                    $q->textarea(
+                        -name    => 'schema',
+                        -rows    => 5,
                         -columns => 60,
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Parser:',
                     $q->radio_group(
                         -name    => 'parser',
-                        -values  => [ qw( MySQL PostgreSQL Oracle 
-                            Sybase Excel XML-SQLFairy xSV  
+                        -values  => [ qw( MySQL PostgreSQL Oracle
+                            Sybase Excel XML-SQLFairy xSV
                         ) ],
                         -default => 'MySQL',
                         -rows    => 3,
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Producer:',
                     $q->radio_group(
@@ -184,103 +184,103 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td(
                     { -colspan => 2, -align => 'center' },
-                    $q->submit( 
-                        -name  => 'submit', 
+                    $q->submit(
+                        -name  => 'submit',
                         -value => 'Submit',
                     )
                 ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
-                    'General Options:' 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
+                    'General Options:'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Validate Schema:',
                     $q->radio_group(
                         -name    => 'validate',
                         -values  => [ 1, 0 ],
-                        -labels  => { 
-                            1    => 'Yes', 
-                            0    => 'No' 
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No'
                         },
                         -default => 0,
                         -rows    => 2,
                     ),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
-                    'DB Producer Options:' 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
+                    'DB Producer Options:'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Add &quot;DROP TABLE&quot; statements:',
                     $q->radio_group(
                         -name    => 'add_drop_table',
                         -values  => [ 1, 0 ],
-                        -labels  => { 
-                            1    => 'Yes', 
-                            0    => 'No' 
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No'
                         },
                         -default => 0,
                         -rows    => 2,
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Include comments:',
                     $q->radio_group(
                         -name    => 'comments',
                         -values  => [ 1, 0 ],
-                        -labels  => { 
-                            1    => 'Yes', 
-                            0    => 'No' 
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No'
                         },
                         -default => 1,
                         -rows    => 2,
                     ),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
-                    'HTML/POD/Diagram Producer Options:' 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
+                    'HTML/POD/Diagram Producer Options:'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Title:',
                     $q->textfield('title'),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
-                    'TTSchema Producer Options:' 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
+                    'TTSchema Producer Options:'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Template:',
                     $q->filefield( -name => 'template'),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
                     'Graphical Producer Options'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Perform Natural Joins:',
                     $q->radio_group(
@@ -296,7 +296,7 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Skip These Fields in Natural Joins:',
                     $q->textarea(
@@ -306,7 +306,7 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Show Only Foreign Keys:',
                     $q->radio_group(
@@ -321,22 +321,22 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Add Color:',
                     $q->radio_group(
                         -name    => 'add_color',
                         -values  => [ 1, 0 ],
-                        -labels  => { 
-                            1    => 'Yes', 
-                            0    => 'No' 
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No'
                         },
                         -default => 1,
                         -rows    => 2,
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Show Field Names:',
                     $q->radio_group(
@@ -351,13 +351,13 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
                     'Diagram Producer Options'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Output Type:',
                     $q->radio_group(
@@ -368,7 +368,7 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Font Size:',
                     $q->radio_group(
@@ -379,19 +379,19 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Number of Columns:',
                     $q->textfield('no_columns'),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
                     'GraphViz Producer Options'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Output Type:',
                     $q->radio_group(
@@ -405,7 +405,7 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Layout:',
                     $q->radio_group(
@@ -416,87 +416,87 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Node Shape:',
                     $q->radio_group(
                         -name    => 'node_shape',
-                        -values  => [ qw( record plaintext ellipse 
-                            circle egg triangle box diamond trapezium 
-                            parallelogram house hexagon octagon 
+                        -values  => [ qw( record plaintext ellipse
+                            circle egg triangle box diamond trapezium
+                            parallelogram house hexagon octagon
                         ) ],
                         -default => 'record',
                         -rows    => 4,
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Height:',
                     $q->textfield( -name => 'height' ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Width:',
                     $q->textfield( -name => 'width' ),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
-                    'XML Producer Options:' 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
+                    'XML Producer Options:'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Use attributes for values:',
                     $q->radio_group(
                         -name    => 'attrib-values',
                         -values  => [ 1, 0 ],
-                        -labels  => { 
-                            1    => 'Yes', 
-                            0    => 'No' 
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No'
                         },
                         -default => 0,
                         -rows    => 2,
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Emit Empty Tags:',
                     $q->radio_group(
                         -name    => 'emit-empty-tags',
                         -values  => [ 1, 0 ],
-                        -labels  => { 
-                            1    => 'Yes', 
-                            0    => 'No' 
+                        -labels  => {
+                            1    => 'Yes',
+                            0    => 'No'
                         },
                         -default => 0,
                         -rows    => 2,
                     ),
                 ] ),
             ),
-            $q->Tr( 
-                $q->th( 
-                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 }, 
+            $q->Tr(
+                $q->th(
+                    { align => 'left', bgcolor => 'lightgrey', colspan => 2 },
                     'xSV Parser Options'
                 ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Field Separator:',
                     $q->textfield( -name => 'fs' ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Record Separator:',
                     $q->textfield( -name => 'rs' ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Trim Whitespace Around Fields:',
                     $q->radio_group(
@@ -511,7 +511,7 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td( [
                     'Scan Fields for Data Type:',
                     $q->radio_group(
@@ -526,11 +526,11 @@ sub show_form {
                     ),
                 ] ),
             ),
-            $q->Tr( 
+            $q->Tr(
                 $q->td(
                     { -colspan => 2, -align => 'center' },
-                    $q->submit( 
-                        -name  => 'submit', 
+                    $q->submit(
+                        -name  => 'submit',
                         -value => 'Submit',
                     )
                 ),

@@ -20,6 +20,7 @@
 * MySQL parser correctly differentiates between signed and unsigned integer column
   display sizes
 * Replace Class::Accessor::Fast dependency with already-included Moo
+* Entire codebase is now free of tabs and trailing whitespace
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05

@@ -23,7 +23,7 @@ my ( $source_schema, $target_schema ) = map {
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff/, $_ ) )
       or die $tr->error;
-    
+
     my $schema = $t->schema;
     unless ( $schema->name ) {
         $schema->name( $_ );
@@ -32,11 +32,11 @@ my ( $source_schema, $target_schema ) = map {
 } (qw/create1.yml create2.yml/);
 
 # Test for differences
-my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'SQLite', $target_schema, 'SQLite', 
-  { no_batch_alters => 1, 
+my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'SQLite', $target_schema, 'SQLite',
+  { no_batch_alters => 1,
     ignore_missing_methods => 1,
     output_db => 'SQLite',
-  } 
+  }
 );
 
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");

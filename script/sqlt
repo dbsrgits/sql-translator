@@ -51,7 +51,7 @@ To translate a schema:
   General Parser Options:
 
     --skip             Comma-separated list of tables to skip (only implemented in some parsers)
-    --ignore_opts      Comma-separated list of table options to ignore 
+    --ignore_opts      Comma-separated list of table options to ignore
 
   DBI Parser Options:
 
@@ -247,12 +247,12 @@ GetOptions(
 ) or pod2usage(2);
 
 if ($use_same_auth) {
-	$producer_dsn = $dsn;
-	$producer_db_user = $db_user;
-	$producer_db_password = $db_password;
+    $producer_dsn = $dsn;
+    $producer_db_user = $db_user;
+    $producer_db_password = $db_password;
 }
 
-if ( 
+if (
     ( !defined $from && defined $dsn )
     ||
     $from =~ /^DBI.*/
@@ -277,7 +277,7 @@ if ( $show_version ) {
     exit(0);
 }
 
-my $translator           =  SQL::Translator->new( 
+my $translator           =  SQL::Translator->new(
     debug                => $debug          ||  0,
     trace                => $trace          ||  0,
     no_comments          => $no_comments    ||  0,
@@ -318,7 +318,7 @@ my $translator           =  SQL::Translator->new(
         newlines         => $newlines,
         postgres_version => $postgres_version,
         mysql_version    => $mysql_version,
-	    package_name     => $package_name,
+        package_name     => $package_name,
     },
 );
 
@@ -345,7 +345,7 @@ $translator->parser($from);
 $translator->producer($to);
 
 for my $file (@files) {
-    my @args = 
+    my @args =
         ($file eq '-') ? (data => \*STDIN) :
         ($file eq '!') ? (data => '') :
         (file => $file);

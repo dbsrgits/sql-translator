@@ -34,7 +34,7 @@ Indices
         options:  [% index.options %]
         is_valid: [% index.is_valid %]
     [% END %]
-    
+
 Constraints
     [%- FOREACH constraint = table.get_constraints %]
     [% constraint.name OR "?" %]

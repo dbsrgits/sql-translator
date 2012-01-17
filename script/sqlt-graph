@@ -18,7 +18,7 @@
 # 02111-1307  USA
 # -------------------------------------------------------------------
 
-=head1 NAME 
+=head1 NAME
 
 sqlt-graph - Automatically create a graph from a database schema
 
@@ -30,9 +30,9 @@ sqlt-graph - Automatically create a graph from a database schema
 
     -l|--layout        Layout schema for GraphViz
                        ("dot," "neato," "twopi"; default "dot")
-    -n|--node-shape    Shape of the nodes ("record," "plaintext," 
-                       "ellipse," "circle," "egg," "triangle," "box," 
-                       "diamond," "trapezium," "parallelogram," "house," 
+    -n|--node-shape    Shape of the nodes ("record," "plaintext,"
+                       "ellipse," "circle," "egg," "triangle," "box,"
+                       "diamond," "trapezium," "parallelogram," "house,"
                        "hexagon," "octagon," default "record")
     -o|--output        Output file name (default STDOUT)
     -t|--output-type   Output file type ("canon", "text," "ps," "hpgl,"
@@ -44,13 +44,13 @@ sqlt-graph - Automatically create a graph from a database schema
     --no-fields        Don't show field names
     --height           Image height (in inches, default "11",
                        set to "0" to undefine)
-    --width            Image width (in inches, default "8.5", 
+    --width            Image width (in inches, default "8.5",
                        set to "0" to undefine)
     --fontsize         custom font size for node and edge labels
-    --fontname         name of custom font (or full path to font file) for 
+    --fontname         name of custom font (or full path to font file) for
                        node, edge, and graph labels
     --nodeattr         attribute name and value (in key=val syntax) for
-                       nodes; this option may be repeated to specify 
+                       nodes; this option may be repeated to specify
                        multiple node attributes
     --edgeattr         same as --nodeattr, but for edge attributes
     --graphattr        same as --nodeattr, but for graph attributes
@@ -60,7 +60,7 @@ sqlt-graph - Automatically create a graph from a database schema
     --show-sizes       Show column sizes for VARCHAR and CHAR fields
     --show-constraints Show list of constraints for each field
     -s|--skip          Fields to skip in natural joins
-    --skip-tables      Comma-separated list of table names to exclude 
+    --skip-tables      Comma-separated list of table names to exclude
     --skip-tables-like Comma-separated list of regexen to exclude tables
     --debug            Print debugging information
 
@@ -88,8 +88,8 @@ If the schema defines foreign keys, then the graph produced will be
 directed showing the direction of the relationship.  If the foreign
 keys are intuited via natural joins, the graph will be undirected.
 
-Clustering of tables allows you to group and box tables according to 
-function or domain or whatever criteria you choose.  The syntax for 
+Clustering of tables allows you to group and box tables according to
+function or domain or whatever criteria you choose.  The syntax for
 clustering tables is:
 
   cluster1=table1,table2;cluster2=table3,table4
@@ -112,8 +112,8 @@ $VERSION = '1.59';
 #
 # Get arguments.
 #
-my ( 
-    $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color, 
+my (
+    $layout, $node_shape, $out_file, $output_type, $db_driver, $add_color,
     $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
     $show_sizes, $show_constraints, $debug, $help, $height, $width,
     $no_fields, $fontsize, $fontname, $skip_tables, $skip_tables_like,
@@ -158,7 +158,7 @@ pod2usage(1) if $help;
 pod2usage( -message => "No db driver specified" ) unless $db_driver;
 pod2usage( -message => 'No input file'          ) unless @files;
 
-my $translator           =  SQL::Translator->new( 
+my $translator           =  SQL::Translator->new(
     from                 => $db_driver,
     to                   => 'GraphViz',
     debug                => $debug || 0,

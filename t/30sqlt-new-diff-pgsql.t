@@ -25,7 +25,7 @@ my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
       or die $tr->error;
     my $out = $t->translate( catfile($Bin, qw/data diff pgsql/, $_ ) )
       or die $tr->error;
-    
+
     my $schema = $t->schema;
     unless ( $schema->name ) {
         $schema->name( $_ );

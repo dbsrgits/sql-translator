@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # vim:filetype=perl
 
 # Before `make install' is performed this script should be runnable with

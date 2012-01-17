@@ -10,7 +10,7 @@ BEGIN {
     maybe_plan(31, 'SQL::Translator::Parser::Excel');
     SQL::Translator::Parser::Excel->import('parse');
 }
- 
+
 my $tr     = SQL::Translator->new(parser => "Excel");
 my $t      = $tr->translate(filename => "t/data/Excel/t.xls");
 my $schema = $tr->schema;
@@ -45,7 +45,7 @@ is( $f3->is_primary_key, 0, 'Field is not PK' );
 my $f4 = shift @fields;
 TODO: {
     eval { require Spreadsheet::ParseExcel };
-       todo_skip "Bug in Spreadsheet::ParseExcel, http://rt.cpan.org/Public/Bug/Display.html?id=39892", 4 
+       todo_skip "Bug in Spreadsheet::ParseExcel, http://rt.cpan.org/Public/Bug/Display.html?id=39892", 4
                if ( $Spreadsheet::ParseExcel::VERSION > 0.32 and $Spreadsheet::ParseExcel::VERSION < 0.41 );
 
        is( $f4->name, 'math', 'Fourth field name is "math"' );
@@ -67,7 +67,7 @@ is( $f6->size, 10, 'Size is "10"' );
 is( $f6->is_primary_key, 0, 'Field is not PK' );
 
 my $f7 = shift @fields;
-is( $f7->name, 'silly_field_with_random_characters', 
+is( $f7->name, 'silly_field_with_random_characters',
     'Seventh field name is "silly_field_with_random_characters"' );
 is( lc $f7->data_type, 'char', 'Data type is "CHAR"' );
 is( $f7->size, 11, 'Size is "11"' );
