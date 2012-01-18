@@ -1,0 +1,6 @@
+# This file allows us to map authors more correctly
+# so if someone were to legally change their name (or commits from different
+# places), we could fix that while maintaining the integrity of the repository
+
+Jaime Soriano Pastor <jsoriano@tuenti.com>    Jaime Soriano <kronoss@kronoss.org>
+Sebatian B. Knapp <rock@ccls-online.de>       giftnuss <rock@ccls-online.de>
