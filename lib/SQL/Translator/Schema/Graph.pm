@@ -1,7 +1,15 @@
 package SQL::Translator::Schema::Graph;
-
 use strict;
 use warnings;
+
+use Carp;
+carp(
+  'SQL::Translator::Schema::Graph appears to be dead unmaintained and untested '
+. 'code. It will remain a part of the SQL::Translator distribution for some '
+. 'time, but eventually will be cleaned away. Please file a bug or contact the '
+. 'maintainers and let them know you are still using this functionality'
+);
+
 
 use base 'Class::Base';
 

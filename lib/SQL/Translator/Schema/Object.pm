@@ -17,13 +17,11 @@ extra functionality.
 
 use strict;
 use warnings;
-use Class::Base;
 use base 'Class::Data::Inheritable';
 use base 'Class::Base';
-use Class::MakeMethods::Utility::Ref qw( ref_compare );
+use Data::Dumper ();
 
 our $VERSION = '1.59';
-
 
 =head1 Construction
 
@@ -179,10 +177,13 @@ Determines if this object is the same as another.
 }
 
 sub _compare_objects {
-   my $self = shift;
-   my $obj1 = shift;
-   my $obj2 = shift;
-   my $result = (ref_compare($obj1, $obj2) == 0);
+#   my ($self, $obj1, $obj2) = @_;
+
+   my $result = (
+      Data::Dumper->new([$_[1]])->Terse(1)->Indent(0)->Deparse(1)->Sortkeys(1)->Maxdepth(0)->Dump
+        eq
+      Data::Dumper->new([$_[2]])->Terse(1)->Indent(0)->Deparse(1)->Sortkeys(1)->Maxdepth(0)->Dump
+   );
 #  if ( !$result ) {
 #     use Carp qw(cluck);
 #     cluck("How did I get here?");

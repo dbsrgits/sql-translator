@@ -17,6 +17,10 @@ BEGIN {
         parser   => "PostgreSQL",
     );
 
+    local $SIG{__WARN__} = sub {
+      warn @_ unless $_[0] =~ /SQL::Translator::Schema::Graph appears to be dead unmaintained and untested code/
+    };
+
     ok( $tr->translate('t/data/pgsql/turnkey.sql'), 'Translate PG' );
     ok( my $schema = $tr->schema, 'Got Schema' );
     ok( my $graph = $schema->as_graph, 'Graph made');

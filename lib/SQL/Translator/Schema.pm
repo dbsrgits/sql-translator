@@ -35,6 +35,7 @@ use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
 
 use SQL::Translator::Utils 'parse_list_arg';
+use Carp;
 
 use base 'SQL::Translator::Schema::Object';
 our $VERSION = '1.59';
@@ -56,15 +57,14 @@ sub new {
   return $self;
 }
 
+# FIXME - to be removed, together with the SQL::Translator::Schema::Graph* stuff
+# looks like a remnant of the Turnkey project integration back in 2003-4
+# Appears to be quite dead
 sub as_graph {
 
-=pod
+    eval { require Class::MakeMethods }
+      or croak 'You need to install the CPAN dependency Class::MakeMethods to use as_graph()';
 
-=head2 as_graph
-
-Returns the schema as an L<SQL::Translator::Schema::Graph> object.
-
-=cut
     require  SQL::Translator::Schema::Graph;
 
     my $self = shift;

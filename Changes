@@ -32,6 +32,7 @@
 * Fix ignored option to script/sqlt-diagram (RT#5992)
 * Fix t/17sqlfxml-producer.t failures due to whitespace differences introduced by
   environment config snippets (RT#70786)
+* Deprecate SQL::Translator::Schema::Graph and the as_graph() schema method
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
