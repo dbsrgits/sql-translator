@@ -130,7 +130,7 @@ schema:
     thing3:
       name: some.thing3
       extra:
-      order: 2
+      order: 3
       fields:
         id:
           name: id
