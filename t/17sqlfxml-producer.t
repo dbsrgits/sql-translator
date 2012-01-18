@@ -40,6 +40,17 @@ use Test::Differences;
 use SQL::Translator;
 use SQL::Translator::Producer::XML::SQLFairy;
 
+# Due to formatters being able to change style, e.g. by entries in .rc files
+# in $HOME, the layout and or indent might differ slightly. As leading white
+# is not important in XML, strip it when comparing
+sub xml_equals
+{
+    my ($got, $expect, $msg) = (@_, "XML looks right");
+    $got    =~ s/^ +//gm;
+    $expect =~ s/^ +//gm;
+    eq_or_diff $got, $expect, $msg;
+}
+
 #
 # basic stuff
 #
@@ -105,7 +116,7 @@ ok("$xml" ne ""                             ,"Produced something!");
 print "XML:\n$xml" if DEBUG;
 # Strip sqlf header with its variable date so we diff safely
 $xml =~ s/^([^\n]*\n){7}//m;
-eq_or_diff $xml, $ans, "XML looks right";
+xml_equals $xml, $ans;
 
 } # end basic stuff
 
@@ -158,7 +169,7 @@ EOXML
     print "XML attrib_values=>1:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
-    eq_or_diff $xml, $ans                       ,"XML looks right";
+    xml_equals $xml, $ans;
 } # end View
 
 #
@@ -221,7 +232,7 @@ EOXML
     print "XML attrib_values=>1:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
-    eq_or_diff $xml, $ans                       ,"XML looks right";
+    xml_equals $xml, $ans;
 } # end Trigger
 
 #
@@ -277,7 +288,7 @@ EOXML
     print "XML attrib_values=>1:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
-    eq_or_diff $xml, $ans                       ,"XML looks right";
+    xml_equals $xml, $ans;
 } # end Procedure
 
 #
@@ -353,5 +364,5 @@ EOXML
     print "XML:\n$xml" if DEBUG;
     # Strip sqlf header with its variable date so we diff safely
     $xml =~ s/^([^\n]*\n){7}//m;
-    eq_or_diff $xml, $ans                       ,"XML looks right";
+    xml_equals $xml, $ans;
 } # end extra

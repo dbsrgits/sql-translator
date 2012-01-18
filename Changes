@@ -30,6 +30,8 @@
 * Fix Diagram Producer POD (RT#71397, RT#71398)
 * Fix Diagram Producer to use correct binmode on output (RT#71399)
 * Fix ignored option to script/sqlt-diagram (RT#5992)
+* Fix t/17sqlfxml-producer.t failures due to whitespace differences introduced by
+  environment config snippets (RT#70786)
 
 # ----------------------------------------------------------
 # 0.11010 2011-10-05
