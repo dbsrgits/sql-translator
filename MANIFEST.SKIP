@@ -1,13 +1,12 @@
+^(?!script/|lib/|inc/|t/|xt/|share/|Makefile.PL$|README$|MANIFEST$|Changes$|META.(?:json|yml)$)
+
 .*CVS.*
 .#.*
 .*\.bak
 .*\.swp
 .*\.old
 .*\.tar\.gz
-^Makefile$
 ^_build/
-^blib/
-^blibdirs$
 _blib$
 Build$
 (^|/)\.
