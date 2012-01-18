@@ -1,5 +1,23 @@
 package SQL::Translator::Parser::DB2;
 
+=head1 NAME
+
+SQL::Translator::Parser::DB2 - parser for DB2
+
+=head1 SYNOPSIS
+
+  use SQL::Translator;
+  use SQL::Translator::Parser::DB2;
+
+  my $translator = SQL::Translator->new;
+  $translator->parser("SQL::Translator::Parser::DB2");
+
+=head1 DESCRIPTION
+
+This is a grammar for parsing CREATE statements for DB2
+
+=cut
+
 use warnings;
 use strict;
 
@@ -740,3 +758,15 @@ sub parse {
 }
 
 1;
+
+=pod
+
+=head1 AUTHOR
+
+Jess Robinson <cpan@desert-island.me.uk>
+
+=head1 SEE ALSO
+
+perl(1), Parse::RecDescent, SQL::Translator::Schema.
+
+=cut

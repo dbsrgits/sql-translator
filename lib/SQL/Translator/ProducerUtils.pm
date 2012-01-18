@@ -1,4 +1,5 @@
-package SQL::Translator::ProducerUtils;
+package # hide from pause
+  SQL::Translator::ProducerUtils;
 
 use Moo;
 use Sub::Quote 'quote_sub';
