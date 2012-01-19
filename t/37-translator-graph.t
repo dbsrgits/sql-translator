@@ -9,7 +9,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(3, "SQL::Translator");
+    maybe_plan(3, 'SQL::Translator', 'Class::MakeMethods');
 }
 
 {
