@@ -21,8 +21,8 @@ use SQL::Translator::Producer::SQLite;
   my $create_opts = { no_comments => 1 };
   my $view1_sql1 = [ SQL::Translator::Producer::SQLite::create_view($view1, $create_opts) ];
 
-  my $view_sql_replace = [ "CREATE TEMPORARY VIEW IF NOT EXISTS 'view_foo' AS
-    SELECT id, name FROM thing" ];
+  my $view_sql_replace = [ 'CREATE TEMPORARY VIEW IF NOT EXISTS "view_foo" AS
+    SELECT id, name FROM thing' ];
   is_deeply($view1_sql1, $view_sql_replace, 'correct "CREATE TEMPORARY VIEW" SQL');
 
 
@@ -31,8 +31,8 @@ use SQL::Translator::Producer::SQLite;
                                                   sql => 'SELECT id, name FROM thing',);
 
   my $view1_sql2 = [ SQL::Translator::Producer::SQLite::create_view($view2, $create_opts) ];
-  my $view_sql_noreplace = [ "CREATE VIEW 'view_foo' AS
-    SELECT id, name FROM thing" ];
+  my $view_sql_noreplace = [ 'CREATE VIEW "view_foo" AS
+    SELECT id, name FROM thing' ];
   is_deeply($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
 }
 {
@@ -56,7 +56,7 @@ use SQL::Translator::Producer::SQLite;
         on_update => 'CASCADE',
     );
 
-    my $expected = [ "FOREIGN KEY ('foreign_key') REFERENCES 'foo'('id') ON DELETE RESTRICT ON UPDATE CASCADE"];
+    my $expected = [ 'FOREIGN KEY ("foreign_key") REFERENCES "foo"("id") ON DELETE RESTRICT ON UPDATE CASCADE'];
     my $result =  [SQL::Translator::Producer::SQLite::create_foreignkey($constraint,$create_opts)];
     is_deeply($result, $expected, 'correct "FOREIGN KEY"');
 }
