@@ -3,17 +3,11 @@ package SQL::Translator::Generator::Role::DDL;
 use Moo::Role;
 use SQL::Translator::Utils qw(header_comment);
 
-requires '_build_shim';
 requires '_build_type_map';
 requires '_build_numeric_types';
 requires '_build_unquoted_defaults';
 requires 'field_type_size';
-
-has shim => (
-   is => 'ro',
-   handles => [ 'quote' ],
-   builder => '_build_shim',
-);
+requires 'quote';
 
 has type_map => (
    is => 'ro',

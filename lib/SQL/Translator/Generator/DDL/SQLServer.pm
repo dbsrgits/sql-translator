@@ -4,9 +4,11 @@ use Moo;
 use SQL::Translator::Generator::Utils;
 use SQL::Translator::Schema::Constants;
 
+with 'SQL::Translator::Generator::Role::Quote';
 with 'SQL::Translator::Generator::Role::DDL';
 
-sub _build_shim { SQL::Translator::Generator::Utils->new( quote_chars => [qw( [ ] )] ) }
+sub quote_chars { [qw([ ])] }
+sub name_sep { q(.) }
 
 sub _build_numeric_types {
    +{

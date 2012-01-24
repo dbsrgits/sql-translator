@@ -3,9 +3,11 @@ package SQL::Translator::Generator::DDL::SQLite;
 use Moo;
 use SQL::Translator::Generator::Utils;
 
+with 'SQL::Translator::Generator::Role::Quote';
 with 'SQL::Translator::Generator::Role::DDL';
 
-sub _build_shim { SQL::Translator::Generator::Utils->new( quote_chars => q(") ) }
+sub quote_chars { [qw(" ")] }
+sub name_sep { q(.) }
 
 sub _build_type_map {
    +{
