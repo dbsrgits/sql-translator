@@ -10,18 +10,15 @@ requires 'field_type_size';
 requires 'quote';
 
 has type_map => (
-   is => 'ro',
-   builder => '_build_type_map',
+   is => 'lazy',
 );
 
 has numeric_types => (
-   is => 'ro',
-   builder => '_build_numeric_types',
+   is => 'lazy',
 );
 
 has unquoted_defaults => (
-   is => 'ro',
-   builder => '_build_unquoted_defaults',
+   is => 'lazy',
 );
 
 has add_comments => (

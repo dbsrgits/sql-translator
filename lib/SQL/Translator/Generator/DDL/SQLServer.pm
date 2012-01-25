@@ -30,8 +30,7 @@ sub _build_type_map {
 }
 
 has sizeless_types => (
-   is => 'ro',
-   builder => '_build_sizeless_types',
+   is => 'lazy',
 );
 
 sub _build_sizeless_types {
