@@ -12,7 +12,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(343, "SQL::Translator::Parser::MySQL");
+    maybe_plan(346, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -521,7 +521,8 @@ BEGIN {
             DELIMITER ;
             CREATE TABLE one (
               `op` varchar(255) character set latin1 collate latin1_bin default NULL,
-              `last_modified` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+              `last_modified` timestamp NOT NULL default Current_Timestamp on update CURRENT_TIMESTAMP,
+              `created_at` datetime NOT NULL Default CURRENT_TIMESTAMP(),
             ) TYPE=INNODB DEFAULT CHARSET=latin1;
 
             /*!50001 CREATE ALGORITHM=UNDEFINED */
@@ -612,7 +613,7 @@ BEGIN {
     is( $table1->name, 'one', 'Found "one" table' );
 
     my @fields = $table1->get_fields;
-    is(scalar @fields, 2, 'Right number of fields (2) on table one');
+    is(scalar @fields, 3, 'Right number of fields (3) on table one');
     my $tableTypeFound = 0;
     my $charsetFound = 0;
     for my $t1_option_ref ( $table1->options ) {
@@ -643,7 +644,16 @@ BEGIN {
       \'CURRENT_TIMESTAMP',
       'Field has right default value'
     );
-    is( $t1f2->extra('on update'), 'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
+    is_deeply( $t1f2->extra('on update'), \'CURRENT_TIMESTAMP', 'Field has right on update qualifier' );
+
+    my $t1f3 = shift @fields;
+    is( $t1f3->data_type, 'datetime', 'Field is a datetime' );
+    ok( !$t1f3->is_nullable, 'Field is not nullable' );
+    is_deeply(
+      $t1f3->default_value,
+      \'CURRENT_TIMESTAMP',
+      'Field has right default value'
+    );
 
     my @views = $schema->get_views;
     is( scalar @views, 3, 'Right number of views (3)' );

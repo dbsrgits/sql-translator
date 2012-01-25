@@ -509,7 +509,7 @@ on_delete : /on delete/i reference_option
     { $item[2] }
 
 on_update :
-    /on update/i 'CURRENT_TIMESTAMP'
+    /on update/i CURRENT_TIMESTAMP
     { $item[2] }
     |
     /on update/i reference_option
@@ -579,9 +579,9 @@ not_null     : /not/i /null/i
 unsigned     : /unsigned/i { $return = 0 }
 
 default_val :
-    /default/i 'CURRENT_TIMESTAMP'
+    /default/i CURRENT_TIMESTAMP
     {
-        $return =  \$item[2];
+        $return =  $item[2];
     }
     |
     /default/i string
@@ -783,9 +783,10 @@ VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     | /NULL/
     { 'NULL' }
 
-CURRENT_TIMESTAMP : /current_timestamp(\(\))?/i
-    | /now\(\)/i
-    { 'CURRENT_TIMESTAMP' }
+# always a scalar-ref, so that it is treated as a function and not quoted by consumers
+CURRENT_TIMESTAMP :
+      /current_timestamp(\(\))?/i { \'CURRENT_TIMESTAMP' }
+    | /now\(\)/i { \'CURRENT_TIMESTAMP' }
 
 END_OF_GRAMMAR
 
