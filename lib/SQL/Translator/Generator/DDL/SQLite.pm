@@ -16,10 +16,6 @@ sub _build_type_map {
    }
 }
 
-has sizeless_types => (
-   is => 'lazy',
-);
-
 sub _build_sizeless_types { +{ text => 1 } }
 sub _build_numeric_types { +{ int => 1, tinyint => 1 } }
 
@@ -58,15 +54,6 @@ sub field {
       ),
       $self->field_nullable($field),
       $self->field_default($field),
-}
-
-sub field_type_size {
-   my ($self, $field) = @_;
-
-   ($field->size && !$self->sizeless_types->{$field->data_type}
-      ? '(' . $field->size . ')'
-      : ''
-   )
 }
 
 1;

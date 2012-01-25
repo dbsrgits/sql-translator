@@ -29,10 +29,6 @@ sub _build_type_map {
    }
 }
 
-has sizeless_types => (
-   is => 'lazy',
-);
-
 sub _build_sizeless_types {
    +{ map { $_ => 1 }
          qw( tinyint smallint int integer bigint text bit image datetime ) }
@@ -45,15 +41,6 @@ sub field {
       $self->field_autoinc($field),
       $self->field_nullable($field),
       $self->field_default($field),
-}
-
-sub field_type_size {
-   my ($self, $field) = @_;
-
-   ($field->size && !$self->sizeless_types->{$field->data_type}
-      ? '(' . $field->size . ')'
-      : ''
-   )
 }
 
 sub field_autoinc { ( $_[1]->is_auto_increment ? 'IDENTITY' : () ) }

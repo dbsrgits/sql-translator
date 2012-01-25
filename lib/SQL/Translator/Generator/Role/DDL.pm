@@ -6,7 +6,7 @@ use SQL::Translator::Utils qw(header_comment);
 requires '_build_type_map';
 requires '_build_numeric_types';
 requires '_build_unquoted_defaults';
-requires 'field_type_size';
+requires '_build_sizeless_types';
 requires 'quote';
 
 has type_map => (
@@ -14,6 +14,10 @@ has type_map => (
 );
 
 has numeric_types => (
+   is => 'lazy',
+);
+
+has sizeless_types => (
    is => 'lazy',
 );
 
@@ -67,6 +71,15 @@ sub field_type {
 
    my $field_type = $field->data_type;
    ($self->type_map->{$field_type} || $field_type).$self->field_type_size($field)
+}
+
+sub field_type_size {
+   my ($self, $field) = @_;
+
+   ($field->size && !$self->sizeless_types->{$field->data_type}
+      ? '(' . $field->size . ')'
+      : ''
+   )
 }
 
 sub fields {
