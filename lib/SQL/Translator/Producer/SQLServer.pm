@@ -43,9 +43,9 @@ $DEBUG = 1 unless defined $DEBUG;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment);
-use SQL::Translator::ProducerUtils;
+use SQL::Translator::Generator::Utils;
 
-my $util = SQL::Translator::ProducerUtils->new( quote_chars => ['[', ']'] );
+my $util = SQL::Translator::Generator::Utils->new( quote_chars => ['[', ']'] );
 
 my %translate  = (
     date      => 'datetime',

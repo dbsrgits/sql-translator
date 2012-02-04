@@ -1,5 +1,5 @@
 package # hide from pause
-  SQL::Translator::ProducerUtils;
+  SQL::Translator::Generator::Utils;
 
 use Moo;
 use Sub::Quote 'quote_sub';

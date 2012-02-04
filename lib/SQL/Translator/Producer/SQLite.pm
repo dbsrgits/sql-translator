@@ -22,8 +22,8 @@ use warnings;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
-use SQL::Translator::ProducerUtils;
-my $util = SQL::Translator::ProducerUtils->new( quote_chars => q(") );
+use SQL::Translator::Generator::Utils;
+my $util = SQL::Translator::Generator::Utils->new( quote_chars => q(") );
 
 our ( $DEBUG, $WARN );
 our $VERSION = '1.59';
