@@ -70,12 +70,13 @@ my $plan = [
     parser_args => {},
     todo => 'Needs volunteers',
   },
-  {
-    engine => 'DB2',
-    producer_args => {},
-    parser_args => {},
-    todo => 'Needs volunteers',
-  },
+# too noisy under new P::RD
+#  {
+#    engine => 'DB2',
+#    producer_args => {},
+#    parser_args => {},
+#    todo => 'Needs volunteers',
+#  },
 
 # There is no Access producer
 #  {

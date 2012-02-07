@@ -1,4 +1,3 @@
-* All parser grammars are now precompiled for speed
 * Fixes to SQLite foreign keys production (patch from Johan Viklund)
   closes RT#16412, RT#44769
 * ON DELETE/UPDATE actions for SQLite (patch from Lukas Thiemeier)

@@ -107,6 +107,8 @@ if ($Module::Install::AUTHOR) {
 WriteAll();
 
 sub _recompile_grammars {
+  return; # disabled until RT#74593 is resolved
+
   require File::Spec;
 
   my $compiled_parser_dir = File::Spec->catdir(qw/
