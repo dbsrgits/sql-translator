@@ -26,7 +26,9 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Index;
-use Data::Dumper;
+
+use Carp::Clan '^SQL::Translator';
+use List::Util 'max';
 
 use base 'SQL::Translator::Schema::Object';
 
@@ -55,18 +57,6 @@ Object constructor.
   );
 
 =cut
-
-sub new {
-  my $class = shift;
-  my $self = $class->SUPER::new (@_)
-    or return;
-
-  $self->{_order} = { map { $_ => 0 } qw/
-    field
-  /};
-
-  return $self;
-}
 
 sub add_constraint {
 
@@ -306,11 +296,35 @@ existing field, you will get an error and the field will not be created.
             $self->error( $field_class->error );
     }
 
-    $field->order( ++$self->{_order}{field} );
+    my $existing_order = { map { $_->order => $_->name } $self->get_fields };
+
+    # supplied order, possible unordered assembly
+    if ( $field->order ) {
+        if($existing_order->{$field->order}) {
+            croak sprintf
+                "Requested order '%d' for column '%s' conflicts with already existing column '%s'",
+                $field->order,
+                $field->name,
+                $existing_order->{$field->order},
+            ;
+        }
+    }
+    else {
+        my $last_field_no = max(keys %$existing_order) || 0;
+        if ( $last_field_no != scalar keys %$existing_order ) {
+            croak sprintf
+                "Table '%s' field order incomplete - unable to auto-determine order for newly added field",
+                $self->name,
+            ;
+        }
+
+        $field->order( $last_field_no + 1 );
+    }
+
     # We know we have a name as the Field->new above errors if none given.
     my $field_name = $field->name;
 
-    if ( exists $self->{'fields'}{ $field_name } ) {
+    if ( $self->get_field($field_name) ) {
         return $self->error(qq[Can't create field: "$field_name" exists]);
     }
     else {

@@ -23,7 +23,7 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: id
-          order: 10
+          order: 1
           size:
             - 11
       indices: []
@@ -67,7 +67,7 @@ schema:
           is_primary_key: 1
           is_unique: 0
           name: employee_id
-          order: 8
+          order: 2
           size:
             - 11
         job_title:
@@ -78,7 +78,7 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: job_title
-          order: 9
+          order: 3
           size:
             - 255
         position:
@@ -89,7 +89,7 @@ schema:
           is_primary_key: 1
           is_unique: 0
           name: position
-          order: 7
+          order: 1
           size:
             - 50
       indices: []

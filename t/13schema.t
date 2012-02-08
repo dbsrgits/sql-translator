@@ -4,7 +4,8 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 238;
+use Test::More tests => 245;
+use Test::Exception;
 use SQL::Translator::Schema::Constants;
 
 require_ok( 'SQL::Translator' );
@@ -714,4 +715,32 @@ require_ok( 'SQL::Translator::Schema' );
     like( $s->error, qr/doesn't exist/, qq[Can't drop non-existant procedure "foo_proc"] );
 
     $s->add_procedure($p);
+}
+
+#
+# Test field order
+#
+{
+    my $s  = SQL::Translator::Schema->new;
+    my $t  = $s->add_table( name => 'person'          );
+    my $f3 = $t->add_field( name => 'age', order => 3 );
+    my $f1 = $t->add_field( name => 'person_id', order => 1 );
+    my $f2 = $t->add_field( name => 'name', order => 2 );
+    my $f4 = $t->add_field( name => 'gender' );
+    my $f5 = $t->add_field( name => 'alias' );
+
+    is( $f1->order, 1, 'Field order is passed, order is 1' );
+    is( $f2->order, 2, 'Field order is passed, order is 2' );
+    is( $f3->order, 3, 'Field order is passed, order is 3' );
+    is( $f4->order, 4, 'Field order is not passed, order is 4' );
+    is( $f5->order, 5, 'Field order is not passed, order is 5' );
+
+    my $t2  = $s->add_table( name => 'place'                );
+    $f2 = $t2->add_field( name => 'name', order => 2 );
+
+    throws_ok { my $f22 = $t2->add_field( name => 'name2', order => 2 ) }
+        qr/\QRequested order '2' for column 'name2' conflicts with already existing column 'name'/;
+
+    throws_ok { $f1 = $t2->add_field( name => 'location' ) }
+        qr/field order incomplete/;
 }

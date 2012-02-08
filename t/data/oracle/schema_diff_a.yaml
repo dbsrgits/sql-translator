@@ -48,7 +48,7 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: other
-          order: 59
+          order: 60
           size:
             - 10
       name: d_operator
