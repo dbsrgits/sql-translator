@@ -3,6 +3,7 @@
 * ON DELETE/UPDATE actions for SQLite (patch from Lukas Thiemeier)
   closes RT#70734, RT#71283, RT#70378
 * Proper quoting support in SQLite
+* Fix data preservation on SQLite diffs involving adding/dropping columns
 * Support for triggers in PostgreSQL producer and parser
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)
 * Fix index issue in SQLT::Parser::DBI::PostgreSQL

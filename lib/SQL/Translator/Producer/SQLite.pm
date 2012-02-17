@@ -441,23 +441,28 @@ sub batch_alter_table {
        alter_table/;
   }
 
-
   my @sql;
   my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
 
+  if(@{$diffs->{drop_field}}) {
+    $old_table =$diffs->{drop_field}[0]->table;
+  }
+
+  my %temp_table_fields;
   do {
     local $table->{name} = $table_name . '_temp_alter';
     # We only want the table - dont care about indexes on tmp table
     my ($table_sql) = create_table($table, {no_comments => 1, temporary_table => 1});
     push @sql,$table_sql;
+
+    %temp_table_fields = map { $_ => 1} $table->get_fields;
   };
 
-  push @sql, "INSERT INTO @{[$util->quote($table_name.'_temp_alter')]} SELECT @{[ join(', ', map $util->quote($_), $old_table->get_fields)]} FROM @{[$util->quote($old_table)]}",
+  push @sql, "INSERT INTO @{[$util->quote($table_name.'_temp_alter')]}( @{[ join(', ', map $util->quote($_), grep { $temp_table_fields{$_} } $old_table->get_fields)]}) SELECT @{[ join(', ', map $util->quote($_), grep { $temp_table_fields{$_} } $old_table->get_fields)]} FROM @{[$util->quote($old_table)]}",
              "DROP TABLE @{[$util->quote($old_table)]}",
              create_table($table, { no_comments => 1 }),
-             "INSERT INTO @{[$util->quote($table_name)]} SELECT @{[ join(', ', map $util->quote($_), $old_table->get_fields)]} FROM @{[$util->quote($table_name.'_temp_alter')]}",
+             "INSERT INTO @{[$util->quote($table_name)]} SELECT @{[ join(', ', map $util->quote($_), $table->get_fields)]} FROM @{[$util->quote($table_name.'_temp_alter')]}",
              "DROP TABLE @{[$util->quote($table_name.'_temp_alter')]}";
-
   return @sql;
 #  return join("", @sql, "");
 }

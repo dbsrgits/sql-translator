@@ -102,7 +102,7 @@ CREATE TEMPORARY TABLE "employee_temp_alter" (
   FOREIGN KEY ("employee_id") REFERENCES "person"("person_id")
 );
 
-INSERT INTO "employee_temp_alter" SELECT "position", "employee_id" FROM "employee";
+INSERT INTO "employee_temp_alter"( "position", "employee_id") SELECT "position", "employee_id" FROM "employee";
 
 DROP TABLE "employee";
 
@@ -131,7 +131,7 @@ CREATE TEMPORARY TABLE "person_temp_alter" (
   "physical_description" text
 );
 
-INSERT INTO "person_temp_alter" SELECT "person_id", "name", "age", "weight", "iq", "is_rock_star", "physical_description" FROM "person";
+INSERT INTO "person_temp_alter"( "person_id", "name", "age", "weight", "iq", "is_rock_star", "physical_description") SELECT "person_id", "name", "age", "weight", "iq", "is_rock_star", "physical_description" FROM "person";
 
 DROP TABLE "person";
 
