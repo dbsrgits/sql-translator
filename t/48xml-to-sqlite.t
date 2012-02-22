@@ -20,6 +20,7 @@ my $xmlfile = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
 $sqlt = SQL::Translator->new(
+    quote_identifiers => 1,
     no_comments => 1,
     show_warnings  => 0,
     add_drop_table => 1,

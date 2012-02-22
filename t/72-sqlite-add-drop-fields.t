@@ -40,27 +40,27 @@ eq_or_diff($upgrade_sql, <<'## END OF DIFF', "Diff as expected");
 
 BEGIN;
 
-CREATE TEMPORARY TABLE "Foo_temp_alter" (
-  "foo" INTEGER PRIMARY KEY NOT NULL,
-  "bar" VARCHAR(10) NOT NULL,
-  "baz" VARCHAR(10),
-  "doomed" VARCHAR(10)
+CREATE TEMPORARY TABLE Foo_temp_alter (
+  foo INTEGER PRIMARY KEY NOT NULL,
+  bar VARCHAR(10) NOT NULL,
+  baz VARCHAR(10),
+  doomed VARCHAR(10)
 );
 
-INSERT INTO "Foo_temp_alter"( "foo", "bar") SELECT "foo", "bar" FROM "Foo";
+INSERT INTO Foo_temp_alter( foo, bar) SELECT foo, bar FROM Foo;
 
-DROP TABLE "Foo";
+DROP TABLE Foo;
 
-CREATE TABLE "Foo" (
-  "foo" INTEGER PRIMARY KEY NOT NULL,
-  "bar" VARCHAR(10) NOT NULL,
-  "baz" VARCHAR(10),
-  "doomed" VARCHAR(10)
+CREATE TABLE Foo (
+  foo INTEGER PRIMARY KEY NOT NULL,
+  bar VARCHAR(10) NOT NULL,
+  baz VARCHAR(10),
+  doomed VARCHAR(10)
 );
 
-INSERT INTO "Foo" SELECT "foo", "bar", "baz", "doomed" FROM "Foo_temp_alter";
+INSERT INTO Foo SELECT foo, bar, baz, doomed FROM Foo_temp_alter;
 
-DROP TABLE "Foo_temp_alter";
+DROP TABLE Foo_temp_alter;
 
 
 COMMIT;

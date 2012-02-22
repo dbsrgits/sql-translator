@@ -1,3 +1,4 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 *** INCOMPATIBLE CHANGES:
 * SQLT no longer supports setting separate conflicting values for the now
   deprecated 'quote_table_names' and 'quote_field_names'. Instead their values
@@ -6,12 +7,16 @@
   specified the default is TRUE as before. If only one is specified - default
   to its value for everything, and if both are specified with a conflicting
   value an exception is thrown.
-
+* Partial quoting support has been added in SQLite. It is currently disabled by
+  default, you need to request is explicitly with quote_identifiers => 1. In a
+  future version of SQL::Translator *THIS DEFAULT BEHAVIOR WILL CHANGE*.
+  If you do NOT WANT quoting, set quote_identifiers to a false value to
+  protect yourself from changes in a future release.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 * Fixes to SQLite foreign keys production (patch from Johan Viklund)
   closes RT#16412, RT#44769
 * ON DELETE/UPDATE actions for SQLite (patch from Lukas Thiemeier)
   closes RT#70734, RT#71283, RT#70378
-* Proper quoting support in SQLite
 * Fix data preservation on SQLite diffs involving adding/dropping columns
 * Support for triggers in PostgreSQL producer and parser
 * Correct Data Type in SQLT::Parser::DBI::PostgreSQL (patch from Andrew Pam)

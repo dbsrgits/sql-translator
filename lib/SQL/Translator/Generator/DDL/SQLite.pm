@@ -3,10 +3,11 @@ package SQL::Translator::Generator::DDL::SQLite;
 use Moo;
 use SQL::Translator::Generator::Utils;
 
+has quote_chars => (is=>'ro', default=>sub { +[qw(" ")] } );
+
 with 'SQL::Translator::Generator::Role::Quote';
 with 'SQL::Translator::Generator::Role::DDL';
 
-sub quote_chars { [qw(" ")] }
 sub name_sep { q(.) }
 
 sub _build_type_map {

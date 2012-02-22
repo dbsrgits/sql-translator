@@ -269,7 +269,7 @@ sub produce_diff_sql {
     }
 
     if (my @tables = @{ $self->tables_to_create } ) {
-      my $translator = new SQL::Translator(
+      my $translator = SQL::Translator->new(
         producer_type => $self->output_db,
         add_drop_table => 0,
         no_comments => 1,

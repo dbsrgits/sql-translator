@@ -9,6 +9,7 @@ use FindBin qw/$Bin/;
 use SQL::Translator::Schema::View;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Producer::SQLite;
+$SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
 
 {
   my $view1 = SQL::Translator::Schema::View->new( name => 'view_foo',
