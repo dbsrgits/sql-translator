@@ -41,7 +41,7 @@ my $out = SQL::Translator::Diff::schema_diff(
    'PostgreSQL',
    {
      producer_args => {
-         quote_table_names => 0,
+         quote_identifiers => 0,
      }
    }
 );
@@ -52,7 +52,7 @@ eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 BEGIN;
 
 CREATE TABLE added (
-  "id" bigint
+  id bigint
 );
 
 ALTER TABLE old_name RENAME TO new_name;

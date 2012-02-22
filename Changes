@@ -1,3 +1,12 @@
+*** INCOMPATIBLE CHANGES:
+* SQLT no longer supports setting separate conflicting values for the now
+  deprecated 'quote_table_names' and 'quote_field_names'. Instead their values
+  are proxied to the new 'quote_identifiers'. If 'quote_identifiers' is
+  supplied, the legacy settings are ignored (with a warning). If nothing is
+  specified the default is TRUE as before. If only one is specified - default
+  to its value for everything, and if both are specified with a conflicting
+  value an exception is thrown.
+
 * Fixes to SQLite foreign keys production (patch from Johan Viklund)
   closes RT#16412, RT#44769
 * ON DELETE/UPDATE actions for SQLite (patch from Lukas Thiemeier)

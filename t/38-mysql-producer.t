@@ -254,8 +254,8 @@ my $mysql_out = join(";\n\n", @stmts_no_drop) . ";\n\n";
       or die "Translat eerror:".$sqlt->error;
     is_deeply \@out, \@stmts_no_drop, "Array output looks right with quoting";
 
+    $sqlt->quote_identifiers(0);
 
-    @{$sqlt}{qw/quote_table_names quote_field_names/} = (0,0);
     $out = $sqlt->translate(\$yaml_in)
       or die "Translate error:".$sqlt->error;
 
@@ -266,7 +266,9 @@ my $mysql_out = join(";\n\n", @stmts_no_drop) . ";\n\n";
     eq_or_diff $out, $mysql_out,       "Output looks right without quoting";
     is_deeply \@out, \@unquoted_stmts, "Array output looks right without quoting";
 
-    @{$sqlt}{qw/add_drop_table quote_field_names quote_table_names/} = (1,1,1);
+    $sqlt->quote_identifiers(1);
+    $sqlt->add_drop_table(1);
+
     @out = $sqlt->translate(\$yaml_in)
       or die "Translat eerror:".$sqlt->error;
     $out = $sqlt->translate(\$yaml_in)

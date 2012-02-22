@@ -11,7 +11,7 @@ our $VERSION  = '0.11010';
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
-use Carp qw(carp);
+use Carp qw(carp croak);
 
 use Data::Dumper;
 use File::Find;
@@ -88,10 +88,46 @@ sub init {
 
     $self->validate( $config->{'validate'} );
 
-    $self->quote_table_names( (defined $config->{'quote_table_names'}
-        ? $config->{'quote_table_names'} : 1) );
-    $self->quote_field_names( (defined $config->{'quote_field_names'}
-        ? $config->{'quote_field_names'} : 1) );
+    my $quote;
+    if (defined $config->{quote_identifiers}) {
+      $quote = $config->{quote_identifiers};
+
+      for (qw/quote_table_names quote_field_names/) {
+        carp "Ignoring deprecated parameter '$_', since 'quote_identifiers' is supplied"
+          if defined $config->{$_}
+      }
+    }
+    # Legacy one set the other is not
+    elsif (
+      defined $config->{'quote_table_names'}
+        xor
+      defined $config->{'quote_field_names'}
+    ) {
+      if (defined $config->{'quote_table_names'}) {
+        carp "Explicitly disabling the deprecated 'quote_table_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_field_names'"
+          unless $config->{'quote_table_names'};
+        $quote = $config->{'quote_table_names'} ? 1 : 0;
+      }
+      else {
+        carp "Explicitly disabling the deprecated 'quote_field_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_table_names'"
+          unless $config->{'quote_field_names'};
+        $quote = $config->{'quote_field_names'} ? 1 : 0;
+      }
+    }
+    # Legacy both are set
+    elsif(defined $config->{'quote_table_names'}) {
+      croak 'Setting quote_table_names and quote_field_names to conflicting values is no longer supported'
+        if ($config->{'quote_table_names'} xor $config->{'quote_field_names'});
+
+      $quote = $config->{'quote_table_names'} ? 1 : 0;
+    }
+    # none are set - on by default, use a 0-but-true as indicator
+    # so we can allow individual producers to change the default
+    else {
+      $quote = '0E0';
+    }
+
+    $self->quote_identifiers($quote);
 
     return $self;
 }
@@ -114,19 +150,25 @@ sub no_comments {
 }
 
 sub quote_table_names {
-    my $self = shift;
-    if ( defined (my $arg = shift) ) {
-        $self->{'quote_table_names'} = $arg ? 1 : 0;
-    }
-    return $self->{'quote_table_names'} || 0;
+    (@_ > 1 and ($_[1] xor $_[0]->{quote_identifiers}) )
+        ? croak 'Using quote_table_names as a setter is no longer supported'
+        : $_[0]->{quote_identifiers} ? 1 : 0
 }
 
 sub quote_field_names {
-    my $self = shift;
-    if ( defined (my $arg = shift) ) {
-        $self->{'quote_field_names'} = $arg ? 1 : 0;
-    }
-    return $self->{'quote_field_names'} || 0;
+    (@_ > 1 and ($_[1] xor $_[0]->{quote_identifiers}) )
+        ? croak 'Using quote_field_names as a setter is no longer supported'
+        : $_[0]->{quote_identifiers} ? 1 : 0
+}
+
+sub quote_identifiers {
+    @_ > 1
+        ? # synchronize for old code reaching directly into guts
+            $_[0]->{quote_table_names}
+             = $_[0]->{quote_field_names}
+              = $_[0]->{quote_identifiers}
+               = $_[1] ? $_[1] : 0
+        : $_[0]->{quote_identifiers}
 }
 
 sub producer {
@@ -741,8 +783,7 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
       # Add "drop table" statements
       add_drop_table      => 1,
       # to quote or not to quote, thats the question
-      quote_table_names     => 1,
-      quote_field_names     => 1,
+      quote_identifiers     => 1,
       # Validate schema object
       validate            => 1,
       # Make all table names CAPS in producers which support this option
@@ -826,11 +867,15 @@ add_drop_table
 
 =item *
 
-quote_table_names
+quote_identifiers
 
 =item *
 
-quote_field_names
+quote_table_names (DEPRECATED)
+
+=item *
+
+quote_field_names (DEPRECATED)
 
 =item *
 
@@ -857,15 +902,19 @@ advantage is gained by passing options to the constructor.
 Toggles whether or not to add "DROP TABLE" statements just before the
 create definitions.
 
+=head2 quote_identifiers
+
+Toggles whether or not to quote identifiers (table, column, constraint, etc.)
+with a quoting mechanism suitable for the chosen Producer. The default (true)
+is to quote them.
+
 =head2 quote_table_names
 
-Toggles whether or not to quote table names with " in DROP and CREATE
-statements. The default (true) is to quote them.
+DEPRECATED - A legacy proxy to L</quote_identifiers>
 
 =head2 quote_field_names
 
-Toggles whether or not to quote field names with " in most
-statements. The default (true), is to quote them.
+DEPRECATED - A legacy proxy to L</quote_identifiers>
 
 =head2 no_comments
 
