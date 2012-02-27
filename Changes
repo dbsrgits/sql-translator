@@ -12,6 +12,7 @@
   future version of SQL::Translator *THIS DEFAULT BEHAVIOR WILL CHANGE*.
   If you do NOT WANT quoting, set quote_identifiers to a false value to
   protect yourself from changes in a future release.
+* Bump the default MySQL parser version to MySQL 4.0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 * script/sqlt-graph now accepts a --trace option
 * Fixes to SQLite foreign keys production (patch from Johan Viklund)
@@ -34,6 +35,7 @@
   fix by not adding the ON DELETE/UPDATE clause at all
 * Changed dependency on Digest::SHA1 to the core-bundled Digest::SHA (RT#67989)
 * Support for double quoted and bit strings as default values in MySQL parser
+* Improved VIEW support in MySQL parser
 * Proper handling of CURRENT_TIMESTAMP default values in MySQL parser (RT#65844)
 * Check in MySQL parser to avoid trying to parse a table defined twice in the same
   file as indices (and probably other things) get messed up
