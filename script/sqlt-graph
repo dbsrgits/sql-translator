@@ -63,6 +63,7 @@ sqlt-graph - Automatically create a graph from a database schema
     --skip-tables      Comma-separated list of table names to exclude
     --skip-tables-like Comma-separated list of regexen to exclude tables
     --debug            Print debugging information
+    --trace            Print parser trace info
 
 =head1 DESCRIPTION
 
@@ -117,7 +118,7 @@ my (
     $natural_join, $join_pk_only, $skip_fields, $show_datatypes,
     $show_sizes, $show_constraints, $debug, $help, $height, $width,
     $no_fields, $fontsize, $fontname, $skip_tables, $skip_tables_like,
-    $cluster
+    $cluster, $trace
 );
 
 # multi-valued options:
@@ -150,6 +151,7 @@ GetOptions(
     'show-sizes'         => \$show_sizes,
     'show-constraints'   => \$show_constraints,
     'debug'              => \$debug,
+    'trace'              => \$trace,
     'h|help'             => \$help,
 ) or die pod2usage;
 my @files = @ARGV; # the create script(s) for the original db
@@ -162,6 +164,7 @@ my $translator           =  SQL::Translator->new(
     from                 => $db_driver,
     to                   => 'GraphViz',
     debug                => $debug || 0,
+    trace                => $trace || 0,
     producer_args        => {
         out_file         => $out_file,
         layout           => $layout,
