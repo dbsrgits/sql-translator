@@ -891,10 +891,12 @@ sub parse {
     my ( $translator, $data ) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
-    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
-    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
-    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
-
+    # Make sure the parser dies when it encounters an error
+    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS;
+    # Enable warnings. This will warn on unused rules &c.
+    local $::RD_WARN   = 1 unless defined $::RD_WARN;
+    # Give out hints to help fix problems.
+    local $::RD_HINT   = 1 unless defined $::RD_HINT;
     local $::RD_TRACE  = $translator->trace ? 1 : undef;
     local $DEBUG       = $translator->debug;
 

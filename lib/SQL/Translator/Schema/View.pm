@@ -73,15 +73,16 @@ names and keep them in order by the first occurrence of a field name.
     if ( @$fields ) {
         my ( %unique, @unique );
         for my $f ( @$fields ) {
-            next if $unique{ $f };
-            $unique{ $f } = 1;
+            next if $unique{ $f }++;
             push @unique, $f;
         }
 
         $self->{'fields'} = \@unique;
     }
 
-    return wantarray ? @{ $self->{'fields'} || [] } : ($self->{'fields'} || '');
+    my @flds = @{ $self->{'fields'} || [] };
+
+    return wantarray ? @flds : \@flds;
 }
 
 sub is_valid {

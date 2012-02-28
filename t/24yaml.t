@@ -211,7 +211,7 @@ schema:
       perform_action_when: after
   views:
     person_pet:
-      fields: ''
+      fields: []
       name: person_pet
       order: 1
       sql: |
