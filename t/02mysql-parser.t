@@ -508,7 +508,7 @@ BEGIN {
 #    charset table option
 #
 {
-    my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50003});
+    my $tr = SQL::Translator->new(parser_args => {mysql_parser_version => 50013});
     my $data = parse($tr,
         q[
             DELIMITER ;;
@@ -527,6 +527,7 @@ BEGIN {
 
             /*!50001 CREATE ALGORITHM=UNDEFINED */
             /*!50013 DEFINER=`cmdomain`@`localhost` SQL SECURITY DEFINER */
+            /*!50014 DEFINER=`BOGUS` */
             /*! VIEW `vs_asset` AS
                 select `a`.`asset_id` AS `asset_id`,`a`.`fq_name` AS `fq_name`,
                 `cfgmgmt_mig`.`ap_extract_folder`(`a`.`fq_name`) AS `folder_name`,
@@ -662,7 +663,6 @@ BEGIN {
     is( $view1->name, 'vs_asset', 'Found "vs_asset" view' );
     is( $view2->name, 'vs_asset2', 'Found "vs_asset2" view' );
     is( $view3->name, 'vs_asset3', 'Found "vs_asset3" view' );
-    like($view1->sql, qr/ALGORITHM=UNDEFINED/, "Detected algorithm");
     like($view1->sql, qr/vs_asset/, "Detected view vs_asset");
 
     # KYC - commenting this out as I don't understand why this string
@@ -675,6 +675,18 @@ BEGIN {
             date_modified container_id creator_id modifier_id user_access
         ] ),
         'First view has correct fields'
+    );
+
+    my @options = $view1->options;
+
+    is_deeply(
+      \@options,
+      [
+        'ALGORITHM=UNDEFINED',
+        'DEFINER=`cmdomain`@`localhost`',
+        'SQL SECURITY DEFINER',
+      ],
+      'Only version 50013 options parsed',
     );
 
     my @procs = $schema->get_procedures;

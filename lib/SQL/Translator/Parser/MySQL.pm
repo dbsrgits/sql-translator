@@ -1059,15 +1059,16 @@ sub parse {
         my $view = $result->{'views'}{ $view_name };
         my @flds = map { $_->{'alias'} || $_->{'name'} }
                    @{ $view->{'select'}{'columns'} || [] };
+        my @from = map { $_->{'alias'} || $_->{'name'} }
+                   @{ $view->{'from'}{'tables'} || [] };
 
         $schema->add_view(
             name    => $view_name,
             sql     => $view->{'sql'},
             order   => $view->{'order'},
             fields  => \@flds,
-#            from    => $view->{'from'}{'tables'},
-#            where   => $view->{'from'}{'where'},
-#            options => $view->{'options'}
+            tables  => \@from,
+            options => $view->{'options'}
         );
     }
 

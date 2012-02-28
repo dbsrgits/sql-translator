@@ -34,7 +34,7 @@ our ( $TABLE_COUNT, $VIEW_COUNT );
 our $VERSION = '1.59';
 
 __PACKAGE__->_attributes( qw/
-    name sql fields schema order
+    name sql fields schema order tables options
 /);
 
 =pod
@@ -83,6 +83,76 @@ names and keep them in order by the first occurrence of a field name.
     my @flds = @{ $self->{'fields'} || [] };
 
     return wantarray ? @flds : \@flds;
+}
+
+sub tables {
+
+=pod
+
+=head2 tables
+
+Gets and set the tables the SELECT mentions.  Accepts a string, list or
+arrayref; returns an array or array reference.  Will unique the table
+names and keep them in order by the first occurrence of a field name.
+
+  $view->tables('foo');
+  $view->tables('foo', 'bar');
+  $view->tables( 'foo, bar' );
+  $view->tables( [ 'foo', 'bar' ] );
+  $view->tables( qw[ foo bar ] );
+
+  my @tables = $view->tables;
+
+=cut
+
+    my $self   = shift;
+    my $tables = parse_list_arg( @_ );
+
+    if ( @$tables ) {
+        my ( %unique, @unique );
+        for my $t ( @$tables ) {
+            next if $unique{ $t }++;
+            push @unique, $t;
+        }
+
+        $self->{'tables'} = \@unique;
+    }
+
+    my @tbls = @{ $self->{'tables'} || [] };
+
+    return wantarray ? @tbls : \@tbls;
+}
+
+sub options {
+
+=pod
+
+=head2 options
+
+Gets and sets a list of options on the view.
+
+  $view->options('ALGORITHM=UNDEFINED');
+
+  my @options = $view->options;
+
+=cut
+
+    my $self    = shift;
+    my $options = parse_list_arg( @_ );
+
+    if ( @$options ) {
+        my ( %unique, @unique );
+        for my $o ( @$options, @{ $self->{'options'} || [] } ) {
+            next if $unique{ $o }++;
+            push @unique, $o;
+        }
+
+        $self->{'options'} = \@unique;
+    }
+
+    my @opts = @{ $self->{'options'} || [] };
+
+    return wantarray ? @opts : \@opts;
 }
 
 sub is_valid {
