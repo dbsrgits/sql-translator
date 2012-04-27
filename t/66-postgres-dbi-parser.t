@@ -179,6 +179,7 @@ END {
       'drop table if exists sqlt_test1',
       'drop table if exists sqlt_products_1',
     ) {
+      local $SIG{__WARN__} = sub {};
       eval { $dbh->do($_) };
     }
   }
