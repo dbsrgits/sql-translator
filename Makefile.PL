@@ -9,7 +9,6 @@ my $deps = {
   requires => {
     'Class::Base'              => '0',
     'Class::Data::Inheritable' => '0.02',
-    'Class::Unload'            => '0.07',
     'Digest::SHA'              => '0',
     'Carp::Clan'               => '0',
     'IO::Dir'                  => '0',

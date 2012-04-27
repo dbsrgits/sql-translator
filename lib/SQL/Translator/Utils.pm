@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Digest::SHA qw( sha1_hex );
 use File::Spec;
-use Class::Unload;
 
 our $VERSION = '1.59';
 our $DEFAULT_COMMENT = '-- ';
@@ -237,6 +236,7 @@ sub ddl_parser_instance {
     # instance shares global state with all its siblings
     # What we do here is gross, but scarily efficient - the parser compilation
     # is much much slower than an unload/reload cycle
+    require Class::Unload;
     Class::Unload->unload($precompiled_mod);
 
     # There is also a sub-namespace that P::RD uses, but simply unsetting
