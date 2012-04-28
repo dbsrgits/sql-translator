@@ -4,7 +4,6 @@
 
 use strict;
 use File::Temp 'tempfile';
-use File::Spec;
 use FindBin qw/$Bin/;
 use IPC::Open3;
 use SQL::Translator;
@@ -38,26 +37,24 @@ my $t               = SQL::Translator->new(
 );
 
 my $output = $t->translate( $file );
-
 ok( $output, 'Got dumper script' );
-
-my ( $fh, $filename ) = tempfile( 'XXXXXXXX' );
-
-print $fh $output;
-close $fh or die "Can't close file '$filename': $!";
-
-open( NULL, ">", File::Spec->devnull );
-my $pid = open3( gensym, \*NULL, \*PH, "$^X -cw $filename" );
-my $res;
-while( <PH> ) { $res .= $_;  }
-waitpid($pid, 0);
-
-like( $res, qr/syntax OK/, 'Generated script syntax is OK' );
 
 like( $output, qr{DBI->connect\(\s*'$dsn',\s*'$db_user',\s*'$db_pass',},
     'Script contains correct DSN, db user and password' );
 
 like( $output, qr/table_name\s*=>\s*'person',/, 'Found "person" table' );
 unlike( $output, qr/table_name\s*=>\s*'pet',/, 'Skipped "pet" table' );
+
+my ( $fh, $filename ) = tempfile( 'XXXXXXXX' );
+
+print $fh $output;
+close $fh or die "Can't close file '$filename': $!";
+
+my $out;
+my $pid = open3( undef, $out, undef, $^X, '-cw', $filename );
+my $res = do { local $/; <$out> };
+waitpid($pid, 0);
+
+like( $res, qr/syntax OK/, 'Generated script syntax is OK' );
 
 unlink $filename;

@@ -5,6 +5,7 @@ use strict;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
 use FindBin qw($Bin);
+use IPC::Open3;
 use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
 
@@ -36,8 +37,7 @@ my $mysql_create2 = (-d "t")
     : catfile($Bin, "t", @mysql_create2);
 
 # Test for differences
-my @cmd = ($^X, $sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
-my $out = `@cmd`;
+my $out = _run_cmd ($^X, $sqlt_diff, "$mysql_create1=MySQL", "$mysql_create2=MySQL");
 
 like($out, qr/CHANGE COLUMN person_id/, "Detected altered 'person_id' field");
 like($out, qr/CHANGE COLUMN iq/, "Detected altered 'iq' field");
@@ -56,8 +56,7 @@ like($out, qr/ADD CONSTRAINT FK5302D47D93FE702E_diff/,
 unlike($out, qr/ADD PRIMARY KEY/, "Primary key looks different when it shouldn't");
 
 # Test for quoted output
-@cmd = ($^X, $sqlt_diff, '--quote=\`', "$mysql_create1=MySQL", "$mysql_create2=MySQL");
-$out = `@cmd`;
+$out = _run_cmd ($^X, $sqlt_diff, '--quote=`', "$mysql_create1=MySQL", "$mysql_create2=MySQL");
 
 like($out, qr/ALTER TABLE `person`/, "Quoted table name");
 like($out, qr/CHANGE COLUMN `person_id`/, "Quoted 'person_id' field");
@@ -66,7 +65,14 @@ like($out, qr/CHANGE COLUMN `name`/, "Quoted 'name' field");
 like($out, qr/CHANGE COLUMN `age`/, "Quoted 'age' field");
 
 # Test for sameness
-@cmd = ($^X, $sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
-$out = `@cmd`;
+$out = _run_cmd ($^X, $sqlt_diff, "$mysql_create1=MySQL", "$mysql_create1=MySQL");
 
 like($out, qr/No differences found/, "Properly detected no differences");
+
+sub _run_cmd {
+  my $out;
+  my $pid = open3( undef, $out, undef, @_ );
+  my $res = do { local $/; <$out> };
+  waitpid($pid, 0);
+  $res;
+}
