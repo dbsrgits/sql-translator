@@ -26,7 +26,7 @@ my $dbh = eval {
 SKIP: {
     if (my $err = ($@ || $DBI::err )) {
       chomp $err;
-      skip "No connection to test db. DBI says '$err'", 59;
+      skip "No connection to test db. DBI says '$err'", 60;
     }
 
     ok($dbh, "dbh setup correctly");
