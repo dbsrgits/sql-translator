@@ -132,6 +132,7 @@ sub parse {
     my $db_user       = $args->{'db_user'};
     my $db_password   = $args->{'db_password'};
 
+    my $dbh_is_local;
     unless ( $dbh ) {
         die 'No DSN' unless $dsn;
         $dbh = DBI->connect( $dsn, $db_user, $db_password,
@@ -142,6 +143,7 @@ sub parse {
                 RaiseError       => 1,
             }
         );
+        $dbh_is_local = 1;
     }
 
     die 'No database handle' unless defined $dbh;
@@ -153,16 +155,17 @@ sub parse {
 
     SQL::Translator::load( $pkg );
 
-    eval {
+    my $s = eval {
         no strict 'refs';
         &{ $sub }( $tr, $dbh ) or die "No result from $pkg";
     };
+    my $err = $@;
 
-    $dbh->disconnect if defined $dbh;
+    eval { $dbh->disconnect } if (defined $dbh and $dbh_is_local);
 
-    die $@ if $@;
+    die $err if $err;
 
-    return 1;
+    return $s;
 }
 
 1;

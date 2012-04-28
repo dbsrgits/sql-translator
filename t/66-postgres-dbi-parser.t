@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan table_ok);
 
 BEGIN {
-    maybe_plan(60, 'SQL::Translator::Parser::DBI::PostgreSQL');
+    maybe_plan(61, 'SQL::Translator::Parser::DBI::PostgreSQL');
     SQL::Translator::Parser::DBI::PostgreSQL->import('parse');
 }
 
@@ -32,7 +32,6 @@ SKIP: {
     ok($dbh, "dbh setup correctly");
     $dbh->do('SET client_min_messages=WARNING');
 
-my $t   = SQL::Translator->new( trace => 0 );
 my $sql = q[
     drop table if exists sqlt_test2;
     drop table if exists sqlt_test1;
@@ -74,10 +73,18 @@ $| = 1;
 
 $dbh->do($sql);
 
-my $data   = SQL::Translator::Parser::DBI::PostgreSQL::parse( $t, $dbh );
+my $t = SQL::Translator->new(
+  trace => 0,
+  parser => 'DBI',
+  parser_args => { dbh => $dbh },
+);
+$t->translate;
 my $schema = $t->schema;
 
 isa_ok( $schema, 'SQL::Translator::Schema', 'Schema object' );
+
+ok ($dbh->ping, 'External handle still connected');
+
 my @tables = $schema->get_tables;
 
 my $t1 = $schema->get_table("sqlt_test1");
