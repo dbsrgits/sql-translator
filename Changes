@@ -50,6 +50,7 @@
   environment config snippets (RT#70786)
 * Fix assembly of Table objects with numbered columns being added out of order
   (RT#74771) (based on patch from Jonathan Otsuka)
+* Fix syntax error in SQL::Translator::Producer::Latex (RT#74953)
 * Deprecate SQL::Translator::Schema::Graph and the as_graph() schema method
 * Bump minimum supported perl version to 5.8.1 (mostly due to Moo)
 

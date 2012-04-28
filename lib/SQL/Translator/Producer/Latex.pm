@@ -39,7 +39,6 @@ use warnings;
 
 our @EXPORT_OK;
 our $VERSION = '1.59';
-$DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Utils 'debug';
 
