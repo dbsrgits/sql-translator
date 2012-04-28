@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(134, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(140, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -36,6 +36,7 @@ my $sql = q{
         f_id integer NOT NULL,
         f_varchar varchar(25),
         f_int smallint,
+        f_smallint smallint default (0)::smallint,
         primary key (f_id),
         check (f_int between 1 and 5)
     );
@@ -258,7 +259,7 @@ my $t2 = shift @tables;
 is( $t2->name, 't_test2', 'Table t_test2 exists' );
 
 my @t2_fields = $t2->get_fields;
-is( scalar @t2_fields, 3, '3 fields in t_test2' );
+is( scalar @t2_fields, 4, '4 fields in t_test2' );
 
 my $t2_f1 = shift @t2_fields;
 is( $t2_f1->name, 'f_id', 'First field is "f_id"' );
@@ -283,6 +284,15 @@ is( $t2_f3->is_nullable, 1, 'Field can be null' );
 is( $t2_f3->size, 5, 'Size is "5"' );
 is( $t2_f3->default_value, undef, 'Default value is undefined' );
 is( $t2_f3->is_primary_key, 0, 'Field is not PK' );
+
+my $t2_f4 = shift @t2_fields;
+is( $t2_f4->name, 'f_smallint', 'Fourth field is "f_smallint"' );
+is( $t2_f4->data_type, 'integer', 'Field is an integer' );
+is( $t2_f4->is_nullable, 1, 'Field can be null' );
+is( $t2_f4->size, 5, 'Size is "5"' );
+is( $t2_f4->default_value, 0, 'Default value is 0' );
+is( $t2_f4->is_primary_key, 0, 'Field is not PK' );
+
 
 my @t2_constraints = $t2->get_constraints;
 is( scalar @t2_constraints, 3, "Three constraints on table" );

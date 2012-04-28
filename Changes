@@ -27,6 +27,7 @@
   via alter_field to a column in Postgres Producer
 * Added a working mechanism for naming foreign keys in the PostgreSQL producer
 * Fix PostgreSQL ignoring default values with specified data type
+* Fix PostgreSQL parser support for (N)::int defaults (patch by Tina Müller)
 * Fix possible name duplication in SQLlite producer
 * Oracle does not accept ON DELETE/UPDATE RESTRICT (though it is the actual default)
   fix by not adding the ON DELETE/UPDATE clause at all

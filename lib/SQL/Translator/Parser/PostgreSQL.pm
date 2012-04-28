@@ -931,10 +931,11 @@ create_table : CREATE TABLE
 
 create_index : CREATE /index/i
 
-default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+/ ( '::' data_type )(?)
+default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+|\(\d+\)/ ( '::' data_type )(?)
     {
         my $val =  defined $item[2] ? $item[2] : '';
         $val    =~ s/^'|'$//g;
+        $val =~ s/^\((\d+)\)\z/$1/; # for example (0)::smallint
         $return =  {
             supertype => 'constraint',
             type      => 'default',
