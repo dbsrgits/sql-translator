@@ -49,6 +49,8 @@ bugtracker  'http://rt.cpan.org/NoAuth/Bugs.html?Dist=SQL-Translator';
 
 resources Ratings => 'http://cpanratings.perl.org/d/SQL-Translator';
 
+Meta->{values}{x_authority} = 'cpan:JROBINSON';
+
 all_from    'lib/SQL/Translator.pm';
 
 for my $type (qw/requires recommends test_requires/) {
