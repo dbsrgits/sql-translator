@@ -1,9 +1,11 @@
-use inc::Module::Install 1.00;
+use inc::Module::Install 1.06;
 use strict;
 use warnings;
 
 # to deal wuth x.y.z versions properly
 configure_requires 'ExtUtils::MakeMaker' => '6.54';
+
+perl_version '5.008001';
 
 my $deps = {
   requires => {
@@ -11,14 +13,11 @@ my $deps = {
     'Class::Data::Inheritable' => '0.02',
     'Digest::SHA'              => '0',
     'Carp::Clan'               => '0',
-    'IO::Dir'                  => '0',
     'IO::Scalar'               => '2.110',
     'Parse::RecDescent'        => '1.964001',
-    'Pod::Usage'               => '0',
     'DBI'                      => '0',
     'File::ShareDir'           => '1.0',
     'File::Spec'               => '0',
-    'Scalar::Util'             => '0',
     'XML::Writer'              => '0.500',
     'Moo'                      => '0.009007',
   },
@@ -34,14 +33,12 @@ my $deps = {
   },
   test_requires => {
     'YAML'                     => '0.66',
-    'File::Basename'           => '0',
-    'Test::More'               => '0.6',
+    'Test::More'               => '0.88',
     'Test::Differences'        => '0',
-    'Test::Exception'          => '0',
+    'Test::Exception'          => '0.31',
   },
 };
 
-perl_version '5.005';
 
 name        'SQL-Translator';
 author      'Ken Youens-Clark <kclark@cpan.org>';
