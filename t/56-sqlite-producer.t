@@ -74,4 +74,40 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
    is_deeply($result, $expected, 'correctly unquoted DEFAULT');
 }
 
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo',
+   );
+   $table->add_field(
+       name => 'data',
+       data_type => 'bytea',
+   );
+   $table->add_field(
+       name => 'data2',
+       data_type => 'set',
+   );
+   $table->add_field(
+       name => 'data2',
+       data_type => 'set',
+   );
+   $table->add_field(
+       name => 'data3',
+       data_type => 'text',
+       size      => 30,
+   );
+   $table->add_field(
+       name => 'data4',
+       data_type => 'blob',
+       size      => 30,
+   );
+   my $expected = [ qq<CREATE TABLE "foo" (
+  "data" blob,
+  "data2" varchar,
+  "data3" text,
+  "data4" blob
+)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly translated bytea to blob');
+}
+
 done_testing;

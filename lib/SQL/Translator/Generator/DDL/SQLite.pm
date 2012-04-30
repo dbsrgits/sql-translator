@@ -15,12 +15,17 @@ sub name_sep { q(.) }
 
 sub _build_type_map {
    +{
-      date => 'datetime',
-      'time' => 'datetime',
+      set   => 'varchar',
+      bytea => 'blob',
    }
 }
 
-sub _build_sizeless_types { +{ text => 1 } }
+sub _build_sizeless_types {
+   +{
+      text => 1,
+      blob => 1,
+   }
+}
 sub _build_numeric_types {
    +{
       int                => 1,
