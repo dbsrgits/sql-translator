@@ -2,9 +2,8 @@
 # vim: set ft=perl:
 
 use strict;
-use Test::More tests => 3;
+use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
-use FindBin qw/$Bin/;
 
 use SQL::Translator::Schema::View;
 use SQL::Translator::Schema::Table;
@@ -45,6 +44,7 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
     $table->add_field(
         name => 'foreign_key',
         data_type => 'integer',
+        default_value => 1,
     );
     my $constraint = SQL::Translator::Schema::Constraint->new(
         table => $table,
@@ -56,8 +56,22 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
         on_delete => 'RESTRICT',
         on_update => 'CASCADE',
     );
-
     my $expected = [ 'FOREIGN KEY ("foreign_key") REFERENCES "foo"("id") ON DELETE RESTRICT ON UPDATE CASCADE'];
     my $result =  [SQL::Translator::Producer::SQLite::create_foreignkey($constraint,$create_opts)];
     is_deeply($result, $expected, 'correct "FOREIGN KEY"');
 }
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo_table',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       default_value => 1,
+   );
+   my $expected = [ qq<CREATE TABLE "foo_table" (\n  "id" integer DEFAULT 1\n)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly unquoted DEFAULT');
+}
+
+done_testing;

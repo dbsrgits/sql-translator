@@ -21,7 +21,26 @@ sub _build_type_map {
 }
 
 sub _build_sizeless_types { +{ text => 1 } }
-sub _build_numeric_types { +{ int => 1, tinyint => 1 } }
+sub _build_numeric_types {
+   +{
+      int                => 1,
+      integer            => 1,
+      tinyint            => 1,
+      smallint           => 1,
+      mediumint          => 1,
+      bigint             => 1,
+      'unsigned big int' => 1,
+      int2               => 1,
+      int8               => 1,
+      numeric            => 1,
+      decimal            => 1,
+      boolean            => 1,
+      real               => 1,
+      double             => 1,
+      'double precision' => 1,
+      float              => 1,
+   }
+}
 
 sub _build_unquoted_defaults {
    +{
