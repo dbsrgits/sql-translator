@@ -5,6 +5,7 @@ package SQL::Translator::Generator::Role::DDL;
 
 use Moo::Role;
 use SQL::Translator::Utils qw(header_comment);
+use Scalar::Util;
 
 requires '_build_type_map';
 requires '_build_numeric_types';
@@ -62,11 +63,19 @@ sub table_comments {
 sub field_nullable { ($_[1]->is_nullable ? $_[0]->nullable : 'NOT NULL' ) }
 
 sub field_default {
-  return () if !defined $_[1]->default_value;
+  my ($self, $field, $exceptions) = @_;
 
-  my $val = $_[1]->default_value;
-  $val = "'$val'" unless $_[0]->numeric_types->{$_[1]->data_type};
-  return ( "DEFAULT $val" )
+  my $default = $field->default_value;
+  return () if !defined $default;
+
+  $default = \"$default"
+    if $exceptions and !ref $default and $exceptions->{$default};
+  if (ref $default) {
+      $default = $$default;
+  } elsif (!($self->numeric_types->{lc($field->data_type)} && Scalar::Util::looks_like_number ($default))) {
+     $default = "'$default'";
+  }
+  return ( "DEFAULT $default" )
 }
 
 sub field_type {

@@ -81,7 +81,11 @@ sub field {
          : ( $self->field_type($field) )
       ),
       $self->field_nullable($field),
-      $self->field_default($field),
+      $self->field_default($field, {
+         NULL => 1,
+         'now()' => 1,
+         'CURRENT_TIMESTAMP' => 1,
+      }),
 }
 
 1;

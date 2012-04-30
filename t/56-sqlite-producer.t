@@ -110,4 +110,58 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
    is_deeply($result, $expected, 'correctly translated bytea to blob');
 }
 
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo_table',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       default_value => \'gunshow',
+   );
+   my $expected = [ qq<CREATE TABLE "foo_table" (\n  "id" integer DEFAULT gunshow\n)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly unquoted DEFAULT');
+}
+
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo_table',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       default_value => 'frew',
+   );
+   my $expected = [ qq<CREATE TABLE "foo_table" (\n  "id" integer DEFAULT 'frew'\n)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly quoted DEFAULT');
+}
+
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       default_value => 'NULL',
+   );
+   $table->add_field(
+       name => 'when',
+       default_value => 'now()',
+   );
+   $table->add_field(
+       name => 'at',
+       default_value => 'CURRENT_TIMESTAMP',
+   );
+   my $expected = [ qq<CREATE TABLE "foo" (
+  "id" integer DEFAULT NULL,
+  "when"  DEFAULT now(),
+  "at"  DEFAULT CURRENT_TIMESTAMP
+)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly unquoted excempted DEFAULTs');
+}
+
 done_testing;
