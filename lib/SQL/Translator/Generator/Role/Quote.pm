@@ -1,6 +1,9 @@
 package # hide from pause
   SQL::Translator::Generator::Role::Quote;
 
+# AUTHOR: Arthur Axel fREW Schmidt
+# Copyright: Same as Perl 5
+
 use Moo::Role;
 
 requires qw(quote_chars name_sep);

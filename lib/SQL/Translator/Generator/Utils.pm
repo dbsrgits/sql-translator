@@ -1,6 +1,9 @@
 package # hide from pause
   SQL::Translator::Generator::Utils;
 
+# AUTHOR: Arthur Axel fREW Schmidt
+# Copyright: Same as Perl 5
+
 use Moo;
 use Sub::Quote 'quote_sub';
 

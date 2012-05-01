@@ -1,5 +1,8 @@
 package SQL::Translator::Generator::Role::DDL;
 
+# AUTHOR: Arthur Axel fREW Schmidt
+# Copyright: Same as Perl 5
+
 use Moo::Role;
 use SQL::Translator::Utils qw(header_comment);
 

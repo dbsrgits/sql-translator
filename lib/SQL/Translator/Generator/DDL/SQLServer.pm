@@ -1,5 +1,8 @@
 package SQL::Translator::Generator::DDL::SQLServer;
 
+# AUTHOR: Arthur Axel fREW Schmidt
+# Copyright: Same as Perl 5
+
 use Moo;
 use SQL::Translator::Generator::Utils;
 use SQL::Translator::Schema::Constants;

@@ -1,5 +1,8 @@
 package SQL::Translator::Generator::DDL::SQLite;
 
+# AUTHOR: Arthur Axel fREW Schmidt
+# Copyright: Same as Perl 5
+
 use Moo;
 use SQL::Translator::Generator::Utils;
 
