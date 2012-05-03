@@ -85,6 +85,7 @@
 * Make true unique constraints if needed in SQL Server
 * Fixed Producer::PostgresSQL to output array type after type size,
   i.e. varchar(64)[] rather than varchar[](64)
+* Add "if exists" to drop view statements in Pg.
 
 # ----------------------------------------------------------
 # 0.11007 2010-11-30
