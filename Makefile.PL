@@ -61,6 +61,13 @@ for my $type (qw/requires recommends test_requires/) {
   }
 }
 
+no_index directory => $_ for (qw|
+  lib/SQL/Translator/Schema/Graph
+|);
+no_index package => $_ for (qw|
+  SQL::Translator::Schema::Graph
+|);
+
 install_script (qw|
   script/sqlt-diagram
   script/sqlt-diff

@@ -1,4 +1,5 @@
-package SQL::Translator::Schema::Graph::Node;
+package # hide from pause
+  SQL::Translator::Schema::Graph::Node;
 
 use strict;
 use warnings;

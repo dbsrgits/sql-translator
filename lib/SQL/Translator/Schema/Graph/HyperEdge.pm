@@ -1,4 +1,5 @@
-package SQL::Translator::Schema::Graph::HyperEdge;
+package # hide from pause
+  SQL::Translator::Schema::Graph::HyperEdge;
 
 use strict;
 use warnings;

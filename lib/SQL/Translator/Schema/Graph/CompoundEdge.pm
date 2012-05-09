@@ -1,4 +1,5 @@
-package SQL::Translator::Schema::Graph::CompoundEdge;
+package # hide from pause
+  SQL::Translator::Schema::Graph::CompoundEdge;
 
 use strict;
 use warnings;
