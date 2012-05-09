@@ -4,7 +4,6 @@ package SQL::Translator::Generator::DDL::SQLite;
 # Copyright: Same as Perl 5
 
 use Moo;
-use SQL::Translator::Generator::Utils;
 
 has quote_chars => (is=>'ro', default=>sub { +[qw(" ")] } );
 

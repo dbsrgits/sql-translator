@@ -4,7 +4,6 @@ package SQL::Translator::Generator::DDL::SQLServer;
 # Copyright: Same as Perl 5
 
 use Moo;
-use SQL::Translator::Generator::Utils;
 use SQL::Translator::Schema::Constants;
 
 with 'SQL::Translator::Generator::Role::Quote';
