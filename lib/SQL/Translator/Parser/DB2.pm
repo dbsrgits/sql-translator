@@ -29,6 +29,10 @@ our $DEBUG;
 use Data::Dumper;
 use SQL::Translator::Utils qw/ddl_parser_instance/;
 
+# !!!!!!
+# THIS GRAMMAR IS INCOMPLETE!!!
+# Khisanth is slowly working on a replacement
+# !!!!!!
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 {

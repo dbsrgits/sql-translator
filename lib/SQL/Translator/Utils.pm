@@ -202,6 +202,12 @@ sub ddl_parser_instance {
     eval "require SQL::Translator::Parser::$type"
         or die "Unable to load grammar-spec container SQL::Translator::Parser::$type:\n$@";
 
+    # handle DB2 in a special way, since the grammar source was lost :(
+    if ($type eq 'DB2') {
+      require SQL::Translator::Parser::DB2::Grammar;
+      return SQL::Translator::Parser::DB2::Grammar->new;
+    }
+
     require Parse::RecDescent;
     return Parse::RecDescent->new(do {
       no strict 'refs';
