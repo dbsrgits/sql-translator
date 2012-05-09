@@ -1,7 +1,15 @@
 package SQL::Translator::Generator::DDL::SQLServer;
 
-# AUTHOR: Arthur Axel fREW Schmidt
-# Copyright: Same as Perl 5
+=head1 NAME
+
+SQL::Translator::Generator::DDL::SQLServer - A Moo based MS SQL Server DDL
+generation engine.
+
+=head1 DESCRIPTION
+
+I<documentation volunteers needed>
+
+=cut
 
 use Moo;
 use SQL::Translator::Schema::Constants;
@@ -233,3 +241,18 @@ sub schema {
 
 1;
 
+=head1 AUTHORS
+
+See the included AUTHORS file:
+L<http://search.cpan.org/dist/SQL-Translator/AUTHORS>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2012 the SQL::Translator L</AUTHORS> as listed above.
+
+=head1 LICENSE
+
+This code is free software and may be distributed under the same terms as Perl
+itself.
+
+=cut

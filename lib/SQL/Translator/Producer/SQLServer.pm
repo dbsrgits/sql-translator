@@ -20,13 +20,6 @@ sub produce {
 
 1;
 
-=pod
-
-=head1 SQLServer Create Table Syntax
-
-TODO
-
-
 =head1 NAME
 
 SQL::Translator::Producer::SQLServer - MS SQLServer producer for SQL::Translator
@@ -40,8 +33,8 @@ SQL::Translator::Producer::SQLServer - MS SQLServer producer for SQL::Translator
 
 =head1 DESCRIPTION
 
-B<WARNING>B This is still fairly early code, basically a hacked version of the
-Sybase Producer (thanks Sam, Paul and Ken for doing the real work ;-)
+This is currently a thin wrapper around the nextgen
+L<SQL::Translator::Generator::DDL::SQLServer> DDL maker.
 
 =head1 Extra Attributes
 
@@ -86,11 +79,20 @@ List of values for an enum field.
 
 =head1 SEE ALSO
 
-SQL::Translator.
+L<SQL::Translator>
 
 =head1 AUTHORS
 
-Mark Addison E<lt>grommit@users.sourceforge.netE<gt> - Bulk of code from
-Sybase producer, I just tweaked it for SQLServer. Thanks.
+See the included AUTHORS file:
+L<http://search.cpan.org/dist/SQL-Translator/AUTHORS>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2012 the SQL::Translator L</AUTHORS> as listed above.
+
+=head1 LICENSE
+
+This code is free software and may be distributed under the same terms as Perl
+itself.
 
 =cut

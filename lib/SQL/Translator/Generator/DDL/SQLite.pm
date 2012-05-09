@@ -1,8 +1,15 @@
 package SQL::Translator::Generator::DDL::SQLite;
 
-# AUTHOR: Arthur Axel fREW Schmidt
-# Copyright: Same as Perl 5
+=head1 NAME
 
+SQL::Translator::Generator::DDL::SQLite - A Moo based SQLite DDL generation
+engine.
+
+=head1 DESCRIPTION
+
+I<documentation volunteers needed>
+
+=cut
 use Moo;
 
 has quote_chars => (is=>'ro', default=>sub { +[qw(" ")] } );
@@ -89,3 +96,18 @@ sub field {
 
 1;
 
+=head1 AUTHORS
+
+See the included AUTHORS file:
+L<http://search.cpan.org/dist/SQL-Translator/AUTHORS>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2012 the SQL::Translator L</AUTHORS> as listed above.
+
+=head1 LICENSE
+
+This code is free software and may be distributed under the same terms as Perl
+itself.
+
+=cut

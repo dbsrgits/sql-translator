@@ -1,10 +1,17 @@
-package # hide from pause
-  SQL::Translator::Generator::Role::Quote;
-
-# AUTHOR: Arthur Axel fREW Schmidt
-# Copyright: Same as Perl 5
+package SQL::Translator::Generator::Role::Quote;
 
 use Moo::Role;
+
+=head1 NAME
+
+SQL::Translator::Generator::Role::Quote - Role for dealing with identifier
+quoting.
+
+=head1 DESCRIPTION
+
+I<documentation volunteers needed>
+
+=cut
 
 requires qw(quote_chars name_sep);
 
@@ -32,3 +39,19 @@ sub quote {
 }
 
 1;
+
+=head1 AUTHORS
+
+See the included AUTHORS file:
+L<http://search.cpan.org/dist/SQL-Translator/AUTHORS>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2012 the SQL::Translator L</AUTHORS> as listed above.
+
+=head1 LICENSE
+
+This code is free software and may be distributed under the same terms as Perl
+itself.
+
+=cut
