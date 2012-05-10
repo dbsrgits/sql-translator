@@ -7,7 +7,7 @@ use base 'Class::Base';
 
 require 5.005;
 
-our $VERSION  = '0.11010';
+our $VERSION  = '0.11011';
 $DEBUG    = 0 unless defined $DEBUG;
 $ERROR    = "";
 
