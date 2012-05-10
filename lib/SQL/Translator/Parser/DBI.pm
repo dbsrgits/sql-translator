@@ -18,7 +18,9 @@ SQL::Translator::Parser::DBI - "parser" for DBI handles
 
   my $translator  =  SQL::Translator->new(
       parser      => 'DBI',
-      dbh         => $dbh,
+      parser_args => {
+          dbh => $dbh,
+      },
   );
 
 Or:
