@@ -308,7 +308,7 @@ sub produce_diff_sql {
       }
 
       my @return =
-        map { $_ ? ( $_ =~ /;$/xms ? $_ : "$_;\n\n" ) : "\n" }
+        map { $_ ? ( $_ =~ /;\s*\z/xms ? $_ : "$_;\n\n" ) : "\n" }
         ("-- Convert schema '$src_name' to '$tar_name':", @diffs);
 
       return wantarray ? @return : join('', @return);

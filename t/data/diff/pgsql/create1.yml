@@ -202,6 +202,17 @@ schema:
           size:
             - 11
             - 2
+        nickname:
+          data_type: varchar
+          default_value: ~
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: nickname
+          order: 8
+          size:
+            - 20
       indices:
         - fields:
             - name
