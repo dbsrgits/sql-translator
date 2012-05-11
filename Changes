@@ -2,6 +2,7 @@
 * De-linkify XML namespace in docs (RT#81838)
 * Allow both single and double quotes for values in MySQL parser
 * Fix diff for altering two things per column - add ; at the end
+* Call all diff methods in list context (it can be merged later)
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09

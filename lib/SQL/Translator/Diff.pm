@@ -248,8 +248,7 @@ sub produce_diff_sql {
             my $meth = $producer_class->can($_);
 
             $meth ? map {
-                    my $sql = $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_args );
-                    $sql ?  ("$sql") : ();
+                    map { $_ ? "$_" : () } $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_args );
                   } @{ $flattened_diffs{$_} }
                   : $self->ignore_missing_methods
                   ? "-- $producer_class cant $_"

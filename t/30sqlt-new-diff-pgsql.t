@@ -78,6 +78,7 @@ ALTER TABLE person ALTER COLUMN age SET DEFAULT 18;
 ALTER TABLE person ALTER COLUMN iq TYPE bigint;
 
 ALTER TABLE person ALTER COLUMN nickname SET NOT NULL;
+
 ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
 
 ALTER TABLE person RENAME COLUMN description TO physical_description;
@@ -136,6 +137,7 @@ ALTER TABLE person ALTER COLUMN age SET DEFAULT 18;
 ALTER TABLE person ALTER COLUMN iq TYPE bigint;
 
 ALTER TABLE person ALTER COLUMN nickname SET NOT NULL;
+
 ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
 
 ALTER TABLE person RENAME COLUMN description TO physical_description;
