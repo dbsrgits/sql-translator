@@ -36,6 +36,7 @@ sub _build_type_map {
    +{
       date => 'datetime',
       'time' => 'datetime',
+      double     => 'decimal',
    }
 }
 
