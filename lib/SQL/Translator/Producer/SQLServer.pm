@@ -21,7 +21,7 @@ sub produce {
 sub rename_table {
    my ($old, $new) = @_;;
 
-   q(sp_rename ') . $old->name . q(', ') . $new->name . q(')
+   q(EXEC sp_rename ') . $old->name . q(', ') . $new->name . q(')
 }
 
 sub alter_drop_constraint {
@@ -63,7 +63,7 @@ sub alter_field {
 }
 
 sub rename_field {
-   'lol'
+   q(EXEC sp_rename ') . $_[0]->name . q(', ') . $_[1]->name . q(', 'COLUMN')
 }
 
 sub alter_create_index {
@@ -134,7 +134,7 @@ sub add_field {
     my $field_clause = build_field_clause($new_field);
     my $table_name_q= $new_field->table->name;
 
-    my @sql= "ALTER TABLE $table_name_q ADD COLUMN $field_clause;";
+    my @sql= "ALTER TABLE $table_name_q ADD $field_clause;";
     if (lc($new_field->data_type) eq 'enum') {
         push @sql, build_add_enum_constraint($new_field, $options).';';
     }
@@ -153,7 +153,7 @@ sub drop_field {
         push @sql, build_drop_enum_constraint($old_field, $options).';';
     }
 
-    push @sql, "ALTER TABLE $table_name_q DROP COLUMN $field_name_q;";
+    push @sql, "ALTER TABLE $table_name_q DROP $field_name_q;";
 
     return join("\n", @sql);
 }
