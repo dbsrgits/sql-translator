@@ -1,3 +1,4 @@
+* Add missing quote function to SQLServer producer
 * Fix incorrect Parser::DBI documentation (RT#60878)
 
 # ----------------------------------------------------------

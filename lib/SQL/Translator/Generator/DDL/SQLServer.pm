@@ -89,7 +89,7 @@ sub unique_constraint_multiple {
   'CREATE UNIQUE NONCLUSTERED INDEX ' .
    $self->unique_constraint_name($constraint) .
    ' ON ' . $self->quote($constraint->table->name) . ' (' .
-   join( ', ', $constraint->fields ) . ')' .
+   join( ', ', map $self->quote($_), $constraint->fields ) . ')' .
    ' WHERE ' . join( ' AND ',
     map $self->quote($_->name) . ' IS NOT NULL',
     grep { $_->is_nullable } $constraint->fields ) . ';'
