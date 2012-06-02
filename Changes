@@ -3,6 +3,7 @@
 * Allow both single and double quotes for values in MySQL parser
 * Fix diff for altering two things per column - add ; at the end
 * Call all diff methods in list context (it can be merged later)
+* Fix Pg diff issue with drop constraint on primary keys
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09

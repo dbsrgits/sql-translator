@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(53,
+    maybe_plan(57,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -143,13 +143,45 @@ for my $name ( 'foo', undef ) {
     }
     else {
         is($fk_constraint_fk_ref->[0], 'ALTER TABLE mytable ADD FOREIGN KEY (myfield)
-  REFERENCES mytable2 (myfield_2) DEFERRABLE', 'Create named Foreign Key Constraint works');
+  REFERENCES mytable2 (myfield_2) DEFERRABLE', 'Create un-named Foreign Key Constraint works');
 
         my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
-        is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop named Foreign Key constraint works');
+        is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop un-named Foreign Key constraint works');
     }
 }
 
+# check named, and unnamed primary keys
+for my $name ( 'foo', undef ) {
+    my $pk_constraint = SQL::Translator::Schema::Constraint->new(
+        table => $table,
+        name   => $name,
+        fields => [qw(myfield)],
+        type   => 'PRIMARY_KEY',
+    );
+    my $pk_constraint_2 = SQL::Translator::Schema::Constraint->new(
+        table => $table,
+        name   => $name,
+        fields => [qw(myfield)],
+        type   => 'PRIMARY_KEY',
+    );
+
+    my  ($pk_constraint_def_ref, $pk_constraint_pk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($pk_constraint);
+
+    if ( $name ) {
+        is($pk_constraint_def_ref->[0], "CONSTRAINT $name PRIMARY KEY (myfield)", 'Create Primary Key Constraint works');
+
+        # ToDo: may we should check if the constraint name was valid, or if next
+        #       unused_name created has choosen a different one
+        my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
+        is($alter_pk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Primary Key constraint works');
+    }
+    else {
+        is($pk_constraint_def_ref->[0], 'PRIMARY KEY (myfield)', 'Create un-named Primary Key Constraint works');
+
+        my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
+        is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_pkey', 'Alter drop un-named Foreign Key constraint works');
+    }
+}
 
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1,
                                                                 $field2);

@@ -968,17 +968,25 @@ sub alter_drop_constraint {
     my $qc = $options->{quote_field_names} || '';
     $generator->quote_chars([$qt]);
 
+    # attention: Postgres  has a very special naming structure for naming
+    # foreign keys and primary keys.  It names them using the name of the
+    # table as prefix and fkey or pkey as suffix, concatenated by an underscore
+    my $c_name;
+    if( $c->name ) {
+        # Already has a name, just quote it
+        $c_name = $qc . $c->name . $qc;
+    } elsif ( $c->type eq FOREIGN_KEY ) {
+        # Doesn't have a name, and is foreign key, append '_fkey'
+        $c_name = $qc . $c->table->name . '_' .
+                    ($c->fields)[0] . '_fkey' . $qc;
+    } elsif ( $c->type eq PRIMARY_KEY ) {
+        # Doesn't have a name, and is primary key, append '_pkey'
+        $c_name = $qc . $c->table->name . '_pkey' . $qc;
+    }
+
     return sprintf(
         'ALTER TABLE %s DROP CONSTRAINT %s',
-        $generator->quote($c->table->name),
-        # attention: Postgres  has a very special naming structure
-        # for naming foreign keys, it names them uses the name of
-        # the table as prefix and fkey as suffix, concatenated by a underscore
-        $c->type eq FOREIGN_KEY
-            ? $c->name
-                ? $qc . $c->name . $qc
-                : $qc . $c->table->name . '_' . ($c->fields)[0] . '_fkey' . $qc
-            : $qc . $c->name . $qc
+        $qt . $c->table->name . $qt, $c_name
     );
 }
 
