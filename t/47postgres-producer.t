@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(51,
+    maybe_plan(53,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -23,6 +23,25 @@ use Test::Differences;
 use SQL::Translator;
 
 my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
+
+{
+  my $table = SQL::Translator::Schema::Table->new( name => 'foo.bar' );
+  my $field = SQL::Translator::Schema::Field->new( name => 'baz',
+                                                 table => $table,
+                                                 data_type => 'VARCHAR',
+                                                 size => 10,
+                                                 default_value => 'quux',
+                                                 is_auto_increment => 0,
+                                                 is_nullable => 0,
+                                                 is_foreign_key => 0,
+                                                 is_unique => 0 );
+  $table->add_field($field);
+  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table($table, { quote_table_names => q{"} });
+  is($table->name, 'foo.bar');
+
+  my $expected = "--\n-- Table: foo.bar\n--\nCREATE TABLE \"foo\".\"bar\" (\n  \"baz\" character varying(10) DEFAULT 'quux' NOT NULL\n)";
+  is($create, $expected);
+}
 
 my $table = SQL::Translator::Schema::Table->new( name => 'mytable');
 
