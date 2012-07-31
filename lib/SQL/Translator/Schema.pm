@@ -26,8 +26,7 @@ returns the database structure.
 
 =cut
 
-use strict;
-use warnings;
+use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
@@ -37,25 +36,22 @@ use SQL::Translator::Schema::View;
 use SQL::Translator::Utils 'parse_list_arg';
 use Carp;
 
-use base 'SQL::Translator::Schema::Object';
+with qw(
+  SQL::Translator::Schema::Role::Extra
+  SQL::Translator::Schema::Role::Error
+  SQL::Translator::Schema::Role::Compare
+);
+
 our $VERSION = '1.59';
 
-__PACKAGE__->_attributes(qw/name database translator/);
 
-sub new {
-  my $class = shift;
-  my $self = $class->SUPER::new (@_)
-    or return;
-
-  $self->{_order} = { map { $_ => 0 } qw/
+has _order => (is => 'ro', default => sub { +{ map { $_ => 0 } qw/
     table
     view
     trigger
     proc
-  /};
-
-  return $self;
-}
+  /} },
+);
 
 # FIXME - to be removed, together with the SQL::Translator::Schema::Graph* stuff
 # looks like a remnant of the Turnkey project integration back in 2003-4
@@ -104,6 +100,8 @@ Returns a Graph::Directed object with the table names for nodes.
     return $g;
 }
 
+has _tables => ( is => 'ro', init_arg => undef, default => sub { +{} } );
+
 sub add_table {
 
 =pod
@@ -136,16 +134,16 @@ not be created.
           or return $self->error( $table_class->error );
     }
 
-    $table->order( ++$self->{_order}{table} );
+    $table->order( ++$self->_order->{table} );
 
     # We know we have a name as the Table->new above errors if none given.
     my $table_name = $table->name;
 
-    if ( defined $self->{'tables'}{$table_name} ) {
+    if ( defined $self->_tables->{$table_name} ) {
         return $self->error(qq[Can't create table: "$table_name" exists]);
     }
     else {
-        $self->{'tables'}{$table_name} = $table;
+        $self->_tables->{$table_name} = $table;
     }
 
     return $table;
@@ -180,20 +178,22 @@ can be set to 1 to also drop all triggers on the table, default is 0.
     my %args    = @_;
     my $cascade = $args{'cascade'};
 
-    if ( !exists $self->{'tables'}{$table_name} ) {
+    if ( !exists $self->_tables->{$table_name} ) {
         return $self->error(qq[Can't drop table: $table_name" doesn't exist]);
     }
 
-    my $table = delete $self->{'tables'}{$table_name};
+    my $table = delete $self->_tables->{$table_name};
 
     if ($cascade) {
 
         # Drop all triggers on this table
         $self->drop_trigger()
-          for ( grep { $_->on_table eq $table_name } @{ $self->{'triggers'} } );
+          for ( grep { $_->on_table eq $table_name } values %{ $self->_triggers } );
     }
     return $table;
 }
+
+has _procedures => ( is => 'ro', init_arg => undef, default => sub { +{} } );
 
 sub add_procedure {
 
@@ -228,16 +228,16 @@ procedure will not be created.
           or return $self->error( $procedure_class->error );
     }
 
-    $procedure->order( ++$self->{_order}{proc} );
+    $procedure->order( ++$self->_order->{proc} );
     my $procedure_name = $procedure->name
       or return $self->error('No procedure name');
 
-    if ( defined $self->{'procedures'}{$procedure_name} ) {
+    if ( defined $self->_procedures->{$procedure_name} ) {
         return $self->error(
             qq[Can't create procedure: "$procedure_name" exists] );
     }
     else {
-        $self->{'procedures'}{$procedure_name} = $procedure;
+        $self->_procedures->{$procedure_name} = $procedure;
     }
 
     return $procedure;
@@ -269,15 +269,17 @@ object.
         $proc_name = shift;
     }
 
-    if ( !exists $self->{'procedures'}{$proc_name} ) {
+    if ( !exists $self->_procedures->{$proc_name} ) {
         return $self->error(
             qq[Can't drop procedure: $proc_name" doesn't exist]);
     }
 
-    my $proc = delete $self->{'procedures'}{$proc_name};
+    my $proc = delete $self->_procedures->{$proc_name};
 
     return $proc;
 }
+
+has _triggers => ( is => 'ro', init_arg => undef, default => sub { +{} } );
 
 sub add_trigger {
 
@@ -312,14 +314,14 @@ not be created.
           or return $self->error( $trigger_class->error );
     }
 
-    $trigger->order( ++$self->{_order}{trigger} );
+    $trigger->order( ++$self->_order->{trigger} );
 
     my $trigger_name = $trigger->name or return $self->error('No trigger name');
-    if ( defined $self->{'triggers'}{$trigger_name} ) {
+    if ( defined $self->_triggers->{$trigger_name} ) {
         return $self->error(qq[Can't create trigger: "$trigger_name" exists]);
     }
     else {
-        $self->{'triggers'}{$trigger_name} = $trigger;
+        $self->_triggers->{$trigger_name} = $trigger;
     }
 
     return $trigger;
@@ -350,15 +352,17 @@ trigger name or an C<SQL::Translator::Schema::Trigger> object.
         $trigger_name = shift;
     }
 
-    if ( !exists $self->{'triggers'}{$trigger_name} ) {
+    if ( !exists $self->_triggers->{$trigger_name} ) {
         return $self->error(
             qq[Can't drop trigger: $trigger_name" doesn't exist]);
     }
 
-    my $trigger = delete $self->{'triggers'}{$trigger_name};
+    my $trigger = delete $self->_triggers->{$trigger_name};
 
     return $trigger;
 }
+
+has _views => ( is => 'ro', init_arg => undef, default => sub { +{} } );
 
 sub add_view {
 
@@ -392,14 +396,14 @@ not be created.
         $view = $view_class->new( \%args ) or return $view_class->error;
     }
 
-    $view->order( ++$self->{_order}{view} );
+    $view->order( ++$self->_order->{view} );
     my $view_name = $view->name or return $self->error('No view name');
 
-    if ( defined $self->{'views'}{$view_name} ) {
+    if ( defined $self->_views->{$view_name} ) {
         return $self->error(qq[Can't create view: "$view_name" exists]);
     }
     else {
-        $self->{'views'}{$view_name} = $view;
+        $self->_views->{$view_name} = $view;
     }
 
     return $view;
@@ -430,18 +434,14 @@ name or an C<SQL::Translator::Schema::View> object.
         $view_name = shift;
     }
 
-    if ( !exists $self->{'views'}{$view_name} ) {
+    if ( !exists $self->_views->{$view_name} ) {
         return $self->error(qq[Can't drop view: $view_name" doesn't exist]);
     }
 
-    my $view = delete $self->{'views'}{$view_name};
+    my $view = delete $self->_views->{$view_name};
 
     return $view;
 }
-
-sub database {
-
-=pod
 
 =head2 database
 
@@ -451,10 +451,7 @@ Get or set the schema's database.  (optional)
 
 =cut
 
-    my $self = shift;
-    $self->{'database'} = shift if @_;
-    return $self->{'database'} || '';
-}
+has database => ( is => 'rw', default => sub { '' } );
 
 sub is_valid {
 
@@ -494,8 +491,8 @@ Returns a procedure by the name provided.
     my $self = shift;
     my $procedure_name = shift or return $self->error('No procedure name');
     return $self->error(qq[Table "$procedure_name" does not exist])
-      unless exists $self->{'procedures'}{$procedure_name};
-    return $self->{'procedures'}{$procedure_name};
+      unless exists $self->_procedures->{$procedure_name};
+    return $self->_procedures->{$procedure_name};
 }
 
 sub get_procedures {
@@ -514,7 +511,7 @@ Returns all the procedures as an array or array reference.
     my @procedures =
       map  { $_->[1] }
       sort { $a->[0] <=> $b->[0] }
-      map  { [ $_->order, $_ ] } values %{ $self->{'procedures'} };
+      map  { [ $_->order, $_ ] } values %{ $self->_procedures };
 
     if (@procedures) {
         return wantarray ? @procedures : \@procedures;
@@ -542,14 +539,14 @@ Returns a table by the name provided.
     my $case_insensitive = shift;
     if ( $case_insensitive ) {
       $table_name = uc($table_name);
-      foreach my $table ( keys %{$self->{tables}} ) {
-         return $self->{tables}{$table} if $table_name eq uc($table);
+      foreach my $table ( keys %{$self->_tables} ) {
+         return $self->_tables->{$table} if $table_name eq uc($table);
       }
       return $self->error(qq[Table "$table_name" does not exist]);
     }
     return $self->error(qq[Table "$table_name" does not exist])
-      unless exists $self->{'tables'}{$table_name};
-    return $self->{'tables'}{$table_name};
+      unless exists $self->_tables->{$table_name};
+    return $self->_tables->{$table_name};
 }
 
 sub get_tables {
@@ -568,7 +565,7 @@ Returns all the tables as an array or array reference.
     my @tables =
       map  { $_->[1] }
       sort { $a->[0] <=> $b->[0] }
-      map  { [ $_->order, $_ ] } values %{ $self->{'tables'} };
+      map  { [ $_->order, $_ ] } values %{ $self->_tables };
 
     if (@tables) {
         return wantarray ? @tables : \@tables;
@@ -594,8 +591,8 @@ Returns a trigger by the name provided.
     my $self = shift;
     my $trigger_name = shift or return $self->error('No trigger name');
     return $self->error(qq[Table "$trigger_name" does not exist])
-      unless exists $self->{'triggers'}{$trigger_name};
-    return $self->{'triggers'}{$trigger_name};
+      unless exists $self->_triggers->{$trigger_name};
+    return $self->_triggers->{$trigger_name};
 }
 
 sub get_triggers {
@@ -614,7 +611,7 @@ Returns all the triggers as an array or array reference.
     my @triggers =
       map  { $_->[1] }
       sort { $a->[0] <=> $b->[0] }
-      map  { [ $_->order, $_ ] } values %{ $self->{'triggers'} };
+      map  { [ $_->order, $_ ] } values %{ $self->_triggers };
 
     if (@triggers) {
         return wantarray ? @triggers : \@triggers;
@@ -640,8 +637,8 @@ Returns a view by the name provided.
     my $self = shift;
     my $view_name = shift or return $self->error('No view name');
     return $self->error('View "$view_name" does not exist')
-      unless exists $self->{'views'}{$view_name};
-    return $self->{'views'}{$view_name};
+      unless exists $self->_views->{$view_name};
+    return $self->_views->{$view_name};
 }
 
 sub get_views {
@@ -660,7 +657,7 @@ Returns all the views as an array or array reference.
     my @views =
       map  { $_->[1] }
       sort { $a->[0] <=> $b->[0] }
-      map  { [ $_->order, $_ ] } values %{ $self->{'views'} };
+      map  { [ $_->order, $_ ] } values %{ $self->_views };
 
     if (@views) {
         return wantarray ? @views : \@views;
@@ -742,10 +739,6 @@ A list of fields to skip in the joins
     return 1;
 }
 
-sub name {
-
-=pod
-
 =head2 name
 
 Get or set the schema's name.  (optional)
@@ -754,12 +747,7 @@ Get or set the schema's name.  (optional)
 
 =cut
 
-    my $self = shift;
-    $self->{'name'} = shift if @_;
-    return $self->{'name'} || '';
-}
-
-sub translator {
+has name => ( is => 'rw', default => sub { '' } );
 
 =pod
 
@@ -769,15 +757,12 @@ Get the SQL::Translator instance that instantiated the parser.
 
 =cut
 
-    my $self = shift;
-    $self->{'translator'} = shift if @_;
-    return $self->{'translator'};
-}
+has translator => ( is => 'rw' );
 
 sub DESTROY {
     my $self = shift;
-    undef $_ for values %{ $self->{'tables'} };
-    undef $_ for values %{ $self->{'views'} };
+    undef $_ for values %{ $self->_tables };
+    undef $_ for values %{ $self->_views };
 }
 
 1;
