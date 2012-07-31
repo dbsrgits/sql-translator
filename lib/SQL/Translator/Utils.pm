@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Digest::SHA qw( sha1_hex );
 use File::Spec;
+use Scalar::Util qw(blessed);
+use Try::Tiny;
 
 our $VERSION = '1.59';
 our $DEFAULT_COMMENT = '-- ';
@@ -13,6 +15,7 @@ our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
     ddl_parser_instance
+    throw ex2err
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
@@ -302,6 +305,33 @@ sub _find_co_root {
         ? $root
         : undef
     ;
+}
+
+{
+    package SQL::Translator::Utils::Error;
+
+    use overload
+        '""' => sub { ${$_[0]} },
+        fallback => 1;
+
+    sub new {
+        my ($class, $msg) = @_;
+        bless \$msg, $class;
+    }
+}
+
+sub throw {
+    die SQL::Translator::Utils::Error->new($_[0]);
+}
+
+sub ex2err {
+    my ($orig, $self, @args) = @_;
+    return try {
+        $self->$orig(@args);
+    } catch {
+        die $_ unless blessed($_) && $_->isa("SQL::Translator::Utils::Error");
+        $self->error("$_");
+    };
 }
 
 1;

@@ -27,7 +27,8 @@ Primary and unique keys are table constraints, not indices.
 
 use Moo;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils 'parse_list_arg';
+use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Types qw(schema_obj);
 use List::MoreUtils qw(uniq);
 
 with qw(
@@ -53,14 +54,6 @@ my %VALID_INDEX_TYPE = (
 Object constructor.
 
   my $schema = SQL::Translator::Schema::Index->new;
-
-=cut
-
-sub BUILD {
-    my ($self) = @_;
-    $self->$_(scalar $self->$_)
-        foreach qw(fields options);
-}
 
 =head2 fields
 
@@ -140,7 +133,7 @@ an array or array reference.
 has options => (
     is => 'rw',
     default => sub { [] },
-    coerce => sub { parse_list_arg($_[0]) },
+    coerce => \&parse_list_arg,
 );
 
 around options => sub {
@@ -161,18 +154,9 @@ Get or set the index's table object.
 
 =cut
 
-has table => ( is => 'rw' );
+has table => ( is => 'rw', isa => schema_obj('Table') );
 
-around table => sub {
-    my $orig = shift;
-    my $self = shift;
-    if ( my $arg = $_[0] ) {
-        return $self->error('Not a table object') unless
-            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema::Table' );
-    }
-
-    return $self->$orig(@_);
-};
+around table => \&ex2err;
 
 =head2 type
 
@@ -189,19 +173,17 @@ uppercase.
 
 =cut
 
-has type => ( is => 'rw', default => sub { 'NORMAL' } );
+has type => (
+    is => 'rw',
+    isa => sub {
+        my $type = uc $_[0] or return;
+        throw("Invalid index type: $type") unless $VALID_INDEX_TYPE{$type};
+    },
+    coerce => sub { uc $_[0] },
+    default => sub { 'NORMAL' },
+);
 
-around type => sub {
-    my ( $orig, $self) = (shift, shift);
-
-    if ( my $type = $_[0] ) {
-        my $type = uc $type;
-        return $self->error("Invalid index type: $type")
-            unless $VALID_INDEX_TYPE{ $type };
-    }
-
-    return $self->$orig(@_);
-};
+around type => \&ex2err;
 
 =head2 equals
 
@@ -252,6 +234,9 @@ sub DESTROY {
     my $self = shift;
     undef $self->{'table'}; # destroy cyclical reference
 }
+
+# Must come after all 'has' declarations
+around new => \&ex2err;
 
 1;
 
