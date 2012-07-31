@@ -27,19 +27,18 @@ stored procedures (and possibly other pieces of nameable SQL code?).
 
 =cut
 
-use strict;
-use warnings;
-use SQL::Translator::Utils 'parse_list_arg';
+use Moo;
+use SQL::Translator::Utils qw(parse_list_arg ex2err);
+use SQL::Translator::Types qw(schema_obj);
+use List::MoreUtils qw(uniq);
 
-use base 'SQL::Translator::Schema::Object';
+with qw(
+  SQL::Translator::Schema::Role::Extra
+  SQL::Translator::Schema::Role::Error
+  SQL::Translator::Schema::Role::Compare
+);
 
 our $VERSION = '1.59';
-
-__PACKAGE__->_attributes( qw/
-    name sql parameters comments owner sql schema order
-/);
-
-=pod
 
 =head2 new
 
@@ -48,10 +47,6 @@ Object constructor.
   my $schema = SQL::Translator::Schema::Procedure->new;
 
 =cut
-
-sub parameters {
-
-=pod
 
 =head2 parameters
 
@@ -67,26 +62,20 @@ Gets and set the parameters of the stored procedure.
 
 =cut
 
+has parameters => (
+    is => 'rw',
+    default => sub { [] },
+    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
+);
+
+around parameters => sub {
+    my $orig   = shift;
     my $self   = shift;
-    my $parameters = parse_list_arg( @_ );
+    my $fields = parse_list_arg( @_ );
+    $self->$orig($fields) if @$fields;
 
-    if ( @$parameters ) {
-        my ( %unique, @unique );
-        for my $p ( @$parameters ) {
-            next if $unique{ $p };
-            $unique{ $p } = 1;
-            push @unique, $p;
-        }
-
-        $self->{'parameters'} = \@unique;
-    }
-
-    return wantarray ? @{ $self->{'parameters'} || [] } : ($self->{'parameters'} || '');
-}
-
-sub name {
-
-=pod
+    return wantarray ? @{ $self->$orig } : $self->$orig;
+};
 
 =head2 name
 
@@ -97,14 +86,7 @@ Get or set the procedure's name.
 
 =cut
 
-    my $self        = shift;
-    $self->{'name'} = shift if @_;
-    return $self->{'name'} || '';
-}
-
-sub sql {
-
-=pod
+has name => ( is => 'rw', default => sub { '' } );
 
 =head2 sql
 
@@ -115,14 +97,7 @@ Get or set the procedure's SQL.
 
 =cut
 
-    my $self       = shift;
-    $self->{'sql'} = shift if @_;
-    return $self->{'sql'} || '';
-}
-
-sub order {
-
-=pod
+has sql => ( is => 'rw', default => sub { '' } );
 
 =head2 order
 
@@ -133,14 +108,8 @@ Get or set the order of the procedure.
 
 =cut
 
-    my $self         = shift;
-    $self->{'order'} = shift if @_;
-    return $self->{'order'};
-}
+has order => ( is => 'rw' );
 
-sub owner {
-
-=pod
 
 =head2 owner
 
@@ -151,14 +120,7 @@ Get or set the owner of the procedure.
 
 =cut
 
-    my $self         = shift;
-    $self->{'owner'} = shift if @_;
-    return $self->{'owner'} || '';
-}
-
-sub comments {
-
-=pod
+has owner => ( is => 'rw', default => sub { '' } );
 
 =head2 comments
 
@@ -170,26 +132,24 @@ Get or set the comments on a procedure.
 
 =cut
 
-    my $self = shift;
+has comments => (
+    is => 'rw',
+    coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
+    default => sub { [] },
+);
 
-    for my $arg ( @_ ) {
+around comments => sub {
+    my $orig     = shift;
+    my $self     = shift;
+    my @comments = ref $_[0] ? @{ $_[0] } : @_;
+
+    for my $arg ( @comments ) {
         $arg = $arg->[0] if ref $arg;
-        push @{ $self->{'comments'} }, $arg if $arg;
+        push @{ $self->$orig }, $arg if defined $arg && $arg;
     }
 
-    if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray
-            ? @{ $self->{'comments'} || [] }
-            : join( "\n", @{ $self->{'comments'} || [] } );
-    }
-    else {
-        return wantarray ? () : '';
-    }
-}
-
-sub schema {
-
-=pod
+    return wantarray ? @{ $self->$orig } : join( "\n", @{ $self->$orig } );
+};
 
 =head2 schema
 
@@ -200,19 +160,9 @@ Get or set the procedures's schema object.
 
 =cut
 
-    my $self = shift;
-    if ( my $arg = shift ) {
-        return $self->error('Not a schema object') unless
-            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema' );
-        $self->{'schema'} = $arg;
-    }
+has schema => ( is => 'rw', isa => schema_obj('Schema') );
 
-    return $self->{'schema'};
-}
-
-sub equals {
-
-=pod
+around schema => \&ex2err;
 
 =head2 equals
 
@@ -222,12 +172,14 @@ Determines if this procedure is the same as another
 
 =cut
 
+around equals => sub {
+    my $orig = shift;
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_sql = shift;
 
-    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $self->$orig($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
 
     unless ($ignore_sql) {
@@ -247,12 +199,15 @@ Determines if this procedure is the same as another
 #    return 0 unless $case_insensitive ? uc($self->owner) eq uc($other->owner) : $self->owner eq $other->owner;
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
     return 1;
-}
+};
 
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
+
+# Must come after all 'has' declarations
+around new => \&ex2err;
 
 1;
 
