@@ -140,7 +140,7 @@ not be created.
     my $table_name = $table->name;
 
     if ( defined $self->_tables->{$table_name} ) {
-        return $self->error(qq[Can't create table: "$table_name" exists]);
+        return $self->error(qq[Can't use table name "$table_name": table exists]);
     }
     else {
         $self->_tables->{$table_name} = $table;
