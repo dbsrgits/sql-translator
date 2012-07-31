@@ -25,12 +25,16 @@ Primary and unique keys are table constraints, not indices.
 
 =cut
 
-use strict;
-use warnings;
+use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils 'parse_list_arg';
+use List::MoreUtils qw(uniq);
 
-use base 'SQL::Translator::Schema::Object';
+with qw(
+  SQL::Translator::Schema::Role::Extra
+  SQL::Translator::Schema::Role::Error
+  SQL::Translator::Schema::Role::Compare
+);
 
 our ( $TABLE_COUNT, $VIEW_COUNT );
 
@@ -44,12 +48,6 @@ my %VALID_INDEX_TYPE = (
   SPATIAL        => 1, # MySQL only (?)
 );
 
-__PACKAGE__->_attributes( qw/
-    name type fields table options
-/);
-
-=pod
-
 =head2 new
 
 Object constructor.
@@ -58,9 +56,11 @@ Object constructor.
 
 =cut
 
-sub fields {
-
-=pod
+sub BUILD {
+    my ($self) = @_;
+    $self->$_(scalar $self->$_)
+        foreach qw(fields options);
+}
 
 =head2 fields
 
@@ -78,22 +78,20 @@ names and keep them in order by the first occurrence of a field name.
 
 =cut
 
+has fields => (
+    is => 'rw',
+    default => sub { [] },
+    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
+);
+
+around fields => sub {
+    my $orig   = shift;
     my $self   = shift;
     my $fields = parse_list_arg( @_ );
+    $self->$orig($fields) if @$fields;
 
-    if ( @$fields ) {
-        my ( %unique, @unique );
-        for my $f ( @$fields ) {
-            next if $unique{ $f };
-            $unique{ $f } = 1;
-            push @unique, $f;
-        }
-
-        $self->{'fields'} = \@unique;
-    }
-
-    return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
-}
+    return wantarray ? @{ $self->$orig } : $self->$orig;
+};
 
 sub is_valid {
 
@@ -120,10 +118,6 @@ Determine whether the index is valid or not.
     return 1;
 }
 
-sub name {
-
-=pod
-
 =head2 name
 
 Get or set the index's name.
@@ -132,14 +126,7 @@ Get or set the index's name.
 
 =cut
 
-    my $self = shift;
-    $self->{'name'} = shift if @_;
-    return $self->{'name'} || '';
-}
-
-sub options {
-
-=pod
+has name => ( is => 'rw', coerce => sub { defined $_[0] ? $_[0] : '' }, default => sub { '' } );
 
 =head2 options
 
@@ -150,22 +137,21 @@ an array or array reference.
 
 =cut
 
+has options => (
+    is => 'rw',
+    default => sub { [] },
+    coerce => sub { parse_list_arg($_[0]) },
+);
+
+around options => sub {
+    my $orig    = shift;
     my $self    = shift;
     my $options = parse_list_arg( @_ );
 
-    push @{ $self->{'options'} }, @$options;
+    push @{ $self->$orig }, @$options;
 
-    if ( ref $self->{'options'} ) {
-        return wantarray ? @{ $self->{'options'} || [] } : $self->{'options'};
-    }
-    else {
-        return wantarray ? () : [];
-    }
-}
-
-sub table {
-
-=pod
+    return wantarray ? @{ $self->$orig } : $self->$orig;
+};
 
 =head2 table
 
@@ -175,19 +161,18 @@ Get or set the index's table object.
 
 =cut
 
+has table => ( is => 'rw' );
+
+around table => sub {
+    my $orig = shift;
     my $self = shift;
-    if ( my $arg = shift ) {
+    if ( my $arg = $_[0] ) {
         return $self->error('Not a table object') unless
             UNIVERSAL::isa( $arg, 'SQL::Translator::Schema::Table' );
-        $self->{'table'} = $arg;
     }
 
-    return $self->{'table'};
-}
-
-sub type {
-
-=pod
+    return $self->$orig(@_);
+};
 
 =head2 type
 
@@ -204,21 +189,19 @@ uppercase.
 
 =cut
 
-    my ( $self, $type ) = @_;
+has type => ( is => 'rw', default => sub { 'NORMAL' } );
 
-    if ( $type ) {
-        $type = uc $type;
+around type => sub {
+    my ( $orig, $self) = (shift, shift);
+
+    if ( my $type = $_[0] ) {
+        my $type = uc $type;
         return $self->error("Invalid index type: $type")
             unless $VALID_INDEX_TYPE{ $type };
-        $self->{'type'} = $type;
     }
 
-    return $self->{'type'} || 'NORMAL';
-}
-
-sub equals {
-
-=pod
+    return $self->$orig(@_);
+};
 
 =head2 equals
 
@@ -228,12 +211,14 @@ Determines if this index is the same as another
 
 =cut
 
+around equals => sub {
+    my $orig = shift;
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
     my $ignore_index_names = shift;
 
-    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $self->$orig($other);
 
     unless ($ignore_index_names) {
       unless ((!$self->name && ($other->name eq $other->fields->[0])) ||
@@ -261,7 +246,7 @@ Determines if this index is the same as another
     return 0 unless $self->_compare_objects(scalar $self->options, scalar $other->options);
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
     return 1;
-}
+};
 
 sub DESTROY {
     my $self = shift;
