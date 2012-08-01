@@ -28,24 +28,22 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 
 =cut
 
-use strict;
-use warnings;
-use SQL::Translator::Utils 'parse_list_arg';
+use Moo;
+use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Types qw(schema_obj);
+use List::MoreUtils qw(uniq);
 
-use base 'SQL::Translator::Schema::Object';
+with qw(
+  SQL::Translator::Schema::Role::Extra
+  SQL::Translator::Schema::Role::Error
+  SQL::Translator::Schema::Role::Compare
+);
 
 use Carp;
 
 our ( $TABLE_COUNT, $VIEW_COUNT );
 
 our $VERSION = '1.59';
-
-__PACKAGE__->_attributes( qw/
-    name schema perform_action_when database_events database_event
-    fields table on_table action order scope
-/);
-
-=pod
 
 =head2 new
 
@@ -55,9 +53,20 @@ Object constructor.
 
 =cut
 
-sub perform_action_when {
-
-=pod
+around BUILDARGS => sub {
+    my ($orig, $self, @args) = @_;
+    my $args = $self->$orig(@args);
+    if (exists $args->{on_table}) {
+        my $arg = delete $args->{on_table};
+        my $table = $args->{schema}->get_table($arg)
+            or die "Table named $arg doesn't exist";
+        $args->{table} = $table;
+    }
+    if (exists $args->{database_event}) {
+        $args->{database_events} = delete $args->{database_event};
+    }
+    return $args;
+};
 
 =head2 perform_action_when
 
@@ -68,22 +77,16 @@ C<database_event>.
 
 =cut
 
-    my $self = shift;
+has perform_action_when => (
+    is => 'rw',
+    coerce => sub { defined $_[0] ? lc $_[0] : $_[0] },
+    isa => sub {
+        throw("Invalid argument '$_[0]' to perform_action_when")
+            if defined $_[0] and $_[0] !~ m/^(before|after)$/i;
+    },
+);
 
-    if ( my $arg = shift ) {
-        $arg =  lc $arg;
-        $arg =~ s/\s+/ /g;
-        if ( $arg =~ m/^(before|after)$/i ) {
-            $self->{'perform_action_when'} = $arg;
-        }
-        else {
-            return
-                $self->error("Invalid argument '$arg' to perform_action_when");
-        }
-    }
-
-    return $self->{'perform_action_when'};
-}
+around perform_action_when => \&ex2err;
 
 sub database_event {
 
@@ -100,10 +103,6 @@ Obsolete please use database_events!
     return $self->database_events( @_ );
 }
 
-sub database_events {
-
-=pod
-
 =head2 database_events
 
 Gets or sets the events that triggers the trigger.
@@ -112,33 +111,36 @@ Gets or sets the events that triggers the trigger.
 
 =cut
 
-    my $self = shift;
-    my @args = ref $_[0] eq 'ARRAY' ? @{ $_[0] } : @_;
-
-    if ( @args ) {
-        @args       = map { s/\s+/ /g; lc $_ } @args;
+has database_events => (
+    is => 'rw',
+    coerce => sub { [ map { lc } ref $_[0] eq 'ARRAY' ? @{$_[0]} : ($_[0]) ] },
+    isa => sub {
+        my @args    = @{$_[0]};
         my %valid   = map { $_, 1 } qw[ insert update update_on delete ];
         my @invalid = grep { !defined $valid{ $_ } } @args;
 
         if ( @invalid ) {
-            return $self->error(
+            throw(
                 sprintf("Invalid events '%s' in database_events",
                     join(', ', @invalid)
                 )
             );
         }
+    },
+);
 
-        $self->{'database_events'} = [ @args ];
+around database_events => sub {
+    my ($orig,$self) = (shift, shift);
+
+    if (@_) {
+        ex2err($orig, $self, ref $_[0] eq 'ARRAY' ? $_[0] : \@_)
+            or return;
     }
 
     return wantarray
-        ? @{ $self->{'database_events'} || [] }
-        : $self->{'database_events'};
-}
-
-sub fields {
-
-=pod
+        ? @{ $self->$orig || [] }
+        : $self->$orig;
+};
 
 =head2 fields
 
@@ -154,26 +156,22 @@ Gets and set which fields to monitor for C<database_event>.
 
 =cut
 
-    my $self = shift;
+has fields => (
+    is => 'rw',
+    coerce => sub {
+        my @fields = uniq @{parse_list_arg($_[0])};
+        @fields ? \@fields : undef;
+    },
+);
+
+around fields => sub {
+    my $orig   = shift;
+    my $self   = shift;
     my $fields = parse_list_arg( @_ );
+    $self->$orig($fields) if @$fields;
 
-    if ( @$fields ) {
-        my ( %unique, @unique );
-        for my $f ( @$fields ) {
-            next if $unique{ $f };
-            $unique{ $f } = 1;
-            push @unique, $f;
-        }
-
-        $self->{'fields'} = \@unique;
-    }
-
-    return wantarray ? @{ $self->{'fields'} || [] } : $self->{'fields'};
-}
-
-sub table {
-
-=pod
+    return wantarray ? @{ $self->$orig || [] } : $self->$orig;
+};
 
 =head2 table
 
@@ -182,15 +180,9 @@ Gets or set the table on which the trigger works, as a L<SQL::Translator::Schema
 
 =cut
 
-    my ($self, $arg) = @_;
-    if ( @_ == 2 ) {
-        $self->error("Table attribute of a ".__PACKAGE__.
-                     " must be a SQL::Translator::Schema::Table")
-            unless ref $arg and $arg->isa('SQL::Translator::Schema::Table');
-        $self->{table} = $arg;
-    }
-    return $self->{table};
-}
+has table => ( is => 'rw', isa => schema_obj('Table') );
+
+around table => \&ex2err;
 
 sub on_table {
 
@@ -213,10 +205,6 @@ Gets or set the table name on which the trigger works, as a string.
     return $self->table->name;
 }
 
-sub action {
-
-=pod
-
 =head2 action
 
 Gets or set the action of the trigger.
@@ -232,11 +220,7 @@ Gets or set the action of the trigger.
 
 =cut
 
-    my $self = shift;
-    my $arg  = shift || '';
-    $self->{'action'} = $arg if $arg;
-    return $self->{'action'};
-}
+has action => ( is => 'rw', default => sub { '' } );
 
 sub is_valid {
 
@@ -264,10 +248,6 @@ Determine whether the trigger is valid or not.
     return 1;
 }
 
-sub name {
-
-=pod
-
 =head2 name
 
 Get or set the trigger's name.
@@ -276,14 +256,7 @@ Get or set the trigger's name.
 
 =cut
 
-    my $self        = shift;
-    $self->{'name'} = shift if @_;
-    return $self->{'name'} || '';
-}
-
-sub order {
-
-=pod
+has name => ( is => 'rw', default => sub { '' } );
 
 =head2 order
 
@@ -293,19 +266,17 @@ Get or set the trigger's order.
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has order => ( is => 'rw', default => sub { 0 } );
+
+around order => sub {
+    my ( $orig, $self, $arg ) = @_;
 
     if ( defined $arg && $arg =~ /^\d+$/ ) {
-        $self->{'order'} = $arg;
+        return $self->$orig($arg);
     }
 
-    return $self->{'order'} || 0;
-}
-
-
-sub scope {
-
-=pod
+    return $self->$orig;
+};
 
 =head2 scope
 
@@ -315,21 +286,17 @@ Get or set the trigger's scope (row or statement).
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has scope => (
+    is => 'rw',
+    isa => sub {
+        my ($arg) = @_;
+        throw( "Invalid scope '$arg'" )
+            if defined $arg and $arg !~ /^(row|statement)$/i;
+    },
+);
 
-    if ( defined $arg ) {
-        return $self->error( "Invalid scope '$arg'" )
-            unless $arg =~ /^(row|statement)$/i;
+around scope => \&ex2err;
 
-        $self->{scope} = $arg;
-    }
-
-    return $self->{scope} || '';
-}
-
-sub schema {
-
-=pod
 
 =head2 schema
 
@@ -340,15 +307,9 @@ Get or set the trigger's schema object.
 
 =cut
 
-    my $self = shift;
-    if ( my $arg = shift ) {
-        return $self->error('Not a schema object') unless
-            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema' );
-        $self->{'schema'} = $arg;
-    }
+has schema => (is => 'rw', isa => schema_obj('Schema') );
 
-    return $self->{'schema'};
-}
+around schema => \&ex2err;
 
 sub compare_arrays {
 
@@ -378,10 +339,6 @@ Compare two arrays.
     return 1;
 }
 
-sub equals {
-
-=pod
-
 =head2 equals
 
 Determines if this trigger is the same as another
@@ -390,11 +347,13 @@ Determines if this trigger is the same as another
 
 =cut
 
+around equals => sub {
+    my $orig             = shift;
     my $self             = shift;
     my $other            = shift;
     my $case_insensitive = shift;
 
-    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $self->$orig($other);
 
     my %names;
     for my $name ( $self->name, $other->name ) {
@@ -431,12 +390,15 @@ Determines if this trigger is the same as another
     }
 
     return 1;
-}
+};
 
 sub DESTROY {
     my $self = shift;
     undef $self->{'schema'}; # destroy cyclical reference
 }
+
+# Must come after all 'has' declarations
+around new => \&ex2err;
 
 1;
 
