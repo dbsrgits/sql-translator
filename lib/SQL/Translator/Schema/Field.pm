@@ -28,6 +28,7 @@ use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 
 with qw(
+  SQL::Translator::Schema::Role::BuildArgs
   SQL::Translator::Schema::Role::Extra
   SQL::Translator::Schema::Role::Error
   SQL::Translator::Schema::Role::Compare
@@ -87,19 +88,6 @@ Object constructor.
       name  => 'foo',
       table => $table,
   );
-
-=cut
-
-around BUILDARGS => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $args = $self->$orig(@_);
-
-    foreach my $arg (keys %{$args}) {
-        delete $args->{$arg} unless defined($args->{$arg});
-    }
-    return $args;
-};
 
 =head2 comments
 

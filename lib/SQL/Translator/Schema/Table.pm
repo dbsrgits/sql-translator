@@ -31,6 +31,7 @@ use Carp::Clan '^SQL::Translator';
 use List::Util 'max';
 
 with qw(
+  SQL::Translator::Schema::Role::BuildArgs
   SQL::Translator::Schema::Role::Extra
   SQL::Translator::Schema::Role::Error
   SQL::Translator::Schema::Role::Compare

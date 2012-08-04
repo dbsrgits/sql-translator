@@ -30,6 +30,7 @@ use SQL::Translator::Types qw(schema_obj);
 use List::MoreUtils qw(uniq);
 
 with qw(
+  SQL::Translator::Schema::Role::BuildArgs
   SQL::Translator::Schema::Role::Extra
   SQL::Translator::Schema::Role::Error
   SQL::Translator::Schema::Role::Compare
@@ -73,7 +74,7 @@ around BUILDARGS => sub {
     my $args = $self->$orig(@_);
 
     foreach my $arg (keys %{$args}) {
-        delete $args->{$arg} if !defined($args->{$arg}) || (ref($args->{$arg}) eq "ARRAY" && !@{$args->{$arg}});
+        delete $args->{$arg} if ref($args->{$arg}) eq "ARRAY" && !@{$args->{$arg}};
     }
     if (exists $args->{fields}) {
         $args->{field_names} = delete $args->{fields};
