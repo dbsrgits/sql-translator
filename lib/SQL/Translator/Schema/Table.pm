@@ -334,7 +334,7 @@ sub add_field {
     my $field_name = $field->name;
 
     if ( $self->get_field($field_name) ) {
-        return $self->error(qq[Can't create field: "$field_name" exists]);
+        return $self->error(qq[Can't use field name "$field_name": field exists]);
     }
     else {
         $self->_fields->{ $field_name } = $field;

@@ -22,12 +22,16 @@ C<SQL::Translator::Schema::Field> is the field object.
 
 =cut
 
-use strict;
-use warnings;
+use Moo;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils 'parse_list_arg';
+use SQL::Translator::Types qw(schema_obj);
+use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 
-use base 'SQL::Translator::Schema::Object';
+with qw(
+  SQL::Translator::Schema::Role::Extra
+  SQL::Translator::Schema::Role::Error
+  SQL::Translator::Schema::Role::Compare
+);
 
 our ( $TABLE_COUNT, $VIEW_COUNT );
 
@@ -75,14 +79,6 @@ our %type_mapping = (
 
 );
 
-__PACKAGE__->_attributes( qw/
-    table name data_type size is_primary_key is_nullable
-    is_auto_increment default_value comments is_foreign_key
-    is_unique order sql_data_type
-/);
-
-=pod
-
 =head2 new
 
 Object constructor.
@@ -94,9 +90,16 @@ Object constructor.
 
 =cut
 
-sub comments {
+around BUILDARGS => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $args = $self->$orig(@_);
 
-=pod
+    foreach my $arg (keys %{$args}) {
+        delete $args->{$arg} unless defined($args->{$arg});
+    }
+    return $args;
+};
 
 =head2 comments
 
@@ -111,27 +114,26 @@ all the comments joined on newlines.
 
 =cut
 
+has comments => (
+    is => 'rw',
+    coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
+    default => sub { [] },
+);
+
+around comments => sub {
+    my $orig = shift;
     my $self = shift;
 
     for my $arg ( @_ ) {
         $arg = $arg->[0] if ref $arg;
-        push @{ $self->{'comments'} }, $arg if $arg;
+        push @{ $self->$orig }, $arg if $arg;
     }
 
-    if ( @{ $self->{'comments'} || [] } ) {
-        return wantarray
-            ? @{ $self->{'comments'} || [] }
-            : join( "\n", @{ $self->{'comments'} || [] } );
-    }
-    else {
-        return wantarray ? () : '';
-    }
-}
+    return wantarray
+        ? @{ $self->$orig }
+        : join( "\n", @{ $self->$orig } );
+};
 
-
-sub data_type {
-
-=pod
 
 =head2 data_type
 
@@ -141,15 +143,7 @@ Get or set the field's data type.
 
 =cut
 
-    my $self = shift;
-    if (@_) {
-      $self->{'data_type'} = $_[0];
-      $self->{'sql_data_type'} = $type_mapping{lc $_[0]} || SQL_UNKNOWN_TYPE unless exists $self->{sql_data_type};
-    }
-    return $self->{'data_type'} || '';
-}
-
-sub sql_data_type {
+has data_type => ( is => 'rw', default => sub { '' } );
 
 =head2 sql_data_type
 
@@ -158,15 +152,11 @@ for more details.
 
 =cut
 
-    my $self = shift;
-    $self->{sql_data_type} = shift if @_;
-    return $self->{sql_data_type} || 0;
+has sql_data_type => ( is => 'rw', lazy => 1, builder => 1 );
 
+sub _build_sql_data_type {
+    $type_mapping{lc $_[0]->data_type} || SQL_UNKNOWN_TYPE;
 }
-
-sub default_value {
-
-=pod
 
 =head2 default_value
 
@@ -178,12 +168,7 @@ assume an error like other methods.
 
 =cut
 
-    my $self = shift;
-    $self->{'default_value'} = shift if @_;
-    return $self->{'default_value'};
-}
-
-=pod
+has default_value => ( is => 'rw' );
 
 =head2 extra
 
@@ -195,10 +180,6 @@ Accepts a hash(ref) of name/value pairs to store;  returns a hash.
 
 =cut
 
-sub foreign_key_reference {
-
-=pod
-
 =head2 foreign_key_reference
 
 Get or set the field's foreign key reference;
@@ -207,30 +188,25 @@ Get or set the field's foreign key reference;
 
 =cut
 
+has foreign_key_reference => (
+    is => 'rw',
+    predicate => '_has_foreign_key_reference',
+    isa => schema_obj('Constraint'),
+);
+
+around foreign_key_reference => sub {
+    my $orig = shift;
     my $self = shift;
 
     if ( my $arg = shift ) {
-        my $class = 'SQL::Translator::Schema::Constraint';
-        if ( UNIVERSAL::isa( $arg, $class ) ) {
-            return $self->error(
-                'Foreign key reference for ', $self->name, 'already defined'
-            ) if $self->{'foreign_key_reference'};
+        return $self->error(
+            'Foreign key reference for ', $self->name, 'already defined'
+        ) if $self->_has_foreign_key_reference;
 
-            $self->{'foreign_key_reference'} = $arg;
-        }
-        else {
-            return $self->error(
-                "Argument to foreign_key_reference is not an $class object"
-            );
-        }
+        return ex2err($orig, $self, $arg);
     }
-
-    return $self->{'foreign_key_reference'};
-}
-
-sub is_auto_increment {
-
-=pod
+    $self->$orig;
+};
 
 =head2 is_auto_increment
 
@@ -240,31 +216,28 @@ Get or set the field's C<is_auto_increment> attribute.
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has is_auto_increment => (
+    is => 'rw',
+    coerce => sub { $_[0] ? 1 : 0 },
+    builder => 1,
+    lazy => 1,
+);
 
-    if ( defined $arg ) {
-        $self->{'is_auto_increment'} = $arg ? 1 : 0;
-    }
+sub _build_is_auto_increment {
+    my ( $self ) = @_;
 
-    unless ( defined $self->{'is_auto_increment'} ) {
-        if ( my $table = $self->table ) {
-            if ( my $schema = $table->schema ) {
-                if (
-                    $schema->database eq 'PostgreSQL' &&
-                    $self->data_type eq 'serial'
-                ) {
-                    $self->{'is_auto_increment'} = 1;
-                }
+    if ( my $table = $self->table ) {
+        if ( my $schema = $table->schema ) {
+            if (
+                $schema->database eq 'PostgreSQL' &&
+                $self->data_type eq 'serial'
+            ) {
+                return 1;
             }
         }
     }
-
-    return $self->{'is_auto_increment'} || 0;
+    return 0;
 }
-
-sub is_foreign_key {
-
-=pod
 
 =head2 is_foreign_key
 
@@ -274,29 +247,29 @@ Returns whether or not the field is a foreign key.
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has is_foreign_key => (
+    is => 'rw',
+    coerce => sub { $_[0] ? 1 : 0 },
+    builder => 1,
+    lazy => 1,
+);
 
-    unless ( defined $self->{'is_foreign_key'} ) {
-        if ( my $table = $self->table ) {
-            for my $c ( $table->get_constraints ) {
-                if ( $c->type eq FOREIGN_KEY ) {
-                    my %fields = map { $_, 1 } $c->fields;
-                    if ( $fields{ $self->name } ) {
-                        $self->{'is_foreign_key'} = 1;
-                        $self->foreign_key_reference( $c );
-                        last;
-                    }
+sub _build_is_foreign_key {
+    my ( $self ) = @_;
+
+    if ( my $table = $self->table ) {
+        for my $c ( $table->get_constraints ) {
+            if ( $c->type eq FOREIGN_KEY ) {
+                my %fields = map { $_, 1 } $c->fields;
+                if ( $fields{ $self->name } ) {
+                    $self->foreign_key_reference( $c );
+                    return 1;
                 }
             }
         }
     }
-
-    return $self->{'is_foreign_key'} || 0;
+    return 0;
 }
-
-sub is_nullable {
-
-=pod
 
 =head2 is_nullable
 
@@ -315,26 +288,17 @@ foreign keys; checks) are represented as table constraints.
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has is_nullable => (
+    is => 'rw',
+    coerce => sub { $_[0] ? 1 : 0 },
+    default => sub { 1 },
+ );
 
-    if ( defined $arg ) {
-        $self->{'is_nullable'} = $arg ? 1 : 0;
-    }
+around is_nullable => sub {
+    my ($orig, $self, $arg) = @_;
 
-    if (
-        defined $self->{'is_nullable'} &&
-        $self->{'is_nullable'} == 1    &&
-        $self->is_primary_key
-    ) {
-        $self->{'is_nullable'} = 0;
-    }
-
-    return defined $self->{'is_nullable'} ? $self->{'is_nullable'} : 1;
-}
-
-sub is_primary_key {
-
-=pod
+    $self->$orig($self->is_primary_key ? 0 : defined $arg ? $arg : ());
+};
 
 =head2 is_primary_key
 
@@ -345,30 +309,24 @@ a table constraint (should it?).
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has is_primary_key => (
+    is => 'rw',
+    coerce => sub { $_[0] ? 1 : 0 },
+    lazy => 1,
+    builder => 1,
+);
 
-    if ( defined $arg ) {
-        $self->{'is_primary_key'} = $arg ? 1 : 0;
-    }
+sub _build_is_primary_key {
+    my ( $self ) = @_;
 
-    unless ( defined $self->{'is_primary_key'} ) {
-        if ( my $table = $self->table ) {
-            if ( my $pk = $table->primary_key ) {
-                my %fields = map { $_, 1 } $pk->fields;
-                $self->{'is_primary_key'} = $fields{ $self->name } || 0;
-            }
-            else {
-                $self->{'is_primary_key'} = 0;
-            }
+    if ( my $table = $self->table ) {
+        if ( my $pk = $table->primary_key ) {
+            my %fields = map { $_, 1 } $pk->fields;
+            return $fields{ $self->name } || 0;
         }
     }
-
-    return $self->{'is_primary_key'} || 0;
+    return 0;
 }
-
-sub is_unique {
-
-=pod
 
 =head2 is_unique
 
@@ -378,23 +336,22 @@ Determine whether the field has a UNIQUE constraint or not.
 
 =cut
 
-    my $self = shift;
+has is_unique => ( is => 'lazy', init_arg => undef );
 
-    unless ( defined $self->{'is_unique'} ) {
-        if ( my $table = $self->table ) {
-            for my $c ( $table->get_constraints ) {
-                if ( $c->type eq UNIQUE ) {
-                    my %fields = map { $_, 1 } $c->fields;
-                    if ( $fields{ $self->name } ) {
-                        $self->{'is_unique'} = 1;
-                        last;
-                    }
+sub _build_is_unique {
+    my ( $self ) = @_;
+
+    if ( my $table = $self->table ) {
+        for my $c ( $table->get_constraints ) {
+            if ( $c->type eq UNIQUE ) {
+                my %fields = map { $_, 1 } $c->fields;
+                if ( $fields{ $self->name } ) {
+                    return 1;
                 }
             }
         }
     }
-
-    return $self->{'is_unique'} || 0;
+    return 0;
 }
 
 sub is_valid {
@@ -416,10 +373,6 @@ Determine whether the field is valid or not.
     return 1;
 }
 
-sub name {
-
-=pod
-
 =head2 name
 
 Get or set the field's name.
@@ -434,20 +387,21 @@ Errors ("No field name") if you try to set a blank name.
 
 =cut
 
+has name => ( is => 'rw', isa => sub { throw( "No field name" ) unless $_[0] } );
+
+around name => sub {
+    my $orig = shift;
     my $self = shift;
 
-    if ( @_ ) {
-        my $arg = shift || return $self->error( "No field name" );
-        if ( my $table = $self->table ) {
+    if ( my ($arg) = @_ ) {
+        if ( my $schema = $self->table ) {
             return $self->error( qq[Can't use field name "$arg": field exists] )
-                if $table->get_field( $arg );
+                if $schema->get_field( $arg );
         }
-
-        $self->{'name'} = $arg;
     }
 
-    return $self->{'name'} || '';
-}
+    return ex2err($orig, $self, @_);
+};
 
 sub full_name {
 
@@ -462,10 +416,6 @@ e.g. "person.foo".
     return $self->table.".".$self->name;
 }
 
-sub order {
-
-=pod
-
 =head2 order
 
 Get or set the field's order.
@@ -474,14 +424,17 @@ Get or set the field's order.
 
 =cut
 
-    my ( $self, $arg ) = @_;
+has order => ( is => 'rw', default => sub { 0 } );
+
+around order => sub {
+    my ( $orig, $self, $arg ) = @_;
 
     if ( defined $arg && $arg =~ /^\d+$/ ) {
-        $self->{'order'} = $arg;
+        return $self->$orig($arg);
     }
 
-    return $self->{'order'} || 0;
-}
+    return $self->$orig;
+};
 
 sub schema {
 
@@ -499,10 +452,6 @@ doesn't have one.
     return undef;
 }
 
-sub size {
-
-=pod
-
 =head2 size
 
 Get or set the field's size.  Accepts a string, array or arrayref of
@@ -518,6 +467,17 @@ numbers and returns a string.
 
 =cut
 
+has size => (
+    is => 'rw',
+    default => sub { [0] },
+    coerce => sub {
+        my @sizes = grep { defined && m/^\d+(?:\.\d+)?$/ } @{parse_list_arg($_[0])};
+        @sizes ? \@sizes : [0];
+    },
+);
+
+around size => sub {
+    my $orig    = shift;
     my $self    = shift;
     my $numbers = parse_list_arg( @_ );
 
@@ -528,18 +488,14 @@ numbers and returns a string.
                 push @new, $num;
             }
         }
-        $self->{'size'} = \@new if @new; # only set if all OK
+        $self->$orig(\@new) if @new; # only set if all OK
     }
 
     return wantarray
-        ? @{ $self->{'size'} || [0] }
-        : join( ',', @{ $self->{'size'} || [0] } )
+        ? @{ $self->$orig || [0] }
+        : join( ',', @{ $self->$orig || [0] } )
     ;
-}
-
-sub table {
-
-=pod
+};
 
 =head2 table
 
@@ -551,17 +507,9 @@ also be used to get the table name.
 
 =cut
 
-    my $self = shift;
-    if ( my $arg = shift ) {
-        return $self->error('Not a table object') unless
-            UNIVERSAL::isa( $arg, 'SQL::Translator::Schema::Table' );
-        $self->{'table'} = $arg;
-    }
+has table => ( is => 'rw', isa => schema_obj('Table') );
 
-    return $self->{'table'};
-}
-
-sub parsed_field {
+around table => \&ex2err;
 
 =head2
 
@@ -569,19 +517,14 @@ Returns the field exactly as the parser found it
 
 =cut
 
+has parsed_field => ( is => 'rw' );
+
+around parsed_field => sub {
+    my $orig = shift;
     my $self = shift;
 
-    if (@_) {
-      my $value = shift;
-      $self->{parsed_field} = $value;
-      return $value || $self;
-    }
-    return $self->{parsed_field} || $self;
-}
-
-sub equals {
-
-=pod
+    return $self->$orig(@_) || $self;
+};
 
 =head2 equals
 
@@ -591,11 +534,13 @@ Determines if this field is the same as another
 
 =cut
 
+around equals => sub {
+    my $orig = shift;
     my $self = shift;
     my $other = shift;
     my $case_insensitive = shift;
 
-    return 0 unless $self->SUPER::equals($other);
+    return 0 unless $self->$orig($other);
     return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
 
     # Comparing types: use sql_data_type if both are not 0. Else use string data_type
@@ -633,7 +578,7 @@ Determines if this field is the same as another
 #    return 0 unless $self->comments eq $other->comments;
     return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
     return 1;
-}
+};
 
 sub DESTROY {
 #
@@ -643,6 +588,9 @@ sub DESTROY {
     undef $self->{'table'};
     undef $self->{'foreign_key_reference'};
 }
+
+# Must come after all 'has' declarations
+around new => \&ex2err;
 
 1;
 

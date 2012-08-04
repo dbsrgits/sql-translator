@@ -187,7 +187,7 @@ my @stmts = (
 
 "DROP TABLE IF EXISTS `thing`",
 "CREATE TABLE `thing` (
-  `id` unsigned int NULL auto_increment,
+  `id` unsigned int NOT NULL auto_increment,
   `name` varchar(32) NULL,
   `swedish_name` varchar(32) character set swe7 NULL,
   `description` text character set utf8 collate utf8_general_ci NULL,
@@ -197,8 +197,8 @@ my @stmts = (
 
 "DROP TABLE IF EXISTS `some`.`thing2`",
 "CREATE TABLE `some`.`thing2` (
-  `id` integer NULL,
-  `foo` integer NULL,
+  `id` integer NOT NULL,
+  `foo` integer NOT NULL,
   `foo2` integer NULL,
   `bar_set` set('foo', 'bar', 'baz') NULL,
   INDEX `index_1` (`id`),
@@ -212,8 +212,8 @@ my @stmts = (
 
 "DROP TABLE IF EXISTS `some`.`thing3`",
 "CREATE TABLE `some`.`thing3` (
-  `id` integer NULL,
-  `foo` integer NULL,
+  `id` integer NOT NULL,
+  `foo` integer NOT NULL,
   `foo2` integer NULL,
   `bar_set` set('foo', 'bar', 'baz') NULL,
   INDEX `index_1` (`id`),
