@@ -161,7 +161,7 @@ Get or set the procedures's schema object.
 
 =cut
 
-has schema => ( is => 'rw', isa => schema_obj('Schema') );
+has schema => ( is => 'rw', isa => schema_obj('Schema'), weak_ref => 1 );
 
 around schema => \&ex2err;
 

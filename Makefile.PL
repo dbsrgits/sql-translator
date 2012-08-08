@@ -19,7 +19,7 @@ my $deps = {
     'File::ShareDir'           => '1.0',
     'File::Spec'               => '0',
     'XML::Writer'              => '0.500',
-    'Moo'                      => '0.009007',
+    'Moo'                      => '1.000003',
     'Try::Tiny'                => '0.04',
   },
   recommends => {

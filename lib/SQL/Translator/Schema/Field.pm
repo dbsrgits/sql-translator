@@ -178,6 +178,7 @@ has foreign_key_reference => (
     is => 'rw',
     predicate => '_has_foreign_key_reference',
     isa => schema_obj('Constraint'),
+    weak_ref => 1,
 );
 
 around foreign_key_reference => sub {
@@ -493,7 +494,7 @@ also be used to get the table name.
 
 =cut
 
-has table => ( is => 'rw', isa => schema_obj('Table') );
+has table => ( is => 'rw', isa => schema_obj('Table'), weak_ref => 1 );
 
 around table => \&ex2err;
 

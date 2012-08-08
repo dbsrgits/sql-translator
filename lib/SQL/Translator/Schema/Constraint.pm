@@ -390,7 +390,7 @@ Get or set the constraint's table object.
 
 =cut
 
-has table => ( is => 'rw', isa => schema_obj('Table') );
+has table => ( is => 'rw', isa => schema_obj('Table'), weak_ref => 1 );
 
 around table => \&ex2err;
 

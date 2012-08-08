@@ -757,7 +757,7 @@ Get the SQL::Translator instance that instantiated the parser.
 
 =cut
 
-has translator => ( is => 'rw' );
+has translator => ( is => 'rw', weak_ref => 1 );
 
 1;
 

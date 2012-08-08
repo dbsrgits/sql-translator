@@ -177,7 +177,7 @@ Gets or set the table on which the trigger works, as a L<SQL::Translator::Schema
 
 =cut
 
-has table => ( is => 'rw', isa => schema_obj('Table') );
+has table => ( is => 'rw', isa => schema_obj('Table'), weak_ref => 1 );
 
 around table => \&ex2err;
 
@@ -304,7 +304,7 @@ Get or set the trigger's schema object.
 
 =cut
 
-has schema => (is => 'rw', isa => schema_obj('Schema') );
+has schema => (is => 'rw', isa => schema_obj('Schema'), weak_ref => 1 );
 
 around schema => \&ex2err;
 
