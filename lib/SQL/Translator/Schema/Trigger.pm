@@ -40,10 +40,6 @@ with qw(
   SQL::Translator::Schema::Role::Compare
 );
 
-use Carp;
-
-our ( $TABLE_COUNT, $VIEW_COUNT );
-
 our $VERSION = '1.59';
 
 =head2 new

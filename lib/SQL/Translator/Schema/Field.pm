@@ -34,8 +34,6 @@ with qw(
   SQL::Translator::Schema::Role::Compare
 );
 
-our ( $TABLE_COUNT, $VIEW_COUNT );
-
 our $VERSION = '1.59';
 
 # Stringify to our name, being careful not to pass any args through so we don't
