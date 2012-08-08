@@ -566,15 +566,6 @@ around equals => sub {
     return 1;
 };
 
-sub DESTROY {
-#
-# Destroy cyclical references.
-#
-    my $self = shift;
-    undef $self->{'table'};
-    undef $self->{'foreign_key_reference'};
-}
-
 # Must come after all 'has' declarations
 around new => \&ex2err;
 

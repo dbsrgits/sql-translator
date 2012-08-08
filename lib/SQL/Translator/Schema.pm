@@ -759,12 +759,6 @@ Get the SQL::Translator instance that instantiated the parser.
 
 has translator => ( is => 'rw' );
 
-sub DESTROY {
-    my $self = shift;
-    undef $_ for values %{ $self->_tables };
-    undef $_ for values %{ $self->_views };
-}
-
 1;
 
 =pod

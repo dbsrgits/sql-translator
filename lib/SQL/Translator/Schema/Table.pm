@@ -1036,14 +1036,6 @@ sub fkey_constraints {
     return wantarray ? @cons : \@cons;
 }
 
-sub DESTROY {
-    my $self = shift;
-    undef $self->{'schema'}; # destroy cyclical reference
-    undef $_ for @{ $self->{'constraints'} };
-    undef $_ for @{ $self->{'indices'} };
-    undef $_ for values %{ $self->{'fields'} };
-}
-
 # Must come after all 'has' declarations
 around new => \&ex2err;
 

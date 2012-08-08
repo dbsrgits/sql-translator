@@ -389,11 +389,6 @@ around equals => sub {
     return 1;
 };
 
-sub DESTROY {
-    my $self = shift;
-    undef $self->{'schema'}; # destroy cyclical reference
-}
-
 # Must come after all 'has' declarations
 around new => \&ex2err;
 
