@@ -1,4 +1,4 @@
-package SQL::Translator::Schema::Role::BuildArgs;
+package SQL::Translator::Role::BuildArgs;
 use Moo::Role;
 
 around BUILDARGS => sub {

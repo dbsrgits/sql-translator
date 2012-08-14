@@ -37,8 +37,9 @@ use SQL::Translator::Utils 'parse_list_arg';
 use Carp;
 
 with qw(
+  SQL::Translator::Role::Error
+  SQL::Translator::Role::BuildArgs
   SQL::Translator::Schema::Role::Extra
-  SQL::Translator::Schema::Role::Error
   SQL::Translator::Schema::Role::Compare
 );
 

@@ -1,4 +1,4 @@
-package SQL::Translator::Schema::Role::Error;
+package SQL::Translator::Role::Error;
 use Moo::Role;
 
 has error => (is => 'rw', default => sub { '' });
