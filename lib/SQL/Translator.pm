@@ -1,9 +1,7 @@
 package SQL::Translator;
 
-use strict;
-use warnings;
+use Moo;
 our ( $DEFAULT_SUB, $DEBUG, $ERROR );
-use base 'Class::Base';
 
 require 5.005;
 
@@ -20,73 +18,28 @@ use File::Basename qw(dirname);
 use IO::Dir;
 use SQL::Translator::Producer;
 use SQL::Translator::Schema;
+use SQL::Translator::Utils qw(throw ex2err);
 
 $DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
 
-sub init {
-    my ( $self, $config ) = @_;
-    #
-    # Set the parser and producer.
-    #
+with qw(
+    SQL::Translator::Role::Debug
+    SQL::Translator::Role::Error
+    SQL::Translator::Role::BuildArgs
+);
+
+around BUILDARGS => sub {
+    my $orig = shift;
+    my $self = shift;
+    my $config = $self->$orig(@_);
+
     # If a 'parser' or 'from' parameter is passed in, use that as the
     # parser; if a 'producer' or 'to' parameter is passed in, use that
     # as the producer; both default to $DEFAULT_SUB.
-    #
-    $self->parser  ($config->{'parser'}   || $config->{'from'} || $DEFAULT_SUB);
-    $self->producer($config->{'producer'} || $config->{'to'}   || $DEFAULT_SUB);
+    $config->{parser} ||= $config->{from} if defined $config->{from};
+    $config->{producer} ||= $config->{to} if defined $config->{to};
 
-    #
-    # Set up callbacks for formatting of pk,fk,table,package names in producer
-    # MOVED TO PRODUCER ARGS
-    #
-    #$self->format_table_name($config->{'format_table_name'});
-    #$self->format_package_name($config->{'format_package_name'});
-    #$self->format_fk_name($config->{'format_fk_name'});
-    #$self->format_pk_name($config->{'format_pk_name'});
-
-    #
-    # Set the parser_args and producer_args
-    #
-    for my $pargs ( qw[ parser_args producer_args ] ) {
-        $self->$pargs( $config->{$pargs} ) if defined $config->{ $pargs };
-    }
-
-    #
-    # Initialize the filters.
-    #
-    if ( $config->{filters} && ref $config->{filters} eq "ARRAY" ) {
-        $self->filters( @{$config->{filters}} )
-        || return $self->error('Error inititializing filters: '.$self->error);
-    }
-
-    #
-    # Set the data source, if 'filename' or 'file' is provided.
-    #
-    $config->{'filename'} ||= $config->{'file'} || "";
-    $self->filename( $config->{'filename'} ) if $config->{'filename'};
-
-    #
-    # Finally, if there is a 'data' parameter, use that in
-    # preference to filename and file
-    #
-    if ( my $data = $config->{'data'} ) {
-        $self->data( $data );
-    }
-
-    #
-    # Set various other options.
-    #
-    $self->{'debug'} = defined $config->{'debug'} ? $config->{'debug'} : $DEBUG;
-
-    $self->add_drop_table( $config->{'add_drop_table'} );
-
-    $self->no_comments( $config->{'no_comments'} );
-
-    $self->show_warnings( $config->{'show_warnings'} );
-
-    $self->trace( $config->{'trace'} );
-
-    $self->validate( $config->{'validate'} );
+    $config->{filename} ||= $config->{file} if defined $config->{file};
 
     my $quote;
     if (defined $config->{quote_identifiers}) {
@@ -121,221 +74,213 @@ sub init {
 
       $quote = $config->{'quote_table_names'} ? 1 : 0;
     }
-    # none are set - on by default, use a 0-but-true as indicator
-    # so we can allow individual producers to change the default
-    else {
-      $quote = '0E0';
+
+    $config->{quote_identifiers} = $quote if defined $quote;
+
+    return $config;
+};
+
+sub BUILD {
+    my ($self) = @_;
+    # Make sure all the tool-related stuff is set up
+    foreach my $tool (qw(producer parser)) {
+        $self->$tool($self->$tool);
     }
-
-    $self->quote_identifiers($quote);
-
-    return $self;
 }
 
-sub add_drop_table {
-    my $self = shift;
-    if ( defined (my $arg = shift) ) {
-        $self->{'add_drop_table'} = $arg ? 1 : 0;
-    }
-    return $self->{'add_drop_table'} || 0;
-}
+has $_ => (
+    is => 'rw',
+    default => sub { 0 },
+    coerce => sub { $_[0] ? 1 : 0 },
+) foreach qw(add_drop_table no_comments show_warnings trace validate);
 
-sub no_comments {
-    my $self = shift;
-    my $arg  = shift;
-    if ( defined $arg ) {
-        $self->{'no_comments'} = $arg ? 1 : 0;
-    }
-    return $self->{'no_comments'} || 0;
-}
+# quote_identifiers is on by default, use a 0-but-true as indicator
+# so we can allow individual producers to change the default
+has quote_identifiers => (
+    is => 'rw',
+    default => sub { '0E0' },
+    coerce => sub { $_[0] || 0 },
+);
 
 sub quote_table_names {
-    (@_ > 1 and ($_[1] xor $_[0]->{quote_identifiers}) )
+    (@_ > 1 and ($_[1] xor $_[0]->quote_identifiers) )
         ? croak 'Using quote_table_names as a setter is no longer supported'
-        : $_[0]->{quote_identifiers} ? 1 : 0
+        : $_[0]->quote_identifiers;
 }
 
 sub quote_field_names {
-    (@_ > 1 and ($_[1] xor $_[0]->{quote_identifiers}) )
+    (@_ > 1 and ($_[1] xor $_[0]->quote_identifiers) )
         ? croak 'Using quote_field_names as a setter is no longer supported'
-        : $_[0]->{quote_identifiers} ? 1 : 0
+        : $_[0]->quote_identifiers;
 }
 
-sub quote_identifiers {
-    @_ > 1
-        ? # synchronize for old code reaching directly into guts
-            $_[0]->{quote_table_names}
-             = $_[0]->{quote_field_names}
-              = $_[0]->{quote_identifiers}
-               = $_[1] ? $_[1] : 0
-        : $_[0]->{quote_identifiers}
-}
+after quote_identifiers => sub {
+    if (@_ > 1) {
+        # synchronize for old code reaching directly into guts
+        $_[0]->{quote_table_names}
+            = $_[0]->{quote_field_names}
+                = $_[1] ? 1 : 0;
+    }
+};
 
-sub producer {
+has producer => ( is => 'rw', default => sub { $DEFAULT_SUB } );
+
+around producer => sub {
+    my $orig = shift;
     shift->_tool({
-            name => 'producer',
-            path => "SQL::Translator::Producer",
-            default_sub => "produce",
+        orig => $orig,
+        name => 'producer',
+        path => "SQL::Translator::Producer",
+        default_sub => "produce",
     }, @_);
-}
+};
 
-sub producer_type { $_[0]->{'producer_type'} }
+has producer_type => ( is => 'rwp', init_arg => undef );
 
-sub producer_args { shift->_args("producer", @_); }
+has producer_args => ( is => 'rw', default => sub { +{} } );
 
-sub parser {
+around producer_args => sub {
+    my $orig = shift;
+    shift->_args($orig, @_);
+};
+
+has parser => ( is => 'rw', default => sub { $DEFAULT_SUB }  );
+
+around parser => sub {
+    my $orig = shift;
     shift->_tool({
+        orig => $orig,
         name => 'parser',
         path => "SQL::Translator::Parser",
         default_sub => "parse",
     }, @_);
-}
+};
 
-sub parser_type { $_[0]->{'parser_type'}; }
+has parser_type => ( is => 'rwp', init_arg => undef );
 
-sub parser_args { shift->_args("parser", @_); }
+has parser_args => ( is => 'rw', default => sub { +{} } );
 
-sub filters {
-    my $self = shift;
-    my $filters = $self->{filters} ||= [];
-    return @$filters unless @_;
+around parser_args => sub {
+    my $orig = shift;
+    shift->_args($orig, @_);
+};
 
-    # Set. Convert args to list of [\&code,@args]
-    foreach (@_) {
-        my ($filt,@args) = ref($_) eq "ARRAY" ? @$_ : $_;
-        if ( isa($filt,"CODE") ) {
-            push @$filters, [$filt,@args];
-            next;
+has filters => (
+    is => 'rw',
+    default => sub { [] },
+    coerce => sub {
+        my @filters;
+        # Set. Convert args to list of [\&code,@args]
+        foreach (@{$_[0]||[]}) {
+            my ($filt,@args) = ref($_) eq "ARRAY" ? @$_ : $_;
+            if ( isa($filt,"CODE") ) {
+                push @filters, [$filt,@args];
+                next;
+            }
+            else {
+                __PACKAGE__->debug("Adding $filt filter. Args:".Dumper(\@args)."\n");
+                $filt = _load_sub("$filt\::filter", "SQL::Translator::Filter")
+                    || throw(__PACKAGE__->error);
+                push @filters, [$filt,@args];
+            }
         }
-        else {
-            $self->debug("Adding $filt filter. Args:".Dumper(\@args)."\n");
-            $filt = _load_sub("$filt\::filter", "SQL::Translator::Filter")
-            || return $self->error(__PACKAGE__->error);
-            push @$filters, [$filt,@args];
-        }
-    }
-    return @$filters;
-}
+        return \@filters;
+    },
+);
 
-sub show_warnings {
+around filters => sub {
+    my $orig = shift;
     my $self = shift;
-    my $arg  = shift;
-    if ( defined $arg ) {
-        $self->{'show_warnings'} = $arg ? 1 : 0;
-    }
-    return $self->{'show_warnings'} || 0;
-}
+    return @{$self->$orig([@{$self->$orig}, @_])} if @_;
+    return @{$self->$orig};
+};
 
-
-sub filename {
-    my $self = shift;
-    if (@_) {
+has filename => (
+    is => 'rw',
+    isa => sub {
         my $filename = shift;
         if (-d $filename) {
-            my $msg = "Cannot use directory '$filename' as input source";
-            return $self->error($msg);
-        } elsif (ref($filename) eq 'ARRAY') {
-            $self->{'filename'} = $filename;
-            $self->debug("Got array of files: ".join(', ',@$filename)."\n");
-        } elsif (-f _ && -r _) {
-            $self->{'filename'} = $filename;
-            $self->debug("Got filename: '$self->{'filename'}'\n");
-        } else {
-            my $msg = "Cannot use '$filename' as input source: ".
-                      "file does not exist or is not readable.";
-            return $self->error($msg);
+            throw("Cannot use directory '$filename' as input source");
+        } elsif (not -f _ && -r _) {
+            throw("Cannot use '$filename' as input source: ".
+                  "file does not exist or is not readable.");
         }
-    }
+    },
+);
 
-    $self->{'filename'};
-}
+around filename => \&ex2err;
 
-sub data {
+has data => (
+    is => 'rw',
+    builder => 1,
+    lazy => 1,
+    coerce => sub {
+        # Set $self->data based on what was passed in.  We will
+        # accept a number of things; do our best to get it right.
+        my $data = shift;
+        if (isa($data, 'ARRAY')) {
+            $data = join '', @$data;
+        }
+        elsif (isa($data, 'GLOB')) {
+            seek ($data, 0, 0) if eof ($data);
+            local $/;
+            $data = <$data>;
+        }
+        return isa($data, 'SCALAR') ? $data : \$data;
+    },
+);
+
+around data => sub {
+    my $orig = shift;
     my $self = shift;
 
-    # Set $self->{'data'} based on what was passed in.  We will
-    # accept a number of things; do our best to get it right.
-    if (@_) {
-        my $data = shift;
-        if (isa($data, "SCALAR")) {
-            $self->{'data'} =  $data;
-        }
-        else {
-            if (isa($data, 'ARRAY')) {
-                $data = join '', @$data;
-            }
-            elsif (isa($data, 'GLOB')) {
-                seek ($data, 0, 0) if eof ($data);
-                local $/;
-                $data = <$data>;
-            }
-            elsif (! ref $data && @_) {
-                $data = join '', $data, @_;
-            }
-            $self->{'data'} = \$data;
-        }
+    if (@_ > 1 && !ref $_[0]) {
+        return $self->$orig(\join('', @_));
     }
+    elsif (@_) {
+        return $self->$orig(@_);
+    }
+    return ex2err($orig, $self);
+};
 
+sub _build_data {
+    my $self = shift;
     # If we have a filename but no data yet, populate.
-    if (not $self->{'data'} and my $filename = $self->filename) {
+    if (my $filename = $self->filename) {
         $self->debug("Opening '$filename' to get contents.\n");
-        local *FH;
         local $/;
         my $data;
 
         my @files = ref($filename) eq 'ARRAY' ? @$filename : ($filename);
 
         foreach my $file (@files) {
-            unless (open FH, $file) {
-                return $self->error("Can't read file '$file': $!");
-            }
+            open my $fh, '<', $file
+               or throw("Can't read file '$file': $!");
 
-            $data .= <FH>;
+            $data .= <$fh>;
 
-            unless (close FH) {
-                return $self->error("Can't close file '$file': $!");
-            }
+            close $fh or throw("Can't close file '$file': $!");
         }
 
-        $self->{'data'} = \$data;
+        return \$data;
     }
-
-    return $self->{'data'};
 }
 
-sub reset {
-#
-# Deletes the existing Schema object so that future calls to translate
-# don't append to the existing.
-#
+has schema => (
+    is => 'lazy',
+    init_arg => undef,
+    clearer => 'reset',
+    predicate => '_has_schema',
+);
+
+around reset => sub {
+    my $orig = shift;
     my $self = shift;
-    $self->{'schema'} = undef;
-    return 1;
-}
+    $self->$orig(@_);
+    return 1
+};
 
-sub schema {
-#
-# Returns the SQL::Translator::Schema object
-#
-    my $self = shift;
-
-    unless ( defined $self->{'schema'} ) {
-        $self->{'schema'} = SQL::Translator::Schema->new(
-            translator      => $self,
-        );
-    }
-
-    return $self->{'schema'};
-}
-
-sub trace {
-    my $self = shift;
-    my $arg  = shift;
-    if ( defined $arg ) {
-        $self->{'trace'} = $arg ? 1 : 0;
-    }
-    return $self->{'trace'} || 0;
-}
+sub _build_schema { SQL::Translator::Schema->new(translator => shift) }
 
 sub translate {
     my $self = shift;
@@ -434,7 +379,7 @@ sub translate {
     # ----------------------------------------------------------------
 
     # Run parser
-    unless ( defined $self->{'schema'} ) {
+    unless ( $self->_has_schema ) {
         eval { $parser_output = $parser->($self, $$data) };
         if ($@ || ! $parser_output) {
             my $msg = sprintf "translate: Error with parser '%s': %s",
@@ -499,12 +444,7 @@ sub list_producers {
 # ----------------------------------------------------------------------
 sub _args {
     my $self = shift;
-    my $type = shift;
-    $type = "${type}_args" unless $type =~ /_args$/;
-
-    unless (defined $self->{$type} && isa($self->{$type}, 'HASH')) {
-        $self->{$type} = { };
-    }
+    my $orig = shift;
 
     if (@_) {
         # If the first argument is an explicit undef (remember, we
@@ -512,14 +452,14 @@ sub _args {
         # out the producer_args hash.
         if (! defined $_[0]) {
             shift @_;
-            %{$self->{$type}} = ();
+            $self->$orig({});
         }
 
         my $args = isa($_[0], 'HASH') ? shift : { @_ };
-        %{$self->{$type}} = (%{$self->{$type}}, %$args);
+        return $self->$orig({ %{$self->$orig}, %$args });
     }
 
-    $self->{$type};
+    return $self->$orig;
 }
 
 # ----------------------------------------------------------------------
@@ -533,6 +473,7 @@ sub _args {
 sub _tool {
     my ($self,$args) = (shift, shift);
     my $name = $args->{name};
+    my $orig = $args->{orig};
     return $self->{$name} unless @_; # get accessor
 
     my $path = $args->{path};
@@ -541,8 +482,8 @@ sub _tool {
 
     # passed an anonymous subroutine reference
     if (isa($tool, 'CODE')) {
-        $self->{$name} = $tool;
-        $self->{"$name\_type"} = "CODE";
+        $self->$orig($tool);
+        $self->${\"_set_${name}_type"}("CODE");
         $self->debug("Got $name: code ref\n");
     }
 
@@ -568,8 +509,8 @@ sub _tool {
 
         # get code reference and assign
         my (undef,$module,undef) = $sub =~ m/((.*)::)?(\w+)$/;
-        $self->{$name} = $code;
-        $self->{"$name\_type"} = $sub eq "CODE" ? "CODE" : $module;
+        $self->$orig($code);
+        $self->${\"_set_$name\_type"}($sub eq "CODE" ? "CODE" : $module);
         $self->debug("Got $name: $sub\n");
     }
 
@@ -744,13 +685,8 @@ sub version {
     return $VERSION;
 }
 
-sub validate {
-    my ( $self, $arg ) = @_;
-    if ( defined $arg ) {
-        $self->{'validate'} = $arg ? 1 : 0;
-    }
-    return $self->{'validate'} || 0;
-}
+# Must come after all 'has' declarations
+around new => \&ex2err;
 
 1;
 
