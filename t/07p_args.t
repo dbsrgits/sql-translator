@@ -46,7 +46,7 @@ is(scalar @fields, 4, "right number of fields");
 #
 # Blow away the existing schema object.
 #
-$tr->schema (undef);
+$tr->reset;
 
 # Now, pass parser_args indirectly...
 $tr->parser(\&silly_parser, { delimiter => "\t" });
