@@ -30,7 +30,7 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 
 use Moo 1.000003;
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
-use SQL::Translator::Types qw(schema_obj);
+use SQL::Translator::Types qw(schema_obj enum);
 use List::MoreUtils qw(uniq);
 use Sub::Quote qw(quote_sub);
 
@@ -73,10 +73,10 @@ C<database_event>.
 has perform_action_when => (
     is => 'rw',
     coerce => quote_sub(q{ defined $_[0] ? lc $_[0] : $_[0] }),
-    isa => sub {
-        throw("Invalid argument '$_[0]' to perform_action_when")
-            if defined $_[0] and $_[0] !~ m/^(before|after)$/i;
-    },
+    isa => enum([qw(before after)], {
+        msg => "Invalid argument '%s' to perform_action_when",
+        allow_undef => 1,
+    }),
 );
 
 around perform_action_when => \&ex2err;
@@ -281,11 +281,9 @@ Get or set the trigger's scope (row or statement).
 
 has scope => (
     is => 'rw',
-    isa => sub {
-        my ($arg) = @_;
-        throw( "Invalid scope '$arg'" )
-            if defined $arg and $arg !~ /^(row|statement)$/i;
-    },
+    isa => enum([qw(row statement)], {
+        msg => "Invalid scope '%s'", icase => 1, allow_undef => 1,
+    }),
 );
 
 around scope => \&ex2err;

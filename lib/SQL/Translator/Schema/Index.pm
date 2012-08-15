@@ -29,7 +29,7 @@ use Moo 1.000003;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(ex2err throw);
 use SQL::Translator::Role::ListAttr;
-use SQL::Translator::Types qw(schema_obj);
+use SQL::Translator::Types qw(schema_obj enum);
 use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
@@ -147,12 +147,11 @@ uppercase.
 
 has type => (
     is => 'rw',
-    isa => sub {
-        my $type = uc $_[0] or return;
-        throw("Invalid index type: $type") unless $VALID_INDEX_TYPE{$type};
-    },
     coerce => quote_sub(q{ uc $_[0] }),
     default => quote_sub(q{ 'NORMAL' }),
+    isa => enum([keys %VALID_INDEX_TYPE], {
+        msg => "Invalid index type: %s", allow_false => 1,
+    }),
 );
 
 around type => \&ex2err;

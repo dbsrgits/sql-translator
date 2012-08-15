@@ -27,7 +27,7 @@ use Moo 1.000003;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(ex2err throw);
 use SQL::Translator::Role::ListAttr;
-use SQL::Translator::Types qw(schema_obj);
+use SQL::Translator::Types qw(schema_obj enum);
 use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
@@ -227,11 +227,9 @@ has match_type => (
     is => 'rw',
     default => quote_sub(q{ '' }),
     coerce => quote_sub(q{ lc $_[0] }),
-    isa => sub {
-        my $arg = $_[0];
-        throw("Invalid match type: $arg")
-            if $arg && !($arg eq 'full' || $arg eq 'partial' || $arg eq 'simple');
-    },
+    isa => enum([qw(full partial simple)], {
+        msg => "Invalid match type: %s", allow_false => 1,
+    }),
 );
 
 around match_type => \&ex2err;
@@ -368,11 +366,10 @@ Get or set the constraint's type.
 has type => (
     is => 'rw',
     default => quote_sub(q{ '' }),
-    isa => sub {
-        throw("Invalid constraint type: $_[0]")
-            if $_[0] && !$VALID_CONSTRAINT_TYPE{ $_[0] };
-    },
     coerce => quote_sub(q{ (my $t = $_[0]) =~ s/_/ /g; uc $t }),
+    isa => enum([keys %VALID_CONSTRAINT_TYPE], {
+        msg => "Invalid constraint type: %s", allow_false => 1,
+    }),
 );
 
 around type => \&ex2err;
