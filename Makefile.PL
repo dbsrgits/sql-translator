@@ -21,6 +21,7 @@ my $deps = {
     'XML::Writer'              => '0.500',
     'Moo'                      => '1.000003',
     'Package::Variant'         => '1.001001',
+    'Sub::Quote'               => '0',
     'Try::Tiny'                => '0.04',
   },
   recommends => {

@@ -1,5 +1,6 @@
 package SQL::Translator::Schema::Role::Extra;
 use Moo::Role;
+use Sub::Quote qw(quote_sub);
 
 
 =head1 Methods
@@ -24,7 +25,7 @@ Returns a hash or a hashref.
 
 =cut
 
-has extra => ( is => 'rwp', default => sub { +{} } );
+has extra => ( is => 'rwp', default => quote_sub(q{ +{} }) );
 
 around extra => sub {
     my ($orig, $self) = (shift, shift);

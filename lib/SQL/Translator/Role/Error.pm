@@ -1,11 +1,12 @@
 package SQL::Translator::Role::Error;
 use Moo::Role;
+use Sub::Quote qw(quote_sub);
 
 has _ERROR => (
     is => 'rw',
     accessor => 'error',
     init_arg => undef,
-    default => sub { '' },
+    default => quote_sub(q{ '' }),
 );
 
 around error => sub {

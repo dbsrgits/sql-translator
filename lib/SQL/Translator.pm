@@ -16,6 +16,7 @@ use File::Find;
 use File::Spec::Functions qw(catfile);
 use File::Basename qw(dirname);
 use IO::Dir;
+use Sub::Quote qw(quote_sub);
 use SQL::Translator::Producer;
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(throw ex2err);
@@ -90,7 +91,7 @@ sub BUILD {
 
 has $_ => (
     is => 'rw',
-    default => sub { 0 },
+    default => quote_sub(q{ 0 }),
     coerce => sub { $_[0] ? 1 : 0 },
 ) foreach qw(add_drop_table no_comments show_warnings trace validate);
 
@@ -98,7 +99,7 @@ has $_ => (
 # so we can allow individual producers to change the default
 has quote_identifiers => (
     is => 'rw',
-    default => sub { '0E0' },
+    default => quote_sub(q{ '0E0' }),
     coerce => sub { $_[0] || 0 },
 );
 
@@ -137,7 +138,7 @@ around producer => sub {
 
 has producer_type => ( is => 'rwp', init_arg => undef );
 
-has producer_args => ( is => 'rw', default => sub { +{} } );
+has producer_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
 
 around producer_args => sub {
     my $orig = shift;
@@ -158,7 +159,7 @@ around parser => sub {
 
 has parser_type => ( is => 'rwp', init_arg => undef );
 
-has parser_args => ( is => 'rw', default => sub { +{} } );
+has parser_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
 
 around parser_args => sub {
     my $orig = shift;
@@ -167,7 +168,7 @@ around parser_args => sub {
 
 has filters => (
     is => 'rw',
-    default => sub { [] },
+    default => quote_sub(q{ [] }),
     coerce => sub {
         my @filters;
         # Set. Convert args to list of [\&code,@args]

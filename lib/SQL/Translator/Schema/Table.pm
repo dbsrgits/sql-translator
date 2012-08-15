@@ -30,6 +30,7 @@ use SQL::Translator::Schema::Index;
 
 use Carp::Clan '^SQL::Translator';
 use List::Util 'max';
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -74,7 +75,7 @@ C<SQL::Translator::Schema::Constraint> object.
 has _constraints => (
     is => 'ro',
     init_arg => undef,
-    default => sub { +[] },
+    default => quote_sub(q{ +[] }),
     predicate => 1,
     lazy => 1,
 );
@@ -197,7 +198,7 @@ C<SQL::Translator::Schema::Index> object.
 has _indices => (
     is => 'ro',
     init_arg => undef,
-    default => sub { [] },
+    default => quote_sub(q{ [] }),
     predicate => 1,
     lazy => 1,
 );
@@ -281,7 +282,7 @@ existing field, you will get an error and the field will not be created.
 has _fields => (
     is => 'ro',
     init_arg => undef,
-    default => sub { +{} },
+    default => quote_sub(q{ +{} }),
     predicate => 1,
     lazy => 1
 );
@@ -405,7 +406,7 @@ all the comments joined on newlines.
 has comments => (
     is => 'rw',
     coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
-    default => sub { [] },
+    default => quote_sub(q{ [] }),
 );
 
 around comments => sub {
@@ -596,7 +597,7 @@ Determine whether the table can link two arg tables via many-to-many.
 
 =cut
 
-has _can_link => ( is => 'ro', init_arg => undef, default => sub { +{} } );
+has _can_link => ( is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }) );
 
 sub can_link {
     my ( $self, $table1, $table2 ) = @_;
@@ -807,7 +808,7 @@ Get or set the table's order.
 
 =cut
 
-has order => ( is => 'rw', default => sub { 0 } );
+has order => ( is => 'rw', default => quote_sub(q{ 0 }) );
 
 around order => sub {
     my ( $orig, $self, $arg ) = @_;

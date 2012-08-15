@@ -26,6 +26,7 @@ use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -98,7 +99,7 @@ all the comments joined on newlines.
 has comments => (
     is => 'rw',
     coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
-    default => sub { [] },
+    default => quote_sub(q{ [] }),
 );
 
 around comments => sub {
@@ -124,7 +125,7 @@ Get or set the field's data type.
 
 =cut
 
-has data_type => ( is => 'rw', default => sub { '' } );
+has data_type => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 sql_data_type
 
@@ -273,7 +274,7 @@ foreign keys; checks) are represented as table constraints.
 has is_nullable => (
     is => 'rw',
     coerce => sub { $_[0] ? 1 : 0 },
-    default => sub { 1 },
+    default => quote_sub(q{ 1 }),
  );
 
 around is_nullable => sub {
@@ -406,7 +407,7 @@ Get or set the field's order.
 
 =cut
 
-has order => ( is => 'rw', default => sub { 0 } );
+has order => ( is => 'rw', default => quote_sub(q{ 0 }) );
 
 around order => sub {
     my ( $orig, $self, $arg ) = @_;
@@ -451,7 +452,7 @@ numbers and returns a string.
 
 has size => (
     is => 'rw',
-    default => sub { [0] },
+    default => quote_sub(q{ [0] }),
     coerce => sub {
         my @sizes = grep { defined && m/^\d+(?:\.\d+)?$/ } @{parse_list_arg($_[0])};
         @sizes ? \@sizes : [0];

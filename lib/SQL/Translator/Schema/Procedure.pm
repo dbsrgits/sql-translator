@@ -31,6 +31,7 @@ use Moo;
 use SQL::Translator::Utils qw(ex2err);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -69,7 +70,7 @@ Get or set the procedure's name.
 
 =cut
 
-has name => ( is => 'rw', default => sub { '' } );
+has name => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 sql
 
@@ -80,7 +81,7 @@ Get or set the procedure's SQL.
 
 =cut
 
-has sql => ( is => 'rw', default => sub { '' } );
+has sql => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 order
 
@@ -103,7 +104,7 @@ Get or set the owner of the procedure.
 
 =cut
 
-has owner => ( is => 'rw', default => sub { '' } );
+has owner => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 comments
 
@@ -118,7 +119,7 @@ Get or set the comments on a procedure.
 has comments => (
     is => 'rw',
     coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
-    default => sub { [] },
+    default => quote_sub(q{ [] }),
 );
 
 around comments => sub {

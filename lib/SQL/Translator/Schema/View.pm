@@ -27,6 +27,7 @@ use Moo;
 use SQL::Translator::Utils qw(ex2err);
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Role::ListAttr;
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -114,7 +115,7 @@ Get or set the view's name.
 
 =cut
 
-has name => ( is => 'rw', default => sub { '' } );
+has name => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 order
 
@@ -124,7 +125,7 @@ Get or set the view's order.
 
 =cut
 
-has order => ( is => 'rw', default => sub { 0 } );
+has order => ( is => 'rw', default => quote_sub(q{ 0 }) );
 
 around order => sub {
     my ( $orig, $self, $arg ) = @_;
@@ -144,7 +145,7 @@ Get or set the view's SQL.
 
 =cut
 
-has sql => ( is => 'rw', default => sub { '' } );
+has sql => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 schema
 

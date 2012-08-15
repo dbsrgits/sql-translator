@@ -30,6 +30,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(ex2err throw);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -100,7 +101,7 @@ Get or set the index's name.
 
 =cut
 
-has name => ( is => 'rw', coerce => sub { defined $_[0] ? $_[0] : '' }, default => sub { '' } );
+has name => ( is => 'rw', coerce => sub { defined $_[0] ? $_[0] : '' }, default => quote_sub(q{ '' }) );
 
 =head2 options
 
@@ -147,7 +148,7 @@ has type => (
         throw("Invalid index type: $type") unless $VALID_INDEX_TYPE{$type};
     },
     coerce => sub { uc $_[0] },
-    default => sub { 'NORMAL' },
+    default => quote_sub(q{ 'NORMAL' }),
 );
 
 around type => \&ex2err;

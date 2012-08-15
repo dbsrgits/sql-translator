@@ -2,6 +2,7 @@ package SQL::Translator::Role::ListAttr;
 use strictures 1;
 use SQL::Translator::Utils qw(parse_list_arg ex2err);
 use List::MoreUtils qw(uniq);
+use Sub::Quote qw(quote_sub);
 
 use Package::Variant (
     importing => {
@@ -24,7 +25,7 @@ sub make_variant {
     has($name => (
         is => 'rw',
         (!$arguments{builder} ? (
-            default => sub { [] },
+            default => quote_sub(q{ [] }),
         ) : ()),
         coerce => $coerce,
         %arguments,

@@ -32,6 +32,7 @@ use Moo;
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 use SQL::Translator::Types qw(schema_obj);
 use List::MoreUtils qw(uniq);
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -212,7 +213,7 @@ Gets or set the action of the trigger.
 
 =cut
 
-has action => ( is => 'rw', default => sub { '' } );
+has action => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 sub is_valid {
 
@@ -248,7 +249,7 @@ Get or set the trigger's name.
 
 =cut
 
-has name => ( is => 'rw', default => sub { '' } );
+has name => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 order
 
@@ -258,7 +259,7 @@ Get or set the trigger's order.
 
 =cut
 
-has order => ( is => 'rw', default => sub { 0 } );
+has order => ( is => 'rw', default => quote_sub(q{ 0 }) );
 
 around order => sub {
     my ( $orig, $self, $arg ) = @_;

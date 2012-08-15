@@ -32,6 +32,7 @@ use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
+use Sub::Quote qw(quote_sub);
 
 use SQL::Translator::Utils 'parse_list_arg';
 use Carp;
@@ -41,12 +42,12 @@ extends 'SQL::Translator::Schema::Object';
 our $VERSION = '1.59';
 
 
-has _order => (is => 'ro', default => sub { +{ map { $_ => 0 } qw/
+has _order => (is => 'ro', default => quote_sub(q{ +{ map { $_ => 0 } qw/
     table
     view
     trigger
     proc
-  /} },
+  /} }),
 );
 
 # FIXME - to be removed, together with the SQL::Translator::Schema::Graph* stuff
@@ -96,7 +97,7 @@ Returns a Graph::Directed object with the table names for nodes.
     return $g;
 }
 
-has _tables => ( is => 'ro', init_arg => undef, default => sub { +{} } );
+has _tables => ( is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }) );
 
 sub add_table {
 
@@ -189,7 +190,7 @@ can be set to 1 to also drop all triggers on the table, default is 0.
     return $table;
 }
 
-has _procedures => ( is => 'ro', init_arg => undef, default => sub { +{} } );
+has _procedures => ( is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }) );
 
 sub add_procedure {
 
@@ -275,7 +276,7 @@ object.
     return $proc;
 }
 
-has _triggers => ( is => 'ro', init_arg => undef, default => sub { +{} } );
+has _triggers => ( is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }) );
 
 sub add_trigger {
 
@@ -358,7 +359,7 @@ trigger name or an C<SQL::Translator::Schema::Trigger> object.
     return $trigger;
 }
 
-has _views => ( is => 'ro', init_arg => undef, default => sub { +{} } );
+has _views => ( is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }) );
 
 sub add_view {
 
@@ -447,7 +448,7 @@ Get or set the schema's database.  (optional)
 
 =cut
 
-has database => ( is => 'rw', default => sub { '' } );
+has database => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 sub is_valid {
 
@@ -743,7 +744,7 @@ Get or set the schema's name.  (optional)
 
 =cut
 
-has name => ( is => 'rw', default => sub { '' } );
+has name => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =pod
 

@@ -28,6 +28,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(ex2err throw);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
+use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -87,7 +88,7 @@ False, so the following are eqivalent:
 
 =cut
 
-has deferrable => ( is => 'rw', coerce => sub { $_[0] ? 1 : 0 }, default => sub { 1 } );
+has deferrable => ( is => 'rw', coerce => sub { $_[0] ? 1 : 0 }, default => quote_sub(q{ 1 }) );
 
 =head2 expression
 
@@ -97,7 +98,7 @@ Gets and set the expression used in a CHECK constraint.
 
 =cut
 
-has expression => ( is => 'rw', default => sub { '' } );
+has expression => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 around expression => sub {
     my ($orig, $self, $arg) = @_;
@@ -220,7 +221,7 @@ Get or set the constraint's match_type.  Only valid values are "full"
 
 has match_type => (
     is => 'rw',
-    default => sub { '' },
+    default => quote_sub(q{ '' }),
     coerce => sub { lc $_[0] },
     isa => sub {
         my $arg = $_[0];
@@ -239,7 +240,7 @@ Get or set the constraint's name.
 
 =cut
 
-has name => ( is => 'rw', default => sub { '' } );
+has name => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 around name => sub {
     my ($orig, $self, $arg) = @_;
@@ -266,7 +267,7 @@ Get or set the constraint's "on delete" action.
 
 =cut
 
-has on_delete => ( is => 'rw', default => sub { '' } );
+has on_delete => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 around on_delete => sub {
     my ($orig, $self, $arg) = @_;
@@ -281,7 +282,7 @@ Get or set the constraint's "on update" action.
 
 =cut
 
-has on_update => ( is => 'rw', default => sub { '' } );
+has on_update => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 around on_update => sub {
     my ($orig, $self, $arg) = @_;
@@ -338,7 +339,7 @@ Get or set the table referred to by the constraint.
 
 =cut
 
-has reference_table => ( is => 'rw', default => sub { '' } );
+has reference_table => ( is => 'rw', default => quote_sub(q{ '' }) );
 
 =head2 table
 
@@ -362,7 +363,7 @@ Get or set the constraint's type.
 
 has type => (
     is => 'rw',
-    default => sub { '' },
+    default => quote_sub(q{ '' }),
     isa => sub {
         throw("Invalid constraint type: $_[0]")
             if $_[0] && !$VALID_CONSTRAINT_TYPE{ $_[0] };
