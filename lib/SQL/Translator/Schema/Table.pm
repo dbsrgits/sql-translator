@@ -22,6 +22,7 @@ C<SQL::Translator::Schema::Table> is the table object.
 use Moo;
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 use SQL::Translator::Types qw(schema_obj);
+use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Schema::Field;
@@ -796,21 +797,7 @@ an array or array reference.
 
 =cut
 
-has options => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => \&parse_list_arg,
-);
-
-around options => sub {
-    my $orig    = shift;
-    my $self    = shift;
-    my $options = parse_list_arg( @_ );
-
-    push @{ $self->$orig }, @$options;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr options => ( append => 1 );
 
 =head2 order
 

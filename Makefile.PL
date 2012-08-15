@@ -20,6 +20,7 @@ my $deps = {
     'File::Spec'               => '0',
     'XML::Writer'              => '0.500',
     'Moo'                      => '1.000003',
+    'Package::Variant'         => '1.001001',
     'Try::Tiny'                => '0.04',
   },
   recommends => {

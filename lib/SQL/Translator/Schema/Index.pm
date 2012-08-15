@@ -27,9 +27,9 @@ Primary and unique keys are table constraints, not indices.
 
 use Moo;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Utils qw(ex2err throw);
+use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
-use List::MoreUtils qw(uniq);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -65,20 +65,7 @@ names and keep them in order by the first occurrence of a field name.
 
 =cut
 
-has fields => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
-);
-
-around fields => sub {
-    my $orig   = shift;
-    my $self   = shift;
-    my $fields = parse_list_arg( @_ );
-    $self->$orig($fields) if @$fields;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr fields => ( uniq => 1 );
 
 sub is_valid {
 
@@ -124,21 +111,7 @@ an array or array reference.
 
 =cut
 
-has options => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => \&parse_list_arg,
-);
-
-around options => sub {
-    my $orig    = shift;
-    my $self    = shift;
-    my $options = parse_list_arg( @_ );
-
-    push @{ $self->$orig }, @$options;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr options => ();
 
 =head2 table
 

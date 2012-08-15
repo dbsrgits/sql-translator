@@ -24,9 +24,9 @@ C<SQL::Translator::Schema::View> is the view object.
 =cut
 
 use Moo;
-use SQL::Translator::Utils qw(parse_list_arg ex2err);
+use SQL::Translator::Utils qw(ex2err);
 use SQL::Translator::Types qw(schema_obj);
-use List::MoreUtils qw(uniq);
+use SQL::Translator::Role::ListAttr;
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -54,20 +54,7 @@ names and keep them in order by the first occurrence of a field name.
 
 =cut
 
-has fields => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
-);
-
-around fields => sub {
-    my $orig   = shift;
-    my $self   = shift;
-    my $fields = parse_list_arg( @_ );
-    $self->$orig($fields) if @$fields;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr fields => ( uniq => 1 );
 
 =head2 tables
 
@@ -85,20 +72,7 @@ names and keep them in order by the first occurrence of a field name.
 
 =cut
 
-has tables => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
-);
-
-around tables => sub {
-    my $orig   = shift;
-    my $self   = shift;
-    my $fields = parse_list_arg( @_ );
-    $self->$orig($fields) if @$fields;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr tables => ( uniq => 1 );
 
 =head2 options
 
@@ -110,23 +84,7 @@ Gets and sets a list of options on the view.
 
 =cut
 
-has options => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
-);
-
-around options => sub {
-    my $orig    = shift;
-    my $self    = shift;
-    my $options = parse_list_arg( @_ );
-
-    if ( @$options ) {
-        $self->$orig([ @{$self->$orig}, @$options ])
-    }
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr options => ( uniq => 1, append => 1 );
 
 sub is_valid {
 

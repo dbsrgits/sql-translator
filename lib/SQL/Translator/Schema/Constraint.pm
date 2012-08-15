@@ -25,9 +25,9 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 
 use Moo;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Utils qw(ex2err throw);
+use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
-use List::MoreUtils qw(uniq);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -207,23 +207,7 @@ avoid the overload magic of the Field objects returned by the fields method.
 
 =cut
 
-has field_names => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
-);
-
-around field_names => sub {
-    my $orig   = shift;
-    my $self   = shift;
-    my $fields = parse_list_arg( @_ );
-    $self->$orig($fields) if @$fields;
-
-    $fields = $self->$orig;
-    return wantarray ? @{$fields}
-        : @{$fields} ? $fields
-        : undef;
-};
+with ListAttr field_names => ( uniq => 1, undef_if_empty => 1 );
 
 =head2 match_type
 
@@ -272,17 +256,7 @@ Returns an array or array reference.
 
 =cut
 
-has options => ( is => 'rw', coerce => \&parse_list_arg, default => sub { [] } );
-
-around options => sub {
-    my $orig    = shift;
-    my $self    = shift;
-    my $options = parse_list_arg( @_ );
-
-    push @{ $self->$orig }, @$options;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr options => ();
 
 =head2 on_delete
 
@@ -329,22 +303,11 @@ arrayref; returns an array or array reference.
 
 =cut
 
-has reference_fields => (
-    is => 'rw',
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
+with ListAttr reference_fields => (
+    may_throw => 1,
     builder => 1,
     lazy => 1,
 );
-
-around reference_fields => sub {
-    my $orig   = shift;
-    my $self   = shift;
-    my $fields = parse_list_arg( @_ );
-    $self->$orig($fields) if @$fields;
-
-    $fields = ex2err($orig, $self) or return;
-    return wantarray ? @{$fields} : $fields
-};
 
 sub _build_reference_fields {
     my ($self) = @_;

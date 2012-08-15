@@ -28,9 +28,9 @@ stored procedures (and possibly other pieces of nameable SQL code?).
 =cut
 
 use Moo;
-use SQL::Translator::Utils qw(parse_list_arg ex2err);
+use SQL::Translator::Utils qw(ex2err);
+use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
-use List::MoreUtils qw(uniq);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -58,20 +58,7 @@ Gets and set the parameters of the stored procedure.
 
 =cut
 
-has parameters => (
-    is => 'rw',
-    default => sub { [] },
-    coerce => sub { [uniq @{parse_list_arg($_[0])}] },
-);
-
-around parameters => sub {
-    my $orig   = shift;
-    my $self   = shift;
-    my $fields = parse_list_arg( @_ );
-    $self->$orig($fields) if @$fields;
-
-    return wantarray ? @{ $self->$orig } : $self->$orig;
-};
+with ListAttr parameters => ( uniq => 1 );
 
 =head2 name
 
