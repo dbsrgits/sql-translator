@@ -19,7 +19,7 @@ C<SQL::Translator::Schema::Table> is the table object.
 
 =cut
 
-use Moo;
+use Moo 1.000003;
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Role::ListAttr;

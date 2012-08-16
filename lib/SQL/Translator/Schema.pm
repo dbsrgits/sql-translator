@@ -26,7 +26,7 @@ returns the database structure.
 
 =cut
 
-use Moo;
+use Moo 1.000003;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Procedure;
 use SQL::Translator::Schema::Table;

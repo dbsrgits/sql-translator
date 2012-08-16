@@ -22,7 +22,7 @@ C<SQL::Translator::Schema::Field> is the field object.
 
 =cut
 
-use Moo;
+use Moo 1.000003;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);

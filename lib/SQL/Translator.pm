@@ -1,9 +1,7 @@
 package SQL::Translator;
 
-use Moo;
+use Moo 1.000003;
 our ( $DEFAULT_SUB, $DEBUG, $ERROR );
-
-require 5.005;
 
 our $VERSION  = '0.11013';
 $DEBUG    = 0 unless defined $DEBUG;
