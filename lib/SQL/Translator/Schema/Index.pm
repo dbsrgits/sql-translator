@@ -101,7 +101,11 @@ Get or set the index's name.
 
 =cut
 
-has name => ( is => 'rw', coerce => quote_sub(q{ defined $_[0] ? $_[0] : '' }), default => quote_sub(q{ '' }) );
+has name => (
+    is => 'rw',
+    coerce => quote_sub(q{ defined $_[0] ? $_[0] : '' }),
+    default => quote_sub(q{ '' }),
+);
 
 =head2 options
 

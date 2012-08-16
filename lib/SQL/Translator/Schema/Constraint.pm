@@ -88,7 +88,11 @@ False, so the following are eqivalent:
 
 =cut
 
-has deferrable => ( is => 'rw', coerce => quote_sub(q{ $_[0] ? 1 : 0 }), default => quote_sub(q{ 1 }) );
+has deferrable => (
+    is => 'rw',
+    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
+    default => quote_sub(q{ 1 }),
+);
 
 =head2 expression
 
