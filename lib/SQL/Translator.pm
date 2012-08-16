@@ -90,7 +90,7 @@ sub BUILD {
 has $_ => (
     is => 'rw',
     default => quote_sub(q{ 0 }),
-    coerce => sub { $_[0] ? 1 : 0 },
+    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
 ) foreach qw(add_drop_table no_comments show_warnings trace validate);
 
 # quote_identifiers is on by default, use a 0-but-true as indicator
@@ -98,7 +98,7 @@ has $_ => (
 has quote_identifiers => (
     is => 'rw',
     default => quote_sub(q{ '0E0' }),
-    coerce => sub { $_[0] || 0 },
+    coerce => quote_sub(q{ $_[0] || 0 }),
 );
 
 sub quote_table_names {

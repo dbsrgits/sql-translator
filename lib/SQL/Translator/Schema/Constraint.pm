@@ -88,7 +88,7 @@ False, so the following are eqivalent:
 
 =cut
 
-has deferrable => ( is => 'rw', coerce => sub { $_[0] ? 1 : 0 }, default => quote_sub(q{ 1 }) );
+has deferrable => ( is => 'rw', coerce => quote_sub(q{ $_[0] ? 1 : 0 }), default => quote_sub(q{ 1 }) );
 
 =head2 expression
 
@@ -222,7 +222,7 @@ Get or set the constraint's match_type.  Only valid values are "full"
 has match_type => (
     is => 'rw',
     default => quote_sub(q{ '' }),
-    coerce => sub { lc $_[0] },
+    coerce => quote_sub(q{ lc $_[0] }),
     isa => sub {
         my $arg = $_[0];
         throw("Invalid match type: $arg")
@@ -368,7 +368,7 @@ has type => (
         throw("Invalid constraint type: $_[0]")
             if $_[0] && !$VALID_CONSTRAINT_TYPE{ $_[0] };
     },
-    coerce => sub { (my $t = $_[0]) =~ s/_/ /g; uc $t },
+    coerce => quote_sub(q{ (my $t = $_[0]) =~ s/_/ /g; uc $t }),
 );
 
 around type => \&ex2err;

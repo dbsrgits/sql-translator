@@ -72,7 +72,7 @@ C<database_event>.
 
 has perform_action_when => (
     is => 'rw',
-    coerce => sub { defined $_[0] ? lc $_[0] : $_[0] },
+    coerce => quote_sub(q{ defined $_[0] ? lc $_[0] : $_[0] }),
     isa => sub {
         throw("Invalid argument '$_[0]' to perform_action_when")
             if defined $_[0] and $_[0] !~ m/^(before|after)$/i;
@@ -106,7 +106,7 @@ Gets or sets the events that triggers the trigger.
 
 has database_events => (
     is => 'rw',
-    coerce => sub { [ map { lc } ref $_[0] eq 'ARRAY' ? @{$_[0]} : ($_[0]) ] },
+    coerce => quote_sub(q{ [ map { lc } ref $_[0] eq 'ARRAY' ? @{$_[0]} : ($_[0]) ] }),
     isa => sub {
         my @args    = @{$_[0]};
         my %valid   = map { $_, 1 } qw[ insert update update_on delete ];

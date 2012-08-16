@@ -118,7 +118,7 @@ Get or set the comments on a procedure.
 
 has comments => (
     is => 'rw',
-    coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
+    coerce => quote_sub(q{ ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] }),
     default => quote_sub(q{ [] }),
 );
 

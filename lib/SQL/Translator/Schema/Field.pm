@@ -98,7 +98,7 @@ all the comments joined on newlines.
 
 has comments => (
     is => 'rw',
-    coerce => sub { ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] },
+    coerce => quote_sub(q{ ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] }),
     default => quote_sub(q{ [] }),
 );
 
@@ -201,7 +201,7 @@ Get or set the field's C<is_auto_increment> attribute.
 
 has is_auto_increment => (
     is => 'rw',
-    coerce => sub { $_[0] ? 1 : 0 },
+    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
     builder => 1,
     lazy => 1,
 );
@@ -232,7 +232,7 @@ Returns whether or not the field is a foreign key.
 
 has is_foreign_key => (
     is => 'rw',
-    coerce => sub { $_[0] ? 1 : 0 },
+    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
     builder => 1,
     lazy => 1,
 );
@@ -273,7 +273,7 @@ foreign keys; checks) are represented as table constraints.
 
 has is_nullable => (
     is => 'rw',
-    coerce => sub { $_[0] ? 1 : 0 },
+    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
     default => quote_sub(q{ 1 }),
  );
 
@@ -294,7 +294,7 @@ a table constraint (should it?).
 
 has is_primary_key => (
     is => 'rw',
-    coerce => sub { $_[0] ? 1 : 0 },
+    coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
     lazy => 1,
     builder => 1,
 );

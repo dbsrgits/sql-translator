@@ -101,7 +101,7 @@ Get or set the index's name.
 
 =cut
 
-has name => ( is => 'rw', coerce => sub { defined $_[0] ? $_[0] : '' }, default => quote_sub(q{ '' }) );
+has name => ( is => 'rw', coerce => quote_sub(q{ defined $_[0] ? $_[0] : '' }), default => quote_sub(q{ '' }) );
 
 =head2 options
 
@@ -147,7 +147,7 @@ has type => (
         my $type = uc $_[0] or return;
         throw("Invalid index type: $type") unless $VALID_INDEX_TYPE{$type};
     },
-    coerce => sub { uc $_[0] },
+    coerce => quote_sub(q{ uc $_[0] }),
     default => quote_sub(q{ 'NORMAL' }),
 );
 
