@@ -30,12 +30,7 @@ use SQL::Translator::Schema::Index;
 use Carp::Clan '^SQL::Translator';
 use List::Util 'max';
 
-with qw(
-  SQL::Translator::Role::Error
-  SQL::Translator::Role::BuildArgs
-  SQL::Translator::Schema::Role::Extra
-  SQL::Translator::Schema::Role::Compare
-);
+extends 'SQL::Translator::Schema::Object';
 
 our $VERSION = '1.59';
 

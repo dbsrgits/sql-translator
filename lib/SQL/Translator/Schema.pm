@@ -36,12 +36,7 @@ use SQL::Translator::Schema::View;
 use SQL::Translator::Utils 'parse_list_arg';
 use Carp;
 
-with qw(
-  SQL::Translator::Role::Error
-  SQL::Translator::Role::BuildArgs
-  SQL::Translator::Schema::Role::Extra
-  SQL::Translator::Schema::Role::Compare
-);
+extends 'SQL::Translator::Schema::Object';
 
 our $VERSION = '1.59';
 

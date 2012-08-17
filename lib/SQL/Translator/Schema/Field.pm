@@ -27,12 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 
-with qw(
-  SQL::Translator::Role::Error
-  SQL::Translator::Role::BuildArgs
-  SQL::Translator::Schema::Role::Extra
-  SQL::Translator::Schema::Role::Compare
-);
+extends 'SQL::Translator::Schema::Object';
 
 our $VERSION = '1.59';
 
