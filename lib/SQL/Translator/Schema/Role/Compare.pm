@@ -1,9 +1,27 @@
 package SQL::Translator::Schema::Role::Compare;
+
+=head1 NAME
+
+SQL::Translator::Schema::Role::Compare - compare objects
+
+=head1 SYNOPSIS
+
+    package Foo;
+    use Moo;
+	with qw(SQL::Translator::Schema::Role::Compare);
+
+	$obj->equals($other);
+
+=head1 DESCRIPTION
+
+This L<Moo::Role> provides a method to compare if two objects are the
+same.
+
+=cut
+
 use Moo::Role;
 
-sub equals {
-
-=pod
+=head1 METHODS
 
 =head2 equals
 
@@ -13,6 +31,7 @@ Determines if this object is the same as another.
 
 =cut
 
+sub equals {
     my $self = shift;
     my $other = shift;
 

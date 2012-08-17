@@ -1,12 +1,27 @@
 package SQL::Translator::Schema::Role::Extra;
+
+=head1 NAME
+
+SQL::Translator::Schema::Role::Extra - "extra" attribute for schema classes
+
+=head1 SYNOPSIS
+
+    package Foo;
+    use Moo;
+    with qw(SQL::Translator::Schema::Role::Extra);
+
+=head1 DESCRIPTION
+
+This role provides methods to set and get a hashref of extra attributes
+for schema objects.
+
+=cut
+
 use Moo::Role;
 use Sub::Quote qw(quote_sub);
 
 
-=head1 Methods
-
-The following methods are defined here, therefore all schema objects
-using this role will have them.
+=head1 METHODS
 
 =head2 extra
 

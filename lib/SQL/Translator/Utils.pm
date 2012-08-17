@@ -482,6 +482,27 @@ Takes a version string (X.Y.Z) or perl style (XX.YYYZZZ) and a target ('perl'
 or 'native') transforms the string to the given target style.
 to
 
+=head2 throw
+
+Throws the provided string as an object that will stringify back to the
+original string.  This stops it from being mangled by L<Moo>'s C<isa>
+code.
+
+=head2 ex2err
+
+Wraps an attribute accessor to catch any exception raised using
+L</throw> and store them in C<< $self->error() >>, finally returning
+undef.  A reference to this function can be passed directly to
+L<Moo/around>.
+
+    around foo => \&ex2err;
+
+    around bar => sub {
+        my ($orig, $self) = (shift, shift);
+        return ex2err($orig, $self, @_) if @_;
+        ...
+    };
+
 =head1 AUTHORS
 
 Darren Chamberlain E<lt>darren@cpan.orgE<gt>,
