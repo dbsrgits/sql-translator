@@ -1,3 +1,6 @@
+* Convert SQL::Translator, ::Schema and ::Schema::* to Moo
+* Fix leaks by weakening circular references between schema objects
+
 # ----------------------------------------------------------
 # 0.11013 2012-09-22
 # ----------------------------------------------------------
