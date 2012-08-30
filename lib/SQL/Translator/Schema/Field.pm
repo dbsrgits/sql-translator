@@ -25,7 +25,7 @@ C<SQL::Translator::Schema::Field> is the field object.
 use Moo 1.000003;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Types qw(schema_obj);
-use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Utils qw(parse_list_arg ex2err throw carp_ro);
 use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
@@ -320,6 +320,8 @@ Determine whether the field has a UNIQUE constraint or not.
 =cut
 
 has is_unique => ( is => 'lazy', init_arg => undef );
+
+around is_unique => carp_ro('is_unique');
 
 sub _build_is_unique {
     my ( $self ) = @_;

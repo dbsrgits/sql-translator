@@ -6,6 +6,7 @@ use Digest::SHA qw( sha1_hex );
 use File::Spec;
 use Scalar::Util qw(blessed);
 use Try::Tiny;
+use Carp qw(carp);
 
 our $VERSION = '1.59';
 our $DEFAULT_COMMENT = '-- ';
@@ -15,7 +16,7 @@ our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
     ddl_parser_instance
-    throw ex2err
+    throw ex2err carp_ro
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
@@ -334,6 +335,15 @@ sub ex2err {
     };
 }
 
+sub carp_ro {
+    my ($name) = @_;
+    return sub {
+        my ($orig, $self) = (shift, shift);
+        carp "'$name' is a read-only accessor" if @_;
+        return $self->$orig;
+    };
+}
+
 1;
 
 =pod
@@ -502,6 +512,12 @@ L<Moo/around>.
         return ex2err($orig, $self, @_) if @_;
         ...
     };
+
+=head2 carp_ro
+
+Takes a field name and returns a reference to a function can be used
+L<around|Moo/around> a read-only accessor to make it L<carp|Carp/carp>
+instead of die when passed an argument.
 
 =head1 AUTHORS
 

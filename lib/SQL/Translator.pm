@@ -17,7 +17,7 @@ use IO::Dir;
 use Sub::Quote qw(quote_sub);
 use SQL::Translator::Producer;
 use SQL::Translator::Schema;
-use SQL::Translator::Utils qw(throw ex2err);
+use SQL::Translator::Utils qw(throw ex2err carp_ro);
 
 $DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
 
@@ -136,6 +136,8 @@ around producer => sub {
 
 has producer_type => ( is => 'rwp', init_arg => undef );
 
+around producer_type => carp_ro('producer_type');
+
 has producer_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
 
 around producer_args => sub {
@@ -156,6 +158,8 @@ around parser => sub {
 };
 
 has parser_type => ( is => 'rwp', init_arg => undef );
+
+around parser_type => carp_ro('parser_type');
 
 has parser_args => ( is => 'rw', default => quote_sub(q{ +{} }) );
 
