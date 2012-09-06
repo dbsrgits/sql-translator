@@ -55,7 +55,7 @@ BEGIN;
 SET foreign_key_checks=0;
 
 CREATE TABLE added (
-  id integer(11)
+  id integer(11) NULL
 );
 
 SET foreign_key_checks=1;
@@ -70,19 +70,19 @@ ALTER TABLE person DROP INDEX u_name;
 
 ALTER TABLE employee DROP COLUMN job_title;
 
-ALTER TABLE new_name ADD COLUMN new_field integer;
+ALTER TABLE new_name ADD COLUMN new_field integer NULL;
 
-ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT 1;
+ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1;
 
 ALTER TABLE person CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment;
 
 ALTER TABLE person CHANGE COLUMN name name varchar(20) NOT NULL;
 
-ALTER TABLE person CHANGE COLUMN age age integer(11) DEFAULT 18;
+ALTER TABLE person CHANGE COLUMN age age integer(11) NULL DEFAULT 18;
 
-ALTER TABLE person CHANGE COLUMN iq iq integer(11) DEFAULT 0;
+ALTER TABLE person CHANGE COLUMN iq iq integer(11) NULL DEFAULT 0;
 
-ALTER TABLE person CHANGE COLUMN description physical_description text;
+ALTER TABLE person CHANGE COLUMN description physical_description text NULL;
 
 ALTER TABLE person ADD UNIQUE INDEX unique_name (name);
 
@@ -117,7 +117,7 @@ BEGIN;
 SET foreign_key_checks=0;
 
 CREATE TABLE added (
-  id integer(11)
+  id integer(11) NULL
 );
 
 SET foreign_key_checks=1;
@@ -125,15 +125,15 @@ SET foreign_key_checks=1;
 ALTER TABLE employee DROP COLUMN job_title;
 
 ALTER TABLE old_name RENAME TO new_name,
-                     ADD COLUMN new_field integer;
+                     ADD COLUMN new_field integer NULL;
 
 ALTER TABLE person DROP INDEX UC_age_name,
-                   ADD COLUMN is_rock_star tinyint(4) DEFAULT 1,
+                   ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1,
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
                    CHANGE COLUMN name name varchar(20) NOT NULL,
-                   CHANGE COLUMN age age integer(11) DEFAULT 18,
-                   CHANGE COLUMN iq iq integer(11) DEFAULT 0,
-                   CHANGE COLUMN description physical_description text,
+                   CHANGE COLUMN age age integer(11) NULL DEFAULT 18,
+                   CHANGE COLUMN iq iq integer(11) NULL DEFAULT 0,
+                   CHANGE COLUMN description physical_description text NULL,
                    ADD UNIQUE UC_person_id (person_id),
                    ADD UNIQUE UC_age_name (age, name),
                    ENGINE=InnoDB;
@@ -187,7 +187,7 @@ BEGIN;
 SET foreign_key_checks=0;
 
 CREATE TABLE added (
-  id integer(11)
+  id integer(11) NULL
 );
 
 SET foreign_key_checks=1;
@@ -198,12 +198,12 @@ ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
 
 ALTER TABLE person DROP INDEX UC_age_name,
                    DROP INDEX u_name,
-                   ADD COLUMN is_rock_star tinyint(4) DEFAULT 1,
+                   ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1,
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
                    CHANGE COLUMN name name varchar(20) NOT NULL,
-                   CHANGE COLUMN age age integer(11) DEFAULT 18,
-                   CHANGE COLUMN iq iq integer(11) DEFAULT 0,
-                   CHANGE COLUMN description physical_description text,
+                   CHANGE COLUMN age age integer(11) NULL DEFAULT 18,
+                   CHANGE COLUMN iq iq integer(11) NULL DEFAULT 0,
+                   CHANGE COLUMN description physical_description text NULL,
                    ADD UNIQUE INDEX unique_name (name),
                    ADD UNIQUE UC_person_id (person_id),
                    ADD UNIQUE UC_age_name (age, name),
@@ -257,7 +257,7 @@ BEGIN;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E_diff;
 
-ALTER TABLE employee ADD COLUMN new integer,
+ALTER TABLE employee ADD COLUMN new integer NULL,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id) ON DELETE CASCADE,
                      ADD CONSTRAINT new_constraint FOREIGN KEY (employee_id) REFERENCES patty (fake);
 

@@ -187,20 +187,20 @@ my @stmts = (
 
 "DROP TABLE IF EXISTS `thing`",
 "CREATE TABLE `thing` (
-  `id` unsigned int auto_increment,
-  `name` varchar(32),
-  `swedish_name` varchar(32) character set swe7,
-  `description` text character set utf8 collate utf8_general_ci,
+  `id` unsigned int NULL auto_increment,
+  `name` varchar(32) NULL,
+  `swedish_name` varchar(32) character set swe7 NULL,
+  `description` text character set utf8 collate utf8_general_ci NULL,
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci",
 
 "DROP TABLE IF EXISTS `some`.`thing2`",
 "CREATE TABLE `some`.`thing2` (
-  `id` integer,
-  `foo` integer,
-  `foo2` integer,
-  `bar_set` set('foo', 'bar', 'baz'),
+  `id` integer NULL,
+  `foo` integer NULL,
+  `foo2` integer NULL,
+  `bar_set` set('foo', 'bar', 'baz') NULL,
   INDEX `index_1` (`id`),
   INDEX `really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47` (`id`),
   INDEX (`foo`),
@@ -212,10 +212,10 @@ my @stmts = (
 
 "DROP TABLE IF EXISTS `some`.`thing3`",
 "CREATE TABLE `some`.`thing3` (
-  `id` integer,
-  `foo` integer,
-  `foo2` integer,
-  `bar_set` set('foo', 'bar', 'baz'),
+  `id` integer NULL,
+  `foo` integer NULL,
+  `foo2` integer NULL,
+  `bar_set` set('foo', 'bar', 'baz') NULL,
   INDEX `index_1` (`id`),
   INDEX `really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47` (`id`),
   INDEX (`foo`),
@@ -296,7 +296,7 @@ my $field1 = SQL::Translator::Schema::Field->new( name => 'myfield',
 
 my $field1_sql = SQL::Translator::Producer::MySQL::create_field($field1);
 
-is($field1_sql, 'myfield VARCHAR(10)', 'Create field works');
+is($field1_sql, 'myfield VARCHAR(10) NULL', 'Create field works');
 
 my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
                                                   table => $table,
@@ -314,7 +314,7 @@ is($alter_field, 'ALTER TABLE mytable CHANGE COLUMN myfield myfield VARCHAR(25) 
 
 my $add_field = SQL::Translator::Producer::MySQL::add_field($field1);
 
-is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10)', 'Add field works');
+is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10) NULL', 'Add field works');
 
 my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2);
 is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
@@ -353,7 +353,7 @@ for my $size (keys %$number_sizes) {
 
     is(
         SQL::Translator::Producer::MySQL::create_field($number_field),
-        "numberfield_$expected $expected($size)",
+        "numberfield_$expected $expected($size) NULL",
         "Use $expected for NUMBER types of size $size"
     );
 }
@@ -372,68 +372,68 @@ for my $size (qw/255 256 65535 65536/) {
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003 }),
-    'vch_255 varchar(255)',
+    'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0 }),
-    'vch_255 varchar(255)',
+    'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}),
-    'vch_255 varchar(255)',
+    'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT when no version specified',
 );
 
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003 }),
-    'vch_256 varchar(256)',
+    'vch_256 varchar(256) NULL',
     'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0 }),
-    'vch_256 text',
+    'vch_256 text NULL',
     'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}),
-    'vch_256 text',
+    'vch_256 text NULL',
     'VARCHAR(256) is substituted with TEXT when no version specified',
 );
 
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003 }),
-    'vch_65535 varchar(65535)',
+    'vch_65535 varchar(65535) NULL',
     'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0 }),
-    'vch_65535 text',
+    'vch_65535 text NULL',
     'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}),
-    'vch_65535 text',
+    'vch_65535 text NULL',
     'VARCHAR(65535) is substituted with TEXT when no version specified',
 );
 
 
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003 }),
-    'vch_65536 text',
+    'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0 }),
-    'vch_65536 text',
+    'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
 );
 is (
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}),
-    'vch_65536 text',
+    'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT when no version specified',
 );
 
@@ -516,7 +516,7 @@ EOV
             is_unique         => 0
         );
         my $sql = SQL::Translator::Producer::MySQL::create_field($field);
-        is($sql, "my$type $type", "Skip length param for type $type");
+        is($sql, "my$type $type NULL", "Skip length param for type $type");
     }
 }
 
@@ -568,7 +568,7 @@ EOV
 
     my $add_field = SQL::Translator::Producer::MySQL::add_field($field1, $options);
 
-    is($add_field, 'ALTER TABLE `mydb`.`mytable` ADD COLUMN `myfield` VARCHAR(10)', 'Add field works');
+    is($add_field, 'ALTER TABLE `mydb`.`mytable` ADD COLUMN `myfield` VARCHAR(10) NULL', 'Add field works');
 
     my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2, $options);
     is($drop_field, 'ALTER TABLE `mydb`.`mytable` DROP COLUMN `myfield`', 'Drop field works');
@@ -600,7 +600,7 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
 
         is(
             SQL::Translator::Producer::MySQL::create_field($number_field, $options),
-            "`numberfield_$expected` $expected($size)",
+            "`numberfield_$expected` $expected($size) NULL",
             "Use $expected for NUMBER types of size $size"
         );
     }
@@ -619,68 +619,68 @@ is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003, %$options }),
-        '`vch_255` varchar(255)',
+        '`vch_255` varchar(255) NULL',
         'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0, %$options }),
-        '`vch_255` varchar(255)',
+        '`vch_255` varchar(255) NULL',
         'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{255}, $options),
-        '`vch_255` varchar(255)',
+        '`vch_255` varchar(255) NULL',
         'VARCHAR(255) is not substituted with TEXT when no version specified',
     );
 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003, %$options }),
-        '`vch_256` varchar(256)',
+        '`vch_256` varchar(256) NULL',
         'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0, %$options }),
-        '`vch_256` text',
+        '`vch_256` text NULL',
         'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{256}, $options),
-        '`vch_256` text',
+        '`vch_256` text NULL',
         'VARCHAR(256) is substituted with TEXT when no version specified',
     );
 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003, %$options }),
-        '`vch_65535` varchar(65535)',
+        '`vch_65535` varchar(65535) NULL',
         'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0, %$options }),
-        '`vch_65535` text',
+        '`vch_65535` text NULL',
         'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, $options),
-        '`vch_65535` text',
+        '`vch_65535` text NULL',
         'VARCHAR(65535) is substituted with TEXT when no version specified',
     );
 
 
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003, %$options }),
-        '`vch_65536` text',
+        '`vch_65536` text NULL',
         'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0, %$options }),
-        '`vch_65536` text',
+        '`vch_65536` text NULL',
         'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
     );
     is (
         SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, $options),
-        '`vch_65536` text',
+        '`vch_65536` text NULL',
         'VARCHAR(65536) is substituted with TEXT when no version specified',
     );
 
@@ -762,7 +762,7 @@ EOV
                 is_unique         => 0
             );
             my $sql = SQL::Translator::Producer::MySQL::create_field($field, $options);
-            is($sql, "`my$type` $type", "Skip length param for type $type");
+            is($sql, "`my$type` $type NULL", "Skip length param for type $type");
         }
     }
 }
