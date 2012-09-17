@@ -276,6 +276,8 @@ has schema => (
     predicate => '_has_schema',
 );
 
+around schema => carp_ro('schema');
+
 around reset => sub {
     my $orig = shift;
     my $self = shift;
