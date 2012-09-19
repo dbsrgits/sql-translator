@@ -20,7 +20,7 @@ C<SQL::Translator::Schema::Table> is the table object.
 =cut
 
 use Moo 1.000003;
-use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Utils qw(parse_list_arg ex2err throw carp_ro);
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Schema::Constants;
@@ -549,6 +549,8 @@ True if table has no data (non-key) fields and only uses single key joins.
 
 has is_trivial_link => ( is => 'lazy', init_arg => undef );
 
+around is_trivial_link => carp_ro('is_trivial_link');
+
 sub _build_is_trivial_link {
     my $self = shift;
     return 0 if $self->is_data;
@@ -576,6 +578,8 @@ Returns true if the table has some non-key fields.
 =cut
 
 has is_data => ( is => 'lazy', init_arg => undef );
+
+around is_data => carp_ro('is_data');
 
 sub _build_is_data {
     my $self = shift;
