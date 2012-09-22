@@ -1,3 +1,7 @@
+# ----------------------------------------------------------
+# 0.11013 2012-09-22
+# ----------------------------------------------------------
+
 * Make MySQL producer add NULL after every nullable field, conforming to SQL
   standard, and avoiding MySQL bugs
 
