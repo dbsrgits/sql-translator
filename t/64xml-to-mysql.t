@@ -37,13 +37,13 @@ my @want = (
     q[CREATE TABLE `Basic` (
   `id` integer(10) zerofill NOT NULL auto_increment,
   `title` varchar(100) NOT NULL DEFAULT 'hello',
-  `description` text DEFAULT '',
-  `email` varchar(500),
-  `explicitnulldef` varchar(255),
-  `explicitemptystring` varchar(255) DEFAULT '',
-  `emptytagdef` varchar(255) DEFAULT '' comment 'Hello emptytagdef',
-  `another_id` integer(10) DEFAULT 2,
-  `timest` timestamp,
+  `description` text NULL DEFAULT '',
+  `email` varchar(500) NULL,
+  `explicitnulldef` varchar(255) NULL,
+  `explicitemptystring` varchar(255) NULL DEFAULT '',
+  `emptytagdef` varchar(255) NULL DEFAULT '' comment 'Hello emptytagdef',
+  `another_id` integer(10) NULL DEFAULT 2,
+  `timest` timestamp NULL,
   INDEX `titleindex` (`title`),
   INDEX (`another_id`),
   PRIMARY KEY (`id`),
@@ -55,7 +55,7 @@ my @want = (
     q[DROP TABLE IF EXISTS `Another`],
     q[CREATE TABLE `Another` (
   `id` integer(10) NOT NULL auto_increment,
-  `num` numeric(10, 2),
+  `num` numeric(10, 2) NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB],
     q[CREATE OR REPLACE
