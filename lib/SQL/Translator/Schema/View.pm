@@ -23,7 +23,7 @@ C<SQL::Translator::Schema::View> is the view object.
 
 =cut
 
-use Moo 1.000003;
+use Moo;
 use SQL::Translator::Utils qw(ex2err);
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Role::ListAttr;

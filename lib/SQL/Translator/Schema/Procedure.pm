@@ -27,7 +27,7 @@ stored procedures (and possibly other pieces of nameable SQL code?).
 
 =cut
 
-use Moo 1.000003;
+use Moo;
 use SQL::Translator::Utils qw(ex2err);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);

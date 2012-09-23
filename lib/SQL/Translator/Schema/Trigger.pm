@@ -28,7 +28,7 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 
 =cut
 
-use Moo 1.000003;
+use Moo;
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
 use SQL::Translator::Types qw(schema_obj enum);
 use List::MoreUtils qw(uniq);

@@ -25,7 +25,7 @@ Primary and unique keys are table constraints, not indices.
 
 =cut
 
-use Moo 1.000003;
+use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(ex2err throw);
 use SQL::Translator::Role::ListAttr;

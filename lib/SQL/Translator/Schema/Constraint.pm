@@ -23,7 +23,7 @@ C<SQL::Translator::Schema::Constraint> is the constraint object.
 
 =cut
 
-use Moo 1.000003;
+use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(ex2err throw);
 use SQL::Translator::Role::ListAttr;
