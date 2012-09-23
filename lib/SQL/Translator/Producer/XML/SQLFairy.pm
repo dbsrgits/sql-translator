@@ -149,7 +149,6 @@ use Exporter;
 use base qw(Exporter);
 @EXPORT_OK = qw(produce);
 
-use IO::Scalar;
 use SQL::Translator::Utils qw(header_comment debug);
 BEGIN {
     # Will someone fix XML::Writer already?
@@ -176,14 +175,14 @@ sub produce {
     $PArgs          = $translator->producer_args;
     my $newlines    = defined $PArgs->{newlines} ? $PArgs->{newlines} : 1;
     my $indent      = defined $PArgs->{indent}   ? $PArgs->{indent}   : 2;
-    my $io          = IO::Scalar->new;
 
     # Setup the XML::Writer and set the namespace
+    my $io;
     my $prefix = "";
     $prefix    = $Name            if $PArgs->{add_prefix};
     $prefix    = $PArgs->{prefix} if $PArgs->{prefix};
     my $xml         = XML::Writer->new(
-        OUTPUT      => $io,
+        OUTPUT      => \$io,
         NAMESPACES  => 1,
         PREFIX_MAP  => { $Namespace => $prefix },
         DATA_MODE   => $newlines,

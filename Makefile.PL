@@ -11,7 +11,6 @@ my $deps = {
   requires => {
     'Digest::SHA'              => '0',
     'Carp::Clan'               => '0',
-    'IO::Scalar'               => '2.110',
     'Parse::RecDescent'        => '1.967009',
     'DBI'                      => '0',
     'File::ShareDir'           => '1.0',

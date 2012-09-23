@@ -226,9 +226,9 @@ sub check_roundtrip {
 
 # the two sql strings should be identical
   my $msg = "$args->{name} SQL roundtrip successful - SQL statements match";
-  $ENV{SQLTTEST_RT_DEBUG}     #stringify below because IO::Scalar does not behave nice
-    ? eq_or_diff ("$rt_out", "$base_out", $msg)
-    : ok ("$rt_out" eq "$base_out", $msg)
+  $ENV{SQLTTEST_RT_DEBUG}
+    ? eq_or_diff ($rt_out, $base_out, $msg)
+    : ok ($rt_out eq $base_out, $msg)
   ;
 }
 
