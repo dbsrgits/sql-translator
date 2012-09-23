@@ -13,6 +13,7 @@ inc/
 pm_to_blib
 t/data/roundtrip_autogen.yaml
 share/PrecompiledParsers/Parse/RecDescent/DDL/SQLT/*.pm
+/SQL-Translator-*.tar.*
 *.swp
 *~
 .#*
