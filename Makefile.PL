@@ -14,7 +14,6 @@ my $deps = {
     'Parse::RecDescent'        => '1.967009',
     'DBI'                      => '0',
     'File::ShareDir'           => '1.0',
-    'XML::Writer'              => '0.500',
     'Moo'                      => '1.000003',
     'Package::Variant'         => '1.001001',
     'Sub::Quote'               => '0',
@@ -32,6 +31,7 @@ my $deps = {
   },
   test_requires => {
     'YAML'                     => '0.66',
+    'XML::Writer'              => '0.500',
     'Test::More'               => '0.88',
     'Test::Differences'        => '0',
     'Test::Exception'          => '0.31',
