@@ -9,8 +9,6 @@ perl_version '5.008001';
 
 my $deps = {
   requires => {
-    'Class::Base'              => '0',
-    'Class::Data::Inheritable' => '0.02',
     'Digest::SHA'              => '0',
     'Carp::Clan'               => '0',
     'IO::Scalar'               => '2.110',
