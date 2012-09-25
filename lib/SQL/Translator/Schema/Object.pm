@@ -38,7 +38,7 @@ equality.
 
 =cut
 
-use Moo;
+use Moo 1.000003;
 
 with qw(
   SQL::Translator::Role::Error
