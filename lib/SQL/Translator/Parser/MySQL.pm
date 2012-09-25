@@ -870,7 +870,7 @@ NAME: QUOTED_NAME
 
 VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
-    | /'.*?'/
+    | /["'].*?["']/
     {
         # remove leading/trailing quotes
         my $val = $item[1];
