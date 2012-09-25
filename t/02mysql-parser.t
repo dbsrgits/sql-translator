@@ -78,7 +78,7 @@ BEGIN {
               unsuccessful date default '0000-00-00',
               i1 int(11) default '0' not null,
               s1 set('a','b','c') default 'b',
-              e1 enum('a','b','c') default "c",
+              e1 enum("a","b","c") default "c",
               name varchar(30) default NULL,
               foo_type enum('vk','ck') NOT NULL default 'vk',
               date timestamp,

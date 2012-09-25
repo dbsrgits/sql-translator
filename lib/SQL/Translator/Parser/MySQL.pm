@@ -860,9 +860,13 @@ BACKTICK : '`'
 
 DOUBLE_QUOTE: '"'
 
+SINGLE_QUOTE: "'"
+
 QUOTED_NAME : BACKTICK /[^`]+/ BACKTICK
     { $item[2] }
     | DOUBLE_QUOTE /[^"]+/ DOUBLE_QUOTE
+    { $item[2] }
+    | SINGLE_QUOTE /[^']+/ SINGLE_QUOTE
     { $item[2] }
 
 NAME: QUOTED_NAME
@@ -870,7 +874,7 @@ NAME: QUOTED_NAME
 
 VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
     { $item[1] }
-    | /'.*?'/
+    | QUOTED_NAME
     {
         # remove leading/trailing quotes
         my $val = $item[1];

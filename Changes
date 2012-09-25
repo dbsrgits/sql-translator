@@ -1,5 +1,6 @@
 
 * De-linkify XML namespace in docs (RT#81838)
+* Allow both single and double quotes for values in MySQL parser
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09
