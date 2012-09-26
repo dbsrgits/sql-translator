@@ -1,3 +1,7 @@
+# ----------------------------------------------------------
+# 0.11013_03 2012-09-25
+# ----------------------------------------------------------
+
 * Remove SQL::Translator::Schema::Graph as announced in 0.11011
 * Remove a number of no longer needed deps
 
