@@ -275,7 +275,7 @@ sub produce {
     #
     my @table_defs =();
 
-    for my $table ( $schema->get_tables ) {
+    for my $table ( $schema->get_tables( $producer_args ) ) {
 #        print $table->name, "\n";
         push @table_defs, create_table($table,
                                        { add_drop_table    => $add_drop_table,
@@ -406,7 +406,8 @@ sub create_view {
 
 sub create_table
 {
-    my ($table, $options) = @_;
+    my $table   = shift or return;
+    my $options = shift || {};
 
     my $qt = $options->{quote_table_names} || '';
     my $qf = $options->{quote_field_names} || '';
@@ -659,6 +660,11 @@ sub create_index
 
     my $qf = $options->{quote_field_names} || '';
 
+    #
+    # Don't quote a partial index (having parens), e.g., "desc(40)"
+    #
+    my @fields = map { /[()]/ ? $_ : "${qf}${_}${qf}" } $index->fields;
+
     return join(
         ' ',
         map { $_ || () }
@@ -669,7 +675,7 @@ sub create_index
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
           ) . $qf
         : '',
-        '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
+        '(' .  join( ',', @fields ) . ')'
     );
 }
 
