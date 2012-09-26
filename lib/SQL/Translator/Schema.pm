@@ -73,7 +73,15 @@ Returns a Graph::Directed object with the table names for nodes.
             if ( $field->is_foreign_key ) {
                 my $fktable = $field->foreign_key_reference->reference_table;
 
-                $g->add_edge( $fktable, $tname );
+                unless ( 
+                    $fktable eq $tname
+                    ||
+                    $g->has_edge( $fktable, $tname )
+                    ||
+                    $g->has_edge( $tname, $fktable )
+                ) {
+                    $g->add_edge( $fktable, $tname );
+                }
             }
         }
     }
@@ -543,10 +551,25 @@ Returns all the tables as an array or array reference.
 =cut
 
     my $self   = shift;
-    my @tables =
-      map  { $_->[1] }
-      sort { $a->[0] <=> $b->[0] }
-      map  { [ $_->order, $_ ] } values %{ $self->_tables };
+    my $options = shift || {};
+    my @tables;
+
+    if ( $options->{'directed'} ) {
+        require Graph::Traversal::DFS;
+        my $g = $self->as_graph_pm;
+        my $d = Graph::Traversal::DFS->new($g);
+
+        for my $table ( $d->dfs ) {
+            push @tables, $self->_tables->{ $table };
+        }
+    }
+    else {
+      @tables =
+        map  { $_->[1] }
+        sort { $a->[0] <=> $b->[0] }
+        map  { [ $_->order, $_ ] } values %{ $self->_tables }
+      ;
+    }
 
     if (@tables) {
         return wantarray ? @tables : \@tables;

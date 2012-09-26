@@ -82,13 +82,14 @@ To translate a schema:
     --producer-db-pass   Database password for producer
     --producer-dsn       DSN for producer
     --use-same-auth      Use these DSN, user, password for producer output
+    --directed           Use a directed graph to order tables
 
   DB Producer Options:
 
-    --add-drop-table   Add 'DROP TABLE' statements before creates
+    --add-drop-table     Add 'DROP TABLE' statements before creates
     --quote-table-names  Quote all table names in statements
-    --quote-field-names  Qjuote all field names in statements
-    --no-comments      Don't include comments in SQL output
+    --quote-field-names  Quote all field names in statements
+    --no-comments        Don't include comments in SQL output
 
   PostgreSQL Producer Options:
 
@@ -155,95 +156,97 @@ use SQL::Translator;
 use vars qw( $VERSION );
 $VERSION = '1.59';
 
-my $from;             # the original database
-my $to;               # the destination database
-my $help;             # show POD and bail
-my $stdin;            # whether to read STDIN for create script
-my $no_comments;      # whether to put comments in out file
-my $show_warnings;    # whether to show warnings from SQL::Translator
-my $add_drop_table;   # whether to add "DROP table" statements
-my $quote_table_names;  # whether to quote table names
-my $quote_field_names;  # whether to quote field names
-my $debug;            # whether to print debug info
-my $trace;            # whether to print parser trace
-my $list;             # list all parsers and producers
-my $no_trim;          # don't trim whitespace on xSV fields
-my $no_scan;          # don't scan xSV fields for data types and sizes
-my $field_separator;  # for xSV files
-my $record_separator; # for xSV files
-my $validate;         # whether to validate the parsed document
-my $imap_file;        # filename where to place image map coords
-my $imap_url;         # URL to use in making image map
-my $pretty;           # use CGI::Pretty instead of CGI (HTML producer)
-my $template;         # template to pass to TTSchema producer
-my %tt_vars;          # additional template vars to pass the TTSchema producer
-my %tt_conf;          # additional template conf to pass the TTSchema producer
-my $title;            # title for HTML/POD producer
-my $add_prefix;       # Use explicit namespace prefix (XML producer)
-my $prefix;           # Set explicit namespace prefix (XML producer)
-my $newlines;         # Add newlines around tags (XML producer)
-my $indent;           # Number of indent chars for XML
-my $package_name;     # Base class name for ClassDBI
-my $use_same_auth =0; # producer uses same DSN, user, password as parser
-my $dsn;              # DBI parser
-my $db_user;          # DBI parser
-my $db_password;      # DBI parser
-my $show_version;     # Show version and exit script
+my $add_drop_table;       # whether to add "DROP table" statements
+my $add_prefix;           # Use explicit namespace prefix (XML producer)
+my $add_truncate;
+my $db_password;          # DBI parser
+my $db_user;              # DBI parser
+my $debug;                # whether to print debug info
+my $dsn;                  # DBI parser
+my $field_separator;      # for xSV files
+my $from;                 # the original database
+my $help;                 # show POD and bail
+my $ignore_opts;
+my $imap_file;            # filename where to place image map coords
+my $imap_url;             # URL to use in making image map
+my $indent;               # Number of indent chars for XML
+my $list;                 # list all parsers and producers
+my $mysql_parser_version; # MySQL parser arg for /*! comments
+my $mysql_version;        # MySQL version
+my $newlines;             # Add newlines around tags (XML producer)
+my $no_comments;          # whether to put comments in out file
+my $no_scan;              # don't scan xSV fields for data types and sizes
+my $no_trim;              # don't trim whitespace on xSV fields
+my $package_name;         # Base class name for ClassDBI
+my $postgres_version;     # PostgreSQL version
+my $prefix;               # Set explicit namespace prefix (XML producer)
+my $pretty;               # use CGI::Pretty instead of CGI (HTML producer)
+my $producer_db_password; # db_pass "
+my $producer_db_user;     # DSN     for producer (e.g. Dumper, ClassDBI)
+my $producer_dsn;         # db_user "
+my $quote_field_names;    # whether to quote field names
+my $quote_table_names;    # whether to quote table names
+my $record_separator;     # for xSV files
+my $show_version;         # Show version and exit script
+my $show_warnings;        # whether to show warnings from SQL::Translator
 my $skip;
 my $skiplike;
-my $ignore_opts;
-my $producer_db_user; # DSN     for producer (e.g. Dumper, ClassDBI)
-my $producer_db_password; # db_pass "
-my $producer_dsn;     # db_user "
-my $add_truncate;
-my $mysql_parser_version;  # MySQL parser arg for /*! comments
-my $postgres_version; # PostgreSQL version
-my $mysql_version; # MySQL version
+my $stdin;                # whether to read STDIN for create script
+my $template;             # template to pass to TTSchema producer
+my $title;                # title for HTML/POD producer
+my $to;                   # the destination database
+my $trace;                # whether to print parser trace
+my $use_directed;         # Producer arg to order tables by DFS
+my $use_same_auth = 0;    # producer uses same DSN, user, password as parser
+my $validate;             # whether to validate the parsed document
+my %tt_conf;              # additional template conf for TTSchema producer
+my %tt_vars;              # additional template vars for TTSchema producer
 
 GetOptions(
-    'add-drop-table'   => \$add_drop_table,
-    'quote-table-names|quote_table_names'   => \$quote_table_names,
-    'quote-field-names|quote_field_names'   => \$quote_field_names,
-    'd|debug'          => \$debug,
-    'f|from|parser:s'  => \$from,
-    'fs:s'             => \$field_separator,
-    'h|help'           => \$help,
-    'imap-file:s'      => \$imap_file,
-    'imap-url:s'       => \$imap_url,
-    't|to|producer:s'  => \$to,
-    'l|list'           => \$list,
-    'pretty!'          => \$pretty,
-    'no-comments'      => \$no_comments,
-    'no-scan'          => \$no_scan,
-    'no-trim'          => \$no_trim,
-    'rs:s'             => \$record_separator,
-    'show-warnings'    => \$show_warnings,
-    'template:s'       => \$template,
-    'tt-var=s'         => \%tt_vars,
-    'tt-conf=s'        => \%tt_conf,
-    'title:s'          => \$title,
-    'trace'            => \$trace,
-    'v|validate'       => \$validate,
-    'dsn:s'            => \$dsn,
-    'db-user:s'        => \$db_user,
-    'db-password:s'    => \$db_password,
-    'producer-dsn:s'   => \$producer_dsn,
-    'producer-db-user:s'=> \$producer_db_user,
-    'producer-db-pass:s'=> \$producer_db_password,
-    'skip:s'           => \$skip,
-    'skiplike:s'       => \$skiplike,
-    'ignore_opts:s'    => \$ignore_opts,
-    'add_truncate'     => \$add_truncate,
-    'add-prefix'       => \$add_prefix,
-    'prefix:s'         => \$prefix,
-    'indent:s'         => \$indent,
-    'newlines!'        => \$newlines,
-    'package=s'        => \$package_name,
-    'use-same-auth'    => \$use_same_auth,
-    'version'          => \$show_version,
-    'mysql-parser-version=i' => \$mysql_parser_version,
-    'postgres-version=f' => \$postgres_version,
-    'mysql-version=f' => \$mysql_version,
+    'add-drop-table'                      => \$add_drop_table,
+    'add-prefix'                          => \$add_prefix,
+    'add_truncate'                        => \$add_truncate,
+    'db-password:s'                       => \$db_password,
+    'db-user:s'                           => \$db_user,
+    'directed'                            => \$use_directed,
+    'dsn:s'                               => \$dsn,
+    'd|debug'                             => \$debug,
+    'fs:s'                                => \$field_separator,
+    'f|from|parser:s'                     => \$from,
+    'h|help'                              => \$help,
+    'ignore_opts:s'                       => \$ignore_opts,
+    'imap-file:s'                         => \$imap_file,
+    'imap-url:s'                          => \$imap_url,
+    'indent:s'                            => \$indent,
+    'l|list'                              => \$list,
+    'mysql-parser-version=i'              => \$mysql_parser_version,
+    'mysql-version=f'                     => \$mysql_version,
+    'newlines!'                           => \$newlines,
+    'no-comments'                         => \$no_comments,
+    'no-scan'                             => \$no_scan,
+    'no-trim'                             => \$no_trim,
+    'package=s'                           => \$package_name,
+    'postgres-version=f'                  => \$postgres_version,
+    'prefix:s'                            => \$prefix,
+    'pretty!'                             => \$pretty,
+    'producer-db-pass:s'                  => \$producer_db_password,
+    'producer-db-user:s'                  => \$producer_db_user,
+    'producer-dsn:s'                      => \$producer_dsn,
+    'quote-field-names|quote_field_names' => \$quote_field_names,
+    'quote-table-names|quote_table_names' => \$quote_table_names,
+    'rs:s'                                => \$record_separator,
+    'show-warnings'                       => \$show_warnings,
+    'skip:s'                              => \$skip,
+    'skiplike:s'                          => \$skiplike,
+    'template:s'                          => \$template,
+    'title:s'                             => \$title,
+    'trace'                               => \$trace,
+    'tt-conf=s'                           => \%tt_conf,
+    'tt-var=s'                            => \%tt_vars,
+    't|to|producer:s'                     => \$to,
+    'use-same-auth'                       => \$use_same_auth,
+    'version'                             => \$show_version,
+    'v|validate'                          => \$validate,
 ) or pod2usage(2);
 
 if ($use_same_auth) {
@@ -287,38 +290,39 @@ my $translator           =  SQL::Translator->new(
     quote_field_names    => defined $quote_field_names ? $quote_field_names : 1,
     validate             => $validate       ||  0,
     parser_args          => {
-        trim_fields      => $no_trim ? 0 : 1,
-        scan_fields      => $no_scan ? 0 : 1,
-        field_separator  => $field_separator,
-        record_separator => $record_separator,
-        dsn              => $dsn,
-        db_user          => $db_user,
-        db_password      => $db_password,
+        db_password          => $db_password,
+        db_user              => $db_user,
+        dsn                  => $dsn,
+        field_separator      => $field_separator,
+        ignore_opts          => $ignore_opts,
         mysql_parser_version => $mysql_parser_version,
-        skip => $skip,
-        ignore_opts => $ignore_opts,
+        record_separator     => $record_separator,
+        scan_fields          => $no_scan ? 0 : 1,
+        skip                 => $skip,
+        trim_fields          => $no_trim ? 0 : 1,
     },
     producer_args   => {
+        add_prefix       => $add_prefix,
+        add_truncate     => $add_truncate,
+        directed         => $use_directed,
+        db_password      => $producer_db_password,
+        db_user          => $producer_db_user,
+        dsn              => $producer_dsn,
         imap_file        => $imap_file,
         imap_url         => $imap_url,
+        indent           => $indent,
+        mysql_version    => $mysql_version,
+        newlines         => $newlines,
+        package_name     => $package_name,
+        postgres_version => $postgres_version,
+        prefix           => $prefix,
         pretty           => $pretty,
-        ttfile           => $template,
-        tt_vars          => \%tt_vars,
-        tt_conf          => \%tt_conf,
-        title            => $title,
-        dsn              => $producer_dsn,
-        db_user          => $producer_db_user,
-        db_password      => $producer_db_password,
         skip             => $skip,
         skiplike         => $skiplike,
-        add_truncate     => $add_truncate,
-        add_prefix       => $add_prefix,
-        prefix           => $prefix,
-        indent           => $indent,
-        newlines         => $newlines,
-        postgres_version => $postgres_version,
-        mysql_version    => $mysql_version,
-        package_name     => $package_name,
+        title            => $title,
+        tt_conf          => \%tt_conf,
+        tt_vars          => \%tt_vars,
+        ttfile           => $template,
     },
 );
 
