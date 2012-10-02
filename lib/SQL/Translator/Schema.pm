@@ -580,11 +580,6 @@ Returns all the tables as an array or array reference.
         require Graph::Traversal::DFS;
         my $g = $self->as_graph_pm;
         my $d = Graph::Traversal::DFS->new($g);
-#$DB::single=1;
-#        $d->preorder;
-
-#        my @dfs = $d->dfs;
-#        my $ssp = $g->SPT_Dijkstra( $dfs[0] );
 
         for my $table ( $d->dfs ) {
             push @tables, $self->{'tables'}{ $table };

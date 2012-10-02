@@ -29,7 +29,7 @@ sqlt-graph - Automatically create a graph from a database schema
   Options:
 
     -l|--layout        Layout schema for GraphViz
-                       ("dot," "neato," "twopi"; default "dot")
+                       ("dot" [default], "neato," "twopi", "circo", "fdp")
     -n|--node-shape    Shape of the nodes ("record," "plaintext,"
                        "ellipse," "circle," "egg," "triangle," "box,"
                        "diamond," "trapezium," "parallelogram," "house,"
