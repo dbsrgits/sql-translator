@@ -10,7 +10,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 BEGIN {
-    maybe_plan(21,
+    maybe_plan(25,
         'SQL::Translator::Parser::SQLite');
 }
 SQL::Translator::Parser::SQLite->import('parse');
@@ -74,9 +74,9 @@ $file = "$Bin/data/sqlite/named.sql";
     is( $t1->name, 'pet', "'Pet' table" );
 
     my @constraints = $t1->get_constraints;
-    is( scalar @constraints, 3, '3 constraints on pet' );
+    is( scalar @constraints, 5, '5 constraints on pet' );
 
-    my $c1 = pop @constraints;
+    my $c1 = $constraints[2];
     is( $c1->type, 'FOREIGN KEY', 'FK constraint' );
     is( $c1->reference_table, 'person', 'References person table' );
     is( $c1->name, 'fk_person_id', 'Constraint name fk_person_id' );
@@ -84,5 +84,13 @@ $file = "$Bin/data/sqlite/named.sql";
     is( $c1->on_update, 'CASCADE', 'On update cascade' );
     is( join(',', $c1->reference_fields), 'person_id',
         'References person_id field' );
+
+    my $c2 = $constraints[3];
+    is( $c2->on_delete, 'SET DEFAULT', 'On delete set default' );
+    is( $c2->on_update, 'SET NULL', 'On update set null' );
+
+    my $c3 = $constraints[4];
+    is( $c3->on_update, 'NO ACTION', 'On update no action' );
+    is( $c3->on_delete, '', 'On delete not defined' );
 
 }

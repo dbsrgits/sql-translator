@@ -447,10 +447,10 @@ cascade_def : cascade_update_def cascade_delete_def(?)
     cascade_delete_def cascade_update_def(?)
     { $return = {  on_delete => $item[1], on_update => $item[2][0] } }
 
-cascade_delete_def : /on\s+delete\s+(\w+)/i
+cascade_delete_def : /on\s+delete\s+(set null|set default|cascade|restrict|no action)/i
     { $return = $1}
 
-cascade_update_def : /on\s+update\s+(\w+)/i
+cascade_update_def : /on\s+update\s+(set null|set default|cascade|restrict|no action)/i
     { $return = $1}
 
 table_name : qualified_name

@@ -4,6 +4,7 @@
 * Fix diff for altering two things per column - add ; at the end
 * Call all diff methods in list context (it can be merged later)
 * Fix Pg diff issue with drop constraint on primary keys
+* SQLite support for SET NULL, SET DEFAULT and NO ACTION in FK clauses
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09
