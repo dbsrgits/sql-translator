@@ -42,7 +42,7 @@ my $deps = {
 name        'SQL-Translator';
 author      'Ken Youens-Clark <kclark@cpan.org>';
 abstract    'SQL DDL transformations and more';
-license     'gpl';
+license     'perl';
 repository  'git://git.shadowcat.co.uk/dbsrgits/SQL-Translator.git';
 bugtracker  'http://rt.cpan.org/NoAuth/Bugs.html?Dist=SQL-Translator';
 
@@ -51,6 +51,7 @@ resources Ratings => 'http://cpanratings.perl.org/d/SQL-Translator';
 Meta->{values}{x_authority} = 'cpan:JROBINSON';
 
 all_from    'lib/SQL/Translator.pm';
+readme_from 'lib/SQL/Translator.pm';
 
 for my $type (qw/requires recommends test_requires/) {
   no strict qw/refs/;

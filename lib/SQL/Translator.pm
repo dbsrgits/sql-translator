@@ -1117,19 +1117,12 @@ added to the project and what you'd like to contribute.
 
 =head1 COPYRIGHT
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2.
+Copyright 2012 the SQL::Translator authors, as listed in L</AUTHORS>.
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+=head1 LICENSE
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-USA
+This library is free software and may be distributed under the same terms as
+Perl 5 itself.
 
 =head1 BUGS
 
