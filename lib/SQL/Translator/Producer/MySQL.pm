@@ -77,6 +77,39 @@ Set the fields charater set and collation order.
 
 =back
 
+=head2 Index options
+
+=over 4
+
+=item prefix_length
+
+This option allows to use a prefix of certain character type (eg. char,
+varchar, text) fields in the index.
+
+The value of this option is a hashref, keys are the field names, values are the
+prefix lengths.
+
+Example:
+
+    $table->add_index(
+        name    => 'idx1',
+        fields  => [ 'id', 'name', 'address' ],
+        type    => 'normal',
+        options => [
+            {
+                prefix_length => {
+                    name    => 10,
+                    address => 20,
+                }
+            },
+        ],
+    );
+
+    # It will generate the following SQL snippet in the table definition:
+    INDEX `idx1` (`id`, `name`(10), `address`(20)),
+
+=back
+
 =cut
 
 use strict;
@@ -91,6 +124,7 @@ $DEBUG   = 0 unless defined $DEBUG;
 my $DEFAULT_MAX_ID_LENGTH = 64;
 
 use Data::Dumper;
+use List::Util qw(first);
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment
     truncate_id_uniquely parse_mysql_version);
@@ -659,6 +693,14 @@ sub create_index
 
     my $qf = $options->{quote_field_names} || '';
 
+    my ($prefix_length) = map { ( $_ || {} )->{prefix_length} || {} }
+        first { ref $_ eq 'HASH' && exists $_->{prefix_length} }
+            $index->options;
+
+    my @fields = map {
+        "$qf$_$qf" . (defined $prefix_length->{$_} ? "($prefix_length->{$_})" : "")
+    } $index->fields;
+
     return join(
         ' ',
         map { $_ || () }
@@ -669,7 +711,7 @@ sub create_index
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
           ) . $qf
         : '',
-        '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
+        '(' . join(", ", @fields) . ')'
     );
 }
 

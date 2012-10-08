@@ -12,7 +12,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(346, "SQL::Translator::Parser::MySQL");
+    maybe_plan(347, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -233,7 +233,9 @@ BEGIN {
     my $i3 = shift @indices;
     is( $i3->name, 'name_idx', 'Name is "name_idx"' );
     is( $i3->type, NORMAL, 'Normal index' );
-    is( join(',', $i3->fields ), 'name(10)', 'Index is on field "name(10)"' );
+    is( join(',', $i3->fields ), 'name', 'Index is on field "name"' );
+    is_deeply( [ $i3->options ], [ { prefix_length => { name => 10 } } ],
+      'Index is on the first 10 chars' );
 
     my @constraints = $table->get_constraints;
     is( scalar @constraints, 2, 'Right number of constraints (2)' );

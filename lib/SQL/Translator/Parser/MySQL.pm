@@ -735,44 +735,60 @@ foreign_key_def_begin : /constraint/i /foreign key/i WORD
 
 primary_key_def : primary_key index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
+        my ($fields, $options)
+            = SQL::Translator::Parser::MySQL::calculate_fields_and_options(
+                $item[2][0] || $item[6][0], $item[4] );
+
         $return       = {
             supertype => 'constraint',
             type      => 'primary_key',
-            fields    => $item[4],
-            options   => $item[2][0] || $item[6][0],
+            fields    => $fields,
+            options   => $options,
         };
     }
     # In theory, and according to the doc, names should not be allowed here, but
     # MySQL accept (and ignores) them, so we are not going to be less :)
     | primary_key index_name_not_using(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
+        my ($fields, $options)
+            = SQL::Translator::Parser::MySQL::calculate_fields_and_options(
+                $item[6][0], $item[4] );
+
         $return       = {
             supertype => 'constraint',
             type      => 'primary_key',
-            fields    => $item[4],
-            options   => $item[6][0],
+            fields    => $fields,
+            options   => $options,
         };
     }
 
 unique_key_def : UNIQUE KEY(?) index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
+        my ($fields, $options)
+            = SQL::Translator::Parser::MySQL::calculate_fields_and_options(
+                $item[4][0] || $item[8][0], $item[6] );
+
         $return       = {
             supertype => 'constraint',
             name      => $item[3][0],
             type      => 'unique',
-            fields    => $item[6],
-            options   => $item[4][0] || $item[8][0],
+            fields    => $fields,
+            options   => $options,
         }
     }
 
 normal_index : KEY index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
+        my ($fields, $options)
+            = SQL::Translator::Parser::MySQL::calculate_fields_and_options(
+                $item[3][0] || $item[7][0], $item[5] );
+
         $return       = {
             supertype => 'index',
             type      => 'normal',
             name      => $item[2][0],
-            fields    => $item[5],
-            options   => $item[3][0] || $item[7][0],
+            fields    => $fields,
+            options   => $options,
         }
     }
 
@@ -783,26 +799,43 @@ index_type : /using (btree|hash|rtree)/i { $return = uc $1 }
 
 fulltext_index : /fulltext/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     {
+        my ($fields, $options)
+            = SQL::Translator::Parser::MySQL::calculate_fields_and_options(
+                undef, $item[5] );
+
         $return       = {
             supertype => 'index',
             type      => 'fulltext',
             name      => $item{'index_name(?)'}[0],
-            fields    => $item[5],
+            fields    => $fields,
+            # note: according to the MySQL doc, it ignores column index prefixes in
+            # fulltext index definitions
         }
     }
 
 spatial_index : /spatial/i KEY(?) index_name(?) '(' name_with_opt_paren(s /,/) ')'
     {
+        my ($fields, $options)
+            = SQL::Translator::Parser::MySQL::calculate_fields_and_options(
+                undef, $item[5] );
+
         $return       = {
             supertype => 'index',
             type      => 'spatial',
             name      => $item{'index_name(?)'}[0],
-            fields    => $item[5],
+            fields    => $fields,
+            # note: according to the MySQL doc, it ignores column index prefixes in
+            # spatial index definitions
         }
     }
 
 name_with_opt_paren : NAME parens_value_list(s?)
-    { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
+    {
+        $return = {
+            field         => $item[1],
+            prefix_length => $item[2][0] ? $item[2][0][0] : undef,
+        }
+    }
 
 UNIQUE : /unique/i
 
@@ -965,9 +998,10 @@ sub parse {
 
             if ( $fdata->{'has_index'} ) {
                 $table->add_index(
-                    name   => '',
-                    type   => 'NORMAL',
-                    fields => $fdata->{'name'},
+                    name    => '',
+                    type    => 'NORMAL',
+                    fields  => $fdata->{'name'},
+                    options => $fdata->{'options'},
                 ) or die $table->error;
             }
 
@@ -989,9 +1023,10 @@ sub parse {
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
             my $index  =  $table->add_index(
-                name   => $idata->{'name'},
-                type   => uc $idata->{'type'},
-                fields => $idata->{'fields'},
+                name    => $idata->{'name'},
+                type    => uc $idata->{'type'},
+                fields  => $idata->{'fields'},
+                options => $idata->{'options'},
             ) or die $table->error;
         }
 
@@ -1157,6 +1192,31 @@ sub normalize_field {
             if exists $type_mapping{ lc $type };
         $field->extra->{list} = $list if @$list;
     }
+}
+
+# takes the index type and the raw fields item (arrayref of hashrefs as
+# returned by name_with_opt_paren()) and returns the arrayref to be passed as
+# $index->options and the arrayref to be passed as $index->fields
+sub calculate_fields_and_options {
+    my ($index_type, $field_items) = @_;
+
+    my @fields;
+    my %prefix_lengths;
+    foreach my $field_item (@$field_items) {
+        my $field_name = $field_item->{field};
+
+        push @fields, $field_name;
+
+        $prefix_lengths{$field_name} = $field_item->{prefix_length}
+            if defined $field_item->{prefix_length};
+    }
+
+    my @options;
+    push @options, { prefix_length => \%prefix_lengths }
+        if keys %prefix_lengths;
+    push @options, $index_type if defined $index_type;
+
+    return (\@fields, \@options);
 }
 
 1;

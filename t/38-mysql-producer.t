@@ -67,6 +67,24 @@ schema:
             mysql_charset: utf8
             mysql_collate: utf8_general_ci
           order: 4
+      indices:
+        - type: NORMAL
+          fields:
+            - name
+          name: index_on_prefix_1
+          options:
+            prefix_length:
+              name: 10
+        - type: NORMAL
+          fields:
+            - id
+            - name
+            - swedish_name
+          name: index_on_prefix_2
+          options:
+            prefix_length:
+              name: 10
+              swedish_name: 20
       constraints:
         - type: UNIQUE
           fields:
@@ -191,6 +209,8 @@ my @stmts = (
   `name` varchar(32) NULL,
   `swedish_name` varchar(32) character set swe7 NULL,
   `description` text character set utf8 collate utf8_general_ci NULL,
+  INDEX `index_on_prefix_1` (`name`(10)),
+  INDEX `index_on_prefix_2` (`id`, `name`(10), `swedish_name`(20)),
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci",
