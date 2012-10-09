@@ -201,12 +201,14 @@ around filters => sub {
 has filename => (
     is => 'rw',
     isa => sub {
-        my $filename = shift;
-        if (-d $filename) {
-            throw("Cannot use directory '$filename' as input source");
-        } elsif (not -f _ && -r _) {
-            throw("Cannot use '$filename' as input source: ".
-                  "file does not exist or is not readable.");
+        foreach my $filename (ref($_[0]) eq 'ARRAY' ? @{$_[0]} : $_[0]) {
+            if (-d $filename) {
+                throw("Cannot use directory '$filename' as input source");
+            }
+            elsif (not -f _ && -r _) {
+                throw("Cannot use '$filename' as input source: ".
+                      "file does not exist or is not readable.");
+            }
         }
     },
 );
