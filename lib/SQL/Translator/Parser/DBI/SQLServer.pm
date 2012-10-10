@@ -200,7 +200,7 @@ $table_info->{TABLE_TYPE},
                                           name        => $c->{COLUMN_NAME},
                                           data_type   => $c->{TYPE_NAME},
                                           order       => $c->{ORDINAL_POSITION},
-                                          size        => $c->{COLUMN_SIZE},
+                                          size        => [$c->{COLUMN_SIZE},$c->{DECIMAL_DIGITS}],
                                          ) || die $table->error;
                 $f->is_nullable($c->{NULLABLE} == 1);
                 $f->is_auto_increment($is_auto_increment);
