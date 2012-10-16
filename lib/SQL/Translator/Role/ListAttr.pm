@@ -71,7 +71,7 @@ instead of a reference to an empty in scalar context.
 
 =back
 
-Unknown parameters are passed through to the has call L<has|Moo/has> for
+Unknown parameters are passed through to the L<has|Moo/has> call for
 the attribute.
 
 =cut
