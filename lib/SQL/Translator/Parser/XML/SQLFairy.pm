@@ -21,8 +21,8 @@ SQL::Translator::Parser::XML::SQLFairy - parser for SQL::Translator's XML.
 =head1 DESCRIPTION
 
 This parser handles the flavor of XML used natively by the SQLFairy
-project (L<SQL::Translator>).  The XML must be in the namespace
-"http://sqlfairy.sourceforge.net/sqlfairy.xml."
+project (L<SQL::Translator>).  The XML must be in the XML namespace
+C<http://sqlfairy.sourceforge.net/sqlfairy.xml>.
 See L<SQL::Translator::Producer::XML::SQLFairy> for details of this format.
 
 You do not need to specify every attribute of the Schema objects as any missing
