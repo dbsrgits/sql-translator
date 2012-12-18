@@ -165,7 +165,8 @@ ORDER BY 1;
 
 
             my @column_ids = split /\s+/, $$indexhash{'indkey'};
-            my @columns = split /\s+/, $$indexhash{'attname'};
+            my @columns    = (ref($$indexhash{'attname'}) eq 'ARRAY' ? @{ $$indexhash{'attname'} }
+			      : split /\s+/, $$indexhash{'attname'});
 
             $table->add_index(
                               name         => $$indexhash{'relname'},
