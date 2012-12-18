@@ -169,7 +169,7 @@ FOREACH table IN schema.get_tables;
         field_name = field.name;
         fname_len  = field.name.length;
         max_field  = fname_len > max_field ? fname_len : max_field;
-        types.$field_name = field.data_type.match( '(char|str|long|text|enum|date)' )
+        types.$field_name = field.data_type.match( '(char|str|long|text|enum|date|timestamp)' )
             ? 'string' : 'number';
         field_names.push( field_name );
     END;
@@ -223,7 +223,7 @@ for my $table ( @tables ) {
     }
 
     my $sql =
-        'select ' . join(', ', @{ $table->{'fields'} } ) . " from $table_name"
+        'select ' . join(', ', map { qq["$_"] } @{ $table->{'fields'} } ) . " from $table_name"
     ;
     my $sth = $db->prepare( $sql );
     $sth->execute;
