@@ -169,7 +169,7 @@ FOREACH table IN schema.get_tables;
         field_name = field.name;
         fname_len  = field.name.length;
         max_field  = fname_len > max_field ? fname_len : max_field;
-        types.$field_name = field.data_type.match( '(char|str|long|text|enum|date|timestamp)' )
+        types.$field_name = field.data_type.match( '(char|str|long|text|enum|date|timestamp|bytea)' )
             ? 'string' : 'number';
         field_names.push( field_name );
     END;
