@@ -221,9 +221,9 @@ for my $table ( @tables ) {
     if ( $add_truncate ) {
         print "TRUNCATE TABLE $table_name;\n";
     }
-
+    ## use dbh->quote_identifier() as a more rigourous option.
     my $sql =
-        'select ' . join(', ', map { qq["$_"] } @{ $table->{'fields'} } ) . " from $table_name"
+        'select ' . join(', ', map { $db->quote_identifier($_) } @{ $table->{'fields'} } ) . " from $table_name"
     ;
     my $sth = $db->prepare( $sql );
     $sth->execute;
@@ -233,7 +233,11 @@ for my $table ( @tables ) {
         for my $fld ( @{ $table->{'fields'} } ) {
             my $val = $rec->{ $fld };
             if ( $table->{'types'}{ $fld } eq 'string' ) {
+		## would like to be able to use dbh->quote, but that quotes
+		## according to the input database handle type.
+		## $val = $db->quote($val)
                 if ( defined $val ) {
+                    $val =~ s/\\/\\\\/g;
                     $val =~ s/'/\\'/g;
                     $val = qq['$val']
                 }
