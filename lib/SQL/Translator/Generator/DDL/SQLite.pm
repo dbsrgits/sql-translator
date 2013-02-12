@@ -78,12 +78,13 @@ sub _ipk {
 sub field {
    my ($self, $field) = @_;
 
-
    return join ' ',
       $self->field_comments($field),
       $self->field_name($field),
       ( $self->_ipk($field)
-         ? ( 'INTEGER PRIMARY KEY' )
+         ? $field->is_auto_increment 
+            ? ( 'INTEGER PRIMARY KEY AUTOINCREMENT' ) 
+            : ( 'INTEGER PRIMARY KEY' )
          : ( $self->field_type($field) )
       ),
       $self->field_nullable($field),

@@ -40,7 +40,7 @@ BEGIN TRANSACTION;
 DROP TABLE "Basic";
 
 CREATE TABLE "Basic" (
-  "id" INTEGER PRIMARY KEY NOT NULL,
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   "title" varchar(100) NOT NULL DEFAULT 'hello',
   "description" text DEFAULT '',
   "email" varchar(500),
@@ -62,7 +62,7 @@ CREATE UNIQUE INDEX "very_long_index_name_on_title_field_which_should_be_truncat
 DROP TABLE "Another";
 
 CREATE TABLE "Another" (
-  "id" INTEGER PRIMARY KEY NOT NULL,
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   "num" numeric(10,2)
 );
 
@@ -98,7 +98,7 @@ eq_or_diff(\@sql,
           'BEGIN TRANSACTION',
           q<DROP TABLE "Basic">,
           q<CREATE TABLE "Basic" (
-  "id" INTEGER PRIMARY KEY NOT NULL,
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   "title" varchar(100) NOT NULL DEFAULT 'hello',
   "description" text DEFAULT '',
   "email" varchar(500),
@@ -115,7 +115,7 @@ eq_or_diff(\@sql,
           q<CREATE UNIQUE INDEX "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" ON "Basic" ("title")>,
           q<DROP TABLE "Another">,
           q<CREATE TABLE "Another" (
-  "id" INTEGER PRIMARY KEY NOT NULL,
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   "num" numeric(10,2)
 )>,
           q<DROP VIEW IF EXISTS "email_list">,
@@ -130,5 +130,3 @@ eq_or_diff(\@sql,
           'COMMIT',
 
           ], 'SQLite translate in list context matches');
-
-
