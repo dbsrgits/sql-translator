@@ -82,8 +82,8 @@ sub field {
       $self->field_comments($field),
       $self->field_name($field),
       ( $self->_ipk($field)
-         ? $field->is_auto_increment 
-            ? ( 'INTEGER PRIMARY KEY AUTOINCREMENT' ) 
+         ? $field->is_auto_increment
+            ? ( 'INTEGER PRIMARY KEY AUTOINCREMENT' )
             : ( 'INTEGER PRIMARY KEY' )
          : ( $self->field_type($field) )
       ),
