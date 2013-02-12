@@ -122,7 +122,7 @@ ALTER TABLE old_name RENAME TO new_name;
 ALTER TABLE new_name ADD COLUMN new_field int;
 
 CREATE TEMPORARY TABLE person_temp_alter (
-  person_id INTEGER PRIMARY KEY NOT NULL,
+  person_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   name varchar(20) NOT NULL,
   age int(11) DEFAULT 18,
   weight double(11,2),
@@ -136,7 +136,7 @@ INSERT INTO person_temp_alter( person_id, name, age, weight, iq, is_rock_star, p
 DROP TABLE person;
 
 CREATE TABLE person (
-  person_id INTEGER PRIMARY KEY NOT NULL,
+  person_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   name varchar(20) NOT NULL,
   age int(11) DEFAULT 18,
   weight double(11,2),
