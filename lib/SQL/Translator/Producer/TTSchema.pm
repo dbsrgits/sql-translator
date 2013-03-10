@@ -18,12 +18,12 @@ SQL::Translator::Producer::TTSchema -
           ttfile     => 'foo_template.tt',  # Template file to use
 
           # Extra template variables
-          ttargs     => {
+          tt_vars     => {
               author => "Mr Foo",
           },
 
           # Template config options
-          ttargs     => {
+          tt_conf     => {
               INCLUDE_PATH => '/foo/templates',
           },
       },
@@ -34,7 +34,7 @@ SQL::Translator::Producer::TTSchema -
 
 Produces schema output using a given Template Tookit template.
 
-It needs one additional producer_arg of C<ttfile> which is the file
+It needs one additional producer arg of C<ttfile> which is the file
 name of the template to use.  This template will be passed a variable
 called C<schema>, which is the C<SQL::Translator::Producer::Schema> object
 created by the parser. You can then use it to walk the schema via the
@@ -54,13 +54,15 @@ Here's a brief example of what the template could look like:
 
 See F<t/data/template/basic.tt> for a more complete example.
 
-The template will also get the set of extra variables given as a hashref via the
-C<tt_vars> producer arg.
+The template will also get the set of extra variables given as a
+hashref via the C<tt_vars> producer arg. (Note that the old style of
+passing this config in the C<ttargs> producer arg has been
+deprecated).
 
-You can set any of the options used to initiallize the Template object by
-adding a tt_conf producer_arg. See Template Toolkit docs for details of
+You can set any of the options used to initialize the Template object by
+adding a C<tt_conf> producer arg. See Template Toolkit docs for details of
 the options.
-(Note that the old style of passing this config directly in the producer args
+(Note that the old style of passing this config directly in the C<ttargs> producer args
 has been deprecated).
 
 
@@ -68,8 +70,8 @@ has been deprecated).
       to               => 'TT',
       producer_args    => {
           ttfile       => 'foo_template.tt',
-          ttargs       => {},
-          tt_conf      = {
+          tt_vars      => {},
+          tt_conf      => {
             INCLUDE_PATH => '/foo/templates/tt',
             INTERPOLATE  => 1,
           }
