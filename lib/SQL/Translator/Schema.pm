@@ -160,7 +160,7 @@ can be set to 1 to also drop all triggers on the table, default is 0.
     my $cascade = $args{'cascade'};
 
     if ( !exists $self->_tables->{$table_name} ) {
-        return $self->error(qq[Can't drop table: $table_name" doesn't exist]);
+        return $self->error(qq[Can't drop table: "$table_name" doesn't exist]);
     }
 
     my $table = delete $self->_tables->{$table_name};
@@ -252,7 +252,7 @@ object.
 
     if ( !exists $self->_procedures->{$proc_name} ) {
         return $self->error(
-            qq[Can't drop procedure: $proc_name" doesn't exist]);
+            qq[Can't drop procedure: "$proc_name" doesn't exist]);
     }
 
     my $proc = delete $self->_procedures->{$proc_name};
@@ -335,7 +335,7 @@ trigger name or an C<SQL::Translator::Schema::Trigger> object.
 
     if ( !exists $self->_triggers->{$trigger_name} ) {
         return $self->error(
-            qq[Can't drop trigger: $trigger_name" doesn't exist]);
+            qq[Can't drop trigger: "$trigger_name" doesn't exist]);
     }
 
     my $trigger = delete $self->_triggers->{$trigger_name};
@@ -416,7 +416,7 @@ name or an C<SQL::Translator::Schema::View> object.
     }
 
     if ( !exists $self->_views->{$view_name} ) {
-        return $self->error(qq[Can't drop view: $view_name" doesn't exist]);
+        return $self->error(qq[Can't drop view: "$view_name" doesn't exist]);
     }
 
     my $view = delete $self->_views->{$view_name};
@@ -571,7 +571,7 @@ Returns a trigger by the name provided.
 
     my $self = shift;
     my $trigger_name = shift or return $self->error('No trigger name');
-    return $self->error(qq[Table "$trigger_name" does not exist])
+    return $self->error(qq[Trigger "$trigger_name" does not exist])
       unless exists $self->_triggers->{$trigger_name};
     return $self->_triggers->{$trigger_name};
 }

@@ -6,6 +6,7 @@
 * Fix Pg diff issue with drop constraint on primary keys
 * SQLite support for SET NULL, SET DEFAULT and NO ACTION in FK clauses
 * Clean up properly after Parser::DBI::PostgreSQL tests
+* Fix typos in error messages
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09
