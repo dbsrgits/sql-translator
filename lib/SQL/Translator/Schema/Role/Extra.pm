@@ -49,7 +49,7 @@ around extra => sub {
     my $extra = $self->$orig;
 
     if (@_==1) {
-        return exists($extra->{$_[0]}) ? $extra->{$_[0]} : undef ;
+        return $extra->{$_[0]};
     }
     elsif (@_) {
         my %args = @_;

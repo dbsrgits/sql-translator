@@ -499,7 +499,7 @@ Returns all the procedures as an array or array reference.
     }
     else {
         $self->error('No procedures');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
@@ -553,7 +553,7 @@ Returns all the tables as an array or array reference.
     }
     else {
         $self->error('No tables');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
@@ -599,7 +599,7 @@ Returns all the triggers as an array or array reference.
     }
     else {
         $self->error('No triggers');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
@@ -645,7 +645,7 @@ Returns all the views as an array or array reference.
     }
     else {
         $self->error('No views');
-        return wantarray ? () : undef;
+        return;
     }
 }
 

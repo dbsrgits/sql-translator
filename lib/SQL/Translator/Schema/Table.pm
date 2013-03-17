@@ -442,7 +442,7 @@ sub get_constraints {
     }
     else {
         $self->error('No constraints');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
@@ -464,7 +464,7 @@ sub get_indices {
     }
     else {
         $self->error('No indices');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
@@ -515,7 +515,7 @@ sub get_fields {
     }
     else {
         $self->error('No fields');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
@@ -845,7 +845,7 @@ sub field_names {
     }
     else {
         $self->error('No fields');
-        return wantarray ? () : undef;
+        return;
     }
 }
 
