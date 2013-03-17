@@ -77,7 +77,7 @@ with ListAttr tables => ( uniq => 1 );
 
 =head2 options
 
-Gets and sets a list of options on the view.
+Gets or appends a list of options on the view.
 
   $view->options('ALGORITHM=UNDEFINED');
 

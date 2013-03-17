@@ -795,8 +795,8 @@ These are eqivalent:
 
 =head2 options
 
-Get or set the table's options (e.g., table types for MySQL).  Returns
-an array or array reference.
+Get or append to the table's options (e.g., table types for MySQL).
+Returns an array or array reference.
 
   my @options = $table->options;
 
