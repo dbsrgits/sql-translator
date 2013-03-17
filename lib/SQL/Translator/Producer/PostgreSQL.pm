@@ -358,8 +358,8 @@ sub create_table
 
     my $temporary = "";
 
-    if(exists $table->{extra}{temporary}) {
-        $temporary = $table->{extra}{temporary} ? "TEMPORARY " : "";
+    if(exists $table->extra->{temporary}) {
+        $temporary = $table->extra->{temporary} ? "TEMPORARY " : "";
     }
 
     my $create_statement;
@@ -528,20 +528,20 @@ sub create_geometry_constraints{
    my @constraints;
    push @constraints, SQL::Translator::Schema::Constraint->new(
                      name       => "enforce_dims_".$field->name,
-                     expression => "(ST_NDims($field) = ".$field->{extra}{dimensions}.")",
+                     expression => "(ST_NDims($field) = ".$field->extra->{dimensions}.")",
                      table       => $field->table,
                      type       => CHECK_C,
                   );
 
    push @constraints, SQL::Translator::Schema::Constraint->new(
                      name       => "enforce_srid_".$field->name,
-                     expression => "(ST_SRID($field) = ".$field->{extra}{srid}.")",
+                     expression => "(ST_SRID($field) = ".$field->extra->{srid}.")",
                      table       => $field->table,
                      type       => CHECK_C,
                   );
    push @constraints, SQL::Translator::Schema::Constraint->new(
                      name       => "enforce_geotype_".$field->name,
-                     expression => "(GeometryType($field) = '".$field->{extra}{geometry_type}."'::text OR $field IS NULL)",
+                     expression => "(GeometryType($field) = '".$field->extra->{geometry_type}."'::text OR $field IS NULL)",
                      table       => $field->table,
                      type       => CHECK_C,
                   );
@@ -755,7 +755,7 @@ sub convert_datatype
     # Geography
     #
     if($data_type eq 'geography'){
-        $data_type .= '('.$field->{extra}{geography_type}.','. $field->{extra}{srid} .')'
+        $data_type .= '('.$field->extra->{geography_type}.','. $field->extra->{srid} .')'
     }
 
     return $data_type;
@@ -876,9 +876,9 @@ sub add_geometry_column{
                   $field->table->schema->name,
                   $options->{table} ? $options->{table} : $field->table->name,
                   $field->name,
-                  $field->{extra}{dimensions},
-                  $field->{extra}{srid},
-                  $field->{extra}{geometry_type});
+                  $field->extra->{dimensions},
+                  $field->extra->{srid},
+                  $field->extra->{geometry_type});
     return $out;
 }
 
