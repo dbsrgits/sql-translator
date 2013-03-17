@@ -156,9 +156,7 @@ sub preprocess_schema {
       # TYPE is a synonym, but ENGINE is the preferred option name.
       #
 
-      # We have to use the hash directly here since otherwise there is no way
-      # to remove options.
-      my $options = ( $table->{options} ||= []);
+      my $options = $table->options;
 
       # If multiple option names, normalize to the first one
       if (ref $opt_name) {
