@@ -71,6 +71,7 @@ my $sql = q[
 
 $| = 1;
 
+$dbh->begin_work;
 $dbh->do($sql);
 
 my $t = SQL::Translator->new(
@@ -176,18 +177,7 @@ is( scalar @t2_constraints, 1, "One constraint on table" );
 my $t2_c1 = shift @t2_constraints;
 is( $t2_c1->type, FOREIGN_KEY, "Constraint is a FK" );
 
+$dbh->rollback;
 $dbh->disconnect;
 } # end of SKIP block
 
-END {
-  if ($dbh) {
-    for (
-      'drop table if exists sqlt_test2',
-      'drop table if exists sqlt_test1',
-      'drop table if exists sqlt_products_1',
-    ) {
-      local $SIG{__WARN__} = sub {};
-      eval { $dbh->do($_) };
-    }
-  }
-}
