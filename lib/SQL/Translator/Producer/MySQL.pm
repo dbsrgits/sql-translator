@@ -731,7 +731,7 @@ sub create_constraint
 
     my $reference_table_name = quote_table_name($c->reference_table, $qt);
 
-    my @fields = $c->fields or next;
+    my @fields = $c->fields or return;
 
     if ( $c->type eq PRIMARY_KEY ) {
         return 'PRIMARY KEY (' . $qf . join("$qf, $qf", @fields). $qf . ')';
