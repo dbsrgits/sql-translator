@@ -10,6 +10,7 @@
 * Fix typos in error messages
 * Add SQL_TINYINT and SQL_BIGINT to the type map in
   SQL::Translator::Schema::Field
+* Add JSON parser and producer (Jon Jensen)
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09
