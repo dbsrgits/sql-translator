@@ -30,6 +30,7 @@ my $deps = {
     'XML::LibXML'              => '1.69',
   },
   test_requires => {
+    'JSON'                     => '2.0',
     'YAML'                     => '0.66',
     'XML::Writer'              => '0.500',
     'Test::More'               => '0.88',
