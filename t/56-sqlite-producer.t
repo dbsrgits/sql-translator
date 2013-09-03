@@ -164,4 +164,40 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
    is_deeply($result, $expected, 'correctly unquoted excempted DEFAULTs');
 }
 
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo_auto_increment',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       is_nullable => 0,
+       is_auto_increment => 1,
+   );
+   $table->primary_key('id');
+   my $expected = [ qq<CREATE TABLE "foo_auto_increment" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
+)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly built table with autoincrement on primary key');
+}
+
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo_no_auto_increment',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       is_nullable => 0,
+       is_auto_increment => 0,
+   );
+   $table->primary_key('id');
+   my $expected = [ qq<CREATE TABLE "foo_no_auto_increment" (
+  "id" INTEGER PRIMARY KEY NOT NULL
+)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly built table without autoincrement on primary key');
+}
+
 done_testing;
