@@ -3,6 +3,7 @@
 
 use strict;
 use Test::More;
+use Test::Exception;
 use Test::SQL::Translator qw(maybe_plan);
 
 use SQL::Translator::Schema::View;
@@ -199,5 +200,87 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
    my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly built table without autoincrement on primary key');
 }
+
+{
+   # Multi primary key test
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'multi_pk',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       is_nullable => 0,
+       is_auto_increment => 0,
+   );
+   $table->add_field(
+       name => 'id2',
+       data_type => 'integer',
+       is_nullable => 0,
+       is_auto_increment => 0,
+   );
+   $table->primary_key('id');
+   $table->primary_key('id2');
+   my $expected = [ qq<CREATE TABLE "multi_pk" (
+  "id" integer NOT NULL,
+  "id2" integer NOT NULL,
+  PRIMARY KEY ("id", "id2")
+)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly built table with more then one primary key');
+}
+
+{
+   # Multi primary key test
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'text_pk',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'text',
+       is_nullable => 0,
+       is_auto_increment => 0,
+   );
+   $table->primary_key('id');
+   my $expected = [ qq<CREATE TABLE "text_pk" (
+  "id" text PRIMARY KEY NOT NULL
+)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly built table with text primary key');
+}
+
+
+{
+   # Multi primary key test
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'multi_pk_with_autoinc',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       is_nullable => 0,
+       is_auto_increment => 1,
+   );
+   $table->add_field(
+       name => 'id2',
+       data_type => 'integer',
+       is_nullable => 0,
+       is_auto_increment => 0,
+   );
+   $table->primary_key('id');
+   $table->primary_key('id2');
+   my $expected = [ qq<CREATE TABLE "multi_pk" (
+  "id" integer NOT NULL,
+  "id2" integer NOT NULL,
+  PRIMARY KEY ("id", "id2")
+)>];
+   
+   throws_ok {
+     SQL::Translator::Producer::SQLite::create_table(
+        $table, { no_comments => 1 }
+     )
+   } qr/SQLite doen't support auto increment with more then one primary key. Problem has occurred by table 'multi_pk_with_autoinc' and column 'id'/;
+    
+}
+
 
 done_testing;

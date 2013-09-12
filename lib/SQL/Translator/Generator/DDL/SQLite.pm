@@ -10,6 +10,7 @@ engine.
 I<documentation volunteers needed>
 
 =cut
+use Carp;
 use Moo;
 
 has quote_chars => (is=>'ro', default=>sub { +[qw(" ")] } );
@@ -63,17 +64,53 @@ sub _build_unquoted_defaults {
 
 sub nullable { () }
 
-sub _ipk {
-   my ($self, $field) = @_;
-
-   my $pk = $field->table->primary_key;
-   my @pk_fields = $pk ? $pk->fields : ();
-
-   $field->is_primary_key && scalar @pk_fields == 1 &&
-   ( $field->data_type =~ /int(eger)?$/i
-    ||
-   ( $field->data_type =~ /^number?$/i && $field->size !~ /,/ ) )
+sub field_autoinc {
+  my ($self,$field) = @_;
+  my $pk = $field->table->primary_key;
+  my @pk_fields = $pk ? $pk->fields : ();
+ 
+  if ( $field->is_auto_increment && scalar @pk_fields > 1 ){
+    croak sprintf
+      "SQLite doen't support auto increment with more then one primary key. Problem has occurred by table '%s' and column '%s'",
+      $field->table->name,
+      $field->name
+      ;
+  }
+ 
+  ( $_[1]->is_auto_increment ? 'AUTOINCREMENT' : () ) 
 }
+
+sub primary_key_constraint {
+  my ($self,$table) = @_;
+  my $pk = $table->primary_key;
+  my @pk_fields = $pk ? $pk->fields : ();
+  return () if (scalar @pk_fields < 2);
+
+  return 'PRIMARY KEY ('
+    . join(', ', map $self->quote($_), @pk_fields)
+    . ')';
+}
+
+sub field_type_and_single_pk {
+  my ($self, $field) = @_;
+  my $pk = $field->table->primary_key;
+  my @pk_fields = $pk ? $pk->fields : ();
+  my $field_type = $self->field_type($field);
+
+  if ( $field->is_primary_key && scalar @pk_fields == 1){
+    # Convert int(xx), number, .. to INTEGER. This is important for backward 
+    # compatibility and conversion from database to database.
+    if (  $field->data_type =~ /int(eger)?$/i 
+       || ( $field->data_type =~ /^number?$/i && $field->size !~ /,/ )
+    ){
+      $field_type = 'INTEGER';
+    }
+    
+    return $field_type . ' PRIMARY KEY';
+  }
+  return $field_type;
+}
+
 
 sub field {
    my ($self, $field) = @_;
@@ -81,12 +118,8 @@ sub field {
    return join ' ',
       $self->field_comments($field),
       $self->field_name($field),
-      ( $self->_ipk($field)
-         ? $field->is_auto_increment
-            ? ( 'INTEGER PRIMARY KEY AUTOINCREMENT' )
-            : ( 'INTEGER PRIMARY KEY' )
-         : ( $self->field_type($field) )
-      ),
+      $self->field_type_and_single_pk($field),
+      $self->field_autoinc($field),
       $self->field_nullable($field),
       $self->field_default($field, {
          NULL => 1,

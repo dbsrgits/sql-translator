@@ -201,27 +201,15 @@ sub create_table
     }
 
     #
-    # How many fields in PK?
-    #
-    my $pk        = $table->primary_key;
-    my @pk_fields = $pk ? $pk->fields : ();
-
-    #
     # Fields
     #
-    my ( @field_defs, $pk_set );
+    my ( @field_defs );
     for my $field ( @fields ) {
         push @field_defs, create_field($field);
     }
 
-    if (
-         scalar @pk_fields > 1
-         ||
-         ( @pk_fields && !grep /INTEGER PRIMARY KEY/, @field_defs )
-         ) {
-        push @field_defs, 'PRIMARY KEY (' . join(', ', map _generator()->quote($_), @pk_fields ) . ')';
-    }
-
+    push @field_defs, _generator()->primary_key_constraint($table);
+    
     #
     # Indices
     #
