@@ -741,7 +741,7 @@ add to the fields of an existing PK (and will unique the field names).
 Returns the C<SQL::Translator::Schema::Constraint> object representing
 the primary key.
 
-These are eqivalent:
+These are equivalent:
 
   $table->primary_key('id');
   $table->primary_key(['name']);

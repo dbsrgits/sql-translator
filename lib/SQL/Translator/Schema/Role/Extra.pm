@@ -25,7 +25,7 @@ use Sub::Quote qw(quote_sub);
 
 =head2 extra
 
-Get or set the objects "extra" attibutes (e.g., "ZEROFILL" for MySQL fields).
+Get or set the objects "extra" attributes (e.g., "ZEROFILL" for MySQL fields).
 Call with no args to get all the extra data.
 Call with a single name arg to get the value of the named extra attribute,
 returned as a scalar. Call with a hash or hashref to set extra attributes.

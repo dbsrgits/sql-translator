@@ -205,7 +205,7 @@ The template to use, return a file name or a scalar ref of TT
 source, or an L<IO::Handle>. See L<Template> for details, as the return from
 this is passed on to it's C<produce> method.
 
-The default implimentation uses the producer arg C<ttfile> as a filename to read
+The default implementation uses the producer arg C<ttfile> as a filename to read
 the template from. If the arg isn't there it will look for a C<__DATA__> section
 in the class, reading it as template source if found. Returns undef if both
 these fail, causing the produce call to fail with a 'no template!' error.
@@ -220,7 +220,7 @@ by default, but see L<tt_default_vars> for the variables you get for free.
 =head2 tt_default_vars
 
 Return a hash-ref of the default vars given to the template.
-You wouldn't normally over-ride this, just inherit the default implimentation,
+You wouldn't normally over-ride this, just inherit the default implementation,
 to get the C<translator> & C<schema> variables, then over-ride L<tt_vars> to add
 your own.
 
@@ -243,7 +243,7 @@ The L<SQL::Translator> object.
 WARNING: This method is Experimental so may change!
 
 Called with the L<SQL::Translator::Schema> object and should return one (it
-doesn't have to be the same one) that will become the C<schema> varibale used
+doesn't have to be the same one) that will become the C<schema> variable used
 in the template.
 
 Gets called from tt_default_vars.
@@ -266,7 +266,7 @@ Return the L<SQL::Translator> object.
 
 =head2 schema
 
-Return the L<SQL::Translator::Schema> we are translating. This is equivilent
+Return the L<SQL::Translator::Schema> we are translating. This is equivalent
 to C<< $tt_producer->translator->schema >>.
 
 =head2 run
@@ -277,7 +277,7 @@ produced text.
 =head2 args
 
 Util wrapper method around C<< TT::Base->translator->producer_args >> for
-(mostley) readonly access to the producer args. How it works depends on the
+(mostly) readonly access to the producer args. How it works depends on the
 number of arguments you give it and the context.
 
  No args - Return hashref (the actual hash in Translator) or hash of args.

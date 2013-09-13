@@ -126,7 +126,7 @@ Default is 2, set to 0 to turn off indenting.
 
 =head1 LEGACY FORMAT
 
-The previous version of the SQLFairy XML allowed the attributes of the the
+The previous version of the SQLFairy XML allowed the attributes of the
 schema objects to be written as either xml attributes or as data elements, in
 any combination. The old producer could produce attribute only or data element
 only versions. While this allowed for lots of flexibility in writing the XML
@@ -330,7 +330,7 @@ sub xml_obj_children {
 
 #
 # Takes an XML::Writer, Schema::* object and list of method names
-# and writes the obect out as XML. All methods values are written as attributes
+# and writes the object out as XML. All methods values are written as attributes
 # except for the methods listed in @MAP_AS_ELEMENTS which get written as child
 # data elements.
 #
@@ -350,7 +350,7 @@ sub xml_obj {
     my @meths              = @{ $args{'methods'} };
     my $empty_tag          = 0;
 
-    # Use array to ensure consistant (ie not hash) ordering of attribs
+    # Use array to ensure consistent (ie not hash) ordering of attribs
     # The order comes from the meths list passed in.
     my @tags;
     my @attr;

@@ -737,7 +737,7 @@ sub parse {
 1;
 
 # -------------------------------------------------------------------
-# All wholsome food is caught without a net or a trap.
+# All wholesome food is caught without a net or a trap.
 # William Blake
 # -------------------------------------------------------------------
 

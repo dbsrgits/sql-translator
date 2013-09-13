@@ -69,11 +69,11 @@ compatibility.
 
 =item B<table.mysql_charset>, B<table.mysql_collate>
 
-Set the tables default charater set and collation order.
+Set the tables default character set and collation order.
 
 =item B<field.mysql_charset>, B<field.mysql_collate>
 
-Set the fields charater set and collation order.
+Set the fields character set and collation order.
 
 =back
 
@@ -129,7 +129,7 @@ my %translate  = (
 );
 
 #
-# Column types that do not support lenth attribute
+# Column types that do not support length attribute
 #
 my @no_length_attr = qw/
   date time timestamp datetime year
@@ -213,7 +213,7 @@ sub preprocess_schema {
 
             # Normalize constraint names here.
             my $c_name = $c->name;
-            # Give the constraint a name if it doesn't have one, so it doens't feel
+            # Give the constraint a name if it doesn't have one, so it doesn't feel
             # left out
             $c_name   = $table->name . '_fk' unless length $c_name;
 
@@ -876,7 +876,7 @@ sub batch_alter_table {
   my ($table, $diff_hash, $options) = @_;
 
   # InnoDB has an issue with dropping and re-adding a FK constraint under the
-  # name in a single alter statment, see: http://bugs.mysql.com/bug.php?id=13741
+  # name in a single alter statement, see: http://bugs.mysql.com/bug.php?id=13741
   #
   # We have to work round this.
 

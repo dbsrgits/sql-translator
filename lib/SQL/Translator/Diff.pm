@@ -381,7 +381,7 @@ sub diff_table_constraints {
 sub diff_table_fields {
   my ($self, $src_table, $tar_table) = @_;
 
-  # List of ones ew've renamed from so we dont drop them
+  # List of ones we've renamed from so we don't drop them
   my %renamed_source_fields;
 
   for my $tar_table_field ( $tar_table->get_fields ) {
@@ -442,7 +442,7 @@ sub diff_table_options {
     my ($a_name, undef, $b_name, undef) = ( %$a, %$b );
     $a_name cmp $b_name;
   };
-  # Need to sort the options so we dont get supruious diffs.
+  # Need to sort the options so we don't get spurious diffs.
   my (@src_opts, @tar_opts);
   @src_opts = sort $cmp $src_table->options;
   @tar_opts = sort $cmp $tar_table->options;
@@ -471,7 +471,7 @@ SQL::Translator::Diff - determine differences between two schemas
 =head1 DESCRIPTION
 
 Takes two input SQL::Translator::Schemas (or SQL files) and produces ALTER
-statments to make them the same
+statements to make them the same
 
 =head1 SNYOPSIS
 
@@ -572,7 +572,7 @@ I.e. the hash might look something like the following:
 
 C<preprocess_schema> is called by the Diff code to allow the producer to
 normalize any data it needs to first. For example, the MySQL producer uses
-this method to ensure that FK contraint names are unique.
+this method to ensure that FK constraint names are unique.
 
 Basicaly any changes that need to be made to produce the SQL file for the
 schema should be done here, so that a diff between a parsed SQL file and (say)

@@ -655,14 +655,14 @@ sub make_natural_joins {
 
 =head2 make_natural_joins
 
-Creates foriegn key relationships among like-named fields in different
+Creates foreign key relationships among like-named fields in different
 tables.  Accepts the following arguments:
 
 =over 4
 
 =item * join_pk_only
 
-A True or False argument which determins whether or not to perform
+A True or False argument which determines whether or not to perform
 the joins from primary keys to fields of the same name in other tables
 
 =item * skip_fields

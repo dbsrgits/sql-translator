@@ -129,7 +129,7 @@ comma-separated file to an SQLite database, do the following:
 
   $ sqlt -f xSV --fs ',' -t SQLite foo.csv > foo-sqlite.sql
 
-Additionally, there is a non-SQL represenation of relational schemas namely
+Additionally, there is a non-SQL representation of relational schemas namely
 XML.  Additionally, the only XML supported is our own version;  however, it
 would be fairly easy to add an XML parser for something like the TorqueDB
 (http://db.apache.org/torque/) project.  The actual parsing of XML should be
@@ -148,7 +148,7 @@ operation performed by SQLFairy, so it may behoove you to serialize a
 parsed schema if you need to perform repeated conversions.  For
 example, as part of a build process the author converts a MySQL schema
 first to YAML, then to PostgreSQL, Oracle, SQLite and Sybase.
-Additionally, a variety of documention in HTML and images is produced.
+Additionally, a variety of documentation in HTML and images is produced.
 This can be accomplished like so:
 
   $ sqlt -f MySQL -t YAML schema-mysql.sql > schema.yaml
