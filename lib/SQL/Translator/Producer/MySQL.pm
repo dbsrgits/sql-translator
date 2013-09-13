@@ -69,11 +69,11 @@ compatibility.
 
 =item B<table.mysql_charset>, B<table.mysql_collate>
 
-Set the tables default charater set and collation order.
+Set the tables default character set and collation order.
 
 =item B<field.mysql_charset>, B<field.mysql_collate>
 
-Set the fields charater set and collation order.
+Set the fields character set and collation order.
 
 =back
 
