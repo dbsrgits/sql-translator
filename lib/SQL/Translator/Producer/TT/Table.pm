@@ -65,7 +65,7 @@ Here's a brief example of what the template could look like:
 
 See F<t/data/template/table.tt> for a more complete example.
 
-You can also set any of the options used to initiallize the Template
+You can also set any of the options used to initialize the Template
 object by adding them to your producer_args. See Template Toolkit docs
 for details of the options.
 
@@ -82,7 +82,7 @@ If you set C<mk_files> and its additional options the producer will
 write a separate file for each table in the schema. This is useful for
 producing things like HTML documentation where every table gets its
 own page (you could also use TTSchema producer to add an index page).
-Its also particulary good for code generation where you want to
+Its also particularly good for code generation where you want to
 produce a class file per table.
 
 =head1 OPTIONS
@@ -123,12 +123,12 @@ where we want to write our output. One of "skip", "die", "replace",
 B<replace> - Over-write the existing file with the new one, clobbering
 anything already there.
 
-B<skip> - Leave the origional file as it was and don't write the new
+B<skip> - Leave the original file as it was and don't write the new
 version anywhere.
 
 B<die> - Die with an existing file error.
 
-B<insert> - Insert the generated output into the file bewteen a set of
+B<insert> - Insert the generated output into the file between a set of
 special comments (defined by the following options.) Any code between
 the comments will be overwritten (ie the results from a previous
 produce) but the rest of the file is left alone (your custom code).
@@ -246,7 +246,7 @@ sub write_file {
         }
     }
 
-    my ($dir) = $file =~ m!^(.*)/!; # Want greedy, eveything before the last /
+    my ($dir) = $file =~ m!^(.*)/!; # Want greedy, everything before the last /
    if ( $dir and not -d $dir and $pargs->{mk_file_dir} ) { mkpath($dir); }
 
     debug "Writing to $file\n";
@@ -263,7 +263,7 @@ sub insert_code {
     my $cstart = $pargs->{insert_comment_start} || "SQLF_INSERT_START";
     my $cend   = $pargs->{insert_comment_end}   || "SQLF_INSERT_END";
 
-    # Slurp in the origional file
+    # Slurp in the original file
     open ( FILE, "<", "$file") or die "Error opening file $file : $!\n";
     local $/ = undef;
     my $orig = <FILE>;
@@ -290,7 +290,7 @@ Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
 =head1 TODO
 
 - Some tests for the various on exists options (they have been tested
-implicitley through use in a project but need some proper tests).
+implicitly through use in a project but need some proper tests).
 
 - More docs on code generation strategies.
 
