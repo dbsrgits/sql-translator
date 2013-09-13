@@ -22,7 +22,7 @@ SQL::Translator::Producer::DiaUml -
 Currently you will get one class (with the a table
 stereotype) generated per table in the schema. The fields are added as
 attributes of the classes and their datatypes set. It doesn't currently set any
-of the relationships. It doesn't do any layout, all the classses are in one big
+of the relationships. It doesn't do any layout, all the classes are in one big
 stack. However it is still useful as you can use the layout tools in Dia to
 automatically arrange them horizontally or vertically.
 
@@ -64,7 +64,7 @@ Mark Addison E<lt>grommit@users.sourceforge.netE<gt>.
 
 =head1 TODO
 
-* Add the foriegn keys from the schema as UML relations.
+* Add the foreign keys from the schema as UML relations.
 
 * Layout the classes.
 
