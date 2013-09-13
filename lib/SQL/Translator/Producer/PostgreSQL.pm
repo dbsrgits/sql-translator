@@ -831,7 +831,7 @@ sub alter_field
                        $to_field->name)
         if ( !defined $new_default && defined $old_default );
 
-    # add geometry column and contraints
+    # add geometry column and constraints
     push @out, add_geometry_column($to_field) if is_geometry($to_field);
     push @out, add_geometry_constraints($to_field) if is_geometry($to_field);
 
