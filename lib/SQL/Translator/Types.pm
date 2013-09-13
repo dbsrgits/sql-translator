@@ -17,7 +17,7 @@ SQL::Translator::Types - Type checking functions
 
 =head1 DESCRIPTIONS
 
-This module exports fuctions that return coderefs suitable for L<Moo>
+This module exports functions that return coderefs suitable for L<Moo>
 C<isa> type checks.
 Errors are reported using L<SQL::Translator::Utils/throw>.
 
