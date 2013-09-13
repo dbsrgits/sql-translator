@@ -600,7 +600,7 @@ does field_ok run? Can then use these to set up the test plan easily.
 
 =item Test skipping
 
-As the test subs wrap up lots of tests in one call you can't skip idividual
+As the test subs wrap up lots of tests in one call you can't skip individual
 tests only whole sets e.g. a whole table or field.
 We could add skip_* items to the test hashes to allow per test skips. e.g.
 
