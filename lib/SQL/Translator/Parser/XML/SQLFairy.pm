@@ -44,7 +44,7 @@ tags then the order the tags appear in the XML will be used.
 =head2 default_value
 
 Leave the attribute out all together to use the default in L<Schema::Field>.
-Use empty quotes or 'EMPTY_STRING' for a zero lenth string. 'NULL' for an
+Use empty quotes or 'EMPTY_STRING' for a zero length string. 'NULL' for an
 explicit null (currently sets default_value to undef in the
 Schema::Field obj).
 
@@ -58,14 +58,14 @@ Doesn't take any extra parser args at the moment.
 
 =head1 LEGACY FORMAT
 
-The previous version of the SQLFairy XML allowed the attributes of the the
+The previous version of the SQLFairy XML allowed the attributes of the
 schema objects to be written as either xml attributes or as data elements, in
 any combination. While this allows for lots of flexibility in writing the XML
 the result is a great many possible XML formats, not so good for DTD writing,
 XPathing etc! So we have moved to a fixed version described in
 L<SQL::Translator::Producer::XML::SQLFairy>.
 
-This version of the parser will still parse the old formats and emmit warnings
+This version of the parser will still parse the old formats and emit warnings
 when it sees them being used but they should be considered B<heavily
 depreciated>.
 
