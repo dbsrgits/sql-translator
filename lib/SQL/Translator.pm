@@ -959,7 +959,7 @@ analogously to C<producer_type> and C<producer_args>
 
 =head2 filters
 
-Set or retreive the filters to run over the schema during the
+Set or retrieve the filters to run over the schema during the
 translation, before the producer creates its output. Filters are sub
 routines called, in order, with the schema object to filter as the 1st
 arg and a hash of options (passed as a list) for the rest of the args.
