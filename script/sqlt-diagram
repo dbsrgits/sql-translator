@@ -63,7 +63,7 @@ This can prove too permissive, however, as you probably don't want a
 field called "name" to be considered a foreign key, so you could
 include it in the "skip" option, and all fields called "name" will be
 excluded from natural joins.  A more efficient method, however, might
-be to simply deduce the foriegn keys from primary keys to other fields
+be to simply deduce the foreign keys from primary keys to other fields
 named the same in other tables.  Use the "natural-join-pk" option
 to achieve this.
 
