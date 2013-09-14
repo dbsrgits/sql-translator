@@ -486,7 +486,7 @@ has table => ( is => 'rw', isa => schema_obj('Table'), weak_ref => 1 );
 
 around table => \&ex2err;
 
-=head2
+=head2 parsed_field
 
 Returns the field exactly as the parser found it
 
