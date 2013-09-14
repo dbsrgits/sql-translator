@@ -152,16 +152,6 @@ assume an error like other methods.
 
 has default_value => ( is => 'rw' );
 
-=head2 extra
-
-Get or set the field's "extra" attributes (e.g., "ZEROFILL" for MySQL).
-Accepts a hash(ref) of name/value pairs to store;  returns a hash.
-
-  $field->extra( qualifier => 'ZEROFILL' );
-  my %extra = $field->extra;
-
-=cut
-
 =head2 foreign_key_reference
 
 Get or set the field's foreign key reference;
