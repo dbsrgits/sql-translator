@@ -82,7 +82,7 @@ If you set C<mk_files> and its additional options the producer will
 write a separate file for each table in the schema. This is useful for
 producing things like HTML documentation where every table gets its
 own page (you could also use TTSchema producer to add an index page).
-Its also particularly good for code generation where you want to
+It's also particularly good for code generation where you want to
 produce a class file per table.
 
 =head1 OPTIONS
