@@ -57,7 +57,7 @@ See F<t/data/template/basic.tt> for a more complete example.
 The template will also get the set of extra variables given as a hashref via the
 C<tt_vars> producer arg.
 
-You can set any of the options used to initiallize the Template object by
+You can set any of the options used to initialize the Template object by
 adding a tt_conf producer_arg. See Template Toolkit docs for details of
 the options.
 (Note that the old style of passing this config directly in the producer args

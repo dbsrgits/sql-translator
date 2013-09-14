@@ -43,13 +43,13 @@ use overload
 
 use DBI qw(:sql_types);
 
-# Mapping from string to sql contstant
+# Mapping from string to sql constant
 our %type_mapping = (
   integer => SQL_INTEGER,
   int     => SQL_INTEGER,
 
   smallint => SQL_SMALLINT,
-  bigint => 9999, # DBI doesn't export a constatn for this. Le suck
+  bigint => 9999, # DBI doesn't export a constant for this. Le suck
 
   double => SQL_DOUBLE,
 
@@ -154,7 +154,7 @@ has default_value => ( is => 'rw' );
 
 =head2 extra
 
-Get or set the field's "extra" attibutes (e.g., "ZEROFILL" for MySQL).
+Get or set the field's "extra" attributes (e.g., "ZEROFILL" for MySQL).
 Accepts a hash(ref) of name/value pairs to store;  returns a hash.
 
   $field->extra( qualifier => 'ZEROFILL' );
@@ -258,7 +258,7 @@ sub _build_is_foreign_key {
 
 Get or set whether the field can be null.  If not defined, then
 returns "1" (assumes the field can be null).  The argument is evaluated
-by Perl for True or False, so the following are eqivalent:
+by Perl for True or False, so the following are equivalent:
 
   $is_nullable = $field->is_nullable(0);
   $is_nullable = $field->is_nullable('');

@@ -80,7 +80,7 @@ around BUILDARGS => sub {
 
 Get or set whether the constraint is deferrable.  If not defined,
 then returns "1."  The argument is evaluated by Perl for True or
-False, so the following are eqivalent:
+False, so the following are equivalent:
 
   $deferrable = $field->deferrable(0);
   $deferrable = $field->deferrable('');

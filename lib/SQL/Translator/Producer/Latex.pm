@@ -22,7 +22,7 @@ SQL::Translator::Producer::Latex -
 Currently you will get one class (with the a table
 stereotype) generated per table in the schema. The fields are added as
 attributes of the classes and their datatypes set. It doesn't currently set any
-of the relationships. It doesn't do any layout, all the classses are in one big
+of the relationships. It doesn't do any layout, all the classes are in one big
 stack. However it is still useful as you can use the layout tools in Dia to
 automatically arrange them horizontally or vertically.
 

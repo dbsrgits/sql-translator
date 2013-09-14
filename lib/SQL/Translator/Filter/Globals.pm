@@ -104,7 +104,7 @@ sub filter {
         $schema->drop_table($gtbl);
     }
 
-    # Add globalis to tables
+    # Add globals to tables
     foreach my $tbl ( $schema->get_tables ) {
 
         foreach my $new_fld ( @global_fields ) {

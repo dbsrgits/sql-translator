@@ -113,7 +113,7 @@ constraints)
 
 =item * show_fields (DEFAULT: true)
 
-If set to a true value, the names of the colums in a table will
+If set to a true value, the names of the columns in a table will
 be displayed in each table's node
 
 =item * show_fk_only

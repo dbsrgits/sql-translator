@@ -106,7 +106,7 @@ sub produce {
         };
 
         #
-        # Primary key may have a differenct accessor method name
+        # Primary key may have a different accessor method name
         #
 #        if ( my $constraint = $table->primary_key ) {
 #            my $field = ( $constraint->fields )[0];
