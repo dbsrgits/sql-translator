@@ -11,7 +11,7 @@ SQL::Translator::Types - Type checking functions
     use SQL::Translator::Types qw(schema_obj enum);
 
     has foo => ( is => 'rw', isa => schema_obj('Trigger') );
-    has bar => ( is => 'rw', isa => enum([q(baz quux quuz)], {
+    has bar => ( is => 'rw', isa => enum([qw(baz quux quuz)], {
         msg => "Invalid value for bar: '%s'", icase => 1,
     });
 
