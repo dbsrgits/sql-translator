@@ -7,6 +7,8 @@
 * SQLite support for SET NULL, SET DEFAULT and NO ACTION in FK clauses
 * Clean up properly after Parser::DBI::PostgreSQL tests
 * Fix typos in error messages
+* Add SQL_TINYINT and SQL_BIGINT to the type map in
+  SQL::Translator::Schema::Field
 
 # ----------------------------------------------------------
 # 0.11016 2012-10-09

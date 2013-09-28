@@ -48,8 +48,9 @@ our %type_mapping = (
   integer => SQL_INTEGER,
   int     => SQL_INTEGER,
 
+  tinyint => SQL_TINYINT,
   smallint => SQL_SMALLINT,
-  bigint => 9999, # DBI doesn't export a constant for this. Le suck
+  bigint => SQL_BIGINT,
 
   double => SQL_DOUBLE,
 
