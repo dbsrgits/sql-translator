@@ -9,8 +9,9 @@ use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
     maybe_plan(1,
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::PostgreSQL');
+        'SQL::Translator::Parser::PostgreSQL',
+        'SQL::Translator::Producer::MySQL',
+    );
 }
 
 my $create = q|
