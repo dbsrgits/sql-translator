@@ -196,9 +196,9 @@ Returns undef or an empty list if the constraint has no fields set.
 sub fields {
     my $self = shift;
     my $table = $self->table;
-    my @tables = map { $table->get_field($_) || $_ } @{$self->field_names(@_) || []};
-    return wantarray ? @tables
-        : @tables ? \@tables
+    my @fields = map { $table->get_field($_) || $_ } @{$self->field_names(@_) || []};
+    return wantarray ? @fields
+        : @fields ? \@fields
         : undef;
 }
 
