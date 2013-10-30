@@ -212,7 +212,7 @@ $table_info->{TABLE_TYPE},
 
             # add in primary key
             my $h = $dbh->selectall_hashref("sp_pkeys
-$table_info->{TABLE_NAME}", 'COLUMN_NAME');
+[$table_info->{TABLE_NAME}]", 'COLUMN_NAME');
             if (scalar keys %{$h} > 1) {
                 my @c = map {
                     $_->{COLUMN_NAME}
@@ -230,7 +230,7 @@ $table_info->{TABLE_NAME}", 'COLUMN_NAME');
 
             if (defined($stuff->{indexes}->{$table_info->{TABLE_NAME}})){
                 my $h = $dbh->selectall_hashref("sp_helpindex
-$table_info->{TABLE_NAME}", 'INDEX_NAME');
+[$table_info->{TABLE_NAME}]", 'INDEX_NAME');
                 foreach (values %{$h}) {
                     my $fields = $_->{'INDEX_KEYS'};
                     $fields =~ s/\s*//g;

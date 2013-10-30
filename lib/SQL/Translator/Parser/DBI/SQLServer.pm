@@ -212,7 +212,7 @@ $table_info->{TABLE_TYPE},
 
             # add in primary key
             my $h = $dbh->selectall_hashref("sp_pkeys
-$table_info->{TABLE_NAME}", 'COLUMN_NAME');
+[$table_info->{TABLE_NAME}]", 'COLUMN_NAME');
             if (scalar keys %{$h} >= 1) {
                 my @c = map {
                     $_->{COLUMN_NAME}
@@ -226,7 +226,7 @@ $table_info->{TABLE_NAME}", 'COLUMN_NAME');
 
             # add in foreign keys
             $h = $dbh->selectall_hashref("sp_fkeys NULL,
-\@fktable_name = '$table_info->{TABLE_NAME}'", 'FK_NAME');
+\@fktable_name = '[$table_info->{TABLE_NAME}]'", 'FK_NAME');
          foreach my $fk ( values %{$h} ) {
             my $constraint = $table->add_constraint( name => $fk->{FK_NAME},
                fields => [$fk->{FKCOLUMN_NAME}],
@@ -249,7 +249,7 @@ $table_info->{TABLE_NAME}", 'COLUMN_NAME');
 
             if (defined($stuff->{indexes}->{$table_info->{TABLE_NAME}})){
                 my $h = $dbh->selectall_hashref("sp_helpindex
-$table_info->{TABLE_NAME}", 'INDEX_NAME');
+[$table_info->{TABLE_NAME}]", 'INDEX_NAME');
                 foreach (values %{$h}) {
                     my $fields = $_->{'INDEX_KEYS'};
                     $fields =~ s/\s*//g;
