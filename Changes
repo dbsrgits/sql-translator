@@ -14,6 +14,7 @@ Changes for SQL::Translator
    SQL::Translator::Schema::Field
  * Add JSON parser and producer (Jon Jensen)
  * Clean up TTSchema doc some (Gavin Shelley)
+ * Fix AUTOINCREMENT in SQLite (Rafael Porres Molina)
 
 0.11016 2012-10-09
 
