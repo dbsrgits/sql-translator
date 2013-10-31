@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+0.11018 2013-10-31 🎃
+
  * Revert "Fix AUTOINCREMENT in SQLite"
 
 0.11017 2013-10-30
