@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Revert "Fix AUTOINCREMENT in SQLite"
+
 0.11017 2013-10-30
 
  * Apply quotes to fix tables that are reserved words, DBI::SQLServer (Jonathan C. Otsuka)
