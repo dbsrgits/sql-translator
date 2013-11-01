@@ -16,8 +16,7 @@ use_ok('SQL::Translator::Parser::DBI::PostgreSQL');
 
 my @dsn =
   $ENV{DBICTEST_PG_DSN} ? @ENV{ map { "DBICTEST_PG_$_" } qw/DSN USER PASS/ }
-: $ENV{DBI_DSN} ? @ENV{ map { "DBI_$_" } qw/DSN USER PASS/ }
-: ( "dbi:Pg:dbname=postgres", '', '' );
+: $ENV{DBI_DSN} ? @ENV{ map { "DBI_$_" } qw/DSN USER PASS/ };
 
 my $dbh = eval {
   DBI->connect(@dsn, {AutoCommit => 1, RaiseError=>1,PrintError => 1} );
