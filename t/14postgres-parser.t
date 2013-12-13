@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(140, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(154, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -29,7 +29,9 @@ my $sql = q{
         f_fk1 integer not null references t_test2 (f_id),
         f_dropped text,
         f_timestamp timestamp(0) with time zone,
-        f_timestamp2 timestamp without time zone
+        f_timestamp2 timestamp without time zone,
+        f_json json,
+        f_hstore hstore
     );
 
     create table t_test2 (
@@ -117,7 +119,7 @@ is( $t1->name, 't_test1', 'Table t_test1 exists' );
 is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 13, '13 fields in t_test1' );
+is( scalar @t1_fields, 15, '15 fields in t_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -223,6 +225,24 @@ is( $f12->size, 0, 'Size is "0"' );
 is( $f12->default_value, undef, 'Default value is "undef"' );
 is( $f12->is_primary_key, 0, 'Field is not PK' );
 is( $f12->is_foreign_key, 0, 'Field is not FK' );
+
+my $f13 = shift @t1_fields;
+is( $f13->name, 'f_json', '13th field is "f_json"' );
+is( $f13->data_type, 'json', 'Field is Json' );
+is( $f13->is_nullable, 1, 'Field can be null' );
+is( $f13->size, 0, 'Size is "0"' );
+is( $f13->default_value, undef, 'Default value is "undef"' );
+is( $f13->is_primary_key, 0, 'Field is not PK' );
+is( $f13->is_foreign_key, 0, 'Field is not FK' );
+
+my $f14 = shift @t1_fields;
+is( $f14->name, 'f_hstore', '14th field is "f_hstore"' );
+is( $f14->data_type, 'hstore', 'Field is hstore' );
+is( $f14->is_nullable, 1, 'Field can be null' );
+is( $f14->size, 0, 'Size is "0"' );
+is( $f14->default_value, undef, 'Default value is "undef"' );
+is( $f14->is_primary_key, 0, 'Field is not PK' );
+is( $f14->is_foreign_key, 0, 'Field is not FK' );
 
 # my $fk_ref2 = $f11->foreign_key_reference;
 # isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
