@@ -639,7 +639,7 @@ pg_data_type :
             };
         }
     |
-    /(bit|box|cidr|circle|date|inet|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar)/i
+    /(bit|box|cidr|circle|date|inet|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar|json|hstore)/i
         {
             $return = { type => $item[1] };
         }
