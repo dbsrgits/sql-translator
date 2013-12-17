@@ -467,7 +467,9 @@ sub maybe_plan {
             join ", ", @errors;
         plan skip_all => $msg;
     }
-    elsif ($ntests and $ntests ne 'no_plan') {
+    return unless defined $ntests;
+
+    if ($ntests ne 'no_plan') {
         plan tests => $ntests;
     }
     else {
@@ -581,6 +583,9 @@ modules on which test execution depends:
 
 If one of C<SQL::Translator::Parser::MySQL>'s dependencies does not exist,
 then the test will be skipped.
+
+Instead of a number of tests, you can pass C<undef> if you're using
+C<done_testing()>, or C<'no_plan'> if you don't want a plan at all.
 
 =head1 EXPORTS
 

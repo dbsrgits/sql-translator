@@ -7,29 +7,24 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan table_ok);
 
-BEGIN {
-    maybe_plan(61, 'SQL::Translator::Parser::DBI::PostgreSQL');
-    SQL::Translator::Parser::DBI::PostgreSQL->import('parse');
-}
-
-use_ok('SQL::Translator::Parser::DBI::PostgreSQL');
+maybe_plan(undef, 'SQL::Translator::Parser::DBI::PostgreSQL');
 
 my @dsn =
   $ENV{DBICTEST_PG_DSN} ? @ENV{ map { "DBICTEST_PG_$_" } qw/DSN USER PASS/ }
-: $ENV{DBI_DSN} ? @ENV{ map { "DBI_$_" } qw/DSN USER PASS/ };
+: $ENV{DBI_DSN} ? @ENV{ map { "DBI_$_" } qw/DSN USER PASS/ }
+: plan skip_all => 'Set $ENV{DBICTEST_PG_DSN}, _USER and _PASS to run this test';
 
 my $dbh = eval {
   DBI->connect(@dsn, {AutoCommit => 1, RaiseError=>1,PrintError => 1} );
 };
 
-SKIP: {
-    if (my $err = ($@ || $DBI::err )) {
-      chomp $err;
-      skip "No connection to test db. DBI says '$err'", 60;
-    }
+if (my $err = ($@ || $DBI::err )) {
+    chomp $err;
+    plan skip_all => "No connection to test db. DBI says '$err'";
+}
 
-    ok($dbh, "dbh setup correctly");
-    $dbh->do('SET client_min_messages=WARNING');
+ok($dbh, "dbh setup correctly");
+$dbh->do('SET client_min_messages=WARNING');
 
 my $sql = q[
     drop table if exists sqlt_test2;
@@ -178,5 +173,5 @@ is( $t2_c1->type, FOREIGN_KEY, "Constraint is a FK" );
 
 $dbh->rollback;
 $dbh->disconnect;
-} # end of SKIP block
 
+done_testing();
