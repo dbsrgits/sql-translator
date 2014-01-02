@@ -23,8 +23,6 @@ BEGIN {
         );
 }
 
-$ENV{SQLT_NEWDIFF_NOWARN} = 1;
-
 my @mysql_create1 = qw(data mysql create.sql);
 my @mysql_create2 = qw(data mysql create2.sql);
 

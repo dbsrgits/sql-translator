@@ -143,14 +143,6 @@ for my $arg ( @ARGV ) {
     }
 }
 
-print STDERR <<'EOM' unless $ENV{SQLT_NEWDIFF_NOWARN};
-This code is experimental, currently the new code only supports MySQL or
-SQLite diffing. To add support for other databases, please patch the relevant
-SQL::Translator::Producer:: module.  If you need compatibility with the old
-sqlt-diff, please use sqlt-diff-old, and look into helping us make this one
-work for you
-EOM
-
 my $tr            = SQL::Translator->new;
 my @parsers       = $tr->list_parsers;
 my %valid_parsers = map { $_, 1 } @parsers;
