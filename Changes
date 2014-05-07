@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Fix DROP TABLE in SQL Server Producer
+
 0.11018 2013-10-31 🎃
 
  * Revert "Fix AUTOINCREMENT in SQLite"

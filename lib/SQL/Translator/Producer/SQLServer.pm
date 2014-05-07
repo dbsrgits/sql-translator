@@ -14,7 +14,7 @@ sub produce {
   my $translator = shift;
   SQL::Translator::Generator::DDL::SQLServer->new(
     add_comments    => !$translator->no_comments,
-    add_drop_tables => $translator->add_drop_table,
+    add_drop_table => $translator->add_drop_table,
   )->schema($translator->schema)
 }
 

@@ -198,7 +198,7 @@ sub remove_table_constraints {
 }
 
 sub drop_tables {
-   my ($self, $schema) = shift;
+   my ($self, $schema) = @_;
 
    if ($self->add_drop_table) {
       my @tables = sort { $b->order <=> $a->order } $schema->get_tables;
