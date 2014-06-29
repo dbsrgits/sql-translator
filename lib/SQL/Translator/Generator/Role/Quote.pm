@@ -15,6 +15,13 @@ I<documentation volunteers needed>
 
 requires qw(quote_chars name_sep);
 
+has escape_char => (
+  is => 'ro',
+  lazy => 1,
+  clearer => 1,
+  default => sub { $_[0]->quote_chars->[-1] },
+);
+
 sub quote {
   my ($self, $label) = @_;
 
@@ -34,8 +41,10 @@ sub quote {
   }
 
   my $sep = $self->name_sep || '';
+  my $esc = $self->escape_char;
+
   # parts containing * are naturally unquoted
-  join $sep, map "$l$_$r", ( $sep ? split (/\Q$sep\E/, $label ) : $label )
+  join $sep, map { (my $n = $_) =~ s/\Q$r/$esc$r/g; "$l$n$r" } ( $sep ? split (/\Q$sep\E/, $label ) : $label )
 }
 
 1;

@@ -787,7 +787,9 @@ sub mk_name {
 
 sub quote {
   my ($name, $q) = @_;
-  $q && $name ? "$quote_char$name$quote_char" : $name;
+  return $name unless $q && $name;
+  $name =~ s/\Q$quote_char/$quote_char$quote_char/g;
+  return "$quote_char$name$quote_char";
 }
 
 
