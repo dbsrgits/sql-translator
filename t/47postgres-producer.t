@@ -551,7 +551,7 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
 
 {
     my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => [qw( foo  bar )] );
-    my $quote = { quote_table_names => '"', quote_field_names => '"' };
+    my $quote = { quote_table_names => '"' };
 
     {
         my $index = $table->add_index(name => 'myindex', fields => ['foo']);
