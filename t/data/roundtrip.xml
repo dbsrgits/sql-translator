@@ -88,6 +88,17 @@ Created on Fri Aug 15 15:08:18 2003
 
         <extra foo="bar" hello="world" bar="baz" mysql_table_type="InnoDB" />
       </table>
+
+      <table order="1" name="`table` [with] &quot;quotes&quot;">
+	<fields>
+	  <field
+	      name="`field` [with] &quot;quotes&quot;"
+	      is_primary_key="1" is_foreign_key="0"
+	      size="10" data_type="int" is_auto_increment="1" order="1"
+	      is_nullable="0">
+	  </field>
+	</fields>
+      </table>
   </tables>
 
   <views>

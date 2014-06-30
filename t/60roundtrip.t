@@ -92,7 +92,7 @@ my $base_file = "$Bin/data/roundtrip_autogen.yaml";
 open (my $base_fh, '<', $base_file) or die "$base_file: $!";
 
 my $base_t = SQL::Translator->new;
-$base_t->$_ (1) for qw/add_drop_table no_comments/;
+$base_t->$_ (1) for qw/add_drop_table no_comments quote_identifiers/;
 
 my $base_schema = $base_t->translate (
   parser => 'YAML',
@@ -170,7 +170,7 @@ sub check_roundtrip {
 
 # parse the sql back
   my $parser_t = SQL::Translator->new;
-  $parser_t->$_ (1) for qw/add_drop_table no_comments/;
+  $parser_t->$_ (1) for qw/add_drop_table no_comments quote_identifiers/;
   my $mid_schema = $parser_t->translate (
     data => $base_out,
     parser => $args->{engine},
@@ -194,7 +194,7 @@ sub check_roundtrip {
     _get_table_info ($mid_schema->get_tables),
     _get_table_info ($base_schema->get_tables),
     "Schema tables generally match afer $args->{name} parser trip",
-  ) or return;
+  ) or (diag(explain _get_table_info($mid_schema->get_tables)), return);
 
 # and produce sql once again
 
