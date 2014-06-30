@@ -619,18 +619,20 @@ UNIQUE : /unique/i { 1 }
 
 SEMICOLON : ';'
 
-NAME : /["']?(\w+)["']?/ { $return = $1 }
+NAME : /\w+/
+    | DQSTRING
+    | SQSTRING
 
-VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
+DQSTRING : '"' /((?:[^"]|"")+)/ '"'
+    { ($return = $item[2]) =~ s/""/"/g }
+
+SQSTRING : "'" /((?:[^']|'')*)/ "'"
+    { ($return = $item[2]) =~ s/''/'/g }
+
+VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
     { $item[1] }
-    | /'.*?'/
-    {
-        # remove leading/trailing quotes
-        my $val = $item[1];
-        $val    =~ s/^['"]|['"]$//g;
-        $return = $val;
-    }
-    | /NULL/
+    | SQSTRING
+    | /NULL/i
     { 'NULL' }
     | /CURRENT_TIMESTAMP/i
     { 'CURRENT_TIMESTAMP' }
