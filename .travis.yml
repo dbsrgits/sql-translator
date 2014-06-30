@@ -7,6 +7,9 @@ perl:
    - "5.10"
    - "5.8"
 
+env:
+   - PERL_MM_USE_DEFAULT=1
+
 install:
    - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests
    - perl Makefile.PL
