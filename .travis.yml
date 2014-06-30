@@ -11,7 +11,7 @@ env:
    - PERL_MM_USE_DEFAULT=1
 
 install:
-   - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests Package::Variant Parse::RecDescent XML::LibXML YAML
+   - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests DBI Package::Variant Parse::RecDescent XML::LibXML YAML
    - perl Makefile.PL
    - cpanm --quiet --notest --installdeps .
 
