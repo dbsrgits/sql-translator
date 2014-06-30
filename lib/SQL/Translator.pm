@@ -17,7 +17,7 @@ use IO::Dir;
 use Sub::Quote qw(quote_sub);
 use SQL::Translator::Producer;
 use SQL::Translator::Schema;
-use SQL::Translator::Utils qw(throw ex2err carp_ro);
+use SQL::Translator::Utils qw(throw ex2err carp_ro normalize_quote_options);
 
 $DEFAULT_SUB = sub { $_[0]->schema } unless defined $DEFAULT_SUB;
 
@@ -40,40 +40,7 @@ around BUILDARGS => sub {
 
     $config->{filename} ||= $config->{file} if defined $config->{file};
 
-    my $quote;
-    if (defined $config->{quote_identifiers}) {
-      $quote = $config->{quote_identifiers};
-
-      for (qw/quote_table_names quote_field_names/) {
-        carp "Ignoring deprecated parameter '$_', since 'quote_identifiers' is supplied"
-          if defined $config->{$_}
-      }
-    }
-    # Legacy one set the other is not
-    elsif (
-      defined $config->{'quote_table_names'}
-        xor
-      defined $config->{'quote_field_names'}
-    ) {
-      if (defined $config->{'quote_table_names'}) {
-        carp "Explicitly disabling the deprecated 'quote_table_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_field_names'"
-          unless $config->{'quote_table_names'};
-        $quote = $config->{'quote_table_names'} ? 1 : 0;
-      }
-      else {
-        carp "Explicitly disabling the deprecated 'quote_field_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_table_names'"
-          unless $config->{'quote_field_names'};
-        $quote = $config->{'quote_field_names'} ? 1 : 0;
-      }
-    }
-    # Legacy both are set
-    elsif(defined $config->{'quote_table_names'}) {
-      croak 'Setting quote_table_names and quote_field_names to conflicting values is no longer supported'
-        if ($config->{'quote_table_names'} xor $config->{'quote_field_names'});
-
-      $quote = $config->{'quote_table_names'} ? 1 : 0;
-    }
-
+    my $quote = normalize_quote_options($config);
     $config->{quote_identifiers} = $quote if defined $quote;
 
     return $config;
