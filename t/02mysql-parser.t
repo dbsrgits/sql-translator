@@ -80,7 +80,7 @@ BEGIN {
               s1 set('a','b','c') default 'b',
               e1 enum("a","b","c") default "c",
               name varchar(30) default NULL,
-              foo_type enum('vk','ck') NOT NULL default 'vk',
+              foo_type enum('vk','c''k') NOT NULL default 'vk',
               date timestamp,
               time_stamp2 timestamp,
               foo_enabled bit(1) default b'0',
@@ -170,12 +170,12 @@ BEGIN {
     my $f8 = shift @fields;
     is( $f8->name, 'foo_type', 'Eighth field name is "foo_type"' );
     is( $f8->data_type, 'enum', 'Type is "enum"' );
-    is( $f8->size, 2, 'Size is "2"' );
+    is( $f8->size, 3, 'Size is "2"' );
     is( $f8->is_nullable, 0, 'Field cannot be null' );
     is( $f8->default_value, 'vk', 'Default value is "vk"' );
     is( $f8->is_primary_key, 0, 'Field is not PK' );
     my %f8extra = $f8->extra;
-    is( join(',', @{ $f8extra{'list'} || [] }), 'vk,ck', 'List is "vk,ck"' );
+    is( join(',', @{ $f8extra{'list'} || [] }), 'vk,c\'k', 'List is "vk,c\'k"' );
 
     my $f9 = shift @fields;
     is( $f9->name, 'date', 'Ninth field name is "date"' );

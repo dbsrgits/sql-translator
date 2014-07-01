@@ -47,6 +47,14 @@ sub quote {
   join $sep, map { (my $n = $_) =~ s/\Q$r/$esc$r/g; "$l$n$r" } ( $sep ? split (/\Q$sep\E/, $label ) : $label )
 }
 
+sub quote_string {
+    my ($self, $string) = @_;
+
+    return $string unless defined $string;
+    $string =~ s/'/''/g;
+    return qq{'$string'};
+}
+
 1;
 
 =head1 AUTHORS

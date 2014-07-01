@@ -90,6 +90,7 @@ $DEBUG   = 0 unless defined $DEBUG;
 #   http://dev.mysql.com/doc/refman/5.0/en/identifiers.html
 my $DEFAULT_MAX_ID_LENGTH = 64;
 
+use base qw(SQL::Translator::Producer);
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Generator::DDL::MySQL;
@@ -534,8 +535,7 @@ sub create_field
     my @size      = $field->size;
     my %extra     = $field->extra;
     my $list      = $extra{'list'} || [];
-    # \todo deal with embedded quotes
-    my $commalist = join( ', ', map { qq['$_'] } @$list );
+    my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
     my $charset = $extra{'mysql_charset'};
     my $collate = $extra{'mysql_collate'};
 
@@ -627,7 +627,7 @@ sub create_field
     }
 
     # Default?
-    SQL::Translator::Producer->_apply_default_value(
+    __PACKAGE__->_apply_default_value(
       $field,
       \$field_def,
       [
@@ -636,13 +636,21 @@ sub create_field
     );
 
     if ( my $comments = $field->comments ) {
-        $field_def .= qq[ comment '$comments'];
+        $comments = __PACKAGE__->_quote_string($comments);
+        $field_def .= qq[ comment $comments];
     }
 
     # auto_increment?
     $field_def .= " auto_increment" if $field->is_auto_increment;
 
     return $field_def;
+}
+
+sub _quote_string {
+    my ($self, $string) = @_;
+
+    $string =~ s/([\\'])/$1$1/g;
+    return qq{'$string'};
 }
 
 sub alter_create_index

@@ -460,8 +460,7 @@ sub create_view {
         my $data_type = lc $field->data_type;
         my %extra     = $field->extra;
         my $list      = $extra{'list'} || [];
-        # todo deal with embedded quotes
-        my $commalist = join( ', ', map { qq['$_'] } @$list );
+        my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
 
         if ($postgres_version >= 8.003 && $field->data_type eq 'enum') {
             my $type_name = $extra{'custom_type_name'} || $field->table->name . '_' . $field->name . '_type';
@@ -480,7 +479,7 @@ sub create_view {
         #
         # Default value
         #
-        SQL::Translator::Producer->_apply_default_value(
+        __PACKAGE__->_apply_default_value(
           $field,
           \$field_def,
           [
@@ -798,8 +797,7 @@ sub alter_field
     if(ref $default_value eq "SCALAR" ) {
         $default_value = $$default_value;
     } elsif( defined $default_value && $to_dt =~ /^(character|text)/xsmi ) {
-        $default_value =~ s/'/''/xsmg;
-        $default_value = q(') . $default_value . q(');
+        $default_value = __PACKAGE__->_quote_string($default_value);
     }
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s',
