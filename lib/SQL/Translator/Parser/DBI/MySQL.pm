@@ -37,7 +37,7 @@ sub parse {
 
     $dbh->{'FetchHashKeyName'} = 'NAME_lc';
 
-    my $create;
+    my $create = q{};
     for my $table_name ( @table_names ) {
         next if (grep /^$table_name$/, @skip_tables);
         my $sth = $dbh->prepare("show create table $table_name");
