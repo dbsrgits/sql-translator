@@ -67,6 +67,20 @@ schema:
             mysql_charset: utf8
             mysql_collate: utf8_general_ci
           order: 4
+        timestamp:
+          data_type: timestamp
+          default_value: !!perl/ref
+            =: CURRENT_TIMESTAMP
+          extra:
+            on update: !!perl/ref
+              =: CURRENT_TIMESTAMP
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: timestamp
+          order: 5
+          size:
+            - 0
       constraints:
         - type: UNIQUE
           fields:
@@ -191,6 +205,7 @@ my @stmts = (
   `name` varchar(32) NULL,
   `swedish_name` varchar(32) character set swe7 NULL,
   `description` text character set utf8 collate utf8_general_ci NULL,
+  `timestamp` timestamp on update CURRENT_TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE `idx_unique_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci",

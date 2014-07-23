@@ -606,7 +606,12 @@ sub create_field
     }
     for my $qual ( 'character set', 'collate', 'on update' ) {
         my $val = $extra{ $qual } || $extra{ uc $qual } or next;
-        $field_def .= " $qual $val";
+        if ( ref $val ) {
+            $field_def .= " $qual ${$val}";
+        }
+        else {
+            $field_def .= " $qual $val";
+        }
     }
 
     # Null?
