@@ -40,7 +40,7 @@ sub parse {
     my $create = q{};
     for my $table_name ( @table_names ) {
         next if (grep /^$table_name$/, @skip_tables);
-        my $sth = $dbh->prepare("show create table $table_name");
+        my $sth = $dbh->prepare("show create table " . $dbh->quote_identifier($table_name));
         $sth->execute;
         my $table = $sth->fetchrow_hashref;
         $create .= ($table->{'create table'} || $table->{'create view'}) . ";\n\n";
