@@ -43,7 +43,7 @@ sub parse {
         my $sth = $dbh->prepare("show create table $table_name");
         $sth->execute;
         my $table = $sth->fetchrow_hashref;
-        $create .= $table->{'create table'} . ";\n\n";
+        $create .= ($table->{'create table'} || $table->{'create view'}) . ";\n\n";
     }
 
     SQL::Translator::Parser::MySQL::parse( $tr, $create );

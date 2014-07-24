@@ -5,6 +5,7 @@ Changes for SQL::Translator
  * Fix Pg DBI parser test (Dagfinn Ilmari Mannsåker)
  * Remove spurious warnings (Matt Phillips, Wallace Reis)
  * Fix MySQL producer for columns with scalar ref in 'ON UPDATE' (Wallace Reis)
+ * Fix handling of views in MySQL DBI parser
 
 0.11018 2013-10-31 🎃
 
