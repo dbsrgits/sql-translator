@@ -10,6 +10,10 @@ perl:
 env:
    - PERL_MM_USE_DEFAULT=1 DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test DBICTEST_PG_USER=postgres
 
+before_install:
+   - sudo apt-get update -qq
+   - sudo apt-get install -y libgd2-xpm-dev
+
 install:
    - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests DBI Package::Variant Parse::RecDescent XML::LibXML XML::Parser YAML Spreadsheet::ParseExcel Template DBD::Pg Graph::Directed GD || (cat "$HOME/.cpanm/build.log" >&2; false)
    - perl Makefile.PL
