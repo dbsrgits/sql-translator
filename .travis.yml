@@ -8,9 +8,7 @@ perl:
    - "5.8"
 
 env:
-   - PERL_MM_USE_DEFAULT=1
-   - DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test
-   - DBICTEST_PG_USER=postgres
+   - PERL_MM_USE_DEFAULT=1 DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test DBICTEST_PG_USER=postgres
 
 install:
    - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests DBI Package::Variant Parse::RecDescent XML::LibXML XML::Parser YAML Spreadsheet::ParseExcel Template DBD::Pg
