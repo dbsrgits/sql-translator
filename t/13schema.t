@@ -745,4 +745,69 @@ require_ok( 'SQL::Translator::Schema' );
         qr/field order incomplete/;
 }
 
+#
+# Test table dataness/triviality
+#
+
+{
+    my $s = SQL::Translator::Schema->new;
+    my $t1 = $s->add_table( name => 'person' );
+    $t1->add_field( name => 'id' );
+    $t1->primary_key( 'id' );
+    $t1->add_field( name => 'name' );
+
+    my $t2 = $s->add_table( name => 'pet' );
+    $t2->add_field( name => 'id' );
+    $t2->primary_key( 'id' );
+    $t2->add_field( name => 'name' );
+
+    my $t3 = $s->add_table( name => 'person_pet' );
+    $t3->add_field( name => 'person_id' );
+    $t3->add_field( name => 'pet_id' );
+    $t3->primary_key( 'person_id', 'pet_id' );
+
+    $t3->add_constraint(
+        type => FOREIGN_KEY,
+        field => 'person_id',
+        reference_table => $t1,
+    );
+
+    $t3->add_constraint(
+        type => FOREIGN_KEY,
+        field => 'pet_id',
+        reference_table => $t2,
+    );
+
+    my $t4 = $s->add_table( name => 'fans' );
+    my $f1 = $t4->add_field( name => 'fan_id' );
+    my $f2 = $t4->add_field( name => 'idol_id' );
+    $t4->primary_key( 'fan_id', 'idol_id' );
+
+    $t4->add_constraint(
+        type => FOREIGN_KEY,
+        name => 'fan_fan_fk',
+        fields => 'fan_id',
+        reference_table => $t1,
+    );
+
+    $t4->add_constraint(
+        type => FOREIGN_KEY,
+        name => 'fan_idol_fk',
+        fields => 'idol_id',
+        reference_table => $t1,
+    );
+
+    ok( $t1->is_data, 'Person table has data' );
+    ok( !$t1->is_trivial_link, 'Person table is not trivial' );
+
+    ok( $t2->is_data, 'Pet table has data' );
+    ok( !$t1->is_trivial_link, 'Pet table is trivial' );
+
+    ok( !$t3->is_data, 'Link table has no data' );
+    ok( $t3->is_trivial_link, 'Link table is trivial' );
+
+    ok( !$t4->is_data, 'Self-link table has no data' );
+    ok( !$t4->is_trivial_link, 'Self-link table is not trivial' );
+}
+
 done_testing;
