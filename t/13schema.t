@@ -4,7 +4,7 @@
 $| = 1;
 
 use strict;
-use Test::More tests => 245;
+use Test::More;
 use Test::Exception;
 use SQL::Translator::Schema::Constants;
 
@@ -744,3 +744,5 @@ require_ok( 'SQL::Translator::Schema' );
     throws_ok { $f1 = $t2->add_field( name => 'location' ) }
         qr/field order incomplete/;
 }
+
+done_testing;
