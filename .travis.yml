@@ -9,11 +9,16 @@ perl:
 
 env:
    - PERL_MM_USE_DEFAULT=1
+   - DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test
+   - DBICTEST_PG_USER=postgres
 
 install:
-   - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests DBI Package::Variant Parse::RecDescent XML::LibXML XML::Parser YAML Spreadsheet::ParseExcel Template
+   - cpanm --quiet --notest Devel::Cover::Report::Coveralls Module::Install::ReadmeFromPod Module::Install::AuthorTests DBI Package::Variant Parse::RecDescent XML::LibXML XML::Parser YAML Spreadsheet::ParseExcel Template DBD::Pg
    - perl Makefile.PL
    - cpanm --quiet --notest --installdeps .
+
+before_script:
+   - psql -U postgres -c 'create database sqlt_test;'
 
 script:
    - PERL5OPT=-MDevel::Cover=-coverage,statement,branch,condition,path,subroutine prove -lrsv t
