@@ -17,7 +17,7 @@ BEGIN {
 }
 
 my @script = qw(script sqlt-diagram);
-my @data = qw(data mysql Apache-Session-MySQL.sql);
+my @data = qw(data mysql create2.sql);
 
 my $sqlt_diagram = catfile($Bin, updir, @script);
 my $test_data = catfile($Bin, @data);
