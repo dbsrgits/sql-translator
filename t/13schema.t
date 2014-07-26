@@ -4,6 +4,7 @@
 $| = 1;
 
 use strict;
+use warnings;
 use Test::More;
 use Test::Exception;
 use SQL::Translator::Schema::Constants;
@@ -168,6 +169,8 @@ require_ok( 'SQL::Translator::Schema' );
     is( join(",",$person_table->field_names), 'foo,f2',
         'field_names is "foo,f2"' );
 
+    my $ci_field = $person_table->get_field('FOO', 'case_insensitive');
+    is( $ci_field->name, 'foo', 'Got field case-insensitively' );
     #
     # $table-> drop_field
     #
