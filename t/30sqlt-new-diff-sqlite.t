@@ -128,10 +128,11 @@ CREATE TEMPORARY TABLE person_temp_alter (
   weight double(11,2),
   iq int(11) DEFAULT 0,
   is_rock_star tinyint(4) DEFAULT 1,
+  value double(8,2) DEFAULT 0.00,
   physical_description text
 );
 
-INSERT INTO person_temp_alter( person_id, name, age, weight, iq, is_rock_star, physical_description) SELECT person_id, name, age, weight, iq, is_rock_star, physical_description FROM person;
+INSERT INTO person_temp_alter( person_id, name, age, weight, iq, is_rock_star, value, physical_description) SELECT person_id, name, age, weight, iq, is_rock_star, value, physical_description FROM person;
 
 DROP TABLE person;
 
@@ -142,6 +143,7 @@ CREATE TABLE person (
   weight double(11,2),
   iq int(11) DEFAULT 0,
   is_rock_star tinyint(4) DEFAULT 1,
+  value double(8,2) DEFAULT 0.00,
   physical_description text
 );
 
@@ -151,7 +153,7 @@ CREATE UNIQUE INDEX UC_person_id02 ON person (person_id);
 
 CREATE UNIQUE INDEX UC_age_name02 ON person (age, name);
 
-INSERT INTO person SELECT person_id, name, age, weight, iq, is_rock_star, physical_description FROM person_temp_alter;
+INSERT INTO person SELECT person_id, name, age, weight, iq, is_rock_star, value, physical_description FROM person_temp_alter;
 
 DROP TABLE person_temp_alter;
 

@@ -27,6 +27,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Types qw(schema_obj);
 use SQL::Translator::Utils qw(parse_list_arg ex2err throw carp_ro);
 use Sub::Quote qw(quote_sub);
+use Scalar::Util ();
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -74,6 +75,16 @@ our %type_mapping = (
   text => SQL_LONGVARCHAR
 
 );
+
+has _numeric_sql_data_types => ( is => 'lazy' );
+
+sub _build__numeric_sql_data_types {
+    return {
+        map { $_ => 1 }
+            (SQL_INTEGER, SQL_TINYINT, SQL_SMALLINT, SQL_BIGINT, SQL_DOUBLE,
+             SQL_NUMERIC, SQL_DECIMAL, SQL_FLOAT, SQL_REAL)
+    };
+}
 
 =head2 new
 
@@ -543,7 +554,14 @@ around equals => sub {
         my $effective_lhs = $lhs_is_ref ? $$lhs : $lhs;
         my $effective_rhs = $rhs_is_ref ? $$rhs : $rhs;
 
-        return 0 if $effective_lhs ne $effective_rhs;
+        if ( $self->_is_numeric_data_type
+             && Scalar::Util::looks_like_number($effective_lhs)
+             && Scalar::Util::looks_like_number($effective_rhs) ) {
+            return 0 if ($effective_lhs + 0) != ($effective_rhs + 0);
+        }
+        else {
+            return 0 if $effective_lhs ne $effective_rhs;
+        }
     }
 
     return 0 unless $self->is_nullable eq $other->is_nullable;
@@ -558,6 +576,11 @@ around equals => sub {
 
 # Must come after all 'has' declarations
 around new => \&ex2err;
+
+sub _is_numeric_data_type {
+    my $self = shift;
+    return $self->_numeric_sql_data_types->{ $self->sql_data_type };
+}
 
 1;
 

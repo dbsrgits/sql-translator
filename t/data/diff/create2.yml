@@ -201,7 +201,7 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: physical_description
-          order: 7
+          order: 8
           size:
             - 65535
         weight:
@@ -215,6 +215,18 @@ schema:
           order: 4
           size:
             - 11
+            - 2
+        value:
+          data_type: double
+          default_value: 0.00
+          extra: {}
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: value
+          order: 7
+          size:
+            - 8
             - 2
       indices:
         - fields:
