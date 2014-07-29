@@ -54,10 +54,14 @@ our %type_mapping = (
   bigint => SQL_BIGINT,
 
   double => SQL_DOUBLE,
+  'double precision' => SQL_DOUBLE,
 
   decimal => SQL_DECIMAL,
-  numeric => SQL_NUMERIC,
   dec => SQL_DECIMAL,
+  numeric => SQL_NUMERIC,
+
+  real => SQL_REAL,
+  float => SQL_FLOAT,
 
   bit => SQL_BIT,
 
