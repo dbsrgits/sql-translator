@@ -191,21 +191,19 @@ sub _recreate_rt_source {
   };
 
   if ($@) {
-    warn <<EOE;
+    die <<EOE;
 
 =========================================================================
 ===============              WARNING !!!                =================
 =========================================================================
 
 Unable to update the roundtrip schema (attempt triggered by AUTHOR mode).
-We will still generate a Makefile, but be aware that if you build a dist
-this way, it *WILL* be broken.
+Aborting Makefile generation, please fix the errors indicated below
+(typically by installing the missing modules).
 
 -------------------------------------------------------------------------
 $@
 
-Press Enter to continue.
 EOE
-  <>;
   }
 }
