@@ -37,6 +37,7 @@ my $deps = {
     'Test::More'               => '0.88',
     'Test::Differences'        => '0',
     'Test::Exception'          => '0.31',
+    'Text::ParseWords'         => '0',
   },
 };
 

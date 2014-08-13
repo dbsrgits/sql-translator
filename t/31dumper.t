@@ -10,6 +10,7 @@ use SQL::Translator;
 use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
 use Symbol qw(gensym);
+use Text::ParseWords qw(shellwords);
 
 BEGIN {
     maybe_plan(
@@ -51,7 +52,7 @@ print $fh $output;
 close $fh or die "Can't close file '$filename': $!";
 
 my $out;
-my $pid = open3( undef, $out, undef, $^X, '-cw', $filename );
+my $pid = open3( undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES}), '-cw', $filename );
 my $res = do { local $/; <$out> };
 waitpid($pid, 0);
 
