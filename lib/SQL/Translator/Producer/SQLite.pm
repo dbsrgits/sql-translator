@@ -428,15 +428,17 @@ sub batch_alter_table {
   # Fun, eh?
   #
   # If we have rename_field we do similarly.
+  #
+  # We create the temporary table as a copy of the new table, copy all data
+  # to temp table, create new table and then copy as appropriate taking note
+  # of renamed fields.
 
   my $table_name = $table->name;
-  my $renaming = $diffs->{rename_table} && @{$diffs->{rename_table}};
 
   if ( @{$diffs->{rename_field}} == 0 &&
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
-#    return join("\n", map {
     return map {
         my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
         map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql") : () } @{ $diffs->{$_} }
@@ -455,15 +457,23 @@ sub batch_alter_table {
   }
 
   my @sql;
-  my $old_table = $renaming ? $diffs->{rename_table}[0][0] : $table;
 
-  if(@{$diffs->{drop_field}}) {
-    $old_table =$diffs->{drop_field}[0]->table;
+  # $table is the new table but we may need an old one
+  # TODO: this is NOT very well tested at the moment so add more tests
+
+  my $old_table = $table;
+
+  if ( $diffs->{rename_table} && @{$diffs->{rename_table}} ) {
+    $old_table = $diffs->{rename_table}[0][0];
   }
+
+  my $temp_table_name = $table_name . '_temp_alter';
+
+  # CREATE TEMPORARY TABLE t1_backup(a,b);
 
   my %temp_table_fields;
   do {
-    local $table->{name} = $table_name . '_temp_alter';
+    local $table->{name} = $temp_table_name;
     # We only want the table - don't care about indexes on tmp table
     my ($table_sql) = create_table($table, {no_comments => 1, temporary_table => 1});
     push @sql,$table_sql;
@@ -471,13 +481,51 @@ sub batch_alter_table {
     %temp_table_fields = map { $_ => 1} $table->get_fields;
   };
 
-  push @sql, "INSERT INTO @{[_generator()->quote($table_name.'_temp_alter')]}( @{[ join(', ', map _generator()->quote($_), grep { $temp_table_fields{$_} } $old_table->get_fields)]}) SELECT @{[ join(', ', map _generator()->quote($_), grep { $temp_table_fields{$_} } $old_table->get_fields)]} FROM @{[_generator()->quote($old_table)]}",
-             "DROP TABLE @{[_generator()->quote($old_table)]}",
-             create_table($table, { no_comments => 1 }),
-             "INSERT INTO @{[_generator()->quote($table_name)]} SELECT @{[ join(', ', map _generator()->quote($_), $table->get_fields)]} FROM @{[_generator()->quote($table_name.'_temp_alter')]}",
-             "DROP TABLE @{[_generator()->quote($table_name.'_temp_alter')]}";
-  return @sql;
-#  return join("", @sql, "");
+  # record renamed fields for later
+  my %rename_field = map { $_->[1]->name => $_->[0]->name } @{$diffs->{rename_field}};
+
+  # drop added fields from %temp_table_fields
+  delete @temp_table_fields{@{$diffs->{add_field}}};
+
+  # INSERT INTO t1_backup SELECT a,b FROM t1;
+
+  push @sql, sprintf( 'INSERT INTO %s( %s) SELECT %s FROM %s',
+
+    _generator()->quote( $temp_table_name ),
+
+    join( ', ',
+        map _generator()->quote($_),
+        grep { $temp_table_fields{$_} } $table->get_fields ),
+
+    join( ', ',
+        map _generator()->quote($_),
+        map { $rename_field{$_} ? $rename_field{$_} : $_ }
+        grep { $temp_table_fields{$_} } $table->get_fields ),
+
+    _generator()->quote( $old_table->name )
+  );
+
+  # DROP TABLE t1;
+
+  push @sql, sprintf('DROP TABLE %s', _generator()->quote($old_table->name));
+
+  # CREATE TABLE t1(a,b);
+
+  push @sql, create_table($table, { no_comments => 1 });
+
+  # INSERT INTO t1 SELECT a,b FROM t1_backup;
+
+  push @sql, sprintf('INSERT INTO %s SELECT %s FROM %s',
+    _generator()->quote($table_name),
+    join(', ', map _generator()->quote($_), $table->get_fields),
+    _generator()->quote($temp_table_name)
+  );
+
+  # DROP TABLE t1_backup;
+
+  push @sql, sprintf('DROP TABLE %s', _generator()->quote($temp_table_name));
+
+  return wantarray ? @sql : join(";\n", @sql);
 }
 
 sub drop_table {

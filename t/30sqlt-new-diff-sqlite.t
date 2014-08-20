@@ -132,7 +132,7 @@ CREATE TEMPORARY TABLE person_temp_alter (
   physical_description text
 );
 
-INSERT INTO person_temp_alter( person_id, name, age, weight, iq, is_rock_star, value, physical_description) SELECT person_id, name, age, weight, iq, is_rock_star, value, physical_description FROM person;
+INSERT INTO person_temp_alter( person_id, name, age, weight, iq, value, physical_description) SELECT person_id, name, age, weight, iq, value, description FROM person;
 
 DROP TABLE person;
 
