@@ -27,7 +27,7 @@ $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
+use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alter_table_statements);
 use SQL::Translator::Generator::DDL::PostgreSQL;
 use Data::Dumper;
 
@@ -1026,35 +1026,15 @@ sub batch_alter_table {
 
   # as long as we're not renaming the table we don't need to be here
   if ( @{$diff_hash->{rename_table}} == 0 ) {
-    return map {
-      if (@{ $diff_hash->{$_} || [] }) {
-        my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-        map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) }
-          @{ $diff_hash->{$_} }
-      }
-      else { () }
-    } qw/alter_drop_constraint
-      alter_drop_index
-      drop_field
-      add_field
-      alter_field
-      rename_field
-      alter_create_index
-      alter_create_constraint
-      alter_table/;
+    return batch_alter_table_statements($diff_hash, $options);
   }
 
   # first we need to perform drops which are on old table
-  my @sql = map {
-    if (@{ $diff_hash->{$_} || [] }) {
-      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) }
-        @{ $diff_hash->{$_} }
-    }
-    else { () }
-  } qw/alter_drop_constraint
+  my @sql = batch_alter_table_statements($diff_hash, $options, qw(
+    alter_drop_constraint
     alter_drop_index
-    drop_field/;
+    drop_field
+  ));
 
   # next comes the rename_table
   my $old_table = $diff_hash->{rename_table}[0][0];
@@ -1068,19 +1048,14 @@ sub batch_alter_table {
     [map { $_->[0]->table($table) && $_ } @{$diff_hash->{rename_field}}];
 
   # now add everything else
-  push @sql, map {
-    if (@{ $diff_hash->{$_} || [] }) {
-      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) }
-        @{ $diff_hash->{$_} }
-    }
-    else { () }
-  } qw/add_field
+  push @sql, batch_alter_table_statements($diff_hash, $options, qw(
+    add_field
     alter_field
     rename_field
     alter_create_index
     alter_create_constraint
-    alter_table/;
+    alter_table
+  ));
 
   return @sql;
 }
