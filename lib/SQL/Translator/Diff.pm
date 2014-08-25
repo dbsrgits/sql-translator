@@ -574,7 +574,7 @@ I.e. the hash might look something like the following:
  }
 
 
-=item * C<preprocess_schema($class, $schema)> (optional)
+=item * C<preprocess_schema($schema)> (optional)
 
 C<preprocess_schema> is called by the Diff code to allow the producer to
 normalize any data it needs to first. For example, the MySQL producer uses
