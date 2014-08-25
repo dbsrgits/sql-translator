@@ -220,7 +220,8 @@ sub ddl_parser_instance {
     });
 
 # this is disabled until RT#74593 is resolved
-=begin for general sadness
+
+=begin sadness
 
     unless ($parsers_libdir) {
 
@@ -280,6 +281,9 @@ sub ddl_parser_instance {
     }
 
     return $precompiled_mod->new;
+
+=end sadness
+
 =cut
 
 }
