@@ -55,17 +55,20 @@ CREATE TABLE added (
   id bigint
 );
 
+ALTER TABLE employee DROP CONSTRAINT FK5302D47D93FE702E;
+
+ALTER TABLE employee DROP COLUMN job_title;
+
+ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id)
+  REFERENCES person (person_id) DEFERRABLE;
+
 ALTER TABLE old_name RENAME TO new_name;
 
-ALTER TABLE employee DROP CONSTRAINT FK5302D47D93FE702E;
+ALTER TABLE new_name ADD COLUMN new_field integer;
 
 ALTER TABLE person DROP CONSTRAINT UC_age_name;
 
 DROP INDEX u_name;
-
-ALTER TABLE employee DROP COLUMN job_title;
-
-ALTER TABLE new_name ADD COLUMN new_field integer;
 
 ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 
@@ -84,9 +87,6 @@ ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
 ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD CONSTRAINT unique_name UNIQUE (name);
-
-ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id)
-  REFERENCES person (person_id) DEFERRABLE;
 
 ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
 
@@ -118,13 +118,13 @@ CREATE TABLE added (
   id bigint
 );
 
-ALTER TABLE old_name RENAME TO new_name;
-
-ALTER TABLE person DROP CONSTRAINT UC_age_name;
-
 ALTER TABLE employee DROP COLUMN job_title;
 
+ALTER TABLE old_name RENAME TO new_name;
+
 ALTER TABLE new_name ADD COLUMN new_field integer;
+
+ALTER TABLE person DROP CONSTRAINT UC_age_name;
 
 ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 

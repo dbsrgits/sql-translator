@@ -1019,6 +1019,72 @@ sub drop_table {
     return $out;
 }
 
+sub batch_alter_table {
+  my ( $table, $diff_hash, $options ) = @_;
+  my $qt = $options->{quote_table_names} || '';
+  $generator->quote_chars([$qt]);
+
+  # as long as we're not renaming the table we don't need to be here
+  if ( @{$diff_hash->{rename_table}} == 0 ) {
+    return map {
+      if (@{ $diff_hash->{$_} || [] }) {
+        my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
+        map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) }
+          @{ $diff_hash->{$_} }
+      }
+      else { () }
+    } qw/alter_drop_constraint
+      alter_drop_index
+      drop_field
+      add_field
+      alter_field
+      rename_field
+      alter_create_index
+      alter_create_constraint
+      alter_table/;
+  }
+
+  # first we need to perform drops which are on old table
+  my @sql = map {
+    if (@{ $diff_hash->{$_} || [] }) {
+      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
+      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) }
+        @{ $diff_hash->{$_} }
+    }
+    else { () }
+  } qw/alter_drop_constraint
+    alter_drop_index
+    drop_field/;
+
+  # next comes the rename_table
+  my $old_table = $diff_hash->{rename_table}[0][0];
+  push @sql, rename_table( $old_table, $table, $options );
+
+  # for alter_field (and so also rename_field) we need to make sure old
+  # field has table name set to new table otherwise calling alter_field dies
+  $diff_hash->{alter_field} =
+    [map { $_->[0]->table($table) && $_ } @{$diff_hash->{alter_field}}];
+  $diff_hash->{rename_field} =
+    [map { $_->[0]->table($table) && $_ } @{$diff_hash->{rename_field}}];
+
+  # now add everything else
+  push @sql, map {
+    if (@{ $diff_hash->{$_} || [] }) {
+      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
+      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) }
+        @{ $diff_hash->{$_} }
+    }
+    else { () }
+  } qw/add_field
+    alter_field
+    rename_field
+    alter_create_index
+    alter_create_constraint
+    alter_table/;
+
+  return @sql;
+}
+
 1;
 
 # -------------------------------------------------------------------
