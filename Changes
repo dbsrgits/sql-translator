@@ -7,6 +7,7 @@ Changes for SQL::Translator
  * Fix MySQL producer for columns with scalar ref in 'ON UPDATE' (Wallace Reis)
  * Fix handling of views in MySQL DBI parser
  * Fix handling of renamed fields in SQLite diff (Peter Mottram)
+ * Check numeric equality of default values in numeric-type fields (Wallace Reis)
 
 0.11018 2013-10-31 🎃
 
