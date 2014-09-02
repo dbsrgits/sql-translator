@@ -15,7 +15,7 @@ use base qw(Exporter);
 our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
-    ddl_parser_instance
+    ddl_parser_instance batch_alter_table_statements
     throw ex2err carp_ro
 );
 use constant COLLISION_TAG_LENGTH => 8;
@@ -220,7 +220,8 @@ sub ddl_parser_instance {
     });
 
 # this is disabled until RT#74593 is resolved
-=begin for general sadness
+
+=begin sadness
 
     unless ($parsers_libdir) {
 
@@ -280,6 +281,9 @@ sub ddl_parser_instance {
     }
 
     return $precompiled_mod->new;
+
+=end sadness
+
 =cut
 
 }
@@ -342,6 +346,31 @@ sub carp_ro {
         carp "'$name' is a read-only accessor" if @_;
         return $self->$orig;
     };
+}
+
+sub batch_alter_table_statements {
+    my ($diff_hash, $options, @meths) = @_;
+
+    @meths = qw(
+        rename_table
+        alter_drop_constraint
+        alter_drop_index
+        drop_field
+        add_field
+        alter_field
+        rename_field
+        alter_create_index
+        alter_create_constraint
+        alter_table
+    ) unless @meths;
+
+    my $package = caller;
+
+    return map {
+        my $meth = $package->can($_) or die "$package cant $_";
+        map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{ $diff_hash->{$_} }
+    } grep { @{$diff_hash->{$_} || []} }
+        @meths;
 }
 
 1;
@@ -518,6 +547,43 @@ L<Moo/around>.
 Takes a field name and returns a reference to a function can be used
 L<around|Moo/around> a read-only accessor to make it L<carp|Carp/carp>
 instead of die when passed an argument.
+
+=head2 batch_alter_table_statements
+
+Takes diff and argument hashes as passed to
+L<batch_alter_table|SQL::Translator::Diff/batch_alter_table($table, $hash) (optional)>
+and an optional list of producer functions to call on the calling package.
+Returns the list of statements returned by the producer functions.
+
+If no producer functions are specified, the following functions in the
+calling package are called:
+
+=over
+
+=item 1. rename_table
+
+=item 2. alter_drop_constraint
+
+=item 3. alter_drop_index
+
+=item 4. drop_field
+
+=item 5. add_field
+
+=item 5. alter_field
+
+=item 6. rename_field
+
+=item 7. alter_create_index
+
+=item 8. alter_create_constraint
+
+=item 9. alter_table
+
+=back
+
+If the corresponding array in the hash has any elements, but the
+caller doesn't implement that function, an exception is thrown.
 
 =head1 AUTHORS
 

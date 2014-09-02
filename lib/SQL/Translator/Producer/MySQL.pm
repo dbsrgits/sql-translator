@@ -93,7 +93,9 @@ my $DEFAULT_MAX_ID_LENGTH = 64;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug header_comment
-    truncate_id_uniquely parse_mysql_version);
+    truncate_id_uniquely parse_mysql_version
+    batch_alter_table_statements
+);
 
 #
 # Use only lowercase for the keys (e.g. "long" and not "LONG")
@@ -909,21 +911,7 @@ sub batch_alter_table {
 
   }
 
-  my @stmts = map {
-    if (@{ $diff_hash->{$_} || [] }) {
-      my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-      map { $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $options ) } @{ $diff_hash->{$_} }
-    } else { () }
-  } qw/rename_table
-       alter_drop_constraint
-       alter_drop_index
-       drop_field
-       add_field
-       alter_field
-       rename_field
-       alter_create_index
-       alter_create_constraint
-       alter_table/;
+  my @stmts = batch_alter_table_statements($diff_hash, $options);
 
   #quote
   my $qt = $options->{quote_table_names} || '';

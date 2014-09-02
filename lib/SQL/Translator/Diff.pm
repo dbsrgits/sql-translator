@@ -520,6 +520,11 @@ supports the ability to do all alters for a table as one statement.
 If the diff would need a method that is missing from the producer, just emit a
 comment showing the method is missing, rather than dieing with an error
 
+=item B<producer_args>
+
+Hash of extra arguments passed to L<SQL::Translator/new> and the below
+L</PRODUCER FUNCTIONS>.
+
 =back
 
 =head1 PRODUCER FUNCTIONS
@@ -530,34 +535,35 @@ thrown.
 
 =over
 
-=item * C<alter_create_constraint($con)>
+=item * C<alter_create_constraint($con, $args)>
 
-=item * C<alter_drop_constraint($con)>
+=item * C<alter_drop_constraint($con, $args)>
 
-=item * C<alter_create_index($idx)>
+=item * C<alter_create_index($idx, $args)>
 
-=item * C<alter_drop_index($idx)>
+=item * C<alter_drop_index($idx, $args)>
 
-=item * C<add_field($fld)>
+=item * C<add_field($fld, $args)>
 
-=item * C<alter_field($old_fld, $new_fld)>
+=item * C<alter_field($old_fld, $new_fld, $args)>
 
-=item * C<rename_field($old_fld, $new_fld)>
+=item * C<rename_field($old_fld, $new_fld, $args)>
 
-=item * C<drop_field($fld)>
+=item * C<drop_field($fld, $args)>
 
-=item * C<alter_table($table)>
+=item * C<alter_table($table, $args)>
 
-=item * C<drop_table($table)>
+=item * C<drop_table($table, $args)>
 
-=item * C<rename_table($old_table, $new_table)> (optional)
+=item * C<rename_table($old_table, $new_table, $args)> (optional)
 
-=item * C<batch_alter_table($table, $hash)> (optional)
+=item * C<batch_alter_table($table, $hash, $args)> (optional)
 
 If the producer supports C<batch_alter_table>, it will be called with the
 table to alter and a hash, the keys of which will be the method names listed
 above; values will be arrays of fields or constraints to operate on. In the
-case of the field functions that take two arguments this will appear as a hash.
+case of the field functions that take two arguments this will appear as an
+array reference.
 
 I.e. the hash might look something like the following:
 
@@ -568,7 +574,7 @@ I.e. the hash might look something like the following:
  }
 
 
-=item * C<preprocess_schema($class, $schema)> (optional)
+=item * C<preprocess_schema($schema)> (optional)
 
 C<preprocess_schema> is called by the Diff code to allow the producer to
 normalize any data it needs to first. For example, the MySQL producer uses

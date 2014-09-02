@@ -8,6 +8,7 @@ Changes for SQL::Translator
  * Fix handling of views in MySQL DBI parser
  * Fix handling of renamed fields in SQLite diff (Peter Mottram)
  * Check numeric equality of default values in numeric-type fields (Wallace Reis)
+ * Fix handling of renamed fields in renamed tables in Pg diff (Peter Mottram)
 
 0.11018 2013-10-31 🎃
 

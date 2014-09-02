@@ -21,7 +21,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
+use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alter_table_statements);
 use SQL::Translator::Generator::DDL::SQLite;
 
 our ( $DEBUG, $WARN );
@@ -406,7 +406,7 @@ sub alter_drop_index {
 }
 
 sub batch_alter_table {
-  my ($table, $diffs) = @_;
+  my ($table, $diffs, $options) = @_;
 
   # If we have any of the following
   #
@@ -439,21 +439,7 @@ sub batch_alter_table {
        @{$diffs->{alter_field}}  == 0 &&
        @{$diffs->{drop_field}}   == 0
        ) {
-    return map {
-        my $meth = __PACKAGE__->can($_) or die __PACKAGE__ . " cant $_";
-        map { my $sql = $meth->(ref $_ eq 'ARRAY' ? @$_ : $_); $sql ?  ("$sql") : () } @{ $diffs->{$_} }
-
-      } grep { @{$diffs->{$_}} }
-    qw/rename_table
-       alter_drop_constraint
-       alter_drop_index
-       drop_field
-       add_field
-       alter_field
-       rename_field
-       alter_create_index
-       alter_create_constraint
-       alter_table/;
+    return batch_alter_table_statements($diffs, $options);
   }
 
   my @sql;

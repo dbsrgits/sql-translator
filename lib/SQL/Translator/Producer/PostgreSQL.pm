@@ -27,7 +27,7 @@ $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment parse_dbms_version);
+use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alter_table_statements);
 use SQL::Translator::Generator::DDL::PostgreSQL;
 use Data::Dumper;
 
@@ -1017,6 +1017,47 @@ sub drop_table {
 
     $out .= "\n".join("\n",@geometry_drops) if scalar(@geometry_drops);
     return $out;
+}
+
+sub batch_alter_table {
+  my ( $table, $diff_hash, $options ) = @_;
+  my $qt = $options->{quote_table_names} || '';
+  $generator->quote_chars([$qt]);
+
+  # as long as we're not renaming the table we don't need to be here
+  if ( @{$diff_hash->{rename_table}} == 0 ) {
+    return batch_alter_table_statements($diff_hash, $options);
+  }
+
+  # first we need to perform drops which are on old table
+  my @sql = batch_alter_table_statements($diff_hash, $options, qw(
+    alter_drop_constraint
+    alter_drop_index
+    drop_field
+  ));
+
+  # next comes the rename_table
+  my $old_table = $diff_hash->{rename_table}[0][0];
+  push @sql, rename_table( $old_table, $table, $options );
+
+  # for alter_field (and so also rename_field) we need to make sure old
+  # field has table name set to new table otherwise calling alter_field dies
+  $diff_hash->{alter_field} =
+    [map { $_->[0]->table($table) && $_ } @{$diff_hash->{alter_field}}];
+  $diff_hash->{rename_field} =
+    [map { $_->[0]->table($table) && $_ } @{$diff_hash->{rename_field}}];
+
+  # now add everything else
+  push @sql, batch_alter_table_statements($diff_hash, $options, qw(
+    add_field
+    alter_field
+    rename_field
+    alter_create_index
+    alter_create_constraint
+    alter_table
+  ));
+
+  return @sql;
 }
 
 1;
