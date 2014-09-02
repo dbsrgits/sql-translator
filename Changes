@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Fix test failure if Test::PostgreSQL is installed but not working
+
 0.11019 2014-09-02
 
  * Add Json and hstore types to Pg Parser (cloudinstustrie)

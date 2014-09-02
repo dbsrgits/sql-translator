@@ -19,7 +19,7 @@ else {
     no warnings 'once';
     maybe_plan(undef, 'Test::PostgreSQL');
     $pgsql = Test::PostgreSQL->new
-        or die "Can't create test database: $Test::PostgreSQL::errstr";
+        or plan skip_all => "Can't create test database: $Test::PostgreSQL::errstr";
     $dsn = $pgsql->dsn;
 };
 
