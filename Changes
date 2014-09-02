@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+0.11019 2014-09-02
+
  * Add Json and hstore types to Pg Parser (cloudinstustrie)
  * Fix DROP TABLE in SQL Server Producer
  * Fix Pg DBI parser test (Dagfinn Ilmari Mannsåker)
