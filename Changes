@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+0.11020 2014-09-02
+
  * Fix test failure if Test::PostgreSQL is installed but not working
 
 0.11019 2014-09-02
