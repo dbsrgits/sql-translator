@@ -14,6 +14,7 @@ use SQL::Translator;
 
 BEGIN {
     maybe_plan(5,
+        'CGI',
         'HTML::Parser',
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Producer::HTML');

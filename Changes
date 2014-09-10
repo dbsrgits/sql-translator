@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Skip HTML tests if CGI is not installed (RT#98027)
+
 0.11020 2014-09-02
 
  * Fix test failure if Test::PostgreSQL is installed but not working
