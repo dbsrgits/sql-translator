@@ -248,10 +248,9 @@ sub produce {
         $create .= ";\n\n";
         # If wantarray is not set we have to add "/" in this statement
         # DBI->do() needs them omitted
-        # triggers may NOT end with a semicolon
-        $create .= join "/\n\n", @trigger_defs;
-        # for last trigger
-        $create .= "/\n\n";
+        # triggers may NOT end with a semicolon but a "/" instead
+        $create .= "$_/\n\n"
+            for @trigger_defs;
         return $create;
     }
 }
