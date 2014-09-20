@@ -91,7 +91,7 @@ our @EXPORT_OK = qw(parse);
 
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
-{ my ( %tables, %indices, %constraints, $table_order, @table_comments, %views, $view_order, %procedures, $proc_order ) }
+{ my ( %tables, %indices, %constraints, $table_order, @table_comments, %views, $view_order, %procedures, $proc_order, %triggers, $trigger_order ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -107,6 +107,7 @@ startrule : statement(s) eofile
             constraints => \%constraints,
             views       => \%views,
             procedures  => \%procedures,
+            triggers    => \%triggers,
         };
     }
 
@@ -204,6 +205,21 @@ index_expr: parens_name_list
       my $arg_list = join(",", @{$item[3]});
       $return = "$item[2]($arg_list)";
    }
+
+create : /create/i /or replace/i /trigger/i table_name not_end m#^/$#im
+        {
+          @table_comments = ();
+        my $trigger_name = $item[4];
+        # Hack to strip owner from trigger name
+        $trigger_name =~ s#.*\.##;
+        my $owner = '';
+        my $action = "$item[1] $item[2] $item[3] $item[4] $item[5]";
+
+        $triggers{ $trigger_name }{'order'}  = ++$trigger_order;
+        $triggers{ $trigger_name }{'name'}   = $trigger_name;
+        $triggers{ $trigger_name }{'owner'}  = $owner;
+        $triggers{ $trigger_name }{'action'}    = $action;
+        }
 
 create : /create/i /or replace/i /procedure/i table_name not_end m#^/$#im
    {
@@ -707,6 +723,16 @@ sub parse {
          name => $view_name,
          sql  => $result->{views}->{$view_name}->{sql},
       );
+    }
+
+    my @triggers = sort {
+        $result->{triggers}->{ $a }->{'order'} <=> $result->{triggers}->{ $b }->{'order'}
+    } keys %{ $result->{triggers} };
+    foreach my $trigger_name (@triggers) {
+        $schema->add_trigger(
+            name   => $trigger_name,
+            action => $result->{triggers}->{$trigger_name}->{action},
+        );
     }
 
     return 1;
