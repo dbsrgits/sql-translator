@@ -123,6 +123,13 @@ statement : remark
     | drop
     | <error>
 
+alter: /alter/i TABLE table_name /add/i table_constraint ';'
+    {
+        my $constraint = $item{table_constraint};
+        $constraint->{type} = $constraint->{constraint_type};
+        push @{$tables{$item{table_name}}{constraints}}, $constraint;
+    }
+
 alter : /alter/i WORD /[^;]+/ ';'
     { @table_comments = () }
 
