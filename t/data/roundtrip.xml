@@ -31,7 +31,7 @@ Created on Fri Aug 15 15:08:18 2003
           <field name="explicitemptystring" size="0"
               data_type="varchar" order="6" default_value="" />
           <field name="emptytagdef" size="0"
-              data_type="varchar" order="7" default_value="" >
+              data_type="varchar" order="7" default_value="backslash \ single-quote '" >
               <comments>Hello emptytagdef</comments>
           </field>
           <field name="another_id" size="10"
