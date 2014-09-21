@@ -40,7 +40,7 @@ Created on Fri Aug 15 15:08:18 2003
               data_type="timestamp" order="7" >
           </field>
           <field name="numeric" size="9,1"
-              data_type="numeric" order="8" >
+              data_type="numeric" order="8" default_value="42.69" >
           </field>
           <field name="decimal" size="10,2"
               data_type="decimal" order="9" >
