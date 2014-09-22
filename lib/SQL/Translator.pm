@@ -767,6 +767,8 @@ UPDATE, DELETE).
 
 =head1 CONSTRUCTOR
 
+=head2 new
+
 The constructor is called C<new>, and accepts a optional hash of options.
 Valid options are:
 

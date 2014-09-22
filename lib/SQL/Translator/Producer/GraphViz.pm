@@ -96,7 +96,7 @@ undefined (the default) - the result is returned as a string.
 =item * output_type (DEFAULT: 'png')
 
 This determines which
-L<output method|GraphViz/as_canon,_as_text,_as_gif_etc._methods>
+L<output method|GraphViz/as_canon, as_text, as_gif etc. methods>
 will be invoked to generate the graph: C<png> translates to
 C<as_png>, C<ps> to C<as_ps> and so on.
 

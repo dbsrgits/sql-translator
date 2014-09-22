@@ -48,10 +48,10 @@ allows you to write the result for each table to a separate file.
 It needs one additional producer_arg of C<tt_table> which is the file
 name of the template to use.  This template will be passed a template
 var of C<table>, which is the current
-L<SQL::Translator::Producer::Table> table we are producing, which you
-can then use to walk the schema via the methods documented in that
-module. You also get L<schema> as a shortcut to the
-L<SQL::Translator::Producer::Schema> for the table and C<translator>,
+L<SQL::Translator::Schema::Table> table we are producing,
+which you can then use to walk the schema via the methods documented
+in that module. You also get C<schema> as a shortcut to the
+L<SQL::Translator::Schema> for the table and C<translator>,
 the L<SQL::Translator> object for this parse in case you want to get
 access to any of the options etc set here.
 
@@ -296,7 +296,8 @@ implicitly through use in a project but need some proper tests).
 
 - Better hooks for filename generation.
 
-- Integrate with L<TT::Base> and L<TTSchema>.
+- Integrate with L<TT::Base|SQL::Translator::Producer::TT::Base> and
+  L<TTSchema|SQL::Translator::Producer::TTSchema>.
 
 =head1 SEE ALSO
 

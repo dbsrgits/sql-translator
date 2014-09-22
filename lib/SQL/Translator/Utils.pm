@@ -545,13 +545,13 @@ L<Moo/around>.
 =head2 carp_ro
 
 Takes a field name and returns a reference to a function can be used
-L<around|Moo/around> a read-only accessor to make it L<carp|Carp/carp>
+L<around|Moo/around> a read-only accessor to make it L<carp|Carp>
 instead of die when passed an argument.
 
 =head2 batch_alter_table_statements
 
 Takes diff and argument hashes as passed to
-L<batch_alter_table|SQL::Translator::Diff/batch_alter_table($table, $hash) (optional)>
+L<batch_alter_table|SQL::Translator::Diff/batch_alter_table($table, $hash, $args) (optional)>
 and an optional list of producer functions to call on the calling package.
 Returns the list of statements returned by the producer functions.
 

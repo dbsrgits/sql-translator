@@ -174,14 +174,14 @@ sub classes.
  # Convert produce call into an object method call
  sub produce { return __PACKAGE__->new( translator => shift )->run; };
 
-See L<PRODUCER OBJECT> below for details.
+See L</PRODUCER OBJECT> below for details.
 
 The upshot of this is we can make new template producers by sub classing this
 base class, adding the above snippet and a template.
 The module also provides a number of hooks into the templating process,
-see L<SUB CLASS HOOKS> for details.
+see L</SUB CLASS HOOKS> for details.
 
-See the L<SYNOPSIS> above for an example of creating a simple producer using
+See the L</SYNOPSIS> above for an example of creating a simple producer using
 a single template stored in the producers DATA section.
 
 =head1 SUB CLASS HOOKS
@@ -215,13 +215,13 @@ these fail, causing the produce call to fail with a 'no template!' error.
  sub tt_vars { ( foo => "bar" ); }
 
 Return hash of template vars to use in the template. Nothing added here
-by default, but see L<tt_default_vars> for the variables you get for free.
+by default, but see L</tt_default_vars> for the variables you get for free.
 
 =head2 tt_default_vars
 
 Return a hash-ref of the default vars given to the template.
 You wouldn't normally over-ride this, just inherit the default implementation,
-to get the C<translator> & C<schema> variables, then over-ride L<tt_vars> to add
+to get the C<translator> & C<schema> variables, then over-ride L</tt_vars> to add
 your own.
 
 The current default variables are:
@@ -303,7 +303,7 @@ paths.
 
 - Pass in template vars from the producer args and command line.
 
-- Merge in TT::Table.
+- Merge in L<TT::Table|SQL::Translator::Producer::TT::Table>.
 
 - Hooks to pre-process the schema and post-process the output.
 

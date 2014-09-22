@@ -43,10 +43,10 @@ tags then the order the tags appear in the XML will be used.
 
 =head2 default_value
 
-Leave the attribute out all together to use the default in L<Schema::Field>.
-Use empty quotes or 'EMPTY_STRING' for a zero length string. 'NULL' for an
-explicit null (currently sets default_value to undef in the
-Schema::Field obj).
+Leave the attribute out all together to use the default in
+L<SQL::Translator::Schema::Field>.  Use empty quotes or 'EMPTY_STRING'
+for a zero length string. 'NULL' for an explicit null (currently sets
+default_value to undef in the field object).
 
   <sqlf:field default_value="" />                <!-- Empty string -->
   <sqlf:field default_value="EMPTY_STRING" />    <!-- Empty string -->

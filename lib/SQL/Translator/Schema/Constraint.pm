@@ -179,7 +179,7 @@ names and keep them in order by the first occurrence of a field name.
 
 The fields are returned as Field objects if they exist or as plain
 names if not. (If you just want the names and want to avoid the Field's overload
-magic use L<field_names>).
+magic use L</field_names>).
 
 Returns undef or an empty list if the constraint has no fields set.
 
