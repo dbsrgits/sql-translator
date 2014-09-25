@@ -52,7 +52,7 @@ print $fh $output;
 close $fh or die "Can't close file '$filename': $!";
 
 my $out;
-my $pid = open3( undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES}), '-cw', $filename );
+my $pid = open3( undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES}||''), '-cw', $filename );
 my $res = do { local $/; <$out> };
 waitpid($pid, 0);
 

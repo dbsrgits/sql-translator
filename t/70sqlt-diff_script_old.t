@@ -97,7 +97,7 @@ like($out, qr/ALTER TABLE TABLE1 ADD CONSTRAINT/,
 
 sub _run_cmd {
   my $out;
-  my $pid = open3( undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES}), @_ );
+  my $pid = open3( undef, $out, undef, $^X, shellwords($ENV{HARNESS_PERL_SWITCHES}||''), @_ );
   my $res = do { local $/; <$out> };
   waitpid($pid, 0);
   $res;
