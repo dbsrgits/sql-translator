@@ -3,6 +3,7 @@ Changes for SQL::Translator
  * Fix Oracle producer generating an unnecessary / at the end in case there
    are no triggers
  * Skip HTML tests if CGI is not installed (RT#98027)
+ * Fix JSON and YAML tests if the defaults have been tweaked (RT#98824)
 
 0.11020 2014-09-02
 

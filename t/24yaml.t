@@ -13,7 +13,8 @@ BEGIN {
 }
 
 my $sqlt_version = $SQL::Translator::VERSION;
-my $yaml = <<YAML;
+use YAML qw(Dump Load);
+my $yaml = Dump(Load(<<YAML));
 ---
 schema:
   procedures: {}

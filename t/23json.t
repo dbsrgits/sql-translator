@@ -15,7 +15,8 @@ BEGIN {
 }
 
 my $sqlt_version = $SQL::Translator::VERSION;
-my $json = <<JSON;
+use JSON;
+my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
 {
    "schema" : {
       "procedures" : {},
