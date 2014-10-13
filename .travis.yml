@@ -21,6 +21,7 @@ before_install:
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V
+  - cpan-install YAML XML::LibXML # author-mode configure deps
   - build-dist
   - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
 install:
