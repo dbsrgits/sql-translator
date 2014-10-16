@@ -17,15 +17,14 @@ matrix:
   allow_failures:
     - perl: "blead"
 before_install:
-  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - git clone git://github.com/ilmari/perl-travis-helper ~/travis-perl-helpers
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V
-  - cpan-install YAML XML::LibXML # author-mode configure deps
   - build-dist
   - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
 install:
-  - cpan-install --deps XML::Parser DBD::Pg YAML XML::LibXML # Optional test deps
+  - cpan-install --deps XML::Parser DBD::Pg # Optional test deps
   - cpan-install --coverage
 before_script:
   - psql -U postgres -c 'create database sqlt_test;'
