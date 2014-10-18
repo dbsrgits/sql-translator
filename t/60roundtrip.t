@@ -62,7 +62,7 @@ my $plan = [
     engine => 'Oracle',
     producer_args => {},
     parser_args => {},
-    todo => 'Needs volunteers',
+    todo_cmp => "auto-increment triggers aren't detected",
   },
   {
     engine => 'Sybase',
@@ -140,7 +140,7 @@ for my $args (@$plan) {
       local $::RD_HINT = 0 if $args->{todo};
 
       lives_ok (
-        sub { check_roundtrip ($args, $base_schema) },
+        sub { check_roundtrip ($args, $base_schema, $args->{todo_cmp}) },
         "Round trip for $args->{name} did not throw an exception",
       );
     }
@@ -149,7 +149,7 @@ for my $args (@$plan) {
 
 
 sub check_roundtrip {
-  my ($args, $base_schema) = @_;
+  my ($args, $base_schema, $todo_cmp) = @_;
   my $base_t = $base_schema->translator;
 
 # create some output from the submitted schema
@@ -224,6 +224,7 @@ sub check_roundtrip {
     return;
   };
 
+  local $TODO = $todo_cmp;
 # the two sql strings should be identical
   my $msg = "$args->{name} SQL roundtrip successful - SQL statements match";
   $ENV{SQLTTEST_RT_DEBUG}
