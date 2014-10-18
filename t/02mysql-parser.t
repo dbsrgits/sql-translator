@@ -80,7 +80,7 @@ BEGIN {
               s1 set('a','b','c') default 'b',
               e1 enum("a","b","c") default "c",
               name varchar(30) default NULL,
-              foo_type enum('vk','ck') NOT NULL default 'vk',
+              foo_type enum('vk','c''k') NOT NULL default 'vk',
               date timestamp,
               time_stamp2 timestamp,
               foo_enabled bit(1) default b'0',
@@ -170,12 +170,12 @@ BEGIN {
     my $f8 = shift @fields;
     is( $f8->name, 'foo_type', 'Eighth field name is "foo_type"' );
     is( $f8->data_type, 'enum', 'Type is "enum"' );
-    is( $f8->size, 2, 'Size is "2"' );
+    is( $f8->size, 3, 'Size is "2"' );
     is( $f8->is_nullable, 0, 'Field cannot be null' );
     is( $f8->default_value, 'vk', 'Default value is "vk"' );
     is( $f8->is_primary_key, 0, 'Field is not PK' );
     my %f8extra = $f8->extra;
-    is( join(',', @{ $f8extra{'list'} || [] }), 'vk,ck', 'List is "vk,ck"' );
+    is( join(',', @{ $f8extra{'list'} || [] }), 'vk,c\'k', 'List is "vk,c\'k"' );
 
     my $f9 = shift @fields;
     is( $f9->name, 'date', 'Ninth field name is "date"' );
@@ -253,7 +253,7 @@ BEGIN {
         q[
             CREATE TABLE orders (
               order_id                  integer NOT NULL auto_increment,
-              member_id                 varchar(255) comment 'fk to member',
+              member_id                 varchar(255) comment 'fk to ''member''',
               billing_address_id        int,
               shipping_address_id       int,
               credit_card_id            int,
@@ -312,7 +312,7 @@ BEGIN {
     is( $f2->data_type, 'varchar', 'Type is "varchar"' );
     is( $f2->size, 255, 'Size is "255"' );
     is( $f2->is_nullable, 1, 'Field can be null' );
-    is( $f2->comments, 'fk to member', 'Field comment OK' );
+    is( $f2->comments, 'fk to \'member\'', 'Field comment OK' );
     is( $f2->default_value, undef, 'Default value is undefined' );
 
     my $f3 = shift @fields;
@@ -900,7 +900,7 @@ ok ($@, 'Exception thrown on invalid version string');
     is( $f2->data_type, 'varchar', 'Type is "varchar"' );
     is( $f2->size, 12, 'Size is "12"' );
     is( $f2->is_nullable, 0, 'Field can not be null' );
-    is( $f2->default_value, "test single quotes like in you''re", "Single quote in default value is escaped properly" );
+    is( $f2->default_value, "test single quotes like in you're", "Single quote in default value is unescaped properly" );
     is( $f2->is_primary_key, 0, 'Field is not PK' );
 
     # this is more of a sanity test because the original sqlt regex for default looked for an escaped quote represented as \'
@@ -909,7 +909,7 @@ ok ($@, 'Exception thrown on invalid version string');
     is( $f3->data_type, 'varchar', 'Type is "varchar"' );
     is( $f3->size, 20, 'Size is "20"' );
     is( $f3->is_nullable, 0, 'Field can not be null' );
-    is( $f3->default_value, "test single quotes escaped like you\\'re", "Single quote in default value is escaped properly" );
+    is( $f3->default_value, "test single quotes escaped like you're", "Single quote in default value is unescaped properly" );
     is( $f3->is_primary_key, 0, 'Field is not PK' );
 }
 

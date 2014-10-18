@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(57,
+    maybe_plan(undef,
         'SQL::Translator::Producer::PostgreSQL',
         'Test::Differences',
     )
@@ -306,18 +306,30 @@ is($field4_sql, 'bytea_field bytea NOT NULL', 'Create bytea field works');
 my $field5 = SQL::Translator::Schema::Field->new( name => 'enum_field',
                                                    table => $table,
                                                    data_type => 'enum',
-                                                   extra => { list => [ 'Foo', 'Bar' ] },
+                                                   extra => { list => [ 'Foo', 'Bar', 'Ba\'z' ] },
                                                    is_auto_increment => 0,
                                                    is_nullable => 0,
                                                    is_foreign_key => 0,
                                                    is_unique => 0 );
 
-my $field5_sql = SQL::Translator::Producer::PostgreSQL::create_field($field5,{ postgres_version => 8.3 });
+my $field5_types = {};
+my $field5_sql = SQL::Translator::Producer::PostgreSQL::create_field(
+    $field5,
+    {
+        postgres_version => 8.3,
+        type_defs => $field5_types,
+    }
+);
 
 is($field5_sql, 'enum_field mytable_enum_field_type NOT NULL', 'Create real enum field works');
-
-
-
+is_deeply(
+    $field5_types,
+    { mytable_enum_field_type =>
+          "DROP TYPE IF EXISTS mytable_enum_field_type CASCADE;\n" .
+          "CREATE TYPE mytable_enum_field_type AS ENUM ('Foo', 'Bar', 'Ba''z')"
+    },
+    'Create real enum type works'
+);
 
 my $field6 = SQL::Translator::Schema::Field->new(
                                                   name      => 'character',
@@ -438,16 +450,31 @@ is($field12_sql, 'time_field timestamp NOT NULL', 'time with precision');
 my $field13 = SQL::Translator::Schema::Field->new( name => 'enum_field_with_type_name',
                                                    table => $table,
                                                    data_type => 'enum',
-                                                   extra => { list => [ 'Foo', 'Bar' ],
+                                                   extra => { list => [ 'Foo', 'Bar', 'Ba\'z' ],
                                                               custom_type_name => 'real_enum_type' },
                                                    is_auto_increment => 0,
                                                    is_nullable => 0,
                                                    is_foreign_key => 0,
                                                    is_unique => 0 );
 
-my $field13_sql = SQL::Translator::Producer::PostgreSQL::create_field($field13,{ postgres_version => 8.3 });
+my $field13_types = {};
+my $field13_sql = SQL::Translator::Producer::PostgreSQL::create_field(
+    $field13,
+    {
+        postgres_version => 8.3,
+        type_defs => $field13_types,
+    }
+);
 
 is($field13_sql, 'enum_field_with_type_name real_enum_type NOT NULL', 'Create real enum field works');
+is_deeply(
+    $field13_types,
+    { real_enum_type =>
+          "DROP TYPE IF EXISTS real_enum_type CASCADE;\n" .
+          "CREATE TYPE real_enum_type AS ENUM ('Foo', 'Bar', 'Ba''z')"
+    },
+    'Create real enum type works'
+);
 
 
 {
@@ -551,7 +578,7 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
 
 {
     my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => [qw( foo  bar )] );
-    my $quote = { quote_table_names => '"', quote_field_names => '"' };
+    my $quote = { quote_table_names => '"' };
 
     {
         my $index = $table->add_index(name => 'myindex', fields => ['foo']);
@@ -621,3 +648,5 @@ CREATE VIEW view_foo ( id, name ) AS
 ";
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
+
+done_testing;

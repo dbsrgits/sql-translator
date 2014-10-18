@@ -39,7 +39,7 @@ my @out = SQL::Translator::Diff::schema_diff(
     $target_schema, 'MySQL',
     {
         no_batch_alters  => 1,
-        producer_args => { quote_table_names => 0 }
+        producer_args => { quote_identifiers => 0 }
     }
 );
 
@@ -106,7 +106,7 @@ COMMIT;
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schema, 'MySQL',
     { ignore_index_names => 1,
       ignore_constraint_names => 1,
-      producer_args => { quote_table_names => 0 },
+      producer_args => { quote_identifiers => 0 },
     });
 
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
@@ -178,7 +178,7 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
   my $field = $target_schema->get_table('employee')->get_field('employee_id');
   $field->data_type('integer');
   $field->size(0);
-  $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_args => { quote_table_names => 0 } } );
+  $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_args => { quote_identifiers => 0 } } );
   eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- Convert schema 'create.sql' to 'create2.yml':;
 
@@ -317,7 +317,7 @@ COMMIT;
 
   # Test quoting works too.
   $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
-    { producer_args => { quote_table_names => '`' } }
+    { producer_args => { quote_identifiers => 1 } }
   );
   eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on");
 -- Convert schema 'Schema 3' to 'Schema 4':;
@@ -325,8 +325,8 @@ COMMIT;
 BEGIN;
 
 ALTER TABLE `employee` RENAME TO `fnord`,
-                       DROP FOREIGN KEY bar_fk,
-                       ADD CONSTRAINT foo_fk FOREIGN KEY (employee_id) REFERENCES `foo` (id);
+                       DROP FOREIGN KEY `bar_fk`,
+                       ADD CONSTRAINT `foo_fk` FOREIGN KEY (`employee_id`) REFERENCES `foo` (`id`);
 
 
 COMMIT;

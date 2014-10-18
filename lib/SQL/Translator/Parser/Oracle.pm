@@ -126,9 +126,7 @@ statement : remark
 alter : /alter/i WORD /[^;]+/ ';'
     { @table_comments = () }
 
-drop : /drop/i TABLE ';'
-
-drop : /drop/i WORD(s) ';'
+drop : /drop/i WORD(s) NAME WORD(s?) ';'
     { @table_comments = () }
 
 create : create_table table_name '(' create_definition(s /,/) ')' table_option(s?) ';'
@@ -192,9 +190,9 @@ create : create_index index_name /on/i table_name index_expr table_option(?) ';'
         }
     }
 
-index_expr: parens_word_list
+index_expr: parens_name_list
    { $item[1] }
-   | '(' WORD parens_word_list ')'
+   | '(' WORD parens_name_list ')'
    {
       my $arg_list = join(",", @{$item[3]});
       $return = "$item[2]($arg_list)";
@@ -395,7 +393,7 @@ column_constraint_type : /not\s+null/i { $return = { type => 'not_null' } }
                 expression => $item[2],
             };
         }
-    | /references/i table_name parens_word_list(?) on_delete(?)
+    | /references/i table_name parens_name_list(?) on_delete(?)
     {
         $return              =  {
             type             => 'foreign_key',
@@ -462,13 +460,15 @@ parens_value_list : '(' VALUE(s /,/) ')'
 parens_word_list : '(' WORD(s /,/) ')'
     { $item[2] }
 
+parens_name_list : '(' NAME(s /,/) ')'
+    { $item[2] }
+
 field_meta : default_val
     | column_constraint
 
-default_val  : /default/i /(?:')?[\w\d.-]*(?:')?/
+default_val  : /default/i VALUE
     {
         my $val =  $item[2];
-        $val    =~ s/'//g if defined $val;
         $return =  {
             supertype => 'constraint',
             type      => 'default',
@@ -557,7 +557,7 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
         }
     }
     |
-    /foreign key/i '(' NAME(s /,/) ')' /references/i table_name parens_word_list(?) on_delete(?)
+    /foreign key/i '(' NAME(s /,/) ')' /references/i table_name parens_name_list(?) on_delete(?)
     {
         $return              =  {
             type             => 'foreign_key',
@@ -578,14 +578,19 @@ UNIQUE : /unique/i { $return = 1 }
 WORD : /\w+/
 
 NAME : /\w+/ { $item[1] }
+    | DQSTRING
 
 TABLE : /table/i
 
-VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
-    { $item[1] }
-    | /'.*?'/   # XXX doesn't handle embedded quotes
-    { $item[1] }
-    | /NULL/
+DQSTRING : '"' /((?:[^"]|"")+)/ '"'
+    { ($return = $item[2]) =~ s/""/"/g; }
+
+SQSTRING : "'" /((?:[^']|'')*)/ "'"
+    { ($return = $item[2]) =~ s/''/'/g }
+
+VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
+    | SQSTRING
+    | /null/i
     { 'NULL' }
 
 END_OF_GRAMMAR

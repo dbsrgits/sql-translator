@@ -136,7 +136,7 @@ sub enum_constraint {
   return (
      'CONSTRAINT ' . $self->enum_constraint_name($field_name) .
        ' CHECK (' . $self->quote($field_name) .
-       ' IN (' . join( ',', map qq('$_'), @$vals ) . '))'
+       ' IN (' . join( ',', map $self->quote_string($_), @$vals ) . '))'
   )
 }
 

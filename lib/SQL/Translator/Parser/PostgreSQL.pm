@@ -145,7 +145,7 @@ connect : /^\s*\\connect.*\n/
 
 set : /set/i /[^;]*/ ';'
 
-revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_id /from/i name_with_opt_quotes(s /,/) ';'
+revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_id /from/i NAME(s /,/) ';'
     {
         my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
@@ -157,10 +157,10 @@ revoke : /revoke/i WORD(s /,/) /on/i TABLE(?) table_id /from/i name_with_opt_quo
         }
     }
 
-revoke : /revoke/i WORD(s /,/) /on/i SCHEMA(?) schema_name /from/i name_with_opt_quotes(s /,/) ';'
+revoke : /revoke/i WORD(s /,/) /on/i SCHEMA(?) schema_name /from/i NAME(s /,/) ';'
     { 1 }
 
-grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_id /to/i name_with_opt_quotes(s /,/) ';'
+grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_id /to/i NAME(s /,/) ';'
     {
         my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
@@ -172,7 +172,7 @@ grant : /grant/i WORD(s /,/) /on/i TABLE(?) table_id /to/i name_with_opt_quotes(
         }
     }
 
-grant : /grant/i WORD(s /,/) /on/i SCHEMA(?) schema_name /to/i name_with_opt_quotes(s /,/) ';'
+grant : /grant/i WORD(s /,/) /on/i SCHEMA(?) schema_name /to/i NAME(s /,/) ';'
     { 1 }
 
 drop : /drop/i /[^;]*/ ';'
@@ -263,7 +263,7 @@ create : CREATE or_replace(?) temporary(?) VIEW view_id view_fields(?) /AS/i vie
         }
     }
 
-trigger_name : name_with_opt_quotes
+trigger_name : NAME
 
 trigger_scope : /FOR/i /EACH/i /(ROW|STATEMENT)/i { $return = lc $1 }
 
@@ -364,22 +364,7 @@ column_name : NAME '.' NAME
 
 comment_phrase : /null/i
     { $return = 'NULL' }
-
-comment_phrase : /'/ comment_phrase_unquoted(s) /'/
-    { my $phrase = join(' ', @{ $item[2] });
-      $return = $phrase}
-
-# [cjm TODO: double-single quotes in a comment_phrase]
-comment_phrase_unquoted : /[^\']*/
-    { $return = $item[1] }
-
-
-xxxcomment_phrase : /'.*?'|NULL/
-    {
-        my $val = $item[1] || '';
-        $val =~ s/^'|'$//g;
-        $return = $val;
-    }
+    | SQSTRING
 
 field : field_comment(s?) field_name data_type field_meta(s?) field_comment(s?)
     {
@@ -453,7 +438,7 @@ column_constraint : constraint_name(?) column_constraint_type deferrable(?) defe
         }
     }
 
-constraint_name : /constraint/i name_with_opt_quotes { $item[2] }
+constraint_name : /constraint/i NAME { $item[2] }
 
 column_constraint_type : /not null/i { $return = { type => 'not_null' } }
     |
@@ -490,11 +475,11 @@ column_constraint_type : /not null/i { $return = { type => 'not_null' } }
         }
     }
 
-table_id : schema_qualification(?) name_with_opt_quotes {
+table_id : schema_qualification(?) NAME {
     $return = { schema_name => $item[1][0], table_name => $item[2] }
 }
 
-view_id : schema_qualification(?) name_with_opt_quotes {
+view_id : schema_qualification(?) NAME {
     $return = { schema_name => $item[1][0], view_name => $item[2] }
 }
 
@@ -510,17 +495,15 @@ view_target : '('   /select/i    / [^;]+ (?= \) ) /x    ')'    {
 
 view_target_spec :
 
-schema_qualification : name_with_opt_quotes '.'
+schema_qualification : NAME '.'
 
-schema_name : name_with_opt_quotes
+schema_name : NAME
 
-field_name : name_with_opt_quotes
-
-name_with_opt_quotes : double_quote(?) NAME double_quote(?) { $item[2] }
+field_name : NAME
 
 double_quote: /"/
 
-index_name : name_with_opt_quotes
+index_name : NAME
 
 
 data_type : pg_data_type parens_value_list(?)
@@ -648,7 +631,7 @@ parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
 
 
-parens_word_list : '(' name_with_opt_quotes(s /,/) ')'
+parens_word_list : '(' NAME(s /,/) ')'
     { $item[2] }
 
 field_size : '(' num_range ')' { $item{'num_range'} }
@@ -683,7 +666,7 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
         }
     }
 
-table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
+table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
     {
         $return = {
             type   => 'primary_key',
@@ -691,7 +674,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
     |
-    /unique/i '(' name_with_opt_quotes(s /,/) ')'
+    /unique/i '(' NAME(s /,/) ')'
     {
         $return    =  {
             type   => 'unique',
@@ -707,7 +690,7 @@ table_constraint_type : /primary key/i '(' name_with_opt_quotes(s /,/) ')'
         }
     }
     |
-    /foreign key/i '(' name_with_opt_quotes(s /,/) ')' /references/i table_id parens_word_list(?) match_type(?) key_action(s?)
+    /foreign key/i '(' NAME(s /,/) ')' /references/i table_id parens_word_list(?) match_type(?) key_action(s?)
     {
         my ( $on_delete, $on_update );
         for my $action ( @{ $item[9] || [] } ) {
@@ -931,10 +914,9 @@ create_table : CREATE TABLE
 
 create_index : CREATE /index/i
 
-default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+|\(\d+\)/ ( '::' data_type )(?)
+default_val  : DEFAULT DEFAULT_VALUE ( '::' data_type )(?)
     {
-        my $val =  defined $item[2] ? $item[2] : '';
-        $val    =~ s/^'|'$//g;
+        my $val =  $item[2];
         $val =~ s/^\((\d+)\)\z/$1/; # for example (0)::smallint
         $return =  {
             supertype => 'constraint',
@@ -951,6 +933,11 @@ default_val  : DEFAULT /(\d+|'[^']*'|\w+\(.*\))|\w+|\(\d+\)/ ( '::' data_type )(
         }
     }
 
+DEFAULT_VALUE : VALUE
+    | /\w+\(.*\)/
+    | /\w+/
+    | /\(\d+\)/
+
 name_with_opt_paren : NAME parens_value_list(s?)
     { $item[2][0] ? "$item[1]($item[2][0][0])" : $item[1] }
 
@@ -958,7 +945,7 @@ unique : /unique/i { 1 }
 
 key : /key/i | /index/i
 
-table_option : /inherits/i '(' name_with_opt_quotes(s /,/) ')'
+table_option : /inherits/i '(' NAME(s /,/) ')'
     {
         $return = { type => 'inherits', table_name => $item[3] }
     }
@@ -1006,17 +993,17 @@ COMMA : ','
 
 SET : /set/i
 
-NAME    : "`" /\w+/ "`"
-    { $item[2] }
+NAME : DQSTRING
     | /\w+/
-    { $item[1] }
-    | /[\$\w]+/
-    { $item[1] }
 
-VALUE   : /[-+]?\.?\d+(?:[eE]\d+)?/
-    { $item[1] }
-    | /'.*?'/   # XXX doesn't handle embedded quotes
-    { $item[1] }
+DQSTRING : '"' /((?:[^"]|"")+)/ '"'
+    { ($return = $item[2]) =~ s/""/"/g; }
+
+SQSTRING : "'" /((?:[^']|'')*)/ "'"
+    { ($return = $item[2]) =~ s/''/'/g }
+
+VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
+    | SQSTRING
     | /null/i
     { 'NULL' }
 

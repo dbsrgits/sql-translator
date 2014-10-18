@@ -117,7 +117,7 @@ schema:
             list:
               - foo
               - bar
-              - baz
+              - ba'z
       indices:
         - type: NORMAL
           fields:
@@ -171,7 +171,7 @@ schema:
             list:
               - foo
               - bar
-              - baz
+              - ba'z
       indices:
         - type: NORMAL
           fields:
@@ -215,7 +215,7 @@ my @stmts = (
   `id` integer NOT NULL,
   `foo` integer NOT NULL,
   `foo2` integer NULL,
-  `bar_set` set('foo', 'bar', 'baz') NULL,
+  `bar_set` set('foo', 'bar', 'ba''z') NULL,
   INDEX `index_1` (`id`),
   INDEX `really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47` (`id`),
   INDEX (`foo`),
@@ -230,7 +230,7 @@ my @stmts = (
   `id` integer NOT NULL,
   `foo` integer NOT NULL,
   `foo2` integer NULL,
-  `bar_set` set('foo', 'bar', 'baz') NULL,
+  `bar_set` set('foo', 'bar', 'ba''z') NULL,
   INDEX `index_1` (`id`),
   INDEX `really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47` (`id`),
   INDEX (`foo`),

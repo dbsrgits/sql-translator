@@ -73,10 +73,10 @@ statement : create_table
     | exec
     | /^\Z/ | { _err ($thisline, $text) }
 
-use : /use/i WORD GO
+use : /use/i NAME GO
     { @table_comments = () }
 
-setuser : /setuser/i NAME GO
+setuser : /setuser/i USERNAME GO
 
 if : /if/i object_not_null begin if_command end GO
 
@@ -84,7 +84,7 @@ if_command : grant
     | create_index
     | create_constraint
 
-object_not_null : /object_id/i '(' ident ')' /is not null/i
+object_not_null : /object_id/i '(' SQSTRING ')' /is not null/i
 
 field_not_null : /where/i field_name /is \s+ not \s+ null/ix
 
@@ -292,20 +292,11 @@ constraint : primary_key_constraint
     | foreign_key_constraint
     | unique_constraint
 
-field_name : WORD
-   { $return = $item[1] }
-   | LQUOTE WORD RQUOTE
-   { $return = $item[2] }
+field_name : NAME
 
-index_name : WORD
-   { $return = $item[1] }
-   | LQUOTE WORD RQUOTE
-   { $return = $item[2] }
+index_name : NAME
 
-table_name : WORD
- { $return = $item[1] }
- | LQUOTE WORD RQUOTE
- { $return = $item[2] }
+table_name : NAME
 
 data_type : WORD field_size(?)
     {
@@ -334,8 +325,8 @@ nullable : /not/i /null/i
 
 default_val : /default/i /null/i
     { $return = 'null' }
-   | /default/i /'[^']*'/
-    { $item[2]=~ s/'//g; $return = $item[2] }
+   | /default/i SQSTRING
+    { $return = $item[2] }
    | /default/i WORD
     { $return = $item[2] }
 
@@ -426,15 +417,9 @@ index : clustered(?) INDEX index_name(?) on_table(?) parens_field_list END_STATE
 parens_field_list : '(' field_name(s /,/) ')'
     { $item[2] }
 
-ident : QUOTE WORD '.' WORD QUOTE | LQUOTE WORD '.' WORD RQUOTE
-    { $return = { owner => $item[2], name => $item[4] } }
-    | LQUOTE WORD RQUOTE '.' LQUOTE WORD RQUOTE
-    { $return = { owner => $item[2], name => $item[6] } }
-    | LQUOTE WORD RQUOTE
-    { $return = { name  => $item[2] } }
-    | WORD '.' WORD
+ident : NAME '.' NAME
     { $return = { owner => $item[1], name => $item[3] } }
-    | WORD
+    | NAME
     { $return = { name  => $item[1] } }
 
 END_STATEMENT : ';'
@@ -442,8 +427,12 @@ END_STATEMENT : ';'
 
 GO : /^go/i
 
-NAME : QUOTE(?) /\w+/ QUOTE(?)
-    { $item[2] }
+USERNAME : WORD
+    | SQSTRING
+
+NAME : WORD
+    | DQSTRING
+    | BQSTRING
 
 WORD : /[\w#]+/
 
@@ -451,11 +440,14 @@ DIGITS : /\d+/
 
 COMMA : ','
 
-QUOTE : /'/
+SQSTRING : "'" /(?:[^']|'')*/ "'"
+    { ($return = $item[2]) =~ s/''/'/g }
 
-LQUOTE : '['
+DQSTRING : '"' /(?:[^"]|"")+/ '"'
+    { ($return = $item[2]) =~ s/""/"/g }
 
-RQUOTE : ']'
+BQSTRING : '[' /(?:[^]]|]])+/ ']'
+    { ($return = $item[2]) =~ s/]]/]/g; }
 
 END_OF_GRAMMAR
 

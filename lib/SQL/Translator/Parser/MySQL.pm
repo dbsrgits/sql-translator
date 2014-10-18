@@ -185,7 +185,7 @@ statement : comment
     | empty_statement
     | <error>
 
-use : /use/i WORD "$delimiter"
+use : /use/i NAME "$delimiter"
     {
         $database_name = $item[2];
         @table_comments = ();
@@ -196,7 +196,7 @@ set : /set/i not_delimiter "$delimiter"
 
 drop : /drop/i TABLE not_delimiter "$delimiter"
 
-drop : /drop/i WORD(s) "$delimiter"
+drop : /drop/i NAME(s) "$delimiter"
     { @table_comments = () }
 
 bit:
@@ -205,12 +205,9 @@ bit:
 
 string :
   # MySQL strings, unlike common SQL strings, can be double-quoted or
-  # single-quoted, and you can escape the delmiters by doubling (but only the
-  # delimiter) or by backslashing.
+  # single-quoted.
 
-   /'(\\.|''|[^\\\'])*'/ |
-   /"(\\.|""|[^\\\"])*"/
-  # For reference, std sql str: /(?:(?:\')(?:[^\']*(?:(?:\'\')[^\']*)*)(?:\'))//
+  SQSTRING | DQSTRING
 
 nonstring : /[^;\'"]+/
 
@@ -237,7 +234,7 @@ alter : ALTER TABLE table_name alter_specification(s /,/) "$delimiter"
 alter_specification : ADD foreign_key_def
     { $return = $item[2] }
 
-create : CREATE /database/i WORD "$delimiter"
+create : CREATE /database/i NAME "$delimiter"
     { @table_comments = () }
 
 create : CREATE TEMPORARY(?) TABLE opt_if_not_exists(?) table_name '(' create_definition(s /,/) /(,\s*)?\)/ table_option(s?) "$delimiter"
@@ -441,7 +438,7 @@ view_table_def : not_delimiter
         };
     }
 
-view_column_alias : /as/i WORD
+view_column_alias : /as/i NAME
     { $return = $item[2] }
 
 create_definition : constraint
@@ -479,13 +476,8 @@ field_comment : /^\s*(?:#|-{2}).*\n/
     }
 
 
-field_comment2 : /comment/i /'.*?'/
-    {
-        my $comment = $item[2];
-        $comment    =~ s/^'//;
-        $comment    =~ s/'$//;
-        $return     = $comment;
-    }
+field_comment2 : /comment/i SQSTRING
+    { $return = $item[2] }
 
 blank : /\s*/
 
@@ -681,9 +673,8 @@ default_val :
         $return =  $item[2];
     }
     |
-    /default/i string
+    /default/i VALUE
     {
-        $item[2] =~ s/^\s*'|'\s*$//g or $item[2] =~ s/^\s*"|"\s*$//g;
         $return  =  $item[2];
     }
     |
@@ -718,7 +709,7 @@ foreign_key_def : foreign_key_def_begin parens_field_list reference_definition
         }
     }
 
-foreign_key_def_begin : /constraint/i /foreign key/i WORD
+foreign_key_def_begin : /constraint/i /foreign key/i NAME
     { $return = $item[3] }
     |
     /constraint/i NAME /foreign key/i
@@ -727,7 +718,7 @@ foreign_key_def_begin : /constraint/i /foreign key/i WORD
     /constraint/i /foreign key/i
     { $return = '' }
     |
-    /foreign key/i WORD
+    /foreign key/i NAME
     { $return = $item[2] }
     |
     /foreign key/i
@@ -808,18 +799,15 @@ UNIQUE : /unique/i
 
 KEY : /key/i | /index/i
 
-table_option : /comment/i /=/ /'.*?'/
+table_option : /comment/i /=/ string
     {
-        my $comment = $item[3];
-        $comment    =~ s/^'//;
-        $comment    =~ s/'$//;
-        $return     = { comment => $comment };
+        $return     = { comment => $item[3] };
     }
-    | /(default )?(charset|character set)/i /\s*=?\s*/ WORD
+    | /(default )?(charset|character set)/i /\s*=?\s*/ NAME
     {
         $return = { 'CHARACTER SET' => $item[3] };
     }
-    | /collate/i WORD
+    | /collate/i NAME
     {
         $return = { 'COLLATE' => $item[2] }
     }
@@ -827,16 +815,13 @@ table_option : /comment/i /=/ /'.*?'/
     {
         $return = { $item[1] => $item[4] };
     }
-    | WORD /\s*=\s*/ MAYBE_QUOTED_WORD
+    | WORD /\s*=\s*/ table_option_value
     {
         $return = { $item[1] => $item[3] };
     }
 
-MAYBE_QUOTED_WORD: /\w+/
-                 | /'(\w+)'/
-                 { $return = $1 }
-                 | /"(\w+)"/
-                 { $return = $1 }
+table_option_value : VALUE
+                   | NAME
 
 default : /default/i
 
@@ -862,26 +847,30 @@ DOUBLE_QUOTE: '"'
 
 SINGLE_QUOTE: "'"
 
-QUOTED_NAME : BACKTICK /[^`]+/ BACKTICK
-    { $item[2] }
-    | DOUBLE_QUOTE /[^"]+/ DOUBLE_QUOTE
-    { $item[2] }
-    | SINGLE_QUOTE /[^']+/ SINGLE_QUOTE
-    { $item[2] }
+QUOTED_NAME : BQSTRING
+    | SQSTRING
+    | DQSTRING
+
+# MySQL strings, unlike common SQL strings, can have the delmiters
+# escaped either by doubling or by backslashing.
+BQSTRING: BACKTICK /(?:[^\\`]|``|\\.)*/ BACKTICK
+    { ($return = $item[2]) =~ s/(\\[\\`]|``)/substr($1,1)/ge }
+
+DQSTRING: DOUBLE_QUOTE /(?:[^\\"]|""|\\.)*/ DOUBLE_QUOTE
+    { ($return = $item[2]) =~ s/(\\[\\"]|"")/substr($1,1)/ge }
+
+SQSTRING: SINGLE_QUOTE /(?:[^\\']|''|\\.)*/ SINGLE_QUOTE
+    { ($return = $item[2]) =~ s/(\\[\\']|'')/substr($1,1)/ge }
+
 
 NAME: QUOTED_NAME
     | /\w+/
 
-VALUE : /[-+]?\.?\d+(?:[eE]\d+)?/
+VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
     { $item[1] }
-    | QUOTED_NAME
-    {
-        # remove leading/trailing quotes
-        my $val = $item[1];
-        $val    =~ s/^['"]|['"]$//g;
-        $return = $val;
-    }
-    | /NULL/
+    | SQSTRING
+    | DQSTRING
+    | /NULL/i
     { 'NULL' }
 
 # always a scalar-ref, so that it is treated as a function and not quoted by consumers

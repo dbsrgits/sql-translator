@@ -104,8 +104,7 @@ $out = SQL::Translator::Diff::schema_diff(
     { ignore_index_names => 1,
       ignore_constraint_names => 1,
       producer_args => {
-         quote_table_names => 0,
-         quote_field_names => 0,
+         quote_identifiers => 0,
       }
     });
 

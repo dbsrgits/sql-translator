@@ -27,11 +27,23 @@ $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alter_table_statements);
+use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alter_table_statements normalize_quote_options);
 use SQL::Translator::Generator::DDL::PostgreSQL;
 use Data::Dumper;
 
-my $generator = SQL::Translator::Generator::DDL::PostgreSQL->new;
+{
+  my ($quoting_generator, $nonquoting_generator);
+  sub _generator {
+    my $options = shift;
+    return $options->{generator} if exists $options->{generator};
+
+    return normalize_quote_options($options)
+      ? $quoting_generator ||= SQL::Translator::Generator::DDL::PostgreSQL->new
+      : $nonquoting_generator ||= SQL::Translator::Generator::DDL::PostgreSQL->new(
+        quote_chars => [],
+      );
+  }
+}
 
 my ( %translate, %index_name );
 my $max_id_length;
@@ -171,9 +183,7 @@ sub produce {
         $pargs->{postgres_version}, 'perl'
     );
 
-    my $qt = $translator->quote_table_names ? q{"} : q{};
-    my $qf = $translator->quote_field_names ? q{"} : q{};
-    $generator->quote_chars([$qt]);
+    my $generator = _generator({ quote_identifiers => $translator->quote_identifiers });
 
     my @output;
     push @output, header_comment unless ($no_comments);
@@ -183,8 +193,7 @@ sub produce {
     for my $table ( $schema->get_tables ) {
 
         my ($table_def, $fks) = create_table($table, {
-            quote_table_names => $qt,
-            quote_field_names => $qf,
+            generator         => $generator,
             no_comments       => $no_comments,
             postgres_version  => $postgres_version,
             add_drop_table    => $add_drop_table,
@@ -196,13 +205,12 @@ sub produce {
     }
 
     for my $view ( $schema->get_views ) {
-      push @table_defs, create_view($view, {
-        postgres_version  => $postgres_version,
-        add_drop_view     => $add_drop_table,
-        quote_table_names => $qt,
-        quote_field_names => $qf,
-        no_comments       => $no_comments,
-      });
+        push @table_defs, create_view($view, {
+            postgres_version  => $postgres_version,
+            add_drop_view     => $add_drop_table,
+            generator         => $generator,
+            no_comments       => $no_comments,
+        });
     }
 
     for my $trigger ( $schema->get_triggers ) {
@@ -285,24 +293,19 @@ sub create_table
 {
     my ($table, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my $no_comments = $options->{no_comments} || 0;
     my $add_drop_table = $options->{add_drop_table} || 0;
     my $postgres_version = $options->{postgres_version} || 0;
     my $type_defs = $options->{type_defs} || {};
 
     my $table_name = $table->name or next;
-    my ( $fql_tbl_name ) = ( $table_name =~ s/\W(.*)$// ) ? $1 : q{};
-    my $table_name_ur = $qt ? join('.', $table_name, $fql_tbl_name)
-        : $fql_tbl_name ? join('.', $table_name, $fql_tbl_name)
-        : $table_name;
+    my $table_name_qt = $generator->quote($table_name);
 
 # print STDERR "$table_name table_name\n";
     my ( @comments, @field_defs, @sequence_defs, @constraint_defs, @fks );
 
-    push @comments, "--\n-- Table: $table_name_ur\n--\n" unless $no_comments;
+    push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
     if ( $table->comments and !$no_comments ){
         my $c = "-- Comments: \n-- ";
@@ -316,12 +319,12 @@ sub create_table
     #
     my %field_name_scope;
     for my $field ( $table->get_fields ) {
-        push @field_defs, create_field($field, { quote_table_names => $qt,
-                                                 quote_field_names => $qf,
-                                                 table_name => $table_name_ur,
-                                                 postgres_version => $postgres_version,
-                                                 type_defs => $type_defs,
-                                                 constraint_defs => \@constraint_defs,});
+        push @field_defs, create_field($field, {
+            generator => $generator,
+            postgres_version => $postgres_version,
+            type_defs => $type_defs,
+            constraint_defs => \@constraint_defs,
+        });
     }
 
     #
@@ -330,12 +333,9 @@ sub create_table
     my @index_defs = ();
  #   my $idx_name_default;
     for my $index ( $table->get_indices ) {
-        my ($idef, $constraints) = create_index($index,
-                                              {
-                                                  quote_field_names => $qf,
-                                                  quote_table_names => $qt,
-                                                  table_name => $table_name,
-                                              });
+        my ($idef, $constraints) = create_index($index, {
+            generator => $generator,
+        });
         $idef and push @index_defs, $idef;
         push @constraint_defs, @$constraints;
     }
@@ -345,12 +345,9 @@ sub create_table
     #
     my $c_name_default;
     for my $c ( $table->get_constraints ) {
-        my ($cdefs, $fks) = create_constraint($c,
-                                              {
-                                                  quote_field_names => $qf,
-                                                  quote_table_names => $qt,
-                                                  table_name => $table_name,
-                                              });
+        my ($cdefs, $fks) = create_constraint($c, {
+            generator => $generator,
+        });
         push @constraint_defs, @$cdefs;
         push @fks, @$fks;
     }
@@ -366,12 +363,12 @@ sub create_table
     $create_statement = join("\n", @comments);
     if ($add_drop_table) {
         if ($postgres_version >= 8.002) {
-            $create_statement .= 'DROP TABLE IF EXISTS ' . $generator->quote($table_name_ur) . " CASCADE;\n";
+            $create_statement .= "DROP TABLE IF EXISTS $table_name_qt CASCADE;\n";
         } else {
-            $create_statement .= 'DROP TABLE ' . $generator->quote($table_name_ur) . " CASCADE;\n";
+            $create_statement .= "DROP TABLE $table_name_qt CASCADE;\n";
         }
     }
-    $create_statement .= "CREATE ${temporary}TABLE " . $generator->quote($table_name_ur) . " (\n" .
+    $create_statement .= "CREATE ${temporary}TABLE $table_name_qt (\n" .
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n)"
                             ;
@@ -395,9 +392,7 @@ sub create_table
 
 sub create_view {
     my ($view, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my $postgres_version = $options->{postgres_version} || 0;
     my $add_drop_view = $options->{add_drop_view};
 
@@ -444,9 +439,7 @@ sub create_view {
     {
         my ($field, $options) = @_;
 
-        my $qt = $options->{quote_table_names} || '';
-        my $qf = $options->{quote_field_names} || '';
-        $generator->quote_chars([$qt]);
+        my $generator = _generator($options);
         my $table_name = $field->table->name;
         my $constraint_defs = $options->{constraint_defs} || [];
         my $postgres_version = $options->{postgres_version} || 0;
@@ -467,8 +460,7 @@ sub create_view {
         my $data_type = lc $field->data_type;
         my %extra     = $field->extra;
         my $list      = $extra{'list'} || [];
-        # todo deal with embedded quotes
-        my $commalist = join( ', ', map { qq['$_'] } @$list );
+        my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
 
         if ($postgres_version >= 8.003 && $field->data_type eq 'enum') {
             my $type_name = $extra{'custom_type_name'} || $field->table->name . '_' . $field->name . '_type';
@@ -487,7 +479,7 @@ sub create_view {
         #
         # Default value
         #
-        SQL::Translator::Producer->_apply_default_value(
+        __PACKAGE__->_apply_default_value(
           $field,
           \$field_def,
           [
@@ -507,12 +499,9 @@ sub create_view {
       #
       if(is_geometry($field)){
          foreach ( create_geometry_constraints($field) ) {
-            my ($cdefs, $fks) = create_constraint($_,
-                                         {
-                                            quote_field_names => $qf,
-                                            quote_table_names => $qt,
-                                            table_name => $table_name,
-                                         });
+            my ($cdefs, $fks) = create_constraint($_, {
+                generator => $generator,
+            });
             push @$constraint_defs, @$cdefs;
             push @$fks, @$fks;
          }
@@ -553,9 +542,7 @@ sub create_index
 {
     my ($index, $options) = @_;
 
-    my $qt = $options->{quote_table_names} ||'';
-    my $qf = $options->{quote_field_names} ||'';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my $table_name = $index->table->name;
 
     my ($index_def, @constraint_defs);
@@ -593,9 +580,7 @@ sub create_constraint
 {
     my ($c, $options) = @_;
 
-    my $qf = $options->{quote_field_names} ||'';
-    my $qt = $options->{quote_table_names} ||'';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my $table_name = $c->table->name;
     my (@constraint_defs, @fks);
 
@@ -812,8 +797,7 @@ sub alter_field
     if(ref $default_value eq "SCALAR" ) {
         $default_value = $$default_value;
     } elsif( defined $default_value && $to_dt =~ /^(character|text)/xsmi ) {
-        $default_value =~ s/'/''/xsmg;
-        $default_value = q(') . $default_value . q(');
+        $default_value = __PACKAGE__->_quote_string($default_value);
     }
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s',
@@ -857,9 +841,7 @@ sub drop_field
 {
     my ($old_field, $options) = @_;
 
-    my $qt = $options->{quote_table_names} ||'';
-    my $qf = $options->{quote_field_names} ||'';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
 
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $generator->quote($old_field->table->name),
@@ -915,8 +897,7 @@ sub drop_geometry_constraints{
 
 sub alter_table {
     my ($to_table, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my $out = sprintf('ALTER TABLE %s %s',
                       $generator->quote($to_table->name),
                       $options->{alter_table_action});
@@ -926,8 +907,7 @@ sub alter_table {
 
 sub rename_table {
     my ($old_table, $new_table, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     $options->{alter_table_action} = "RENAME TO " . $generator->quote($new_table);
 
    my @geometry_changes;
@@ -941,13 +921,9 @@ sub rename_table {
 
 sub alter_create_index {
     my ($index, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my ($idef, $constraints) = create_index($index, {
-        quote_field_names => $qf,
-        quote_table_names => $qt,
-        table_name => $index->table->name,
+        generator => $generator,
     });
     return $index->type eq NORMAL ? $idef
         : sprintf('ALTER TABLE %s ADD %s',
@@ -964,9 +940,7 @@ sub alter_drop_index {
 
 sub alter_drop_constraint {
     my ($c, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    my $qc = $options->{quote_field_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
 
     # attention: Postgres  has a very special naming structure for naming
     # foreign keys and primary keys.  It names them using the name of the
@@ -974,26 +948,25 @@ sub alter_drop_constraint {
     my $c_name;
     if( $c->name ) {
         # Already has a name, just quote it
-        $c_name = $qc . $c->name . $qc;
+        $c_name = $generator->quote($c->name);
     } elsif ( $c->type eq FOREIGN_KEY ) {
         # Doesn't have a name, and is foreign key, append '_fkey'
-        $c_name = $qc . $c->table->name . '_' .
-                    ($c->fields)[0] . '_fkey' . $qc;
+        $c_name = $generator->quote($c->table->name . '_' .
+                                    ($c->fields)[0] . '_fkey');
     } elsif ( $c->type eq PRIMARY_KEY ) {
         # Doesn't have a name, and is primary key, append '_pkey'
-        $c_name = $qc . $c->table->name . '_pkey' . $qc;
+        $c_name = $generator->quote($c->table->name . '_pkey');
     }
 
     return sprintf(
         'ALTER TABLE %s DROP CONSTRAINT %s',
-        $qt . $c->table->name . $qt, $c_name
+        $generator->quote($c->table->name), $c_name
     );
 }
 
 sub alter_create_constraint {
     my ($index, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my ($defs, $fks) = create_constraint(@_);
 
     # return if there are no constraint definitions so we don't run
@@ -1009,8 +982,7 @@ sub alter_create_constraint {
 
 sub drop_table {
     my ($table, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    $generator->quote_chars([$qt]);
+    my $generator = _generator($options);
     my $out = "DROP TABLE " . $generator->quote($table) . " CASCADE";
 
     my @geometry_drops = map { drop_geometry_column($_); } grep { is_geometry($_) } $table->get_fields;
@@ -1021,8 +993,6 @@ sub drop_table {
 
 sub batch_alter_table {
   my ( $table, $diff_hash, $options ) = @_;
-  my $qt = $options->{quote_table_names} || '';
-  $generator->quote_chars([$qt]);
 
   # as long as we're not renaming the table we don't need to be here
   if ( @{$diff_hash->{rename_table}} == 0 ) {

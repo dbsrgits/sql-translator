@@ -90,11 +90,14 @@ $DEBUG   = 0 unless defined $DEBUG;
 #   http://dev.mysql.com/doc/refman/5.0/en/identifiers.html
 my $DEFAULT_MAX_ID_LENGTH = 64;
 
+use base qw(SQL::Translator::Producer);
 use Data::Dumper;
 use SQL::Translator::Schema::Constants;
+use SQL::Translator::Generator::DDL::MySQL;
 use SQL::Translator::Utils qw(debug header_comment
     truncate_id_uniquely parse_mysql_version
     batch_alter_table_statements
+    normalize_quote_options
 );
 
 #
@@ -245,6 +248,20 @@ sub preprocess_schema {
     }
 }
 
+{
+    my ($quoting_generator, $nonquoting_generator);
+    sub _generator {
+        my $options = shift;
+        return $options->{generator} if exists $options->{generator};
+
+        return normalize_quote_options($options)
+            ? $quoting_generator ||= SQL::Translator::Generator::DDL::MySQL->new()
+            : $nonquoting_generator ||= SQL::Translator::Generator::DDL::MySQL->new(
+                quote_chars => [],
+            );
+    }
+}
+
 sub produce {
     my $translator     = shift;
     local $DEBUG       = $translator->debug;
@@ -257,9 +274,7 @@ sub produce {
     my $mysql_version  = parse_mysql_version ($producer_args->{mysql_version}, 'perl') || 0;
     my $max_id_length  = $producer_args->{mysql_max_id_length} || $DEFAULT_MAX_ID_LENGTH;
 
-    my ($qt, $qf, $qc) = ('','', '');
-    $qt = '`' if $translator->quote_table_names;
-    $qf = '`' if $translator->quote_field_names;
+    my $generator = _generator({ quote_identifiers => $translator->quote_identifiers });
 
     debug("PKG: Beginning production\n");
     %used_names = ();
@@ -281,8 +296,7 @@ sub produce {
                                        { add_drop_table    => $add_drop_table,
                                          show_warnings     => $show_warnings,
                                          no_comments       => $no_comments,
-                                         quote_table_names => $qt,
-                                         quote_field_names => $qf,
+                                         generator         => $generator,
                                          max_id_length     => $max_id_length,
                                          mysql_version     => $mysql_version
                                          });
@@ -294,8 +308,7 @@ sub produce {
                                        { add_replace_view  => $add_drop_table,
                                          show_warnings     => $show_warnings,
                                          no_comments       => $no_comments,
-                                         quote_table_names => $qt,
-                                         quote_field_names => $qf,
+                                         generator         => $generator,
                                          max_id_length     => $max_id_length,
                                          mysql_version     => $mysql_version
                                          });
@@ -308,8 +321,7 @@ sub produce {
                                          { add_drop_trigger  => $add_drop_table,
                                            show_warnings        => $show_warnings,
                                            no_comments          => $no_comments,
-                                           quote_table_names    => $qt,
-                                           quote_field_names    => $qf,
+                                           generator            => $generator,
                                            max_id_length        => $max_id_length,
                                            mysql_version        => $mysql_version
                                            });
@@ -325,8 +337,7 @@ sub produce {
 
 sub create_trigger {
     my ($trigger, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
+    my $generator = _generator($options);
 
     my $trigger_name = $trigger->name;
     debug("PKG: Looking at trigger '${trigger_name}'\n");
@@ -347,29 +358,31 @@ sub create_trigger {
         my $action = $trigger->action;
         $action .= ";" unless $action =~ /;\s*\z/;
 
-        push @statements, "DROP TRIGGER IF EXISTS ${qt}${name}${qt}" if $options->{add_drop_trigger};
+        push @statements, "DROP TRIGGER IF EXISTS " . $generator->quote($name) if $options->{add_drop_trigger};
         push @statements, sprintf(
-            "CREATE TRIGGER ${qt}%s${qt} %s %s ON ${qt}%s${qt}\n  FOR EACH ROW BEGIN %s END",
-            $name, $trigger->perform_action_when, $event, $trigger->on_table, $action,
+            "CREATE TRIGGER %s %s %s ON %s\n  FOR EACH ROW BEGIN %s END",
+            $generator->quote($name), $trigger->perform_action_when, $event,
+            $generator->quote($trigger->on_table), $action,
         );
 
     }
     # Tack the comment onto the first statement
-    $statements[0] = "--\n-- Trigger ${qt}${trigger_name}${qt}\n--\n" . $statements[0] unless $options->{no_comments};
+    $statements[0] = "--\n-- Trigger " . $generator->quote($trigger_name) . "\n--\n" . $statements[0] unless $options->{no_comments};
     return @statements;
 }
 
 sub create_view {
     my ($view, $options) = @_;
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
+    my $generator = _generator($options);
 
     my $view_name = $view->name;
+    my $view_name_qt = $generator->quote($view_name);
+
     debug("PKG: Looking at view '${view_name}'\n");
 
     # Header.  Should this look like what mysqldump produces?
     my $create = '';
-    $create .= "--\n-- View: ${qt}${view_name}${qt}\n--\n" unless $options->{no_comments};
+    $create .= "--\n-- View: $view_name_qt\n--\n" unless $options->{no_comments};
     $create .= 'CREATE';
     $create .= ' OR REPLACE' if $options->{add_replace_view};
     $create .= "\n";
@@ -389,10 +402,10 @@ sub create_view {
     }
 
     #Header, cont.
-    $create .= "  VIEW ${qt}${view_name}${qt}";
+    $create .= "  VIEW $view_name_qt";
 
     if( my @fields = $view->fields ){
-      my $list = join ', ', map { "${qf}${_}${qf}"} @fields;
+      my $list = join ', ', map { $generator->quote($_) } @fields;
       $create .= " ( ${list} )";
     }
     if( my $sql = $view->sql ){
@@ -407,11 +420,9 @@ sub create_view {
 sub create_table
 {
     my ($table, $options) = @_;
+    my $generator = _generator($options);
 
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
-
-    my $table_name = quote_table_name($table->name, $qt);
+    my $table_name = $generator->quote($table->name);
     debug("PKG: Looking at table '$table_name'\n");
 
     #
@@ -451,7 +462,7 @@ sub create_table
         push @constraint_defs, $constr if($constr);
 
          unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY ) {
-             push @index_defs, "INDEX ($qf" . ($c->fields())[0] . "$qf)";
+             push @index_defs, "INDEX (" . $generator->quote(($c->fields())[0]) . ")";
              $indexed_fields{ ($c->fields())[0] } = 1;
          }
     }
@@ -470,21 +481,13 @@ sub create_table
     return $drop ? ($drop,$create) : $create;
 }
 
-sub quote_table_name {
-  my ($table_name, $qt) = @_;
-
-  $table_name =~ s/\./$qt.$qt/g;
-
-  return "$qt$table_name$qt";
-}
-
 sub generate_table_options
 {
   my ($table, $options) = @_;
   my $create;
 
   my $table_type_defined = 0;
-  my $qf               = $options->{quote_field_names} ||= '';
+  my $generator        = _generator($options);
   my $charset          = $table->extra('mysql_charset');
   my $collate          = $table->extra('mysql_collate');
   my $union            = undef;
@@ -499,7 +502,7 @@ sub generate_table_options
       $collate = $value;
       next;
     } elsif (uc $key eq 'UNION') {
-      $union = "($qf". join("$qf, $qf", @$value) ."$qf)";
+      $union = '(' . join(', ', map { $generator->quote($_) } @$value) . ')';
       next;
     }
     $create .= " $key=$value";
@@ -521,19 +524,18 @@ sub create_field
 {
     my ($field, $options) = @_;
 
-    my $qf = $options->{quote_field_names} ||= '';
+    my $generator = _generator($options);
 
     my $field_name = $field->name;
     debug("PKG: Looking at field '$field_name'\n");
-    my $field_def = "$qf$field_name$qf";
+    my $field_def = $generator->quote($field_name);
 
     # data type and size
     my $data_type = $field->data_type;
     my @size      = $field->size;
     my %extra     = $field->extra;
     my $list      = $extra{'list'} || [];
-    # \todo deal with embedded quotes
-    my $commalist = join( ', ', map { qq['$_'] } @$list );
+    my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
     my $charset = $extra{'mysql_charset'};
     my $collate = $extra{'mysql_collate'};
 
@@ -625,7 +627,7 @@ sub create_field
     }
 
     # Default?
-    SQL::Translator::Producer->_apply_default_value(
+    __PACKAGE__->_apply_default_value(
       $field,
       \$field_def,
       [
@@ -634,7 +636,8 @@ sub create_field
     );
 
     if ( my $comments = $field->comments ) {
-        $field_def .= qq[ comment '$comments'];
+        $comments = __PACKAGE__->_quote_string($comments);
+        $field_def .= qq[ comment $comments];
     }
 
     # auto_increment?
@@ -643,13 +646,18 @@ sub create_field
     return $field_def;
 }
 
+sub _quote_string {
+    my ($self, $string) = @_;
+
+    $string =~ s/([\\'])/$1$1/g;
+    return qq{'$string'};
+}
+
 sub alter_create_index
 {
     my ($index, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
-    my $table_name = quote_table_name($index->table->name, $qt);
+    my $table_name = _generator($options)->quote($index->table->name);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,
@@ -661,20 +669,19 @@ sub alter_create_index
 sub create_index
 {
     my ( $index, $options ) = @_;
-
-    my $qf = $options->{quote_field_names} || '';
+    my $generator = _generator($options);
 
     return join(
         ' ',
         map { $_ || () }
         lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
         $index->name
-        ? $qf . truncate_id_uniquely(
+        ? $generator->quote(truncate_id_uniquely(
                 $index->name,
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
-          ) . $qf
+          ))
         : '',
-        '(' . $qf . join( "$qf, $qf", $index->fields ) . $qf . ')'
+        '(' . join( ', ', map { $generator->quote($_) } $index->fields ) . ')'
     );
 }
 
@@ -682,9 +689,7 @@ sub alter_drop_index
 {
     my ($index, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-    my $qf = $options->{quote_field_names} || '';
-    my $table_name = quote_table_name($index->table->name, $qt);
+    my $table_name = _generator($options)->quote($index->table->name);
 
     return join( ' ',
                  'ALTER TABLE',
@@ -700,9 +705,8 @@ sub alter_drop_constraint
 {
     my ($c, $options) = @_;
 
-    my $qt      = $options->{quote_table_names} || '';
-    my $qc      = $options->{quote_field_names} || '';
-    my $table_name = quote_table_name($c->table->name, $qt);
+    my $generator = _generator($options);
+    my $table_name = $generator->quote($c->table->name);
 
     my @out = ('ALTER','TABLE',$table_name,'DROP');
     if($c->type eq PRIMARY_KEY) {
@@ -710,7 +714,7 @@ sub alter_drop_constraint
     }
     else {
         push @out, ($c->type eq FOREIGN_KEY ? $c->type : "INDEX"),
-            $qc . $c->name . $qc;
+            $generator->quote($c->name);
     }
     return join(' ',@out);
 }
@@ -719,8 +723,7 @@ sub alter_create_constraint
 {
     my ($index, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-    my $table_name = quote_table_name($index->table->name, $qt);
+    my $table_name = _generator($options)->quote($index->table->name);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,
@@ -732,29 +735,25 @@ sub create_constraint
 {
     my ($c, $options) = @_;
 
-    my $qf      = $options->{quote_field_names} || '';
-    my $qt      = $options->{quote_table_names} || '';
+    my $generator       = _generator($options);
     my $leave_name      = $options->{leave_name} || undef;
 
-    my $reference_table_name = quote_table_name($c->reference_table, $qt);
+    my $reference_table_name = $generator->quote($c->reference_table);
 
     my @fields = $c->fields or return;
 
     if ( $c->type eq PRIMARY_KEY ) {
-        return 'PRIMARY KEY (' . $qf . join("$qf, $qf", @fields). $qf . ')';
+        return 'PRIMARY KEY (' . join(", ", map { $generator->quote($_) } @fields) . ')';
     }
     elsif ( $c->type eq UNIQUE ) {
         return sprintf 'UNIQUE %s(%s)',
           ((defined $c->name && $c->name)
-            ? join ('',
-                $qf,
-                truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ),
-                $qf,
-                ' '
-              )
+            ? $generator->quote(
+                  truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH ),
+              ) . ' '
             : ''
           ),
-          ( join ', ', map { "${qf}${_}${qf}" } @fields ),
+          ( join ', ', map { $generator->quote($_) } @fields ),
         ;
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
@@ -766,14 +765,13 @@ sub create_constraint
         my $c_name = truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH );
 
         my $def = join(' ',
-                       map { $_ || () }
                          'CONSTRAINT',
-                         $qf . $c_name . $qf,
+                         ($c_name ? $generator->quote($c_name) : () ),
                          'FOREIGN KEY'
                       );
 
 
-        $def .= ' ('.$qf . join( "$qf, $qf", @fields ) . $qf . ')';
+        $def .= ' ('. join( ', ', map { $generator->quote($_) } @fields ) . ')';
 
         $def .= ' REFERENCES ' . $reference_table_name;
 
@@ -790,7 +788,7 @@ sub create_constraint
         }
 
         if ( @rfields ) {
-            $def .= ' (' . $qf . join( "$qf, $qf", @rfields ) . $qf . ')';
+            $def .= ' (' . join( ', ', map { $generator->quote($_) } @rfields ) . ')';
         }
         else {
             warn "FK constraint on " . $table->name . '.' .
@@ -820,10 +818,8 @@ sub alter_table
 {
     my ($to_table, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-
     my $table_options = generate_table_options($to_table, $options) || '';
-    my $table_name = quote_table_name($to_table->name, $qt);
+    my $table_name = _generator($options)->quote($to_table->name);
     my $out = sprintf('ALTER TABLE %s%s',
                       $table_name,
                       $table_options);
@@ -836,13 +832,12 @@ sub alter_field
 {
     my ($from_field, $to_field, $options) = @_;
 
-    my $qf = $options->{quote_field_names} || '';
-    my $qt = $options->{quote_table_names} || '';
-    my $table_name = quote_table_name($to_field->table->name, $qt);
+    my $generator  = _generator($options);
+    my $table_name = $generator->quote($to_field->table->name);
 
     my $out = sprintf('ALTER TABLE %s CHANGE COLUMN %s %s',
                       $table_name,
-                      $qf . $from_field->name . $qf,
+                      $generator->quote($from_field->name),
                       create_field($to_field, $options));
 
     return $out;
@@ -852,8 +847,7 @@ sub add_field
 {
     my ($new_field, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-    my $table_name = quote_table_name($new_field->table->name, $qt);
+    my $table_name = _generator($options)->quote($new_field->table->name);
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
                       $table_name,
@@ -867,13 +861,12 @@ sub drop_field
 {
     my ($old_field, $options) = @_;
 
-    my $qf = $options->{quote_field_names} || '';
-    my $qt = $options->{quote_table_names} || '';
-    my $table_name = quote_table_name($old_field->table->name, $qt);
+    my $generator  = _generator($options);
+    my $table_name = $generator->quote($old_field->table->name);
 
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $table_name,
-                      $qf . $old_field->name . $qf);
+                      $generator->quote($old_field->name));
 
     return $out;
 
@@ -914,11 +907,11 @@ sub batch_alter_table {
   my @stmts = batch_alter_table_statements($diff_hash, $options);
 
   #quote
-  my $qt = $options->{quote_table_names} || '';
+  my $generator = _generator($options);
 
   # rename_table makes things a bit more complex
   my $renamed_from = "";
-  $renamed_from = quote_table_name($diff_hash->{rename_table}[0][0]->name, $qt)
+  $renamed_from = $generator->quote($diff_hash->{rename_table}[0][0]->name)
     if $diff_hash->{rename_table} && @{$diff_hash->{rename_table}};
 
   return unless @stmts;
@@ -927,7 +920,7 @@ sub batch_alter_table {
 
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
-  my $table_name = quote_table_name($table->name, $qt);
+  my $table_name = $generator->quote($table->name);
 
   my $re = $renamed_from
          ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$renamed_from\E) /
@@ -945,12 +938,10 @@ sub batch_alter_table {
 sub drop_table {
   my ($table, $options) = @_;
 
-    my $qt = $options->{quote_table_names} || '';
-
   # Drop (foreign key) constraints so table drops cleanly
   my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
 
-  my $table_name = quote_table_name($table, $qt);
+  my $table_name = _generator($options)->quote($table);
   return (@sql, "DROP TABLE $table");
 
 }
@@ -958,9 +949,9 @@ sub drop_table {
 sub rename_table {
   my ($old_table, $new_table, $options) = @_;
 
-  my $qt = $options->{quote_table_names} || '';
-  my $old_table_name = quote_table_name($old_table, $qt);
-  my $new_table_name = quote_table_name($new_table, $qt);
+  my $generator      = _generator($options);
+  my $old_table_name = $generator->quote($old_table);
+  my $new_table_name = $generator->quote($new_table);
 
   return "ALTER TABLE $old_table_name RENAME TO $new_table_name";
 }

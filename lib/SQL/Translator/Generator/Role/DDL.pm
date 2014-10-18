@@ -20,6 +20,7 @@ requires '_build_numeric_types';
 requires '_build_unquoted_defaults';
 requires '_build_sizeless_types';
 requires 'quote';
+requires 'quote_string';
 
 has type_map => (
    is => 'lazy',
@@ -81,7 +82,7 @@ sub field_default {
   if (ref $default) {
       $default = $$default;
   } elsif (!($self->numeric_types->{lc($field->data_type)} && Scalar::Util::looks_like_number ($default))) {
-     $default = "'$default'";
+      $default = $self->quote_string($default);
   }
   return ( "DEFAULT $default" )
 }

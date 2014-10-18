@@ -10,6 +10,7 @@ my $create = q|
 CREATE TABLE random (
     id int auto_increment PRIMARY KEY,
     foo varchar(255) not null default '',
+    bar enum('wibble','wo''bble'),
     updated timestamp
 );
 CREATE UNIQUE INDEX random_foo_update ON random(foo,updated);
@@ -18,7 +19,7 @@ CREATE INDEX random_foo ON random(foo);
 |;
 
 BEGIN {
-    maybe_plan(3,
+    maybe_plan(undef,
         'SQL::Translator::Parser::MySQL',
         'SQL::Translator::Producer::Oracle');
 }
@@ -35,3 +36,6 @@ my $output = $tr->translate(\$create);
 ok( $output, 'Translate MySQL to Oracle' );
 ok( $output =~ /CREATE INDEX random_foo /, 'Normal index definition translated.');
 ok( $output =~ /CREATE UNIQUE INDEX random_foo_update /, 'Unique index definition translated.');
+ok( $output =~ /\QCHECK (bar IN ('wibble', 'wo''bble'))\E/, 'Enum translated and escaped.');
+
+done_testing;
