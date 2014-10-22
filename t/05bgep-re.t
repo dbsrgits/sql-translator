@@ -51,7 +51,7 @@ SKIP: {
                                 SUFFIX => '.xml',
                                 DIR => tmpdir);
     print $fh $data;
-    $fh->close;
+    close $fh;
 
     ok(XML::Parser->new->parsefile($fname),
         "Successfully parsed output");
