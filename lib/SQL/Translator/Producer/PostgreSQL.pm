@@ -55,9 +55,8 @@ BEGIN {
     # MySQL types
     #
     bigint     => 'bigint',
-    double     => 'numeric',
+    double     => 'double precision',
     decimal    => 'numeric',
-    float      => 'numeric',
     int        => 'integer',
     mediumint  => 'integer',
     smallint   => 'smallint',
@@ -98,11 +97,9 @@ BEGIN {
     varchar    => 'character varying',
     datetime   => 'timestamp',
     text       => 'text',
-    real       => 'numeric',
     comment    => 'text',
     bit        => 'bit',
     tinyint    => 'smallint',
-    float      => 'numeric',
 );
 
  $max_id_length = 62;
@@ -718,7 +715,7 @@ sub convert_datatype
 
     my $type_with_size = join('|',
         'bit', 'varbit', 'character', 'bit varying', 'character varying',
-        'time', 'timestamp', 'interval', 'numeric'
+        'time', 'timestamp', 'interval', 'numeric', 'float'
     );
 
     if ( $data_type !~ /$type_with_size/ ) {
