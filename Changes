@@ -12,6 +12,7 @@ Changes for SQL::Translator
  * Fix erroneous PostgreSQL floating point type translations (RT#99725)
  * Remove executable bit from Parser/JSON.pm (RT#100532)
  * Update the Free Software Foundation's address (RT#100531)
+ * Provide default index names for SQLite (GH#45)
 
 0.11020 2014-09-02
 

@@ -164,4 +164,32 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
    is_deeply($result, $expected, 'correctly unquoted excempted DEFAULTs');
 }
 
+{
+    my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => ['foo'] );
+
+    {
+        my $index = $table->add_index(name => 'myindex', fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::SQLite::create_index($index);
+        is($def, 'CREATE INDEX "myindex" ON "foobar" ("foo")', 'index created');
+    }
+
+    {
+        my $index = $table->add_index(fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::SQLite::create_index($index);
+        is($def, 'CREATE INDEX "foobar_idx" ON "foobar" ("foo")', 'index created');
+    }
+
+    {
+        my $constr = $table->add_constraint(name => 'constr', fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::SQLite::create_constraint($constr);
+        is($def, 'CREATE UNIQUE INDEX "constr" ON "foobar" ("foo")', 'constraint created');
+    }
+
+    {
+        my $constr = $table->add_constraint(fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::SQLite::create_constraint($constr);
+        is($def, 'CREATE UNIQUE INDEX "foobar_idx02" ON "foobar" ("foo")', 'constraint created');
+    }
+}
+
 done_testing;
