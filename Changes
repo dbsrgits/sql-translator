@@ -10,6 +10,7 @@ Changes for SQL::Translator
  * Add support for ALTER TABLE ... ADD CONSTRAINT to Oracle parser
  * Add trigger support to Oracle parser (RT#62927)
  * Fix erroneous PostgreSQL floating point type translations (RT#99725)
+ * Remove executable bit from Parser/JSON.pm (RT#100532)
 
 0.11020 2014-09-02
 
