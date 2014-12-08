@@ -164,4 +164,23 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
    is_deeply($result, $expected, 'correctly unquoted excempted DEFAULTs');
 }
 
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'some_table',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       is_auto_increment => 1,
+       is_nullable => 0,
+       extra => {
+           autoinc_method => 'sequence',
+       },
+   );
+   my $expected = [ qq<CREATE TABLE "some_table" (\n  "id" integer AUTOINCREMENT NOT NULL\n)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly built monotonicly autoincremened PK');
+
+}
+
 done_testing;
