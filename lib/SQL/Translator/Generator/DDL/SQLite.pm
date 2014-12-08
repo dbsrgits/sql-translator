@@ -75,6 +75,22 @@ sub _ipk {
    ( $field->data_type =~ /^number?$/i && $field->size !~ /,/ ) )
 }
 
+sub field_autoinc {
+    my ($self, $field) = @_;
+
+    return (
+      (
+        ($field->extra->{auto_increment_type}||'') eq 'monotonic'
+          and
+        $self->_ipk($field)
+          and
+        $field->is_auto_increment
+      )
+      ? 'AUTOINCREMENT'
+      : ''
+    );
+}
+
 sub field {
    my ($self, $field) = @_;
 
@@ -86,6 +102,7 @@ sub field {
          ? ( 'INTEGER PRIMARY KEY' )
          : ( $self->field_type($field) )
       ),
+      ( $self->field_autoinc($field) || () ),
       $self->field_nullable($field),
       $self->field_default($field, {
          NULL => 1,

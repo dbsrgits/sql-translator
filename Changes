@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Add support for monotonically increasing SQLite autoincs (GH#47)
+
 0.11021 2015-01-29
 
  * Fix Oracle producer generating an unnecessary / at the end in case there

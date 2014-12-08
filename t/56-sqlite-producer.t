@@ -165,6 +165,25 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
 }
 
 {
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'some_table',
+   );
+   $table->add_field(
+       name => 'id',
+       data_type => 'integer',
+       is_auto_increment => 1,
+       is_nullable => 0,
+       extra => {
+           auto_increment_type => 'monotonic',
+       },
+   );
+   $table->primary_key('id');
+   my $expected = [ qq<CREATE TABLE "some_table" (\n  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n)>];
+   my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
+   is_deeply($result, $expected, 'correctly built monotonicly autoincremened PK');
+}
+
+{
     my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => ['foo'] );
 
     {
