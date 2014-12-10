@@ -85,6 +85,11 @@ BEGIN {
     # Sybase types
     #
     comment    => 'text',
+
+    #
+    # MS Access types
+    #
+    memo       => 'text',
 );
 
  $max_id_length = 62;
