@@ -54,18 +54,15 @@ BEGIN {
     #
     # MySQL types
     #
-    bigint     => 'bigint',
     double     => 'double precision',
     decimal    => 'numeric',
     int        => 'integer',
     mediumint  => 'integer',
-    smallint   => 'smallint',
     tinyint    => 'smallint',
     char       => 'character',
     varchar    => 'character varying',
     longtext   => 'text',
     mediumtext => 'text',
-    text       => 'text',
     tinytext   => 'text',
     tinyblob   => 'bytea',
     blob       => 'bytea',
@@ -73,33 +70,21 @@ BEGIN {
     longblob   => 'bytea',
     enum       => 'character varying',
     set        => 'character varying',
-    date       => 'date',
     datetime   => 'timestamp',
-    time       => 'time',
-    timestamp  => 'timestamp',
     year       => 'date',
 
     #
     # Oracle types
     #
     number     => 'integer',
-    char       => 'character',
     varchar2   => 'character varying',
     long       => 'text',
     CLOB       => 'bytea',
-    date       => 'date',
 
     #
     # Sybase types
     #
-    int        => 'integer',
-    money      => 'money',
-    varchar    => 'character varying',
-    datetime   => 'timestamp',
-    text       => 'text',
     comment    => 'text',
-    bit        => 'bit',
-    tinyint    => 'smallint',
 );
 
  $max_id_length = 62;
