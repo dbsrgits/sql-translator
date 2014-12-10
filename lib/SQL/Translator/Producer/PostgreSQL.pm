@@ -79,7 +79,7 @@ BEGIN {
     number     => 'integer',
     varchar2   => 'character varying',
     long       => 'text',
-    CLOB       => 'bytea',
+    clob       => 'text',
 
     #
     # Sybase types
@@ -672,8 +672,8 @@ sub convert_datatype
         undef @size;
     }
     else {
-        $data_type  = defined $translate{ $data_type } ?
-            $translate{ $data_type } :
+        $data_type  = defined $translate{ lc $data_type } ?
+            $translate{ lc $data_type } :
             $data_type;
     }
 
