@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(73,
+    maybe_plan(75,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -799,4 +799,47 @@ EOV
     my $options = {quote_table_names => '`'};
     is(SQL::Translator::Producer::MySQL::alter_drop_constraint($constraint,$options),
        'ALTER TABLE `table` DROP PRIMARY KEY','valid drop primary key');
+}
+
+{
+    my $schema = SQL::Translator::Schema->new();
+    my $table = $schema->add_table( name => 'foo', fields => ['bar'] );
+
+    {
+        my $trigger = $schema->add_trigger(
+            name                => 'mytrigger',
+            perform_action_when => 'before',
+            database_events     => 'update',
+            on_table            => 'foo',
+            fields              => ['bar'],
+            action              => 'BEGIN baz(); END'
+        );
+        my ($def) = SQL::Translator::Producer::MySQL::create_trigger($trigger);
+        my $expected
+          = "--\n"
+          . "-- Trigger mytrigger\n"
+          . "--\n"
+          . "CREATE TRIGGER mytrigger before update ON foo\n"
+          . "  FOR EACH ROW BEGIN baz(); END";
+        is($def, $expected, 'trigger created');
+    }
+
+    {
+        my $trigger = $schema->add_trigger(
+            name                => 'mytrigger2',
+            perform_action_when => 'after',
+            database_events     => ['insert'],
+            on_table            => 'foo',
+            fields              => ['bar'],
+            action              => 'baz()'
+        );
+        my ($def) = SQL::Translator::Producer::MySQL::create_trigger($trigger);
+        my $expected
+          = "--\n"
+          . "-- Trigger mytrigger2\n"
+          . "--\n"
+          . "CREATE TRIGGER mytrigger2 after insert ON foo\n"
+          . "  FOR EACH ROW BEGIN baz(); END";
+        is($def, $expected, 'trigger created');
+    }
 }

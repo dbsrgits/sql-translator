@@ -2,6 +2,7 @@ Changes for SQL::Translator
 
  * Add support for monotonically increasing SQLite autoincs (GH#47)
  * Fix forgotten quoting in the MySQL DROP TABLE diff producer (GH#50)
+ * Improve add_trigger consistency between producers (GH#48)
  * Declare dependencies in deterministic order (RT#102859)
  * Multiple speedups of naive internal debugging mechanism (GH#54)
  * Remove dependency on List::MoreUtils ( http://is.gd/lmu_cac_debacle )

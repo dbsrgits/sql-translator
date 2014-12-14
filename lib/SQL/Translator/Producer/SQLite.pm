@@ -341,7 +341,9 @@ sub create_trigger {
     $DB::single = 1;
     my $action = "";
     if (not ref $trigger->action) {
-      $action .= "BEGIN " . $trigger->action . " END";
+      $action = $trigger->action;
+      $action = "BEGIN " . $action . " END"
+        unless $action =~ /^ \s* BEGIN [\s\;] .*? [\s\;] END [\s\;]* $/six;
     }
     else {
       $action = $trigger->action->{for_each} . " "

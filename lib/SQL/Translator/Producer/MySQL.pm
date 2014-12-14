@@ -356,11 +356,14 @@ sub create_trigger {
         }
 
         my $action = $trigger->action;
-        $action .= ";" unless $action =~ /;\s*\z/;
+        if($action !~ /^ \s* BEGIN [\s\;] .*? [\s\;] END [\s\;]* $/six) {
+            $action .= ";" unless $action =~ /;\s*\z/;
+            $action = "BEGIN $action END";
+        }
 
         push @statements, "DROP TRIGGER IF EXISTS " . $generator->quote($name) if $options->{add_drop_trigger};
         push @statements, sprintf(
-            "CREATE TRIGGER %s %s %s ON %s\n  FOR EACH ROW BEGIN %s END",
+            "CREATE TRIGGER %s %s %s ON %s\n  FOR EACH ROW %s",
             $generator->quote($name), $trigger->perform_action_when, $event,
             $generator->quote($trigger->on_table), $action,
         );
