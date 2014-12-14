@@ -119,6 +119,12 @@ Created on Fri Aug 15 15:08:18 2003
           <action>update modified2=timestamp();</action>
           <extra hello="aliens" />
       </trigger>
+      <trigger name="`trigger` [with] &quot;quotes&quot;"
+	       database_events="insert"
+	       on_table="`table` [with] &quot;quotes&quot;"
+	       perform_action_when="before" order="1">
+	  <action>select timestamp();</action>
+      </trigger>
   </triggers>
 
   <procedures>

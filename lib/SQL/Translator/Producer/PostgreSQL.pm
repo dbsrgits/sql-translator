@@ -213,6 +213,7 @@ sub produce {
     for my $trigger ( $schema->get_triggers ) {
       push @table_defs, create_trigger( $trigger, {
           add_drop_trigger => $add_drop_table,
+          generator        => $generator,
           no_comments      => $no_comments,
         });
     }
@@ -633,10 +634,11 @@ sub create_constraint
 
 sub create_trigger {
   my ($trigger,$options) = @_;
+  my $generator = _generator($options);
 
   my @statements;
 
-  push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s', $trigger->name )
+  push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s', $generator->quote($trigger->name) )
     if $options->{add_drop_trigger};
 
   my $scope = $trigger->scope || '';
@@ -644,10 +646,10 @@ sub create_trigger {
 
   push @statements, sprintf(
     'CREATE TRIGGER %s %s %s ON %s%s %s',
-    $trigger->name,
+    $generator->quote($trigger->name),
     $trigger->perform_action_when,
     join( ' OR ', @{ $trigger->database_events } ),
-    $trigger->on_table,
+    $generator->quote($trigger->on_table),
     $scope,
     $trigger->action,
   );
