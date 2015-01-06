@@ -14,6 +14,7 @@ Changes for SQL::Translator
  * Update the Free Software Foundation's address (RT#100531)
  * Provide default index names for SQLite (GH#45)
  * Fix SQLite diffing on perl 5.8.1
+ * Fix multi-column indexes in Parser::DBI::PostgreSQL
 
 0.11020 2014-09-02
 
