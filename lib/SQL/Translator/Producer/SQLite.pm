@@ -370,7 +370,7 @@ sub create_trigger {
   return @statements;
 }
 
-sub alter_table { } # Noop
+sub alter_table { () } # Noop
 
 sub add_field {
   my ($field) = @_;
