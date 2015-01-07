@@ -9,6 +9,12 @@ Changes for SQL::Translator
    Oracle (RT#90700, RT#31034)
  * Add support for ALTER TABLE ... ADD CONSTRAINT to Oracle parser
  * Add trigger support to Oracle parser (RT#62927)
+ * Fix erroneous PostgreSQL floating point type translations (RT#99725)
+ * Remove executable bit from Parser/JSON.pm (RT#100532)
+ * Update the Free Software Foundation's address (RT#100531)
+ * Provide default index names for SQLite (GH#45)
+ * Fix SQLite diffing on perl 5.8.1
+ * Fix multi-column indexes in Parser::DBI::PostgreSQL
 
 0.11020 2014-09-02
 

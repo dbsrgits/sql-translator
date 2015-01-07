@@ -47,8 +47,8 @@ my $sql = q[
     create table sqlt_test2 (
         f_id integer NOT NULL,
         f_int smallint,
-        primary key (f_id),
-        f_fk1 integer NOT NULL references sqlt_test1 (f_serial)
+        f_fk1 integer NOT NULL references sqlt_test1 (f_serial),
+        primary key (f_id, f_fk1)
     );
 
     CREATE TABLE sqlt_products_1 (
@@ -159,7 +159,7 @@ is( $t2_f3->data_type, 'integer', 'Field is an integer' );
 is( $t2_f3->is_nullable, 0, 'Field cannot be null' );
 is( $t2_f3->size, 0, 'Size is "0"' );
 is( $t2_f3->default_value, undef, 'Default value is undefined' );
-is( $t2_f3->is_primary_key, 0, 'Field is not PK' );
+is( $t2_f3->is_primary_key, 1, 'Field is PK' );
 is( $t2_f3->is_foreign_key, 1, 'Field is a FK' );
 my $fk_ref1 = $t2_f3->foreign_key_reference;
 isa_ok( $fk_ref1, 'SQL::Translator::Schema::Constraint', 'FK' );

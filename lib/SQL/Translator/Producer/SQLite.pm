@@ -225,7 +225,6 @@ sub create_table
     #
     # Indices
     #
-    my $idx_name_default = 'A';
     for my $index ( $table->get_indices ) {
         push @index_defs, create_index($index);
     }
@@ -233,7 +232,6 @@ sub create_table
     #
     # Constraints
     #
-    my $c_name_default = 'A';
     for my $c ( $table->get_constraints ) {
         if ($c->type eq "FOREIGN KEY") {
             push @field_defs, create_foreignkey($c);
@@ -283,14 +281,13 @@ sub create_index
 {
     my ($index, $options) = @_;
 
-    my $name   = $index->name;
-    $name      = mk_name($name);
+    (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
+    my $name   = mk_name($index->name || "${index_table_name}_idx");
 
     my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
 
     # strip any field size qualifiers as SQLite doesn't like these
     my @fields = map { s/\(\d+\)$//; _generator()->quote($_) } $index->fields;
-    (my $index_table_name = $index->table->name) =~ s/^.+?\.//; # table name may not specify schema
     $index_table_name = _generator()->quote($index_table_name);
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
     my $index_def =
@@ -304,10 +301,9 @@ sub create_constraint
 {
     my ($c, $options) = @_;
 
-    my $name   = $c->name;
-    $name      = mk_name($name);
-    my @fields = map _generator()->quote($_), $c->fields;
     (my $index_table_name = $c->table->name) =~ s/^.+?\.//; # table name may not specify schema
+    my $name   = mk_name($c->name || "${index_table_name}_idx");
+    my @fields = map _generator()->quote($_), $c->fields;
     $index_table_name = _generator()->quote($index_table_name);
     warn "removing schema name from '" . $c->table->name . "' to make '$index_table_name'\n" if $WARN;
 
@@ -374,7 +370,7 @@ sub create_trigger {
   return @statements;
 }
 
-sub alter_table { } # Noop
+sub alter_table { () } # Noop
 
 sub add_field {
   my ($field) = @_;

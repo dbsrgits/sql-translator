@@ -50,10 +50,6 @@ sub parse {
 
     my $index_select  = $dbh->prepare(
       "SELECT oid, c.relname, i.indkey, i.indnatts, i.indisunique,
-              ARRAY(SELECT a.attname
-                  FROM pg_attribute a
-                  WHERE a.attrelid=i.indrelid AND a.attnum = ANY(i.indkey)
-              ) AS attname,
               i.indisprimary, pg_get_indexdef(oid) AS create_string
        FROM pg_class c,pg_index i
        WHERE c.relnamespace IN (SELECT oid FROM pg_namespace WHERE nspname='public') AND c.relkind='i'
@@ -149,13 +145,16 @@ ORDER BY 1;
             next if ($$indexhash{'indkey'} eq ''
                      or !defined($$indexhash{'indkey'}) );
 
+            my @columns = map $column_names[$_ - 1], split /\s+/, $$indexhash{'indkey'};
+
             my $type;
             if      ($$indexhash{'indisprimary'}) {
                 $type = UNIQUE; #PRIMARY_KEY;
 
                 #tell sqlt that this is the primary key:
-                my $col_name=$column_names[($$indexhash{'indkey'} - 1)];
-                $table->get_field($col_name)->{is_primary_key}=1;
+                for my $column (@columns) {
+                    $table->get_field($column)->{is_primary_key}=1;
+                }
 
             } elsif ($$indexhash{'indisunique'}) {
                 $type = UNIQUE;
@@ -163,9 +162,6 @@ ORDER BY 1;
                 $type = NORMAL;
             }
 
-
-            my @column_ids = split /\s+/, $$indexhash{'indkey'};
-            my @columns = split /\s+/, $$indexhash{'attname'};
 
             $table->add_index(
                               name         => $$indexhash{'relname'},

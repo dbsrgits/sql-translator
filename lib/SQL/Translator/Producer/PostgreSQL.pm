@@ -54,19 +54,15 @@ BEGIN {
     #
     # MySQL types
     #
-    bigint     => 'bigint',
-    double     => 'numeric',
+    double     => 'double precision',
     decimal    => 'numeric',
-    float      => 'numeric',
     int        => 'integer',
     mediumint  => 'integer',
-    smallint   => 'smallint',
     tinyint    => 'smallint',
     char       => 'character',
     varchar    => 'character varying',
     longtext   => 'text',
     mediumtext => 'text',
-    text       => 'text',
     tinytext   => 'text',
     tinyblob   => 'bytea',
     blob       => 'bytea',
@@ -74,35 +70,26 @@ BEGIN {
     longblob   => 'bytea',
     enum       => 'character varying',
     set        => 'character varying',
-    date       => 'date',
     datetime   => 'timestamp',
-    time       => 'time',
-    timestamp  => 'timestamp',
     year       => 'date',
 
     #
     # Oracle types
     #
     number     => 'integer',
-    char       => 'character',
     varchar2   => 'character varying',
     long       => 'text',
-    CLOB       => 'bytea',
-    date       => 'date',
+    clob       => 'text',
 
     #
     # Sybase types
     #
-    int        => 'integer',
-    money      => 'money',
-    varchar    => 'character varying',
-    datetime   => 'timestamp',
-    text       => 'text',
-    real       => 'numeric',
     comment    => 'text',
-    bit        => 'bit',
-    tinyint    => 'smallint',
-    float      => 'numeric',
+
+    #
+    # MS Access types
+    #
+    memo       => 'text',
 );
 
  $max_id_length = 62;
@@ -216,6 +203,7 @@ sub produce {
     for my $trigger ( $schema->get_triggers ) {
       push @table_defs, create_trigger( $trigger, {
           add_drop_trigger => $add_drop_table,
+          generator        => $generator,
           no_comments      => $no_comments,
         });
     }
@@ -636,10 +624,11 @@ sub create_constraint
 
 sub create_trigger {
   my ($trigger,$options) = @_;
+  my $generator = _generator($options);
 
   my @statements;
 
-  push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s', $trigger->name )
+  push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s', $generator->quote($trigger->name) )
     if $options->{add_drop_trigger};
 
   my $scope = $trigger->scope || '';
@@ -647,10 +636,10 @@ sub create_trigger {
 
   push @statements, sprintf(
     'CREATE TRIGGER %s %s %s ON %s%s %s',
-    $trigger->name,
+    $generator->quote($trigger->name),
     $trigger->perform_action_when,
     join( ' OR ', @{ $trigger->database_events } ),
-    $trigger->on_table,
+    $generator->quote($trigger->on_table),
     $scope,
     $trigger->action,
   );
@@ -688,8 +677,8 @@ sub convert_datatype
         undef @size;
     }
     else {
-        $data_type  = defined $translate{ $data_type } ?
-            $translate{ $data_type } :
+        $data_type  = defined $translate{ lc $data_type } ?
+            $translate{ lc $data_type } :
             $data_type;
     }
 
@@ -718,7 +707,7 @@ sub convert_datatype
 
     my $type_with_size = join('|',
         'bit', 'varbit', 'character', 'bit varying', 'character varying',
-        'time', 'timestamp', 'interval', 'numeric'
+        'time', 'timestamp', 'interval', 'numeric', 'float'
     );
 
     if ( $data_type !~ /$type_with_size/ ) {
