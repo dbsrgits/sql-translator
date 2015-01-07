@@ -174,7 +174,7 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
        is_auto_increment => 1,
        is_nullable => 0,
        extra => {
-           autoinc_method => 'sequence',
+           auto_increment_method => 'sequence',
        },
    );
    my $expected = [ qq<CREATE TABLE "some_table" (\n  "id" integer AUTOINCREMENT NOT NULL\n)>];

@@ -77,12 +77,12 @@ sub _ipk {
 
 sub field_autoinc {
     my ($self, $field) = @_;
-    my $autoinc_method = $field->extra->{autoinc_method};
+    my $auto_increment_method = $field->extra->{auto_increment_method};
     # use 'old' backward-compatible behaviour, i.e. use
     # monotonic autoincrement only if it is specified in extra
     my $force_autoinc = $field->is_auto_increment
-        && defined($autoinc_method)
-        && $autoinc_method eq 'sequence'
+        && defined($auto_increment_method)
+        && $auto_increment_method eq 'sequence'
         ;
     return ( $force_autoinc ? 'AUTOINCREMENT' : () )
 }
