@@ -15,6 +15,8 @@ Changes for SQL::Translator
  * Provide default index names for SQLite (GH#45)
  * Fix SQLite diffing on perl 5.8.1
  * Fix multi-column indexes in Parser::DBI::PostgreSQL
+ * Fix array data types in Parser::PostgreSQL (GH#49)
+ * Fix multidimensional sizes in Parser::PostgreSQL
 
 0.11020 2014-09-02
 

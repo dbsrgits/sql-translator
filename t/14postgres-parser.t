@@ -8,7 +8,7 @@ use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(154, 'SQL::Translator::Parser::PostgreSQL');
+    maybe_plan(undef, 'SQL::Translator::Parser::PostgreSQL');
     SQL::Translator::Parser::PostgreSQL->import('parse');
 }
 
@@ -31,7 +31,8 @@ my $sql = q{
         f_timestamp timestamp(0) with time zone,
         f_timestamp2 timestamp without time zone,
         f_json json,
-        f_hstore hstore
+        f_hstore hstore,
+        f_numarray numeric(7,2) [ ]
     );
 
     create table t_test2 (
@@ -119,7 +120,7 @@ is( $t1->name, 't_test1', 'Table t_test1 exists' );
 is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 15, '15 fields in t_test1' );
+is( scalar @t1_fields, 16, '16 fields in t_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -244,6 +245,15 @@ is( $f14->default_value, undef, 'Default value is "undef"' );
 is( $f14->is_primary_key, 0, 'Field is not PK' );
 is( $f14->is_foreign_key, 0, 'Field is not FK' );
 
+my $f15 = shift @t1_fields;
+is( $f15->name, 'f_numarray', '15th field is "f_numarray"' );
+is( $f15->data_type, 'numeric[]', 'Field is numeric[]' );
+is( $f15->is_nullable, 1, 'Field can be null' );
+is_deeply( [$f15->size], [7,2] , 'Size is "7,2"' );
+is( $f15->default_value, undef, 'Default value is "undef"' );
+is( $f15->is_primary_key, 0, 'Field is not PK' );
+is( $f15->is_foreign_key, 0, 'Field is not FK' );
+
 # my $fk_ref2 = $f11->foreign_key_reference;
 # isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
 # is( $fk_ref2->reference_table, 't_test2', 'FK is to "t_test2" table' );
@@ -339,3 +349,5 @@ is_deeply( scalar $trigger->database_events, [qw(insert update delete)], "Correc
 is( $trigger->perform_action_when, 'before', "Correct time for trigger");
 is( $trigger->scope, 'row', "Correct scope for trigger");
 is( $trigger->action, 'EXECUTE PROCEDURE foo()', "Correct action for trigger");
+
+done_testing;
