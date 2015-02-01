@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+0.11021 2015-01-29
+
  * Fix Oracle producer generating an unnecessary / at the end in case there
    are no triggers
  * Skip HTML tests if CGI is not installed (RT#98027)
@@ -15,6 +17,8 @@ Changes for SQL::Translator
  * Provide default index names for SQLite (GH#45)
  * Fix SQLite diffing on perl 5.8.1
  * Fix multi-column indexes in Parser::DBI::PostgreSQL
+ * Fix array data types in Parser::PostgreSQL (GH#49)
+ * Fix multidimensional sizes in Parser::PostgreSQL
 
 0.11020 2014-09-02
 

@@ -17,7 +17,7 @@ matrix:
   allow_failures:
     - perl: "blead"
 before_install:
-  - git clone git://github.com/ilmari/perl-travis-helper ~/travis-perl-helpers
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V

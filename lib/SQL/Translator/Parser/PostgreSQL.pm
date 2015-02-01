@@ -505,16 +505,20 @@ double_quote: /"/
 
 index_name : NAME
 
+array_indicator : '[' ']'
+    { $return = $item[1].$item[2] }
 
-data_type : pg_data_type parens_value_list(?)
+data_type : pg_data_type parens_value_list(?) array_indicator(?)
     {
         my $data_type = $item[1];
+
+        $data_type->{type} .= $item[3][0] if $item[3][0];
 
         #
         # We can deduce some sizes from the data type's name.
         #
-        if ( my $size = $item[2][0] ) {
-            $data_type->{'size'} = $size;
+        if ( my @size = @{$item[2]} ) {
+            $data_type->{'size'} = (@size == 1 ? $size[0] : \@size);
         }
 
         $return  = $data_type;
