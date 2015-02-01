@@ -81,6 +81,7 @@ sub field_autoinc {
     # use 'old' backward-compatible behaviour, i.e. use
     # monotonic autoincrement only if it is specified in extra
     my $force_autoinc = $field->is_auto_increment
+        && $self->_ipk($field)
         && defined($auto_increment_method)
         && $auto_increment_method eq 'sequence'
         ;

@@ -177,7 +177,8 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
            auto_increment_method => 'sequence',
        },
    );
-   my $expected = [ qq<CREATE TABLE "some_table" (\n  "id" integer AUTOINCREMENT NOT NULL\n)>];
+   $table->primary_key('id');
+   my $expected = [ qq<CREATE TABLE "some_table" (\n  "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL\n)>];
    my $result =  [SQL::Translator::Producer::SQLite::create_table($table, { no_comments => 1 })];
    is_deeply($result, $expected, 'correctly built monotonicly autoincremened PK');
 }
