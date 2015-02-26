@@ -1,5 +1,8 @@
 package SQL::Translator::Types;
 
+use warnings;
+use strict;
+
 =head1 NAME
 
 SQL::Translator::Types - Type checking functions
@@ -22,8 +25,6 @@ C<isa> type checks.
 Errors are reported using L<SQL::Translator::Utils/throw>.
 
 =cut
-
-use strictures 1;
 
 use SQL::Translator::Utils qw(throw);
 use Scalar::Util qw(blessed);
