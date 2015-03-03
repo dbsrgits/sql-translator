@@ -75,9 +75,21 @@ sub _ipk {
    ( $field->data_type =~ /^number?$/i && $field->size !~ /,/ ) )
 }
 
+sub field_autoinc {
+    my ($self, $field) = @_;
+    my $auto_increment_method = $field->extra->{auto_increment_method};
+    # use 'old' backward-compatible behaviour, i.e. use
+    # monotonic autoincrement only if it is specified in extra
+    my $force_autoinc = $field->is_auto_increment
+        && $self->_ipk($field)
+        && defined($auto_increment_method)
+        && $auto_increment_method eq 'sequence'
+        ;
+    return ( $force_autoinc ? 'AUTOINCREMENT' : () )
+}
+
 sub field {
    my ($self, $field) = @_;
-
 
    return join ' ',
       $self->field_comments($field),
@@ -86,6 +98,7 @@ sub field {
          ? ( 'INTEGER PRIMARY KEY' )
          : ( $self->field_type($field) )
       ),
+      $self->field_autoinc($field),
       $self->field_nullable($field),
       $self->field_default($field, {
          NULL => 1,
