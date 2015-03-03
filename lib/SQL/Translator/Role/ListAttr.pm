@@ -1,5 +1,8 @@
 package SQL::Translator::Role::ListAttr;
 
+use warnings;
+use strict;
+
 =head1 NAME
 
 SQL::Translator::Role::ListAttr - context-sensitive list attributes
@@ -19,7 +22,6 @@ attributes.
 
 =cut
 
-use strictures 1;
 use SQL::Translator::Utils qw(parse_list_arg ex2err);
 use List::MoreUtils qw(uniq);
 use Sub::Quote qw(quote_sub);
