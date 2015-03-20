@@ -60,7 +60,7 @@ readme_from 'lib/SQL/Translator.pm';
 for my $type (qw/requires recommends test_requires/) {
   no strict qw/refs/;
   my $f = \&$type;
-  for my $mod (keys %{$deps->{$type} || {} }) {
+  for my $mod (sort keys %{$deps->{$type} || {} }) {
     $f->($mod, $deps->{$type}{$mod});
   }
 }
