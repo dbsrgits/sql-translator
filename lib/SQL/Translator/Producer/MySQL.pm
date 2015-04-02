@@ -938,12 +938,13 @@ sub batch_alter_table {
 sub drop_table {
   my ($table, $options) = @_;
 
-  # Drop (foreign key) constraints so table drops cleanly
-  my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
-
-  my $table_name = _generator($options)->quote($table);
-  return (@sql, "DROP TABLE $table");
-
+  return (
+    # Drop (foreign key) constraints so table drops cleanly
+    batch_alter_table(
+      $table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options
+    ),
+    'DROP TABLE ' . _generator($options)->quote($table),
+  );
 }
 
 sub rename_table {
