@@ -942,7 +942,7 @@ sub drop_table {
   my @sql = batch_alter_table($table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options);
 
   my $table_name = _generator($options)->quote($table);
-  return (@sql, "DROP TABLE $table");
+  return (@sql, "DROP TABLE $table_name");
 
 }
 
