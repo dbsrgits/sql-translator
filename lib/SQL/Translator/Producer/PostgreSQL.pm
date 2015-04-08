@@ -543,6 +543,23 @@ sub create_index
     my @fields     =  $index->fields;
     return unless @fields;
 
+    my $index_using = '';
+    my $index_where = '';
+    for my $opt ( $index->options ) {
+      if ( ref $opt eq 'HASH' ) {
+        foreach my $key (keys %$opt) {
+          my $value = $opt->{$key};
+          next unless defined $value;
+          if ( $key =~ /using/i ) {
+            $index_using = "USING $value";
+          }
+          elsif ( $key =~ /where/i ) {
+            $index_where = "WHERE $value";
+          }
+        }
+      }
+    }
+
     my $def_start = 'CONSTRAINT ' . $generator->quote($name) . ' ';
     my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ( $generator->quote($_) ) } @fields)) . ')';
     if ( $type eq PRIMARY_KEY ) {
@@ -553,7 +570,10 @@ sub create_index
     }
     elsif ( $type eq NORMAL ) {
         $index_def =
-            'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) . ' ' . $field_names
+            'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) .
+            ($index_using ne '' ? ' ' . $index_using : '') .
+            ' ' . $field_names .
+            ($index_where ne '' ? ' ' . $index_where : '')
             ;
     }
     else {

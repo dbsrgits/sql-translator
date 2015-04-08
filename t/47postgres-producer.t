@@ -627,6 +627,14 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
         is($def->[0], 'CONSTRAINT "constr" UNIQUE ("bar", lower(foo))', 'constraint created w/ quotes');
     }
+
+    {
+        my $index = $table->add_index(name => 'myindex', options => [{using => 'hash'}, {where => 'predicate'}], fields => ['bar', 'lower(foo)']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX myindex on foobar USING hash (bar, lower(foo)) WHERE predicate", 'index using & where created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
+        is($def, 'CREATE INDEX "myindex" on "foobar" USING hash ("bar", lower(foo)) WHERE predicate', 'index using & where created w/ quotes');
+    }
 }
 
 my $drop_view_opts1 = { add_drop_view => 1, no_comments => 1, postgres_version => 8.001 };
