@@ -32,7 +32,10 @@ my $sql = q{
         f_timestamp2 timestamp without time zone,
         f_json json,
         f_hstore hstore,
-        f_numarray numeric(7,2) [ ]
+        f_numarray numeric(7,2) [ ],
+        f_uuid uuid,
+        f_time time(0) with time zone,
+        f_time2 time without time zone
     );
 
     create table t_test2 (
@@ -120,7 +123,7 @@ is( $t1->name, 't_test1', 'Table t_test1 exists' );
 is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 16, '16 fields in t_test1' );
+is( scalar @t1_fields, 19, '19 fields in t_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -253,6 +256,33 @@ is_deeply( [$f15->size], [7,2] , 'Size is "7,2"' );
 is( $f15->default_value, undef, 'Default value is "undef"' );
 is( $f15->is_primary_key, 0, 'Field is not PK' );
 is( $f15->is_foreign_key, 0, 'Field is not FK' );
+
+my $f16 = shift @t1_fields;
+is( $f16->name, 'f_uuid', '16th field is "f_uuid"' );
+is( $f16->data_type, 'uuid', 'Field is a UUID' );
+is( $f16->is_nullable, 1, 'Field can be null' );
+is( $f16->size, 0, 'Size is "0"' );
+is( $f16->default_value, undef, 'Default value is "undef"' );
+is( $f16->is_primary_key, 0, 'Field is not PK' );
+is( $f16->is_foreign_key, 0, 'Field is not FK' );
+
+my $f17 = shift @t1_fields;
+is( $f17->name, 'f_time', '17th field is "f_time"' );
+is( $f17->data_type, 'time with time zone', 'Field is a time with time zone' );
+is( $f17->is_nullable, 1, 'Field can be null' );
+is( $f17->size, 0, 'Size is "0"' );
+is( $f17->default_value, undef, 'Default value is "undef"' );
+is( $f17->is_primary_key, 0, 'Field is not PK' );
+is( $f17->is_foreign_key, 0, 'Field is not FK' );
+
+my $f18 = shift @t1_fields;
+is( $f18->name, 'f_time2', '18th field is "f_time2"' );
+is( $f18->data_type, 'time without time zone', 'Field is a time without time zone' );
+is( $f18->is_nullable, 1, 'Field can be null' );
+is( $f18->size, 0, 'Size is "0"' );
+is( $f18->default_value, undef, 'Default value is "undef"' );
+is( $f18->is_primary_key, 0, 'Field is not PK' );
+is( $f18->is_foreign_key, 0, 'Field is not FK' );
 
 # my $fk_ref2 = $f11->foreign_key_reference;
 # isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );
