@@ -4,6 +4,8 @@ Changes for SQL::Translator
  * Add support for CHECK constraint in SQLite producer (GH#57)
  * Fix forgotten quoting in the MySQL DROP TABLE diff producer (GH#50)
  * Fix Pg grammar parsing of UUID, time, timetz columns (RT#100196, GH#52)
+ * Add support for USING and WHERE on indexes in PostgreSQL producer
+   (RT#63814, GH#52)
  * Improve add_trigger consistency between producers (GH#48)
  * Declare dependencies in deterministic order (RT#102859)
  * Multiple speedups of naive internal debugging mechanism (GH#54)
