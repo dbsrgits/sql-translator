@@ -67,8 +67,8 @@ sub produce {
     my $schema     = $t->schema;
     my $args       = $t->producer_args;
     local $DEBUG   = $t->debug;
-    debug("Schema =\n", Dumper( $schema ));
-    debug("Producer args =\n", Dumper( $args ));
+    debug("Schema =\n", Dumper( $schema )) if $DEBUG;
+    debug("Producer args =\n", Dumper( $args )) if $DEBUG;
 
     my $out_file     = $args->{'out_file'}     || '';
     my $output_type  = $args->{'output_type'}  || 'png';
@@ -176,7 +176,7 @@ sub produce {
         debug("Processing table '$table_name'");
 
         my @fields = $table->get_fields;
-        debug("Fields = ", join(', ', map { $_->name } @fields));
+        debug("Fields = ", join(', ', map { $_->name } @fields)) if $DEBUG;
 
         my ( @fld_desc, $max_name, $max_desc );
         for my $f ( @fields ) {
