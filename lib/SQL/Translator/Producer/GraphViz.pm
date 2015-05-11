@@ -520,7 +520,7 @@ sub produce {
 
         debug("Processing table '$table_name'");
 
-        debug("Fields = ", join(', ', map { $_->name } @fields));
+        debug("Fields = ", join(', ', map { $_->name } @fields)) if $DEBUG;
 
         for my $f ( @fields ) {
             my $name      = $f->name or next;

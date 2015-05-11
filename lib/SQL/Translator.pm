@@ -148,7 +148,7 @@ has filters => (
                 next;
             }
             else {
-                __PACKAGE__->debug("Adding $filt filter. Args:".Dumper(\@args)."\n");
+                __PACKAGE__->debug("Adding $filt filter. Args:".Dumper(\@args)."\n") if __PACKAGE__->debugging;
                 $filt = _load_sub("$filt\::filter", "SQL::Translator::Filter")
                     || throw(__PACKAGE__->error);
                 push @filters, [$filt,@args];
@@ -361,7 +361,7 @@ sub translate {
             return $self->error($msg);
         }
     }
-    $self->debug("Schema =\n", Dumper($self->schema), "\n");
+    $self->debug("Schema =\n", Dumper($self->schema), "\n") if $self->debugging;;
 
     # Validate the schema if asked to.
     if ($self->validate) {

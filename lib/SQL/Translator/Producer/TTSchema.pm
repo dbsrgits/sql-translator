@@ -138,7 +138,7 @@ sub produce {
     my %tt_conf = exists $args->{tt_conf} ? %{$args->{tt_conf}} : ();
     # sqlt passes the producer args for _all_ producers in, so we use this
     # grep hack to test for the old usage.
-    debug(Dumper(\%tt_conf));
+    debug(Dumper(\%tt_conf)) if $DEBUG;
     if ( grep /^[A-Z_]+$/, keys %$args ) {
         warn "Template config directly in the producer args is deprecated."
             ." Please use 'tt_conf' instead.\n";
