@@ -303,7 +303,7 @@ sub add_field {
             $self->error( $field_class->error );
     }
 
-    my @fields = $self->get_fields;
+    my @fields = values %{ $self->_fields };
 
     # supplied order, possible unordered assembly
     if ( $field->order ) {
