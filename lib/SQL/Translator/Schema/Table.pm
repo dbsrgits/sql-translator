@@ -303,22 +303,24 @@ sub add_field {
             $self->error( $field_class->error );
     }
 
-    my $existing_order = { map { $_->order => $_->name } $self->get_fields };
+    my @fields = $self->get_fields;
 
     # supplied order, possible unordered assembly
     if ( $field->order ) {
-        if($existing_order->{$field->order}) {
+        my %existing_order = map { $_->order => $_->name } @fields;
+        if($existing_order{$field->order}) {
             croak sprintf
                 "Requested order '%d' for column '%s' conflicts with already existing column '%s'",
                 $field->order,
                 $field->name,
-                $existing_order->{$field->order},
+                $existing_order{$field->order},
             ;
         }
     }
     else {
-        my $last_field_no = max(keys %$existing_order) || 0;
-        if ( $last_field_no != scalar keys %$existing_order ) {
+        my @orders = map { $_->order } @fields;
+        my $last_field_no = max(@orders) || 0;
+        if ( $last_field_no != @orders ) {
             croak sprintf
                 "Table '%s' field order incomplete - unable to auto-determine order for newly added field",
                 $self->name,
