@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(73,
+    maybe_plan(75,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -799,4 +799,59 @@ EOV
     my $options = {quote_table_names => '`'};
     is(SQL::Translator::Producer::MySQL::alter_drop_constraint($constraint,$options),
        'ALTER TABLE `table` DROP PRIMARY KEY','valid drop primary key');
+}
+
+{ # do not create an extra index for a FK that is also the PK
+    my $sqlt;
+    $sqlt = SQL::Translator->new(
+        show_warnings  => 1,
+        no_comments    => 1,
+        from           => "YAML",
+        to             => "MySQL",
+        quote_table_names => 1,
+        quote_field_names => 1
+    );
+
+    my $out = $sqlt->translate(\<<'EOT') or die "Translate error:".$sqlt->error;
+---
+schema:
+  tables:
+    thing:
+      name: thing
+      extra:
+      order: 1
+      fields:
+        id:
+          name: id
+          data_type: int
+          is_primary_key: 1
+          order: 1
+          is_foreign_key: 0
+      constraints:
+        - type: PRIMARY_KEY
+          fields:
+            - id
+    thing2:
+      name: thing2
+      extra:
+      order: 2
+      fields:
+        thing_id:
+          name: thing_id
+          data_type: int
+          is_primary_key: 1
+          order: 1
+          is_foreign_key: 1
+      constraints:
+        - type: PRIMARY_KEY
+          fields:
+            - thing_id
+        - reference_table: thing
+          type: FOREIGN_KEY
+          fields: thing_id
+          name: fk_thing
+EOT
+
+    like $out, qr/PRIMARY KEY \(`thing_id`\)/, 'created primary key';
+    unlike $out, qr/INDEX \(`thing_id`\)/, 'no extra index';
 }
