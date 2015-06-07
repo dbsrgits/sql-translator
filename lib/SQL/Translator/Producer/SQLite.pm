@@ -236,6 +236,9 @@ sub create_table
         if ($c->type eq "FOREIGN KEY") {
             push @field_defs, create_foreignkey($c);
         }
+        elsif ($c->type eq "CHECK") {
+            push @field_defs, create_check_constraint($c);
+        }
         next unless $c->type eq UNIQUE;
         push @constraint_defs, create_constraint($c);
     }
@@ -243,6 +246,14 @@ sub create_table
     $create_table .= join(",\n", map { "  $_" } @field_defs ) . "\n)";
 
     return (@create, $create_table, @index_defs, @constraint_defs );
+}
+
+sub create_check_constraint {
+    my $c     = shift;
+    my $check = '';
+    $check .= 'CONSTRAINT ' . _generator->quote( $c->name ) . ' ' if $c->name;
+    $check .= 'CHECK(' . $c->expression . ')';
+    return $check;
 }
 
 sub create_foreignkey {

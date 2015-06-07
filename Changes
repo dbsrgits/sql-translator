@@ -1,6 +1,7 @@
 Changes for SQL::Translator
 
  * Add support for monotonically increasing SQLite autoincs (GH#47)
+ * Add support for CHECK constraint in SQLite producer (GH#57)
  * Fix forgotten quoting in the MySQL DROP TABLE diff producer (GH#50)
  * Improve add_trigger consistency between producers (GH#48)
  * Declare dependencies in deterministic order (RT#102859)

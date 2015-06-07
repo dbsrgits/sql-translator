@@ -243,4 +243,12 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
     }
 }
 
+{
+    my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => ['foo'] );
+    my $constr = $table->add_constraint(name => 'constr', expression => "foo != 'baz'");
+    my ($def) = SQL::Translator::Producer::SQLite::create_check_constraint($constr);
+
+    is($def, q{CONSTRAINT "constr" CHECK(foo != 'baz')}, 'check constraint created');
+}
+
 done_testing;
