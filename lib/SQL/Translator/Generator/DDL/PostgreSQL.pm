@@ -10,6 +10,7 @@ engine.
 I<documentation volunteers needed>
 
 =cut
+
 use Moo;
 
 has quote_chars => (
