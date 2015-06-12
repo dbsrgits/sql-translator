@@ -102,6 +102,8 @@ L<perl(1)>, L<SQL::Translator>
 =head1 BUGS
 
 =head1 TODO
+Tweak the names of schema objects by providing functions to filter the names
+from the given into the desired forms.
 
 =over 4
 
