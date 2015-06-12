@@ -396,7 +396,7 @@ Mark Addison E<lt>mark.addison@itn.co.ukE<gt>.
 
 =head1 SEE ALSO
 
-L<perl(1)>, L<SQL::Translator>, L<SQL::Translator::Parser::XML::SQLFairy>,
+C<perl(1)>, L<SQL::Translator>, L<SQL::Translator::Parser::XML::SQLFairy>,
 L<SQL::Translator::Schema>, L<XML::Writer>.
 
 =cut

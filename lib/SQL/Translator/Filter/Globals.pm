@@ -147,7 +147,7 @@ filter.
 
 =head1 SEE ALSO
 
-L<perl(1)>, L<SQL::Translator>
+C<perl(1)>, L<SQL::Translator>
 
 =head1 BUGS
 
