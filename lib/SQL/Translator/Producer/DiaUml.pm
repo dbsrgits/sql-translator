@@ -28,10 +28,6 @@ automatically arrange them horizontally or vertically.
 
 =head2 Producer Args
 
-=over 4
-
-=back
-
 =cut
 
 use strict;
