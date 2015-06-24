@@ -571,10 +571,7 @@ sub create_index
     elsif ( $type eq NORMAL ) {
         $index_def =
             'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) .
-            ($index_using ne '' ? ' ' . $index_using : '') .
-            ' ' . $field_names .
-            ($index_where ne '' ? ' ' . $index_where : '')
-            ;
+            ' ' . $index_using . ' ' . $field_names . ' ' . $index_where;
     }
     else {
         warn "Unknown index type ($type) on table $table_name.\n"
