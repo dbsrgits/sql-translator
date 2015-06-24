@@ -618,6 +618,11 @@ pg_data_type :
             $return = { type => 'timestamp' . ($2||'') };
         }
     |
+    /(timetz|time)(?:\(\d\))?( with(?:out)? time zone)?/i
+        {
+            $return = { type => 'time' . ($2||'') };
+        }
+    |
     /text/i
         {
             $return = {
@@ -626,7 +631,7 @@ pg_data_type :
             };
         }
     |
-    /(bit|box|cidr|circle|date|inet|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|timetz|time|varchar|json|hstore)/i
+    /(bit|box|cidr|circle|date|inet|line|lseg|macaddr|money|numeric|decimal|path|point|polygon|varchar|json|hstore|uuid)/i
         {
             $return = { type => $item[1] };
         }
