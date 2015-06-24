@@ -550,10 +550,10 @@ sub create_index
         foreach my $key (keys %$opt) {
           my $value = $opt->{$key};
           next unless defined $value;
-          if ( $key eq 'using' ) {
+          if ( uc($key) eq 'USING' ) {
             $index_using = "USING $value";
           }
-          elsif ( $key eq 'where' ) {
+          elsif ( uc($key) eq 'WHERE' ) {
             $index_where = "WHERE $value";
           }
         }
