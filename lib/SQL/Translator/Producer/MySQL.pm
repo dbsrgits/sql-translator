@@ -457,11 +457,17 @@ sub create_table
     #
     my @constraint_defs;
     my @constraints = $table->get_constraints;
+
+    # Get the primary key, if there is one. No need to create an index for an
+    # FK that is also the PK. It may be a multi-field key, so generate a
+    # suitable string for comparison.
+    my $pk = join "\0", map $_->fields, grep $_->type eq PRIMARY_KEY, @constraints;
     for my $c ( @constraints ) {
         my $constr = create_constraint($c, $options);
         push @constraint_defs, $constr if($constr);
 
-         unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY ) {
+         unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY
+                || ($c->fields)[0] eq $pk ) {
              push @index_defs, "INDEX (" . $generator->quote(($c->fields())[0]) . ")";
              $indexed_fields{ ($c->fields())[0] } = 1;
          }
