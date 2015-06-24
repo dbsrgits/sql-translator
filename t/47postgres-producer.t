@@ -629,11 +629,11 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
     }
 
     {
-        my $index = $table->add_index(name => 'myindex', options => [{using => 'hash'}, {where => 'predicate'}], fields => ['bar', 'lower(foo)']);
+        my $index = $table->add_index(name => 'myindex', options => [{using => 'hash'}, {where => "upper(foo) = 'bar' AND bar = 'foo'"}], fields => ['bar', 'lower(foo)']);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
-        is($def, "CREATE INDEX myindex on foobar USING hash (bar, lower(foo)) WHERE predicate", 'index using & where created');
+        is($def, "CREATE INDEX myindex on foobar USING hash (bar, lower(foo)) WHERE upper(foo) = 'bar' AND bar = 'foo'", 'index using & where created');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
-        is($def, 'CREATE INDEX "myindex" on "foobar" USING hash ("bar", lower(foo)) WHERE predicate', 'index using & where created w/ quotes');
+        is($def, 'CREATE INDEX "myindex" on "foobar" USING hash ("bar", lower(foo)) WHERE upper(foo) = \'bar\' AND bar = \'foo\'', 'index using & where created w/ quotes');
     }
 }
 
