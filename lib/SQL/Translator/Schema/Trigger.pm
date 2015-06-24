@@ -29,9 +29,8 @@ C<SQL::Translator::Schema::Trigger> is the trigger object.
 =cut
 
 use Moo;
-use SQL::Translator::Utils qw(parse_list_arg ex2err throw);
+use SQL::Translator::Utils qw(parse_list_arg ex2err throw uniq);
 use SQL::Translator::Types qw(schema_obj enum);
-use List::MoreUtils qw(uniq);
 use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';

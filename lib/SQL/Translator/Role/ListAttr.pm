@@ -22,8 +22,7 @@ attributes.
 
 =cut
 
-use SQL::Translator::Utils qw(parse_list_arg ex2err);
-use List::MoreUtils qw(uniq);
+use SQL::Translator::Utils qw(parse_list_arg ex2err uniq);
 use Sub::Quote qw(quote_sub);
 
 use Package::Variant (

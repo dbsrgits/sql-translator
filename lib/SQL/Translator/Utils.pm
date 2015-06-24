@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
     ddl_parser_instance batch_alter_table_statements
-    throw ex2err carp_ro
+    uniq throw ex2err carp_ro
     normalize_quote_options
 );
 use constant COLLISION_TAG_LENGTH => 8;
@@ -364,6 +364,15 @@ sub _find_co_root {
         my ($class, $msg) = @_;
         bless \$msg, $class;
     }
+}
+
+sub uniq {
+  my( %seen, $seen_undef, $numeric_preserving_copy );
+  grep { not (
+    defined $_
+      ? $seen{ $numeric_preserving_copy = $_ }++
+      : $seen_undef++
+  ) } @_;
 }
 
 sub throw {

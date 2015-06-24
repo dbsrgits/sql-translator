@@ -18,7 +18,6 @@ my $deps = {
     'Package::Variant'         => '1.001001',
     'Sub::Quote'               => '0',
     'Try::Tiny'                => '0.04',
-    'List::MoreUtils'          => '0.09',
     'Scalar::Util'             => '0',
   },
   recommends => {
