@@ -279,6 +279,7 @@ COMMIT;
   $s2->name('Schema 4');
 
   my $t1 = $s1->add_table(dclone($target_schema->get_table('employee')));
+  $s1->add_table(dclone($source_schema->get_table('deleted')));
   my $t2 = dclone($target_schema->get_table('employee'));
   $t2->name('fnord');
   $t2->extra(renamed_from => 'employee');
@@ -310,6 +311,10 @@ ALTER TABLE employee RENAME TO fnord,
                      DROP FOREIGN KEY bar_fk,
                      ADD CONSTRAINT foo_fk FOREIGN KEY (employee_id) REFERENCES foo (id);
 
+ALTER TABLE deleted DROP FOREIGN KEY fk_fake;
+
+DROP TABLE deleted;
+
 
 COMMIT;
 
@@ -327,6 +332,10 @@ BEGIN;
 ALTER TABLE `employee` RENAME TO `fnord`,
                        DROP FOREIGN KEY `bar_fk`,
                        ADD CONSTRAINT `foo_fk` FOREIGN KEY (`employee_id`) REFERENCES `foo` (`id`);
+
+ALTER TABLE `deleted` DROP FOREIGN KEY `fk_fake`;
+
+DROP TABLE `deleted`;
 
 
 COMMIT;
