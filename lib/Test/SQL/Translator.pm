@@ -532,7 +532,7 @@ __END__
      ],
  });
 
-=head1 DESCSIPTION
+=head1 DESCRIPTION
 
 Provides a set of Test::More tests for Schema objects. Testing a parsed
 schema is then as easy as writing a perl data structure describing how you
@@ -545,14 +545,14 @@ tested to make sure they are still at their default value. This is a useful
 check that you your parser hasn't accidentally set schema values you didn't
 expect it to.
 
-For an example of the output run the t/16xml-parser.t test.
+For an example of the output run the C<t/16xml-parser.t> test.
 
 =head1 Tests
 
 All the tests take a first arg of the schema object to test, followed by a
 hash ref describing how you expect that object to look (you only need give the
 attributes you expect to have changed from the default).
-The 3rd arg is an optional test name to pre-pend to all the generated test
+The 3rd arg is an optional test name to prepend to all the generated test
 names.
 
 =head2 table_ok
@@ -613,7 +613,7 @@ We could add skip_* items to the test hashes to allow per test skips. e.g.
 
 =item yaml test specs
 
-Maybe have the test subs also accept yaml for the test hash ref as its a much
+Maybe have the test subs also accept yaml for the test hash ref as it is much
 nicer for writing big data structures. We can then define tests as in input
 schema file and test yaml file to compare it against.
 
