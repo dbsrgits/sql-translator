@@ -532,11 +532,11 @@ __END__
      ],
  });
 
-=head1 DESCSIPTION
+=head1 DESCRIPTION
 
 Provides a set of Test::More tests for Schema objects. Testing a parsed
 schema is then as easy as writing a perl data structure describing how you
-expect the schema to look. Also provides maybe_plan for conditionally running
+expect the schema to look. Also provides C<maybe_plan> for conditionally running
 tests based on their dependencies.
 
 The data structures given to the test subs don't have to include all the
@@ -545,14 +545,14 @@ tested to make sure they are still at their default value. This is a useful
 check that you your parser hasn't accidentally set schema values you didn't
 expect it to.
 
-For an example of the output run the t/16xml-parser.t test.
+For an example of the output run the C<t/16xml-parser.t> test.
 
 =head1 Tests
 
 All the tests take a first arg of the schema object to test, followed by a
 hash ref describing how you expect that object to look (you only need give the
 attributes you expect to have changed from the default).
-The 3rd arg is an optional test name to pre-pend to all the generated test
+The 3rd arg is an optional test name to prepend to all the generated test
 names.
 
 =head2 table_ok
@@ -600,20 +600,20 @@ maybe_plan
 
 =item Test Count Constants
 
-Constants to give the number of tests each *_ok sub uses. e.g. How many tests
-does field_ok run? Can then use these to set up the test plan easily.
+Constants to give the number of tests each C<*_ok> sub uses. e.g. How many tests
+does C<field_ok> run? Can then use these to set up the test plan easily.
 
 =item Test skipping
 
 As the test subs wrap up lots of tests in one call you can't skip individual
 tests only whole sets e.g. a whole table or field.
-We could add skip_* items to the test hashes to allow per test skips. e.g.
+We could add C<skip_*> items to the test hashes to allow per test skips. e.g.
 
  skip_is_primary_key => "Need to fix primary key parsing.",
 
 =item yaml test specs
 
-Maybe have the test subs also accept yaml for the test hash ref as its a much
+Maybe have the test subs also accept yaml for the test hash ref as it is much
 nicer for writing big data structures. We can then define tests as in input
 schema file and test yaml file to compare it against.
 
