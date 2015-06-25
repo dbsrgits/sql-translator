@@ -69,10 +69,4 @@ if you want to set lots of things, use lots of filters!
 
 C<perl(1)>, L<SQL::Translator>
 
-=head1 BUGS
-
-=head1 TODO
-
-=head1 AUTHOR
-
 =cut

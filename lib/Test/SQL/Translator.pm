@@ -619,8 +619,6 @@ schema file and test yaml file to compare it against.
 
 =back
 
-=head1 BUGS
-
 =head1 AUTHOR
 
 Mark D. Addison E<lt>mark.addison@itn.co.ukE<gt>,

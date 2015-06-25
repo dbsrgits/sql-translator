@@ -99,10 +99,6 @@ __END__
 
 C<perl(1)>, L<SQL::Translator>
 
-=head1 BUGS
-
-=head1 TODO
-
 =over 4
 
 =item Name Groups
@@ -145,6 +141,5 @@ code it into the filter it's self.
 
 =back
 
-=head1 AUTHOR
 
 =cut
