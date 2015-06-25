@@ -536,7 +536,7 @@ __END__
 
 Provides a set of Test::More tests for Schema objects. Testing a parsed
 schema is then as easy as writing a perl data structure describing how you
-expect the schema to look. Also provides maybe_plan for conditionally running
+expect the schema to look. Also provides C<maybe_plan> for conditionally running
 tests based on their dependencies.
 
 The data structures given to the test subs don't have to include all the
@@ -600,14 +600,14 @@ maybe_plan
 
 =item Test Count Constants
 
-Constants to give the number of tests each *_ok sub uses. e.g. How many tests
-does field_ok run? Can then use these to set up the test plan easily.
+Constants to give the number of tests each C<*_ok> sub uses. e.g. How many tests
+does C<field_ok> run? Can then use these to set up the test plan easily.
 
 =item Test skipping
 
 As the test subs wrap up lots of tests in one call you can't skip individual
 tests only whole sets e.g. a whole table or field.
-We could add skip_* items to the test hashes to allow per test skips. e.g.
+We could add C<skip_*> items to the test hashes to allow per test skips. e.g.
 
  skip_is_primary_key => "Need to fix primary key parsing.",
 
