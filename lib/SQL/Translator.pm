@@ -1104,7 +1104,7 @@ or unified-diff formatted patches, GitHub pull requests, or plain bug
 reports either via RT or the Mailing list. Contributors are generally
 granted access to the official repository after their first several
 patches pass successful review. Don't hesitate to
-L<contact|/GETTING HELP/SUPPORT> us with any further questions you may
+L<contact|/GETTING HELPE<sol>SUPPORT> us with any further questions you may
 have.
 
 This project is maintained in a git repository. The code and related tools are
