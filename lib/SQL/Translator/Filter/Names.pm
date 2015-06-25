@@ -95,6 +95,9 @@ __END__
 
 =head1 DESCRIPTION
 
+Tweak the names of schema objects by providing functions to filter the names
+from the given into the desired forms.
+
 =head1 SEE ALSO
 
 C<perl(1)>, L<SQL::Translator>
