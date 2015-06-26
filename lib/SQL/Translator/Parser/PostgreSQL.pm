@@ -247,7 +247,8 @@ create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(
                 supertype => $item{'unique'}[0] ? 'constraint' : 'index',
                 type      => $item{'unique'}[0] ? 'unique'     : 'normal',
                 fields    => $item[9],
-                method    => $item{'using_method'}[0],
+                method    => $item{'using_method(?)'}[0],
+                where     => $item{'where_predicate(?)'}[0],
             }
         ;
     }
@@ -1080,10 +1081,14 @@ sub parse {
         }
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
+            my @options = ();
+            push @options, { using => $idata->{'method'} } if $idata->{method};
+            push @options, { where => $idata->{'where'} }  if $idata->{where};
             my $index  =  $table->add_index(
-                name   => $idata->{'name'},
-                type   => uc $idata->{'type'},
-                fields => $idata->{'fields'},
+                name    => $idata->{'name'},
+                type    => uc $idata->{'type'},
+                fields  => $idata->{'fields'},
+                options => \@options
             ) or die $table->error . ' ' . $table->name;
         }
 

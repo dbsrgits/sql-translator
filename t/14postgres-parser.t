@@ -71,6 +71,12 @@ my $sql = q{
     FOR EACH ROW
     EXECUTE PROCEDURE foo();
 
+  CREATE INDEX test_index1 ON t_test1 (f_varchar);
+
+  CREATE INDEX test_index2 ON t_test1 USING hash (f_char, f_bool);
+
+  CREATE INDEX test_index3 ON t_test1 USING hash (f_bigint, f_tz) WHERE f_bigint = '1' AND f_tz IS NULL;
+
     alter table t_test1 add f_fk2 integer;
 
     alter table only t_test1 add constraint c_u1 unique (f_varchar);
@@ -379,5 +385,27 @@ is_deeply( scalar $trigger->database_events, [qw(insert update delete)], "Correc
 is( $trigger->perform_action_when, 'before', "Correct time for trigger");
 is( $trigger->scope, 'row', "Correct scope for trigger");
 is( $trigger->action, 'EXECUTE PROCEDURE foo()', "Correct action for trigger");
+
+# test index
+my @indices = $t1->get_indices;
+is(scalar @indices, 3, 'got three indexes');
+
+my $t1_i1 = $indices[0];
+is( $t1_i1->name, 'test_index1', 'First index is "test_index1"' );
+is( join(',', $t1_i1->fields), 'f_varchar', 'Index is on field "f_varchar"' );
+is( join(',', map { keys %$_ } $t1_i1->options), '', 'Index is has no options' );
+
+my $t1_i2 = $indices[1];
+is( $t1_i2->name, 'test_index2', 'Second index is "test_index2"' );
+is( join(',', $t1_i2->fields), 'f_char,f_bool', 'Index is on fields "f_char, f_bool"' );
+is( join(',', map { keys %$_ } $t1_i2->options), 'using', 'Index is has one option' );
+is( $t1_i2->options->[0]->{using}, 'hash', 'Index is using HASH method' );
+
+my $t1_i3 = $indices[2];
+is( $t1_i3->name, 'test_index3', 'Third index is "test_index3"' );
+is( join(',', $t1_i3->fields), 'f_bigint,f_tz', 'Index is on fields "f_bigint, f_tz"' );
+is( join(',', map { keys %$_ } $t1_i3->options), 'using,where', 'Index is has both options' );
+is( $t1_i3->options->[0]->{using}, 'hash', 'Index is using HASH method' );
+is( $t1_i3->options->[1]->{where}, "f_bigint = '1' AND f_tz IS NULL", 'Index predicate is right' );
 
 done_testing;
