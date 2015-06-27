@@ -83,23 +83,27 @@ sub produce {
             $pod .= "=head3 CONSTRAINTS\n\n";
             for my $c ( @constraints ) {
                 $pod .= "=head4 " . $c->type . "\n\n=over 4\n\n";
-                $pod .= "=item * Fields = " .
-                    join(', ', $c->fields ) . "\n\n";
+                if($c->type eq CHECK_C) {
+                    $pod .= "=item * Expression = " . $c->expression . "\n\n";
+                } else {
+                    $pod .= "=item * Fields = " .
+                        join(', ', $c->fields ) . "\n\n";
 
-                if ( $c->type eq FOREIGN_KEY ) {
-                    $pod .= "=item * Reference Table = L</" .
-                        $c->reference_table . ">\n\n";
-                    $pod .= "=item * Reference Fields = " .
-                        join(', ', map {"L</$_>"} $c->reference_fields ) .
-                        "\n\n";
-                }
+                    if ( $c->type eq FOREIGN_KEY ) {
+                        $pod .= "=item * Reference Table = L</" .
+                            $c->reference_table . ">\n\n";
+                        $pod .= "=item * Reference Fields = " .
+                            join(', ', map {"L</$_>"} $c->reference_fields ) .
+                            "\n\n";
+                    }
 
-                if ( my $update = $c->on_update ) {
-                    $pod .= "=item * On update = $update\n\n";
-                }
+                    if ( my $update = $c->on_update ) {
+                        $pod .= "=item * On update = $update\n\n";
+                    }
 
-                if ( my $delete = $c->on_delete ) {
-                    $pod .= "=item * On delete = $delete\n\n";
+                    if ( my $delete = $c->on_delete ) {
+                        $pod .= "=item * On delete = $delete\n\n";
+                    }
                 }
 
                 $pod .= "=back\n\n";
