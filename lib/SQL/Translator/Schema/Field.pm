@@ -179,8 +179,10 @@ Get or set the field's foreign key reference;
 has foreign_key_reference => (
     is => 'rw',
     predicate => '_has_foreign_key_reference',
-    isa => schema_obj('Constraint'),
+    isa => sub { not defined $_[0] or schema_obj('Constraint')->(@_) },
+    builder => 1,
     weak_ref => 1,
+    lazy => 1,
 );
 
 around foreign_key_reference => sub {
@@ -196,6 +198,22 @@ around foreign_key_reference => sub {
     }
     $self->$orig;
 };
+
+sub _build_foreign_key_reference {
+    my ( $self ) = @_;
+
+    if ( my $table = $self->table ) {
+        for my $c ( $table->get_constraints ) {
+            if ( $c->type eq FOREIGN_KEY ) {
+                my %fields = map { $_, 1 } $c->fields;
+                if ( $fields{ $self->name } ) {
+                    return $c;
+                }
+            }
+        }
+    }
+    return undef;
+}
 
 =head2 is_auto_increment
 
