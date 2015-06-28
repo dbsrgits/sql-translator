@@ -31,7 +31,7 @@ before_install:
   - build-dist
   - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
 install:
-  - cpan-install --deps XML::Parser DBD::Pg # Optional test deps
+  - cpan-install --deps CGI XML::Parser DBD::Pg # Optional test deps
   - cpan-install --coverage
 before_script:
   - psql -U postgres -c 'create database sqlt_test;'
