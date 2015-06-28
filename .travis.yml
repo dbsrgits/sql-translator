@@ -24,21 +24,10 @@ matrix:
   allow_failures:
     - perl: "blead"
 before_install:
-  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
-  - source ~/travis-perl-helpers/init
-  - build-perl
-  - perl -V
-  - build-dist
-  - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
+  - eval $(curl https://travis-perl.github.io/init) --auto
 install:
   - cpan-install --deps CGI DBD::SQLite XML::Parser DBD::Pg # Optional test deps
   - cpan-install Test::EOL Test::NoTabs # Author test deps
   - cpan-install --coverage
 before_script:
   - psql -U postgres -c 'create database sqlt_test;'
-  - coverage-setup
-script:
-  - perl Makefile.PL
-  - prove -lrsv $(test-dirs)
-after_success:
-  - coverage-report
