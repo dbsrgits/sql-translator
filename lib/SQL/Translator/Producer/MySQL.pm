@@ -449,7 +449,8 @@ sub create_table
     my %indexed_fields;
     for my $index ( $table->get_indices ) {
         push @index_defs, create_index($index, $options);
-        $indexed_fields{ $_ } = 1 for $index->fields;
+        $indexed_fields{ join "\0", $index->fields } = 1;
+        $indexed_fields{ ($index->fields)[0] } = 1;
     }
 
     #
@@ -458,18 +459,20 @@ sub create_table
     my @constraint_defs;
     my @constraints = $table->get_constraints;
 
-    # Get the primary key, if there is one. No need to create an index for an
-    # FK that is also the PK. It may be a multi-field key, so generate a
-    # suitable string for comparison.
-    my $pk = join "\0", map $_->fields, grep $_->type eq PRIMARY_KEY, @constraints;
+    for my $pk ( grep $_->type eq PRIMARY_KEY, @constraints ) {
+        $indexed_fields{ join "\0", $pk->fields } = 1;
+        $indexed_fields{ ($pk->fields)[0] } = 1;
+    }
+
+
     for my $c ( @constraints ) {
         my $constr = create_constraint($c, $options);
         push @constraint_defs, $constr if($constr);
 
-         unless ( $indexed_fields{ ($c->fields())[0] } || $c->type ne FOREIGN_KEY
-                || ($c->fields)[0] eq $pk ) {
-             push @index_defs, "INDEX (" . $generator->quote(($c->fields())[0]) . ")";
-             $indexed_fields{ ($c->fields())[0] } = 1;
+         unless ( $indexed_fields{ join("\0", $c->fields) } || $c->type ne FOREIGN_KEY ) {
+             push @index_defs, "INDEX (" . join(', ' => map $generator->quote($_), $c->fields) . ")";
+             $indexed_fields{ join("\0", $c->fields) } = 1;
+             $indexed_fields{ ($c->fields)[0] } = 1;
          }
     }
 

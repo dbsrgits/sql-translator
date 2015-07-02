@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(75,
+    maybe_plan(76,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -821,37 +821,55 @@ schema:
       extra:
       order: 1
       fields:
-        id:
-          name: id
+        id1:
+          name: id1
           data_type: int
           is_primary_key: 1
           order: 1
           is_foreign_key: 0
+        id2:
+          name: id2
+          data_type: int
+          is_primary_key: 1
+          order: 2
+          is_foreign_key: 0
       constraints:
         - type: PRIMARY_KEY
           fields:
-            - id
+            - id1
+            - id2
     thing2:
       name: thing2
       extra:
       order: 2
       fields:
-        thing_id:
-          name: thing_id
+        thing2_id1:
+          name: thing2_id1
           data_type: int
           is_primary_key: 1
           order: 1
           is_foreign_key: 1
+        thing2_id2:
+          name: thing2_id2
+          data_type: int
+          is_primary_key: 1
+          order: 2
+          is_foreign_key: 1
       constraints:
         - type: PRIMARY_KEY
           fields:
-            - thing_id
+            - thing2_id1
+            - thing2_id2
         - reference_table: thing
           type: FOREIGN_KEY
-          fields: thing_id
+          fields:
+            - thing2_id1
+            - thing2_id2
           name: fk_thing
 EOT
 
-    like $out, qr/PRIMARY KEY \(`thing_id`\)/, 'created primary key';
-    unlike $out, qr/INDEX \(`thing_id`\)/, 'no extra index';
+    note $out;
+    like $out, qr/PRIMARY KEY \(`thing2_id1`, `thing2_id2`\)/, 'created primary key';
+    unlike $out, qr/INDEX \(`thing2_id1`, `thing2_id2`\)/, 'no extra index';
+    unlike $out, qr/INDEX \(`thing2_id1`\)/, 'no single column index';
 }
