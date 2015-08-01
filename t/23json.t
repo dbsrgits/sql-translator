@@ -276,7 +276,8 @@ my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
       "parser_type" : "SQL::Translator::Parser::SQLite",
       "producer_args" : {
          "canonical" : 1,
-         "pretty" : 1
+         "pretty" : 1,
+	 "totally_bogus_arg_to_test_arg_filtering_to_json" : 1
       },
       "producer_type" : "SQL::Translator::Producer::JSON",
       "show_warnings" : 0,
@@ -296,6 +297,7 @@ my $tr = SQL::Translator->new(
     producer_args => {
         canonical => 1,
         pretty => 1,
+	totally_bogus_arg_to_test_arg_filtering_to_json => 1,
     },
     data => $data,
 );
