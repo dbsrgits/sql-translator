@@ -20,6 +20,10 @@ schema:
   procedures: {}
   tables:
     person:
+      comments:
+        - table comment 1
+        - table comment 2
+        - table comment 3
       constraints:
         - deferrable: 1
           expression: ''
