@@ -56,6 +56,10 @@ sub parse {
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
             $table->add_constraint( %$cdata ) or die $table->error;
         }
+
+	$table->comments( $tdata->{'comments' } )
+	    if exists $tdata->{'comments'};
+
     }
 
     #
