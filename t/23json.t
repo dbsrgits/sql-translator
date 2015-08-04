@@ -137,7 +137,12 @@ my $json = from_json(<<JSON);
             "indices" : [],
             "name" : "person",
             "options" : [],
-            "order" : "1"
+            "order" : "1",
+            "comments" : [
+               "table comment 1",
+               "table comment 2",
+               "table comment 3"
+             ]
          },
          "pet" : {
             "constraints" : [

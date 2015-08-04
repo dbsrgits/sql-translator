@@ -115,6 +115,10 @@ schema:
       name: person
       options: []
       order: 1
+      comments :
+        - table comment 1
+        - table comment 2
+        - table comment 3
     pet:
       constraints:
         - deferrable: 1
