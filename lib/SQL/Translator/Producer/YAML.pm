@@ -132,8 +132,8 @@ sub view_procedure {
         'sql'        => scalar $procedure->sql,
         'parameters' => scalar $procedure->parameters,
         'owner'      => scalar $procedure->owner,
-        'comments'   => scalar $procedure->comments,
-        keys %{$procedure->extra} ? ('extra' => { $procedure->extra } ) : (),
+        $procedure->comments      ? ('comments' => [ $procedure->comments ] ) : (),
+        keys %{$procedure->extra} ? ('extra'    => { $procedure->extra } ) : (),
     };
 }
 
