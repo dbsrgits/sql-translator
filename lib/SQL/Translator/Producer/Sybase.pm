@@ -123,8 +123,10 @@ sub produce {
     my $add_drop_table = $translator->add_drop_table;
     my $schema         = $translator->schema;
 
-    my $output;
-    $output .= header_comment unless ($no_comments);
+    my @output;
+    push @output, header_comment unless ($no_comments);
+
+    my @foreign_keys;
 
     for my $table ( $schema->get_tables ) {
         my $table_name    = $table->name or next;
@@ -260,8 +262,8 @@ sub produce {
             }
             elsif ( $type eq FOREIGN_KEY ) {
                 $name ||= mk_name( $table_name, 'fk', undef,1 );
-                push @constraint_defs,
-                    "CONSTRAINT $name FOREIGN KEY".
+                push @foreign_keys,
+                    "ALTER TABLE $table ADD CONSTRAINT $name FOREIGN KEY".
                     ' (' . join( ', ', @fields ) . ') REFERENCES '.
                     $constraint->reference_table.
                     ' (' . join( ', ', @rfields ) . ')';
@@ -284,25 +286,23 @@ sub produce {
             push @index_defs,
                 'CREATE INDEX ' . $index->name .
                 " ON $table_name (".
-                join( ', ', $index->fields ) . ");";
+                join( ', ', $index->fields ) . ")";
         }
 
-        my $create_statement;
-        $create_statement  = qq[DROP TABLE $table_name_ur;\n]
-            if $add_drop_table;
-        $create_statement .= qq[CREATE TABLE $table_name_ur (\n].
+        my $drop_statement = $add_drop_table
+            ? qq[DROP TABLE $table_name_ur] : '';
+        my $create_statement = qq[CREATE TABLE $table_name_ur (\n].
             join( ",\n",
                 map { "  $_" } @field_defs, @constraint_defs
             ).
-            "\n);"
+            "\n)"
         ;
 
-        $output .= join( "\n\n",
-            @comments,
+        $create_statement = join("\n\n", @comments) . "\n\n" . $create_statement;
+        push @output,
             $create_statement,
             @index_defs,
-            ''
-        );
+        ;
     }
 
     foreach my $view ( $schema->get_views ) {
@@ -314,7 +314,7 @@ sub produce {
         # text of view is already a 'create view' statement so no need
         # to do anything fancy.
 
-        $output .= join("\n\n",
+        push @output, join("\n\n",
                        @comments,
                        $view->sql(),
                        );
@@ -333,11 +333,12 @@ sub produce {
         # think about doing fancy stuff with granting permissions and
         # so on.
 
-        $output .= join("\n\n",
+        push @output, join("\n\n",
                        @comments,
                        $procedure->sql(),
                        );
     }
+    push @output, @foreign_keys;
 
     if ( $WARN ) {
         if ( %truncated ) {
@@ -352,7 +353,7 @@ sub produce {
         }
     }
 
-    return $output;
+    return wantarray ? @output : join ";\n\n", @output;
 }
 
 sub mk_name {
