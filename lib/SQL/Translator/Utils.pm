@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(
     debug normalize_name header_comment parse_list_arg truncate_id_uniquely
     $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
     ddl_parser_instance batch_alter_table_statements
-    uniq throw ex2err carp_ro
+    uniq uniq_keys throw ex2err carp_ro
     normalize_quote_options
 );
 use constant COLLISION_TAG_LENGTH => 8;
@@ -130,7 +130,7 @@ sub parse_list_arg {
     #
     # This protects stringification of references.
     #
-    if ( @$list && ref $list->[0] ) {
+    if ( @$list && grep { ref $_ } @$list ) {
         return $list;
     }
     #
@@ -373,6 +373,15 @@ sub uniq {
       ? $seen{ $numeric_preserving_copy = $_ }++
       : $seen_undef++
   ) } @_;
+}
+
+sub uniq_keys {
+  my $key = shift;
+  my %seen;
+  grep {
+    my $name = ref $_ ? $_->{$key} : $_;
+    not ( $seen{$name}++ );
+  } @_;
 }
 
 sub throw {

@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(75,
+    maybe_plan(79,
         'YAML',
         'SQL::Translator::Producer::MySQL',
         'Test::Differences',
@@ -779,6 +779,38 @@ EOV
             my $sql = SQL::Translator::Producer::MySQL::create_field($field, $options);
             is($sql, "`my$type` $type NULL", "Skip length param for type $type");
         }
+    }
+}
+
+{
+    my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => ['foo'] );
+
+    {
+        my $index = $table->add_index(name => 'myindex', fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+        is($def, 'INDEX myindex (foo)', 'index created');
+    }
+
+    {
+        my $index = $table->add_index(fields => ['foo']);
+        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+        is($def, 'INDEX (foo)', 'index created');
+    }
+
+    {
+        my $index = $table->add_index(fields => [ { name => 'foo', size => 25 } ], type => 'unique');
+        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+        is($def, 'UNIQUE INDEX (foo(25))', 'unique index created');
+    }
+
+    {
+        my $index = $table->add_index(name => 'sized', fields => [
+            'foobar',
+            { name => 'foo', size => 10 },
+            { name => 'bar', size => 15 },
+        ]);
+        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+        is($def, 'INDEX sized (foobar, foo(10), bar(15))', 'index created');
     }
 }
 

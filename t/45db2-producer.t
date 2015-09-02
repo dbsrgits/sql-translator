@@ -14,7 +14,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(4,
+    maybe_plan(6,
         'SQL::Translator::Producer::DB2',
         'Test::Differences',
     )
@@ -57,6 +57,14 @@ is($alter_field, 'ALTER TABLE mytable ALTER myfield SET DATATYPE VARCHAR(25)', '
 my $add_field = SQL::Translator::Producer::DB2::add_field($field1);
 
 is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10)', 'Add field works');
+
+my $index = $table->add_index(name => 'myindex', fields => ['foo']);
+my ($def) = SQL::Translator::Producer::DB2::create_index($index);
+is($def, 'CREATE INDEX myindex ON mytable ( foo );', 'index created');
+
+my $index2 = $table->add_index(name => 'myindex', fields => [ { name => 'foo', size => 15 } ]);
+my ($def2) = SQL::Translator::Producer::DB2::create_index($index);
+is($def2, 'CREATE INDEX myindex ON mytable ( foo );', 'index created');
 
 my $drop_field = SQL::Translator::Producer::DB2::drop_field($field2);
 is($drop_field, '', 'Drop field works');

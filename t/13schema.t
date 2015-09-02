@@ -248,10 +248,45 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $index2, 'SQL::Translator::Schema::Index', 'Index' );
     is( $index2->name, 'bar', 'Index name is "bar"' );
 
+    my $index3 = $person_table->add_index( name => "sized", fields => [ { name => 'forename', size => 15} ] )
+        or warn $person_table->error;
+    isa_ok( $index3, 'SQL::Translator::Schema::Index', 'Index' );
+    is( $index3->name, 'sized', 'Index name is "sized"' );
+
+    # Test index comparison function.
+    # 2 completely different indexes
+    ok( !$index3->equals($index2), "2 different indexes return false on equals() function (simple)" );
+
+    # Same indexes with different lengths
+    my $index4 = SQL::Translator::Schema::Index->new(
+        name => "sized", fields => [ { name => 'forename', size => 20} ]
+    );
+    ok( !$index3->equals($index4), "2 different indexes return false on equals() function (index length different)" );
+
+    # Identical indexes with lengths
+    my $index5 = SQL::Translator::Schema::Index->new(
+        name => "sized", fields => [ { name => 'forename', size => 15} ]
+    );
+    ok( $index3->equals($index5), "2 identical indexes return true on equals() (with index length)" );
+
+    # Identical indexes without lengths
+    my $index6 = SQL::Translator::Schema::Index->new( name => "foo", fields => [qw/foo age/] );
+    ok( $index6->equals($index1), "2 identical indexes return true on equals() (without index length)" );
+
+    # Check comparison of index names
+    my $index7 = SQL::Translator::Schema::Index->new( name => "bar" );
+    ok( $index7->equals($index2), "2 empty indexes return true on equals()" );
+
+    # Check that 2 indexes are equal, if one doesn't have a name, and the
+    # other has a name that is the same as the first field
+    my $index8 = SQL::Translator::Schema::Index->new( fields => [qw/foo age/] );
+    ok( $index8->equals($index6), "Compare 2 indexes, one without name" );
+
     my $indices = $person_table->get_indices;
-    is( scalar @$indices, 2, 'Two indices' );
+    is( scalar @$indices, 3, 'Two indices' );
     is( $indices->[0]->name, 'foo', '"foo" index' );
     is( $indices->[1]->name, 'bar', '"bar" index' );
+    is( $indices->[2]->name, 'sized', '"sized" index' );
 
     #
     # $table-> drop_index

@@ -194,6 +194,12 @@ $SQL::Translator::Producer::SQLite::NO_QUOTES = 0;
     }
 
     {
+        my $index = $table->add_index(name => 'myindex2', fields => [ { name => 'foo', size => 15 } ]);
+        my ($def) = SQL::Translator::Producer::SQLite::create_index($index);
+        is($def, 'CREATE INDEX "myindex2" ON "foobar" ("foo")', 'index created');
+    }
+
+    {
         my $index = $table->add_index(fields => ['foo']);
         my ($def) = SQL::Translator::Producer::SQLite::create_index($index);
         is($def, 'CREATE INDEX "foobar_idx" ON "foobar" ("foo")', 'index created');
