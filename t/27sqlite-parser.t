@@ -32,11 +32,11 @@ my $file = "$Bin/data/sqlite/create.sql";
     my $t1 = shift @tables;
     is( $t1->name, 'person', "'Person' table" );
     is_deeply(  [ $t1->comments ],
-		[ q(table comment 1),
-		  q(table comment 2),
-		  q(table comment 3)
-		],
-	      'person table comments' );
+                [ q(table comment 1),
+                  q(table comment 2),
+                  q(table comment 3)
+                ],
+              'person table comments' );
 
     my @fields = $t1->get_fields;
     is( scalar @fields, 6, 'Six fields in "person" table');
