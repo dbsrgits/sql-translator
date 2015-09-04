@@ -54,7 +54,6 @@ resources    IRC        => 'irc://irc.perl.org/#sql-translator';
 Meta->{values}{x_authority} = 'cpan:JROBINSON';
 
 all_from    'lib/SQL/Translator.pm';
-readme_from 'lib/SQL/Translator.pm';
 
 for my $type (qw/requires recommends test_requires/) {
   no strict qw/refs/;
