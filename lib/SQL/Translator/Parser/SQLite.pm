@@ -147,7 +147,7 @@ our @EXPORT_OK = qw(parse);
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 {
-    my ( %tables, $table_order, @table_comments, @views, @triggers );
+    my ( %tables, $table_order, @views, @triggers );
 
     sub _err {
       my $max_lines = 5;
@@ -179,8 +179,8 @@ eofile : /^\Z/
 statement : begin_transaction
     | commit
     | drop
-    | comment
     | create
+    | comment
     | /^\Z/ | { _err ($thisline, $text) }
 
 begin_transaction : /begin/i TRANSACTION(?) SEMICOLON
@@ -239,16 +239,17 @@ create : CREATE TEMPORARY(?) UNIQUE(?) INDEX NAME ON table_name parens_field_lis
 #
 # Create Table
 #
-create : CREATE TEMPORARY(?) TABLE table_name '(' definition(s /,/) ')' SEMICOLON
+create : comment(s?) CREATE TEMPORARY(?) TABLE table_name '(' definition(s /,/) ')' SEMICOLON
     {
-        my $db_name    = $item[4]->{'db_name'} || '';
-        my $table_name = $item[4]->{'name'};
+        my $db_name    = $item[5]->{'db_name'} || '';
+        my $table_name = $item[5]->{'name'};
 
         $tables{ $table_name }{'name'}         = $table_name;
-        $tables{ $table_name }{'is_temporary'} = $item[2][0] ? 1 : 0;
+        $tables{ $table_name }{'is_temporary'} = $item[3][0] ? 1 : 0;
+        $tables{ $table_name }{'comments'}     = $item[1];
         $tables{ $table_name }{'order'}        = ++$table_order;
 
-        for my $def ( @{ $item[6] } ) {
+        for my $def ( @{ $item[7] } ) {
             if ( $def->{'supertype'} eq 'column' ) {
                 push @{ $tables{ $table_name }{'fields'} }, $def;
             }

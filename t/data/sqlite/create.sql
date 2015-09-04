@@ -1,3 +1,6 @@
+-- table comment 1
+-- table comment 2
+-- table comment 3
 create table person (
   person_id INTEGER PRIMARY KEY AUTOINCREMENT,
   'name' varchar(20) not null,
