@@ -623,11 +623,11 @@ NAME : /\w+/
     | DQSTRING
     | SQSTRING
 
-DQSTRING : '"' /((?:[^"]|"")+)/ '"'
-    { ($return = $item[2]) =~ s/""/"/g }
+DQSTRING : '"' <skip: ''> /((?:[^"]|"")+)/ '"'
+    { ($return = $item[3]) =~ s/""/"/g }
 
-SQSTRING : "'" /((?:[^']|'')*)/ "'"
-    { ($return = $item[2]) =~ s/''/'/g }
+SQSTRING : "'" <skip: ''> /((?:[^']|'')*)/ "'"
+    { ($return = $item[3]) =~ s/''/'/g }
 
 VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
     { $item[1] }

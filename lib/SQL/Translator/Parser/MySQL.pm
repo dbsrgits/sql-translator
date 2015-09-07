@@ -853,14 +853,14 @@ QUOTED_NAME : BQSTRING
 
 # MySQL strings, unlike common SQL strings, can have the delmiters
 # escaped either by doubling or by backslashing.
-BQSTRING: BACKTICK /(?:[^\\`]|``|\\.)*/ BACKTICK
-    { ($return = $item[2]) =~ s/(\\[\\`]|``)/substr($1,1)/ge }
+BQSTRING: BACKTICK <skip: ''> /(?:[^\\`]|``|\\.)*/ BACKTICK
+    { ($return = $item[3]) =~ s/(\\[\\`]|``)/substr($1,1)/ge }
 
-DQSTRING: DOUBLE_QUOTE /(?:[^\\"]|""|\\.)*/ DOUBLE_QUOTE
-    { ($return = $item[2]) =~ s/(\\[\\"]|"")/substr($1,1)/ge }
+DQSTRING: DOUBLE_QUOTE <skip: ''> /(?:[^\\"]|""|\\.)*/ DOUBLE_QUOTE
+    { ($return = $item[3]) =~ s/(\\[\\"]|"")/substr($1,1)/ge }
 
-SQSTRING: SINGLE_QUOTE /(?:[^\\']|''|\\.)*/ SINGLE_QUOTE
-    { ($return = $item[2]) =~ s/(\\[\\']|'')/substr($1,1)/ge }
+SQSTRING: SINGLE_QUOTE <skip: ''> /(?:[^\\']|''|\\.)*/ SINGLE_QUOTE
+    { ($return = $item[3]) =~ s/(\\[\\']|'')/substr($1,1)/ge }
 
 
 NAME: QUOTED_NAME
