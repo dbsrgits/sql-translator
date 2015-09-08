@@ -12,7 +12,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(346, "SQL::Translator::Parser::MySQL");
+    maybe_plan(undef, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -957,3 +957,5 @@ ok ($@, 'Exception thrown on invalid version string');
     ok (!$tr->error, 'no error');
     ok (my $schema = $tr->schema, 'got schema');
 }
+
+done_testing;
