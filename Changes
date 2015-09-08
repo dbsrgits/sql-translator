@@ -14,6 +14,7 @@ Changes for SQL::Translator
  * Fix parsing of strings with leading whitespace for MySQL, Oracle, PostgreSQL,
    SQLServer and SQLite
  * Fix parsing of MySQL column comments (RT#83380)
+ * Fix multi-line comments in YAML and JSON producers
 
 0.11021 2015-01-29
 
