@@ -291,7 +291,7 @@ sub create_table
     my $table_name_qt = $generator->quote($table_name);
 
 # print STDERR "$table_name table_name\n";
-    my ( @comments, @field_defs, @sequence_defs, @constraint_defs, @fks );
+    my ( @comments, @field_defs, @index_defs, @sequence_defs, @constraint_defs, @fks );
 
     push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
@@ -303,7 +303,6 @@ sub create_table
     #
     # Fields
     #
-    my %field_name_scope;
     for my $field ( $table->get_fields ) {
         push @field_defs, create_field($field, {
             generator => $generator,
@@ -316,8 +315,6 @@ sub create_table
     #
     # Index Declarations
     #
-    my @index_defs = ();
- #   my $idx_name_default;
     for my $index ( $table->get_indices ) {
         my ($idef, $constraints) = create_index($index, {
             generator => $generator,
@@ -329,7 +326,6 @@ sub create_table
     #
     # Table constraints
     #
-    my $c_name_default;
     for my $c ( $table->get_constraints ) {
         my ($cdefs, $fks) = create_constraint($c, {
             generator => $generator,
@@ -339,14 +335,7 @@ sub create_table
     }
 
 
-    my $temporary = "";
-
-    if(exists $table->extra->{temporary}) {
-        $temporary = $table->extra->{temporary} ? "TEMPORARY " : "";
-    }
-
-    my $create_statement;
-    $create_statement = join("\n", @comments);
+    my $create_statement = join("\n", @comments);
     if ($add_drop_table) {
         if ($postgres_version >= 8.002) {
             $create_statement .= "DROP TABLE IF EXISTS $table_name_qt CASCADE;\n";
@@ -354,6 +343,7 @@ sub create_table
             $create_statement .= "DROP TABLE $table_name_qt CASCADE;\n";
         }
     }
+    my $temporary = $table->extra->{temporary} ? "TEMPORARY " : "";
     $create_statement .= "CREATE ${temporary}TABLE $table_name_qt (\n" .
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n)"
