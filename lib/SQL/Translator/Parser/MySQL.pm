@@ -476,12 +476,9 @@ field_comment : /^\s*(?:#|-{2}).*\n/
     }
 
 
-field_comment2 : /comment/i SQSTRING
-    { $return = $item[2] }
-
 blank : /\s*/
 
-field : field_comment(s?) field_name data_type field_qualifier(s?) field_comment2(?) reference_definition(?) on_update(?) field_comment(s?)
+field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) on_update(?) field_comment(s?)
     {
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
@@ -492,7 +489,7 @@ field : field_comment(s?) field_name data_type field_qualifier(s?) field_comment
                    ? $qualifiers{'not_null'} : 1;
         delete $qualifiers{'not_null'};
 
-        my @comments = ( @{ $item[1] }, @{ $item[5] }, @{ $item[8] } );
+        my @comments = ( @{ $item[1] }, (exists $qualifiers{comment} ? delete $qualifiers{comment} : ()) , @{ $item[7] } );
 
         $return = {
             supertype   => 'field',
@@ -575,6 +572,13 @@ field_qualifier : KEY
     {
         $return = {
             has_index => 1,
+        }
+    }
+
+field_qualifier : /comment/i string
+    {
+        $return = {
+            comment => $item[2],
         }
     }
 
