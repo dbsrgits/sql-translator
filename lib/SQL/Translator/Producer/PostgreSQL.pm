@@ -295,11 +295,9 @@ sub create_table
 
     push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
-    if ( $table->comments and !$no_comments ){
-        my $c = "-- Comments: \n-- ";
-        $c .= join "\n-- ",  $table->comments;
-        $c .= "\n--\n";
-        push @comments, $c;
+    if ( !$no_comments and my $comments = $table->comments ) {
+        $comments =~ s/^/-- /mg;
+        push @comments, "-- Comments:\n$comments\n--\n";
     }
 
     #
@@ -435,9 +433,11 @@ sub create_view {
 
         $field_name_scope{$table_name} ||= {};
         my $field_name    = $field->name;
-        my $field_comments = $field->comments
-            ? "-- " . $field->comments . "\n  "
-            : '';
+        my $field_comments = '';
+        if (my $comments = $field->comments) {
+            $comments =~ s/(?<!\A)^/  -- /mg;
+            $field_comments = "-- $comments\n  ";
+        }
 
         my $field_def     = $field_comments . $generator->quote($field_name);
 

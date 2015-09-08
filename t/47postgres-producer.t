@@ -25,8 +25,10 @@ use SQL::Translator;
 my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
 
 {
-  my $table = SQL::Translator::Schema::Table->new( name => 'foo.bar' );
+  my $table = SQL::Translator::Schema::Table->new( name => 'foo.bar',
+                                                   comments => [ "multi\nline",'single line' ] );
   my $field = SQL::Translator::Schema::Field->new( name => 'baz',
+                                                 comments => [ "multi\nline",'single line' ],
                                                  table => $table,
                                                  data_type => 'VARCHAR',
                                                  size => 10,
@@ -39,7 +41,25 @@ my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
   my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table($table, { quote_table_names => q{"} });
   is($table->name, 'foo.bar');
 
-  my $expected = "--\n-- Table: foo.bar\n--\nCREATE TABLE \"foo\".\"bar\" (\n  \"baz\" character varying(10) DEFAULT 'quux' NOT NULL\n)";
+  my $expected = <<EOESQL;
+--
+-- Table: foo.bar
+--
+
+-- Comments:
+-- multi
+-- line
+-- single line
+--
+CREATE TABLE "foo"."bar" (
+  -- multi
+  -- line
+  -- single line
+  "baz" character varying(10) DEFAULT 'quux' NOT NULL
+)
+EOESQL
+
+  $expected =~ s/\n\z//;
   is($create, $expected);
 }
 
