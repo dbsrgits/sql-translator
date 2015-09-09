@@ -47,7 +47,7 @@ use constant MAX_ID_LENGTH => 62;
   }
 }
 
-my ( %translate, %index_name );
+my ( %translate );
 
 BEGIN {
 
@@ -93,7 +93,6 @@ BEGIN {
     memo       => 'text',
 );
 }
-my %global_names;
 my %truncated;
 
 =pod
@@ -206,42 +205,45 @@ sub produce {
         : join ('', @output);
 }
 
-sub mk_name {
-    my $basename      = shift || '';
-    my $type          = shift || '';
-    my $scope         = shift || '';
-    my $critical      = shift || '';
-    my $basename_orig = $basename;
+{
+    my %global_names;
+    sub mk_name {
+        my $basename      = shift || '';
+        my $type          = shift || '';
+        my $scope         = shift || '';
+        my $critical      = shift || '';
+        my $basename_orig = $basename;
 
-    my $max_name      = $type
-                        ? MAX_ID_LENGTH - (length($type) + 1)
-                        : MAX_ID_LENGTH;
-    $basename         = substr( $basename, 0, $max_name )
-                        if length( $basename ) > $max_name;
-    my $name          = $type ? "${type}_$basename" : $basename;
+        my $max_name      = $type
+                            ? MAX_ID_LENGTH - (length($type) + 1)
+                            : MAX_ID_LENGTH;
+        $basename         = substr( $basename, 0, $max_name )
+                            if length( $basename ) > $max_name;
+        my $name          = $type ? "${type}_$basename" : $basename;
 
-    if ( $basename ne $basename_orig and $critical ) {
-        my $show_type = $type ? "+'$type'" : "";
-        warn "Truncating '$basename_orig'$show_type to ", MAX_ID_LENGTH,
-            " character limit to make '$name'\n" if $WARN;
-        $truncated{ $basename_orig } = $name;
+        if ( $basename ne $basename_orig and $critical ) {
+            my $show_type = $type ? "+'$type'" : "";
+            warn "Truncating '$basename_orig'$show_type to ", MAX_ID_LENGTH,
+                " character limit to make '$name'\n" if $WARN;
+            $truncated{ $basename_orig } = $name;
+        }
+
+        $scope ||= \%global_names;
+        if ( my $prev = $scope->{ $name } ) {
+            my $name_orig = $name;
+            $name        .= sprintf( "%02d", ++$prev );
+            substr($name, MAX_ID_LENGTH - 3) = "00"
+                if length( $name ) > MAX_ID_LENGTH;
+
+            warn "The name '$name_orig' has been changed to ",
+                 "'$name' to make it unique.\n" if $WARN;
+
+            $scope->{ $name_orig }++;
+        }
+
+        $scope->{ $name }++;
+        return $name;
     }
-
-    $scope ||= \%global_names;
-    if ( my $prev = $scope->{ $name } ) {
-        my $name_orig = $name;
-        $name        .= sprintf( "%02d", ++$prev );
-        substr($name, MAX_ID_LENGTH - 3) = "00"
-            if length( $name ) > MAX_ID_LENGTH;
-
-        warn "The name '$name_orig' has been changed to ",
-             "'$name' to make it unique.\n" if $WARN;
-
-        $scope->{ $name_orig }++;
-    }
-
-    $scope->{ $name }++;
-    return $name;
 }
 
 sub is_geometry
@@ -495,59 +497,62 @@ sub create_geometry_constraints{
    return @constraints;
 }
 
-sub create_index
 {
-    my ($index, $options) = @_;
+    my %index_name;
+    sub create_index
+    {
+        my ($index, $options) = @_;
 
-    my $generator = _generator($options);
-    my $table_name = $index->table->name;
+        my $generator = _generator($options);
+        my $table_name = $index->table->name;
 
-    my ($index_def, @constraint_defs);
+        my ($index_def, @constraint_defs);
 
-    my $name
-        = $index->name
-        || join('_', $table_name, 'idx', ++$index_name{ $table_name });
+        my $name
+            = $index->name
+            || join('_', $table_name, 'idx', ++$index_name{ $table_name });
 
-    my $type = $index->type || NORMAL;
-    my @fields     =  $index->fields;
-    return unless @fields;
+        my $type = $index->type || NORMAL;
+        my @fields     =  $index->fields;
+        return unless @fields;
 
-    my $index_using;
-    my $index_where;
-    for my $opt ( $index->options ) {
-      if ( ref $opt eq 'HASH' ) {
-        foreach my $key (keys %$opt) {
-          my $value = $opt->{$key};
-          next unless defined $value;
-          if ( uc($key) eq 'USING' ) {
-            $index_using = "USING $value";
-          }
-          elsif ( uc($key) eq 'WHERE' ) {
-            $index_where = "WHERE $value";
-          }
+        my $index_using;
+        my $index_where;
+        for my $opt ( $index->options ) {
+            if ( ref $opt eq 'HASH' ) {
+                foreach my $key (keys %$opt) {
+                    my $value = $opt->{$key};
+                    next unless defined $value;
+                    if ( uc($key) eq 'USING' ) {
+                        $index_using = "USING $value";
+                    }
+                    elsif ( uc($key) eq 'WHERE' ) {
+                        $index_where = "WHERE $value";
+                    }
+                }
+            }
         }
-      }
-    }
 
-    my $def_start = 'CONSTRAINT ' . $generator->quote($name) . ' ';
-    my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ( $generator->quote($_) ) } @fields)) . ')';
-    if ( $type eq PRIMARY_KEY ) {
-        push @constraint_defs, "${def_start}PRIMARY KEY ".$field_names;
-    }
-    elsif ( $type eq UNIQUE ) {
-        push @constraint_defs, "${def_start}UNIQUE " .$field_names;
-    }
-    elsif ( $type eq NORMAL ) {
-        $index_def =
-            'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) . ' ' .
-            join ' ', grep { defined } $index_using, $field_names, $index_where;
-    }
-    else {
-        warn "Unknown index type ($type) on table $table_name.\n"
-            if $WARN;
-    }
+        my $def_start = 'CONSTRAINT ' . $generator->quote($name) . ' ';
+        my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ( $generator->quote($_) ) } @fields)) . ')';
+        if ( $type eq PRIMARY_KEY ) {
+            push @constraint_defs, "${def_start}PRIMARY KEY ".$field_names;
+        }
+        elsif ( $type eq UNIQUE ) {
+            push @constraint_defs, "${def_start}UNIQUE " .$field_names;
+        }
+        elsif ( $type eq NORMAL ) {
+            $index_def =
+                'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) . ' ' .
+                join ' ', grep { defined } $index_using, $field_names, $index_where;
+        }
+        else {
+            warn "Unknown index type ($type) on table $table_name.\n"
+                if $WARN;
+        }
 
-    return $index_def, \@constraint_defs;
+        return $index_def, \@constraint_defs;
+    }
 }
 
 sub create_constraint
