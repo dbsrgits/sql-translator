@@ -41,7 +41,7 @@ my $out = SQL::Translator::Diff::schema_diff(
    'PostgreSQL',
    {
      producer_args => {
-         quote_identifiers => 0,
+         quote_identifiers => 1,
      }
    }
 );
@@ -51,48 +51,48 @@ eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 
 BEGIN;
 
-CREATE TABLE added (
-  id bigint
+CREATE TABLE "added" (
+  "id" bigint
 );
 
-ALTER TABLE employee DROP CONSTRAINT FK5302D47D93FE702E;
+ALTER TABLE "employee" DROP CONSTRAINT "FK5302D47D93FE702E";
 
-ALTER TABLE employee DROP COLUMN job_title;
+ALTER TABLE "employee" DROP COLUMN "job_title";
 
-ALTER TABLE employee ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id)
-  REFERENCES person (person_id) DEFERRABLE;
+ALTER TABLE "employee" ADD CONSTRAINT "FK5302D47D93FE702E_diff" FOREIGN KEY ("employee_id")
+  REFERENCES "person" ("person_id") DEFERRABLE;
 
-ALTER TABLE old_name RENAME TO new_name;
+ALTER TABLE "old_name" RENAME TO "new_name";
 
-ALTER TABLE new_name ADD COLUMN new_field integer;
+ALTER TABLE "new_name" ADD COLUMN "new_field" integer;
 
-ALTER TABLE person DROP CONSTRAINT UC_age_name;
+ALTER TABLE "person" DROP CONSTRAINT "UC_age_name";
 
-DROP INDEX u_name;
+DROP INDEX "u_name";
 
-ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
+ALTER TABLE "person" ADD COLUMN "is_rock_star" smallint DEFAULT 1;
 
-ALTER TABLE person ALTER COLUMN person_id TYPE serial;
+ALTER TABLE "person" ALTER COLUMN "person_id" TYPE serial;
 
-ALTER TABLE person ALTER COLUMN name SET NOT NULL;
+ALTER TABLE "person" ALTER COLUMN "name" SET NOT NULL;
 
-ALTER TABLE person ALTER COLUMN age SET DEFAULT 18;
+ALTER TABLE "person" ALTER COLUMN "age" SET DEFAULT 18;
 
-ALTER TABLE person ALTER COLUMN iq TYPE bigint;
+ALTER TABLE "person" ALTER COLUMN "iq" TYPE bigint;
 
-ALTER TABLE person ALTER COLUMN nickname SET NOT NULL;
+ALTER TABLE "person" ALTER COLUMN "nickname" SET NOT NULL;
 
-ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
+ALTER TABLE "person" ALTER COLUMN "nickname" TYPE character varying(24);
 
-ALTER TABLE person RENAME COLUMN description TO physical_description;
+ALTER TABLE "person" RENAME COLUMN "description" TO "physical_description";
 
-ALTER TABLE person ADD CONSTRAINT unique_name UNIQUE (name);
+ALTER TABLE "person" ADD CONSTRAINT "unique_name" UNIQUE ("name");
 
-ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
+ALTER TABLE "person" ADD CONSTRAINT "UC_person_id" UNIQUE ("person_id");
 
-ALTER TABLE person ADD CONSTRAINT UC_age_name UNIQUE (age, name);
+ALTER TABLE "person" ADD CONSTRAINT "UC_age_name" UNIQUE ("age", "name");
 
-DROP TABLE deleted CASCADE;
+DROP TABLE "deleted" CASCADE;
 
 
 COMMIT;

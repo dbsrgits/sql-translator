@@ -729,11 +729,12 @@ sub convert_datatype
 
 sub alter_field
 {
-    my ($from_field, $to_field) = @_;
+    my ($from_field, $to_field, $options) = @_;
 
     die "Can't alter field in another table"
         if($from_field->table->name ne $to_field->table->name);
 
+    my $generator = _generator($options);
     my @out;
 
     # drop geometry column and constraints
@@ -746,27 +747,41 @@ sub alter_field
     # BUT: drop geometry is done before the rename, cause it work's on the
     # $from_field directly
     push @out, sprintf('ALTER TABLE %s RENAME COLUMN %s TO %s',
-                       $to_field->table->name,
-                       $from_field->name,
-                       $to_field->name) if($from_field->name ne $to_field->name);
+                       map($generator->quote($_),
+                           $to_field->table->name,
+                           $from_field->name,
+                           $to_field->name,
+                       ),
+                   )
+        if($from_field->name ne $to_field->name);
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET NOT NULL',
-                       $to_field->table->name,
-                       $to_field->name) if(!$to_field->is_nullable and
-                                           $from_field->is_nullable);
+                       map($generator->quote($_),
+                           $to_field->table->name,
+                           $to_field->name
+                       ),
+                   )
+        if(!$to_field->is_nullable and $from_field->is_nullable);
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL',
-                      $to_field->table->name,
-                      $to_field->name)
-       if ( !$from_field->is_nullable and $to_field->is_nullable );
+                      map($generator->quote($_),
+                          $to_field->table->name,
+                          $to_field->name
+                      ),
+                   )
+       if (!$from_field->is_nullable and $to_field->is_nullable);
 
 
     my $from_dt = convert_datatype($from_field);
     my $to_dt   = convert_datatype($to_field);
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
-                       $to_field->table->name,
-                       $to_field->name,
-                       $to_dt) if($to_dt ne $from_dt);
+                       map($generator->quote($_),
+                           $to_field->table->name,
+                           $to_field->name
+                       ),
+                       $to_dt,
+                   )
+        if($to_dt ne $from_dt);
 
     my $old_default = $from_field->default_value;
     my $new_default = $to_field->default_value;
@@ -781,9 +796,12 @@ sub alter_field
     }
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s',
-                       $to_field->table->name,
-                       $to_field->name,
-                       $default_value)
+                       map($generator->quote($_),
+                           $to_field->table->name,
+                           $to_field->name,
+                       ),
+                       $default_value,
+                   )
         if ( defined $new_default &&
              (!defined $old_default || $old_default ne $new_default) );
 
@@ -791,8 +809,11 @@ sub alter_field
     # would result in no change
 
     push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT',
-                       $to_field->table->name,
-                       $to_field->name)
+                       map($generator->quote($_),
+                           $to_field->table->name,
+                           $to_field->name,
+                       ),
+                   )
         if ( !defined $new_default && defined $old_default );
 
     # add geometry column and constraints
@@ -806,11 +827,11 @@ sub rename_field { alter_field(@_) }
 
 sub add_field
 {
-    my ($new_field) = @_;
+    my ($new_field,$options) = @_;
 
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
-                      $new_field->table->name,
-                      create_field($new_field));
+                      _generator($options)->quote($new_field->table->name),
+                      create_field($new_field, $options));
     $out .= "\n".add_geometry_column($new_field) if is_geometry($new_field);
     $out .= "\n".add_geometry_constraints($new_field) if is_geometry($new_field);
     return $out;
@@ -914,8 +935,7 @@ sub alter_create_index {
 
 sub alter_drop_index {
     my ($index, $options) = @_;
-    my $index_name = $index->name;
-    return "DROP INDEX $index_name";
+    return 'DROP INDEX '. _generator($options)->quote($index->name);
 }
 
 sub alter_drop_constraint {
@@ -927,20 +947,19 @@ sub alter_drop_constraint {
     # table as prefix and fkey or pkey as suffix, concatenated by an underscore
     my $c_name;
     if( $c->name ) {
-        # Already has a name, just quote it
-        $c_name = $generator->quote($c->name);
+        # Already has a name, just use it
+        $c_name = $c->name;
     } elsif ( $c->type eq FOREIGN_KEY ) {
         # Doesn't have a name, and is foreign key, append '_fkey'
-        $c_name = $generator->quote($c->table->name . '_' .
-                                    ($c->fields)[0] . '_fkey');
+        $c_name = $c->table->name . '_' . ($c->fields)[0] . '_fkey';
     } elsif ( $c->type eq PRIMARY_KEY ) {
         # Doesn't have a name, and is primary key, append '_pkey'
-        $c_name = $generator->quote($c->table->name . '_pkey');
+        $c_name = $c->table->name . '_pkey';
     }
 
     return sprintf(
         'ALTER TABLE %s DROP CONSTRAINT %s',
-        $generator->quote($c->table->name), $c_name
+        map { $generator->quote($_) } $c->table->name, $c_name,
     );
 }
 
