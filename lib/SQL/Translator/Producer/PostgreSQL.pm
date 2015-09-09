@@ -31,6 +31,8 @@ use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alte
 use SQL::Translator::Generator::DDL::PostgreSQL;
 use Data::Dumper;
 
+use constant MAX_ID_LENGTH => 62;
+
 {
   my ($quoting_generator, $nonquoting_generator);
   sub _generator {
@@ -46,7 +48,6 @@ use Data::Dumper;
 }
 
 my ( %translate, %index_name );
-my $max_id_length;
 
 BEGIN {
 
@@ -91,8 +92,6 @@ BEGIN {
     #
     memo       => 'text',
 );
-
- $max_id_length = 62;
 }
 my %reserved = map { $_, 1 } qw[
     ALL ANALYSE ANALYZE AND ANY AS ASC
@@ -112,7 +111,6 @@ my %reserved = map { $_, 1 } qw[
     UNION UNIQUE USER USING VERBOSE WHEN WHERE
 ];
 
-# my $max_id_length    = 62;
 my %used_identifiers = ();
 my %global_names;
 my %truncated;
@@ -233,18 +231,18 @@ sub mk_name {
     my $scope         = shift || '';
     my $critical      = shift || '';
     my $basename_orig = $basename;
-#    my $max_id_length = 62;
+
     my $max_name      = $type
-                        ? $max_id_length - (length($type) + 1)
-                        : $max_id_length;
+                        ? MAX_ID_LENGTH - (length($type) + 1)
+                        : MAX_ID_LENGTH;
     $basename         = substr( $basename, 0, $max_name )
                         if length( $basename ) > $max_name;
     my $name          = $type ? "${type}_$basename" : $basename;
 
     if ( $basename ne $basename_orig and $critical ) {
         my $show_type = $type ? "+'$type'" : "";
-        warn "Truncating '$basename_orig'$show_type to $max_id_length ",
-            "character limit to make '$name'\n" if $WARN;
+        warn "Truncating '$basename_orig'$show_type to ", MAX_ID_LENGTH,
+            " character limit to make '$name'\n" if $WARN;
         $truncated{ $basename_orig } = $name;
     }
 
@@ -252,8 +250,8 @@ sub mk_name {
     if ( my $prev = $scope->{ $name } ) {
         my $name_orig = $name;
         $name        .= sprintf( "%02d", ++$prev );
-        substr($name, $max_id_length - 3) = "00"
-            if length( $name ) > $max_id_length;
+        substr($name, MAX_ID_LENGTH - 3) = "00"
+            if length( $name ) > MAX_ID_LENGTH;
 
         warn "The name '$name_orig' has been changed to ",
              "'$name' to make it unique.\n" if $WARN;
