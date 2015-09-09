@@ -333,12 +333,10 @@ sub create_table
     #
     # Geometry
     #
-    if (grep { is_geometry($_) } $table->get_fields) {
+    if (my @geometry_columns = grep { is_geometry($_) } $table->get_fields) {
         $create_statement .= ";";
-        my @geometry_columns;
-        foreach my $col ($table->get_fields) { push(@geometry_columns,$col) if is_geometry($col); }
-        $create_statement .= "\n".join("\n", map{ drop_geometry_column($_) } @geometry_columns) if $options->{add_drop_table};
-        $create_statement .= "\n".join("\n", map{ add_geometry_column($_) } @geometry_columns);
+        $create_statement .= join("\n", '', map{ drop_geometry_column($_) } @geometry_columns) if $options->{add_drop_table};
+        $create_statement .= join("\n", '', map{ add_geometry_column($_) } @geometry_columns);
     }
 
     return $create_statement, \@fks;
@@ -734,8 +732,10 @@ sub alter_field
     my @out;
 
     # drop geometry column and constraints
-    push @out, drop_geometry_column($from_field) if is_geometry($from_field);
-    push @out, drop_geometry_constraints($from_field) if is_geometry($from_field);
+    push @out,
+        drop_geometry_column($from_field),
+        drop_geometry_constraints($from_field),
+        if is_geometry($from_field);
 
     # it's necessary to start with rename column cause this would affect
     # all of the following statements which would be broken if do the
@@ -813,8 +813,10 @@ sub alter_field
         if ( !defined $new_default && defined $old_default );
 
     # add geometry column and constraints
-    push @out, add_geometry_column($to_field) if is_geometry($to_field);
-    push @out, add_geometry_constraints($to_field) if is_geometry($to_field);
+    push @out,
+        add_geometry_column($to_field),
+        add_geometry_constraints($to_field)
+        if is_geometry($to_field);
 
     return wantarray ? @out : join(";\n", @out);
 }
@@ -828,8 +830,9 @@ sub add_field
     my $out = sprintf('ALTER TABLE %s ADD COLUMN %s',
                       _generator($options)->quote($new_field->table->name),
                       create_field($new_field, $options));
-    $out .= "\n".add_geometry_column($new_field) if is_geometry($new_field);
-    $out .= "\n".add_geometry_constraints($new_field) if is_geometry($new_field);
+    $out .= "\n".add_geometry_column($new_field)
+          . "\n".add_geometry_constraints($new_field)
+        if is_geometry($new_field);
     return $out;
 
 }
@@ -843,14 +846,15 @@ sub drop_field
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $generator->quote($old_field->table->name),
                       $generator->quote($old_field->name));
-    $out .= "\n".drop_geometry_column($old_field) if is_geometry($old_field);
+    $out .= "\n".drop_geometry_column($old_field)
+        if is_geometry($old_field);
     return $out;
 }
 
 sub add_geometry_column {
-    my ($field,$options) = @_;
+    my ($field, $options) = @_;
 
-    my $out = sprintf(
+    return sprintf(
         "INSERT INTO geometry_columns VALUES ('%s','%s','%s','%s','%s','%s','%s')",
         '',
         $field->table->schema->name,
@@ -860,39 +864,32 @@ sub add_geometry_column {
         $field->extra->{srid},
         $field->extra->{geometry_type},
     );
-    return $out;
 }
 
 sub drop_geometry_column {
     my $field = shift;
 
-    my $out = sprintf(
+    return sprintf(
         "DELETE FROM geometry_columns WHERE f_table_schema = '%s' AND f_table_name = '%s' AND f_geometry_column = '%s'",
         $field->table->schema->name,
         $field->table->name,
         $field->name,
     );
-    return $out;
 }
 
 sub add_geometry_constraints {
-    my $field = shift;
+    my ($field, $options) = @_;
 
-    my @constraints = create_geometry_constraints($field);
-
-    my $out = join("\n", map { alter_create_constraint($_); } @constraints);
-
-    return $out;
+    return join("\n", map { alter_create_constraint($_) }
+                    create_geometry_constraints($field));
 }
 
 sub drop_geometry_constraints {
-    my $field = shift;
+    my ($field, $options) = @_;
 
-    my @constraints = create_geometry_constraints($field);
+    return join("\n", map { alter_drop_constraint($_) }
+                    create_geometry_constraints($field));
 
-    my $out = join("\n", map { alter_drop_constraint($_); } @constraints);
-
-    return $out;
 }
 
 sub alter_table {
@@ -910,11 +907,12 @@ sub rename_table {
     my $generator = _generator($options);
     $options->{alter_table_action} = "RENAME TO " . $generator->quote($new_table);
 
-    my @geometry_changes;
-    push @geometry_changes, map { drop_geometry_column($_); } grep { is_geometry($_) } $old_table->get_fields;
-    push @geometry_changes, map { add_geometry_column($_, { table => $new_table }); } grep { is_geometry($_) } $old_table->get_fields;
+    my @geometry_changes = map {
+        drop_geometry_column($_),
+        add_geometry_column($_, { table => $new_table }),
+    } grep { is_geometry($_) } $old_table->get_fields;
 
-    $options->{geometry_changes} = join ("\n",@geometry_changes) if scalar(@geometry_changes);
+    $options->{geometry_changes} = join ("\n",@geometry_changes) if @geometry_changes;
 
     return alter_table($old_table, $options);
 }
@@ -985,7 +983,7 @@ sub drop_table {
 
     my @geometry_drops = map { drop_geometry_column($_); } grep { is_geometry($_) } $table->get_fields;
 
-    $out .= "\n".join("\n",@geometry_drops) if scalar(@geometry_drops);
+    $out .= join("\n", '', @geometry_drops) if @geometry_drops;
     return $out;
 }
 
