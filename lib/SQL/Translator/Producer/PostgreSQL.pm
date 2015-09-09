@@ -271,8 +271,7 @@ sub create_table
     my $table_name = $table->name or next;
     my $table_name_qt = $generator->quote($table_name);
 
-# print STDERR "$table_name table_name\n";
-    my ( @comments, @field_defs, @index_defs, @sequence_defs, @constraint_defs, @fks );
+    my ( @comments, @field_defs, @index_defs, @constraint_defs, @fks );
 
     push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
@@ -415,13 +414,12 @@ sub create_view {
         #
         # Datatype
         #
-        my @size      = $field->size;
         my $data_type = lc $field->data_type;
         my %extra     = $field->extra;
         my $list      = $extra{'list'} || [];
         my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
 
-        if ($postgres_version >= 8.003 && $field->data_type eq 'enum') {
+        if ($postgres_version >= 8.003 && $data_type eq 'enum') {
             my $type_name = $extra{'custom_type_name'} || $field->table->name . '_' . $field->name . '_type';
             $field_def .= ' '. $type_name;
             my $new_type_def = "DROP TYPE IF EXISTS $type_name CASCADE;\n" .
