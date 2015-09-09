@@ -52,8 +52,8 @@ is($field1_geocol, "INSERT INTO geometry_columns VALUES ('','myschema','mytable'
 
 my $field1_geocon = SQL::Translator::Producer::PostgreSQL::add_geometry_constraints($field1);
 
-is($field1_geocon, qq[ALTER TABLE mytable ADD CONSTRAINT enforce_dims_myfield CHECK ((ST_NDims(myfield) = 2))
-ALTER TABLE mytable ADD CONSTRAINT enforce_srid_myfield CHECK ((ST_SRID(myfield) = -1))
+is($field1_geocon, qq[ALTER TABLE mytable ADD CONSTRAINT enforce_dims_myfield CHECK ((ST_NDims(myfield) = 2));
+ALTER TABLE mytable ADD CONSTRAINT enforce_srid_myfield CHECK ((ST_SRID(myfield) = -1));
 ALTER TABLE mytable ADD CONSTRAINT enforce_geotype_myfield CHECK ((GeometryType(myfield) = 'POINT'::text OR myfield IS NULL))],
  'Add geometry constraints works');
 
@@ -70,8 +70,8 @@ my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1,
                                                                 $field2);
 is($alter_field, qq[DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'mytable' AND f_geometry_column = 'myfield';
-ALTER TABLE mytable DROP CONSTRAINT enforce_dims_myfield
-ALTER TABLE mytable DROP CONSTRAINT enforce_srid_myfield
+ALTER TABLE mytable DROP CONSTRAINT enforce_dims_myfield;
+ALTER TABLE mytable DROP CONSTRAINT enforce_srid_myfield;
 ALTER TABLE mytable DROP CONSTRAINT enforce_geotype_myfield;
 ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL;
 ALTER TABLE mytable ALTER COLUMN myfield TYPE character varying(25)],
@@ -82,23 +82,23 @@ my $alter_field2 = SQL::Translator::Producer::PostgreSQL::alter_field($field2,
 is($alter_field2, qq[ALTER TABLE mytable ALTER COLUMN myfield DROP NOT NULL;
 ALTER TABLE mytable ALTER COLUMN myfield TYPE geometry;
 INSERT INTO geometry_columns VALUES ('','myschema','mytable','myfield','2','-1','POINT');
-ALTER TABLE mytable ADD CONSTRAINT enforce_dims_myfield CHECK ((ST_NDims(myfield) = 2))
-ALTER TABLE mytable ADD CONSTRAINT enforce_srid_myfield CHECK ((ST_SRID(myfield) = -1))
+ALTER TABLE mytable ADD CONSTRAINT enforce_dims_myfield CHECK ((ST_NDims(myfield) = 2));
+ALTER TABLE mytable ADD CONSTRAINT enforce_srid_myfield CHECK ((ST_SRID(myfield) = -1));
 ALTER TABLE mytable ADD CONSTRAINT enforce_geotype_myfield CHECK ((GeometryType(myfield) = 'POINT'::text OR myfield IS NULL))],
  'Alter field non geometry to geometry works');
 
 $field1->name('field3');
 my $add_field = SQL::Translator::Producer::PostgreSQL::add_field($field1);
 
-is($add_field, qq[ALTER TABLE mytable ADD COLUMN field3 geometry
-INSERT INTO geometry_columns VALUES ('','myschema','mytable','field3','2','-1','POINT')
-ALTER TABLE mytable ADD CONSTRAINT enforce_dims_field3 CHECK ((ST_NDims(field3) = 2))
-ALTER TABLE mytable ADD CONSTRAINT enforce_srid_field3 CHECK ((ST_SRID(field3) = -1))
+is($add_field, qq[ALTER TABLE mytable ADD COLUMN field3 geometry;
+INSERT INTO geometry_columns VALUES ('','myschema','mytable','field3','2','-1','POINT');
+ALTER TABLE mytable ADD CONSTRAINT enforce_dims_field3 CHECK ((ST_NDims(field3) = 2));
+ALTER TABLE mytable ADD CONSTRAINT enforce_srid_field3 CHECK ((ST_SRID(field3) = -1));
 ALTER TABLE mytable ADD CONSTRAINT enforce_geotype_field3 CHECK ((GeometryType(field3) = 'POINT'::text OR field3 IS NULL))],
  'Add geometry field works');
 
 my $drop_field = SQL::Translator::Producer::PostgreSQL::drop_field($field1);
-is($drop_field, qq[ALTER TABLE mytable DROP COLUMN field3
+is($drop_field, qq[ALTER TABLE mytable DROP COLUMN field3;
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'mytable' AND f_geometry_column = 'field3'], 'Drop geometry field works');
 
 $table->add_field($field1);
@@ -131,12 +131,12 @@ CREATE TABLE mytable (
 INSERT INTO geometry_columns VALUES ('','myschema','mytable','field3','2','-1','POINT')],'Create table with geometry works.');
 
 my $rename_table = SQL::Translator::Producer::PostgreSQL::rename_table($table, "table2");
-is($rename_table,qq[ALTER TABLE mytable RENAME TO table2
-DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'mytable' AND f_geometry_column = 'field3'
+is($rename_table,qq[ALTER TABLE mytable RENAME TO table2;
+DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'mytable' AND f_geometry_column = 'field3';
 INSERT INTO geometry_columns VALUES ('','myschema','table2','field3','2','-1','POINT')],'Rename table with geometry works.');
 
 $table->name("table2");
 my $drop_table = SQL::Translator::Producer::PostgreSQL::drop_table($table);
-is($drop_table, qq[DROP TABLE table2 CASCADE
+is($drop_table, qq[DROP TABLE table2 CASCADE;
 DELETE FROM geometry_columns WHERE f_table_schema = 'myschema' AND f_table_name = 'table2' AND f_geometry_column = 'field3'], 'Drop table with geometry works.');
 
