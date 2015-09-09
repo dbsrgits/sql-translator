@@ -854,25 +854,29 @@ sub add_geometry_column {
     my ($field, $options) = @_;
 
     return sprintf(
-        "INSERT INTO geometry_columns VALUES ('%s','%s','%s','%s','%s','%s','%s')",
-        '',
-        $field->table->schema->name,
-        $options->{table} ? $options->{table} : $field->table->name,
-        $field->name,
-        $field->extra->{dimensions},
-        $field->extra->{srid},
-        $field->extra->{geometry_type},
+        "INSERT INTO geometry_columns VALUES (%s,%s,%s,%s,%s,%s,%s)",
+        map(__PACKAGE__->_quote_string($_),
+            '',
+            $field->table->schema->name,
+            $options->{table} ? $options->{table} : $field->table->name,
+            $field->name,
+            $field->extra->{dimensions},
+            $field->extra->{srid},
+            $field->extra->{geometry_type},
+        ),
     );
 }
 
 sub drop_geometry_column {
-    my $field = shift;
+    my ($field) = @_;
 
     return sprintf(
-        "DELETE FROM geometry_columns WHERE f_table_schema = '%s' AND f_table_name = '%s' AND f_geometry_column = '%s'",
-        $field->table->schema->name,
-        $field->table->name,
-        $field->name,
+        "DELETE FROM geometry_columns WHERE f_table_schema = %s AND f_table_name = %s AND f_geometry_column = %s",
+        map(__PACKAGE__->_quote_string($_),
+            $field->table->schema->name,
+            $field->table->name,
+            $field->name,
+        ),
     );
 }
 
