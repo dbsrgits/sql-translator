@@ -451,9 +451,7 @@ sub create_view {
         #
         if (is_geometry($field)) {
             foreach ( create_geometry_constraints($field, $options) ) {
-                my ($cdefs, $fks) = create_constraint($_, {
-                    generator => $generator,
-                });
+                my ($cdefs, $fks) = create_constraint($_, $options);
                 push @$constraint_defs, @$cdefs;
                 push @$fks, @$fks;
             }
@@ -924,9 +922,7 @@ sub rename_table {
 sub alter_create_index {
     my ($index, $options) = @_;
     my $generator = _generator($options);
-    my ($idef, $constraints) = create_index($index, {
-        generator => $generator,
-    });
+    my ($idef, $constraints) = create_index($index, $options);
     return $index->type eq NORMAL ? $idef
         : sprintf('ALTER TABLE %s ADD %s',
               $generator->quote($index->table->name),
