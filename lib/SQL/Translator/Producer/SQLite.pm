@@ -282,6 +282,7 @@ sub create_foreignkey {
 
     $fk_sql .= " ON DELETE " . $c->{on_delete} if $c->{on_delete};
     $fk_sql .= " ON UPDATE " . $c->{on_update} if $c->{on_update};
+    $fk_sql .= " DEFERRABLE INITIALLY DEFERRED" if $c->deferrable;
 
     return $fk_sql;
 }

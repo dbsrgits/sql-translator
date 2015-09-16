@@ -425,7 +425,7 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
         }
     }
     |
-    FOREIGN_KEY parens_field_list REFERENCES ref_def cascade_def(?)
+    FOREIGN_KEY parens_field_list REFERENCES ref_def cascade_def(?) deferrable(?) deferred(?)
     {
       $return = {
         supertype        => 'constraint',
@@ -435,6 +435,8 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
         reference_fields => $item[4]{'reference_fields'},
         on_delete        => $item[5][0]{'on_delete'},
         on_update        => $item[5][0]{'on_update'},
+        deferrable       => $item[6] && ($item[7]||'') eq 'deferred',
+        #deferred         => $item[6] && ($item[7]||'') eq 'deferred',
       }
     }
 
@@ -452,6 +454,15 @@ cascade_delete_def : /on\s+delete\s+(set null|set default|cascade|restrict|no ac
 
 cascade_update_def : /on\s+update\s+(set null|set default|cascade|restrict|no action)/i
     { $return = $1}
+
+not : /not/i
+
+deferrable : not(?) /deferrable/i
+    {
+        $return = ( $item[1] =~ /not/i ) ? 0 : 1;
+    }
+
+deferred : /initially/i /(deferred|immediate)/i { $item[2] }
 
 table_name : qualified_name
 
