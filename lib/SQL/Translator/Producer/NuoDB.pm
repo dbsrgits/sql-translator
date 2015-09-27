@@ -30,59 +30,7 @@ use SQL::Translator::Utils qw(header_comment);
 my %dt_translate;
 BEGIN {
   %dt_translate = (
-    #
-    # MySQL types
-    #
-    int        => 'integer',
-    mediumint  => 'integer',
-    tinyint    => 'smallint',
-    char       => 'char',
-    tinyblob   => 'blob',
-    mediumblob => 'blob',
-    longblob   => 'long varchar for bit data',
-    tinytext   => 'varchar',
-    text       => 'varchar',
-    longtext   => 'varchar',
-    mediumtext => 'varchar',
-    enum       => 'varchar',
-    set        => 'varchar',
-    date       => 'date',
-    datetime   => 'timestamp',
-    time       => 'time',
-    year       => 'date',
-
-    #
-    # PostgreSQL types
-    #
-    'double precision'  => 'double',
-    serial              => 'integer',
-    bigserial           => 'integer',
-    money               => 'double',
-    character           => 'char',
-    'character varying' => 'varchar',
-    bytea               => 'BLOB',
-    interval            => 'integer',
-    boolean             => 'smallint',
-    point               => 'integer',
-    line                => 'integer',
-    lseg                => 'integer',
-    box                 => 'integer',
-    path                => 'integer',
-    polygon             => 'integer',
-    circle              => 'integer',
-    cidr                => 'integer',
-    inet                => 'varchar',
-    macaddr             => 'varchar',
-    bit                 => 'number',
-    'bit varying'       => 'number',
-
-    #
-    # DB types
-    #
-    number              => 'integer',
-    varchar2            => 'varchar',
-    long                => 'clob',
-
+    int                 => 'INTEGER',
     varchar             => 'STRING',
     text                => 'STRING',
 );
@@ -157,9 +105,9 @@ DATA               INSERT         PROCEDURE     VARIANT
 DATABASE           INTEGRITY      PROGRAM       VCAT
 DAY                INTO           PSID          VIEW
 DAYS               IS             QUERYNO       VOLUMES
-DB2GENERAL         ISOBID         READ          WHEN
-DB2GENRL           ISOLATION      READS         WHERE
-DB2SQL             ITERATE        RECOVERY      WHILE
+ISOBID             READ           WHEN
+ISOLATION          READS          WHERE
+ITERATE            RECOVERY       WHILE
 DBINFO             JAR            REFERENCES    WITH
 DECLARE            JAVA           REFERENCING   WLM
 DEFAULT            JOIN           RELEASE       WRITE
