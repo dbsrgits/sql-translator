@@ -94,12 +94,12 @@ COUNT_BIG          HOUR           OVERRIDING    TRIGGER
 CREATE             HOURS          PACKAGE       TRIM
 CROSS              IDENTITY       PARAMETER     TYPE
 CURRENT            IF             PART          UNDO
-IMMEDIATE      PARTITION     UNION
+IMMEDIATE          PARTITION      UNION
 CURRENT_LC_CTYPE   IN             PATH          UNIQUE
 CURRENT_PATH       INCLUDING      PIECESIZE     UNTIL
 CURRENT_SERVER     INCREMENT      PLAN          UPDATE
-INDEX          POSITION      USAGE
-INDICATOR      PRECISION     USER
+INDEX              POSITION       USAGE
+INDICATOR          PRECISION     USER
 CURRENT_TIMEZONE   INHERIT        PREPARE       USING
 CURRENT_USER       INNER          PRIMARY       VALIDPROC
 CURSOR             INOUT          PRIQTY        VALUES
@@ -219,9 +219,7 @@ sub create_field
     my ($field) = @_;
 
     my $field_name = check_name($field->name, 'fields', 30);
-#    use Data::Dumper;
-#    print Dumper(\%dt_translate);
-#    print $field->data_type, " ", $dt_translate{lc($field->data_type)}, "\n";
+
     my $data_type = uc($dt_translate{lc($field->data_type)} || $field->data_type);
     my $size = $field->size();
 
@@ -284,6 +282,7 @@ sub create_constraint
                       $expr ? $expr : $ref,
                       $update,
                       $delete);
+
     if ($constraint->type eq FOREIGN_KEY) {
         my $table_name = $constraint->table->name;
 
