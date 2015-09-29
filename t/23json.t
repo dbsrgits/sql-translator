@@ -104,6 +104,10 @@ my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
                   ]
                },
                "person_id" : {
+                  "comments" : [
+                    "field comment 1",
+                    "field comment 2"
+                  ],
                   "data_type" : "INTEGER",
                   "default_value" : null,
                   "is_auto_increment" : 1,

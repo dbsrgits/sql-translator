@@ -11,6 +11,13 @@ Changes for SQL::Translator
  * Declare dependencies in deterministic order (RT#102859)
  * Multiple speedups of naive internal debugging mechanism (GH#54)
  * Remove dependency on List::MoreUtils ( http://is.gd/lmu_cac_debacle )
+ * Fix parsing of strings with leading whitespace for MySQL, Oracle, PostgreSQL,
+   SQLServer and SQLite
+ * Fix parsing of MySQL column comments (RT#83380)
+ * Fix multi-line comments in YAML, JSON and PostgreSQL producers
+ * Fix identifier quoting in PostgreSQL diff producer
+ * Fix missing semicolons between PostGIS statements
+ * Fix string and identifier quoting in PostGIS statements
 
 0.11021 2015-01-29
 

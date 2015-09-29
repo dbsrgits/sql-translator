@@ -1,4 +1,6 @@
 create table person (
+  -- field comment 1
+  -- field comment 2
   person_id INTEGER PRIMARY KEY AUTOINCREMENT,
   'name' varchar(20) not null,
   'age' integer,

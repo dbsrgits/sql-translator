@@ -440,14 +440,14 @@ DIGITS : /\d+/
 
 COMMA : ','
 
-SQSTRING : "'" /(?:[^']|'')*/ "'"
-    { ($return = $item[2]) =~ s/''/'/g }
+SQSTRING : "'" <skip: ''> /(?:[^']|'')*/ "'"
+    { ($return = $item[3]) =~ s/''/'/g }
 
-DQSTRING : '"' /(?:[^"]|"")+/ '"'
-    { ($return = $item[2]) =~ s/""/"/g }
+DQSTRING : '"' <skip: ''> /(?:[^"]|"")+/ '"'
+    { ($return = $item[3]) =~ s/""/"/g }
 
-BQSTRING : '[' /(?:[^]]|]])+/ ']'
-    { ($return = $item[2]) =~ s/]]/]/g; }
+BQSTRING : '[' <skip: ''> /(?:[^]]|]])+/ ']'
+    { ($return = $item[3]) =~ s/]]/]/g; }
 
 END_OF_GRAMMAR
 

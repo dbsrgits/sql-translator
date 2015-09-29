@@ -87,6 +87,9 @@ schema:
           size:
             - 20
         person_id:
+          comments:
+            - field comment 1
+            - field comment 2
           data_type: INTEGER
           default_value: ~
           is_auto_increment: 1

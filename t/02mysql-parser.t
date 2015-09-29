@@ -12,7 +12,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(346, "SQL::Translator::Parser::MySQL");
+    maybe_plan(undef, "SQL::Translator::Parser::MySQL");
     SQL::Translator::Parser::MySQL->import('parse');
 }
 
@@ -252,7 +252,7 @@ BEGIN {
     my $data = parse($tr,
         q[
             CREATE TABLE orders (
-              order_id                  integer NOT NULL auto_increment,
+              order_id                  integer NOT NULL comment '        ' auto_increment,
               member_id                 varchar(255) comment 'fk to ''member''',
               billing_address_id        int,
               shipping_address_id       int,
@@ -306,6 +306,7 @@ BEGIN {
     is( $f1->default_value, undef, 'Default value is undefined' );
     is( $f1->is_primary_key, 1, 'Field is PK' );
     is( $f1->is_auto_increment, 1, 'Field is auto inc' );
+    is_deeply( [$f1->comments],['        '], 'Field comment OK' );
 
     my $f2 = shift @fields;
     is( $f2->name, 'member_id', 'Second field name is "member_id"' );
@@ -957,3 +958,5 @@ ok ($@, 'Exception thrown on invalid version string');
     ok (!$tr->error, 'no error');
     ok (my $schema = $tr->schema, 'got schema');
 }
+
+done_testing;

@@ -99,6 +99,16 @@ Created on Fri Aug 15 15:08:18 2003
 	  </field>
 	</fields>
       </table>
+
+      <table order="1" name=" table with spaces ">
+	<fields>
+	  <field
+	      name=" field with spaces "
+	      is_primary_key="1" data_type="text"
+	      default_value=" value with spaces ">
+	  </field>
+	</fields>
+      </table>
   </tables>
 
   <views>
