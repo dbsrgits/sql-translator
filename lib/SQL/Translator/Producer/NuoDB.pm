@@ -40,85 +40,54 @@ BEGIN {
 }
 
 my %nuodb_reserved = map { $_ => 1} qw/
-ADD                DETERMINISTIC  LEAVE         RESTART
-AFTER              DISALLOW       LEFT          RESTRICT
-ALIAS              DISCONNECT     LIKE          RESULT
-ALL                DISTINCT       LINKTYPE      RESULT_SET_LOCATOR
-ALLOCATE           DO             LOCAL         RETURN
-ALLOW              DOUBLE         LOCALE        RETURNS
-ALTER              DROP           LOCATOR       REVOKE
-AND                DSNHATTR       LOCATORS      RIGHT
-ANY                DSSIZE         LOCK          ROLLBACK
-APPLICATION        DYNAMIC        LOCKMAX       ROUTINE
-AS                 EACH           LOCKSIZE      ROW
-ASSOCIATE          EDITPROC       LONG          ROWS
-ASUTIME            ELSE           LOOP          RRN
-AUDIT              ELSEIF         MAXVALUE      RUN
-AUTHORIZATION      ENCODING       MICROSECOND   SAVEPOINT
-AUX                END            MICROSECONDS  SCHEMA
-AUXILIARY          END-EXEC       MINUTE        SCRATCHPAD
-BEFORE             END-EXEC1      MINUTES       SECOND
-BEGIN              ERASE          MINVALUE      SECONDS
-BETWEEN            ESCAPE         MODE          SECQTY
-BINARY             EXCEPT         MODIFIES      SECURITY
-BUFFERPOOL         EXCEPTION      MONTH         SELECT
-BY                 EXCLUDING      MONTHS        SENSITIVE
-CACHE              EXECUTE        NEW           SET
-CALL               EXISTS         NEW_TABLE     SIGNAL
-CALLED             EXIT           NO            SIMPLE
-CAPTURE            EXTERNAL       NOCACHE       SOME
-CARDINALITY        FENCED         NOCYCLE       SOURCE
-CASCADED           FETCH          NODENAME      SPECIFIC
-CASE               FIELDPROC      NODENUMBER    SQL
-CAST               FILE           NOMAXVALUE    SQLID
-CCSID              FINAL          NOMINVALUE    STANDARD
-CHAR               FOR            NOORDER       START
-CHARACTER          FOREIGN        NOT           STATIC
-CHECK              FREE           NULL          STAY
-CLOSE              FROM           NULLS         STOGROUP
-CLUSTER            FULL           NUMPARTS      STORES
-COLLECTION         FUNCTION       OBID          STYLE
-COLLID             GENERAL        OF            SUBPAGES
-COLUMN             GENERATED      OLD           SUBSTRING
-COMMENT            GET            OLD_TABLE     SYNONYM
-COMMIT             GLOBAL         ON            SYSFUN
-CONCAT             GO             OPEN          SYSIBM
-CONDITION          GOTO           OPTIMIZATION  SYSPROC
-CONNECT            GRANT          OPTIMIZE      SYSTEM
-CONNECTION         GRAPHIC        OPTION        TABLE
-CONSTRAINT         GROUP          OR            TABLESPACE
-CONTAINS           HANDLER        ORDER         THEN
-CONTINUE           HAVING         OUT           TO
-COUNT              HOLD           OUTER         TRANSACTION
-COUNT_BIG          HOUR           OVERRIDING    TRIGGER
-CREATE             HOURS          PACKAGE       TRIM
-CROSS              IDENTITY       PARAMETER     TYPE
-CURRENT            IF             PART          UNDO
-IMMEDIATE          PARTITION      UNION
-CURRENT_LC_CTYPE   IN             PATH          UNIQUE
-CURRENT_PATH       INCLUDING      PIECESIZE     UNTIL
-CURRENT_SERVER     INCREMENT      PLAN          UPDATE
-INDEX              POSITION       USAGE
-INDICATOR          PRECISION     USER
-CURRENT_TIMEZONE   INHERIT        PREPARE       USING
-CURRENT_USER       INNER          PRIMARY       VALIDPROC
-CURSOR             INOUT          PRIQTY        VALUES
-CYCLE              INSENSITIVE    PRIVILEGES    VARIABLE
-DATA               INSERT         PROCEDURE     VARIANT
-DATABASE           INTEGRITY      PROGRAM       VCAT
-DAY                INTO           PSID          VIEW
-DAYS               IS             QUERYNO       VOLUMES
-ISOBID             READ           WHEN
-ISOLATION          READS          WHERE
-ITERATE            RECOVERY       WHILE
-DBINFO             JAR            REFERENCES    WITH
-DECLARE            JAVA           REFERENCING   WLM
-DEFAULT            JOIN           RELEASE       WRITE
-DEFAULTS           KEY            RENAME        YEAR
-DEFINITION         LABEL          REPEAT        YEARS
-DELETE             LANGUAGE       RESET
-DESCRIPTOR         LC_CTYPE       RESIGNAL
-SET                STRING
+ALL               AS              BETWEEN         BITS
+BOTH              BREAK           BY              CALL
+CASCADE           CASE            CATCH           COLLATE
+COLUMN            CONSTRAINT      CONTAINING      CONTINUE
+CREATE            CURRENT         CURRENT_DATE    CURRENT_TIME
+CURRENT_TIMESTAMP DEFAULT         DELETE          DESCRIBE
+DISTINCT          ELSE            END             END_FOR
+END_FUNCTION      END_IF          END_PROCEDURE   END_TRIGGER
+END_TRY           END_WHILE       ENUM            ESCAPE
+EXECUTE           EXISTS          FALSE           FETCH
+FOR               FOREIGN         FOR_UPDATE      FROM
+FULL              GENERATED       GROUP           HAVING
+IDENTITY          IF              IN              INNER
+INOUT             INSERT          INTO            IS
+JOIN              KEY             LEADING         LEFT
+LIKE              LIMIT           LOGICAL_AND     LOGICAL_NOT
+LOGICAL_OR        MAX             MAXVALUE        MIN
+NATIONAL          NATURAL         NCHAR           NCLOB
+NEXT              NEXT_VALUE      NOT_BETWEEN     NOT_CONTAINING
+NOT_IN            NOT_LIKE        NOT_STARTING    NTEXT
+NULL              NUMERIC         NVARCHAR        OCTETS
+OFF               OFFSET          ON              ONLY
+ORDER             OUT             PRIMARY         REAL
+RECORD_BATCHING   REFERENCES      REGEXP          RESTART
+RESTRICT          RETURN          RIGHT           ROLLBACK
+ROWS              SELECT          SET             SHOW
+SMALLDATETIME     SMALLINT        STARTING        STRING_TYPE
+THEN              THROW           TINYBLOB        TINYINT
+TO                TRAILING        TRUE            TRY
+UNION             UNIQUE          UNKNOWN         UPDATE
+USING             VAR             VER             WHEN
+WHERE             WHILE           WITH
+ABS               ACOS            ASIN            ATAN2
+ATAN              BIT_LENGTH      CAST            CEILING
+CHARACTER_LENGTH  COALESCE        CONCAT          CONVERT_TZ
+COS               COT             CURRENT_USER    DATE
+DATE_ADD          DATE_SUB        DAYOFWEEK       DAY
+DEGREES           EXTRACT         FLOOR           GREATEST
+HOUR              IFNULL          LEAST           LOCATE
+LOWER             LTRIM           MINUTE          MOD
+MONTH             MSLEEP          NOW             NULLIF
+OCTET_LENGTH      OPTIONAL_FIELD  PI              POSITION
+POWER             RADIANS         RAND            REPLACE
+ROUND             RTRIM           SECOND          SIN
+SQRT              SUBSTRING_INDEX SUBSTR          TAN
+TRIM              UPPER           USER            YEAR
+STRING            SCHEMA          PART            LOCK
+PATH              GET
 /;
 
 sub produce
