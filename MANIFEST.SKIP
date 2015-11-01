@@ -1,4 +1,4 @@
-^(?!script/|lib/|inc/|t/|xt/|share/|Makefile.PL$|README$|MANIFEST$|Changes$|META.(?:json|yml)$)
+^(?!script/|lib/|inc/|t/|xt/|share/|Makefile.PL$|README$|MANIFEST$|Changes$|AUTHORS$|META.(?:json|yml)$)
 
 .*CVS.*
 .#.*
