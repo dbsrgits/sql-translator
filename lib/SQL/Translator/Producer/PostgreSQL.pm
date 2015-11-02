@@ -602,6 +602,11 @@ sub create_constraint
         push @fks, "$def";
     }
 
+    # This seemed preferable to doing it in every junction of that if
+    if ($c->deferrable and $c->type ne FOREIGN_KEY) {
+        $constraint_defs[-1] .= ' DEFERRABLE';
+    }
+
     return \@constraint_defs, \@fks;
 }
 

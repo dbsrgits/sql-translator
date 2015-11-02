@@ -46,9 +46,9 @@ CREATE TABLE "Basic" (
   "emptytagdef" character varying DEFAULT '',
   "another_id" integer DEFAULT 2,
   "timest" timestamp,
-  PRIMARY KEY ("id"),
-  CONSTRAINT "emailuniqueindex" UNIQUE ("email"),
-  CONSTRAINT "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" UNIQUE ("title")
+  PRIMARY KEY ("id") DEFERRABLE,
+  CONSTRAINT "emailuniqueindex" UNIQUE ("email") DEFERRABLE,
+  CONSTRAINT "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" UNIQUE ("title") DEFERRABLE
 );
 CREATE INDEX "titleindex" on "Basic" ("title");
 
@@ -56,7 +56,7 @@ DROP TABLE "Another" CASCADE;
 CREATE TABLE "Another" (
   "id" serial NOT NULL,
   "num" numeric(10,2),
-  PRIMARY KEY ("id")
+  PRIMARY KEY ("id") DEFERRABLE
 );
 
 DROP VIEW "email_list";
