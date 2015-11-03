@@ -56,6 +56,7 @@ Object constructor.
       match_type       => 'full',        # how to match
       on_delete        => 'cascade',     # what to do on deletes
       on_update        => '',            # what to do on updates
+      deferrable       => 0,             # whether to set DEFERRABLE, if supported by the database
   );
 
 =cut
