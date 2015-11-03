@@ -92,6 +92,7 @@ True or False, so the following are equivalent:
 has deferrable => (
     is => 'rw',
     coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
+    lazy => 1,
     default => sub {
         $_[0]->type eq FOREIGN_KEY
     },
