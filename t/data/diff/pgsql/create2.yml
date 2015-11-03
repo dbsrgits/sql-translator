@@ -120,7 +120,7 @@ schema:
           reference_fields: []
           reference_table: ''
           type: UNIQUE
-        - deferrable: 0
+        - deferrable: 1
           expression: ''
           fields:
             - age
