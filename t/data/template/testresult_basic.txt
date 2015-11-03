@@ -152,7 +152,7 @@ Constraints
         match_type:       
         reference_fields: 
         reference_table:  
-        deferrable:       1
+        deferrable:       0
         on_delete:        
         on_update:        
         options:          
@@ -165,7 +165,7 @@ Constraints
         match_type:       
         reference_fields: 
         reference_table:  
-        deferrable:       1
+        deferrable:       0
         on_delete:        
         on_update:        
         options:          
@@ -178,7 +178,7 @@ Constraints
         match_type:       
         reference_fields: 
         reference_table:  
-        deferrable:       1
+        deferrable:       0
         on_delete:        
         on_update:        
         options:          
@@ -240,7 +240,7 @@ Constraints
         match_type:       
         reference_fields: 
         reference_table:  
-        deferrable:       1
+        deferrable:       0
         on_delete:        
         on_update:        
         options:          

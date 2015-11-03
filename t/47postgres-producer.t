@@ -112,7 +112,7 @@ my $pk_constraint = SQL::Translator::Schema::Constraint->new(
 
 my  ($pk_constraint_def_ref, $pk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($pk_constraint);
 ok(@{$pk_constraint_def_ref} == 1 && @{$pk_constraint_fk_ref} == 0,  'precheck of create_Primary Key constraint');
-is($pk_constraint_def_ref->[0], 'CONSTRAINT foo PRIMARY KEY (myfield) DEFERRABLE', 'Create Primary Key Constraint works');
+is($pk_constraint_def_ref->[0], 'CONSTRAINT foo PRIMARY KEY (myfield)', 'Create Primary Key Constraint works');
 
 my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
 is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT foo', 'Alter drop Primary Key constraint works');
@@ -188,7 +188,7 @@ for my $name ( 'foo', undef ) {
     my  ($pk_constraint_def_ref, $pk_constraint_pk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($pk_constraint);
 
     if ( $name ) {
-        is($pk_constraint_def_ref->[0], "CONSTRAINT $name PRIMARY KEY (myfield) DEFERRABLE", 'Create Primary Key Constraint works');
+        is($pk_constraint_def_ref->[0], "CONSTRAINT $name PRIMARY KEY (myfield)", 'Create Primary Key Constraint works');
 
         # ToDo: may we should check if the constraint name was valid, or if next
         #       unused_name created has choosen a different one
@@ -196,7 +196,7 @@ for my $name ( 'foo', undef ) {
         is($alter_pk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Primary Key constraint works');
     }
     else {
-        is($pk_constraint_def_ref->[0], 'PRIMARY KEY (myfield) DEFERRABLE', 'Create un-named Primary Key Constraint works');
+        is($pk_constraint_def_ref->[0], 'PRIMARY KEY (myfield)', 'Create un-named Primary Key Constraint works');
 
         my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
         is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_pkey', 'Alter drop un-named Foreign Key constraint works');
@@ -658,25 +658,25 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
     {
         my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['foo']);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
-        is($def->[0], 'CONSTRAINT constr UNIQUE (foo) DEFERRABLE', 'constraint created');
+        is($def->[0], 'CONSTRAINT constr UNIQUE (foo)', 'constraint created');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
-        is($def->[0], 'CONSTRAINT "constr" UNIQUE ("foo") DEFERRABLE', 'constraint created w/ quotes');
+        is($def->[0], 'CONSTRAINT "constr" UNIQUE ("foo")', 'constraint created w/ quotes');
     }
 
     {
         my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['lower(foo)']);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
-        is($def->[0], 'CONSTRAINT constr UNIQUE (lower(foo)) DEFERRABLE', 'constraint created');
+        is($def->[0], 'CONSTRAINT constr UNIQUE (lower(foo))', 'constraint created');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
-        is($def->[0], 'CONSTRAINT "constr" UNIQUE (lower(foo)) DEFERRABLE', 'constraint created w/ quotes');
+        is($def->[0], 'CONSTRAINT "constr" UNIQUE (lower(foo))', 'constraint created w/ quotes');
     }
 
     {
         my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['bar', 'lower(foo)']);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
-        is($def->[0], 'CONSTRAINT constr UNIQUE (bar, lower(foo)) DEFERRABLE', 'constraint created');
+        is($def->[0], 'CONSTRAINT constr UNIQUE (bar, lower(foo))', 'constraint created');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr, $quote);
-        is($def->[0], 'CONSTRAINT "constr" UNIQUE ("bar", lower(foo)) DEFERRABLE', 'constraint created w/ quotes');
+        is($def->[0], 'CONSTRAINT "constr" UNIQUE ("bar", lower(foo))', 'constraint created w/ quotes');
     }
 
     {

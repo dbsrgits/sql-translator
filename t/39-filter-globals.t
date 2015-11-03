@@ -90,7 +90,7 @@ is_deeply ($struct, {
       Person => {
         constraints => [
           {
-            deferrable => 1,
+            deferrable => 0,
             expression => "",
             fields => [
               "modified"

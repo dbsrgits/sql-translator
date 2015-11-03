@@ -35,7 +35,7 @@ schema:
             - person_id
           reference_table: person
           type: FOREIGN KEY
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - employee_id
@@ -96,7 +96,7 @@ schema:
       order: 4
     person:
       constraints:
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - person_id
@@ -108,7 +108,7 @@ schema:
           reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - person_id
@@ -120,7 +120,7 @@ schema:
           reference_fields: []
           reference_table: ''
           type: UNIQUE
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - age
