@@ -11,16 +11,16 @@ use SQL::Translator::Diff;
 
 maybe_plan(undef, 'DBD::Pg');
 
-my ( $pgsql, $ddl, $ret, $dsn, $user, $pass );
+my ( $pg_tst, $ddl, $ret, $dsn, $user, $pass );
 if ($ENV{DBICTEST_PG_DSN}) {
     ($dsn, $user, $pass) = map { $ENV{"DBICTEST_PG_$_"} } qw(DSN USER PASS);
 }
 else {
     no warnings 'once';
     maybe_plan(undef, 'Test::PostgreSQL');
-    $pgsql = Test::PostgreSQL->new
+    $pg_tst = Test::PostgreSQL->new
         or plan skip_all => "Can't create test database: $Test::PostgreSQL::errstr";
-    $dsn = $pgsql->dsn;
+    $dsn = $pg_tst->dsn;
 };
 
 my $dbh = DBI->connect($dsn, $user, $pass, { RaiseError => 1, AutoCommit => 1 });
@@ -80,11 +80,17 @@ cmp_ok( scalar(@$ret), '==', 1, "Got 1 row");
 cmp_ok( $ret->[0]->{biff}, 'eq', 'buzz', "col biff has value buzz" );
 
 # Make sure Test::PostgreSQL can kill Pg
-undef $dbh if $pgsql;
+undef $dbh if $pg_tst;
 
 END {
-    if ($dbh && !$pgsql) {
+    if ($dbh && !$pg_tst) {
         $dbh->do("drop table if exists sqlt_test_$_") foreach qw(foo fluff);
+    }
+    elsif( $pg_tst ) {
+        # do the teardown ourselves, work around RT#108460
+        local $?;
+        $pg_tst->stop;
+        1;
     }
 }
 
