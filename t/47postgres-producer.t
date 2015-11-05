@@ -250,6 +250,37 @@ is($add_field, 'ALTER TABLE mytable ADD COLUMN field3 character varying(10)', 'A
 my $drop_field = SQL::Translator::Producer::PostgreSQL::drop_field($field2);
 is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
 
+my $field_serial = SQL::Translator::Schema::Field->new( name => 'serial_field',
+                                                  table => $table,
+                                                  data_type => 'INT',
+                                                  is_auto_increment => 1,
+                                                  is_nullable => 0 );
+
+my $field_serial_sql = SQL::Translator::Producer::PostgreSQL::create_field($field_serial);
+
+is($field_serial_sql, 'serial_field serial NOT NULL', 'Create serial field works');
+
+my $field_bigserial = SQL::Translator::Schema::Field->new( name => 'bigserial_field',
+                                                  table => $table,
+                                                  data_type => 'BIGINT',
+                                                  is_auto_increment => 1,
+                                                  is_nullable => 0 );
+
+my $field_bigserial_sql = SQL::Translator::Producer::PostgreSQL::create_field($field_bigserial);
+
+is($field_bigserial_sql, 'bigserial_field bigserial NOT NULL', 'Create bigserial field works (from bigint type)');
+
+$field_bigserial = SQL::Translator::Schema::Field->new( name => 'bigserial_field',
+                                                  table => $table,
+                                                  data_type => 'INT',
+                                                  is_auto_increment => 1,
+                                                  is_nullable => 0,
+                                                  size => 12 );
+
+$field_bigserial_sql = SQL::Translator::Producer::PostgreSQL::create_field($field_bigserial);
+
+is($field_bigserial_sql, 'bigserial_field bigserial NOT NULL', 'Create bigserial field works (based on size)');
+
 my $field3 = SQL::Translator::Schema::Field->new( name      => 'time_field',
                                                   table => $table,
                                                   data_type => 'TIME',
