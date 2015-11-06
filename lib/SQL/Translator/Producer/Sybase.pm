@@ -281,9 +281,7 @@ sub produce {
             push @index_defs,
                 'CREATE INDEX ' . $index->name .
                 " ON $table_name (".
-                join( ', ',
-                    map { ref $_ ? $_->{name} : $_ } $index->fields
-                ) . ");";
+                join( ', ',$index->field_names ) . ");";
         }
 
         my $create_statement;

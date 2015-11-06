@@ -798,7 +798,7 @@ EOV
     }
 
     {
-        my $index = $table->add_index(fields => [ { name => 'foo', size => 25 } ], type => 'unique');
+        my $index = $table->add_index(fields => [ { name => 'foo', prefix_length => 25 } ], type => 'unique');
         my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
         is($def, 'UNIQUE INDEX (foo(25))', 'unique index created');
     }
@@ -806,8 +806,8 @@ EOV
     {
         my $index = $table->add_index(name => 'sized', fields => [
             'foobar',
-            { name => 'foo', size => 10 },
-            { name => 'bar', size => 15 },
+            { name => 'foo', prefix_length => 10 },
+            { name => 'bar', prefix_length => 15 },
         ]);
         my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
         is($def, 'INDEX sized (foobar, foo(10), bar(15))', 'index created');

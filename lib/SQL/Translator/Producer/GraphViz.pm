@@ -465,9 +465,7 @@ sub produce {
                 ? $index->name . ':'
                 : ()
               ,
-              join (', ',
-                  map { ref $_ ? "$_->{name}($_->{size})" : $_ } $index->fields
-              ),
+              join (', ', $index->field_names_with_lengths),
               ($index->type eq 'UNIQUE') ? '[U]' : (),
             );
            }
