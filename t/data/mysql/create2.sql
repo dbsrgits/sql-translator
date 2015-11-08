@@ -23,3 +23,8 @@ create table added (
   id integer
 );
 
+CREATE TABLE foobar (
+  id integer NOT NULL auto_increment,
+  name varchar(255) default NULL,
+  PRIMARY KEY (id)
+);

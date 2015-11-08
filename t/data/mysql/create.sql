@@ -21,3 +21,9 @@ create table employee (
 create table deleted (
   id integer
 );
+
+CREATE TABLE foobar (
+  id int(11) NOT NULL auto_increment,
+  name varchar(25) default NULL,
+  PRIMARY KEY  (id)
+) ENGINE=InnoDB;
