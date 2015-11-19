@@ -459,6 +459,9 @@ sub maybe_plan {
         elsif ($@ =~ /([\w\:]+ version [\d\.]+) required.+?this is only version/) {
             push @errors, $1;
         }
+        elsif ($@ =~ /Can't load .+? for module .+?DynaLoader\.pm/i ) {
+          push @errors, $module;
+        }
     }
 
     if (@errors) {

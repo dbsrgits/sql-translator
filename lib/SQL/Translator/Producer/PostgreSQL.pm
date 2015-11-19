@@ -651,7 +651,7 @@ sub convert_datatype
         $data_type = 'character varying';
     }
     elsif ( $field->is_auto_increment ) {
-        if ( defined $size[0] && $size[0] > 11 ) {
+        if ( (defined $size[0] && $size[0] > 11) or $data_type eq 'bigint' ) {
             $data_type = 'bigserial';
         }
         else {
