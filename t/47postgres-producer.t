@@ -708,4 +708,31 @@ CREATE VIEW view_foo ( id, name ) AS
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
+{
+  my $table = SQL::Translator::Schema::Table->new( name => 'foo.bar', extra => { unlogged => 1 }, );
+  my $field = SQL::Translator::Schema::Field->new( name => 'baz',
+                                                 table => $table,
+                                                 data_type => 'VARCHAR',
+                                                 size => 10,
+                                                 default_value => 'quux',
+                                                 is_auto_increment => 0,
+                                                 is_nullable => 0,
+                                                 is_foreign_key => 0,
+                                                 is_unique => 0 );
+  $table->add_field($field);
+  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table($table, { quote_table_names => q{"} });
+
+  my $expected = <<EOESQL;
+--
+-- Table: foo.bar
+--
+CREATE UNLOGGED TABLE "foo"."bar" (
+  "baz" character varying(10) DEFAULT 'quux' NOT NULL
+)
+EOESQL
+
+  $expected =~ s/\n\z//;
+  is($create, $expected, 'Create unlogged table works');
+}
+
 done_testing;
