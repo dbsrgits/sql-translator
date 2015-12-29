@@ -229,28 +229,32 @@ $table_info->{TABLE_TYPE},
             # constraint?
 
             if (defined($stuff->{indexes}->{$table_info->{TABLE_NAME}})){
-                my $h = $dbh->selectall_hashref("sp_helpindex
-[$table_info->{TABLE_NAME}]", 'INDEX_NAME');
-                foreach (values %{$h}) {
-                    my $fields = $_->{'INDEX_KEYS'};
-                    $fields =~ s/\s*//g;
-                    my $i = $table->add_index(
-                                              name   =>
-$_->{INDEX_NAME},
-                                              fields => $fields,
-                                             );
-                    if ($_->{'INDEX_DESCRIPTION'} =~ /unique/i) {
-                        $i->type('unique');
+                # If there are no indexes then $ar will contain [ [ 1 ] ]
+                my $ar = $dbh->selectall_arrayref("sp_helpindex [$table_info->{TABLE_NAME}]");
+                if (@{$ar->[0]} > 1) {
+                    my $h = $dbh->selectall_hashref("sp_helpindex
+    [$table_info->{TABLE_NAME}]", 'INDEX_NAME');
+                    foreach (values %{$h}) {
+                        my $fields = $_->{'INDEX_KEYS'};
+                        $fields =~ s/\s*//g;
+                        my $i = $table->add_index(
+                                                  name   =>
+    $_->{INDEX_NAME},
+                                                  fields => $fields,
+                                                 );
+                        if ($_->{'INDEX_DESCRIPTION'} =~ /unique/i) {
+                            $i->type('unique');
 
-                        # we could make this a primary key if there
-                        # isn't already one defined and if there
-                        # aren't any nullable columns in thisindex.
+                            # we could make this a primary key if there
+                            # isn't already one defined and if there
+                            # aren't any nullable columns in thisindex.
 
-                        if (!defined($table->primary_key())) {
-                            $table->primary_key($fields)
-                                unless grep {
-                                    $table->get_field($_)->is_nullable()
-                                } split(/,\s*/, $fields);
+                            if (!defined($table->primary_key())) {
+                                $table->primary_key($fields)
+                                    unless grep {
+                                        $table->get_field($_)->is_nullable()
+                                    } split(/,\s*/, $fields);
+                            }
                         }
                     }
                 }
