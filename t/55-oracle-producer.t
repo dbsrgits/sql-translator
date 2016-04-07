@@ -7,6 +7,7 @@ use Test::More;
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Table;
+use SQL::Translator::Schema::View;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Producer::Oracle;
@@ -78,6 +79,25 @@ use SQL::Translator::Producer::Oracle;
         ],
         'correct "CREATE CONSTRAINT" SQL'
     );
+
+    my $materialized_view = SQL::Translator::Schema::View->new(
+        name    => 'matview',
+        sql     => 'SELECT id, name FROM table3',
+        fields  => 'id, name',
+        extra   => {
+            materialized =>
+                'REFRESH START WITH SYSDATE NEXT SYSDATE + 5/1440 FORCE WITH ROWID'
+        }
+    );
+
+    my ($materialized_view_def) = SQL::Translator::Producer::Oracle::create_view($materialized_view);
+    is_deeply(
+        $materialized_view_def,
+        [   "CREATE MATERIALIZED VIEW matview REFRESH START WITH SYSDATE NEXT SYSDATE + 5/1440 FORCE WITH ROWID AS\nSELECT id, name FROM table3"
+        ],
+        'correct "CREATE MATERIALZED VIEW" SQL'
+    );
+
 }
 
 done_testing();
