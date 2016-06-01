@@ -896,4 +896,20 @@ is($mat_view_sql, $mat_view_sql_expected, 'correct "MATERIALIZED VIEW" SQL');
     . "FOR EACH ROW EXECUTE PROCEDURE test_trigger_proc()", "trigger created");
 }
 
+# Functions
+{
+  my $func1_sql = 'CREATE FUNCTION test_func1(arg1 character varying) ' .
+    'RETURNS character varying AS \'my ($arg1) = @_; return "Hello: " . ($arg1 // "unnamed");\' LANGUAGE plperl';
+  my $function1 = SQL::Translator::Schema::Procedure->new(
+    name => 'test_func1',
+    sql  => $func1_sql
+  );
+
+  my $create_function_opts = { add_drop_procedure => 1, no_comments => 1 };
+  my @function1_sqls = SQL::Translator::Producer::PostgreSQL::create_procedure($function1, $create_function_opts);
+  ok(@function1_sqls == 2, "DROP & CREATE FUNCTION");
+  is($function1_sqls[0], "DROP FUNCTION IF EXISTS test_func1", "function dropped");
+  is($function1_sqls[1], $func1_sql, "function created");
+}
+
 done_testing;

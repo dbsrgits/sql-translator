@@ -238,6 +238,29 @@ and table_constraint is:
 
   DROP TRIGGER [ IF EXISTS ] name ON table_name [ CASCADE | RESTRICT ]
 
+=head1 Create Function Syntax
+
+  CREATE [ OR REPLACE ] FUNCTION
+      name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } default_expr ] [, ...] ] )
+      [ RETURNS rettype
+        | RETURNS TABLE ( column_name column_type [, ...] ) ]
+    { LANGUAGE lang_name
+      | TRANSFORM { FOR TYPE type_name } [, ... ]
+      | WINDOW
+      | IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
+      | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
+      | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+      | COST execution_cost
+      | ROWS result_rows
+      | SET configuration_parameter { TO value | = value | FROM CURRENT }
+      | AS 'definition'
+      | AS 'obj_file', 'link_symbol'
+    } ...
+      [ WITH ( attribute [, ...] ) ]
+
+  DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype [, ...] ] )
+    [ CASCADE | RESTRICT ]
+
 =cut
 
 sub produce {
@@ -296,6 +319,18 @@ sub produce {
             add_drop_trigger => $add_drop_table,
             generator        => $generator,
             no_comments      => $no_comments,
+          }
+        );
+  }
+
+  for my $procedure ($schema->get_procedures) {
+    push @table_defs,
+        create_procedure(
+          $procedure,
+          {
+            add_drop_procedure => $add_drop_table,
+            generator          => $generator,
+            no_comments        => $no_comments,
           }
         );
   }
@@ -829,6 +864,20 @@ sub create_trigger {
         $generator->quote($trigger->on_table),
         $scope, $trigger->action,
       );
+
+  return @statements;
+}
+
+sub create_procedure {
+  my ($procedure,$options) = @_;
+  my $generator = _generator($options);
+
+  my @statements;
+
+  push @statements, sprintf( 'DROP FUNCTION IF EXISTS %s', $generator->quote($procedure->name) )
+    if $options->{add_drop_procedure};
+
+  push @statements, $procedure->sql;
 
   return @statements;
 }
