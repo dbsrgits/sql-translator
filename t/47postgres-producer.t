@@ -855,6 +855,8 @@ CREATE VIEW view_foo ( id, name ) AS
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
+
+# Materialized view
 my $mat_view = SQL::Translator::Schema::View->new(
   name   => 'view_foo',
   fields => [qw/id name/],
@@ -871,4 +873,27 @@ my $mat_view_sql_expected = "CREATE MATERIALIZED VIEW view_foo ( id, name ) AS
 ";
 
 is($mat_view_sql, $mat_view_sql_expected, 'correct "MATERIALIZED VIEW" SQL');
+
+
+# Triggers
+{
+  my $schema   = SQL::Translator::Schema->new();
+  my $table    = $schema->add_table( name => 'test_table' );
+  my $trigger1 = $schema->add_trigger(
+    name                => 'test_trigger',
+    perform_action_when => 'BEFORE',
+    database_events     => [qw/UPDATE INSERT/],
+    on_table            => 'test_table',
+    action              => 'EXECUTE PROCEDURE test_trigger_proc()',
+    scope               => 'ROW',
+  );
+
+  my $create_trigger_opts = { add_drop_trigger => 1, no_comments => 1 };
+  my @trigger1_sqls = SQL::Translator::Producer::PostgreSQL::create_trigger($trigger1, $create_trigger_opts);
+  ok(@trigger1_sqls == 2, "DROP & CREATE TRIGGER");
+  is($trigger1_sqls[0], "DROP TRIGGER IF EXISTS test_trigger ON test_table", "trigger dropped");
+  is($trigger1_sqls[1], "CREATE TRIGGER test_trigger before update OR insert ON test_table "
+    . "FOR EACH ROW EXECUTE PROCEDURE test_trigger_proc()", "trigger created");
+}
+
 done_testing;
