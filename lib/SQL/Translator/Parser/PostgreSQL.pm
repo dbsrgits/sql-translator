@@ -348,7 +348,7 @@ function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
   /AS/i DOLQSTRING { $item[2] }
 
 
-create : CREATE /FUNCTION/i function_name function_args function_return function_def(s) ';'
+create : CREATE or_replace(?) /FUNCTION/i function_name function_args function_return function_def(s) ';'
     {
         my $func_name = $item{function_name};
 
