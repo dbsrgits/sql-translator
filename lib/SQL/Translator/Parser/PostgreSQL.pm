@@ -102,7 +102,7 @@ our @EXPORT_OK = qw(parse);
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
 { my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments,
-       @procedures ) }
+       @procedures, $trigger_order, $procedure_order ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -299,6 +299,7 @@ create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i ta
 
         push @triggers, {
             name => $item{trigger_name},
+            order => ++$trigger_order,
             perform_action_when => $item{before_or_after},
             database_events => $item{database_events},
             on_table => $item{table_id}{table_name},
@@ -354,6 +355,7 @@ create : CREATE or_replace(?) /FUNCTION/i function_name function_args function_r
 
         push @procedures, {
           name => $func_name,
+          order => ++$procedure_order,
           sql => 'CREATE FUNCTION ' . $func_name . $item{statement_body} . ';',
         };
     }
