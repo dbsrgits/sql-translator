@@ -857,7 +857,7 @@ sub create_trigger {
 
   push @statements,
       sprintf(
-        'CREATE TRIGGER %s %s %s ON %s%s %s',
+        "CREATE TRIGGER %s %s %s\n  ON %s%s %s",
         $generator->quote($trigger->name),
         $trigger->perform_action_when,
         join(' OR ', @{ $trigger->database_events }),
