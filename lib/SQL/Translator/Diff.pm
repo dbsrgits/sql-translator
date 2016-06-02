@@ -40,11 +40,47 @@ has table_diff_hash => (
   lazy    => 1,
   default => quote_sub '{}',
 );
+has triggers_to_drop => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has triggers_to_modify => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has triggers_to_create => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has procedures_to_drop => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has procedures_to_modify => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
+has procedures_to_create => (
+  is => 'rw',
+  lazy => 1,
+  default => quote_sub '[]',
+);
 
 my @diff_arrays = qw/
     tables_to_drop
     tables_to_create
-    /;
+    triggers_to_drop
+    triggers_to_modify
+    triggers_to_create
+    procedures_to_drop
+    procedures_to_modify
+    procedures_to_create
+/;
 
 my @diff_hash_keys = qw/
     constraints_to_create
@@ -115,6 +151,7 @@ sub compute_differences {
   }
 
   my %src_tables_checked = ();
+  my %src_tables_deleted = ();
   my @tar_tables         = sort { $a->name cmp $b->name } $target_schema->get_tables;
   ## do original/source tables exist in target?
   for my $tar_table (@tar_tables) {
@@ -162,8 +199,71 @@ sub compute_differences {
 
     $src_table_name = lc $src_table_name if $self->case_insensitive;
 
-    push @{ $self->tables_to_drop }, $src_table
-        unless $src_tables_checked{$src_table_name};
+    next if $src_tables_checked{$src_table_name};
+    push @{ $self->tables_to_drop}, $src_table;
+    $src_tables_deleted{$src_table_name} = 1;
+  }
+
+  my %src_triggers_checked = ();
+  my @tgt_triggers = sort { $a->name cmp $b->name } $target_schema->get_triggers;
+  for my $tgt_trigger ( @tgt_triggers ) {
+    my $name = $tgt_trigger->name;
+
+    my $src_trigger = $source_schema->get_trigger( $name, $self->case_insensitive );
+
+    unless ( $src_trigger ) {
+      push @{$self->triggers_to_create}, $tgt_trigger;
+      next;
+    }
+
+    my $src_trigger_name = $src_trigger->name;
+    $src_trigger_name = lc $src_trigger_name if $self->case_insensitive;
+    $src_triggers_checked{$src_trigger_name} = 1;
+
+    # Compare trigger
+    push @{$self->triggers_to_modify}, $tgt_trigger
+      unless $src_trigger->equals( $tgt_trigger );
+  }
+
+  for my $src_trigger ( $source_schema->get_triggers ) {
+    my $name = $src_trigger->name;
+    $name = lc $name if $self->case_insensitive;
+
+    my $src_table_name = $src_trigger->on_table;
+    $src_table_name = lc $src_table_name if $self->case_insensitive;
+
+    push @{ $self->triggers_to_drop }, $src_trigger
+      unless $src_triggers_checked{$name} or $src_tables_deleted{$src_table_name};
+  }
+
+  my %src_procedures_checked = ();
+  my @tgt_procedures = sort { $a->name cmp $b->name } $target_schema->get_procedures;
+  for my $tgt_procedure ( @tgt_procedures ) {
+    my $name = $tgt_procedure->name;
+
+    my $src_procedure = $source_schema->get_procedure( $name, $self->case_insensitive );
+
+    unless ( $src_procedure ) {
+      push @{$self->procedures_to_create}, $tgt_procedure;
+      next;
+    }
+
+    my $src_procedure_name = $src_procedure->name;
+    $src_procedure_name = lc $src_procedure_name if $self->case_insensitive;
+    $src_procedures_checked{$src_procedure_name} = 1;
+
+    # Compare SQL in procedure declaration
+    next unless $src_procedure->sql ne $tgt_procedure->sql;
+    push @{$self->procedures_to_modify}, $tgt_procedure;
+  }
+
+  for my $src_procedure ( $source_schema->get_procedures ) {
+    my $name = $src_procedure->name;
+
+    $name = lc $name if $self->case_insensitive;
+
+    push @{ $self->procedures_to_drop}, $src_procedure
+      unless $src_procedures_checked{$name};
   }
 
   return $self;
@@ -278,6 +378,96 @@ sub produce_diff_sql {
           $meth                         ? (map { $meth->($_, $self->sqlt_args) } @tables_to_drop)
         : $self->ignore_missing_methods ? "-- $producer_class cant drop_table"
         :                                 die "$producer_class cant drop_table";
+  }
+
+  if (my @triggers = @{ $self->triggers_to_create } ) {
+    my $translator = SQL::Translator->new(
+      producer_type => $self->output_db,
+      add_drop_table => 0,
+      no_comments => 1,
+      # TODO: sort out options
+      %{ $self->producer_args }
+    );
+    $translator->producer_args->{no_transaction} = 1;
+    my $schema = $translator->schema;
+
+    $schema->add_trigger($_) for @triggers;
+
+    push @diffs,
+      # Remove begin/commit here, since we wrap everything in one.
+      grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
+  }
+
+  if (my @triggers_to_drop = @{ $self->{triggers_to_drop} || []} ) {
+    my $meth = $producer_class->can('drop_trigger');
+
+    push @diffs, $meth ? ( map { $meth->($_, $self->producer_args) } @triggers_to_drop)
+                       : $self->ignore_missing_methods
+                       ? "-- $producer_class cant drop_trigger"
+                       : die "$producer_class cant drop_trigger";
+  }
+
+  if (my @triggers = @{ $self->triggers_to_modify } ) {
+    my $translator = SQL::Translator->new(
+      producer_type => $self->output_db,
+      add_drop_table => 1,
+      no_comments => 1,
+      # TODO: sort out options
+      %{ $self->producer_args }
+    );
+    $translator->producer_args->{no_transaction} = 1;
+    my $schema = $translator->schema;
+
+    $schema->add_trigger($_) for @triggers;
+
+    push @diffs,
+      # Remove begin/commit here, since we wrap everything in one.
+      grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
+  }
+
+  if (my @procedures = @{ $self->procedures_to_create } ) {
+    my $translator = SQL::Translator->new(
+      producer_type => $self->output_db,
+      add_drop_table => 0,
+      no_comments => 1,
+      # TODO: sort out options
+      %{ $self->producer_args }
+    );
+    $translator->producer_args->{no_transaction} = 1;
+    my $schema = $translator->schema;
+
+    $schema->add_procedure($_) for @procedures;
+
+    push @diffs,
+      # Remove begin/commit here, since we wrap everything in one.
+      grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
+  }
+
+  if (my @procedures_to_drop = @{ $self->{procedures_to_drop} || []} ) {
+    my $meth = $producer_class->can('drop_procedure');
+
+    push @diffs, $meth ? ( map { $meth->($_, $self->producer_args) } @procedures_to_drop)
+                       : $self->ignore_missing_methods
+                       ? "-- $producer_class cant drop_procedure"
+                       : die "$producer_class cant drop_procedure";
+  }
+
+  if (my @procedures_to_modify = @{ $self->{procedures_to_modify} || []} ) {
+    my $translator = SQL::Translator->new(
+      producer_type => $self->output_db,
+      add_drop_table => 1,
+      no_comments => 1,
+      # TODO: sort out options
+      %{ $self->producer_args }
+    );
+    $translator->producer_args->{no_transaction} = 1;
+    my $schema = $translator->schema;
+
+    $schema->add_procedure($_) for @procedures_to_modify;
+
+    push @diffs,
+      # Remove begin/commit here, since we wrap everything in one.
+      grep { $_ !~ /^(?:COMMIT|START(?: TRANSACTION)?|BEGIN(?: TRANSACTION)?)/ } $producer_class->can('produce')->($translator);
   }
 
   if (@diffs) {

@@ -1,6 +1,18 @@
 ---
 schema:
-  procedures: {}
+  procedures:
+    deleted_proc:
+      order: 1
+      name: deleted_proc
+      sql: 'CREATE FUNCTION deleted_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 1 + 1;$$'
+    modified_proc:
+      order: 2
+      name: modified_proc
+      sql: 'CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 1 + 2;$$'
+    some_proc:
+      order: 3
+      name: some_proc
+      sql: 'CREATE FUNCTION some_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 2 + 2;$$'
   tables:
     deleted:
       constraints:
@@ -233,7 +245,47 @@ schema:
           type: UNIQUE
       name: person
       order: 1
-  triggers: {}
+  triggers:
+    trg_deleted:
+      order: 1
+      name: trg_deleted
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: employee
+      action: 'EXECUTE PROCEDURE something()'
+      scope: row
+    trg_keep:
+      order: 2
+      name: trg_keep
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: employee
+      action: 'EXECUTE PROCEDURE something()'
+      scope: row
+    trg_modify:
+      order: 3
+      name: trg_modify
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: employee
+      action: 'EXECUTE PROCEDURE something()'
+      scope: row
+    trg_on_deleted:
+      order: 4
+      name: trg_on_deleted
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: deleted
+      action: 'EXECUTE PROCEDURE something()'
+      scope: row
   views: {}
 translator:
   add_drop_table: 0

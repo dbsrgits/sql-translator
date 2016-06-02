@@ -1,6 +1,18 @@
 ---
 schema:
-  procedures: {}
+  procedures:
+    modified_proc:
+      order: 2
+      name: 'modified_proc'
+      sql: 'CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 2;$$'
+    some_proc:
+      order: 3
+      name: 'some_proc'
+      sql: 'CREATE FUNCTION some_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 2 + 2;$$'
+    new_proc:
+      order: 4
+      name: 'new_proc'
+      sql: 'CREATE FUNCTION new_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 3;$$'
   tables:
     added:
       constraints: []
@@ -232,7 +244,37 @@ schema:
           type: UNIQUE
       name: person
       order: 1
-  triggers: {}
+  triggers:
+    trg_keep:
+      order: 2
+      name: trg_keep
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: employee
+      action: 'EXECUTE PROCEDURE something()'
+      scope: row
+    trg_modify:
+      order: 3
+      name: trg_modify
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: employee
+      action: 'EXECUTE PROCEDURE something_else()'
+      scope: row
+    trg_created:
+      order: 5
+      name: trg_created
+      perform_action_when: before
+      database_events:
+        - update
+        - insert
+      on_table: employee
+      action: 'EXECUTE PROCEDURE something()'
+      scope: row
   views: {}
 translator:
   add_drop_table: 0

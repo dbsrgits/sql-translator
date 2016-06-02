@@ -96,6 +96,24 @@ ALTER TABLE "person" ADD CONSTRAINT "UC_age_name" UNIQUE ("age", "name");
 
 DROP TABLE "deleted" CASCADE;
 
+CREATE TRIGGER "trg_created" before update OR insert
+  ON "employee" FOR EACH row EXECUTE PROCEDURE something();
+
+DROP TRIGGER "trg_deleted" ON "employee";
+
+DROP TRIGGER IF EXISTS "trg_modify" ON "employee";
+
+CREATE TRIGGER "trg_modify" before update OR insert
+  ON "employee" FOR EACH row EXECUTE PROCEDURE something_else();
+
+CREATE FUNCTION new_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 3;$$;
+
+DROP FUNCTION "deleted_proc";
+
+DROP FUNCTION IF EXISTS "modified_proc";
+
+CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 2;$$;
+
 
 COMMIT;
 
@@ -155,6 +173,24 @@ ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
 ALTER TABLE person ADD CONSTRAINT UC_age_name UNIQUE (age, name);
 
 DROP TABLE deleted CASCADE;
+
+CREATE TRIGGER trg_created before update OR insert
+  ON employee FOR EACH row EXECUTE PROCEDURE something();
+
+DROP TRIGGER trg_deleted ON employee;
+
+DROP TRIGGER IF EXISTS trg_modify ON employee;
+
+CREATE TRIGGER trg_modify before update OR insert
+  ON employee FOR EACH row EXECUTE PROCEDURE something_else();
+
+CREATE FUNCTION new_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 3;$$;
+
+DROP FUNCTION deleted_proc;
+
+DROP FUNCTION IF EXISTS modified_proc;
+
+CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 2;$$;
 
 
 COMMIT;

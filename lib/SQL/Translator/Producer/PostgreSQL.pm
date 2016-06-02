@@ -868,6 +868,17 @@ sub create_trigger {
   return @statements;
 }
 
+sub drop_trigger {
+    my ($trigger, $options) = @_;
+    my $generator = _generator($options);
+
+    my $out = sprintf( 'DROP TRIGGER %s ON %s',
+        $generator->quote($trigger->name),
+        $generator->quote($trigger->table->name) );
+
+    return $out;
+}
+
 sub create_procedure {
   my ($procedure,$options) = @_;
   my $generator = _generator($options);
@@ -880,6 +891,15 @@ sub create_procedure {
   push @statements, $procedure->sql;
 
   return @statements;
+}
+
+sub drop_procedure {
+    my ($procedure, $options) = @_;
+    my $generator = _generator($options);
+
+    my $out = "DROP FUNCTION " . $generator->quote($procedure->name);
+
+    return $out;
 }
 
 sub convert_datatype {
