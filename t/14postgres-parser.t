@@ -121,6 +121,18 @@ baz $foo$,
 
     create materialized view if not exists baa (black, sheep) as select foo black, bar sheep from baz;
 
+    -- Triggers
+    CREATE TRIGGER test_trigger before update OR insert ON t_test1
+      FOR EACH ROW EXECUTE PROCEDURE test_trigger_proc();
+
+    -- Functions
+    CREATE FUNCTION test_func1(arg1 character varying)
+      RETURNS character varying
+      AS 'my ($arg1) = @_; return "Hello: " . ($arg1 // "unnamed");'
+      LANGUAGE plperl;
+
+    CREATE FUNCTION test_func2 () RETURNS int AS $$function body$$;
+
     commit;
 };
 
@@ -409,6 +421,8 @@ is($schema->get_table('products_2')->extra('temporary'),            1,  "Table i
 is($schema->get_table('products_3')->extra('temporary'),            1,  "Table is TEMPORARY");
 
 # test trigger
+my @triggers = $schema->get_triggers;
+ok( @triggers == 1, 'one trigger defined');
 my $trigger = $schema->get_trigger('test_trigger');
 is($trigger->on_table, 'products_1', "Trigger is on correct table");
 is_deeply(scalar $trigger->database_events, [qw(insert update delete)], "Correct events for trigger");
@@ -448,5 +462,17 @@ is_deeply(
   [ { using => 'hash' }, { where => "f_bigint = '1' AND f_tz IS NULL" }, { include => ['f_bool'] } ],
   'Index is using hash method and has predicate right and include INCLUDE'
 );
+
+# Procedures
+my @procedures = $schema->get_procedures;
+#use Data::Dumper;
+#print STDERR Dumper(\@procedures);
+ok( @procedures == 2, 'two procedures parsed' );
+
+my $p1 = shift @procedures;
+is ($p1->name, 'test_func1', 'First procedure is "test_func1"');
+
+my $p2 = shift @procedures;
+is ($p2->name, 'test_func2', 'Second procedure is "test_func2"');
 
 done_testing;

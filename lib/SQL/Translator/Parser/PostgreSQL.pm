@@ -101,7 +101,8 @@ our @EXPORT_OK = qw(parse);
 
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
-{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments) }
+{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments,
+       @procedures ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -114,6 +115,7 @@ startrule : statement(s) eofile {
         tables => \%tables,
         views => \@views,
         triggers => \@triggers,
+        procedures => \@procedures,
     }
 }
 
@@ -303,6 +305,57 @@ create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i ta
             scope => $item{'trigger_scope(?)'}[0],
             action => $action,
         }
+    }
+
+DOLQDELIMITER : '$' /((?:[^\$])*)/ '$' { $item[2] }
+
+DOLQSTRING : DOLQDELIMITER <skip:''> /(.*)(?=\$$item{DOLQDELIMITER}\$)/s DOLQDELIMITER
+    {
+      {
+        quote => join('', '$', $item[1], '$'),
+        body => $item[3],
+      }
+    }
+
+argmode : /IN|OUT|INOUT|VARIADIC/i { $return = uc $1 }
+
+ARGUMENT : argmode(?) NAME(?) /((?:[^,\)])*)/
+    { $return = {
+        argmode => $item[1][0],
+        name => $item[2][0],
+        type => $item[3]
+      }
+    }
+
+function_args : '(' ARGUMENT(s? /,/)  ')'
+    {
+      my @arguments;
+      foreach my $arg ( @{ $item[2] } ) {
+        push @arguments, $arg;
+      }
+
+      $return = \@arguments;
+    }
+
+function_name : NAME
+
+function_return : /RETURNS/i data_type
+
+function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
+  /(IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/i { { attribute => $item[1] } } |
+  /COST/i DIGITS { { cost => $item[2] } } |
+  /AS/i SQSTRING { { body => $item[2], quote => '\'' } } |
+  /AS/i DOLQSTRING { $item[2] }
+
+
+create : CREATE /FUNCTION/i function_name function_args function_return function_def(s) ';'
+    {
+        my $func_name = $item{function_name};
+
+        push @procedures, {
+          name => $func_name,
+          sql => 'CREATE FUNCTION ' . $func_name . $item{statement_body} . ';',
+        };
     }
 
 #
@@ -1171,6 +1224,10 @@ sub parse {
 
   for my $trigger (@{ $result->{triggers} }) {
     $schema->add_trigger(%$trigger);
+  }
+
+  for my $procedure (@{ $result->{procedures} }) {
+      $schema->add_procedure( %$procedure );
   }
 
   return 1;
