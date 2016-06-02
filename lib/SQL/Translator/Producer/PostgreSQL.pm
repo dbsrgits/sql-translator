@@ -888,7 +888,41 @@ sub create_procedure {
   push @statements, sprintf( 'DROP FUNCTION IF EXISTS %s', $generator->quote($procedure->name) )
     if $options->{add_drop_procedure};
 
-  push @statements, $procedure->sql;
+  my $sql = 'CREATE FUNCTION ';
+  $sql .= $generator->quote($procedure->name);
+  $sql .= ' (';
+  foreach my $arg (@{$procedure->parameters}) {
+    $sql .= join(', ', join(' ', map $arg->{$_},
+                                 grep defined($arg->{$_}),
+                                 qw/argmode name type/));
+  }
+  $sql .= ')';
+  $sql .= "\n";
+  $sql .= ' RETURNS ';
+  $sql .= $procedure->extra->{returns}{type};
+  if($procedure->extra->{returns}{size}) {
+    $sql .= '(' . $procedure->extra->{returns}{size} . ')';
+  }
+  foreach my $def (@{$procedure->extra->{definitions}}) {
+    $sql .= "\n";
+    $sql .= ' ';
+    if($def->{body}) {
+      $sql .= 'AS ';
+      $sql .= $def->{quote};
+      $sql .= $def->{body};
+      $sql .= $def->{quote};
+    } elsif($def->{language}) {
+      $sql .= 'LANGUAGE ';
+      $sql .= $def->{language};
+    } elsif($def->{attribute}) {
+      $sql .= uc $def->{attribute};
+    } elsif($def->{cost}) {
+      $sql .= 'COST ';
+      $sql .= $def->{cost};
+    }
+  }
+
+  push @statements, $sql;
 
   return @statements;
 }

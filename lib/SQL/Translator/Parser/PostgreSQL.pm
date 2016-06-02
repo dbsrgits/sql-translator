@@ -310,7 +310,7 @@ create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i ta
 
 DOLQDELIMITER : '$' /((?:[^\$])*)/ '$' { $item[2] }
 
-DOLQSTRING : DOLQDELIMITER <skip:''> /(.*)(?=\$$item{DOLQDELIMITER}\$)/s DOLQDELIMITER
+DOLQSTRING : DOLQDELIMITER <skip:''> /(.*?)(?=\$$item{DOLQDELIMITER}\$)/s DOLQDELIMITER
     {
       {
         quote => join('', '$', $item[1], '$'),
@@ -340,10 +340,16 @@ function_args : '(' ARGUMENT(s? /,/)  ')'
 
 function_name : NAME
 
-function_return : /RETURNS/i data_type
+function_return : /RETURNS/i /(.*?)(?=AS|LANGUAGE|COST|IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/is
+    {
+      my $type = $item[2];
+      $type =~ s/\n//g;
+      $type =~ s/\s*$//g;
+      { type => $type }
+    }
 
 function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
-  /(IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/i { { attribute => $item[1] } } |
+  /(IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/i { { attribute => lc $item[1] } } |
   /COST/i DIGITS { { cost => $item[2] } } |
   /AS/i SQSTRING { { body => $item[2], quote => '\'' } } |
   /AS/i DOLQSTRING { $item[2] }
@@ -352,11 +358,49 @@ function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
 create : CREATE or_replace(?) /FUNCTION/i function_name function_args function_return function_def(s) ';'
     {
         my $func_name = $item{function_name};
+        my $args = $item{function_args};
+        my $sql = 'CREATE FUNCTION ';
+        $sql .= $func_name;
+        $sql .= ' (';
+        foreach my $arg (@$args) {
+          $sql .= join(', ',
+                    join(' ', map $arg->{$_},
+                              grep defined($arg->{$_}),
+                              qw/argmode name type/));
+        }
+        $sql .= ')';
+        $sql .= ' RETURNS ';
+        $sql .= $item{function_return}{type};
+        if($item{function_return}{size}) {
+          $sql .= '(' . $item{function_return}{size} . ')';
+        }
+        foreach my $def (@{$item{'function_def(s)'}}) {
+          $sql .= ' ';
+          if($def->{body}) {
+            $sql .= 'AS ';
+            $sql .= $def->{quote};
+            $sql .= $def->{body};
+            $sql .= $def->{quote};
+          } elsif($def->{language}) {
+            $sql .= 'LANGUAGE ';
+            $sql .= $def->{language};
+          } elsif($def->{attribute}) {
+            $sql .= uc $def->{attribute};
+          } elsif($def->{cost}) {
+            $sql .= 'COST ';
+            $sql .= $def->{cost};
+          }
+        }
 
         push @procedures, {
           name => $func_name,
           order => ++$procedure_order,
-          sql => 'CREATE FUNCTION ' . $func_name . $item{statement_body} . ';',
+          sql => $sql,
+          parameters => $args,
+          extra => {
+            returns => $item{function_return},
+            definitions => $item{'function_def(s)'}
+          }
         };
     }
 
