@@ -358,16 +358,16 @@ function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
 create : CREATE or_replace(?) /FUNCTION/i function_name function_args function_return function_def(s) ';'
     {
         my $func_name = $item{function_name};
-        my $args = $item{function_args};
         my $sql = 'CREATE FUNCTION ';
         $sql .= $func_name;
         $sql .= ' (';
-        foreach my $arg (@$args) {
-          $sql .= join(', ',
-                    join(' ', map $arg->{$_},
-                              grep defined($arg->{$_}),
-                              qw/argmode name type/));
+        my @args = ();
+        foreach my $arg (@{$item{function_args}}) {
+          push @args, join(' ', map $arg->{$_},
+                                grep defined($arg->{$_}),
+                                qw/argmode name type/);
         }
+        $sql .= join(', ', @args);
         $sql .= ')';
         $sql .= ' RETURNS ';
         $sql .= $item{function_return}{type};
@@ -396,7 +396,7 @@ create : CREATE or_replace(?) /FUNCTION/i function_name function_args function_r
           name => $func_name,
           order => ++$procedure_order,
           sql => $sql,
-          parameters => $args,
+          parameters => $item{function_args},
           extra => {
             returns => $item{function_return},
             definitions => $item{'function_def(s)'}

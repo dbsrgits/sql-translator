@@ -891,11 +891,13 @@ sub create_procedure {
   my $sql = 'CREATE FUNCTION ';
   $sql .= $generator->quote($procedure->name);
   $sql .= ' (';
+  my @args = ();
   foreach my $arg (@{$procedure->parameters}) {
-    $sql .= join(', ', join(' ', map $arg->{$_},
-                                 grep defined($arg->{$_}),
-                                 qw/argmode name type/));
+    push @args, join(' ', map $arg->{$_},
+                          grep defined($arg->{$_}),
+                          qw/argmode name type/);
   }
+  $sql .= join(', ', @args);
   $sql .= ')';
   $sql .= "\n";
   $sql .= ' RETURNS ';
