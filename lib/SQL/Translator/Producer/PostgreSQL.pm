@@ -428,7 +428,7 @@ sub create_table {
 
   my (@comments, @field_defs, @index_defs, @constraint_defs, @fks);
 
-  if ( my $schema_name = $table->schema_qualifier ) {
+  if ( my $schema_name = $table->schema_qualifier and $table->schema ) {
     if ( not defined $table->schema->extra->{schema_qualifiers}->{$schema_name} ) {
       push @comments, "--\n-- Schema: $schema_name\n--\n" unless $no_comments;
 
