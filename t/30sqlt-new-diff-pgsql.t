@@ -106,13 +106,19 @@ DROP TRIGGER IF EXISTS "trg_modify" ON "employee";
 CREATE TRIGGER "trg_modify" before update OR insert
   ON "employee" FOR EACH row EXECUTE PROCEDURE something_else();
 
-CREATE FUNCTION new_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 3;$$;
+CREATE FUNCTION "new_proc" ()
+ RETURNS int
+ LANGUAGE plpgsql
+ AS $$RETURN 3 + 3;$$;
 
 DROP FUNCTION "deleted_proc";
 
 DROP FUNCTION IF EXISTS "modified_proc";
 
-CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 2;$$;
+CREATE FUNCTION "modified_proc" ()
+ RETURNS int
+ LANGUAGE plpgsql
+ AS $$RETURN 3 + 2;$$;
 
 
 COMMIT;
@@ -184,13 +190,19 @@ DROP TRIGGER IF EXISTS trg_modify ON employee;
 CREATE TRIGGER trg_modify before update OR insert
   ON employee FOR EACH row EXECUTE PROCEDURE something_else();
 
-CREATE FUNCTION new_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 3;$$;
+CREATE FUNCTION new_proc ()
+ RETURNS int
+ LANGUAGE plpgsql
+ AS $$RETURN 3 + 3;$$;
 
 DROP FUNCTION deleted_proc;
 
 DROP FUNCTION IF EXISTS modified_proc;
 
-CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 2;$$;
+CREATE FUNCTION modified_proc ()
+ RETURNS int
+ LANGUAGE plpgsql
+ AS $$RETURN 3 + 2;$$;
 
 
 COMMIT;

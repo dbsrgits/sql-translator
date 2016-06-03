@@ -4,14 +4,35 @@ schema:
     deleted_proc:
       order: 1
       name: deleted_proc
+      extra:
+        returns:
+          type: int
+        definitions:
+          - language: plpgsql
+          - body: 'RETURN 1 + 1;'
+            quote: '$$'
       sql: 'CREATE FUNCTION deleted_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 1 + 1;$$'
     modified_proc:
       order: 2
       name: modified_proc
+      extra:
+        returns:
+          type: int
+        definitions:
+          - language: plpgsql
+          - body: 'RETURN 1 + 2;'
+            quote: '$$'
       sql: 'CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 1 + 2;$$'
     some_proc:
       order: 3
       name: some_proc
+      extra:
+        returns:
+          type: int
+        definitions:
+          - language: plpgsql
+          - body: 'RETURN 2 + 2;'
+            quote: '$$'
       sql: 'CREATE FUNCTION some_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 2 + 2;$$'
   tables:
     deleted:

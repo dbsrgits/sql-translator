@@ -4,14 +4,35 @@ schema:
     modified_proc:
       order: 2
       name: 'modified_proc'
+      extra:
+        returns:
+          type: int
+        definitions:
+          - language: plpgsql
+          - body: 'RETURN 3 + 2;'
+            quote: '$$'
       sql: 'CREATE FUNCTION modified_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 2;$$'
     some_proc:
       order: 3
       name: 'some_proc'
+      extra:
+        returns:
+          type: int
+        definitions:
+          - language: plpgsql
+          - body: 'RETURN 2 + 2;'
+            quote: '$$'
       sql: 'CREATE FUNCTION some_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 2 + 2;$$'
     new_proc:
       order: 4
       name: 'new_proc'
+      extra:
+        returns:
+          type: int
+        definitions:
+          - language: plpgsql
+          - body: 'RETURN 3 + 3;'
+            quote: '$$'
       sql: 'CREATE FUNCTION new_proc () RETURNS int LANGUAGE plpgsql AS $$RETURN 3 + 3;$$'
   tables:
     added:
