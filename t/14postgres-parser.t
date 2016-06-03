@@ -133,6 +133,12 @@ baz $foo$,
 
     CREATE FUNCTION test_func2 () RETURNS int AS $$function body$$;
 
+    create table secschema.t_test1 (
+        f_serial serial NOT NULL primary key
+    );
+
+    alter table secschema.t_test1 add f_fk2s integer;
+
     commit;
 };
 
@@ -143,7 +149,7 @@ my $schema = $t->schema;
 
 isa_ok($schema, 'SQL::Translator::Schema', 'Schema object');
 my @tables = $schema->get_tables;
-is(scalar @tables, 5, 'Five tables');
+is(scalar @tables, 6, 'Six tables');
 
 my $t1 = shift @tables;
 is($t1->name, 't_test1', 'Table t_test1 exists');
@@ -474,5 +480,31 @@ is ($p1->name, 'test_func1', 'First procedure is "test_func1"');
 
 my $p2 = shift @procedures;
 is ($p2->name, 'test_func2', 'Second procedure is "test_func2"');
+
+# Qualified with schema
+my $t1s = pop @tables;
+
+is( $t1s->name, 't_test1', 'Table t_test1 from secschema schema exists' );
+is( $t1s->schema_qualifier, 'secschema', 'Table t_test1 has correct schema: secschema' );
+is( $t1s->qualified_name, 'secschema.t_test1', 'Table t_test1 from secschema schema has correct qualified name' );
+
+my @t1s_fields = $t1s->get_fields;
+is( scalar @t1s_fields, 2, '2 fields secschema.in t_test1' );
+
+my $t1s_f1 = shift @t1s_fields;
+is( $t1s_f1->name, 'f_serial', 'First field is "f_serial"' );
+is( $t1s_f1->data_type, 'integer', 'Field is an integer' );
+is( $t1s_f1->is_nullable, 0, 'Field cannot be null' );
+is( $t1s_f1->size, 11, 'Size is "11"' );
+is( $t1s_f1->default_value, undef, 'Default value is undefined' );
+is( $t1s_f1->is_primary_key, 1, 'Field is PK' );
+
+my $t1s_f2 = shift @t1s_fields;
+is( $t1s_f2->name, 'f_fk2s', 'Second field is "f_fk2s"' );
+is( $t1s_f2->data_type, 'integer', 'Field is an integer' );
+is( $t1s_f2->is_nullable, 1, 'Field can be null' );
+is( $t1s_f2->size, 10, 'Size is "10"' );
+is( $t1s_f2->default_value, undef, 'Default value is undefined' );
+is( $t1s_f2->is_primary_key, 0, 'Field is not PK' );
 
 done_testing;

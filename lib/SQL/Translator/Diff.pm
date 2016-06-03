@@ -152,10 +152,10 @@ sub compute_differences {
 
   my %src_tables_checked = ();
   my %src_tables_deleted = ();
-  my @tar_tables         = sort { $a->name cmp $b->name } $target_schema->get_tables;
+  my @tar_tables         = sort { $a->qualified_name cmp $b->qualified_name } $target_schema->get_tables;
   ## do original/source tables exist in target?
   for my $tar_table (@tar_tables) {
-    my $tar_table_name = $tar_table->name;
+    my $tar_table_name = $tar_table->qualified_name;
 
     my $src_table;
 
@@ -180,7 +180,7 @@ sub compute_differences {
       next;
     }
 
-    my $src_table_name = $src_table->name;
+    my $src_table_name = $src_table->qualified_name;
     $src_table_name = lc $src_table_name if $self->case_insensitive;
     $src_tables_checked{$src_table_name} = 1;
 
@@ -195,7 +195,7 @@ sub compute_differences {
   }    # end of target_schema->get_tables loop
 
   for my $src_table ($source_schema->get_tables) {
-    my $src_table_name = $src_table->name;
+    my $src_table_name = $src_table->qualified_name;
 
     $src_table_name = lc $src_table_name if $self->case_insensitive;
 
@@ -565,7 +565,7 @@ sub diff_table_fields {
     if (my $old_name = $tar_table_field->extra->{renamed_from}) {
       my $src_table_field = $src_table->get_field($old_name, $self->case_insensitive);
       unless ($src_table_field) {
-        carp qq#Renamed column can't find old column "@{[$src_table->name]}.$old_name" for renamed column\n#;
+        carp qq#Renamed column can't find old column "@{[$src_table->qualified_name]}.$old_name" for renamed column\n#;
         delete $tar_table_field->extra->{renamed_from};
       } else {
         push @{ $self->table_diff_hash->{$tar_table}{fields_to_rename} }, [ $src_table_field, $tar_table_field ];
