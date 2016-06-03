@@ -908,6 +908,7 @@ sub create_procedure {
   $sql .= ' (';
   my @args = ();
   foreach my $arg (@{$procedure->parameters}) {
+    $arg = {name => $arg} if ref($arg) ne 'HASH';
     push @args, join(' ', map $arg->{$_},
                           grep defined($arg->{$_}),
                           qw/argmode name type/);
@@ -915,8 +916,8 @@ sub create_procedure {
   $sql .= join(', ', @args);
   $sql .= ')';
   $sql .= "\n";
-  $sql .= ' RETURNS ';
-  $sql .= $procedure->extra->{returns}{type};
+  $sql .= ' RETURNS ' . $procedure->extra->{returns}{type}
+    if $procedure->extra->{returns}{type};
   if($procedure->extra->{returns}{size}) {
     $sql .= '(' . $procedure->extra->{returns}{size} . ')';
   }

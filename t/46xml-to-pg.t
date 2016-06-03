@@ -71,6 +71,11 @@ DROP TRIGGER IF EXISTS "bar_trigger" ON "Basic";
 
 CREATE TRIGGER "bar_trigger" before insert OR update ON "Basic" FOR EACH row update modified2=timestamp();;
 
+DROP FUNCTION IF EXISTS "foo_proc";
+
+CREATE FUNCTION "foo_proc" (foo, bar)
+;
+
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
 
