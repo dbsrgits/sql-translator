@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Add support for parsing PostgreSQL dollar-quoted strings
+
 0.11024 2018-01-09
 
  * Remove temporary diagnostics added in 0.11023_01
