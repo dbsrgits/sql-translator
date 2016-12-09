@@ -686,6 +686,14 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
         is($def, 'CREATE INDEX "myindex" on "foobar" USING hash ("bar", lower(foo)) WHERE upper(foo) = \'bar\' AND bar = \'foo\'', 'index using & where created w/ quotes');
     }
+
+    {
+        my $index = $table->add_index(name => 'myindex', fields => ['coalesce(foo, 0)']);
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX myindex on foobar (coalesce(foo, 0))", 'index created');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
+        is($def, 'CREATE INDEX "myindex" on "foobar" (coalesce(foo, 0))', 'index created w/ quotes');
+    }
 }
 
 my $drop_view_opts1 = { add_drop_view => 1, no_comments => 1, postgres_version => 8.001 };
