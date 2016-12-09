@@ -19,6 +19,7 @@ my $deps = {
     'Sub::Quote'               => '0',
     'Try::Tiny'                => '0.04',
     'Scalar::Util'             => '0',
+    'Regexp::Common'           => '0',
   },
   recommends => {
     'Template'                 => '2.20',
