@@ -149,7 +149,7 @@ HEADER_COMMENT
     sub clear_saved_strings {
         %symbols = ();
     }
-+
+
     sub parse_list_arg {
         my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
         #
