@@ -148,7 +148,9 @@ sub view_trigger {
         'fields'              => scalar $trigger->fields,
         'on_table'            => scalar $trigger->on_table,
         'action'              => scalar $trigger->action,
-        'scope'               => scalar $trigger->scope,
+        (defined $trigger->scope ? (
+            'scope'           => scalar $trigger->scope,
+        ) : ()),
         keys %{$trigger->extra} ? ('extra' => { $trigger->extra } ) : (),
     };
 }
