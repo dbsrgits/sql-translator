@@ -213,6 +213,7 @@ schema:
       on_table: pet
       order: 1
       perform_action_when: after
+      scope: row
   views:
     person_pet:
       fields: []

@@ -216,7 +216,7 @@ sub parse {
     foreach (@nodes) {
         my %data = get_tagfields($xp, $_, "sqlf:", qw/
             name perform_action_when database_event database_events fields
-            on_table action order extra
+            on_table action order extra scope
         /);
 
         # back compat

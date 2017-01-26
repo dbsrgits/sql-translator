@@ -99,12 +99,12 @@ Created on Fri Aug 15 15:08:18 2003
 
   <triggers>
       <trigger name="foo_trigger" database_event="insert" on_table="Basic"
-          perform_action_when="after" order="1">
+          perform_action_when="after" order="1" scope="row">
           <action>update modified=timestamp();</action>
           <extra foo="bar" hello="world" bar="baz" />
       </trigger>
       <trigger name="bar_trigger" database_events="insert , update" on_table="Basic"
-          perform_action_when="before" order="1">
+          perform_action_when="before" order="1" scope="row">
           <action>update modified2=timestamp();</action>
           <extra hello="aliens" />
       </trigger>

@@ -27,7 +27,7 @@ use constant DEBUG => (exists $opt{d} ? 1 : 0);
 #=============================================================================
 
 BEGIN {
-    maybe_plan(238, 'SQL::Translator::Parser::XML::SQLFairy');
+    maybe_plan(undef, 'SQL::Translator::Parser::XML::SQLFairy');
 }
 
 my $testschema = "$Bin/data/xml/schema.xml";
@@ -235,6 +235,7 @@ schema_ok( $scma, {
             database_events     => 'insert',
             on_table            => 'Basic',
             action              => 'update modified=timestamp();',
+            scope               => 'row',
             extra => {
                 foo => "bar",
                 hello => "world",
@@ -247,6 +248,7 @@ schema_ok( $scma, {
             database_events     => 'insert,update',
             on_table            => 'Basic',
             action              => 'update modified2=timestamp();',
+            scope               => 'row',
             extra => {
                 hello => "aliens",
             },
@@ -269,3 +271,5 @@ schema_ok( $scma, {
     ],
 
 }); # end schema
+
+done_testing;

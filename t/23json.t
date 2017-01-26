@@ -260,7 +260,8 @@ my $json = to_json(from_json(<<JSON), { canonical => 1, pretty => 1 });
             "name" : "pet_trig",
             "on_table" : "pet",
             "order" : "1",
-            "perform_action_when" : "after"
+            "perform_action_when" : "after",
+            "scope": "row"
          }
       },
       "views" : {

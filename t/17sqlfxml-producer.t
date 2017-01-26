@@ -193,7 +193,7 @@ $ans = <<EOXML;
   </tables>
   <views></views>
   <triggers>
-    <trigger name="foo_trigger" database_events="insert" on_table="Basic" perform_action_when="after" order="1">
+    <trigger name="foo_trigger" database_events="insert" on_table="Basic" perform_action_when="after" order="1" scope="row">
       <action>update modified=timestamp();</action>
       <extra hello="world" />
     </trigger>
@@ -222,6 +222,7 @@ EOXML
         database_events     => [$database_event],
         table               => $table,
         action              => $action,
+        scope               => 'row',
         extra               => { hello => "world" },
     ) or die $s->error;
 
