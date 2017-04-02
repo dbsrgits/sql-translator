@@ -326,7 +326,7 @@ create : CREATE PROCEDURE NAME not_delimiter "$delimiter"
 PROCEDURE : /procedure/i
     | /function/i
 
-create : CREATE or_replace(?) create_view_option(s?) /view/i NAME /as/i view_select_statement "$delimiter"
+create : CREATE or_replace(?) create_view_option(s?) /view/i NAME parens_field_list(?) /as/i view_select_statement "$delimiter"
     {
         @table_comments = ();
         my $view_name   = $item{'NAME'};

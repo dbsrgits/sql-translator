@@ -502,6 +502,19 @@ BEGIN {
     is( join(',', $t2c2->reference_fields), 'id', 'To field "id"' );
 }
 
+# Tests for CREATE VIEW statements that contain a column list
+# after the view name
+{
+    my $tr = SQL::Translator->new();
+    my $data = parse($tr,
+        q[
+            CREATE
+              VIEW view_foo (id, name) AS
+                SELECT id, name FROM thing;
+        ]
+    ) or die $tr->error;
+}
+
 # cch Tests for:
 #    comments like: /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 #    char fields with character set and collate qualifiers
