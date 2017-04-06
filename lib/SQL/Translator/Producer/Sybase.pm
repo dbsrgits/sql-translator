@@ -163,6 +163,8 @@ sub produce {
             my $commalist      = join( ', ', map { qq['$_'] } @$list );
             my $seq_name;
 
+            my $identity = '';
+
             if ( $data_type eq 'enum' ) {
                 my $check_name = mk_name(
                     $table_name.'_'.$field_name, 'chk' ,undef, 1
@@ -174,10 +176,10 @@ sub produce {
             elsif ( $data_type eq 'set' ) {
                 $data_type .= 'character varying';
             }
-            elsif ( $field->is_auto_increment ) {
-                $field_def .= ' IDENTITY';
-            }
             else {
+                if ( $field->is_auto_increment ) {
+                    $identity = 'IDENTITY';
+                }
                 if ( defined $translate{ $data_type } ) {
                     $data_type = $translate{ $data_type };
                 }
@@ -209,6 +211,7 @@ sub produce {
 
             $field_def .= " $data_type";
             $field_def .= "($size)" if $size;
+            $field_def .= " $identity" if $identity;
 
             #
             # Default value
