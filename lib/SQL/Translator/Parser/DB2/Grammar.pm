@@ -5,7 +5,7 @@ use Parse::RecDescent;
 
 
 package Parse::RecDescent::SQL::Translator::Parser::DB2::Grammar;
-use strict;
+use strict; use warnings;
 use vars qw($skip $AUTOLOAD  );
 $skip = '\s*';
 
