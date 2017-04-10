@@ -339,6 +339,7 @@ create : CREATE or_replace(?) create_view_option(s?) /view/i NAME parens_field_l
             $item{'CREATE'},
             $item{'or_replace(?)'},
             $options,
+            'view',
             $view_name,
             'as select',
             join(', ',
