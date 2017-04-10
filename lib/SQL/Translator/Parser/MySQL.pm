@@ -332,13 +332,11 @@ create : CREATE or_replace(?) create_view_option(s?) /view/i NAME parens_field_l
         my $view_name   = $item{'NAME'};
         my $select_sql  = $item{'view_select_statement'};
         my $options     = $item{'create_view_option(s?)'};
-        my $field_list  = $item{'parens_field_list(?)'};
 
-        # Map fields as aliases on the select columns
-        my @fields = ( $field_list->[0] ) ? @{ $field_list->[0] } : ();
-        map { $select_sql->{'columns'}->[$_]->{'alias'} = $fields[$_] }
-            ( 0 .. $#fields )
-            if (@fields);
+        # Use the field list as column aliases, if specified
+        my @fields = @{$item{'parens_field_list(?)'}[0] || []};
+        $select_sql->{columns}->[$_]->{alias} = $fields[$_]
+            for 0..$#fields;
 
         my $sql = join(q{ },
             grep { defined and length }
