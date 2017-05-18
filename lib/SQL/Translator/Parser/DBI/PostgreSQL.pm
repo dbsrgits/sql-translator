@@ -37,17 +37,16 @@ sub parse {
     my $schema = $tr->schema;
 
     my $column_select = $dbh->prepare(
-      "SELECT a.attname, case 
+      "SELECT a.attname, case
           when t.oid = any ('{int,int8,int2}'::regtype[])
           and ad.adsrc = 'nextval('''
-                || (pg_get_serial_sequence (a.attrelid::regclass::text
-                                          , a.attname))::regclass
+                || (pg_get_serial_sequence (a.attrelid::regclass::text, a.attname))::regclass
                 || '''::regclass)'
          then case t.oid
              when 'int8'::regtype then 'bigserial'
              when 'int'::regtype  then 'serial'
              when 'int2'::regtype then 'smallserial'
-         end 
+         end
          else format_type(t.oid, a.atttypmod)
          end as typname, a.attnum,
              case typname

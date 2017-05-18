@@ -704,7 +704,6 @@ sub convert_datatype
         $data_type =~ s/\([0-9]+\)$//; # Bug fix for type(size)(size)
         $data_type .= '(' . join( ',', @size ) . ')';
     }
-    
     if($array)
     {
         $data_type .= '[]';
@@ -782,7 +781,6 @@ sub alter_field
                        $to_field->name),
                        $to_dt eq 'serial' ? 'integer' : "$1int"
                     );
-            
             my $seq_name = "${table_name}_${field_name}_seq";
             my $by_name = "${table_name}.${field_name}";
             my @args = map(
