@@ -768,14 +768,32 @@ sub alter_field
 
     my $from_dt = convert_datatype($from_field);
     my $to_dt   = convert_datatype($to_field);
-    push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
-                       map($generator->quote($_),
-                           $to_field->table->name,
-                           $to_field->name
-                       ),
-                       $to_dt,
-                   )
-        if($to_dt ne $from_dt);
+
+    if ($to_dt ne $from_dt) {
+        if ($to_dt =~ /(big|small)?serial/) {
+            my $table_name = $to_field->table->name;
+            my $field_name = $to_field->name;
+
+            push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+                       $to_field->table->name,
+                       $to_field->name,
+                       $to_dt eq 'serial' ? 'integer' : "$1int");
+
+            push @out, <<"__SERIAL__";
+CREATE SEQUENCE ${table_name}_${field_name}_seq;
+
+ALTER TABLE ${table_name} ALTER COLUMN ${field_name} SET DEFAULT nextval('${table_name}_${field_name}_seq');
+
+ALTER SEQUENCE ${table_name}_${field_name}_seq OWNED BY ${table_name}.${field_name};
+
+__SERIAL__
+        } else {
+            push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+                       $to_field->table->name,
+                       $to_field->name,
+                       $to_dt);
+        }
+    }
 
     my $old_default = $from_field->default_value;
     my $new_default = $to_field->default_value;
