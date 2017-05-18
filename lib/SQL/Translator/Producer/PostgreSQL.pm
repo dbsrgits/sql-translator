@@ -689,12 +689,22 @@ sub convert_datatype
         @size = ();
     }
 
-    if (defined $size[0] && $size[0] > 0 && $data_type =~ /^time/i ) {
-        $data_type =~ s/^(time.*?)( with.*)?$/$1($size[0])/;
-        $data_type .= $2 if(defined $2);
+    if ( $data_type =~ /^(time(?:[a-z]+)?)/i ) {
+        my $time_type = $1;
+        if (defined $size[0] && 0 < $size[0]) {
+            $time_type .= "($size[0])";
+        }
+        if ($data_type =~ /((?:with|without)? time zone)$/i) {
+            $time_type .= " $1";
+        } else {
+            $time_type .= ' without time zone';
+        }
+        $data_type = $time_type;
     } elsif ( defined $size[0] && $size[0] > 0 ) {
+        $data_type =~ s/\([0-9]+\)$//; # Bug fix for type(size)(size)
         $data_type .= '(' . join( ',', @size ) . ')';
     }
+    
     if($array)
     {
         $data_type .= '[]';
