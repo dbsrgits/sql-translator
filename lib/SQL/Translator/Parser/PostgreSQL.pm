@@ -589,6 +589,15 @@ pg_data_type :
             };
         }
     |
+    /(smallserial|serial2)/i
+        {
+            $return = {
+                type              => 'integer',
+                size              => 5,
+                is_auto_increment => 1
+            };
+        }
+    |
     /(bit varying|varbit)/i
         {
             $return = { type => 'varbit' };

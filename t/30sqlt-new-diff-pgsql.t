@@ -72,7 +72,13 @@ DROP INDEX "u_name";
 
 ALTER TABLE "person" ADD COLUMN "is_rock_star" smallint DEFAULT 1;
 
-ALTER TABLE "person" ALTER COLUMN "person_id" TYPE serial;
+ALTER TABLE "person" ALTER COLUMN "person_id" TYPE integer;
+
+CREATE SEQUENCE "person_person_id_seq";
+
+ALTER TABLE "person" ALTER COLUMN "person_id" SET DEFAULT nextval('person_person_id_seq');
+
+ALTER SEQUENCE "person_person_id_seq" OWNED BY "person"."person_id";
 
 ALTER TABLE "person" ALTER COLUMN "name" SET NOT NULL;
 
@@ -127,7 +133,13 @@ ALTER TABLE person DROP CONSTRAINT UC_age_name;
 
 ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 
-ALTER TABLE person ALTER COLUMN person_id TYPE serial;
+ALTER TABLE person ALTER COLUMN person_id TYPE integer;
+
+CREATE SEQUENCE person_person_id_seq;
+
+ALTER TABLE person ALTER COLUMN person_id SET DEFAULT nextval('person_person_id_seq');
+
+ALTER SEQUENCE person_person_id_seq OWNED BY person.person_id;
 
 ALTER TABLE person ALTER COLUMN name SET NOT NULL;
 

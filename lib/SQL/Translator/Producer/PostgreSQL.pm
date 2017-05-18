@@ -651,10 +651,11 @@ sub convert_datatype
         $data_type = 'character varying';
     }
     elsif ( $field->is_auto_increment ) {
-        if ( (defined $size[0] && $size[0] > 11) or $data_type eq 'bigint' ) {
+        if (11 < $size[0] || $data_type eq 'bigint') {
             $data_type = 'bigserial';
-        }
-        else {
+        } elsif (0 < $size[0] && $size[0] < 5 || $data_type eq 'smallint') {
+            $data_type = 'smallserial';
+        } else {
             $data_type = 'serial';
         }
         undef @size;
@@ -672,19 +673,10 @@ sub convert_datatype
     }
 
     if ( $data_type eq 'integer' ) {
-        if ( defined $size[0] && $size[0] > 0) {
-            if ( $size[0] > 10 ) {
-                $data_type = 'bigint';
-            }
-            elsif ( $size[0] < 5 ) {
-                $data_type = 'smallint';
-            }
-            else {
-                $data_type = 'integer';
-            }
-        }
-        else {
-            $data_type = 'integer';
+        if (10 < $size[0]) {
+            $data_type = 'bigint';
+        } elsif (0 < $size[0] && $size[0] <= 5) {
+            $data_type = 'smallint';
         }
     }
 
@@ -775,22 +767,35 @@ sub alter_field
             my $field_name = $to_field->name;
 
             push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+                    map($generator->quote($_),
                        $to_field->table->name,
-                       $to_field->name,
-                       $to_dt eq 'serial' ? 'integer' : "$1int");
+                       $to_field->name),
+                       $to_dt eq 'serial' ? 'integer' : "$1int"
+                    );
+            
+            my $seq_name = "${table_name}_${field_name}_seq";
+            my $by_name = "${table_name}.${field_name}";
+            my @args = map(
+                $generator->quote($_),
+                $seq_name,
+                $table_name,
+                $field_name,
+                $seq_name,
+                $by_name
+            );
+            push @out, sprintf(<<"__SERIAL__", @args);
+CREATE SEQUENCE %s;
 
-            push @out, <<"__SERIAL__";
-CREATE SEQUENCE ${table_name}_${field_name}_seq;
+ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('${table_name}_${field_name}_seq');
 
-ALTER TABLE ${table_name} ALTER COLUMN ${field_name} SET DEFAULT nextval('${table_name}_${field_name}_seq');
-
-ALTER SEQUENCE ${table_name}_${field_name}_seq OWNED BY ${table_name}.${field_name};
+ALTER SEQUENCE %s OWNED BY %s;
 
 __SERIAL__
         } else {
             push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+                    map($generator->quote($_),
                        $to_field->table->name,
-                       $to_field->name,
+                       $to_field->name),
                        $to_dt);
         }
     }
