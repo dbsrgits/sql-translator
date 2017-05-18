@@ -37,14 +37,32 @@ sub parse {
     my $schema = $tr->schema;
 
     my $column_select = $dbh->prepare(
-      "SELECT a.attname, format_type(t.oid, a.atttypmod) as typname, a.attnum,
-              a.atttypmod as length, a.attnotnull, a.atthasdef, ad.adsrc,
+      "SELECT a.attname, case 
+          when t.oid = any ('{int,int8,int2}'::regtype[])
+          and ad.adsrc = 'nextval('''
+                || (pg_get_serial_sequence (a.attrelid::regclass::text
+                                          , a.attname))::regclass
+                || '''::regclass)'
+         then case t.oid
+             when 'int8'::regtype then 'bigserial'
+             when 'int'::regtype  then 'serial'
+             when 'int2'::regtype then 'smallserial'
+         end 
+         else format_type(t.oid, a.atttypmod)
+         end as typname, a.attnum,
+             case typname
+                  when 'varchar'   then a.atttypmod - 4
+                  when 'bpchar'    then a.atttypmod - 4
+                  when 'numeric'   then (a.atttypmod - 4) / 65536
+                  when 'decimal'   then (a.atttypmod - 4) / 65536
+                  else a.atttypmod
+              end as length, a.attnotnull, a.atthasdef, ad.adsrc,
               d.description
        FROM pg_type t, pg_attribute a
        LEFT JOIN pg_attrdef ad ON (ad.adrelid = a.attrelid AND a.attnum = ad.adnum)
        LEFT JOIN pg_description d ON (a.attrelid=d.objoid AND a.attnum=d.objsubid)
-       WHERE a.attrelid=? AND attnum>0
-         AND a.atttypid=t.oid
+       WHERE a.attrelid = ? AND attnum > 0
+         AND a.atttypid = t.oid
        ORDER BY a.attnum"
     );
 

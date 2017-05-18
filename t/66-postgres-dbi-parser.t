@@ -91,7 +91,7 @@ is( scalar @t1_fields, 4, '4 fields in sqlt_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
-is( $f1->data_type, 'integer', 'Field is an integer' );
+is( $f1->data_type, 'serial', 'Field is a serial' );
 is( $f1->is_nullable, 0, 'Field cannot be null' );
 is( $f1->default_value, "nextval('sqlt_test1_f_serial_seq'::regclass)", 'Default value is nextval()' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
@@ -102,8 +102,7 @@ my $f2 = shift @t1_fields;
 is( $f2->name, 'f_varchar', 'Second field is "f_varchar"' );
 is( $f2->data_type, 'character varying(255)', 'Field is a character varying(255)' );
 is( $f2->is_nullable, 1, 'Field can be null' );
-#FIXME: should not be 255?
-is( $f2->size, 259, 'Size is "259"' );
+is( $f2->size, 255, 'Size is "255"' );
 is( $f2->default_value, undef, 'Default value is undefined' );
 is( $f2->is_primary_key, 0, 'Field is not PK' );
 is( $f2->is_auto_increment, 0, 'Field is not auto increment' );
