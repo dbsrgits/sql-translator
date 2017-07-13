@@ -81,10 +81,10 @@ exec : exec_statement(s) GO
 
 exec_statement : /exec/i /[^\n]+/
 
-comment : /^\s*(?:#|-{2}).*\n/
+comment : /^\s*--.*\n/
     {
         my $comment =  $item[1];
-        $comment    =~ s/^\s*(#|--)\s*//;
+        $comment    =~ s/^\s*--\s*//;
         $comment    =~ s/\s*$//;
         $return     = $comment;
         push @table_comments, $comment;
