@@ -23,6 +23,7 @@ Changes for SQL::Translator
  * Fix missing semicolons between PostGIS statements
  * Fix string and identifier quoting in PostGIS statements
  * Fix intermittent test failures (RT#108460)
+ * Fix relying on exact serialisation for JSON/YAML tests (RT#121901)
 
 0.11021 2015-01-29
 
