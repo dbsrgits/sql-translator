@@ -386,10 +386,11 @@ sub create_trigger {
 sub alter_table { () } # Noop
 
 sub add_field {
-  my ($field) = @_;
+  my ($field,$options) = @_;
 
   return sprintf("ALTER TABLE %s ADD COLUMN %s",
-      _generator()->quote($field->table->name), create_field($field))
+      _generator($options)->quote($field->table->name),
+      create_field($field, $options))
 }
 
 sub alter_create_index {
