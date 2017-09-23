@@ -271,7 +271,7 @@ sub produce {
     xml_obj_children( $xml, $schema,
         tag    => 'trigger',
         methods => [qw/name database_events action on_table perform_action_when
-            fields order extra/],
+            fields order extra scope/],
     );
 
     #

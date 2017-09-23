@@ -1,7 +1,7 @@
 use warnings;
 use strict;
 use Test::More;
-use Test::Differences;
+use Test::Exception;
 use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 use FindBin '$Bin';
@@ -13,8 +13,8 @@ BEGIN {
 }
 
 my $sqlt_version = $SQL::Translator::VERSION;
-use YAML qw(Dump Load);
-my $yaml = Dump(Load(<<YAML));
+use YAML qw(Load);
+my $yaml = Load(<<YAML);
 ---
 schema:
   procedures: {}
@@ -213,6 +213,7 @@ schema:
       on_table: pet
       order: 1
       perform_action_when: after
+      scope: row
   views:
     person_pet:
       fields: []
@@ -246,5 +247,5 @@ my $tr   = SQL::Translator->new(
 );
 
 my $out;
-ok( $out = $tr->translate, 'Translate SQLite to YAML' );
-eq_or_diff( $out, $yaml, 'YAML matches expected' );
+lives_ok { $out = Load($tr->translate) } 'Translate SQLite to YAML';
+is_deeply( $out, $yaml, 'YAML matches expected' );

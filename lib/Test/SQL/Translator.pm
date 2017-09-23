@@ -284,6 +284,9 @@ sub trigger_ok {
     is( $obj->on_table, $test->{on_table},
         "$t_name    on_table is '$test->{on_table}'" );
 
+    is( $obj->scope, $test->{scope}, "$t_name    scope is '$test->{scope}'" )
+        if exists $test->{scope};
+
     is( $obj->action, $test->{action}, "$t_name    action is '$test->{action}'" );
 
     is_deeply( { $obj->extra }, $test->{extra}, "$t_name    extra" );
