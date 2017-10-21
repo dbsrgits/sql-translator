@@ -601,6 +601,15 @@ sub create_constraint
 
         push @fks, "$def";
     }
+    elsif( $c->type eq EXCLUDE ) {
+        my $using      =  $c->options->[0]{ using };
+        $using =  $using ? "USING $using" : '';
+        my $expression =  $c->expression;
+        my $where      =  $c->options->[0]{ where };
+        $where =  $where ? "WHERE $where" : '';
+        push @constraint_defs, "$def_start EXCLUDE $using ( $expression ) $where";
+    }
+
 
     return \@constraint_defs, \@fks;
 }
