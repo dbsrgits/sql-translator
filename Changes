@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+0.11022 2017-12-04
+
  * Add support for monotonically increasing SQLite autoincs (GH#47)
  * Add support for CHECK constraint in SQLite producer (GH#57)
  * Add support for CHECK constraint in POD producer (GH#63)
