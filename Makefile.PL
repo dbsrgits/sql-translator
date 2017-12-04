@@ -1,3 +1,4 @@
+BEGIN { push @INC, '.' unless $INC[-1] eq '.' }
 use inc::Module::Install 1.06;
 use strict;
 use warnings;
