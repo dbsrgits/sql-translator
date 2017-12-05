@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Fix error handling for Test::PostgreSQL 1.20
+
 0.11022 2017-12-04
 
  * Add support for monotonically increasing SQLite autoincs (GH#47)

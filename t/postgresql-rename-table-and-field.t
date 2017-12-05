@@ -18,7 +18,7 @@ if ($ENV{DBICTEST_PG_DSN}) {
 else {
     no warnings 'once';
     maybe_plan(undef, 'Test::PostgreSQL');
-    $pg_tst = Test::PostgreSQL->new
+    $pg_tst = eval { Test::PostgreSQL->new }
         or plan skip_all => "Can't create test database: $Test::PostgreSQL::errstr";
     $dsn = $pg_tst->dsn;
 };
