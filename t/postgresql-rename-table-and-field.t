@@ -8,6 +8,7 @@ use Test::Exception;
 use Test::SQL::Translator;
 use SQL::Translator;
 use SQL::Translator::Diff;
+use Digest;
 
 maybe_plan(undef, 'DBD::Pg');
 
@@ -18,6 +19,11 @@ if ($ENV{DBICTEST_PG_DSN}) {
 else {
     no warnings 'once';
     maybe_plan(undef, 'Test::PostgreSQL');
+    open my $fh, '<:raw', $INC{"Test/PostgreSQL.pm"} or die "No Test::PostgreSQL: $!\n";
+    my $d = Digest->new('MD5');
+    $d->addfile($fh);
+    diag sprintf "Test::PostgreSQL %s found at %s (md5: %s)",
+        Test::PostgreSQL->VERSION, $INC{"Test/PostgreSQL.pm"}, $d->hexdigest;
     $pg_tst = eval { Test::PostgreSQL->new }
         or plan skip_all => "Can't create test database: $Test::PostgreSQL::errstr";
     $dsn = $pg_tst->dsn;

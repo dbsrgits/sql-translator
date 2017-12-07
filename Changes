@@ -1,5 +1,10 @@
 Changes for SQL::Translator
 
+0.11023_01 2017-12-07
+
+ * Add diagnostics to t/postgresql-rename-table-and-field.t that's
+   failing mysteriously on some smokers
+
 0.11023 2017-12-05
 
  * Fix error handling for Test::PostgreSQL 1.20
