@@ -465,6 +465,9 @@ sub maybe_plan {
         elsif ($@ =~ /Can't load .+? for module .+?DynaLoader\.pm/i ) {
           push @errors, $module;
         }
+        else {
+            push @errors, "$module: $@";
+        }
     }
 
     if (@errors) {

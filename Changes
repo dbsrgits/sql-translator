@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Make maybe_plan skip on unrecognised failures to load modules
+
 0.11023_01 2017-12-07
 
  * Add diagnostics to t/postgresql-rename-table-and-field.t that's
