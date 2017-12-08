@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+0.11023_02 2017-12-08
+
  * Make maybe_plan skip on unrecognised failures to load modules
 
 0.11023_01 2017-12-07
