@@ -466,7 +466,8 @@ sub maybe_plan {
           push @errors, $module;
         }
         else {
-            push @errors, "$module: $@";
+            (my $err = $@) =~ s/\n+/\\n/g; # Can't have newlines in the skip message
+            push @errors, "$module: $err";
         }
     }
 
