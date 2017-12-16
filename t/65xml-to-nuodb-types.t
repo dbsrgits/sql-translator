@@ -111,6 +111,22 @@ use SQL::Translator::Producer::NuoDB;
    is_deeply(@result[0], $expected, 'NOW() stays NOW()');
 }
 
+# without time zone
+{
+   my $table = SQL::Translator::Schema::Table->new(
+       name => 'foo_table',
+   );
+   $table->add_field(
+       name          => 'c',
+       data_type     => 'timestamp WITHOUT TIME ZONE',
+       is_nullable   => 1,
+   );
+   my $expected = "CREATE TABLE foo_table (\n  c TIMESTAMP\n);";
+   my @result =  SQL::Translator::Producer::NuoDB::create_table($table);
+   is_deeply(@result[0], $expected, 'Ignore WITHOUT TIME ZONE');
+}
+
+
 # reserved word field
 {
    my $table = SQL::Translator::Schema::Table->new(
