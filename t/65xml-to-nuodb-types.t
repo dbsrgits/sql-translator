@@ -106,9 +106,9 @@ use SQL::Translator::Producer::NuoDB;
        is_nullable   => 0,
        default_value => 'NOW()',
    );
-   my $expected = "CREATE TABLE foo_table (\n  c TIMESTAMP NOT NULL DEFAULT 'NOW'\n);";
+   my $expected = "CREATE TABLE foo_table (\n  c TIMESTAMP NOT NULL DEFAULT NOW()\n);";
    my @result =  SQL::Translator::Producer::NuoDB::create_table($table);
-   is_deeply(@result[0], $expected, 'NOW() to NOW');
+   is_deeply(@result[0], $expected, 'NOW() stays NOW()');
 }
 
 # reserved word field

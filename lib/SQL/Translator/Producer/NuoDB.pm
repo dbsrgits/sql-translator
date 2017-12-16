@@ -200,7 +200,7 @@ sub create_field
     $field_def .= !defined $field->default_value ? '' :
         $field->default_value =~ /current( |_)timestamp/i ||
         $field->default_value =~ /\Qnow()\E/i ?
-        ' DEFAULT \'NOW\'' : defined $field->default_value ?
+        ' DEFAULT NOW()' : defined $field->default_value ?
         (" DEFAULT " . ($data_type =~ /(INT|DOUBLE)/i ?
                         $field->default_value : "'" . $field->default_value . "'")
          ) : '';
