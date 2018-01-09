@@ -26,6 +26,7 @@ matrix:
 before_install:
   - eval $(curl https://travis-perl.github.io/init) --auto
 install:
+  - $HELPERS_ROOT/bin/cpan-config
   - cpan-install --deps CGI DBD::SQLite XML::Parser DBD::Pg # Optional test deps
   - cpan-install Test::EOL Test::NoTabs # Author test deps
   - cpan-install --coverage
