@@ -21,7 +21,7 @@ perl:
   - "5.8"
 env:
   global:
-    - COVERAGE="coveralls"
+    - COVERAGE="coveralls codecov"
     - DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test
     - DBICTEST_PG_USER=postgres
 matrix:
