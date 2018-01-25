@@ -66,7 +66,8 @@ sub produce {
     local $NO_QUOTES = 0
       if $translator->quote_identifiers and $translator->quote_identifiers ne '0E0';
 
-    my $head = (header_comment() . "\n") unless $no_comments;
+    my $head;
+    $head = (header_comment() . "\n") unless $no_comments;
 
     my @create = ();
 
