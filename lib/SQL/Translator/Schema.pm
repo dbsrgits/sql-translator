@@ -89,7 +89,7 @@ sub add_table {
 
 =head2 add_table
 
-Add a table object.  Returns the new SQL::Translator::Schema::Table object.
+Add a table object.  Returns the new L<SQL::Translator::Schema::Table> object.
 The "name" parameter is required.  If you try to create a table with the
 same name as an existing table, you will get an error and the table will
 not be created.
@@ -138,7 +138,7 @@ sub drop_table {
 
 Remove a table from the schema. Returns the table object if the table was found
 and removed, an error otherwise. The single parameter can be either a table
-name or an C<SQL::Translator::Schema::Table> object. The "cascade" parameter
+name or an L<SQL::Translator::Schema::Table> object. The "cascade" parameter
 can be set to 1 to also drop all triggers on the table, default is 0.
 
   $schema->drop_table('mytable');
@@ -182,7 +182,7 @@ sub add_procedure {
 
 =head2 add_procedure
 
-Add a procedure object.  Returns the new SQL::Translator::Schema::Procedure
+Add a procedure object.  Returns the new L<SQL::Translator::Schema::Procedure>
 object.  The "name" parameter is required.  If you try to create a procedure
 with the same name as an existing procedure, you will get an error and the
 procedure will not be created.
@@ -232,7 +232,7 @@ sub drop_procedure {
 
 Remove a procedure from the schema. Returns the procedure object if the
 procedure was found and removed, an error otherwise. The single parameter
-can be either a procedure name or an C<SQL::Translator::Schema::Procedure>
+can be either a procedure name or an L<SQL::Translator::Schema::Procedure>
 object.
 
   $schema->drop_procedure('myprocedure');
@@ -268,7 +268,7 @@ sub add_trigger {
 
 =head2 add_trigger
 
-Add a trigger object.  Returns the new SQL::Translator::Schema::Trigger object.
+Add a trigger object.  Returns the new L<SQL::Translator::Schema::Trigger> object.
 The "name" parameter is required.  If you try to create a trigger with the
 same name as an existing trigger, you will get an error and the trigger will
 not be created.
@@ -316,7 +316,7 @@ sub drop_trigger {
 
 Remove a trigger from the schema. Returns the trigger object if the trigger was
 found and removed, an error otherwise. The single parameter can be either a
-trigger name or an C<SQL::Translator::Schema::Trigger> object.
+trigger name or an L<SQL::Translator::Schema::Trigger> object.
 
   $schema->drop_trigger('mytrigger');
 
@@ -351,7 +351,7 @@ sub add_view {
 
 =head2 add_view
 
-Add a view object.  Returns the new SQL::Translator::Schema::View object.
+Add a view object.  Returns the new L<SQL::Translator::Schema::View> object.
 The "name" parameter is required.  If you try to create a view with the
 same name as an existing view, you will get an error and the view will
 not be created.
@@ -398,7 +398,7 @@ sub drop_view {
 
 Remove a view from the schema. Returns the view object if the view was found
 and removed, an error otherwise. The single parameter can be either a view
-name or an C<SQL::Translator::Schema::View> object.
+name or an L<SQL::Translator::Schema::View> object.
 
   $schema->drop_view('myview');
 
