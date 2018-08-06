@@ -215,8 +215,7 @@ schema:
           name: value
           order: 7
           size:
-            - 8
-            - 2
+            - 0
       indices:
         - fields:
             - name
