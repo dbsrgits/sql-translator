@@ -48,7 +48,7 @@ sub xml_equals
     my ($got, $expect, $msg) = (@_, "XML looks right");
     $got    =~ s/^ +//gm;
     $expect =~ s/^ +//gm;
-    eq_or_diff $got, $expect, $msg;
+    eq_or_diff $got, $expect, $msg, { context => 1 };
 }
 
 #

@@ -47,7 +47,7 @@ ok( @out, 'Got a list' );
 
 my $out = join('', @out);
 
-eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
+eq_or_diff($out, <<'## END OF DIFF', "Diff as expected", { context => 1 });
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
 BEGIN;
@@ -109,7 +109,7 @@ $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schem
       producer_args => { quote_identifiers => 0 },
     });
 
-eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
+eq_or_diff($out, <<'## END OF DIFF', "Diff as expected", { context => 1 });
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
 BEGIN;
@@ -151,7 +151,7 @@ COMMIT;
 # Test for sameness
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
 
-eq_or_diff($out, <<'## END OF DIFF', "No differences found");
+eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 -- Convert schema 'create1.yml' to 'create1.yml':;
 
 -- No differences found;
@@ -179,7 +179,7 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
   $field->data_type('integer');
   $field->size(0);
   $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_args => { quote_identifiers => 0 } } );
-  eq_or_diff($out, <<'## END OF DIFF', "No differences found");
+  eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 -- Convert schema 'create.sql' to 'create2.yml':;
 
 BEGIN;
@@ -251,7 +251,7 @@ COMMIT;
 
   my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
 
-  eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB");
+  eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB", { context => 1 });
 -- Convert schema 'Schema 1' to 'Schema 2':;
 
 BEGIN;
@@ -302,7 +302,7 @@ COMMIT;
   );
 
   my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
-  eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table");
+  eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table", { context => 1 });
 -- Convert schema 'Schema 3' to 'Schema 4':;
 
 BEGIN;
@@ -324,7 +324,7 @@ COMMIT;
   $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
     { producer_args => { quote_identifiers => 1 } }
   );
-  eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on");
+  eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on", { context => 1 });
 -- Convert schema 'Schema 3' to 'Schema 4':;
 
 BEGIN;
