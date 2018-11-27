@@ -9,7 +9,7 @@ use Try::Tiny;
 use Carp qw(carp croak);
 
 our $VERSION = '1.59';
-our $DEFAULT_COMMENT = '-- ';
+our $DEFAULT_COMMENT = '--';
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(
@@ -111,14 +111,14 @@ sub header_comment {
 
     my $header_comment =<<"HEADER_COMMENT";
 ${comment_char}
-${comment_char}Created by $producer
-${comment_char}Created on $now
+${comment_char} Created by $producer
+${comment_char} Created on $now
 ${comment_char}
 HEADER_COMMENT
 
     # Any additional stuff passed in
     for my $additional_comment (@_) {
-        $header_comment .= "${comment_char}${additional_comment}\n";
+        $header_comment .= "${comment_char} ${additional_comment}\n";
     }
 
     return $header_comment;
@@ -547,7 +547,7 @@ Will give three different results; specifically:
 
 =head2 $DEFAULT_COMMENT
 
-This is the default comment string, '-- ' by default.  Useful for
+This is the default comment string, '--' by default.  Useful for
 C<header_comment>.
 
 =head2 parse_mysql_version
