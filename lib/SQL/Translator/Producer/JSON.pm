@@ -20,7 +20,7 @@ use strict;
 use warnings;
 our $VERSION = '1.00';
 
-use JSON;
+use JSON::MaybeXS 'to_json';
 
 sub produce {
     my $translator = shift;
@@ -184,7 +184,7 @@ sub view_index {
 
 =head1 SEE ALSO
 
-SQL::Translator, JSON, http://www.json.org/.
+SQL::Translator, JSON::MaybeXS, http://www.json.org/.
 
 =head1 AUTHORS
 

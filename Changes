@@ -1,6 +1,7 @@
 Changes for SQL::Translator
 
  * Add support for parsing PostgreSQL dollar-quoted strings
+ * switched JSON backend from JSON.pm to JSON::MaybeXS
 
 0.11024 2018-01-09
 
