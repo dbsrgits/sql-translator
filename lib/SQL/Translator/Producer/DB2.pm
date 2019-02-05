@@ -310,7 +310,9 @@ sub create_index
                       $index->type() =~ /^UNIQUE$/i ? 'UNIQUE' : '',
                       $index->name,
                       $index->table->name,
-                      join(', ', $index->fields) );
+                      join(', ',
+                          map { ref $_ ? $_->{name} : $_ } $index->fields
+                      ) );
 
     return $out;
 }

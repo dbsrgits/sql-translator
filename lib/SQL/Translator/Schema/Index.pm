@@ -64,9 +64,14 @@ names and keep them in order by the first occurrence of a field name.
 
   my @fields = $index->fields;
 
+The length of an index can be specified as follows (only has any effect
+with a MySQL database):
+
+  $index->fields( 'id', { name => 'firstname', size => 15 } );
+
 =cut
 
-with ListAttr fields => ( uniq => 1 );
+with ListAttr fields => ( uniq_keys => 'name' );
 
 sub is_valid {
 
@@ -174,8 +179,10 @@ around equals => sub {
     return 0 unless $self->$orig($other);
 
     unless ($ignore_index_names) {
-      unless ((!$self->name && ($other->name eq $other->fields->[0])) ||
-        (!$other->name && ($self->name eq $self->fields->[0]))) {
+      my $self_first = ref $self->fields->[0] ? $self->fields->[0]->{name} : $self->fields->[0] || '';
+      my $other_first = ref $other->fields->[0] ? $other->fields->[0]->{name} : $other->fields->[0] || '';
+      unless ((!$self->name && ($other->name eq $other_first)) ||
+        (!$other->name && ($self->name eq $self_first))) {
         return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
       }
     }
@@ -185,13 +192,15 @@ around equals => sub {
     # Check fields, regardless of order
     my %otherFields = ();  # create a hash of the other fields
     foreach my $otherField ($other->fields) {
-      $otherField = uc($otherField) if $case_insensitive;
-      $otherFields{$otherField} = 1;
+      my $name = ref $otherField ? $otherField->{name} : $otherField;
+      $name = uc($name) if $case_insensitive;
+      $otherFields{$name} = ref $otherField ? $otherField->{size} : -1; # -1 == no length. Easier comparison.
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
-      $selfField = uc($selfField) if $case_insensitive;
-      return 0 unless $otherFields{$selfField};
-      delete $otherFields{$selfField};
+      my ($name, $size) = ref $selfField ? ($selfField->{name}, $selfField->{size}) : ($selfField, -1);
+      $name = uc($name) if $case_insensitive;
+      return 0 unless exists $otherFields{$name} && $otherFields{$name} == $size;
+      delete $otherFields{$name};
     }
     # Check all other fields were accounted for
     return 0 unless keys %otherFields == 0;

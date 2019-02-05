@@ -403,7 +403,9 @@ sub create_table {
         for my $index ( $table->get_indices ) {
             my $index_name = $index->name || '';
             my $index_type = $index->type || NORMAL;
-            my @fields     = map { quote($_, $qf) } $index->fields;
+            my @fields     = map {
+                ref $_ ? quote($_->{name}, $qf) : quote($_, $qf)
+            } $index->fields;
             next unless @fields;
 
             my @index_options;

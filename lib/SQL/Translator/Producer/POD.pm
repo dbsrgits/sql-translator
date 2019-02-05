@@ -71,7 +71,9 @@ sub produce {
             for my $index ( @indices ) {
                 $pod .= "=head4 " . $index->type . "\n\n=over 4\n\n";
                 $pod .= "=item * Fields = " .
-                    join(', ', $index->fields ) . "\n\n";
+                    join(', ',
+                        map { ref $_ ? "$_->{name}($_->{size})" : $_ } $index->fields
+                    ) . "\n\n";
                 $pod .= "=back\n\n";
             }
         }
