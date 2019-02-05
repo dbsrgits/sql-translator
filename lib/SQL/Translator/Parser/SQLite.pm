@@ -730,6 +730,7 @@ sub parse {
             database_events     => $def->{'db_events'},
             action              => $def->{'action'},
             on_table            => $def->{'on_table'},
+            scope               => 'row', # SQLite only supports row triggers
         );
     }
 

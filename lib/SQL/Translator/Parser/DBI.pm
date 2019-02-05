@@ -111,7 +111,6 @@ use constant DRIVERS => {
     pg               => 'PostgreSQL',
     sqlite           => 'SQLite',
     sybase           => 'Sybase',
-    pg               => 'PostgreSQL',
     db2              => 'DB2',
 };
 

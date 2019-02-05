@@ -11,9 +11,10 @@ use Text::ParseWords qw(shellwords);
 BEGIN {
     maybe_plan(
         3,
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::Diagram',
+        'GD',
         'Graph::Directed',
+        'SQL::Translator::Producer::Diagram',
+        'SQL::Translator::Parser::MySQL',
     );
 }
 

@@ -66,11 +66,11 @@ CREATE VIEW "email_list" ( "email" ) AS
 
 DROP TRIGGER IF EXISTS "foo_trigger";
 
-CREATE TRIGGER "foo_trigger" after insert ON "Basic" update modified=timestamp();;
+CREATE TRIGGER "foo_trigger" after insert ON "Basic" FOR EACH row update modified=timestamp();;
 
 DROP TRIGGER IF EXISTS "bar_trigger";
 
-CREATE TRIGGER "bar_trigger" before insert OR update ON "Basic" update modified2=timestamp();;
+CREATE TRIGGER "bar_trigger" before insert OR update ON "Basic" FOR EACH row update modified2=timestamp();;
 
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
