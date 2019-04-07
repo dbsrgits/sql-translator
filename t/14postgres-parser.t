@@ -25,7 +25,9 @@ my $sql = q{
         f_bool boolean,
         f_bin bytea,
         f_tz timestamp default '1970-01-01 00:00:00'::TIMESTAMP,
-        f_text text,
+        f_text text default $foo$ foo
+$bar$
+baz $foo$,
         f_fk1 integer not null references t_test2 (f_id),
         f_dropped text,
         f_timestamp timestamp(0) with time zone,
@@ -35,7 +37,9 @@ my $sql = q{
         f_numarray numeric(7,2) [ ],
         f_uuid uuid,
         f_time time(0) with time zone,
-        f_time2 time without time zone
+        f_time2 time without time zone,
+        f_text2 text default $$$$,
+        f_text3 text default $$$ $$
     );
 
     create table t_test2 (
@@ -127,7 +131,7 @@ is( $t1->name, 't_test1', 'Table t_test1 exists' );
 is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 19, '19 fields in t_test1' );
+is( scalar @t1_fields, 21, '21 fields in t_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -201,7 +205,7 @@ is( $f9->name, 'f_text', 'Ninth field is "f_text"' );
 is( $f9->data_type, 'text', 'Field is text' );
 is( $f9->is_nullable, 1, 'Field can be null' );
 is( $f9->size, 64000, 'Size is "64,000"' );
-is( $f9->default_value, undef, 'Default value is undefined' );
+is( $f9->default_value, " foo\n\$bar\$\nbaz ", 'Dollar-quoted default value is " foo\n$bar$\nbaz "' );
 is( $f9->is_primary_key, 0, 'Field is not PK' );
 
 my $f10 = shift @t1_fields;
@@ -287,6 +291,22 @@ is( $f18->size, 0, 'Size is "0"' );
 is( $f18->default_value, undef, 'Default value is "undef"' );
 is( $f18->is_primary_key, 0, 'Field is not PK' );
 is( $f18->is_foreign_key, 0, 'Field is not FK' );
+
+my $f19 = shift @t1_fields;
+is( $f19->name, 'f_text2', '19th field is "f_text2"' );
+is( $f19->data_type, 'text', 'Field is text' );
+is( $f19->is_nullable, 1, 'Field can be null' );
+is( $f19->size, 64000, 'Size is "64,000"' );
+is( $f19->default_value, '', 'Dollar-quoted default value is empty' );
+is( $f19->is_primary_key, 0, 'Field is not PK' );
+
+my $f20 = shift @t1_fields;
+is( $f20->name, 'f_text3', '20th field is "f_text3"' );
+is( $f20->data_type, 'text', 'Field is text' );
+is( $f20->is_nullable, 1, 'Field can be null' );
+is( $f20->size, 64000, 'Size is "64,000"' );
+is( $f20->default_value, '$ ', 'Dollar-quoted default value is "$ "' );
+is( $f20->is_primary_key, 0, 'Field is not PK' );
 
 # my $fk_ref2 = $f11->foreign_key_reference;
 # isa_ok( $fk_ref2, 'SQL::Translator::Schema::Constraint', 'FK' );

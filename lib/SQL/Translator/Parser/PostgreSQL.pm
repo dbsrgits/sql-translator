@@ -1012,8 +1012,12 @@ DQSTRING : '"' <skip: ''> /((?:[^"]|"")+)/ '"'
 SQSTRING : "'" <skip: ''> /((?:[^']|'')*)/ "'"
     { ($return = $item[3]) =~ s/''/'/g }
 
+DOLLARSTRING : /\$[^\$]*\$/ <skip: ''> /.*?(?=\Q$item[1]\E)/s "$item[1]"
+    { $return = $item[3]; }
+
 VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
     | SQSTRING
+    | DOLLARSTRING
     | /null/i
     { 'NULL' }
 

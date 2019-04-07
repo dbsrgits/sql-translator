@@ -465,6 +465,10 @@ sub maybe_plan {
         elsif ($@ =~ /Can't load .+? for module .+?DynaLoader\.pm/i ) {
           push @errors, $module;
         }
+        else {
+            (my $err = $@) =~ s/\n+/\\n/g; # Can't have newlines in the skip message
+            push @errors, "$module: $err";
+        }
     }
 
     if (@errors) {

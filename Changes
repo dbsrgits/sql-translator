@@ -1,5 +1,26 @@
 Changes for SQL::Translator
 
+ * Add support for parsing PostgreSQL dollar-quoted strings
+
+0.11024 2018-01-09
+
+ * Remove temporary diagnostics added in 0.11023_01
+
+0.11023_02 2017-12-08
+
+ * Make maybe_plan skip on unrecognised failures to load modules
+
+0.11023_01 2017-12-07
+
+ * Add diagnostics to t/postgresql-rename-table-and-field.t that's
+   failing mysteriously on some smokers
+
+0.11023 2017-12-05
+
+ * Fix error handling for Test::PostgreSQL 1.20
+
+0.11022 2017-12-04
+
  * Add support for monotonically increasing SQLite autoincs (GH#47)
  * Add support for CHECK constraint in SQLite producer (GH#57)
  * Add support for CHECK constraint in POD producer (GH#63)

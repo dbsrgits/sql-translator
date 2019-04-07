@@ -1,3 +1,4 @@
+BEGIN { push @INC, '.' unless $INC[-1] eq '.' }
 use inc::Module::Install 1.06;
 use strict;
 use warnings;
@@ -54,7 +55,6 @@ resources    IRC        => 'irc://irc.perl.org/#sql-translator';
 Meta->{values}{x_authority} = 'cpan:JROBINSON';
 
 all_from    'lib/SQL/Translator.pm';
-readme_from 'lib/SQL/Translator.pm';
 
 for my $type (qw/requires recommends test_requires/) {
   no strict qw/refs/;
@@ -77,26 +77,22 @@ install_share();
 
 tests_recursive ();
 
+if ($Module::Install::AUTHOR) {
+    my @missing_plugins;
+    for my $plugin (qw(AuthorTests ReadmeFromPod)) {
+        unless (eval "require Module::Install::$plugin; 1") {
+            push @missing_plugins, "Module::Install::$plugin";
+            chomp(my $err = $@);
+            $missing_plugins[-1] .= " ($err)"
+                unless $err =~ m{^Can't locate Module/Install/$plugin\.pm in \@INC};
+        }
+    }
+    die "\nYou need to install the following modules to run this Makefile.PL in author mode:\n\n", join("\n", @missing_plugins), "\n\n"
+        if @missing_plugins;
 
-# temporary(?) until I get around to fix M::I wrt xt/
-# needs Module::Install::AuthorTests
-eval {
-  # this should not be necessary since the autoloader is supposed
-  # to work, but there were reports of it failing
-  require Module::Install::AuthorTests;
-  recursive_author_tests (qw/xt/);
-  1;
-} || do {
-  if ($Module::Install::AUTHOR) {
-    my $err = $@;
-
-    # better error message in case of missing dep
-    eval { require Module::Install::AuthorTests }
-      || die "\nYou need Module::Install::AuthorTests installed to run this Makefile.PL in author mode:\n\n$@\n";
-
-    die $err;
-  }
-};
+    recursive_author_tests (qw/xt/);
+    readme_from('lib/SQL/Translator.pm');
+}
 
 auto_install();
 
