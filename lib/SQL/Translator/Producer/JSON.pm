@@ -18,7 +18,7 @@ This module serializes a schema to a JSON string.
 
 use strict;
 use warnings;
-our $VERSION = '1.59';
+our $VERSION = '1.59_01';
 
 use JSON::MaybeXS 'to_json';
 

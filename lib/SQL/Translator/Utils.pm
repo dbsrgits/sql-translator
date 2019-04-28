@@ -8,7 +8,7 @@ use Scalar::Util qw(blessed);
 use Try::Tiny;
 use Carp qw(carp croak);
 
-our $VERSION = '1.59';
+our $VERSION = '1.59_01';
 our $DEFAULT_COMMENT = '-- ';
 
 use base qw(Exporter);

@@ -21,7 +21,7 @@ takes a long time.
 
 use strict;
 use warnings;
-our $VERSION = '1.59';
+our $VERSION = '1.59_01';
 
 use YAML qw(Dump);
 

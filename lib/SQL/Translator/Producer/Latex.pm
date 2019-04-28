@@ -34,7 +34,7 @@ use strict;
 use warnings;
 
 our @EXPORT_OK;
-our $VERSION = '1.59';
+our $VERSION = '1.59_01';
 
 use SQL::Translator::Utils 'debug';
 

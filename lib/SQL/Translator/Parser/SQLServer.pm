@@ -19,7 +19,7 @@ should probably be considered a work in progress.
 use strict;
 use warnings;
 
-our $VERSION = '1.59';
+our $VERSION = '1.59_01';
 
 our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
