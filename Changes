@@ -4,6 +4,7 @@ Changes for SQL::Translator
  * Add support for materialized views in Oracle producer
  * switched JSON backend from JSON.pm to JSON::MaybeXS
  * Port Makefile.PL from Module::Install to Distar
+ * Synchronise the version number across all modules
 
 0.11024 2018-01-09
 
