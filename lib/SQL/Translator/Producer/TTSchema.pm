@@ -110,7 +110,7 @@ use strict;
 use warnings;
 
 our ( $DEBUG, @EXPORT_OK );
-our $VERSION = '1.59_01';
+our $VERSION = '1.60';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Template;

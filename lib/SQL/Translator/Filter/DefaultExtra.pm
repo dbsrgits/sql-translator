@@ -33,7 +33,7 @@ objects.
 
 use strict;
 use warnings;
-our $VERSION = '1.59_01';
+our $VERSION = '1.60';
 
 sub filter {
     my $schema = shift;

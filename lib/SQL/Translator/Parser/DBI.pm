@@ -102,7 +102,7 @@ use strict;
 use warnings;
 use DBI;
 our @EXPORT;
-our $VERSION = '1.59_01';
+our $VERSION = '1.60';
 
 use constant DRIVERS => {
     mysql            => 'MySQL',

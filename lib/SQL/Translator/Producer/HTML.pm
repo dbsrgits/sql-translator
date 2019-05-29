@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-our $VERSION = '1.59_01';
+our $VERSION = '1.60';
 our $NAME = __PACKAGE__;
 our $NOWRAP = 0 unless defined $NOWRAP;
 our $NOLINKTABLE = 0 unless defined $NOLINKTABLE;

@@ -2,7 +2,7 @@ package SQL::Translator::Parser::JSON;
 
 use strict;
 use warnings;
-our $VERSION = '1.59_01';
+our $VERSION = '1.60';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
