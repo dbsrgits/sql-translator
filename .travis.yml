@@ -45,3 +45,5 @@ before_script:
   - psql -U postgres -c 'create database sqlt_test;'
 script:
   - perl Makefile.PL && make test
+services:
+  - postgresql
