@@ -3,7 +3,7 @@ use warnings;
 use ExtUtils::MakeMaker;
 use File::ShareDir::Install;
 do './maint/Makefile.PL.include' or die $@
-  unless -f 'META.yml';
+  unless -f 'META.yml' && -f 't/data/roundtrip_autogen.yaml';
 my $eumm_version = eval $ExtUtils::MakeMaker::VERSION;
 
 my %eumm_args = (
