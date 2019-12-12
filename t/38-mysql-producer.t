@@ -280,7 +280,6 @@ my @stmts = (
   `id` integer NOT NULL,
   `foo` integer NULL,
   `foo2` integer NULL,
-  INDEX (`foo`),
   UNIQUE `foo` (`foo`, `foo2`),
   PRIMARY KEY (`id`),
   CONSTRAINT `foo` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`)
