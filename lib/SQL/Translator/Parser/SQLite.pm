@@ -477,7 +477,8 @@ column_list : field_name(s /,/)
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
 
-expr : /[^)]+/
+expr : /[^)]* \( [^)]+ \) [^)]*/x # parens, balanced one deep
+    | /[^)]+/
 
 sort_order : /(ASC|DESC)/i
 
