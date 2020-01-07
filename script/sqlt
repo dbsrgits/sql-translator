@@ -87,7 +87,7 @@ To translate a schema:
 
     --add-drop-table   Add 'DROP TABLE' statements before creates
     --quote-table-names  Quote all table names in statements
-    --quote-field-names  Qjuote all field names in statements
+    --quote-field-names  Quote all field names in statements
     --no-comments      Don't include comments in SQL output
 
   PostgreSQL Producer Options:
