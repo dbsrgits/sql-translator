@@ -15,6 +15,7 @@ create table employee (
 	employee_id integer,
   job_title varchar(255),
 	CONSTRAINT FK5302D47D93FE702E FOREIGN KEY (employee_id) REFERENCES person (person_id),
+	CONSTRAINT `demo_constraint` CHECK (`employee_id` > 0 and `employee_id` IS NOT NULL),
 	PRIMARY KEY  (position, employee_id) USING BTREE
 ) ENGINE=InnoDB;
 

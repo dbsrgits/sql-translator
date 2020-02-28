@@ -193,6 +193,7 @@ CREATE TABLE added (
 SET foreign_key_checks=1;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
+                     DROP CONSTRAINT demo_constraint,
                      DROP COLUMN job_title,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
 
