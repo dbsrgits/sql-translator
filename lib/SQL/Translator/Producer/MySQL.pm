@@ -716,7 +716,7 @@ sub alter_drop_constraint
         push @out, $c->type;
     }
     else {
-        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "INDEX"),
+        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"),
             $generator->quote($c->name);
     }
     return join(' ',@out);
