@@ -74,6 +74,8 @@ ALTER TABLE new_name ADD COLUMN new_field integer NULL;
 
 ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1;
 
+ALTER TABLE foobar CHANGE COLUMN name name varchar(255) NULL;
+
 ALTER TABLE person CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment;
 
 ALTER TABLE person CHANGE COLUMN name name varchar(20) NOT NULL;
@@ -123,6 +125,8 @@ CREATE TABLE added (
 SET foreign_key_checks=1;
 
 ALTER TABLE employee DROP COLUMN job_title;
+
+ALTER TABLE foobar CHANGE COLUMN name name varchar(255) NULL;
 
 ALTER TABLE old_name RENAME TO new_name,
                      ADD COLUMN new_field integer NULL;
@@ -195,6 +199,8 @@ SET foreign_key_checks=1;
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
                      DROP COLUMN job_title,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
+
+ALTER TABLE foobar CHANGE COLUMN name name varchar(255) NULL;
 
 ALTER TABLE person DROP INDEX UC_age_name,
                    DROP INDEX u_name,
