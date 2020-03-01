@@ -292,7 +292,7 @@ my $field3 = SQL::Translator::Schema::Field->new( name      => 'time_field',
 
 my $field3_sql = SQL::Translator::Producer::PostgreSQL::create_field($field3);
 
-is($field3_sql, 'time_field time NOT NULL', 'Create time field works');
+is($field3_sql, 'time_field time without time zone NOT NULL', 'Create time field works');
 
 my $field3_datetime_with_TZ = SQL::Translator::Schema::Field->new(
     name      => 'datetime_with_TZ',
@@ -496,7 +496,7 @@ my $field12 = SQL::Translator::Schema::Field->new( name => 'time_field',
 
 my $field12_sql = SQL::Translator::Producer::PostgreSQL::create_field($field12,{ postgres_version => 8.3 });
 
-is($field12_sql, 'time_field timestamp NOT NULL', 'time with precision');
+is($field12_sql, 'time_field timestamp without time zone NOT NULL', 'time with precision');
 
 my $field13 = SQL::Translator::Schema::Field->new( name => 'enum_field_with_type_name',
                                                    table => $table,

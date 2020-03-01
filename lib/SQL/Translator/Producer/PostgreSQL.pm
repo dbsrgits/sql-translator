@@ -651,10 +651,11 @@ sub convert_datatype
         $data_type = 'character varying';
     }
     elsif ( $field->is_auto_increment ) {
-        if ( (defined $size[0] && $size[0] > 11) or $data_type eq 'bigint' ) {
+        if (11 < $size[0] || $data_type eq 'bigint') {
             $data_type = 'bigserial';
-        }
-        else {
+        } elsif (0 < $size[0] && $size[0] < 5 || $data_type eq 'smallint') {
+            $data_type = 'smallserial';
+        } else {
             $data_type = 'serial';
         }
         undef @size;
@@ -672,19 +673,10 @@ sub convert_datatype
     }
 
     if ( $data_type eq 'integer' ) {
-        if ( defined $size[0] && $size[0] > 0) {
-            if ( $size[0] > 10 ) {
-                $data_type = 'bigint';
-            }
-            elsif ( $size[0] < 5 ) {
-                $data_type = 'smallint';
-            }
-            else {
-                $data_type = 'integer';
-            }
-        }
-        else {
-            $data_type = 'integer';
+        if (10 < $size[0]) {
+            $data_type = 'bigint';
+        } elsif (0 < $size[0] && $size[0] <= 5) {
+            $data_type = 'smallint';
         }
     }
 
@@ -697,10 +689,19 @@ sub convert_datatype
         @size = ();
     }
 
-    if (defined $size[0] && $size[0] > 0 && $data_type =~ /^time/i ) {
-        $data_type =~ s/^(time.*?)( with.*)?$/$1($size[0])/;
-        $data_type .= $2 if(defined $2);
+    if ( $data_type =~ /^(time(?:[a-z]+)?)/i ) {
+        my $time_type = $1;
+        if (defined $size[0] && 0 < $size[0]) {
+            $time_type .= "($size[0])";
+        }
+        if ($data_type =~ /((?:with|without)? time zone)$/i) {
+            $time_type .= " $1";
+        } else {
+            $time_type .= ' without time zone';
+        }
+        $data_type = $time_type;
     } elsif ( defined $size[0] && $size[0] > 0 ) {
+        $data_type =~ s/\([0-9]+\)$//; # Bug fix for type(size)(size)
         $data_type .= '(' . join( ',', @size ) . ')';
     }
     if($array)
@@ -768,14 +769,44 @@ sub alter_field
 
     my $from_dt = convert_datatype($from_field);
     my $to_dt   = convert_datatype($to_field);
-    push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
-                       map($generator->quote($_),
-                           $to_field->table->name,
-                           $to_field->name
-                       ),
-                       $to_dt,
-                   )
-        if($to_dt ne $from_dt);
+
+    if ($to_dt ne $from_dt) {
+        if ($to_dt =~ /(big|small)?serial/) {
+            my $table_name = $to_field->table->name;
+            my $field_name = $to_field->name;
+
+            push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+                    map($generator->quote($_),
+                       $to_field->table->name,
+                       $to_field->name),
+                       $to_dt eq 'serial' ? 'integer' : "$1int"
+                    );
+            my $seq_name = "${table_name}_${field_name}_seq";
+            my $by_name = "${table_name}.${field_name}";
+            my @args = map(
+                $generator->quote($_),
+                $seq_name,
+                $table_name,
+                $field_name,
+                $seq_name,
+                $by_name
+            );
+            push @out, sprintf(<<"__SERIAL__", @args);
+CREATE SEQUENCE %s;
+
+ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval('${table_name}_${field_name}_seq');
+
+ALTER SEQUENCE %s OWNED BY %s;
+
+__SERIAL__
+        } else {
+            push @out, sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+                    map($generator->quote($_),
+                       $to_field->table->name,
+                       $to_field->name),
+                       $to_dt);
+        }
+    }
 
     my $old_default = $from_field->default_value;
     my $new_default = $to_field->default_value;
