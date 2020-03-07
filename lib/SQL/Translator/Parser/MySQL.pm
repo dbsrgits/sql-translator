@@ -692,6 +692,11 @@ default_val :
     {
         $return  =  $item[2];
     }
+    |
+    /default/i NAME # column value, allowed in MariaDB
+    {
+        $return  =  $item[2];
+    }
 
 auto_inc : /auto_increment/i { 1 }
 

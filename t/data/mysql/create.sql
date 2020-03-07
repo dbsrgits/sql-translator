@@ -4,7 +4,7 @@ create table person (
   age integer,
   weight double(11,2),
   iq tinyint default '0',
-  description text,
+  description text default `name`,
   UNIQUE KEY UC_age_name (age)
 ) ENGINE=MyISAM;
 
