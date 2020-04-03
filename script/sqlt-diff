@@ -46,6 +46,7 @@ Options:
   --ignore-constraint-names   Ignore constraint name differences
   --mysql_parser_version=<#####> Specify a target MySQL parser version
                                  for dealing with /*! comments
+  --mysql-version=<#####> Specify a target MySQL producer version
   --output-db=<Producer>  This Producer will be used instead of one
                           corresponding to parser1 to format output
                           for new tables
@@ -118,7 +119,8 @@ $VERSION = '1.60';
 
 my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names,
     $ignore_constraint_names, $output_db, $mysql_parser_version,
-    $ignore_view_sql, $ignore_proc_sql, $no_batch_alters, $quote
+    $mysql_version, $ignore_view_sql, $ignore_proc_sql, $no_batch_alters,
+    $quote
 );
 
 GetOptions(
@@ -130,6 +132,7 @@ GetOptions(
     'ignore-index-names' => \$ignore_index_names,
     'ignore-constraint-names' => \$ignore_constraint_names,
     'mysql_parser_version:s' => \$mysql_parser_version,
+    'mysql-version=s' => \$mysql_version,
     'output-db:s' => \$output_db,
     'ignore-view-sql' => \$ignore_view_sql,
     'ignore-proc-sql' => \$ignore_proc_sql,
@@ -195,6 +198,7 @@ my $result = SQL::Translator::Diff::schema_diff(
         producer_args => {
             quote_table_names   => $quote || '',
             quote_field_names   => $quote || '',
+            mysql_version       => $mysql_version,
         },
     }
 );
