@@ -9,7 +9,6 @@ use Try::Tiny;
 use Carp qw(carp croak);
 
 our $VERSION = '1.60';
-our $DEFAULT_COMMENT = '--';
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(
@@ -20,6 +19,8 @@ our @EXPORT_OK = qw(
     normalize_quote_options
 );
 use constant COLLISION_TAG_LENGTH => 8;
+
+our $DEFAULT_COMMENT = '--';
 
 sub debug {
     my ($pkg, $file, $line, $sub) = caller(0);
