@@ -1,5 +1,11 @@
 Changes for SQL::Translator
 
+ * Fixes for Sybase producer
+ * Support CHECK (expr) for SQLite and MySQLoids
+ * Avoid accidentally whole objects in YAML output
+ * Prettify comment generation
+ * Tyop fixes
+
 1.60 - 2019-05-29
  * No changes since 1.59_01
 
