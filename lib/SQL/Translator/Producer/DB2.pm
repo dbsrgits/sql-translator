@@ -21,7 +21,7 @@ use warnings;
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.60';
+our $VERSION = '1.61';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;

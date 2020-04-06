@@ -90,7 +90,7 @@ context the slash will be still there to ensure compatibility with SQLPlus.
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.60';
+our $VERSION = '1.61';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use base 'SQL::Translator::Producer';

@@ -32,7 +32,7 @@ use strict;
 use warnings;
 our ($DEBUG, @EXPORT_OK);
 $DEBUG = 0 unless defined $DEBUG;
-our $VERSION = '1.60';
+our $VERSION = '1.61';
 
 use Spreadsheet::ParseExcel;
 use Exporter;
