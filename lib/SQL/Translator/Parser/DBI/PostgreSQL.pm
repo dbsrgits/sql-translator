@@ -38,7 +38,7 @@ sub parse {
 
     my $column_select = $dbh->prepare(
       "SELECT a.attname, format_type(t.oid, a.atttypmod) as typname, a.attnum,
-              a.atttypmod as length, a.attnotnull, a.atthasdef, ad.adsrc,
+              a.atttypmod as length, a.attnotnull, a.atthasdef, pg_get_expr(ad.adbin, ad.adrelid) as adsrc,
               d.description
        FROM pg_type t, pg_attribute a
        LEFT JOIN pg_attrdef ad ON (ad.adrelid = a.attrelid AND a.attnum = ad.adnum)
