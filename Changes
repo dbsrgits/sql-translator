@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Update Pg support to allow version 12 (still supporting back to 7.4)
+
 1.61 - 2020-04-19
  * Fixes for Sybase producer
  * Support CHECK (expr) for SQLite and MySQLoids
