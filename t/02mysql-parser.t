@@ -959,4 +959,33 @@ ok ($@, 'Exception thrown on invalid version string');
     ok (my $schema = $tr->schema, 'got schema');
 }
 
+{
+    # test view definitions with join
+    my $view = q~
+    CREATE VIEW `view1` AS
+        SELECT 
+            table1.cidr, col2
+        FROM
+            table1
+        INNER JOIN
+            table2
+            ON table1.cidr = table2.cidr ;
+    ~;
+
+    my $tr  = SQL::Translator->new;
+    my $sub = $tr->parser( 'SQL::Translator::Parser::MySQL' );
+    $sub->( $tr, $view );
+
+    my $schema = $tr->schema;
+
+    my @views = $schema->get_views;
+    is( scalar @views, 1, 'Right number of views (1)' );
+
+    my ($view_obj) = $views[0];
+    is( $view_obj->name, 'view1' );
+    my $tables = $view_obj->tables;
+    is_deeply( $tables, [qw/table1 table2/] );
+    is( $view_obj->sql, "CREATE view1 as select table1.cidr, col2  from  table1\n         INNER JOIN\n            table2 ON table1.cidr = table2.cidr " );
+}
+
 done_testing;
