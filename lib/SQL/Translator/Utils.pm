@@ -8,7 +8,7 @@ use Scalar::Util qw(blessed);
 use Try::Tiny;
 use Carp qw(carp croak);
 
-our $VERSION = '1.61';
+our $VERSION = '1.62';
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(

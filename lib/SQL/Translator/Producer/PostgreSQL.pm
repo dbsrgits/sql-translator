@@ -22,7 +22,7 @@ Does not yet support PostGIS Views.
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.61';
+our $VERSION = '1.62';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
