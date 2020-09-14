@@ -1,5 +1,6 @@
 Changes for SQL::Translator
 
+1.62 - 2020-09-14
  * Update Pg support to allow version 12 (still supporting back to 7.4)
 
 1.61 - 2020-04-19
