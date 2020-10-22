@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
