@@ -2,6 +2,7 @@ Build
 Build.bat
 MANIFEST
 MANIFEST.bak
+MANIFEST.SKIP
 META.*
 MYMETA.*
 Makefile
@@ -9,7 +10,7 @@ Makefile.old
 README
 _build/
 blib/
-inc/
+Distar/
 cover_db/
 pm_to_blib
 t/data/roundtrip_autogen.yaml

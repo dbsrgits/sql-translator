@@ -20,7 +20,7 @@ DBI-Sybase parser included with SQL::Translator.
 use strict;
 use warnings;
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;

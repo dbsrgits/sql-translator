@@ -77,7 +77,7 @@ use Pod::Usage;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = '1.59';
+$VERSION = '1.62';
 
 #
 # Get arguments.

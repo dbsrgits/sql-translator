@@ -1,0 +1,122 @@
+BEGIN { -e 'Distar' or system("git clone git://git.shadowcat.co.uk/p5sagit/Distar.git") }
+use lib 'Distar/lib';
+use Distar 0.001;
+
+author      'Ken Youens-Clark <kclark@cpan.org>';
+manifest_include 'script' => qr/.+/;
+manifest_include 't/data' => qr/.+/;
+manifest_include 'share' => qr/.+/;
+manifest_include '' => qr/\A(?:AUTHORS)\z/;
+
+# eval so can generate deps for cpanm --installdeps .
+eval {
+  _recompile_grammars();
+  _recreate_rt_source();
+};
+print "Got errors:\n\n$@" if $@;
+
+sub _recompile_grammars {
+  return; # disabled until RT#74593 is resolved
+
+  require File::Spec;
+
+  my $compiled_parser_dir = File::Spec->catdir(qw/
+    share PrecompiledParsers Parse RecDescent DDL SQLT
+  /);
+
+  # Currently consider only single-name parsers containing a grammar marker
+  # This is somewhat fragile, but better than loading all kinds of parsers
+  # to some of which we may not even have the deps
+  my $parser_libdir = 'lib/SQL/Translator/Parser';
+  for my $parser_fn (glob "$parser_libdir/*.pm") {
+    die "$parser_fn does not look like a readable file\n"
+      unless ( -f $parser_fn and -r $parser_fn );
+
+    my ($type) = $parser_fn =~ /^\Q$parser_libdir\E\/(.+)\.pm$/i
+      or die "$parser_fn not named in expected format\n";
+
+    my $parser_source = do { local (@ARGV, $/) = $parser_fn; <> };
+    next unless $parser_source =~ /\$GRAMMAR.+?END_OF_GRAMMAR/s;
+
+
+    my $precomp_parser_fn = File::Spec->catfile($compiled_parser_dir, "$type.pm");
+
+    next if (
+      -f $precomp_parser_fn
+        and
+      (stat($parser_fn))[9] <= (stat($precomp_parser_fn))[9]
+    );
+
+
+    print "Precompiling parser for $type\n";
+
+    require $parser_fn;
+    require Parse::RecDescent;
+
+    Parse::RecDescent->Precompile(
+      do {
+        no strict 'refs';
+        ${"SQL::Translator::Parser::${type}::GRAMMAR"}
+          || die "No \$GRAMMAR global found in SQL::Translator::Parser::$type ($parser_fn)\n"
+      },
+      "Parse::RecDescent::DDL::SQLT::$type"
+    );
+
+    rename( "$type.pm", $precomp_parser_fn )
+      or die "Unable to move $type.pm to $compiled_parser_dir: $!\n";
+  }
+
+}
+
+sub _recreate_rt_source {
+  my $base_xml = "t/data/roundtrip.xml";
+  my $autogen_yaml = "t/data/roundtrip_autogen.yaml";
+
+  print "Updating $autogen_yaml\n";
+
+  unlink $autogen_yaml;
+
+  eval {
+
+    use lib 'lib';
+
+    require SQL::Translator;
+    require SQL::Translator::Parser::XML;
+
+    open (my $fh, '>', $autogen_yaml) or die "$autogen_yaml: $!\n";
+
+    my $tr = SQL::Translator->new;
+    my $yaml = $tr->translate (
+      parser => 'XML',
+      file => $base_xml,
+      producer => 'YAML',
+    ) or  die sprintf ("Unable to translate %s to YAML: %s\n",
+              $base_xml,
+              $tr->error || 'error unknown'
+          );
+
+    print $fh $yaml;
+    close $fh;
+  };
+
+  if ($@) {
+    die <<EOE;
+
+=========================================================================
+===============              WARNING !!!                =================
+=========================================================================
+
+Unable to update the roundtrip schema (attempt triggered by AUTHOR mode).
+Continuing Makefile generation, but please fix the errors indicated below
+(typically by installing the missing modules).
+
+-------------------------------------------------------------------------
+$@
+
+EOE
+  }
+}
+
+# vim: ft=perl et sts=2 sw=2 tw=0:
+
+1;

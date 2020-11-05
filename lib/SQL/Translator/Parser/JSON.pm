@@ -2,12 +2,12 @@ package SQL::Translator::Parser::JSON;
 
 use strict;
 use warnings;
-our $VERSION = '1.00';
+our $VERSION = '1.62';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
 use Data::Dumper;
-use JSON;
+use JSON::MaybeXS 'from_json';
 
 sub parse {
     my ($translator, $data) = @_;

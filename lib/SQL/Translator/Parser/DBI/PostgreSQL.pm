@@ -21,7 +21,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 our ( $DEBUG, @EXPORT_OK );
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 $DEBUG   = 0 unless defined $DEBUG;
 
 my $actions = {c => 'cascade',
@@ -38,7 +38,7 @@ sub parse {
 
     my $column_select = $dbh->prepare(
       "SELECT a.attname, format_type(t.oid, a.atttypmod) as typname, a.attnum,
-              a.atttypmod as length, a.attnotnull, a.atthasdef, ad.adsrc,
+              a.atttypmod as length, a.attnotnull, a.atthasdef, pg_get_expr(ad.adbin, ad.adrelid) as adsrc,
               d.description
        FROM pg_type t, pg_attribute a
        LEFT JOIN pg_attrdef ad ON (ad.adrelid = a.attrelid AND a.attnum = ad.adnum)

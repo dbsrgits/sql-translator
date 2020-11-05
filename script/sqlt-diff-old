@@ -96,7 +96,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = '1.59';
+$VERSION = '1.62';
 
 my ( @input, $list, $help, $debug );
 for my $arg ( @ARGV ) {

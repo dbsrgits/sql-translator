@@ -82,7 +82,7 @@ Set the fields character set and collation order.
 use strict;
 use warnings;
 our ( $DEBUG, %used_names );
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 $DEBUG   = 0 unless defined $DEBUG;
 
 # Maximum length for most identifiers is 64, according to:
@@ -716,7 +716,7 @@ sub alter_drop_constraint
         push @out, $c->type;
     }
     else {
-        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "INDEX"),
+        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"),
             $generator->quote($c->name);
     }
     return join(' ',@out);
@@ -743,12 +743,14 @@ sub create_constraint
 
     my $reference_table_name = $generator->quote($c->reference_table);
 
-    my @fields = $c->fields or return;
+    my @fields = $c->fields;
 
     if ( $c->type eq PRIMARY_KEY ) {
+        return unless @fields;
         return 'PRIMARY KEY (' . join(", ", map { $generator->quote($_) } @fields) . ')';
     }
     elsif ( $c->type eq UNIQUE ) {
+        return unless @fields;
         return sprintf 'UNIQUE %s(%s)',
           ((defined $c->name && $c->name)
             ? $generator->quote(
@@ -760,6 +762,7 @@ sub create_constraint
         ;
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
+        return unless @fields;
         #
         # Make sure FK field is indexed or MySQL complains.
         #
@@ -811,6 +814,20 @@ sub create_constraint
         if ( $c->on_update ) {
             $def .= ' ON UPDATE '. $c->on_update;
         }
+        return $def;
+    }
+    elsif ( $c->type eq CHECK_C ) {
+        my $table = $c->table;
+        my $c_name = truncate_id_uniquely( $c->name, $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH );
+
+        my $def = join(' ',
+                         'CONSTRAINT',
+                         ($c_name ? $generator->quote($c_name) : () ),
+                         'CHECK'
+                      );
+
+
+        $def .= ' ('. $c->expression . ')';
         return $def;
     }
 

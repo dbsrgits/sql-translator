@@ -22,7 +22,7 @@ Does not yet support PostGIS Views.
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
@@ -785,7 +785,7 @@ sub alter_field
     # ALTER TABLE users ALTER COLUMN column SET DEFAULT ThisIsUnescaped;
     if(ref $default_value eq "SCALAR" ) {
         $default_value = $$default_value;
-    } elsif( defined $default_value && $to_dt =~ /^(character|text)/xsmi ) {
+    } elsif( defined $default_value && $to_dt =~ /^(character|text|timestamp|date)/xsmi ) {
         $default_value = __PACKAGE__->_quote_string($default_value);
     }
 

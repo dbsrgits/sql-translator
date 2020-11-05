@@ -19,7 +19,7 @@ use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
 my $tr = SQL::Translator->new;
 
-my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
+my ( $source_schema, $target_schema ) = map {
     my $t = SQL::Translator->new;
     $t->parser( 'YAML' )
       or die $tr->error;

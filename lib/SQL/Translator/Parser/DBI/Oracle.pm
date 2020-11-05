@@ -22,7 +22,7 @@ use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Field;
 use SQL::Translator::Schema::Constraint;
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 sub parse {
     my ( $tr, $dbh ) = @_;

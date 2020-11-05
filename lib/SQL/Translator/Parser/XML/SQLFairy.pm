@@ -79,7 +79,7 @@ use strict;
 use warnings;
 
 our ( $DEBUG, @EXPORT_OK );
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 $DEBUG   = 0 unless defined $DEBUG;
 
 use Data::Dumper;

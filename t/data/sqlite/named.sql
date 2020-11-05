@@ -8,6 +8,6 @@ create table pet (
     constraint fk_person_id_3 references person(person_id) on update NO ACTION,
   "name" varchar(30),
   "age" int,
-  constraint age_under_100 check ( age < 100 ),
+  constraint age_under_100 check ( age < 100 and age not in (101, 102) ),
   constraint pk_pet primary key (pet_id, person_id)
 );

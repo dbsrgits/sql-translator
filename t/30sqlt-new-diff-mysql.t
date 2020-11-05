@@ -19,7 +19,7 @@ use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
 my $tr = SQL::Translator->new;
 
-my ( $source_schema, $target_schema, $parsed_sql_schema ) = map {
+my ( $source_schema, $target_schema ) = map {
     my $t = SQL::Translator->new;
     $t->parser( 'YAML' )
       or die $tr->error;
@@ -47,7 +47,7 @@ ok( @out, 'Got a list' );
 
 my $out = join('', @out);
 
-eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
+eq_or_diff($out, <<'## END OF DIFF', "Diff as expected", { context => 1 });
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
 BEGIN;
@@ -64,7 +64,7 @@ ALTER TABLE old_name RENAME TO new_name;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E;
 
-ALTER TABLE person DROP INDEX UC_age_name;
+ALTER TABLE person DROP CONSTRAINT UC_age_name;
 
 ALTER TABLE person DROP INDEX u_name;
 
@@ -109,7 +109,7 @@ $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schem
       producer_args => { quote_identifiers => 0 },
     });
 
-eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
+eq_or_diff($out, <<'## END OF DIFF', "Diff as expected", { context => 1 });
 -- Convert schema 'create1.yml' to 'create2.yml':;
 
 BEGIN;
@@ -127,7 +127,7 @@ ALTER TABLE employee DROP COLUMN job_title;
 ALTER TABLE old_name RENAME TO new_name,
                      ADD COLUMN new_field integer NULL;
 
-ALTER TABLE person DROP INDEX UC_age_name,
+ALTER TABLE person DROP CONSTRAINT UC_age_name,
                    ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1,
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
                    CHANGE COLUMN name name varchar(20) NOT NULL,
@@ -151,7 +151,7 @@ COMMIT;
 # Test for sameness
 $out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
 
-eq_or_diff($out, <<'## END OF DIFF', "No differences found");
+eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 -- Convert schema 'create1.yml' to 'create1.yml':;
 
 -- No differences found;
@@ -179,7 +179,7 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
   $field->data_type('integer');
   $field->size(0);
   $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { producer_args => { quote_identifiers => 0 } } );
-  eq_or_diff($out, <<'## END OF DIFF', "No differences found");
+  eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 -- Convert schema 'create.sql' to 'create2.yml':;
 
 BEGIN;
@@ -193,10 +193,11 @@ CREATE TABLE added (
 SET foreign_key_checks=1;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
+                     DROP CONSTRAINT demo_constraint,
                      DROP COLUMN job_title,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
 
-ALTER TABLE person DROP INDEX UC_age_name,
+ALTER TABLE person DROP CONSTRAINT UC_age_name,
                    DROP INDEX u_name,
                    ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1,
                    ADD COLUMN value double(8, 2) NULL DEFAULT 0.00,
@@ -251,7 +252,7 @@ COMMIT;
 
   my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
 
-  eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB");
+  eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB", { context => 1 });
 -- Convert schema 'Schema 1' to 'Schema 2':;
 
 BEGIN;
@@ -302,7 +303,7 @@ COMMIT;
   );
 
   my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
-  eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table");
+  eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table", { context => 1 });
 -- Convert schema 'Schema 3' to 'Schema 4':;
 
 BEGIN;
@@ -324,7 +325,7 @@ COMMIT;
   $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
     { producer_args => { quote_identifiers => 1 } }
   );
-  eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on");
+  eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on", { context => 1 });
 -- Convert schema 'Schema 3' to 'Schema 4':;
 
 BEGIN;

@@ -132,7 +132,7 @@ More information about the MySQL comment-syntax: L<http://dev.mysql.com/doc/refm
 use strict;
 use warnings;
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
@@ -692,6 +692,11 @@ default_val :
     {
         $return  =  $item[2];
     }
+    |
+    /default/i NAME # column value, allowed in MariaDB
+    {
+        $return  =  $item[2];
+    }
 
 auto_inc : /auto_increment/i { 1 }
 
@@ -700,7 +705,30 @@ primary_key : /primary/i /key/i { 1 }
 constraint : primary_key_def
     | unique_key_def
     | foreign_key_def
+    | check_def
     | <error>
+
+expr : /[^)]* \( [^)]+ \) [^)]*/x # parens, balanced one deep
+    | /[^)]+/
+
+check_def : check_def_begin '(' expr ')'
+    {
+        $return              =  {
+            supertype        => 'constraint',
+            type             => 'check',
+            name             => $item[1],
+            expression       => $item[3],
+        }
+    }
+
+check_def_begin : /constraint/i /check/i NAME
+    { $return = $item[3] }
+    |
+    /constraint/i NAME /check/i
+    { $return = $item[2] }
+    |
+    /constraint/i /check/i
+    { $return = '' }
 
 foreign_key_def : foreign_key_def_begin parens_field_list reference_definition
     {
@@ -1017,6 +1045,7 @@ sub parse {
                 name             => $cdata->{'name'},
                 type             => $cdata->{'type'},
                 fields           => $cdata->{'fields'},
+                expression       => $cdata->{'expression'},
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
