@@ -460,6 +460,16 @@ sub create_table
     #
     my @constraint_defs;
     my @constraints = $table->get_constraints;
+
+    # Mark fields which are first in a UNIQUE constraint as indexed if the
+    # constraint name is the same as the field. This is to prevent a duplicate
+    # index being created to support foreign keys.
+    for my $c ( @constraints ) {
+        if ($c->type eq UNIQUE && $c->name eq ($c->fields())[0]) {
+            $indexed_fields{ ($c->fields())[0] } = 1;
+        }
+    }
+
     for my $c ( @constraints ) {
         my $constr = create_constraint($c, $options);
         push @constraint_defs, $constr if($constr);
