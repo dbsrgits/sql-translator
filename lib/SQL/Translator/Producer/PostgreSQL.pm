@@ -364,6 +364,7 @@ sub create_view {
 
     my $extra = $view->extra;
     $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create .= " MATERIALIZED" if exists($extra->{materialized}) && $extra->{materialized};
     $create .= " VIEW " . $generator->quote($view_name);
 
     if ( my @fields = $view->fields ) {

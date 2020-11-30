@@ -708,4 +708,20 @@ CREATE VIEW view_foo ( id, name ) AS
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
+my $mat_view = SQL::Translator::Schema::View->new(
+    name   => 'view_foo',
+    fields => [qw/id name/],
+    sql    => 'SELECT id, name FROM thing',
+    extra  => {
+      materialized => 1
+    }
+);
+
+my $mat_view_sql = SQL::Translator::Producer::PostgreSQL::create_view($mat_view, {  no_comments => 1 });
+
+my $mat_view_sql_expected = "CREATE MATERIALIZED VIEW view_foo ( id, name ) AS
+    SELECT id, name FROM thing
+";
+
+is($mat_view_sql, $mat_view_sql_expected, 'correct "MATERIALIZED VIEW" SQL');
 done_testing;
