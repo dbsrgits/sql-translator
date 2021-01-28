@@ -45,7 +45,7 @@ schema:
             - person_id
           reference_table: person
           type: FOREIGN KEY
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - position
@@ -111,7 +111,7 @@ schema:
       order: 4
     person:
       constraints:
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - person_id

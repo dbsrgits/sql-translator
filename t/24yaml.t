@@ -21,7 +21,7 @@ schema:
   tables:
     person:
       constraints:
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - person_id
@@ -33,7 +33,7 @@ schema:
           reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - name
@@ -117,7 +117,7 @@ schema:
       order: 1
     pet:
       constraints:
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields: []
           match_type: ''
@@ -128,7 +128,7 @@ schema:
           reference_fields: []
           reference_table: ''
           type: CHECK
-        - deferrable: 1
+        - deferrable: 0
           expression: ''
           fields:
             - pet_id

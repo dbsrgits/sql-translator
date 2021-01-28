@@ -90,7 +90,7 @@ ALTER TABLE "person" ADD CONSTRAINT "unique_name" UNIQUE ("name");
 
 ALTER TABLE "person" ADD CONSTRAINT "UC_person_id" UNIQUE ("person_id");
 
-ALTER TABLE "person" ADD CONSTRAINT "UC_age_name" UNIQUE ("age", "name");
+ALTER TABLE "person" ADD CONSTRAINT "UC_age_name" UNIQUE ("age", "name") DEFERRABLE;
 
 DROP TABLE "deleted" CASCADE;
 
@@ -143,7 +143,7 @@ ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
 
-ALTER TABLE person ADD CONSTRAINT UC_age_name UNIQUE (age, name);
+ALTER TABLE person ADD CONSTRAINT UC_age_name UNIQUE (age, name) DEFERRABLE;
 
 DROP TABLE deleted CASCADE;
 

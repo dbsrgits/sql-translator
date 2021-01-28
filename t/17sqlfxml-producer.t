@@ -87,10 +87,10 @@ $ans = <<EOXML;
         </index>
       </indices>
       <constraints>
-        <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1">
+        <constraint name="" type="PRIMARY KEY" fields="id" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="0">
           <extra />
         </constraint>
-        <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="1">
+        <constraint name="" type="UNIQUE" fields="email" reference_table="" reference_fields="" on_delete="" on_update="" match_type="" expression="" options="" deferrable="0">
           <extra />
         </constraint>
       </constraints>
