@@ -524,6 +524,7 @@ sub create_geometry_constraints {
                     }
                     elsif ( uc($key) eq 'INCLUDE' ) {
                         next unless $postgres_version >= 11;
+                        die 'Include list must be an arrayref' unless ref $value eq 'ARRAY';
                         my $value_list = join ', ', @$value;
                         $index_extras{include} = "INCLUDE ($value_list)"
                     }
