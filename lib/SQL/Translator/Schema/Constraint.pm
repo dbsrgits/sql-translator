@@ -40,6 +40,7 @@ my %VALID_CONSTRAINT_TYPE = (
     CHECK_C,     1,
     FOREIGN_KEY, 1,
     NOT_NULL,    1,
+    EXCLUDE,     1,
 );
 
 =head2 new
