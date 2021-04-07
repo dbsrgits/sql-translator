@@ -101,7 +101,7 @@ Here's the word from the MySQL site
   or      INDEX DIRECTORY="absolute path to directory"
 
 
-A subset of the ALTER TABLE syntax that allows addition of foreign keys:
+A subset of the ALTER TABLE syntax that allows addition of foreign keys and unique keys:
 
   ALTER [IGNORE] TABLE tbl_name alter_specification [, alter_specification] ...
 
@@ -109,6 +109,7 @@ A subset of the ALTER TABLE syntax that allows addition of foreign keys:
           ADD [CONSTRAINT [symbol]]
           FOREIGN KEY [index_name] (index_col_name,...)
              [reference_definition]
+     or   UNIQUE [INDEX|KEY] [index_name] (index_col_name,...)
 
 A subset of INSERT that we ignore:
 
@@ -231,7 +232,8 @@ alter : ALTER TABLE table_name alter_specification(s /,/) "$delimiter"
     }
     }
 
-alter_specification : ADD foreign_key_def
+alter_specification : ADD foreign_key_def |
+    ADD unique_key_def
     { $return = $item[2] }
 
 create : CREATE /database/i NAME "$delimiter"
@@ -777,16 +779,28 @@ primary_key_def : primary_key index_type(?) '(' name_with_opt_paren(s /,/) ')' i
         };
     }
 
-unique_key_def : UNIQUE KEY(?) index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
+unique_key_def : unique_key_def_begin index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
         $return       = {
             supertype => 'constraint',
-            name      => $item[3][0],
+            name      => $item[1],,
             type      => 'unique',
-            fields    => $item[6],
-            options   => $item[4][0] || $item[8][0],
+            fields    => $item[4],
+            options   => $item[2][0] || $item[6][0],
         }
     }
+
+unique_key_def_begin : UNIQUE KEY(?) index_name_not_using
+    { $return = $item[3] }
+    |
+    UNIQUE KEY(?)
+    { $return = '' }
+    |
+    /constraint/i NAME UNIQUE KEY(?)
+    { $return = $item[2] }
+    |
+    /constraint/i UNIQUE KEY(?)
+    { $return = '' }
 
 normal_index : KEY index_name_not_using(?) index_type(?) '(' name_with_opt_paren(s /,/) ')' index_type(?)
     {
