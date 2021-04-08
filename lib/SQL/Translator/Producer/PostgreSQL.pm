@@ -939,6 +939,11 @@ sub alter_drop_constraint {
     my ($c, $options) = @_;
     my $generator = _generator($options);
 
+    # NOT NULL constraint does not require a DROP CONSTRAINT statement
+    if ( $c->type eq NOT_NULL) {
+        return;
+    }
+
     # attention: Postgres  has a very special naming structure for naming
     # foreign keys and primary keys.  It names them using the name of the
     # table as prefix and fkey or pkey as suffix, concatenated by an underscore
