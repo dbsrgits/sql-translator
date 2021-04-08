@@ -783,7 +783,7 @@ unique_key_def : unique_key_def_begin index_type(?) '(' name_with_opt_paren(s /,
     {
         $return       = {
             supertype => 'constraint',
-            name      => $item[1],,
+            name      => $item[1],
             type      => 'unique',
             fields    => $item[4],
             options   => $item[2][0] || $item[6][0],
