@@ -961,8 +961,6 @@ ok ($@, 'Exception thrown on invalid version string');
 
 {
     my $tr = SQL::Translator->new;
-    my $data = q||;
-
     my $val = parse($tr,
         q[
             create table `test` (
