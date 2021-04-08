@@ -46,7 +46,7 @@ Here's the word from the MySQL site
     or    INTEGER[(length)] [UNSIGNED] [ZEROFILL]
     or    BIGINT[(length)] [UNSIGNED] [ZEROFILL]
     or    REAL[(length,decimals)] [UNSIGNED] [ZEROFILL]
-    or    DOUBLE[(length,decimals)] [UNSIGNED] [ZEROFILL]
+    or    DOUBLE[ PRECISTION][(length,decimals)] [UNSIGNED] [ZEROFILL]
     or    FLOAT[(length,decimals)] [UNSIGNED] [ZEROFILL]
     or    DECIMAL(length,decimals) [UNSIGNED] [ZEROFILL]
     or    NUMERIC(length,decimals) [UNSIGNED] [ZEROFILL]
@@ -626,7 +626,7 @@ field_name   : NAME
 
 index_name   : NAME
 
-data_type    : WORD parens_value_list(s?) type_qualifier(s?)
+data_type    : field_type parens_value_list(s?) type_qualifier(s?)
     {
         my $type = $item[1];
         my $size; # field size, applicable only to non-set fields
@@ -659,7 +659,7 @@ parens_value_list : '(' VALUE(s /,/) ')'
 type_qualifier : /(BINARY|UNSIGNED|ZEROFILL)/i
     { lc $item[1] }
 
-field_type   : WORD
+field_type   : /double\s+precision/i | WORD
 
 create_index : /create/i /index/i
 
@@ -978,6 +978,8 @@ sub parse {
                 comments          => $fdata->{'comments'},
             ) or die $table->error;
 
+            $field->{'data_type'} = 'double' if $fdata->{'data_type'} =~ /double\s+precision/i;
+
             $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
 
             for my $qual ( qw[ binary unsigned zerofill list collate ],
@@ -1133,12 +1135,17 @@ sub normalize_field {
             $changed = $size != 20;
             $size = 20;
         }
-        elsif ( lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ ) {
+        elsif ( lc $type =~ /(decimal|numeric|fixed|dec)/ ) {
             my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
             $changed     = @$old_size != 2
                         || $old_size->[0] != 8
                         || $old_size->[1] != 2;
             $size        = [8,2];
+        }
+        elsif ( lc $type =~ /(float|double|real)/ ) {
+            my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
+            $changed     = @$old_size != 2;
+            $size        = 0;
         }
     }
 

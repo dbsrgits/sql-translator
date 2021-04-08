@@ -128,7 +128,7 @@ CREATE TEMPORARY TABLE person_temp_alter (
   weight double(11,2),
   iq int(11) DEFAULT 0,
   is_rock_star tinyint(4) DEFAULT 1,
-  value double(8,2) DEFAULT 0.00,
+  value double DEFAULT 0.0,
   physical_description text
 );
 
@@ -143,7 +143,7 @@ CREATE TABLE person (
   weight double(11,2),
   iq int(11) DEFAULT 0,
   is_rock_star tinyint(4) DEFAULT 1,
-  value double(8,2) DEFAULT 0.00,
+  value double DEFAULT 0.0,
   physical_description text
 );
 
