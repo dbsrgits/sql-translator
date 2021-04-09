@@ -197,8 +197,6 @@ schema:
 EOSCHEMA
 
 my @stmts = (
-"SET foreign_key_checks=0",
-
 "DROP TABLE IF EXISTS `thing`",
 "CREATE TABLE `thing` (
   `id` unsigned int NOT NULL auto_increment,
@@ -239,8 +237,6 @@ my @stmts = (
   CONSTRAINT `fk_thing_2` FOREIGN KEY (`foo`) REFERENCES `some`.`thing2` (`id`, `foo`),
   CONSTRAINT `fk_thing_3` FOREIGN KEY (`foo2`) REFERENCES `some`.`thing2` (`id`, `foo`)
 ) ENGINE=InnoDB",
-
-"SET foreign_key_checks=1",
 
 );
 

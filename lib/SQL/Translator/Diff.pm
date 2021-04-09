@@ -295,8 +295,10 @@ sub produce_diff_sql {
     }
 
     if (@diffs) {
-      unshift @diffs, "BEGIN";
-      push    @diffs, "\nCOMMIT";
+      my $begin_cmd = $producer_class->can('begin_commands') ? $producer_class->begin_commands() : "BEGIN";
+      my $commit_cmd = $producer_class->can('commit_commands') ? $producer_class->commit_commands() : "\nCOMMIT";
+      unshift @diffs, $begin_cmd;
+      push    @diffs, $commit_cmd;
     } else {
       @diffs = ("-- No differences found");
     }

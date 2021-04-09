@@ -281,7 +281,6 @@ sub produce {
     my $create = '';
     $create .= header_comment unless ($no_comments);
     # \todo Don't set if MySQL 3.x is set on command line
-    my @create = "SET foreign_key_checks=0";
 
     preprocess_schema($schema);
 
@@ -330,9 +329,8 @@ sub produce {
 
 
 #    print "@table_defs\n";
-    push @table_defs, "SET foreign_key_checks=1";
 
-    return wantarray ? ($create ? $create : (), @create, @table_defs) : ($create . join('', map { $_ ? "$_;\n\n" : () } (@create, @table_defs)));
+    return wantarray ? ($create ? $create : (), @table_defs) : ($create . join('', map { $_ ? "$_;\n\n" : () } @table_defs));
 }
 
 sub create_trigger {
@@ -963,7 +961,7 @@ sub drop_table {
     batch_alter_table(
       $table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options
     ),
-    'DROP TABLE ' . _generator($options)->quote($table),
+    'DROP TABLE ' . _generator($options)->quote($table)
   );
 }
 
@@ -991,6 +989,14 @@ sub next_unused_name {
   $name .= '_' . $i;
   $used_names{$name} = $name;
   return $name;
+}
+
+sub begin_commands {
+  return "BEGIN;\n\nSET foreign_key_checks=0;\n\n";
+}
+
+sub commit_commands {
+  return "\nSET foreign_key_checks=1;\n\nCOMMIT";
 }
 
 1;
