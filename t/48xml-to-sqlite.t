@@ -50,7 +50,7 @@ CREATE TABLE "Basic" (
   "emptytagdef" varchar DEFAULT '',
   "another_id" int(10) DEFAULT 2,
   "timest" timestamp,
-  FOREIGN KEY ("another_id") REFERENCES "Another"("id")
+  FOREIGN KEY ("another_id") REFERENCES "Another"("id") DEFERRABLE INITIALLY DEFERRED
 );
 
 CREATE INDEX "titleindex" ON "Basic" ("title");
@@ -108,7 +108,7 @@ eq_or_diff(\@sql,
   "emptytagdef" varchar DEFAULT '',
   "another_id" int(10) DEFAULT 2,
   "timest" timestamp,
-  FOREIGN KEY ("another_id") REFERENCES "Another"("id")
+  FOREIGN KEY ("another_id") REFERENCES "Another"("id") DEFERRABLE INITIALLY DEFERRED
 )>,
           q<CREATE INDEX "titleindex" ON "Basic" ("title")>,
           q<CREATE UNIQUE INDEX "emailuniqueindex" ON "Basic" ("email")>,
