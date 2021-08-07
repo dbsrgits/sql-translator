@@ -236,7 +236,7 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
         1;
     }
 
-create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
+create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(?) '(' field_name(s /,/) ')' include_covering(?) where_predicate(?) ';'
     {
         my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
@@ -249,6 +249,7 @@ create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(
                 fields    => $item[9],
                 method    => $item{'using_method(?)'}[0],
                 where     => $item{'where_predicate(?)'}[0],
+                include   => $item{'include_covering(?)'}[0]
             }
         ;
     }
@@ -301,6 +302,9 @@ create : CREATE WORD /[^;]+/ ';'
 using_method : /using/i WORD { $item[2] }
 
 where_predicate : /where/i /[^;]+/
+
+include_covering : /include/i '(' covering_field_name(s /,/) ')'
+  { $item{'covering_field_name(s)'} }
 
 create_definition : field
     | table_constraint
@@ -501,6 +505,8 @@ schema_qualification : NAME '.'
 schema_name : NAME
 
 field_name : NAME
+
+covering_field_name : NAME
 
 double_quote: /"/
 
@@ -1088,6 +1094,7 @@ sub parse {
             my @options = ();
             push @options, { using => $idata->{'method'} } if $idata->{method};
             push @options, { where => $idata->{'where'} }  if $idata->{where};
+            push @options, { include => $idata->{'include'} } if $idata->{include};
             my $index  =  $table->add_index(
                 name    => $idata->{'name'},
                 type    => uc $idata->{'type'},

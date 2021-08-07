@@ -78,6 +78,7 @@ baz $foo$,
     CREATE INDEX test_index1 ON t_test1 (f_varchar);
     CREATE INDEX test_index2 ON t_test1 USING hash (f_char, f_bool);
     CREATE INDEX test_index3 ON t_test1 USING hash (f_bigint, f_tz) WHERE f_bigint = '1' AND f_tz IS NULL;
+    CREATE INDEX test_index4 ON t_test1 USING hash (f_bigint, f_tz) include (f_bool) WHERE f_bigint = '1' AND f_tz IS NULL;
 
     alter table t_test1 add f_fk2 integer;
 
@@ -406,7 +407,7 @@ is( $trigger->action, 'EXECUTE PROCEDURE foo()', "Correct action for trigger");
 
 # test index
 my @indices = $t1->get_indices;
-is(scalar @indices, 3, 'got three indexes');
+is(scalar @indices, 4, 'got three indexes');
 
 my $t1_i1 = $indices[0];
 is( $t1_i1->name, 'test_index1', 'First index is "test_index1"' );
@@ -425,6 +426,19 @@ is_deeply(
     [ $t1_i3->options ],
     [ { using => 'hash' }, { where => "f_bigint = '1' AND f_tz IS NULL" } ],
     'Index is using hash method and has predicate right'
+);
+
+my $t1_i4 = $indices[3];
+is( $t1_i4->name, 'test_index4', 'Fourth index is "test_index4"' );
+is( join(',', $t1_i4->fields), 'f_bigint,f_tz', 'Index is on fields "f_bigint, f_tz"' );
+is_deeply(
+    [ $t1_i4->options ],
+    [
+      { using => 'hash' },
+      { where => "f_bigint = '1' AND f_tz IS NULL" },
+      { include => [ 'f_bool' ] }
+    ],
+    'Index is using hash method and has predicate right and include INCLUDE'
 );
 
 done_testing;
