@@ -1,5 +1,7 @@
 Changes for SQL::Translator
 
+ * Support INCLUDE on indices for Pg (producer + parser)
+
 1.62 - 2020-09-14
  * Update Pg support to allow version 12 (still supporting back to 7.4)
 
