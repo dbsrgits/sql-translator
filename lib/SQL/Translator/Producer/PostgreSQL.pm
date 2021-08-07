@@ -129,6 +129,7 @@ and table_constraint is:
 
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ INCLUDE  ( column [, ...] ) ]
       [ WHERE predicate ]
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )

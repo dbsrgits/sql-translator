@@ -51,11 +51,12 @@ Table:
   [ DEFERRABLE | NOT DEFERRABLE ]
   [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
-Index:
-(http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createindex.html)
+Index :
+(http://www.postgresql.org/docs/11/sql-createindex.html)
 
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ INCLUDE  ( column [, ...] ) ]
       [ WHERE predicate ]
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
