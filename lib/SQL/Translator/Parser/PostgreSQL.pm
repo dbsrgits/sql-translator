@@ -15,10 +15,10 @@ SQL::Translator::Parser::PostgreSQL - parser for PostgreSQL
 =head1 DESCRIPTION
 
 The grammar was started from the MySQL parsers.  Here is the description
-from PostgreSQL:
+from PostgreSQL, truncated to what's currently supported (patches welcome, of course) :
 
 Table:
-(http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createtable.html)
+(http://www.postgresql.org/docs/current/sql-createtable.html)
 
   CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
       { column_name data_type [ DEFAULT default_expr ]
@@ -52,7 +52,7 @@ Table:
   [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
 Index :
-(http://www.postgresql.org/docs/11/sql-createindex.html)
+(http://www.postgresql.org/docs/current/sql-createindex.html)
 
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( column [ ops_name ] [, ...] )
@@ -81,7 +81,7 @@ Alter table:
   ALTER TABLE table
           OWNER TO new_owner
 
-View table:
+View :
 
     CREATE [ OR REPLACE ] VIEW view [ ( column name list ) ] AS SELECT query
 
