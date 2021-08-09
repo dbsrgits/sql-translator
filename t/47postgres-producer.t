@@ -656,6 +656,14 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
     }
 
     {
+        my $index = $table->add_index(name => 'covering', fields => ['bar'], options => { include => [ 'lower(foo)', 'baz' ] });
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX covering on foobar (bar)", 'skip if postgres is too old');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, { postgres_version => 11 });
+        is($def, "CREATE INDEX covering on foobar (bar) INCLUDE (lower(foo), baz)", 'index created');
+    }
+
+    {
         my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['foo']);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
         is($def->[0], 'CONSTRAINT constr UNIQUE (foo)', 'constraint created');

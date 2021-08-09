@@ -15,10 +15,10 @@ SQL::Translator::Parser::PostgreSQL - parser for PostgreSQL
 =head1 DESCRIPTION
 
 The grammar was started from the MySQL parsers.  Here is the description
-from PostgreSQL:
+from PostgreSQL, truncated to what's currently supported (patches welcome, of course) :
 
 Table:
-(http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createtable.html)
+(http://www.postgresql.org/docs/current/sql-createtable.html)
 
   CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
       { column_name data_type [ DEFAULT default_expr ]
@@ -51,11 +51,12 @@ Table:
   [ DEFERRABLE | NOT DEFERRABLE ]
   [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
-Index:
-(http://www.postgresql.org/docs/view.php?version=7.3&idoc=1&file=sql-createindex.html)
+Index :
+(http://www.postgresql.org/docs/current/sql-createindex.html)
 
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ INCLUDE  ( column [, ...] ) ]
       [ WHERE predicate ]
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
@@ -80,7 +81,7 @@ Alter table:
   ALTER TABLE table
           OWNER TO new_owner
 
-View table:
+View :
 
     CREATE [ OR REPLACE ] VIEW view [ ( column name list ) ] AS SELECT query
 
@@ -236,7 +237,7 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
         1;
     }
 
-create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(?) '(' field_name(s /,/) ')' where_predicate(?) ';'
+create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(?) '(' field_name(s /,/) ')' include_covering(?) where_predicate(?) ';'
     {
         my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
@@ -249,6 +250,7 @@ create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(
                 fields    => $item[9],
                 method    => $item{'using_method(?)'}[0],
                 where     => $item{'where_predicate(?)'}[0],
+                include   => $item{'include_covering(?)'}[0]
             }
         ;
     }
@@ -301,6 +303,9 @@ create : CREATE WORD /[^;]+/ ';'
 using_method : /using/i WORD { $item[2] }
 
 where_predicate : /where/i /[^;]+/
+
+include_covering : /include/i '(' covering_field_name(s /,/) ')'
+  { $item{'covering_field_name(s)'} }
 
 create_definition : field
     | table_constraint
@@ -501,6 +506,8 @@ schema_qualification : NAME '.'
 schema_name : NAME
 
 field_name : NAME
+
+covering_field_name : NAME
 
 double_quote: /"/
 
@@ -1088,6 +1095,7 @@ sub parse {
             my @options = ();
             push @options, { using => $idata->{'method'} } if $idata->{method};
             push @options, { where => $idata->{'where'} }  if $idata->{where};
+            push @options, { include => $idata->{'include'} } if $idata->{include};
             my $index  =  $table->add_index(
                 name    => $idata->{'name'},
                 type    => uc $idata->{'type'},

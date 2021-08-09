@@ -129,6 +129,7 @@ and table_constraint is:
 
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ INCLUDE  ( column [, ...] ) ]
       [ WHERE predicate ]
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
@@ -296,6 +297,7 @@ sub create_table
     for my $index ( $table->get_indices ) {
         my ($idef, $constraints) = create_index($index, {
             generator => $generator,
+            postgres_version => $postgres_version,
         });
         $idef and push @index_defs, $idef;
         push @constraint_defs, @$constraints;
@@ -497,6 +499,7 @@ sub create_geometry_constraints {
 
         my $generator = _generator($options);
         my $table_name = $index->table->name;
+        my $postgres_version = $options->{postgres_version} || 0;
 
         my ($index_def, @constraint_defs);
 
@@ -508,18 +511,23 @@ sub create_geometry_constraints {
         my @fields     =  $index->fields;
         return unless @fields;
 
-        my $index_using;
-        my $index_where;
+        my %index_extras;
         for my $opt ( $index->options ) {
             if ( ref $opt eq 'HASH' ) {
                 foreach my $key (keys %$opt) {
                     my $value = $opt->{$key};
                     next unless defined $value;
                     if ( uc($key) eq 'USING' ) {
-                        $index_using = "USING $value";
+                        $index_extras{using} = "USING $value";
                     }
                     elsif ( uc($key) eq 'WHERE' ) {
-                        $index_where = "WHERE $value";
+                        $index_extras{where} = "WHERE $value";
+                    }
+                    elsif ( uc($key) eq 'INCLUDE' ) {
+                        next unless $postgres_version >= 11;
+                        die 'Include list must be an arrayref' unless ref $value eq 'ARRAY';
+                        my $value_list = join ', ', @$value;
+                        $index_extras{include} = "INCLUDE ($value_list)"
                     }
                 }
             }
@@ -536,7 +544,7 @@ sub create_geometry_constraints {
         elsif ( $type eq NORMAL ) {
             $index_def =
                 'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) . ' ' .
-                join ' ', grep { defined } $index_using, $field_names, $index_where;
+                join ' ', grep { defined } $index_extras{using}, $field_names, @index_extras{'include', 'where'};
         }
         else {
             warn "Unknown index type ($type) on table $table_name.\n"
