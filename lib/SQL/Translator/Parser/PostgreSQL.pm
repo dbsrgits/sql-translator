@@ -264,6 +264,19 @@ create : CREATE or_replace(?) temporary(?) VIEW view_id view_fields(?) /AS/i vie
         }
     }
 
+create: CREATE /MATERIALIZED VIEW/i if_not_exists(?) view_id view_fields(?) /AS/i view_target ';'
+    {
+        push @views, {
+            schema_name  => $item{view_id}{schema_name},
+            view_name    => $item{view_id}{view_name},
+            sql          => $item{view_target},
+            fields       => $item[5],
+            extra        => { materialized => 1 }
+        }
+    }
+
+if_not_exists : /IF NOT EXISTS/i
+
 trigger_name : NAME
 
 trigger_scope : /FOR/i /EACH/i /(ROW|STATEMENT)/i { $return = lc $1 }

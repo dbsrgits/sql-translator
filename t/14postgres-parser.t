@@ -113,6 +113,12 @@ baz $foo$,
 
     alter table t_test1 owner to foo;
 
+    -- we should tests views if they're supported, right?
+
+    create or replace temporary view fez (foo, bar) as select foo, count(bar) as bar from baz group by foo;
+
+    create materialized view if not exists baa (black, sheep) as select foo black, bar sheep from baz;
+
     commit;
 };
 
