@@ -39,7 +39,7 @@ use Carp;
 
 extends 'SQL::Translator::Schema::Object';
 
-our $VERSION = '1.60';
+our $VERSION = '1.62';
 
 
 has _order => (is => 'ro', default => quote_sub(q{ +{ map { $_ => 0 } qw/

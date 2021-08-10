@@ -89,7 +89,7 @@ View table:
 use strict;
 use warnings;
 
-our $VERSION = '1.60';
+our $VERSION = '1.62';
 
 our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
