@@ -61,7 +61,9 @@ sub produce {
     }, {
         allow_blessed => 1,
         allow_unknown => 1,
-        %{$translator->producer_args},
+        ( map { $_ => $translator->producer_args->{$_} }
+          grep { defined $translator->producer_args->{$_} }
+            qw[ pretty indent canonical ] ),
     });
 }
 
