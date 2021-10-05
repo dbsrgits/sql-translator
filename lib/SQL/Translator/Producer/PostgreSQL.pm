@@ -99,7 +99,7 @@ my %truncated;
 
 =head1 PostgreSQL Create Table Syntax
 
-  CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
+  CREATE [ [ LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE table_name (
       { column_name data_type [ DEFAULT default_expr ] [ column_constraint [, ... ] ]
       | table_constraint }  [, ... ]
   )
@@ -323,8 +323,11 @@ sub create_table
             $create_statement .= "DROP TABLE $table_name_qt CASCADE;\n";
         }
     }
-    my $temporary = $table->extra->{temporary} ? "TEMPORARY " : "";
-    $create_statement .= "CREATE ${temporary}TABLE $table_name_qt (\n" .
+    my $parameter =
+        $table->extra->{temporary} ? "TEMPORARY "
+      : $table->extra->{unlogged}  ? "UNLOGGED "
+      :                              "";
+    $create_statement .= "CREATE ${parameter}TABLE $table_name_qt (\n" .
                             join( ",\n", map { "  $_" } @field_defs, @constraint_defs ).
                             "\n)"
                             ;
