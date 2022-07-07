@@ -23,6 +23,7 @@ $sqlt = SQL::Translator->new(
     no_comments => 1,
     show_warnings  => 0,
     add_drop_table => 1,
+    producer_args => { attach_comments => 1 }
 );
 
 die "Can't find test schema $xmlfile" unless -e $xmlfile;

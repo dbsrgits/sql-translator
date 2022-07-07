@@ -53,6 +53,12 @@ my $plan = [
     parser_args => {},
   },
   {
+    engine => 'PostgreSQL',
+    name => 'Postgres w/ attached comments',
+    producer_args => { attach_comments => 1 },
+    parser_args => {},
+  },
+  {
     engine => 'SQLServer',
     producer_args => {},
     parser_args => {},
