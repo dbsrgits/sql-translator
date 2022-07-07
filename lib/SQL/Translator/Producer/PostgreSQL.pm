@@ -277,10 +277,8 @@ sub create_table
     if ( my $comments = $table->comments ) {
       # this follows the example in the MySQL producer, where all comments are added as
       # table comments, even though they could have originally been parsed as DDL comments
-        my $comment_ddl =
-          'CREATE COMMENT on TABLE ' 
-          . $table_name_qt 
-          . ' IS $comment$' . (join ',', @$comments) . '$comment$;';
+      # quoted via $$ string so there can be 'quotes' inside the comments
+        my $comment_ddl = "COMMENT on TABLE $table_name_qt IS \$comment\$$comments\$comment\$";
         push @comment_statements, $comment_ddl;
     }
 
@@ -298,9 +296,7 @@ sub create_table
         next unless $field_comments;
         my $field_name_qt = $generator->quote($field->name);
         my $comment_ddl =
-          'CREATE COMMENT ON COLUMN '
-          . "$table_name_qt.$field_name_qt "
-          . ' IS $comment$' . (join ',', @$field_comments) . '$comment$';
+          "COMMENT ON COLUMN $table_name_qt.$field_name_qt IS \$comment\$$field_comments\$comment\$";
         push @comment_statements, $comment_ddl;
 
     }
