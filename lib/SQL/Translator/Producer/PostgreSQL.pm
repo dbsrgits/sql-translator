@@ -296,7 +296,7 @@ sub create_table
         next unless $field_comments;
         my $field_name_qt = $generator->quote($field->name);
         my $comment_ddl =
-          "COMMENT ON COLUMN $table_name_qt.$field_name_qt IS \$comment\$$field_comments\$comment\$";
+          "COMMENT on COLUMN $table_name_qt.$field_name_qt IS \$comment\$$field_comments\$comment\$";
         push @comment_statements, $comment_ddl;
 
     }
@@ -348,6 +348,7 @@ sub create_table
         $create_statement .= join(";\n", '', map{ drop_geometry_column($_, $options) } @geometry_columns) if $options->{add_drop_table};
         $create_statement .= join(";\n", '', map{ add_geometry_column($_, $options) } @geometry_columns);
     }
+
     if (@comment_statements) {
       $create_statement .= join(";\n", '', @comment_statements);
     }

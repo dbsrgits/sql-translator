@@ -42,7 +42,6 @@ CREATE TABLE "Basic" (
   "email" character varying(500),
   "explicitnulldef" character varying,
   "explicitemptystring" character varying DEFAULT '',
-  -- Hello emptytagdef
   "emptytagdef" character varying DEFAULT '',
   "another_id" integer DEFAULT 2,
   "timest" timestamp,
@@ -51,6 +50,7 @@ CREATE TABLE "Basic" (
   CONSTRAINT "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" UNIQUE ("title")
 );
 CREATE INDEX "titleindex" on "Basic" ("title");
+COMMENT on COLUMN "Basic"."emptytagdef" IS \$comment\$Hello emptytagdef\$comment\$;
 
 DROP TABLE "Another" CASCADE;
 CREATE TABLE "Another" (

@@ -366,6 +366,7 @@ column_name : NAME '.' NAME
 comment_phrase : /null/i
     { $return = 'NULL' }
     | SQSTRING
+    | DOLLARSTRING
 
 field : field_comment(s?) field_name data_type field_meta(s?) field_comment(s?)
     {
