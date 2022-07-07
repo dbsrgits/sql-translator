@@ -41,6 +41,8 @@ baz $foo$,
         f_text2 text default $$$$,
         f_text3 text default $$$ $$
     );
+    COMMENT on TABLE t_test1 IS 'this is another comment on t_test1';
+    COMMENT on COLUMN t_test1.f_serial IS 'this is another comment on f_serial';
 
     create table t_test2 (
         f_id integer NOT NULL,
@@ -128,7 +130,7 @@ is( scalar @tables, 5, 'Five tables' );
 my $t1 = shift @tables;
 is( $t1->name, 't_test1', 'Table t_test1 exists' );
 
-is( $t1->comments, 'comment on t_test1', 'Table comment exists' );
+is_deeply([ $t1->comments ], [ 'comment on t_test1', 'this is another comment on t_test1' ], 'Table comment exists' );
 
 my @t1_fields = $t1->get_fields;
 is( scalar @t1_fields, 21, '21 fields in t_test1' );
@@ -140,7 +142,7 @@ is( $f1->is_nullable, 0, 'Field cannot be null' );
 is( $f1->size, 11, 'Size is "11"' );
 is( $f1->default_value, '0', 'Default value is "0"' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
-is( $f1->comments, 'this is the primary key', 'Comment' );
+is_deeply( [ $f1->comments ], [ 'this is the primary key', 'this is another comment on f_serial' ], 'Comment' );
 is( $f1->is_auto_increment, 1, 'Field is auto increment' );
 
 my $f2 = shift @t1_fields;
