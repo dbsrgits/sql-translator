@@ -273,9 +273,15 @@ sub create_table
 
     push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
-    if ( !$no_comments and my $comments = $table->comments ) {
-        $comments =~ s/^/-- /mg;
-        push @comments, "-- Comments:\n$comments\n--\n";
+    my @comment_statements;
+    if ( my $comments = $table->comments ) {
+      # this follows the example in the MySQL producer, where all comments are added as
+      # table comments, even though they could have originally been parsed as DDL comments
+        my $comment_ddl =
+          'CREATE COMMENT on TABLE ' 
+          . $table_name_qt 
+          . ' IS $comment$' . (join ',', @$comments) . '$comment$;';
+        push @comment_statements, $comment_ddl;
     }
 
     #
@@ -288,6 +294,15 @@ sub create_table
             type_defs => $type_defs,
             constraint_defs => \@constraint_defs,
         });
+        my $field_comments = $field->comments;
+        next unless $field_comments;
+        my $field_name_qt = $generator->quote($field->name);
+        my $comment_ddl =
+          'CREATE COMMENT ON COLUMN '
+          . "$table_name_qt.$field_name_qt "
+          . ' IS $comment$' . (join ',', @$field_comments) . '$comment$';
+        push @comment_statements, $comment_ddl;
+
     }
 
     #
@@ -336,6 +351,9 @@ sub create_table
     if (my @geometry_columns = grep { is_geometry($_) } $table->get_fields) {
         $create_statement .= join(";\n", '', map{ drop_geometry_column($_, $options) } @geometry_columns) if $options->{add_drop_table};
         $create_statement .= join(";\n", '', map{ add_geometry_column($_, $options) } @geometry_columns);
+    }
+    if (@comment_statements) {
+      $create_statement .= join(";\n", '', @comment_statements);
     }
 
     return $create_statement, \@fks;
@@ -398,13 +416,7 @@ sub create_view {
 
         $field_name_scope{$table_name} ||= {};
         my $field_name    = $field->name;
-        my $field_comments = '';
-        if (my $comments = $field->comments) {
-            $comments =~ s/(?<!\A)^/  -- /mg;
-            $field_comments = "-- $comments\n  ";
-        }
-
-        my $field_def     = $field_comments . $generator->quote($field_name);
+        my $field_def     = $generator->quote($field_name);
 
         #
         # Datatype
