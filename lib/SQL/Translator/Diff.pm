@@ -41,7 +41,7 @@ has no_batch_alters => (
 has ignore_missing_methods => (
   is => 'rw',
 );
-has producer_args => (
+has sqlt_args => (
   is => 'rw',
   lazy => 1,
   default => quote_sub '{}',
@@ -103,12 +103,14 @@ sub schema_diff {
 
 sub BUILD {
   my ($self, $args) = @_;
-  if ($args->{producer_options}) {
-    carp 'producer_options is deprecated. Please use producer_args';
-    $self->producer_args({
-      %{$args->{producer_options}},
-      %{$self->producer_args}
-    });
+  for my $deprecated (qw/producer_options producer_args/) {
+    if ($args->{$deprecated}) {
+      carp "$deprecated is deprecated. Please use sqlt_args";
+      $self->sqlt_args({
+        %{$args->{$deprecated}},
+        %{$self->sqlt_args}
+      });
+    }
   }
 
   if (! $self->output_db) {
@@ -229,7 +231,7 @@ sub produce_diff_sql {
               $func_map{$_} => $self->table_diff_hash->{$table}{$_}
             } keys %func_map
           },
-          $self->producer_args
+          $self->sqlt_args
         );
       }
     } else {
@@ -248,7 +250,7 @@ sub produce_diff_sql {
             my $meth = $producer_class->can($_);
 
             $meth ? map {
-                    map { $_ ? "$_" : () } $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->producer_args );
+                    map { $_ ? "$_" : () } $meth->( (ref $_ eq 'ARRAY' ? @$_ : $_), $self->sqlt_args );
                   } @{ $flattened_diffs{$_} }
                   : $self->ignore_missing_methods
                   ? "-- $producer_class cant $_"
@@ -273,7 +275,7 @@ sub produce_diff_sql {
         add_drop_table => 0,
         no_comments => 1,
         # TODO: sort out options
-        %{ $self->producer_args }
+        %{ $self->sqlt_args }
       );
       $translator->producer_args->{no_transaction} = 1;
       my $schema = $translator->schema;
@@ -288,7 +290,7 @@ sub produce_diff_sql {
     if (my @tables_to_drop = @{ $self->{tables_to_drop} || []} ) {
       my $meth = $producer_class->can('drop_table');
 
-      push @diffs, $meth ? ( map { $meth->($_, $self->producer_args) } @tables_to_drop)
+      push @diffs, $meth ? ( map { $meth->($_, $self->sqlt_args) } @tables_to_drop)
                          : $self->ignore_missing_methods
                          ? "-- $producer_class cant drop_table"
                          : die "$producer_class cant drop_table";
@@ -453,11 +455,18 @@ sub diff_table_options {
     unless $src_table->_compare_objects( \@src_opts, \@tar_opts );
 }
 
-# support producer_options as an alias for producer_args for legacy code.
+# support producer_options as an alias for sqlt_args for legacy code.
 sub producer_options {
   my $self = shift;
 
-  return $self->producer_args( @_ );
+  return $self->sqlt_args( @_ );
+}
+
+# support producer_args as an alias for sqlt_args for legacy code.
+sub producer_args {
+  my $self = shift;
+
+  return $self->sqlt_args( @_ );
 }
 
 1;
@@ -520,7 +529,7 @@ supports the ability to do all alters for a table as one statement.
 If the diff would need a method that is missing from the producer, just emit a
 comment showing the method is missing, rather than dieing with an error
 
-=item B<producer_args>
+=item B<sqlt_args>
 
 Hash of extra arguments passed to L<SQL::Translator/new> and the below
 L</PRODUCER FUNCTIONS>.
