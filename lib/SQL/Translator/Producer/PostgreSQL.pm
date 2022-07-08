@@ -19,6 +19,9 @@ Does not yet support PostGIS Views.
 
 =head2 Producer Args
 
+You can change the global behavior of the producer by passing the following options to the
+C<producer_args> attribute of C<SQL::Translator>.
+
 =over 4
 
 =item postgres_version
@@ -50,6 +53,52 @@ instead of this
 
 =back
 
+=head2 Extra args
+
+Various schema types support various options via the C<extra> attribute.
+
+=over 2
+
+=item Tables
+
+=over 2
+
+=item temporary
+
+Produces a temporary table.
+
+=back
+
+=item Views
+
+=over 2
+
+=item temporary
+
+Produces a temporary view.
+
+=item materialized
+
+Produces a materialized view.
+
+=back
+
+=item Fields
+
+=over 2
+
+=item list, custom_type_name
+
+For enum types, list is the list of valid values, and custom_type_name is the name that
+the type should have. Defaults to $table_$field_type.
+
+=item geometry_type, srid, dimensions, geography_type
+
+Fields for use with PostGIS types.
+
+=back
+
+=back
 
 =cut
 
@@ -425,6 +474,7 @@ sub create_view {
 
     my $extra = $view->extra;
     $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create .= " MATERIALIZED" if exists($extra->{materialized}) && $extra->{materialized};
     $create .= " VIEW " . $generator->quote($view_name);
 
     if ( my @fields = $view->fields ) {
