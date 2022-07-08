@@ -38,25 +38,23 @@ my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
                                                  is_foreign_key => 0,
                                                  is_unique => 0 );
   $table->add_field($field);
-  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table($table, { quote_table_names => q{"} });
+  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table(
+    $table, { quote_table_names => q{"}, attach_comments => 1 });
   is($table->name, 'foo.bar');
 
   my $expected = <<EOESQL;
 --
 -- Table: foo.bar
 --
-
--- Comments:
--- multi
--- line
--- single line
---
 CREATE TABLE "foo"."bar" (
-  -- multi
-  -- line
-  -- single line
   "baz" character varying(10) DEFAULT 'quux' NOT NULL
-)
+);
+COMMENT on TABLE "foo"."bar" IS \$comment\$multi
+line
+single line\$comment\$;
+COMMENT on COLUMN "foo"."bar"."baz" IS \$comment\$multi
+line
+single line\$comment\$
 EOESQL
 
   $expected =~ s/\n\z//;
