@@ -1,5 +1,6 @@
 Changes for SQL::Translator
 
+ * sqlt-diff: Change producer_args to sqlt_args for better self-documentation
  * Support INCLUDE on indices for Pg (producer + parser)
 
 1.62 - 2020-09-14
