@@ -38,25 +38,23 @@ my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
                                                  is_foreign_key => 0,
                                                  is_unique => 0 );
   $table->add_field($field);
-  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table($table, { quote_table_names => q{"} });
+  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table(
+    $table, { quote_table_names => q{"}, attach_comments => 1 });
   is($table->name, 'foo.bar');
 
   my $expected = <<EOESQL;
 --
 -- Table: foo.bar
 --
-
--- Comments:
--- multi
--- line
--- single line
---
 CREATE TABLE "foo"."bar" (
-  -- multi
-  -- line
-  -- single line
   "baz" character varying(10) DEFAULT 'quux' NOT NULL
-)
+);
+COMMENT on TABLE "foo"."bar" IS \$comment\$multi
+line
+single line\$comment\$;
+COMMENT on COLUMN "foo"."bar"."baz" IS \$comment\$multi
+line
+single line\$comment\$
 EOESQL
 
   $expected =~ s/\n\z//;
@@ -653,6 +651,14 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
         is($def, "CREATE INDEX myindex on foobar (bar, lower(foo))", 'index created');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
         is($def, 'CREATE INDEX "myindex" on "foobar" ("bar", lower(foo))', 'index created w/ quotes');
+    }
+
+    {
+        my $index = $table->add_index(name => 'covering', fields => ['bar'], options => { include => [ 'lower(foo)', 'baz' ] });
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX covering on foobar (bar)", 'skip if postgres is too old');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, { postgres_version => 11 });
+        is($def, "CREATE INDEX covering on foobar (bar) INCLUDE (lower(foo), baz)", 'index created');
     }
 
     {

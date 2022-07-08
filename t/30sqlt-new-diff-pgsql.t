@@ -40,7 +40,7 @@ my $out = SQL::Translator::Diff::schema_diff(
     $target_schema,
    'PostgreSQL',
    {
-     producer_args => {
+     sqlt_args => {
          quote_identifiers => 1,
      }
    }
@@ -103,7 +103,7 @@ $out = SQL::Translator::Diff::schema_diff(
     $source_schema, 'PostgreSQL', $target_schema, 'PostgreSQL',
     { ignore_index_names => 1,
       ignore_constraint_names => 1,
-      producer_args => {
+      sqlt_args => {
          quote_identifiers => 0,
       }
     });

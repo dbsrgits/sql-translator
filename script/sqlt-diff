@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
@@ -192,7 +192,7 @@ my $result = SQL::Translator::Diff::schema_diff(
         no_batch_alters         => $no_batch_alters || 0,
         debug                   => $debug || 0,
         trace                   => $trace || 0,
-        producer_args => {
+        sqlt_args => {
             quote_table_names   => $quote || '',
             quote_field_names   => $quote || '',
         },
