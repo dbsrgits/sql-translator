@@ -307,59 +307,10 @@ sub create_table {
         # Table constraints
         #
         for my $c ( $table->get_constraints ) {
-            my $name    = $c->name || '';
-            my @fields  = map { quote($_,$qf) } $c->fields;
-            my @rfields = map { quote($_,$qf) } $c->reference_fields;
-
-            next if !@fields && $c->type ne CHECK_C;
-
-            if ( $c->type eq PRIMARY_KEY ) {
-                # create a name if delay_constraints
-                $name ||= mk_name( $table_name, 'pk' )
-                  if $options->{delay_constraints};
-                $name = quote($name,$qf);
-                push @constraint_defs, ($name ? "CONSTRAINT $name " : '') .
-                  'PRIMARY KEY (' . join( ', ', @fields ) . ')';
-            }
-            elsif ( $c->type eq UNIQUE ) {
-              # Don't create UNIQUE constraints identical to the primary key
-              if ( my $pk = $table->primary_key ) {
-                my $u_fields = join(":", @fields);
-                my $pk_fields = join(":", $pk->fields);
-                next if $u_fields eq $pk_fields;
-              }
-
-              if ($name) {
-                # Force prepend of table_name as ORACLE doesn't allow duplicate
-                # CONSTRAINT names even for different tables (ORA-02264)
-                $name = mk_name( "${table_name}_$name", 'u' ) unless $name =~ /^$table_name/;
-              }
-              else {
-                $name = mk_name( $table_name, 'u' );
-              }
-
-              $name = quote($name, $qf);
-
-                for my $f ( $c->fields ) {
-                    my $field_def = $table->get_field( $f ) or next;
-                    my $dtype     = $translate{ ref $field_def->data_type eq "ARRAY" ? $field_def->data_type->[0] : $field_def->data_type} or next;
-                    if ( $WARN && $dtype =~ /clob/i ) {
-                        warn "Oracle will not allow UNIQUE constraints on " .
-                             "CLOB field '" . $field_def->table->name . '.' .
-                             $field_def->name . ".'\n"
-                    }
-                }
-
-                push @constraint_defs, "CONSTRAINT $name UNIQUE " .
-                    '(' . join( ', ', @fields ) . ')';
-            }
-            elsif ( $c->type eq CHECK_C ) {
-                $name ||= mk_name( $name || $table_name, 'ck' );
-                $name = quote($name, $qf);
-                my $expression = $c->expression || '';
-                push @constraint_defs, "CONSTRAINT $name CHECK ($expression)";
-            }
-            elsif ( $c->type eq FOREIGN_KEY ) {
+            my $constr = create_constraint($c, $options);
+            push @constraint_defs, $constr if ($constr);
+            
+            if ( $c->type eq FOREIGN_KEY ) {
                 $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
                 $name = quote($name, $qf);
                 my $on_delete = uc ($c->on_delete || '');
@@ -727,6 +678,99 @@ sub create_field {
 
 }
 
+sub alter_drop_constraint {
+    my ($c, $options) = @_;
+
+    my $generator = _generator($options);
+    my $table_name = $generator->quote($c->table->name);
+
+    my @out = ('ALTER','TABLE',$table_name,'DROP');
+    if($c->type eq PRIMARY_KEY) {
+        push @out, $c->type;
+    }
+    else {
+        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"),
+            $generator->quote($c->name);
+    }
+    return join(' ',@out);
+}
+
+sub alter_create_constraint {
+    my ($index, $options) = @_;
+
+    my $table_name = _generator($options)->quote($index->table->name);
+    return join( ' ',
+                 'ALTER TABLE',
+                 $table_name,
+                 'ADD',
+                 create_constraint(@_) );
+}
+
+sub create_constraint {
+    my ($c, $options) = @_;
+
+    my $qt = $options->{quote_table_names};
+    my $qf = $options->{quote_field_names};
+    my $table = $c->table;
+    my $table_name = $table->name;
+    my $table_name_q = quote($table_name,$qt);
+    my $name    = $c->name || '';
+    my @fields  = map { quote($_,$qf) } $c->fields;
+    my @rfields = map { quote($_,$qf) } $c->reference_fields;
+
+    return undef if !@fields && $c->type ne 'CHECK';
+
+    my $definition;
+
+    if ( $c->type eq PRIMARY_KEY ) {
+        # create a name if delay_constraints
+        $name ||= mk_name( $table_name, 'pk' )
+          if $options->{delay_constraints};
+        $name = quote($name,$qf);
+        $definition =  ($name ? "CONSTRAINT $name " : '') .
+          'PRIMARY KEY (' . join( ', ', @fields ) . ')';
+    }
+    elsif ( $c->type eq UNIQUE ) {
+      # Don't create UNIQUE constraints identical to the primary key
+      if ( my $pk = $table->primary_key ) {
+        my $u_fields = join(":", @fields);
+        my $pk_fields = join(":", $pk->fields);
+        next if $u_fields eq $pk_fields;
+      }
+
+      if ($name) {
+        # Force prepend of table_name as ORACLE doesn't allow duplicate
+        # CONSTRAINT names even for different tables (ORA-02264)
+        $name = mk_name( "${table_name}_$name", 'u' ) unless $name =~ /^$table_name/;
+      }
+      else {
+        $name = mk_name( $table_name, 'u' );
+      }
+
+      $name = quote($name, $qf);
+
+        for my $f ( $c->fields ) {
+            my $field_def = $table->get_field( $f ) or next;
+            my $dtype     = $translate{ ref $field_def->data_type eq "ARRAY" ? $field_def->data_type->[0] : $field_def->data_type} or next;
+            if ( $WARN && $dtype =~ /clob/i ) {
+                warn "Oracle will not allow UNIQUE constraints on " .
+                     "CLOB field '" . $field_def->table->name . '.' .
+                     $field_def->name . ".'\n"
+            }
+        }
+
+        $definition = "CONSTRAINT $name UNIQUE " .
+            '(' . join( ', ', @fields ) . ')';
+    }
+    elsif ( $c->type eq CHECK_C ) {
+        $name ||= mk_name( $name || $table_name, 'ck' );
+        $name = quote($name, $qf);
+        my $expression = $c->expression || '';
+        $definition =  "CONSTRAINT $name CHECK ($expression)";
+    }
+    
+    return $definition ? $definition : undef;
+}
 
 sub create_view {
     my ($view, $options) = @_;
