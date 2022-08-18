@@ -310,6 +310,10 @@ sub create_table {
             my $constr = create_constraint($c, $options);
             push @constraint_defs, $constr if ($constr);
             
+            my $name    = $c->name || '';
+            my @fields  = map { quote($_,$qf) } $c->fields;
+            my @rfields = map { quote($_,$qf) } $c->reference_fields;
+            
             if ( $c->type eq FOREIGN_KEY ) {
                 $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
                 $name = quote($name, $qf);
