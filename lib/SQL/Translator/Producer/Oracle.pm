@@ -462,6 +462,19 @@ sub alter_field {
     return 'ALTER TABLE '.$table_name.' MODIFY ( '.join('', @$field_defs).' )';
 }
 
+sub drop_field
+{
+    my ($old_field, $options) = @_;
+
+    my $table_name = quote($old_field->table->name);
+
+    my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
+                      $table_name,
+                      quote($old_field->name));
+
+    return $out;
+}
+
 sub add_field {
     my ($new_field, $options) = @_;
 
@@ -685,8 +698,7 @@ sub create_field {
 sub alter_drop_constraint {
     my ($c, $options) = @_;
 
-    my $generator = _generator($options);
-    my $table_name = $generator->quote($c->table->name);
+    my $table_name = quote($c->table->name);
 
     my @out = ('ALTER','TABLE',$table_name,'DROP');
     if($c->type eq PRIMARY_KEY) {
@@ -694,7 +706,7 @@ sub alter_drop_constraint {
     }
     else {
         push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"),
-            $generator->quote($c->name);
+            quote($c->name);
     }
     return join(' ',@out);
 }
@@ -702,7 +714,7 @@ sub alter_drop_constraint {
 sub alter_create_constraint {
     my ($index, $options) = @_;
 
-    my $table_name = _generator($options)->quote($index->table->name);
+    my $table_name = quote($index->table->name);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,

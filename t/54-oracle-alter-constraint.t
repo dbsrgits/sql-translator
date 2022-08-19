@@ -9,12 +9,12 @@ use SQL::Translator;
 use SQL::Translator::Diff;
 
 BEGIN {
-    maybe_plan(2, 'SQL::Translator::Parser::YAML',
+    maybe_plan(4, 'SQL::Translator::Parser::YAML',
                   'SQL::Translator::Producer::Oracle');
 }
 
-my $schema1 = $Bin.'/data/oracle/schema_diff_b.yaml';
-my $schema2 = $Bin.'/data/oracle/schema_diff_c.yaml';
+my $schema1 = $Bin.'/data/oracle/schema_diff_d.yaml';
+my $schema2 = $Bin.'/data/oracle/schema_diff_e.yaml';
 
 open my $io1, '<', $schema1 or die $!;
 open my $io2, '<', $schema2 or die $!;
@@ -38,6 +38,7 @@ $t->parser->($t,$yaml2);
 my $d = SQL::Translator::Diff->new
   ({
     output_db => 'Oracle',
+    target_db => 'Oracle',
     source_schema => $s->schema,
     target_schema => $t->schema,
    });
@@ -46,5 +47,9 @@ my $d = SQL::Translator::Diff->new
 my $diff = $d->compute_differences->produce_diff_sql || die $d->error;
 
 ok($diff, 'Diff generated.');
-like($diff, '/ALTER TABLE d_operator ADD \( foo nvarchar2\(10\) NOT NULL \)/',
-     'Alter table generated.');
+
+like($diff, '/ALTER TABLE d_operator DROP CONSTRAINT foo_unique/', 'DROP constraint foo_unique generated');
+
+like($diff, '/ALTER TABLE d_operator DROP CONSTRAINT other_check/', 'DROP constraint other_check generated');
+
+like($diff, '/ADD CONSTRAINT other_check CHECK \(other BETWEEN 100 and 99999\)/', 'ADD check constraint generated');

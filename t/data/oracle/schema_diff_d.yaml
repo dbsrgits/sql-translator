@@ -16,6 +16,13 @@ schema:
           reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
+        - fields: foo
+          name: 'foo_unique'
+          type: UNIQUE
+        - fields: other
+          name: 'other_check'
+          type: CHECK
+          expression: other BETWEEN 1 and 99999
       fields:
         id_operator:
           data_type: integer
@@ -29,17 +36,6 @@ schema:
           order: 58
           size:
             - 0
-        bar:
-          data_type: varchar2
-          default_value: ~
-          extra: {}
-          is_nullable: 1
-          is_primary_key: 0
-          is_unique: 0
-          name: bar
-          order: 61
-          size:
-            - 3
         name:
           data_type: nvarchar2
           default_value: ~
@@ -51,16 +47,27 @@ schema:
           order: 59
           size:
             - 10
-        other:
+        foo:
           data_type: nvarchar2
           default_value: ~
           extra: {}
           is_nullable: 0
           is_primary_key: 0
-          is_unique: 0
-          name: other
+          is_unique: 1
+          name: foo
           order: 60
           size:
             - 10
+        other:
+          data_type: integer
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 1
+          name: other
+          order: 61
+          size:
+            - 5
       name: d_operator
       order: 11
