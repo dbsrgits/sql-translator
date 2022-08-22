@@ -95,7 +95,7 @@ $DEBUG   = 0 unless defined $DEBUG;
 
 use base 'SQL::Translator::Producer';
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(header_comment);
+use SQL::Translator::Utils qw(header_comment batch_alter_table_statements);
 
 my %translate  = (
     #
@@ -693,6 +693,73 @@ sub create_field {
 
     return \@create, \@field_defs, \@trigger_defs, \@field_comments;
 
+}
+
+sub batch_alter_table {
+  my ($table, $diff_hash, $options) = @_;
+
+  my %fks_to_alter;
+  my %fks_to_drop = map {
+    $_->type eq FOREIGN_KEY
+              ? ( $_->name => $_ )
+              : ( )
+  } @{$diff_hash->{alter_drop_constraint} };
+
+  my %fks_to_create = map {
+    if ( $_->type eq FOREIGN_KEY) {
+      $fks_to_alter{$_->name} = $fks_to_drop{$_->name} if $fks_to_drop{$_->name};
+      ( $_->name => $_ );
+    } else { ( ) }
+  } @{$diff_hash->{alter_create_constraint} };
+
+  my @drop_stmt;
+  if (scalar keys %fks_to_alter) {
+    $diff_hash->{alter_drop_constraint} = [
+      grep { !$fks_to_alter{$_->name} } @{ $diff_hash->{alter_drop_constraint} }
+    ];
+
+    @drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options);
+
+  }
+
+  my @stmts = batch_alter_table_statements($diff_hash, $options);
+
+  # rename_table makes things a bit more complex
+  my $renamed_from = "";
+  $renamed_from = quote($diff_hash->{rename_table}[0][0]->name)
+    if $diff_hash->{rename_table} && @{$diff_hash->{rename_table}};
+
+  return unless @stmts;
+  # Just zero or one stmts. return now
+  return (@drop_stmt,@stmts) unless @stmts > 1;
+
+  # Now strip off the 'ALTER TABLE xyz' of all but the first one
+
+  my $table_name = quote($table->name);
+
+  my $re = $renamed_from
+         ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$renamed_from\E) /
+            : qr/^ALTER TABLE \Q$table_name\E /;
+
+  my $first = shift  @stmts;
+  my ($alter_table) = $first =~ /($re)/;
+
+  my $padd = " " x length($alter_table);
+
+  return @drop_stmt, join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts);
+
+}
+
+sub drop_table {
+  my ($table, $options) = @_;
+
+  return (
+    # Drop (foreign key) constraints so table drops cleanly
+    batch_alter_table(
+      $table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options
+    ),
+    'DROP TABLE ' . quote($table),
+  );
 }
 
 sub alter_drop_constraint {

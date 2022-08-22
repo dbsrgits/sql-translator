@@ -68,3 +68,27 @@ schema:
             - 5
       name: d_operator
       order: 11
+    supplier:
+      fields:
+        id:
+          data_type: integer
+          is_nullable: 0
+          is_primary_key: 1
+          size: 11
+          name: id
+          order: 62
+        cust_id:
+          data_type: integer
+          is_nullable: 1
+          is_primary_key: 0
+          size: 11
+          name: cust_id
+          order: 63
+        supplier_name: 
+          data_type: nvarchar2
+          is_nullable: 0
+          is_primary_key: 0
+          size: 256
+          name: supplier_name
+          order: 65
+      name: supplier

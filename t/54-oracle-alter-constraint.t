@@ -9,7 +9,7 @@ use SQL::Translator;
 use SQL::Translator::Diff;
 
 BEGIN {
-    maybe_plan(4, 'SQL::Translator::Parser::YAML',
+    maybe_plan(6, 'SQL::Translator::Parser::YAML',
                   'SQL::Translator::Producer::Oracle');
 }
 
@@ -50,6 +50,10 @@ ok($diff, 'Diff generated.');
 
 like($diff, '/ALTER TABLE d_operator DROP CONSTRAINT foo_unique/', 'DROP constraint foo_unique generated');
 
-like($diff, '/ALTER TABLE d_operator DROP CONSTRAINT other_check/', 'DROP constraint other_check generated');
+like($diff, '/DROP CONSTRAINT other_check/', 'DROP constraint other_check generated');
 
 like($diff, '/ADD CONSTRAINT other_check CHECK \(other BETWEEN 100 and 99999\)/', 'ADD check constraint generated');
+
+like($diff, '/ALTER TABLE supplier DROP FOREIGN KEY fk_customer/', 'DROP Foreign key constraint generated');
+
+like($diff, '/DROP TABLE customer/', 'DROP TABLE customer generated');
