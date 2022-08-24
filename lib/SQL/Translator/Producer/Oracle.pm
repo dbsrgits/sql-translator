@@ -95,7 +95,8 @@ $DEBUG   = 0 unless defined $DEBUG;
 
 use base 'SQL::Translator::Producer';
 use SQL::Translator::Schema::Constants;
-use SQL::Translator::Utils qw(header_comment batch_alter_table_statements);
+use SQL::Translator::Utils qw(header_comment);
+use Data::Dumper;
 
 my %translate  = (
     #
@@ -390,23 +391,9 @@ sub create_table {
                 push @field_defs, 'CONSTRAINT '.$index_name.' PRIMARY KEY '.
                     '(' . join( ', ', @fields ) . ')';
             }
-            elsif ( $index_type eq NORMAL ) {
-                $index_name = $index_name ? mk_name( $index_name )
-                    : mk_name( $table_name, $index_name || 'i' );
-                $index_name = quote($index_name, $qf);
-                push @index_defs,
-                    "CREATE INDEX $index_name on $table_name_q (".
-                        join( ', ', @fields ).
-                    ")$index_options";
-            }
-            elsif ( $index_type eq UNIQUE ) {
-                $index_name = $index_name ? mk_name( $index_name )
-                    : mk_name( $table_name, $index_name || 'i' );
-                $index_name = quote($index_name, $qf);
-                push @index_defs,
-                    "CREATE UNIQUE INDEX $index_name on $table_name_q (".
-                        join( ', ', @fields ).
-                    ")$index_options";
+            elsif ($index_type eq NORMAL or $index_type eq UNIQUE) {
+                warn "CAlling create index with options: " . Dumper($options) . "\n";
+                push @index_defs, create_index($index, $options, $index_options);
             }
             else {
                 warn "Unknown index type ($index_type) on table $table_name.\n"
@@ -465,12 +452,12 @@ sub alter_field {
 sub drop_field
 {
     my ($old_field, $options) = @_;
-
-    my $table_name = quote($old_field->table->name);
+    my $qi = $options->{quote_identifiers};
+    my $table_name = quote($old_field->table->name, $qi);
 
     my $out = sprintf('ALTER TABLE %s DROP COLUMN %s',
                       $table_name,
-                      quote($old_field->name));
+                      quote($old_field->name, $qi));
 
     return $out;
 }
@@ -668,19 +655,20 @@ sub create_field {
         push @trigger_defs, $trigger;
     }
 
-    if ( lc $field->data_type eq 'timestamp' ) {
-        my $base_name = $table_name . "_". $field_name;
-        my $trig_name = quote(mk_name( $base_name, 'ts' ), $qt);
-        my $trigger =
-          "CREATE OR REPLACE TRIGGER $trig_name\n".
-          "BEFORE INSERT OR UPDATE ON $table_name_q\n".
-          "FOR EACH ROW WHEN (new.$field_name_q IS NULL)\n".
-          "BEGIN\n".
-          " SELECT sysdate INTO :new.$field_name_q FROM dual;\n".
-          "END;\n";
+    # Do not create a trigger to insert sysdate to all timestamp fields
+    # if ( lc $field->data_type eq 'timestamp' ) {
+    #     my $base_name = $table_name . "_". $field_name;
+    #     my $trig_name = quote(mk_name( $base_name, 'ts' ), $qt);
+    #     my $trigger =
+    #       "CREATE OR REPLACE TRIGGER $trig_name\n".
+    #       "BEFORE INSERT OR UPDATE ON $table_name_q\n".
+    #       "FOR EACH ROW WHEN (new.$field_name_q IS NULL)\n".
+    #       "BEGIN\n".
+    #       " SELECT sysdate INTO :new.$field_name_q FROM dual;\n".
+    #       "END;\n";
 
-          push @trigger_defs, $trigger;
-    }
+    #       push @trigger_defs, $trigger;
+    # }
 
     push @field_defs, $field_def;
 
@@ -695,77 +683,48 @@ sub create_field {
 
 }
 
-sub batch_alter_table {
-  my ($table, $diff_hash, $options) = @_;
+sub drop_table {
+    my ($table, $options) = @_;
 
-  my %fks_to_alter;
-  my %fks_to_drop = map {
-    $_->type eq FOREIGN_KEY
-              ? ( $_->name => $_ )
-              : ( )
-  } @{$diff_hash->{alter_drop_constraint} };
+    my @foreign_key_constraints = grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints;
+    my @statements;
+    for my $constraint(@foreign_key_constraints) {
+        push @statements, alter_drop_constraint($constraint);
+    }
 
-  my %fks_to_create = map {
-    if ( $_->type eq FOREIGN_KEY) {
-      $fks_to_alter{$_->name} = $fks_to_drop{$_->name} if $fks_to_drop{$_->name};
-      ( $_->name => $_ );
-    } else { ( ) }
-  } @{$diff_hash->{alter_create_constraint} };
-
-  my @drop_stmt;
-  if (scalar keys %fks_to_alter) {
-    $diff_hash->{alter_drop_constraint} = [
-      grep { !$fks_to_alter{$_->name} } @{ $diff_hash->{alter_drop_constraint} }
-    ];
-
-    @drop_stmt = batch_alter_table($table, { alter_drop_constraint => [ values %fks_to_alter ] }, $options);
-
-  }
-
-  my @stmts = batch_alter_table_statements($diff_hash, $options);
-
-  # rename_table makes things a bit more complex
-  my $renamed_from = "";
-  $renamed_from = quote($diff_hash->{rename_table}[0][0]->name)
-    if $diff_hash->{rename_table} && @{$diff_hash->{rename_table}};
-
-  return unless @stmts;
-  # Just zero or one stmts. return now
-  return (@drop_stmt,@stmts) unless @stmts > 1;
-
-  # Now strip off the 'ALTER TABLE xyz' of all but the first one
-
-  my $table_name = quote($table->name);
-
-  my $re = $renamed_from
-         ? qr/^ALTER TABLE (?:\Q$table_name\E|\Q$renamed_from\E) /
-            : qr/^ALTER TABLE \Q$table_name\E /;
-
-  my $first = shift  @stmts;
-  my ($alter_table) = $first =~ /($re)/;
-
-  my $padd = " " x length($alter_table);
-
-  return @drop_stmt, join( ",\n", $first, map { s/$re//; $padd . $_ } @stmts);
-
+    return @statements, 'DROP TABLE ' . quote($table);
 }
 
-sub drop_table {
-  my ($table, $options) = @_;
+sub alter_create_index {
+    my ($index, $options) = @_;
+    return create_index($index, $options);
+}
 
-  return (
-    # Drop (foreign key) constraints so table drops cleanly
-    batch_alter_table(
-      $table, { alter_drop_constraint => [ grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints ] }, $options
-    ),
-    'DROP TABLE ' . quote($table),
-  );
+sub create_index {
+    my ( $index, $options, $index_options) = @_;
+    my $qf = $options->{quote_field_names} || $options->{quote_identifiers};
+    my $qt = $options->{quote_table_names} || $options->{quote_identifiers};
+    return join(
+        ' ',
+        map { $_ || () }
+        'CREATE',
+        lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
+        $index->name ? quote($index->name, $qf): '',
+        'ON',
+        quote($index->table, $qt),
+        '(' . join( ', ', map { quote($_) } $index->fields ) . ")$index_options"
+    );
+}
+
+sub alter_drop_index {
+    my ($index, $options) = @_;
+    return 'DROP INDEX ' . $index->name;
 }
 
 sub alter_drop_constraint {
     my ($c, $options) = @_;
-
-    my $table_name = quote($c->table->name);
+    my $qi = $options->{quote_identifiers};
+    my $table_name = quote($c->table->name, $qi);
 
     my @out = ('ALTER','TABLE',$table_name,'DROP');
     if($c->type eq PRIMARY_KEY) {
@@ -773,15 +732,15 @@ sub alter_drop_constraint {
     }
     else {
         push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"),
-            quote($c->name);
+            quote($c->name, $qi);
     }
     return join(' ',@out);
 }
 
 sub alter_create_constraint {
     my ($index, $options) = @_;
-
-    my $table_name = quote($index->table->name);
+    my $qi = $options->{quote_identifiers};
+    my $table_name = quote($index->table->name, $qi);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,
