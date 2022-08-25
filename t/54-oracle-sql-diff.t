@@ -9,7 +9,7 @@ use SQL::Translator;
 use SQL::Translator::Diff;
 
 BEGIN {
-    maybe_plan(6, 'SQL::Translator::Producer::Oracle');
+    maybe_plan(10, 'SQL::Translator::Producer::Oracle');
 }
 
 my $schema1 = $Bin.'/data/oracle/schema-1.5.sql';
@@ -37,30 +37,29 @@ $t->parser->($t,$sql2);
 my $d = SQL::Translator::Diff->new
   ({
     output_db => 'Oracle',
-    target_db => 'Oracle',
     source_schema => $s->schema,
     target_schema => $t->schema,
-    sqlt_args => {quote_identifiers => 1}
+    sqlt_args => {quote_identifiers => 0}
    });
-
 
 my $diff = $d->compute_differences->produce_diff_sql || die $d->error;
 
 ok($diff, 'Diff generated.');
 
-warn "The diff is: " . Dumper($diff);
-
 like($diff, '/CREATE TABLE t_group/', 'CREATE TABLE t_group generated');
 
-like($diff, '/ALTER TABLE t_category DROP CONSTRAINT t_category_display_name/', 'DROP constraint display_name generated');
+like($diff, '/ALTER TABLE t_category DROP CONSTRAINT t_category_display_name/', 'DROP constraint t_category_display_name generated');
+
+like($diff, '/ALTER TABLE t_user_groups DROP FOREIGN KEY t_user_groups_group_id_fk/', 'DROP FOREIGN KEY constraint generated');
+
+like($diff, '/DROP INDEX t_alert_roles_idx_alert_id/', 'DROP INDEX generated');
 
 like($diff, '/ALTER TABLE t_message MODIFY \( alert_id number\(11\) \)/', 'MODIFY alert_id generated');
 
 like($diff, '/CREATE INDEX t_user_groups_idx_user_id ON t_user_groups \(user_id\)/', 'CREATE INDEX generated');
-# like($diff, '/ALTER TABLE t_category_defaults DROP FOREIGN KEY t_category_defaults_user_id/', 'DROP FOREIGN KEY constraint generated');
 
-# like($diff, '/ALTER TABLE t_user_groups ADD CONSTRAINT t_user_groups_group_id_fk FOREIGN KEY \(group_id\) REFERENCES t_group \(group_id\) ON DELETE CASCADE/', 'ADD FOREIGN KEY constraint generated');
+like($diff, '/ALTER TABLE t_user_groups ADD CONSTRAINT t_user_groups_group_id_fk FOREIGN KEY \(group_id\) REFERENCES t_group \(group_id\) ON DELETE CASCADE/', 'ADD FOREIGN KEY constraint generated');
 
-# like($diff, '/ADD CONSTRAINT other_check CHECK \(other BETWEEN 100 and 99999\)/', 'ADD check constraint generated');
+like($diff, '/ALTER TABLE t_population_group DROP FOREIGN KEY t_population_group_group_role_fk/', 'DROP FOREIGN KEY before drop table generated');
 
-# like($diff, '/DROP TABLE customer/', 'DROP TABLE customer generated');
+like($diff, '/DROP TABLE t_population_group/', 'DROP TABLE generated');

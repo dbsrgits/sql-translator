@@ -152,6 +152,8 @@ CREATE INDEX t_alert_idx_category on t_alert (category);
 
 CREATE INDEX t_user_groups_idx_group_id on t_user_groups (group_id);
 
+CREATE INDEX t_user_roles_idx_user_id on t_user_roles (user_id);
+
 CREATE INDEX t_user_roles_idx_role_id on t_user_roles (role_id);
 
 CREATE INDEX t_category_defaults_idx_cate on t_category_defaults (category_id);

@@ -129,11 +129,7 @@ ALTER TABLE t_category_defaults ADD CONSTRAINT t_category_defaults_user_id FOREI
 
 ALTER TABLE t_user_groups ADD CONSTRAINT t_user_groups_group_id_fk FOREIGN KEY (group_id) REFERENCES t_group (group_id) ON DELETE CASCADE;
 
-ALTER TABLE t_user_groups ADD CONSTRAINT t_user_groups_user_id_fk FOREIGN KEY (user_id) REFERENCES t_user (user_id) ON DELETE CASCADE;
-
 ALTER TABLE t_user_roles ADD CONSTRAINT t_user_roles_role_id_fk FOREIGN KEY (role_id) REFERENCES t_role (role_id) ON DELETE CASCADE;
-
-ALTER TABLE t_user_roles ADD CONSTRAINT t_user_roles_user_id_fk FOREIGN KEY (user_id) REFERENCES t_user (user_id) ON DELETE CASCADE;
 
 ALTER TABLE t_alert_roles ADD CONSTRAINT t_alert_roles_alert_id_fk FOREIGN KEY (alert_id) REFERENCES t_alert (alert_id) ON DELETE CASCADE;
 
@@ -152,8 +148,6 @@ CREATE INDEX t_user_groups_idx_user_id on t_user_groups (user_id);
 CREATE INDEX t_user_roles_idx_role_id on t_user_roles (role_id);
 
 CREATE INDEX t_user_roles_idx_user_id on t_user_roles (user_id);
-
-CREATE INDEX t_alert_roles_idx_alert_id on t_alert_roles (alert_id);
 
 CREATE INDEX t_alert_roles_idx_role_id on t_alert_roles (role_id);
 

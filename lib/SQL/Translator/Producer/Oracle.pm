@@ -195,7 +195,7 @@ sub produce {
     my $schema         = $translator->schema;
     my $oracle_version  = $translator->producer_args->{oracle_version} || 0;
     my $delay_constraints = $translator->producer_args->{delay_constraints};
-    my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
+    my ($output, $create, @table_defs, @trigger_defs, @index_defs, @constraint_defs);
 
     $create .= header_comment unless ($no_comments);
     my $qt = 1 if $translator->quote_table_names;
@@ -212,7 +212,7 @@ sub produce {
     }
 
     for my $table ( $schema->get_tables ) {
-        my ( $table_def, $fk_def, $trigger_def, $index_def, $constraint_def ) = create_table(
+        my ( $table_def, $trigger_def, $index_def, $constraint_def ) = create_table(
             $table,
             {
                 add_drop_table    => $add_drop_table,
@@ -224,7 +224,6 @@ sub produce {
             }
         );
         push @table_defs, @$table_def;
-        push @fk_defs, @$fk_def;
         push @trigger_defs, @$trigger_def;
         push @index_defs, @$index_def;
         push @constraint_defs, @$constraint_def;
@@ -243,10 +242,10 @@ sub produce {
     }
 
     if (wantarray) {
-        return defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs;
+        return defined $create ? $create : (), @table_defs, @view_defs, @trigger_defs, @index_defs, @constraint_defs;
     }
     else {
-        $create .= join (";\n\n", @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
+        $create .= join (";\n\n", @table_defs, @view_defs, @index_defs, @constraint_defs);
         $create .= ";\n\n";
         # If wantarray is not set we have to add "/" in this statement
         # DBI->do() needs them omitted
@@ -266,7 +265,7 @@ sub create_table {
 
     my $item = '';
     my $drop;
-    my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
+    my (@create, @field_defs, @constraint_defs, @trigger_defs);
 
     push @create, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
     push @create, qq[DROP TABLE $table_name_q CASCADE CONSTRAINTS] if $options->{add_drop_table};
@@ -310,46 +309,6 @@ sub create_table {
         for my $c ( $table->get_constraints ) {
             my $constr = create_constraint($c, $options);
             push @constraint_defs, $constr if ($constr);
-            
-            my $name    = $c->name || '';
-            my @fields  = map { quote($_,$qf) } $c->fields;
-            my @rfields = map { quote($_,$qf) } $c->reference_fields;
-            
-            if ( $c->type eq FOREIGN_KEY ) {
-                $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
-                $name = quote($name, $qf);
-                my $on_delete = uc ($c->on_delete || '');
-
-                my $def = "CONSTRAINT $name FOREIGN KEY ";
-
-                if ( @fields ) {
-                    $def .= '(' . join( ', ', @fields ) . ')';
-                }
-
-                my $ref_table = quote($c->reference_table,$qt);
-
-                $def .= " REFERENCES $ref_table";
-
-                if ( @rfields ) {
-                    $def .= ' (' . join( ', ', @rfields ) . ')';
-                }
-
-                if ( $c->match_type ) {
-                    $def .= ' MATCH ' .
-                        ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
-                }
-
-                if ( $on_delete && $on_delete ne "RESTRICT") {
-                    $def .= ' ON DELETE '.$c->on_delete;
-                }
-
-                # disabled by plu 2007-12-29 - doesn't exist for oracle
-                #if ( $c->on_update ) {
-                #    $def .= ' ON UPDATE '. $c->on_update;
-                #}
-
-                push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_q, $def);
-            }
         }
 
         #
@@ -392,7 +351,6 @@ sub create_table {
                     '(' . join( ', ', @fields ) . ')';
             }
             elsif ($index_type eq NORMAL or $index_type eq UNIQUE) {
-                warn "CAlling create index with options: " . Dumper($options) . "\n";
                 push @index_defs, create_index($index, $options, $index_options);
             }
             else {
@@ -427,7 +385,7 @@ sub create_table {
         }
     }
 
-    return \@create, \@fk_defs, \@trigger_defs, \@index_defs, ($options->{delay_constraints} ? \@constraint_defs : []);
+    return \@create, \@trigger_defs, \@index_defs, ($options->{delay_constraints} ? \@constraint_defs : []);
 }
 
 sub alter_field {
@@ -686,13 +644,14 @@ sub create_field {
 sub drop_table {
     my ($table, $options) = @_;
 
+    my $qi = $options->{quote_identifiers};
     my @foreign_key_constraints = grep { $_->type eq 'FOREIGN KEY' } $table->get_constraints;
     my @statements;
     for my $constraint(@foreign_key_constraints) {
-        push @statements, alter_drop_constraint($constraint);
+        push @statements, alter_drop_constraint($constraint, $options);
     }
 
-    return @statements, 'DROP TABLE ' . quote($table);
+    return @statements, 'DROP TABLE ' . quote($table, $qi);
 }
 
 sub alter_create_index {
@@ -702,6 +661,7 @@ sub alter_create_index {
 
 sub create_index {
     my ( $index, $options, $index_options) = @_;
+    $index_options = $index_options || '';
     my $qf = $options->{quote_field_names} || $options->{quote_identifiers};
     my $qt = $options->{quote_table_names} || $options->{quote_identifiers};
     return join(
@@ -738,14 +698,14 @@ sub alter_drop_constraint {
 }
 
 sub alter_create_constraint {
-    my ($index, $options) = @_;
+    my ($c, $options) = @_;
     my $qi = $options->{quote_identifiers};
-    my $table_name = quote($index->table->name, $qi);
+    my $table_name = quote($c->table->name, $qi);
     return join( ' ',
                  'ALTER TABLE',
                  $table_name,
                  'ADD',
-                 create_constraint(@_) );
+                 create_constraint($c, $options) );
 }
 
 sub create_constraint {
@@ -809,6 +769,34 @@ sub create_constraint {
         $name = quote($name, $qf);
         my $expression = $c->expression || '';
         $definition =  "CONSTRAINT $name CHECK ($expression)";
+    }
+    elsif ( $c->type eq FOREIGN_KEY ) {
+        $name = mk_name( join('_', $table_name, $c->fields). '_fk' );
+        $name = quote($name, $qf);
+        my $on_delete = uc ($c->on_delete || '');
+
+        $definition = "CONSTRAINT $name FOREIGN KEY ";
+
+        if ( @fields ) {
+            $definition .= '(' . join( ', ', @fields ) . ')';
+        }
+
+        my $ref_table = quote($c->reference_table,$qt);
+
+        $definition .= " REFERENCES $ref_table";
+
+        if ( @rfields ) {
+            $definition .= ' (' . join( ', ', @rfields ) . ')';
+        }
+
+        if ( $c->match_type ) {
+            $definition .= ' MATCH ' .
+                ( $c->match_type =~ /full/i ) ? 'FULL' : 'PARTIAL';
+        }
+
+        if ( $on_delete && $on_delete ne "RESTRICT") {
+            $definition .= ' ON DELETE '.$c->on_delete;
+        }
     }
     
     return $definition ? $definition : undef;
