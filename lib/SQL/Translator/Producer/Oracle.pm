@@ -686,14 +686,7 @@ sub alter_drop_constraint {
     my $qi = $options->{quote_identifiers};
     my $table_name = quote($c->table->name, $qi);
 
-    my @out = ('ALTER','TABLE',$table_name,'DROP');
-    if($c->type eq PRIMARY_KEY) {
-        push @out, $c->type;
-    }
-    else {
-        push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"),
-            quote($c->name, $qi);
-    }
+    my @out = ('ALTER','TABLE',$table_name,'DROP','CONSTRAINT',quote($c->name, $qi));
     return join(' ',@out);
 }
 
