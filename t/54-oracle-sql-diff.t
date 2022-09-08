@@ -50,7 +50,7 @@ like($diff, '/CREATE TABLE t_group/', 'CREATE TABLE t_group generated');
 
 like($diff, '/ALTER TABLE t_category DROP CONSTRAINT t_category_display_name/', 'DROP constraint t_category_display_name generated');
 
-like($diff, '/ALTER TABLE t_user_groups DROP FOREIGN KEY t_user_groups_group_id_fk/', 'DROP FOREIGN KEY constraint generated');
+like($diff, '/ALTER TABLE t_user_groups DROP CONSTRAINT t_user_groups_group_id_fk/', 'DROP FOREIGN KEY constraint generated');
 
 like($diff, '/DROP INDEX t_alert_roles_idx_alert_id/', 'DROP INDEX generated');
 
@@ -60,6 +60,6 @@ like($diff, '/CREATE INDEX t_user_groups_idx_user_id ON t_user_groups \(user_id\
 
 like($diff, '/ALTER TABLE t_user_groups ADD CONSTRAINT t_user_groups_group_id_fk FOREIGN KEY \(group_id\) REFERENCES t_group \(group_id\) ON DELETE CASCADE/', 'ADD FOREIGN KEY constraint generated');
 
-like($diff, '/ALTER TABLE t_population_group DROP FOREIGN KEY t_population_group_group_role_fk/', 'DROP FOREIGN KEY before drop table generated');
+like($diff, '/ALTER TABLE t_population_group DROP CONSTRAINT t_population_group_group_role_fk/', 'DROP FOREIGN KEY before drop table generated');
 
 like($diff, '/DROP TABLE t_population_group/', 'DROP TABLE generated');

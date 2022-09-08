@@ -54,6 +54,6 @@ like($diff, '/DROP CONSTRAINT other_check/', 'DROP constraint other_check genera
 
 like($diff, '/ADD CONSTRAINT other_check CHECK \(other BETWEEN 100 and 99999\)/', 'ADD check constraint generated');
 
-like($diff, '/ALTER TABLE supplier CONSTRAINT fk_customer/', 'DROP Foreign key constraint generated');
+like($diff, '/ALTER TABLE supplier DROP CONSTRAINT fk_customer/', 'DROP Foreign key constraint generated');
 
 like($diff, '/DROP TABLE customer/', 'DROP TABLE customer generated');

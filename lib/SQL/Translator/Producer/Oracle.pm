@@ -396,8 +396,13 @@ sub alter_field {
       create_field($to_field, $options, {});
 
     # Fix ORA-01442
-    if ($to_field->is_nullable && !$from_field->is_nullable) {
-        die 'Cannot remove NOT NULL from table field';
+    if (!$from_field->is_nullable && $to_field->is_nullable) {
+        if ($from_field->data_type =~ /text/) {
+            die 'Cannot alter CLOB field in this way';
+        }
+        else {
+            @$field_defs = map { $_ .= ' NULL' } @$field_defs;
+        }
     } elsif (!$from_field->is_nullable && !$to_field->is_nullable) {
         @$field_defs = map { s/ NOT NULL//; $_} @$field_defs;
     }
