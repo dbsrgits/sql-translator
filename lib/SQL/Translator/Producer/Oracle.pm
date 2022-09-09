@@ -618,21 +618,6 @@ sub create_field {
         push @trigger_defs, $trigger;
     }
 
-    # Do not create a trigger to insert sysdate to all timestamp fields
-    # if ( lc $field->data_type eq 'timestamp' ) {
-    #     my $base_name = $table_name . "_". $field_name;
-    #     my $trig_name = quote(mk_name( $base_name, 'ts' ), $qt);
-    #     my $trigger =
-    #       "CREATE OR REPLACE TRIGGER $trig_name\n".
-    #       "BEFORE INSERT OR UPDATE ON $table_name_q\n".
-    #       "FOR EACH ROW WHEN (new.$field_name_q IS NULL)\n".
-    #       "BEGIN\n".
-    #       " SELECT sysdate INTO :new.$field_name_q FROM dual;\n".
-    #       "END;\n";
-
-    #       push @trigger_defs, $trigger;
-    # }
-
     push @field_defs, $field_def;
 
     if ( my $comment = $field->comments ) {
