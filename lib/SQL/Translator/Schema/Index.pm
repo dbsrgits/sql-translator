@@ -135,7 +135,7 @@ sub fields_with_lengths {
     my ($self) = @_;
 
     print STDERR Data::Dumper::Dumper($self->fields);
-    return ( map { ref $_ ? "$_->{name}($_->{prefix_length})" : $_ } 
+    return ( map { ref $_ ? "$_->{name}($_->{prefix_length})" : $_ }
 	     ($self->fields) );
 }
 

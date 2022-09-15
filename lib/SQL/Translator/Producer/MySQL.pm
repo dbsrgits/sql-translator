@@ -684,7 +684,7 @@ sub create_index
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
           ))
         : '',
-        '(' . join( ', ', map { 
+        '(' . join( ', ', map {
             ref $_ ? $generator->quote($_->{name}) . "($_->{prefix_length})" : $generator->quote($_)
         } $index->fields ) . ')'
     );

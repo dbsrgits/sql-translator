@@ -42,7 +42,7 @@ generated for dropping objects in the database will contain IF EXISTS.
 Generates table and column comments via the COMMENT command rather than as a comment in
 the DDL. You could then look it up with \dt+ or \d+ (for tables and columns respectively)
 in psql. The comment is dollar quoted with $comment$ so you can include ' in it. Just to clarify: you get this
-    
+
     CREATE TABLE foo ...;
     COMMENT on TABLE foo IS $comment$hi there$comment$;
 
