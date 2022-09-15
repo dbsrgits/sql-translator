@@ -136,7 +136,7 @@ sub fields_with_lengths {
 
     print STDERR Data::Dumper::Dumper($self->fields);
     return ( map { ref $_ ? "$_->{name}($_->{prefix_length})" : $_ }
-	     ($self->fields) );
+        ($self->fields) );
 }
 
 =head2 options
