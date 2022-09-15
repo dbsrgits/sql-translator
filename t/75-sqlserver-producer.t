@@ -57,7 +57,7 @@ schema:
         - type: NORMAL
           fields:
             - name: id
-              size: 10
+              prefix_length: 10
           name: index_1
         - type: NORMAL
           fields:

@@ -67,7 +67,7 @@ names and keep them in order by the first occurrence of a field name.
 The length of an index can be specified as follows (only has any effect
 with a MySQL database):
 
-  $index->fields( 'id', { name => 'firstname', size => 15 } );
+  $index->fields( 'id', { name => 'firstname', prefix_length => 15 } );
 
 =cut
 
@@ -111,6 +111,33 @@ has name => (
     coerce => quote_sub(q{ defined $_[0] ? $_[0] : '' }),
     default => quote_sub(q{ '' }),
 );
+
+=head2 field_names
+
+Return just the index field names for the case when we don't care whether
+the "prefix_length" is specified or not.
+
+=cut
+
+sub field_names {
+    my ($self) = @_;
+
+    return ( map { ref $_ ? $_->{name} : $_ } ($self->fields) );
+}
+
+=head2 fields_with_lengths
+
+Return the index field names with the prefix_length appended if set.
+
+=cut
+
+sub fields_with_lengths {
+    my ($self) = @_;
+
+    print STDERR Data::Dumper::Dumper($self->fields);
+    return ( map { ref $_ ? "$_->{name}($_->{prefix_length})" : $_ } 
+	     ($self->fields) );
+}
 
 =head2 options
 
@@ -197,7 +224,7 @@ around equals => sub {
       $otherFields{$name} = ref $otherField ? $otherField->{size} : -1; # -1 == no length. Easier comparison.
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
-      my ($name, $size) = ref $selfField ? ($selfField->{name}, $selfField->{size}) : ($selfField, -1);
+      my ($name, $size) = ref $selfField ? ($selfField->{name}, $selfField->{prefix_length}) : ($selfField, -1);
       $name = uc($name) if $case_insensitive;
       return 0 unless exists $otherFields{$name} && $otherFields{$name} == $size;
       delete $otherFields{$name};

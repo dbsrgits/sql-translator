@@ -248,7 +248,7 @@ require_ok( 'SQL::Translator::Schema' );
     isa_ok( $index2, 'SQL::Translator::Schema::Index', 'Index' );
     is( $index2->name, 'bar', 'Index name is "bar"' );
 
-    my $index3 = $person_table->add_index( name => "sized", fields => [ { name => 'forename', size => 15} ] )
+    my $index3 = $person_table->add_index( name => "sized", fields => [ { name => 'forename', prefix_length => 15} ] )
         or warn $person_table->error;
     isa_ok( $index3, 'SQL::Translator::Schema::Index', 'Index' );
     is( $index3->name, 'sized', 'Index name is "sized"' );

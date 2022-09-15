@@ -299,11 +299,7 @@ sub create_index
     my $type   = $index->type eq 'UNIQUE' ? "UNIQUE " : '';
 
     # strip any field size qualifiers as SQLite doesn't like these
-    my @fields = map {
-        $_ = $_->{name} if ref $_; # Remove any index lengths
-        s/\(\d+\)$//;
-        _generator()->quote($_)
-    } $index->fields;
+    my @fields = map { s/\(\d+\)$//; _generator()->quote($_) } $index->field_names;
     $index_table_name = _generator()->quote($index_table_name);
     warn "removing schema name from '" . $index->table->name . "' to make '$index_table_name'\n" if $WARN;
     my $index_def =

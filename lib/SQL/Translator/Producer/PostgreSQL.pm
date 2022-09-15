@@ -619,7 +619,7 @@ sub create_geometry_constraints {
             || join('_', $table_name, 'idx', ++$index_name{ $table_name });
 
         my $type = $index->type || NORMAL;
-        my @fields     =  $index->fields;
+        my @fields     =  $index->field_names;
         return unless @fields;
 
         my %index_extras;
@@ -645,10 +645,7 @@ sub create_geometry_constraints {
         }
 
         my $def_start = 'CONSTRAINT ' . $generator->quote($name) . ' ';
-        my $field_names = '(' . join(", ", (map {
-            my $name = ref $_ ? $_->{name} : $_;
-            $name =~ /\(.*\)/ ? $name : ( $generator->quote($name) );
-        } @fields)) . ')';
+        my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ( $generator->quote($_) ) } @fields)) . ')';
         if ( $type eq PRIMARY_KEY ) {
             push @constraint_defs, "${def_start}PRIMARY KEY ".$field_names;
         }

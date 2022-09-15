@@ -70,7 +70,7 @@ use SQL::Translator::Producer::Oracle;
     );
 
     my $index1 = $table1->add_index(name => 'myfooindex', fields => ['foo']);
-    my $index2 = $table1->add_index(name => 'mybarindex', fields => [ { name => 'bar', size => 10 } ]);
+    my $index2 = $table1->add_index(name => 'mybarindex', fields => [ { name => 'bar', prefix_length => 10 } ]);
 
     my ($table1_def, $fk1_def, $trigger1_def,
         $index1_def, $constraint1_def
