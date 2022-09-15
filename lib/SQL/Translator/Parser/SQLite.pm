@@ -133,7 +133,7 @@ like-op::=
 use strict;
 use warnings;
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 our $DEBUG;
 $DEBUG   = 0 unless defined $DEBUG;
@@ -477,7 +477,8 @@ column_list : field_name(s /,/)
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
 
-expr : /[^)]+/
+expr : /[^)]* \( [^)]+ \) [^)]*/x # parens, balanced one deep
+    | /[^)]+/
 
 sort_order : /(ASC|DESC)/i
 

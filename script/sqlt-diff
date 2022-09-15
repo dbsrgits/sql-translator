@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 # vim: set ft=perl:
 
 # -------------------------------------------------------------------
@@ -114,7 +114,7 @@ use SQL::Translator::Diff;
 use SQL::Translator::Schema::Constants;
 
 use vars qw( $VERSION );
-$VERSION = '1.59';
+$VERSION = '1.62';
 
 my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names,
     $ignore_constraint_names, $output_db, $mysql_parser_version,
@@ -192,7 +192,7 @@ my $result = SQL::Translator::Diff::schema_diff(
         no_batch_alters         => $no_batch_alters || 0,
         debug                   => $debug || 0,
         trace                   => $trace || 0,
-        producer_args => {
+        sqlt_args => {
             quote_table_names   => $quote || '',
             quote_field_names   => $quote || '',
         },

@@ -22,7 +22,7 @@ something similar to the output of mdbtools (http://mdbtools.sourceforge.net/).
 use strict;
 use warnings;
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 our $DEBUG;
 $DEBUG = 0 unless defined $DEBUG;

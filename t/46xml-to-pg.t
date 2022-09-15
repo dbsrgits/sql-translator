@@ -23,6 +23,7 @@ $sqlt = SQL::Translator->new(
     no_comments => 1,
     show_warnings  => 0,
     add_drop_table => 1,
+    producer_args => { attach_comments => 1 }
 );
 
 die "Can't find test schema $xmlfile" unless -e $xmlfile;
@@ -42,7 +43,6 @@ CREATE TABLE "Basic" (
   "email" character varying(500),
   "explicitnulldef" character varying,
   "explicitemptystring" character varying DEFAULT '',
-  -- Hello emptytagdef
   "emptytagdef" character varying DEFAULT '',
   "another_id" integer DEFAULT 2,
   "timest" timestamp,
@@ -51,6 +51,7 @@ CREATE TABLE "Basic" (
   CONSTRAINT "very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" UNIQUE ("title")
 );
 CREATE INDEX "titleindex" on "Basic" ("title");
+COMMENT on COLUMN "Basic"."emptytagdef" IS \$comment\$Hello emptytagdef\$comment\$;
 
 DROP TABLE "Another" CASCADE;
 CREATE TABLE "Another" (

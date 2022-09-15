@@ -25,16 +25,25 @@ env:
     - COVERAGE="coveralls codecov"
     - DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test
     - DBICTEST_PG_USER=postgres
+    - SPLIT_BUILD=0
 matrix:
   allow_failures:
     - perl: "blead"
     - perl: "dev"
 before_install:
-  - eval $(curl https://travis-perl.github.io/init) --auto
+  - eval $(curl https://travis-perl.github.io/init) --perl
+  - cpan-install File::ShareDir::Install # absolute minimum for Makefile.PL
+  - perl Makefile.PL # generate deps
+  - cpan-install --deps # so can regen t/data/roundtrip_autogen.yaml
 install:
+  - build-dist
+  - cd $BUILD_DIR
   - $HELPERS_ROOT/bin/cpan-config
   - cpan-install --deps CGI DBD::SQLite XML::Parser DBD::Pg # Optional test deps
-  - cpan-install Test::EOL Test::NoTabs # Author test deps
   - cpan-install --coverage
 before_script:
   - psql -U postgres -c 'create database sqlt_test;'
+script:
+  - perl Makefile.PL && make test
+services:
+  - postgresql

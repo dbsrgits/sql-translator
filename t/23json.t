@@ -15,7 +15,7 @@ BEGIN {
 }
 
 my $sqlt_version = $SQL::Translator::VERSION;
-use JSON;
+use JSON::MaybeXS 'from_json';
 my $json = from_json(<<JSON);
 {
    "schema" : {

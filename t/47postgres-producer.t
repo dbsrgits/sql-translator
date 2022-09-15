@@ -38,25 +38,23 @@ my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
                                                  is_foreign_key => 0,
                                                  is_unique => 0 );
   $table->add_field($field);
-  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table($table, { quote_table_names => q{"} });
+  my ($create, $fks) = SQL::Translator::Producer::PostgreSQL::create_table(
+    $table, { quote_table_names => q{"}, attach_comments => 1 });
   is($table->name, 'foo.bar');
 
   my $expected = <<EOESQL;
 --
 -- Table: foo.bar
 --
-
--- Comments:
--- multi
--- line
--- single line
---
 CREATE TABLE "foo"."bar" (
-  -- multi
-  -- line
-  -- single line
   "baz" character varying(10) DEFAULT 'quux' NOT NULL
-)
+);
+COMMENT on TABLE "foo"."bar" IS \$comment\$multi
+line
+single line\$comment\$;
+COMMENT on COLUMN "foo"."bar"."baz" IS \$comment\$multi
+line
+single line\$comment\$
 EOESQL
 
   $expected =~ s/\n\z//;
@@ -664,6 +662,14 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
     }
 
     {
+        my $index = $table->add_index(name => 'covering', fields => ['bar'], options => { include => [ 'lower(foo)', 'baz' ] });
+        my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
+        is($def, "CREATE INDEX covering on foobar (bar)", 'skip if postgres is too old');
+        ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, { postgres_version => 11 });
+        is($def, "CREATE INDEX covering on foobar (bar) INCLUDE (lower(foo), baz)", 'index created');
+    }
+
+    {
         my $constr = $table->add_constraint(name => 'constr', type => UNIQUE, fields => ['foo']);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_constraint($constr);
         is($def->[0], 'CONSTRAINT constr UNIQUE (foo)', 'constraint created');
@@ -716,4 +722,20 @@ CREATE VIEW view_foo ( id, name ) AS
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
+my $mat_view = SQL::Translator::Schema::View->new(
+    name   => 'view_foo',
+    fields => [qw/id name/],
+    sql    => 'SELECT id, name FROM thing',
+    extra  => {
+      materialized => 1
+    }
+);
+
+my $mat_view_sql = SQL::Translator::Producer::PostgreSQL::create_view($mat_view, {  no_comments => 1 });
+
+my $mat_view_sql_expected = "CREATE MATERIALIZED VIEW view_foo ( id, name ) AS
+    SELECT id, name FROM thing
+";
+
+is($mat_view_sql, $mat_view_sql_expected, 'correct "MATERIALIZED VIEW" SQL');
 done_testing;

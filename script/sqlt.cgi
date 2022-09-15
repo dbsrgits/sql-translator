@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
@@ -38,7 +38,7 @@ use CGI;
 use SQL::Translator;
 
 use vars '$VERSION';
-$VERSION = '1.59';
+$VERSION = '1.62';
 
 my $q = CGI->new;
 

@@ -41,7 +41,7 @@ use Template;
 
 use Data::Dumper;
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 sub produce {
     my $t              = shift;

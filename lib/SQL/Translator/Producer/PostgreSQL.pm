@@ -17,12 +17,95 @@ producer.
 Now handles PostGIS Geometry and Geography data types on table definitions.
 Does not yet support PostGIS Views.
 
+=head2 Producer Args
+
+You can change the global behavior of the producer by passing the following options to the
+C<producer_args> attribute of C<SQL::Translator>.
+
+=over 4
+
+=item postgres_version
+
+The version of postgres to generate DDL for. Turns on features only available in later versions. The following features are supported
+
+=over 4
+
+=item IF EXISTS
+
+If your postgres_version is higher than 8.003 (I should hope it is by now), then the DDL
+generated for dropping objects in the database will contain IF EXISTS.
+
+=back
+
+=item attach_comments
+
+Generates table and column comments via the COMMENT command rather than as a comment in
+the DDL. You could then look it up with \dt+ or \d+ (for tables and columns respectively)
+in psql. The comment is dollar quoted with $comment$ so you can include ' in it. Just to clarify: you get this
+    
+    CREATE TABLE foo ...;
+    COMMENT on TABLE foo IS $comment$hi there$comment$;
+
+instead of this
+
+    -- comment
+    CREAT TABLE foo ...;
+
+=back
+
+=head2 Extra args
+
+Various schema types support various options via the C<extra> attribute.
+
+=over 2
+
+=item Tables
+
+=over 2
+
+=item temporary
+
+Produces a temporary table.
+
+=back
+
+=item Views
+
+=over 2
+
+=item temporary
+
+Produces a temporary view.
+
+=item materialized
+
+Produces a materialized view.
+
+=back
+
+=item Fields
+
+=over 2
+
+=item list, custom_type_name
+
+For enum types, list is the list of valid values, and custom_type_name is the name that
+the type should have. Defaults to $table_$field_type.
+
+=item geometry_type, srid, dimensions, geography_type
+
+Fields for use with PostGIS types.
+
+=back
+
+=back
+
 =cut
 
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
@@ -129,6 +212,7 @@ and table_constraint is:
 
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( column [ ops_name ] [, ...] )
+      [ INCLUDE  ( column [, ...] ) ]
       [ WHERE predicate ]
   CREATE [ UNIQUE ] INDEX index_name ON table
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
@@ -163,6 +247,7 @@ sub produce {
             postgres_version  => $postgres_version,
             add_drop_table    => $add_drop_table,
             type_defs         => \%type_defs,
+            attach_comments   => $pargs->{attach_comments}
         });
 
         push @table_defs, $table_def;
@@ -265,6 +350,7 @@ sub create_table
     my $add_drop_table = $options->{add_drop_table} || 0;
     my $postgres_version = $options->{postgres_version} || 0;
     my $type_defs = $options->{type_defs} || {};
+    my $attach_comments = $options->{attach_comments};
 
     my $table_name = $table->name or next;
     my $table_name_qt = $generator->quote($table_name);
@@ -273,9 +359,18 @@ sub create_table
 
     push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
-    if ( !$no_comments and my $comments = $table->comments ) {
-        $comments =~ s/^/-- /mg;
-        push @comments, "-- Comments:\n$comments\n--\n";
+    my @comment_statements;
+    if ( my $comments = $table->comments ) {
+          if ( $attach_comments) {
+          # this follows the example in the MySQL producer, where all comments are added as
+          # table comments, even though they could have originally been parsed as DDL comments
+          # quoted via $$ string so there can be 'quotes' inside the comments
+          my $comment_ddl = "COMMENT on TABLE $table_name_qt IS \$comment\$$comments\$comment\$";
+          push @comment_statements, $comment_ddl;
+      } elsif (!$no_comments) {
+          $comments =~ s/^/-- /mg;
+          push @comments, "-- Comments:\n$comments\n--\n";
+      }
     }
 
     #
@@ -287,7 +382,17 @@ sub create_table
             postgres_version => $postgres_version,
             type_defs => $type_defs,
             constraint_defs => \@constraint_defs,
+            attach_comments => $attach_comments
         });
+        if ( $attach_comments ) {
+            my $field_comments = $field->comments;
+            next unless $field_comments;
+            my $field_name_qt = $generator->quote($field->name);
+            my $comment_ddl =
+              "COMMENT on COLUMN $table_name_qt.$field_name_qt IS \$comment\$$field_comments\$comment\$";
+            push @comment_statements, $comment_ddl;
+        }
+
     }
 
     #
@@ -296,6 +401,7 @@ sub create_table
     for my $index ( $table->get_indices ) {
         my ($idef, $constraints) = create_index($index, {
             generator => $generator,
+            postgres_version => $postgres_version,
         });
         $idef and push @index_defs, $idef;
         push @constraint_defs, @$constraints;
@@ -338,6 +444,10 @@ sub create_table
         $create_statement .= join(";\n", '', map{ add_geometry_column($_, $options) } @geometry_columns);
     }
 
+    if (@comment_statements) {
+      $create_statement .= join(";\n", '', @comment_statements);
+    }
+
     return $create_statement, \@fks;
 }
 
@@ -364,6 +474,7 @@ sub create_view {
 
     my $extra = $view->extra;
     $create .= " TEMPORARY" if exists($extra->{temporary}) && $extra->{temporary};
+    $create .= " MATERIALIZED" if exists($extra->{materialized}) && $extra->{materialized};
     $create .= " VIEW " . $generator->quote($view_name);
 
     if ( my @fields = $view->fields ) {
@@ -395,11 +506,13 @@ sub create_view {
         my $constraint_defs = $options->{constraint_defs} || [];
         my $postgres_version = $options->{postgres_version} || 0;
         my $type_defs = $options->{type_defs} || {};
+        my $attach_comments = $options->{attach_comments};
 
         $field_name_scope{$table_name} ||= {};
         my $field_name    = $field->name;
+
         my $field_comments = '';
-        if (my $comments = $field->comments) {
+        if ( !$attach_comments and my $comments = $field->comments ) {
             $comments =~ s/(?<!\A)^/  -- /mg;
             $field_comments = "-- $comments\n  ";
         }
@@ -497,6 +610,7 @@ sub create_geometry_constraints {
 
         my $generator = _generator($options);
         my $table_name = $index->table->name;
+        my $postgres_version = $options->{postgres_version} || 0;
 
         my ($index_def, @constraint_defs);
 
@@ -508,18 +622,23 @@ sub create_geometry_constraints {
         my @fields     =  $index->fields;
         return unless @fields;
 
-        my $index_using;
-        my $index_where;
+        my %index_extras;
         for my $opt ( $index->options ) {
             if ( ref $opt eq 'HASH' ) {
                 foreach my $key (keys %$opt) {
                     my $value = $opt->{$key};
                     next unless defined $value;
                     if ( uc($key) eq 'USING' ) {
-                        $index_using = "USING $value";
+                        $index_extras{using} = "USING $value";
                     }
                     elsif ( uc($key) eq 'WHERE' ) {
-                        $index_where = "WHERE $value";
+                        $index_extras{where} = "WHERE $value";
+                    }
+                    elsif ( uc($key) eq 'INCLUDE' ) {
+                        next unless $postgres_version >= 11;
+                        die 'Include list must be an arrayref' unless ref $value eq 'ARRAY';
+                        my $value_list = join ', ', @$value;
+                        $index_extras{include} = "INCLUDE ($value_list)"
                     }
                 }
             }
@@ -539,7 +658,7 @@ sub create_geometry_constraints {
         elsif ( $type eq NORMAL ) {
             $index_def =
                 'CREATE INDEX ' . $generator->quote($name) . ' on ' . $generator->quote($table_name) . ' ' .
-                join ' ', grep { defined } $index_using, $field_names, $index_where;
+                join ' ', grep { defined } $index_extras{using}, $field_names, @index_extras{'include', 'where'};
         }
         else {
             warn "Unknown index type ($type) on table $table_name.\n"
@@ -788,7 +907,7 @@ sub alter_field
     # ALTER TABLE users ALTER COLUMN column SET DEFAULT ThisIsUnescaped;
     if(ref $default_value eq "SCALAR" ) {
         $default_value = $$default_value;
-    } elsif( defined $default_value && $to_dt =~ /^(character|text)/xsmi ) {
+    } elsif( defined $default_value && $to_dt =~ /^(character|text|timestamp|date)/xsmi ) {
         $default_value = __PACKAGE__->_quote_string($default_value);
     }
 

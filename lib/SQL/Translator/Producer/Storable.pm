@@ -25,7 +25,7 @@ use strict;
 use warnings;
 our ( $DEBUG, @EXPORT_OK );
 $DEBUG = 0 unless defined $DEBUG;
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 use Storable;
 use Exporter;

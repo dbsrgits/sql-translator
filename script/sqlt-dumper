@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 
 # -------------------------------------------------------------------
 # Copyright (C) 2002-2009 SQLFairy Authors
@@ -63,7 +63,7 @@ use SQL::Translator;
 use File::Basename qw(basename);
 
 use vars '$VERSION';
-$VERSION = '1.59';
+$VERSION = '1.62';
 
 my ( $help, $db, $skip, $skiplike, $db_user, $db_pass, $dsn );
 GetOptions(

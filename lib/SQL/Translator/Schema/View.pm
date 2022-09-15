@@ -31,7 +31,7 @@ use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
-our $VERSION = '1.59';
+our $VERSION = '1.62';
 
 =head2 new
 
