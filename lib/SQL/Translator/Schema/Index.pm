@@ -221,7 +221,7 @@ around equals => sub {
     foreach my $otherField ($other->fields) {
       my $name = ref $otherField ? $otherField->{name} : $otherField;
       $name = uc($name) if $case_insensitive;
-      $otherFields{$name} = ref $otherField ? $otherField->{size} : -1; # -1 == no length. Easier comparison.
+      $otherFields{$name} = ref $otherField ? $otherField->{prefix_length} : -1; # -1 == no length. Easier comparison.
     }
     foreach my $selfField ($self->fields) { # check for self fields in hash
       my ($name, $size) = ref $selfField ? ($selfField->{name}, $selfField->{prefix_length}) : ($selfField, -1);

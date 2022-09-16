@@ -259,13 +259,13 @@ require_ok( 'SQL::Translator::Schema' );
 
     # Same indexes with different lengths
     my $index4 = SQL::Translator::Schema::Index->new(
-        name => "sized", fields => [ { name => 'forename', size => 20} ]
+        name => "sized", fields => [ { name => 'forename', prefix_length => 20} ]
     );
     ok( !$index3->equals($index4), "2 different indexes return false on equals() function (index length different)" );
 
     # Identical indexes with lengths
     my $index5 = SQL::Translator::Schema::Index->new(
-        name => "sized", fields => [ { name => 'forename', size => 15} ]
+        name => "sized", fields => [ { name => 'forename', prefix_length => 15} ]
     );
     ok( $index3->equals($index5), "2 identical indexes return true on equals() (with index length)" );
 
