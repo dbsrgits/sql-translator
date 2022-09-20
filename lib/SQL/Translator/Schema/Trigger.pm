@@ -41,7 +41,7 @@ our $VERSION = '1.62';
 
 Object constructor.
 
-  my $schema = SQL::Translator::Schema::Trigger->new;
+  my $trigger = SQL::Translator::Schema::Trigger->new;
 
 =cut
 
