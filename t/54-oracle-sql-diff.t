@@ -48,6 +48,8 @@ ok($diff, 'Diff generated.');
 
 like($diff, '/CREATE TABLE t_group/', 'CREATE TABLE t_group generated');
 
+like($diff, '/ALTER TABLE t_category DROP PRIMARY KEY/', 'Drop PRIMARY KEY generated');
+
 like($diff, '/ALTER TABLE t_category DROP CONSTRAINT t_category_display_name/', 'DROP constraint t_category_display_name generated');
 
 like($diff, '/ALTER TABLE t_user_groups DROP CONSTRAINT t_user_groups_group_id_fk/', 'DROP FOREIGN KEY constraint generated');

@@ -675,8 +675,13 @@ sub alter_drop_constraint {
     my ($c, $options) = @_;
     my $qi = $options->{quote_identifiers};
     my $table_name = quote($c->table->name, $qi);
-
-    my @out = ('ALTER','TABLE',$table_name,'DROP','CONSTRAINT',quote($c->name, $qi));
+    my @out = ('ALTER','TABLE',$table_name,'DROP',);
+    if ($c->name) {
+        push @out, ('CONSTRAINT',quote($c->name, $qi));
+    }
+    elsif ($c->type eq PRIMARY_KEY) {
+        push @out, 'PRIMARY KEY';
+    }
     return join(' ',@out);
 }
 

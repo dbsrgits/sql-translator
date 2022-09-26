@@ -1,12 +1,12 @@
 CREATE TABLE t_category (
-  category_id number(11) NOT NULL,
+  id number(11) NOT NULL,
   display_name varchar2(256) NOT NULL,
   description varchar2(4000) NOT NULL,
   added date DEFAULT CURRENT_TIMESTAMP NOT NULL,
   added_by varchar2(32) NOT NULL,
   modified date,
   modified_by varchar2(32),
-  PRIMARY KEY (category_id)
+  PRIMARY KEY (id)
 );
 
 CREATE SEQUENCE sq_t_group_group_id;
@@ -121,9 +121,9 @@ CREATE TABLE t_alert_roles (
   PRIMARY KEY (alert_id, role_id)
 );
 
-ALTER TABLE t_alert ADD CONSTRAINT t_alert_category_fk FOREIGN KEY (category) REFERENCES t_category (category_id);
+ALTER TABLE t_alert ADD CONSTRAINT t_alert_category_fk FOREIGN KEY (category) REFERENCES t_category (id);
 
-ALTER TABLE t_category_defaults ADD CONSTRAINT t_category_defaults_category FOREIGN KEY (category_id) REFERENCES t_category (category_id);
+ALTER TABLE t_category_defaults ADD CONSTRAINT t_category_defaults_category FOREIGN KEY (category_id) REFERENCES t_category (id);
 
 ALTER TABLE t_category_defaults ADD CONSTRAINT t_category_defaults_user_id FOREIGN KEY (user_id) REFERENCES t_user (user_id);
 
