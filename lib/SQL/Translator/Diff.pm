@@ -92,7 +92,7 @@ sub schema_diff {
     $options ||= {};
 
     my $obj = SQL::Translator::Diff->new( {
-      sqlt_args => $options,
+      %$options,
       source_schema => $source_schema,
       target_schema => $target_schema,
       output_db     => $output_db

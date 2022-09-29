@@ -9,7 +9,7 @@ use SQL::Translator;
 use SQL::Translator::Diff;
 
 BEGIN {
-    maybe_plan(10, 'SQL::Translator::Producer::Oracle');
+    maybe_plan(11, 'SQL::Translator::Producer::Oracle');
 }
 
 my $schema1 = $Bin.'/data/oracle/schema-1.5.sql';
