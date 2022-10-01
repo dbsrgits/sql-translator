@@ -16,7 +16,7 @@ jobs:
       - name: perl -V
         run: perl -V
       - name: Install early dep
-        run: cpanm -n File::ShareDir::Install
+        run: curl -L https://cpanmin.us | perl - -n File::ShareDir::Install
       - name: Install Dependencies
         run: curl -L https://cpanmin.us | perl - --installdeps -n --with-develop .
       - name: Set up
