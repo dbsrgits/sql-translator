@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         perl-version:
-          - '5.22'
+          - '5.26'
           - '5.32'
           - '5.34'
           - '5.36'
@@ -20,13 +20,13 @@ jobs:
       image: perl:${{ matrix.perl-version }}
     steps:
       - uses: actions/checkout@v2
-      - name: perl -V
-        run: perl -V
-      - name: Install early dep
-        run: cpanm -n File::ShareDir::Install
+      - name: dev packages for testing
+        run: apt update && apt install -y libgd-dev graphviz libxml2-dev
+      - name: Install early + extra deps
+        run: cpanm -n File::ShareDir::Install DBD::SQLite CGI
+      - name: Install dependencies
+        run: cpanm -n --installdeps --with-develop .
       - name: Set up
         run: perl Makefile.PL
-      - name: Install dependencies
-        run: cpanm -n --installdeps .
       - name: Run Tests
         run: prove -lj4 t
