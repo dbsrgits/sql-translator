@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up Perl
-        run: brew install perl
+        run: brew install perl gd graphviz libxml2
       - name: perl -V
         run: perl -V
       - name: Install early dep

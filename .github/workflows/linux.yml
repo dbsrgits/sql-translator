@@ -23,7 +23,7 @@ jobs:
       - name: dev packages for testing
         run: apt update && apt install -y libgd-dev graphviz libxml2-dev
       - name: Install early + extra deps
-        run: cpanm -n File::ShareDir::Install DBD::SQLite CGI
+        run: cpanm -n File::ShareDir::Install
       - name: Install dependencies
         run: cpanm -n --installdeps --with-develop .
       - name: Set up
