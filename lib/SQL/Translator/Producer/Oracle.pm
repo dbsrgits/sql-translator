@@ -380,18 +380,13 @@ sub create_table {
     }
 
     my $table_options = @table_options ? "\n".join("\n", @table_options) : '';
-    debug("Create is @create");
-    debug("Constraints are @constraint_defs");
-    debug("Field DEFS: " . join(', ', @field_defs));
     push @create, "CREATE TABLE $table_name_q (\n" .
             join( ",\n", map { "  $_" } @field_defs,
             ($options->{delay_constraints} ? () : @constraint_defs) ) .
             "\n)$table_options";
 
-    debug("NOW Create is @create");
     @constraint_defs = map { "ALTER TABLE $table_name_q ADD $_"  } @constraint_defs;
 
-    debug("Now constraint defs are " . join(', ', @constraint_defs));
     if ( $WARN ) {
         if ( %truncated ) {
             warn "Truncated " . keys( %truncated ) . " names:\n";
