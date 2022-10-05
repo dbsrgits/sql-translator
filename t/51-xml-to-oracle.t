@@ -39,7 +39,7 @@ my $sql_string = $sqlt->translate(
     to       => 'Oracle',
     filename => $xmlfile,
 ) or die $sqlt->error;
-
+warn "SQL: " . join("\n", @sql) . "\n";
 my $want = [
 'DROP TABLE Basic CASCADE CONSTRAINTS',
           'DROP SEQUENCE sq_Basic_id',
@@ -58,19 +58,19 @@ my $want = [
   CONSTRAINT u_Basic_emailuniqueindex UNIQUE (email),
   CONSTRAINT u_Basic_very_long_index_name_o UNIQUE (title)
 )',
-          'DROP TABLE Another CASCADE CONSTRAINTS',
-          'DROP SEQUENCE sq_Another_id',
-          'CREATE SEQUENCE sq_Another_id',
-          'CREATE TABLE Another (
+'DROP TABLE Another CASCADE CONSTRAINTS',
+'DROP SEQUENCE sq_Another_id',
+'CREATE SEQUENCE sq_Another_id',
+'CREATE TABLE Another (
   id number(10) NOT NULL,
   num number(10,2),
   PRIMARY KEY (id)
 )',
 'DROP VIEW email_list',
-          'CREATE VIEW email_list AS
+'CREATE VIEW email_list AS
 SELECT email FROM Basic WHERE (email IS NOT NULL)',
-          'ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk FOREIGN KEY (another_id) REFERENCES Another (id)',
-          'CREATE OR REPLACE TRIGGER ai_Basic_id
+'ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk FOREIGN KEY (another_id) REFERENCES Another (id)',
+'CREATE OR REPLACE TRIGGER ai_Basic_id
 BEFORE INSERT ON Basic
 FOR EACH ROW WHEN (
  new.id IS NULL OR new.id = 0
@@ -81,14 +81,7 @@ BEGIN
  FROM dual;
 END;
 ',
-          'CREATE OR REPLACE TRIGGER ts_Basic_timest
-BEFORE INSERT OR UPDATE ON Basic
-FOR EACH ROW WHEN (new.timest IS NULL)
-BEGIN
- SELECT sysdate INTO :new.timest FROM dual;
-END;
-',
-          'CREATE OR REPLACE TRIGGER ai_Another_id
+'CREATE OR REPLACE TRIGGER ai_Another_id
 BEFORE INSERT ON Another
 FOR EACH ROW WHEN (
  new.id IS NULL OR new.id = 0
@@ -99,7 +92,7 @@ BEGIN
  FROM dual;
 END;
 ',
-'CREATE INDEX titleindex on Basic (title)'];
+'CREATE INDEX titleindex ON Basic (title)'];
 
 is_deeply(\@sql, $want, 'Got correct Oracle statements in list context');
 
@@ -143,7 +136,7 @@ SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk01 FOREIGN KEY (another_id) REFERENCES Another (id);
 
-CREATE INDEX titleindex01 on Basic (title);
+CREATE INDEX titleindex ON Basic (title);
 
 CREATE OR REPLACE TRIGGER ai_Basic_id01
 BEFORE INSERT ON Basic
@@ -154,14 +147,6 @@ BEGIN
  SELECT sq_Basic_id01.nextval
  INTO :new.id
  FROM dual;
-END;
-/
-
-CREATE OR REPLACE TRIGGER ts_Basic_timest01
-BEFORE INSERT OR UPDATE ON Basic
-FOR EACH ROW WHEN (new.timest IS NULL)
-BEGIN
- SELECT sysdate INTO :new.timest FROM dual;
 END;
 /
 

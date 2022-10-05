@@ -195,7 +195,7 @@ sub produce {
     my $schema         = $translator->schema;
     my $oracle_version  = $translator->producer_args->{oracle_version} || 0;
     my $delay_constraints = $translator->producer_args->{delay_constraints};
-    my ($output, $create, @table_defs, @trigger_defs, @index_defs, @constraint_defs);
+    my ($output, $create, @table_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs);
 
     debug("ORA: Beginning production");
     $create .= header_comment unless ($no_comments);
@@ -214,7 +214,7 @@ sub produce {
 
     for my $table ( $schema->get_tables ) {
         debug("ORA: Producing for table " . $table->name);
-        my ( $table_def, $trigger_def, $index_def, $constraint_def ) = create_table(
+        my ( $table_def, $fk_def, $trigger_def, $index_def, $constraint_def ) = create_table(
             $table,
             {
                 add_drop_table    => $add_drop_table,
@@ -226,6 +226,7 @@ sub produce {
             }
         );
         push @table_defs, @$table_def;
+        push @fk_defs, @$fk_def;
         push @trigger_defs, @$trigger_def;
         push @index_defs, @$index_def;
         push @constraint_defs, @$constraint_def;
@@ -244,10 +245,10 @@ sub produce {
     }
 
     if (wantarray) {
-        return defined $create ? $create : (), @table_defs, @view_defs, @trigger_defs, @index_defs, @constraint_defs;
+        return defined $create ? $create : (), @table_defs, @view_defs, @fk_defs, @trigger_defs, @index_defs, @constraint_defs;
     }
     else {
-        $create .= join (";\n\n", @table_defs, @view_defs, @index_defs, @constraint_defs);
+        $create .= join (";\n\n", @table_defs, @view_defs, @fk_defs, @index_defs, @constraint_defs);
         $create .= ";\n\n";
         # If wantarray is not set we have to add "/" in this statement
         # DBI->do() needs them omitted
@@ -267,7 +268,7 @@ sub create_table {
 
     my $item = '';
     my $drop;
-    my (@create, @field_defs, @constraint_defs, @trigger_defs);
+    my (@create, @field_defs, @constraint_defs, @fk_defs, @trigger_defs);
 
     push @create, "--\n-- Table: $table_name\n--" unless $options->{no_comments};
     push @create, qq[DROP TABLE $table_name_q CASCADE CONSTRAINTS] if $options->{add_drop_table};
@@ -311,7 +312,14 @@ sub create_table {
     #
     for my $c ( $table->get_constraints ) {
         my $constr = create_constraint($c, $options);
-        push @constraint_defs, $constr if ($constr);
+        if ($constr) {
+            if ($c->type eq FOREIGN_KEY) {  # FK defs always come later as alters
+                push @fk_defs, sprintf("ALTER TABLE %s ADD %s", $table_name_q, $constr);
+            }
+            else {
+                push @constraint_defs, $constr;
+            }
+        }
     }
 
     #
@@ -374,7 +382,6 @@ sub create_table {
     my $table_options = @table_options ? "\n".join("\n", @table_options) : '';
     debug("Create is @create");
     debug("Constraints are @constraint_defs");
-    debug("Delay_constraints is " . $options->{delay_constraints});
     debug("Field DEFS: " . join(', ', @field_defs));
     push @create, "CREATE TABLE $table_name_q (\n" .
             join( ",\n", map { "  $_" } @field_defs,
@@ -382,9 +389,9 @@ sub create_table {
             "\n)$table_options";
 
     debug("NOW Create is @create");
-    @constraint_defs = map { "ALTER TABLE $table_name_q ADD $_"  }
-      @constraint_defs;
+    @constraint_defs = map { "ALTER TABLE $table_name_q ADD $_"  } @constraint_defs;
 
+    debug("Now constraint defs are " . join(', ', @constraint_defs));
     if ( $WARN ) {
         if ( %truncated ) {
             warn "Truncated " . keys( %truncated ) . " names:\n";
@@ -392,7 +399,7 @@ sub create_table {
         }
     }
 
-    return \@create, \@trigger_defs, \@index_defs, ($options->{delay_constraints} ? \@constraint_defs : []);
+    return \@create, \@fk_defs, \@trigger_defs, \@index_defs, ($options->{delay_constraints} ? \@constraint_defs : []);
 }
 
 sub alter_field {
