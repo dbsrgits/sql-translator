@@ -69,12 +69,17 @@ use SQL::Translator::Producer::Oracle;
         type             => FOREIGN_KEY,
     );
 
-    my ($table1_def, $trigger1_def,
+    my ($table1_def, $fk1_def, $trigger1_def,
         $index1_def, $constraint1_def
     ) = SQL::Translator::Producer::Oracle::create_table($table1);
 
-    like($table1_def->[1], '/CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY \(fk_col1, fk_col2\) REFERENCES table2 \(fk_col1, fk_col2\)/', 'correct "CONSTRAINT" SQL');
-
+    is_deeply(
+        $fk1_def,
+        [   'ALTER TABLE table1 ADD CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY (fk_col1, fk_col2) REFERENCES table2 (fk_col1, fk_col2)'
+        ],
+        'correct "CREATE CONSTRAINT" SQL'
+    );
+    
     my $materialized_view = SQL::Translator::Schema::View->new(
         name    => 'matview',
         sql     => 'SELECT id, name FROM table3',
