@@ -672,15 +672,17 @@ sub create_index {
     $index_options = $index_options || '';
     my $qf = $options->{quote_field_names} || $options->{quote_identifiers};
     my $qt = $options->{quote_table_names} || $options->{quote_identifiers};
+    my $index_name = $index->name || '';
+    $index_name = $index_name ? mk_name( $index_name ) : mk_name( $index->table, $index_name || 'i' );
     return join(
         ' ',
         map { $_ || () }
         'CREATE',
         lc $index->type eq 'normal' ? 'INDEX' : $index->type . ' INDEX',
-        $index->name ? quote($index->name, $qf): '',
+        $index_name ? quote($index_name, $qf): '',
         'ON',
         quote($index->table, $qt),
-        '(' . join( ', ', map { quote($_) } $index->fields ) . ")$index_options"
+        '(' . join( ', ', map { quote($_, $qf) } $index->fields ) . ")$index_options"
     );
 }
 

@@ -39,7 +39,7 @@ my $sql_string = $sqlt->translate(
     to       => 'Oracle',
     filename => $xmlfile,
 ) or die $sqlt->error;
-warn "SQL: " . join("\n", @sql) . "\n";
+
 my $want = [
 'DROP TABLE Basic CASCADE CONSTRAINTS',
           'DROP SEQUENCE sq_Basic_id',
@@ -136,7 +136,7 @@ SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 ALTER TABLE Basic ADD CONSTRAINT Basic_another_id_fk01 FOREIGN KEY (another_id) REFERENCES Another (id);
 
-CREATE INDEX titleindex ON Basic (title);
+CREATE INDEX titleindex01 ON Basic (title);
 
 CREATE OR REPLACE TRIGGER ai_Basic_id01
 BEFORE INSERT ON Basic
