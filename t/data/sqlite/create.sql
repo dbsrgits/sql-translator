@@ -1,3 +1,6 @@
+-- table comment 1
+-- table comment 2
+-- table comment 3
 create table person (
   -- field comment 1
   -- field comment 2
