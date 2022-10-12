@@ -1,0 +1,32 @@
+name: linux
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+jobs:
+  perl:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl-version:
+          - '5.26'
+          - '5.32'
+          - '5.34'
+          - '5.36'
+    container:
+      image: perl:${{ matrix.perl-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: dev packages for testing
+        run: apt update && apt install -y libgd-dev graphviz libxml2-dev
+      - name: Install early + extra deps
+        run: cpanm -n File::ShareDir::Install
+      - name: Install dependencies
+        run: cpanm -n --installdeps --with-develop .
+      - name: Set up
+        run: perl Makefile.PL
+      - name: Run Tests
+        run: prove -lj4 t

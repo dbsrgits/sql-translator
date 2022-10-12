@@ -1,0 +1,25 @@
+name: macos
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+jobs:
+  perl:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Perl
+        run: brew install perl gd graphviz libxml2
+      - name: perl -V
+        run: perl -V
+      - name: Install early dep
+        run: curl -L https://cpanmin.us | perl - -n File::ShareDir::Install
+      - name: Install Dependencies
+        run: curl -L https://cpanmin.us | perl - --installdeps -n --with-develop .
+      - name: Set up
+        run: perl Makefile.PL
+      - name: Run Tests
+        run: prove -lj4 t
