@@ -1,0 +1,523 @@
+# SQL::Translator::Manual - sqlfairy user manual
+
+# SYNOPSIS
+
+SQL::Translator (AKA "SQLFairy") is a collection of modules for
+transforming (mainly) SQL DDL files into a variety of other formats,
+including other SQL dialects, documentation, images, and code.  In
+this manual, we will attempt to address how to use SQLFairy for common
+tasks.  For a lower-level discussion of how the code works, please
+read the documentation for [SQL::Translator](https://metacpan.org/pod/SQL::Translator).
+
+It may prove helpful to have a general understanding of the SQLFairy
+code before continuing.  The code can be broken into three conceptual
+groupings:
+
+- **Parsers**
+
+  - The parsers are responsible for reading the input files and describing
+them to the Schema object middleware.
+
+- **Producers**
+
+  - The producers create the output as described by the Schema middleware.
+
+- **Schema objects**
+
+  - The Schema objects bridge the communication between the Parsers and
+Producers by representing any parsed file through a standard set of
+generic objects to represent concepts like Tables, Fields (columns),
+Indices, Constraints, etc.
+
+It's not necessary to understand how to write or manipulate any
+of these for most common tasks, but you should aware of the concepts
+as they will be referenced later in this document.
+
+# SQLFAIRY SCRIPTS
+
+Most common tasks can be accomplished through the use of the script
+interfaces to the SQL::Translator code.  All SQLFairy scripts begin
+with "sqlt."  Here are the scripts and a description of what they each
+do:
+
+- `sqlt`
+
+  - This is the main interface for text-to-text translations, e.g.,
+converting a MySQL schema to Oracle.
+
+- `sqlt-diagram`
+
+  - This is a tailored interface for the Diagram producer and its many
+myriad options.
+
+- `sqlt-diff`
+
+  - This script will examine two schemas and report the SQL commands
+(ALTER, CREATE) needed to turn the first schema into the second.
+
+- `sqlt-dumper`
+
+  - This script generates a Perl script that can be used to connect to a
+database and dump the data in each table in different formats, similar
+to the "mysqldump" program.
+
+- `sqlt-graph`
+
+  - This is an interface to the GraphViz visualization tool and its myriad
+options.
+
+- `sqlt.cgi`
+
+  - This is a CGI script that presents an HTML form for uploading or
+pasting a schema and choosing an output and the output options.
+
+To read the full documentation for each script, use "perldoc" (or
+execute any of the command-line scripts with the "--help" flag).
+
+# CONVERTING SQL DIALECTS
+
+Probably the most common task SQLFairy is used for is to convert one
+dialect of SQL to another.  If you have a text description of an SQL
+database (AKA a "DDL" -- "Data Definition Language"), then you should
+use the "sqlt" script with switches to indicate the parser and
+producer and the name of the text file as the final argument.  For
+example, to convert the "foo.sql" MySQL schema to a version suitable
+for PostgreSQL, you would do the following:
+
+  `$ sqlt -f MySQL -t PostgreSQL foo.sql > foo-pg.sql`
+
+The "from" and "to" options are case-sensitive and must match exactly
+the names of the Parser and Producer classes in SQL::Translator.  For
+a complete listing of your options, execute "sqlt" with the "--list"
+flag.
+
+# EXTRACT SQL SCHEMAS DIRECTLY FROM DATABASE
+
+It is possible to extract some schemas directly from the database
+without parsing a text file (the "foo.sql" in the above example).
+This can prove significantly faster than parsing a text file.  To
+do this, use the "DBI" parser and provide the necessary arguments to
+connect to the database and indicate the producer class, like so:
+```
+  $ sqlt -f DBI --dsn dbi:mysql:FOO --db-user guest \
+    --db-password p4ssw0rd -t PostgreSQL > foo
+```
+The "--list" option to "sqlt" will show the databases supported by
+DBI parsers.
+
+# HANDLING NON-SQL DATA
+
+Certain structured document formats can be easily thought of as
+tables.  SQLFairy can parse Microsoft Excel spreadsheets and
+arbitrarily delimited text files just as if they were schemas which
+contained only one table definition.  The column names are normalized
+to something sane for most databases (whitespace is converted to
+underscores and non-word characters are removed), and the data in each
+field is scanned to determine the appropriate data type (character,
+integer, or float) and size.  For instance, to convert a
+comma-separated file to an SQLite database, do the following:
+```
+  $ sqlt -f xSV --fs ',' -t SQLite foo.csv > foo-sqlite.sql
+```
+Additionally, there is a non-SQL representation of relational schemas namely
+XML.  Additionally, the only XML supported is our own version;  however, it
+would be fairly easy to add an XML parser for something like the TorqueDB
+(<http://db.apache.org/torque/>) project.  The actual parsing of XML should be
+trivial given the number of XML parsers available, so all that would be left
+would be to map the specific concepts in the source file to the Schema objects
+in SQLFairy.
+
+To convert a schema in SQLFairy's XML dialect to Oracle, do the following:
+```
+  $ sqlt -f XML-SQLFairy -t Oracle foo.xml > foo-oracle.sql
+```
+# SERIALIZING SCHEMAS
+
+Parsing a schema is generally the most computationally expensive
+operation performed by SQLFairy, so it may behoove you to serialize a
+parsed schema if you need to perform repeated conversions.  For
+example, as part of a build process the author converts a MySQL schema
+first to YAML, then to PostgreSQL, Oracle, SQLite and Sybase.
+Additionally, a variety of documentation in HTML and images is produced.
+This can be accomplished like so:
+```
+  $ sqlt -f MySQL -t YAML schema-mysql.sql > schema.yaml
+  $ sqlt -f YAML -t Oracle schema.yaml > schema-oracle.sql
+  $ sqlt -f YAML -t PostgreSQL schema.yaml > schema-postgresql.sql
+  $ ...
+```
+SQLFairy has three serialization producers, none of which is superior
+to the other in their description of a schema.
+
+- XML-SQLFairy
+
+  - This is the aforementioned XML format.  It is essentially a direct
+mapping of the Schema objects into XML.  This can also provide a very
+convenient bridge to describing a schema to a non-Perl application.
+Providing a producer argument to "sqlt" of just "XML" will default to
+using "XML-SQLFairy."
+
+- Storable
+
+  - This producer stores the Schema object using Perl's Storable.pm module
+available on CPAN.
+
+- YAML
+
+  - This producer serialized the Schema object with the very readable
+structured data format of YAML (http://www.yaml.org/).  Earlier
+examples show serializing to YAML.
+
+# VISUALIZING SQL SCHEMAS
+
+The visualization tools in SQLFairy can graphically represent the
+tables, fields, datatypes and sizes, constraints, and foreign key
+relationships in a very compact and intuitive format.  This can be
+very beneficial in understanding and document large or small schemas.
+Two producers in SQLFairy will create pseudo-E/R (entity-relationship)
+diagrams:
+
+- Diagram
+
+  - The first visualization tool in SQLFairy, this producer uses libgd to
+draw a picture of the schema.  The tables are evenly distributed in
+definition order running in columns (i.e., no graphing algorithms are
+used), so the many of the lines showing the foreign key relationships
+may cross over each other and the table boxes.  Please read the
+documentation of the "sqlt-diagram" script for all the options
+available to this producer.
+
+- GraphViz
+
+  - The layout of the GraphViz producer is far superior to the Diagram
+producer as it uses the Graphviz binary from Bell Labs to create very
+professional-looking graphs.  There are several different layout
+algorithms and node shapes available.  Please see the documentation of
+the "sqlt-graph" script for more information.
+
+# AUTOMATED CODE-GENERATION
+
+Given that so many applications interact with SQL databases, it's no
+wonder that people have automated code to deal with this interaction.
+Class::DBI from CPAN is one such module that allows a developer to
+describe the relationships between tables and fields in class
+declarations and then generates all the SQL to interact (`SELECT`,
+`UPDATE`, `DELETE`, `INSERT` statements) at runtime.  Obviously, the schema
+already describes itself, so it only makes sense that you should be
+able to generate this kind of code directly from the schema.  The
+"ClassDBI" producer in SQLFairy does just this, creating a Perl module
+that inherits from Class::DBI and sets up most of the code needed to
+interact with the database.  Here is an example of how to do this:
+```
+  $ sqlt -f MySQL -t ClassDBI foo.sql > Foo.pm
+```
+Then simply edit Foo.pm as needed and include it in your code.
+
+# CREATING A DATA DUMPER SCRIPT
+
+The Dumper producer creates a Perl script that can select the fields
+in each table and then create "INSERT" statements for each record in
+the database similar to the output generated by MySQL's "mysqldump"
+program:
+```
+  $ sqlt -f YAML -t Dumper --dumper-db-user guest \
+  > --dumper-db-pass p4ssw0rd --dumper-dsn dbi:mysql:FOO \
+  > foo.yaml > foo-dumper.pl
+```
+And then execute the resulting script to dump the data:
+```
+  $ chmod +x foo-dumper.pl
+  $ ./foo-dumper.pl > foo-data.sql
+```
+The dumper script also has a number of options available.  Execute the
+script with the "--help" flag to read about them.
+
+# DOCUMENTING WITH SQL::TRANSLATOR
+
+SQLFairy offers two producers to help document schemas:
+
+- HTML
+
+  - This producer creates a single HTML document which uses HTML
+formatting to describe the Schema objects and to create hyperlinks on
+foreign key relationships.  This can be a surprisingly useful
+documentation aid as it creates a very readable format that allows one
+to jump easily to specific tables and fields.  It's also possible to
+plugin your own CSS to further control the presentation of the HTML.
+
+- POD
+
+  - This is arguably not that useful of a producer by itself, but the
+number of POD-conversion tools could be used to further transform the
+POD into something more interesting.  The schema is basically
+represented in POD sections where tables are broken down into fields,
+indices, constraints, foreign keys, etc.
+
+# TEMPLATE-BASED MANIPULATION OF SCHEMA OBJECTS
+
+All of the producers which create text output could have been coded
+using a templating system to mix in the dynamic output with static
+text.  CPAN offers several diverse templating systems, but few are as
+powerful as Template Toolkit (<http://www.template-toolkit.org/>).  You
+can easily create your own producer without writing any Perl code at
+all simply by writing a template using Template Toolkit's syntax.  The
+template will be passed a reference to the Schema object briefly
+described at the beginning of this document and mentioned many times
+throughout.  For example, you could create a template that simply
+prints the name of each table and field that looks like this:
+```
+  # file: schema.tt
+  [% FOREACH table IN schema.get_tables %]
+  Table: [% table.name %]
+  Fields:
+  [% FOREACH field IN table.get_fields -%]
+    [% field.name %]
+  [% END -%]
+  [% END %]
+```
+And then process it like so:
+```
+  $ sqlt -f YAML -t TTSchema --template schema.tt foo.yaml
+```
+To create output like this:
+```
+  Table: foo
+  Fields:
+    foo_id
+    foo_name
+```
+For more information on Template Toolkit, please install the
+"Template" module and read the POD.
+
+# FINDING THE DIFFERENCES BETWEEN TWO SCHEMAS
+
+As mentioned above, the "sqlt-diff" schema examines two schemas and
+creates SQL schema modification statements that can be used to
+transform the first schema into the second.  The flag syntax is
+somewhat quirky:
+```
+  $ sqlt-diff foo-v1.sql=MySQL foo-v2.sql=Oracle > diff.sql
+```
+As demonstrated, the schemas need not even be from the same vendor,
+though this is likely to produce some spurious results as
+datatypes are not currently viewed equivalent unless they match
+exactly, even if they would be converted to the same.  For example,
+MySQL's "integer" data type would be converted to Oracle's "number,"
+but the differ isn't quite smart enough yet to figure this out.  Also,
+as the SQL to ALTER a field definition varies from database vendor to
+vendor, these statements are made using just the keyword "CHANGE" and
+will likely need to be corrected for the target database.
+
+# A UNIFIED GRAPHICAL INTERFACE
+
+Seeing all the above options and scripts, you may be pining for a
+single, graphical interface to handle all these transformations and
+choices.  This is exactly what the "sqlt.cgi" script provides.  Simply
+drop this script into your web server's CGI directory and enable the
+execute bit and you can point your web browser to an HTML form which
+provides a simple interface to all the SQLFairy parsers and producers.
+
+# PLUGIN YOUR OWN PARSERS AND PRODUCERS
+
+Now that you have seen how the parsers and producers interact via the
+Schema objects, you may wish to create your own versions to plugin.
+
+Producers are probably the easier concept to grok, so let's cover that
+first.  By far the easiest way to create custom output is to use the
+TTSchema producer in conjunction with a Template Toolkit template as
+described earlier.  However, you can also easily pass a reference to a
+subroutine that SQL::Translator can call for the production of the
+output.  This subroutine will be passed a single argument of the
+SQL::Translator object which you can use to access the Schema objects.
+Please read the POD for SQL::Translator and SQL::Translator::Schema to
+learn the methods you can call.  Here is a very simple example:
+```
+  #!/usr/bin/perl
+
+  use strict;
+  use SQL::Translator;
+
+  my $input = q[
+      create table foo (
+          foo_id int not null default '0' primary key,
+          foo_name varchar(30) not null default ''
+      );
+
+      create table bar (
+          bar_id int not null default '0' primary key,
+          bar_value varchar(100) not null default ''
+      );
+  ];
+
+  my $t = SQL::Translator->new;
+  $t->parser('MySQL') or die $t->error;
+  $t->producer( \&produce ) or die $t->error;
+  my $output = $t->translate( \$input ) or die $t->error;
+  print $output;
+
+  sub produce {
+      my $tr     = shift;
+      my $schema = $tr->schema;
+      my $output = '';
+      for my $t ( $schema->get_tables ) {
+          $output .= join('', "Table = ", $t->name, "\n");
+      }
+      return $output;
+  }
+```
+Executing this script produces the following:
+```
+  $ ./my-producer.pl
+  Table = foo
+  Table = bar
+```
+A custom parser will be passed two arguments:  the SQL::Translator
+object and the data to be parsed.  In this example, the schema will be
+represented in a simple text format.  Each line is a table definition
+where the fields are separated by colons.  The first field is the
+table name and the following fields are column definitions where the
+column name, data type and size are separated by spaces.  The
+specifics of the example are unimportant -- what is being demonstrated
+is that you have to decide how to parse the incoming data and then
+map the concepts in the data to the Schema object.
+```
+  #!/usr/bin/perl
+
+  use strict;
+  use SQL::Translator;
+
+  my $input =
+      "foo:foo_id int 11:foo_name varchar 30\n" .
+      "bar:bar_id int 11:bar_value varchar 30"
+  ;
+
+  my $t = SQL::Translator->new;
+  $t->parser( \&parser ) or die $t->error;
+  $t->producer('Oracle') or die $t->error;
+  my $output = $t->translate( \$input ) or die $t->error;
+  print $output;
+
+  sub parser {
+      my ( $tr, $data ) = @_;
+      my $schema = $tr->schema;
+
+      for my $line ( split( /\n/, $data ) ) {
+          my ( $table_name, @fields ) = split( /:/, $line );
+          my $table = $schema->add_table( name => $table_name )
+              or die $schema->error;
+          for ( @fields ) {
+              my ( $f_name, $type, $size ) = split;
+              $table->add_field(
+                  name      => $f_name,
+                  data_type => $type,
+                  size      => $size,
+              ) or die $table->error;
+          }
+      }
+
+      return 1;
+  }
+```
+And here is the output produced by this script:
+```
+  --
+  -- Created by SQL::Translator::Producer::Oracle
+  -- Created on Wed Mar 31 15:43:30 2004
+  --
+  --
+  -- Table: foo
+  --
+
+  CREATE TABLE foo (
+    foo_id number(11),
+    foo_name varchar2(30)
+  );
+
+  --
+  -- Table: bar
+  --
+
+  CREATE TABLE bar (
+    bar_id number(11),
+    bar_value varchar2(30)
+  );
+```
+If you create a useful parser or producer, you are encouraged to
+submit your work to the SQLFairy project!
+
+# PLUGIN TEMPLATE TOOLKIT PRODUCERS
+
+You may find that the TTSchema producer doesn't give you enough control over
+templating and you want to play with the Template config or add you own
+variables. Or maybe you just have a really good template you want to submit to
+SQLFairy :) If so, the SQL::Translator::Producer::TT::Base producer may be
+just for you! Instead of working like a normal producer it provides a base
+class so you can cheaply build new producer modules based on templates.
+
+It's simplest use is when we just want to put a single template in its own
+module. So to create a Foo producer we create a F<Custom/Foo.pm> file as
+follows, putting our template in the __DATA__ section.
+```
+ package Custom::Foo.pm;
+ use base qw/SQL::Translator::Producer::TT::Base/;
+ # Use our new class as the producer
+ sub produce { return __PACKAGE__->new( translator => shift )->run; };
+
+ __DATA__
+ [% FOREACH table IN schema.get_tables %]
+ Table: [% table.name %]
+ Fields:
+ [% FOREACH field IN table.get_fields -%]
+   [% field.name %]
+ [% END -%]
+ [% END %]
+```
+For that we get a producer called Custom::Foo that we can now call like a
+normal producer (as long as the directory with F<Custom/Foo.pm> is in our @INC
+path):
+```
+ $ sqlt -f YAML -t Custom-Foo foo.yaml
+```
+The template gets variables of C<schema> and C<translator> to use in building
+its output. You also get a number of methods you can override to hook into the
+template generation.
+
+B<tt_config> Allows you to set the config options used by the Template object.
+The Template Toolkit provides a huge number of options which allow you to do all
+sorts of magic (See [Template::Manual::Config[(Template::Manual::Config) for details). This method
+provides a hook into them by returning a hash of options for the Template. e.g.
+Say you want to use the INTERPOLATE option to save some typing in your template;
+```
+ sub tt_config { ( INTERPOLATE => 1 ); }
+```
+Another common use for this is to add you own filters to the template:
+```
+ sub tt_config {(
+    INTERPOLATE => 1,
+    FILTERS => { foo_filter => \&foo_filter, }
+ );}
+```
+Another common extension is adding your own template variables. This is done
+with B<tt_vars>:
+```
+ sub tt_vars { ( foo => "bar" ); }
+```
+What about using template files instead of DATA sections? You can already - if
+you give a template on the command line your new producer will use that instead
+of reading the DATA section:
+```
+ $ sqlt -f YAML -t Custom-Foo --template foo.tt foo.yaml
+```
+This is useful as you can set up a producer that adds a set of filters and
+variables that you can then use in templates given on the command line. (There
+is also a tt_schema method to over ride if you need even finer control over the
+source of your template). Note that if you leave out the DATA section all
+together then your producer will require a template file name to be given.
+
+See [SQL::Translator::Producer::TT::Base](https://metacpan.org/pod/SQL::Translator::Producer::TT::Base) for more details.
+
+# AUTHOR
+
+Ken Y. Clark <kclark@cpan.org>.
+
+![Logo](http://sqlfairy.sourceforge.net/images/logo.jpg)
