@@ -119,6 +119,7 @@ ORDER BY 1;
 
         $column_select->execute($table_oid);
 
+        my %column_by_attrid;
         while (my $columnhash = $column_select->fetchrow_hashref ) {
 
             #data_type seems to not be populated; perhaps there needs to
@@ -135,17 +136,17 @@ ORDER BY 1;
                 if $$columnhash{'length'}>0 && $$columnhash{'length'}<=0xFFFF;
             $col->{is_nullable} = $$columnhash{'attnotnull'} ? 0 : 1;
             $col->comments($$columnhash{'description'}) if $$columnhash{'description'};
+            $column_by_attrid{$$columnhash{'attnum'}}= $$columnhash{'attname'};
         }
 
         $index_select->execute($table_oid);
 
-        my @column_names = $table->field_names();
         while (my $indexhash = $index_select->fetchrow_hashref ) {
               #don't deal with function indexes at the moment
             next if ($$indexhash{'indkey'} eq ''
                      or !defined($$indexhash{'indkey'}) );
 
-            my @columns = map $column_names[$_ - 1], split /\s+/, $$indexhash{'indkey'};
+            my @columns = map $column_by_attrid{$_}, split /\s+/, $$indexhash{'indkey'};
 
             my $type;
             if      ($$indexhash{'indisprimary'}) {
