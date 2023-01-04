@@ -93,7 +93,7 @@ my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
 is( $f1->data_type, 'integer', 'Field is an integer' );
 is( $f1->is_nullable, 0, 'Field cannot be null' );
-is( $f1->default_value, "nextval('sqlt_test1_f_serial_seq'::regclass)", 'Default value is nextval()' );
+is( ${$f1->default_value}, "nextval('sqlt_test1_f_serial_seq'::regclass)", 'Default value is nextval()' );
 is( $f1->is_primary_key, 1, 'Field is PK' );
 #FIXME: not set to auto-increment? maybe we can guess auto-increment behavior by looking at the default_value (i.e. it call function nextval() )
 #is( $f1->is_auto_increment, 1, 'Field is auto increment' );
@@ -114,7 +114,7 @@ is( $f3->name, 'f_text', 'Third field is "f_text"' );
 is( $f3->data_type, 'text', 'Field is a text' );
 is( $f3->is_nullable, 1, 'Field can be null' );
 is( $f3->size, 0, 'Size is 0' );
-is( $f3->default_value, "'FOO'::text", 'Default value is "FOO"' );
+is( ${$f3->default_value}, "'FOO'::text", 'Default value is "FOO"' );
 is( $f3->is_primary_key, 0, 'Field is not PK' );
 is( $f3->is_auto_increment, 0, 'Field is not auto increment' );
 is( $f3->comments, 'this is a comment on a field of the first table', 'There is a comment on the third field');

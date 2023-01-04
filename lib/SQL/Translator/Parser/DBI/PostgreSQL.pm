@@ -127,7 +127,8 @@ ORDER BY 1;
 
             my $col = $table->add_field(
                               name        => $$columnhash{'attname'},
-                              default_value => $$columnhash{'adsrc'},
+                              (!$$columnhash{'atthasdef'}? ()
+                              : ( default_value => \$$columnhash{'adsrc'} )),
                               data_type   => $$columnhash{'typname'},
                               order       => $$columnhash{'attnum'},
                              ) || die $table->error;
