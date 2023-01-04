@@ -53,7 +53,7 @@ my $sql = q[
 
     CREATE TABLE sqlt_products_1 (
         product_no integer,
-        name text,
+        name text default '['''']',
         price numeric(8,4) default 0.0,
         created_at timestamp without time zone default now()
     );
@@ -166,6 +166,11 @@ isa_ok( $fk_ref1, 'SQL::Translator::Schema::Constraint', 'FK' );
 is( $fk_ref1->reference_table, 'sqlt_test1', 'FK is to "sqlt_test1" table' );
 
 my $t3 = $schema->get_table("sqlt_products_1");
+
+my $t3_f2= $t3->get_field('name');
+is( $t3_f2->data_type, 'text', 'Second field, type "text"' );
+is( $t3_f2->default_value, q{['']}, 'default value is json array of empty string' );
+
 my $t3_f3= $t3->get_field('price');
 is( $t3_f3->name, 'price', 'Third field is "price"' );
 is( $t3_f3->data_type, 'numeric', 'Third field type "numeric"' );

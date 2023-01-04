@@ -142,7 +142,7 @@ ORDER BY 1;
                 elsif ($default =~ /^'(.*?)'(::\Q$type\E)?$/) {
                     my $str= $1;
                     $str =~ s/''/'/g;
-                    $col->default_value($1)
+                    $col->default_value($str);
                 }
                 else { $col->default_value(\$default) }
             }
