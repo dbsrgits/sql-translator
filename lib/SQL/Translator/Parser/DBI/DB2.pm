@@ -23,7 +23,7 @@ use SQL::Translator::Parser::DB2;
 use SQL::Translator::Schema::Constants;
 
 our ($DEBUG, $VERSION, @EXPORT_OK );
-# $VERSION = '1.62';
+# $VERSION = '1.63';
 $DEBUG   = 0 unless defined $DEBUG;
 
 sub parse {
