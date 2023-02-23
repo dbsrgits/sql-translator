@@ -1070,13 +1070,17 @@ sub alter_drop_constraint {
     if( $c->name ) {
         # Already has a name, just use it
         $c_name = $c->name;
-    } elsif ( $c->type eq FOREIGN_KEY ) {
-        # Doesn't have a name, and is foreign key, append '_fkey'
-        $c_name = $c->table->name . '_' . ($c->fields)[0] . '_fkey';
-    } elsif ( $c->type eq PRIMARY_KEY ) {
-        # Doesn't have a name, and is primary key, append '_pkey'
-        $c_name = $c->table->name . '_pkey';
-    }
+    } else {
+      # if the name is dotted we need the table, not schema nor database
+      my ($tablename) = reverse split /[.]/, $c->table->name;
+      if ( $c->type eq FOREIGN_KEY ) {
+          # Doesn't have a name, and is foreign key, append '_fkey'
+          $c_name = $tablename . '_' . ($c->fields)[0] . '_fkey';
+      } elsif ( $c->type eq PRIMARY_KEY ) {
+          # Doesn't have a name, and is primary key, append '_pkey'
+          $c_name = $tablename . '_pkey';
+      }
+  }
 
     return sprintf(
         'ALTER TABLE %s DROP CONSTRAINT %s',
