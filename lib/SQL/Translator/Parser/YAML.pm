@@ -57,8 +57,8 @@ sub parse {
             $table->add_constraint( %$cdata ) or die $table->error;
         }
 
-	$table->comments( $tdata->{'comments' } )
-	    if exists $tdata->{'comments'};
+        $table->comments( $tdata->{'comments' } )
+            if exists $tdata->{'comments'};
     }
 
     #

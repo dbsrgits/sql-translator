@@ -803,7 +803,7 @@ sub create_constraint {
             $definition .= ' ON DELETE '.$c->on_delete;
         }
     }
-    
+
     return $definition ? $definition : undef;
 }
 

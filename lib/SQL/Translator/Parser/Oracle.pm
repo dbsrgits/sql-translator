@@ -81,7 +81,7 @@ use warnings;
 our $VERSION = '1.62';
 
 our $DEBUG;
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use Data::Dumper;
 use SQL::Translator::Utils qw/ddl_parser_instance/;
@@ -489,7 +489,7 @@ parens_name_list : '(' NAME(s /,/) ')'
 field_meta : default_val
     | column_constraint
 
-default_val  : 
+default_val  :
     /default/i CURRENT_TIMESTAMP
     {
         my $val =  $item[2];
@@ -630,25 +630,30 @@ VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
 CURRENT_TIMESTAMP :
       /current_timestamp(\(\))?/i { \'CURRENT_TIMESTAMP' }
     | /now\(\)/i { \'CURRENT_TIMESTAMP' }
-    
+
 END_OF_GRAMMAR
 
 sub parse {
     my ( $translator, $data ) = @_;
 
     # Enable warnings within the Parse::RecDescent module.
-    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS; # Make sure the parser dies when it encounters an error
-    local $::RD_WARN   = 1 unless defined $::RD_WARN; # Enable warnings. This will warn on unused rules &c.
-    local $::RD_HINT   = 1 unless defined $::RD_HINT; # Give out hints to help fix problems.
+    local $::RD_ERRORS = 1
+      unless defined
+      $::RD_ERRORS;    # Make sure the parser dies when it encounters an error
+    local $::RD_WARN = 1
+      unless
+      defined $::RD_WARN;  # Enable warnings. This will warn on unused rules &c.
+    local $::RD_HINT = 1
+      unless defined $::RD_HINT;    # Give out hints to help fix problems.
 
-    local $::RD_TRACE  = $translator->trace ? 1 : undef;
-    local $DEBUG       = $translator->debug;
+    local $::RD_TRACE = $translator->trace ? 1 : undef;
+    local $DEBUG      = $translator->debug;
 
     my $parser = ddl_parser_instance('Oracle');
 
-    my $result = $parser->startrule( $data );
+    my $result = $parser->startrule($data);
     die "Parse failed.\n" unless defined $result;
-    if ( $DEBUG ) {
+    if ($DEBUG) {
         warn "Parser results =\n", Dumper($result), "\n";
     }
 
@@ -656,15 +661,13 @@ sub parse {
     my $indices     = $result->{'indices'};
     my $constraints = $result->{'constraints'};
     my @tables      = sort {
-        $result->{'tables'}{ $a }{'order'}
-        <=>
-        $result->{'tables'}{ $b }{'order'}
+        $result->{'tables'}{$a}{'order'} <=> $result->{'tables'}{$b}{'order'}
     } keys %{ $result->{'tables'} };
 
-    for my $table_name ( @tables ) {
-        my $tdata    =  $result->{'tables'}{ $table_name };
+    for my $table_name (@tables) {
+        my $tdata = $result->{'tables'}{$table_name};
         next unless $tdata->{'table_name'};
-        my $table    =  $schema->add_table(
+        my $table = $schema->add_table(
             name     => $tdata->{'table_name'},
             comments => $tdata->{'comments'},
         ) or die $schema->error;
@@ -673,12 +676,11 @@ sub parse {
 
         my @fields = sort {
             $tdata->{'fields'}->{$a}->{'order'}
-            <=>
-            $tdata->{'fields'}->{$b}->{'order'}
+              <=> $tdata->{'fields'}->{$b}->{'order'}
         } keys %{ $tdata->{'fields'} };
 
-        for my $fname ( @fields ) {
-            my $fdata = $tdata->{'fields'}{ $fname };
+        for my $fname (@fields) {
+            my $fdata = $tdata->{'fields'}{$fname};
             my $field = $table->add_field(
                 name              => $fdata->{'name'},
                 data_type         => $fdata->{'data_type'},
@@ -690,12 +692,12 @@ sub parse {
             ) or die $table->error;
         }
 
-        push @{ $tdata->{'indices'} }, @{ $indices->{ $table_name } || [] };
+        push @{ $tdata->{'indices'} }, @{ $indices->{$table_name} || [] };
         push @{ $tdata->{'constraints'} },
-             @{ $constraints->{ $table_name } || [] };
+          @{ $constraints->{$table_name} || [] };
 
         for my $idata ( @{ $tdata->{'indices'} || [] } ) {
-            my $index  =  $table->add_index(
+            my $index = $table->add_index(
                 name   => $idata->{'name'},
                 type   => uc $idata->{'type'},
                 fields => $idata->{'fields'},
@@ -703,7 +705,7 @@ sub parse {
         }
 
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
-            my $constraint       =  $table->add_constraint(
+            my $constraint = $table->add_constraint(
                 name             => $cdata->{'name'},
                 type             => $cdata->{'type'},
                 fields           => $cdata->{'fields'},
@@ -711,37 +713,37 @@ sub parse {
                 reference_table  => $cdata->{'reference_table'},
                 reference_fields => $cdata->{'reference_fields'},
                 match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete'}
-                                 || $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update'}
-                                 || $cdata->{'on_update_do'},
+                on_delete => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
+                on_update => $cdata->{'on_update'} || $cdata->{'on_update_do'},
             ) or die $table->error;
         }
     }
 
     my @procedures = sort {
-        $result->{procedures}->{ $a }->{'order'} <=> $result->{procedures}->{ $b }->{'order'}
+        $result->{procedures}->{$a}->{'order'}
+          <=> $result->{procedures}->{$b}->{'order'}
     } keys %{ $result->{procedures} };
     foreach my $proc_name (@procedures) {
-      $schema->add_procedure(
-         name  => $proc_name,
-         owner => $result->{procedures}->{$proc_name}->{owner},
-         sql   => $result->{procedures}->{$proc_name}->{sql},
-      );
+        $schema->add_procedure(
+            name  => $proc_name,
+            owner => $result->{procedures}->{$proc_name}->{owner},
+            sql   => $result->{procedures}->{$proc_name}->{sql},
+        );
     }
 
     my @views = sort {
-        $result->{views}->{ $a }->{'order'} <=> $result->{views}->{ $b }->{'order'}
+        $result->{views}->{$a}->{'order'} <=> $result->{views}->{$b}->{'order'}
     } keys %{ $result->{views} };
-    foreach my $view_name (keys %{ $result->{views} }) {
-      $schema->add_view(
-         name => $view_name,
-         sql  => $result->{views}->{$view_name}->{sql},
-      );
+    foreach my $view_name ( keys %{ $result->{views} } ) {
+        $schema->add_view(
+            name => $view_name,
+            sql  => $result->{views}->{$view_name}->{sql},
+        );
     }
 
     my @triggers = sort {
-        $result->{triggers}->{ $a }->{'order'} <=> $result->{triggers}->{ $b }->{'order'}
+        $result->{triggers}->{$a}->{'order'}
+          <=> $result->{triggers}->{$b}->{'order'}
     } keys %{ $result->{triggers} };
     foreach my $trigger_name (@triggers) {
         $schema->add_trigger(

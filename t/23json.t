@@ -287,7 +287,7 @@ my $json = from_json(<<JSON);
       "producer_args" : {
          "canonical" : 1,
          "pretty" : 1,
-	 "totally_bogus_arg_to_test_arg_filtering_to_json" : 1
+         "totally_bogus_arg_to_test_arg_filtering_to_json" : 1
       },
       "producer_type" : "SQL::Translator::Producer::JSON",
       "show_warnings" : 0,
@@ -301,17 +301,17 @@ my $file = "$Bin/data/sqlite/create.sql";
 open my $fh, '<', $file or die "Can't read '$file': $!\n";
 local $/;
 my $data = <$fh>;
-my $tr = SQL::Translator->new(
-    parser => 'SQLite',
-    producer => 'JSON',
+my $tr   = SQL::Translator->new(
+    parser        => 'SQLite',
+    producer      => 'JSON',
     producer_args => {
-        canonical => 1,
-        pretty => 1,
-	totally_bogus_arg_to_test_arg_filtering_to_json => 1,
+        canonical                                       => 1,
+        pretty                                          => 1,
+        totally_bogus_arg_to_test_arg_filtering_to_json => 1,
     },
     data => $data,
 );
 
 my $out;
-lives_ok { $out = from_json($tr->translate) } 'Translate SQLite to JSON';
+lives_ok { $out = from_json( $tr->translate ) } 'Translate SQLite to JSON';
 is_deeply( $out, $json, 'JSON matches expected' );
