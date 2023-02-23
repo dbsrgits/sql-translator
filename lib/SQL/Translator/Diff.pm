@@ -101,11 +101,12 @@ sub schema_diff {
     $obj->compute_differences->produce_diff_sql;
 }
 
+my $warned_dep;
 sub BUILD {
   my ($self, $args) = @_;
   for my $deprecated (qw/producer_options producer_args/) {
     if ($args->{$deprecated}) {
-      carp "$deprecated is deprecated. Please use sqlt_args";
+      carp "$deprecated is deprecated -- it does not go straight to the producer, it goes to the internal sqlt object. Please use sqlt_args, which reflects how it's used" unless $warned_dep++;
       $self->sqlt_args({
         %{$args->{$deprecated}},
         %{$self->sqlt_args}
