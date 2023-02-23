@@ -489,7 +489,17 @@ parens_name_list : '(' NAME(s /,/) ')'
 field_meta : default_val
     | column_constraint
 
-default_val  : /default/i VALUE
+default_val  : 
+    /default/i CURRENT_TIMESTAMP
+    {
+        my $val =  $item[2];
+        $return =  {
+            supertype => 'constraint',
+            type      => 'default',
+            value     => $val,
+        }
+    }
+    | /default/i VALUE
     {
         my $val =  $item[2];
         $return =  {
@@ -616,6 +626,11 @@ VALUE : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
     | /null/i
     { 'NULL' }
 
+# always a scalar-ref, so that it is treated as a function and not quoted by consumers
+CURRENT_TIMESTAMP :
+      /current_timestamp(\(\))?/i { \'CURRENT_TIMESTAMP' }
+    | /now\(\)/i { \'CURRENT_TIMESTAMP' }
+    
 END_OF_GRAMMAR
 
 sub parse {

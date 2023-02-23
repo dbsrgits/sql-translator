@@ -16,6 +16,10 @@ schema:
           reference_fields: []
           reference_table: ''
           type: PRIMARY KEY
+        - fields: other
+          name: 'other_check'
+          type: CHECK
+          expression: other BETWEEN 100 and 99999
       fields:
         id_operator:
           data_type: integer
@@ -29,38 +33,62 @@ schema:
           order: 58
           size:
             - 0
-        bar:
-          data_type: varchar2
-          default_value: ~
-          extra: {}
-          is_nullable: 1
-          is_primary_key: 0
-          is_unique: 0
-          name: bar
-          order: 61
-          size:
-            - 3
         name:
-          data_type: nvarchar2
-          default_value: ~
-          extra: {}
-          is_nullable: 1
-          is_primary_key: 0
-          is_unique: 0
-          name: name
-          order: 59
-          size:
-            - 10
-        other:
           data_type: nvarchar2
           default_value: ~
           extra: {}
           is_nullable: 0
           is_primary_key: 0
           is_unique: 0
-          name: other
+          name: name
+          order: 59
+          size:
+            - 10
+        foo:
+          data_type: nvarchar2
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 0
+          name: foo
           order: 60
           size:
             - 10
+        other:
+          data_type: integer
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 1
+          name: other
+          order: 61
+          size:
+            - 5
       name: d_operator
       order: 11
+    supplier:
+      fields:
+        id:
+          data_type: integer
+          is_nullable: 0
+          is_primary_key: 1
+          size: 11
+          name: id
+          order: 62
+        cust_id:
+          data_type: integer
+          is_nullable: 1
+          is_primary_key: 0
+          size: 11
+          name: cust_id
+          order: 63
+        supplier_name: 
+          data_type: nvarchar2
+          is_nullable: 0
+          is_primary_key: 0
+          size: 256
+          name: supplier_name
+          order: 65
+      name: supplier

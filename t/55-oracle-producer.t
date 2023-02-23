@@ -79,7 +79,7 @@ use SQL::Translator::Producer::Oracle;
         ],
         'correct "CREATE CONSTRAINT" SQL'
     );
-
+    
     my $materialized_view = SQL::Translator::Schema::View->new(
         name    => 'matview',
         sql     => 'SELECT id, name FROM table3',

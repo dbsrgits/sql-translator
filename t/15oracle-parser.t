@@ -7,7 +7,7 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 use Test::SQL::Translator qw(maybe_plan);
 
-maybe_plan(99, 'SQL::Translator::Parser::Oracle');
+maybe_plan(103, 'SQL::Translator::Parser::Oracle');
 SQL::Translator::Parser::Oracle->import('parse');
 
 my $t   = SQL::Translator->new( trace => 0 );
@@ -34,6 +34,7 @@ my $sql = q[
         trait_symbol            VARCHAR2(100 BYTE)   NOT NULL,
         trait_name              VARCHAR2(200 CHAR)   NOT NULL,
         qtl_trait_category_id   NUMBER(11)      NOT NULL,
+        trait_date              DATE            DEFAULT CURRENT_TIMESTAMP NOT NULL,
         UNIQUE ( trait_symbol ),
         UNIQUE ( trait_name ),
         FOREIGN KEY ( qtl_trait_category_id ) REFERENCES qtl_trait_category
@@ -179,7 +180,7 @@ is( $t2->name, 'qtl_trait', 'Table "qtl_trait" exists' );
 is( $t2->comments, 'foo bar comment', 'Comment "foo bar" exists' );
 
 my @t2_fields = $t2->get_fields;
-is( scalar @t2_fields, 4, '4 fields in table' );
+is( scalar @t2_fields, 5, '5 fields in table' );
 
 my $t2_f1 = shift @t2_fields;
 is( $t2_f1->name, 'qtl_trait_id', 'First field is "qtl_trait_id"' );
@@ -216,6 +217,16 @@ is( $f4_fk->reference_table, 'qtl_trait_category',
     'FK references table "qtl_trait_category"' );
 is( join(',', $f4_fk->reference_fields), 'qtl_trait_category_id',
     'FK references field "qtl_trait_category_id"' );
+
+my $t2_f5 = shift @t2_fields;
+is( $t2_f5->name, 'trait_date', 'Fifth field is "trait_date"');
+is( $t2_f5->data_type, 'DATE', 'Field is a timestamp' );
+is( $t2_f5->is_nullable, 0, 'Field cannot be null' );
+is_deeply(
+    $t2_f5->default_value,
+    \'CURRENT_TIMESTAMP',
+    'Field has correct default value'
+);
 
 my @t2_constraints = $t2->get_constraints;
 is( scalar @t2_constraints, 4, '4 constraints on table' );
