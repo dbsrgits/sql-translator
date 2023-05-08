@@ -100,6 +100,8 @@ schema:
           order: 1
           size:
             - 0
+          extra:
+            auto_increment_type: monotonic
         weight:
           data_type: double
           default_value: ~

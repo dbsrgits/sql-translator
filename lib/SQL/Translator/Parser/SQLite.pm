@@ -681,6 +681,7 @@ sub parse {
                 size              => $fdata->{'size'},
                 default_value     => $fdata->{'default'},
                 is_auto_increment => $fdata->{'is_auto_inc'},
+		($fdata->{'is_auto_inc'}? ( extra => { auto_increment_type => 'monotonic' } ) : ()),
                 is_nullable       => $fdata->{'is_nullable'},
                 comments          => $fdata->{'comments'},
             ) or die $table->error;
