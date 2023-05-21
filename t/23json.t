@@ -109,6 +109,9 @@ my $json = from_json(<<JSON);
                     "field comment 2"
                   ],
                   "data_type" : "INTEGER",
+                  "extra" : {
+                     "auto_increment_type" : "monotonic"
+                  },
                   "default_value" : null,
                   "is_auto_increment" : 1,
                   "is_nullable" : 0,
