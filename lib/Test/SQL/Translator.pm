@@ -49,7 +49,7 @@ my %ATTRIBUTES = (
     constraint => {
         name             => '',
         type             => '',
-        deferrable       => 1,
+        deferrable       => 0,
         expression       => '',
         is_valid         => 1,
         fields           => [],
@@ -133,6 +133,11 @@ sub default_attribs {
         keys %{ $ATTRIBUTES{ $object_type } }
     ) {
         $hashref->{ $attr } = $ATTRIBUTES{ $object_type }{ $attr }
+    }
+
+    # Special case
+    if ($object_type eq 'constraint' and $hashref->{type} eq FOREIGN_KEY) {
+        $hashref->{deferrable} = 1;
     }
 
     return $hashref;

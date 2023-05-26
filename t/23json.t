@@ -24,7 +24,7 @@ my $json = from_json(<<JSON);
          "person" : {
             "constraints" : [
                {
-                  "deferrable" : 1,
+                  "deferrable" : 0,
                   "expression" : "",
                   "fields" : [
                      "person_id"
@@ -39,7 +39,7 @@ my $json = from_json(<<JSON);
                   "type" : "PRIMARY KEY"
                },
                {
-                  "deferrable" : 1,
+                  "deferrable" : 0,
                   "expression" : "",
                   "fields" : [
                      "name"
@@ -150,7 +150,7 @@ my $json = from_json(<<JSON);
          "pet" : {
             "constraints" : [
                {
-                  "deferrable" : 1,
+                  "deferrable" : 0,
                   "expression" : "",
                   "fields" : [],
                   "match_type" : "",
@@ -163,7 +163,7 @@ my $json = from_json(<<JSON);
                   "type" : "CHECK"
                },
                {
-                  "deferrable" : 1,
+                  "deferrable" : 0,
                   "expression" : "",
                   "fields" : [
                      "pet_id",

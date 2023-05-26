@@ -49,12 +49,12 @@ Created on Fri Aug 15 15:08:18 2003
 
         <constraints>
           <constraint name="" type="PRIMARY KEY" fields="id"
-              reference_table="" options="" deferrable="1" match_type=""
+              reference_table="" options="" deferrable="0" match_type=""
               expression="" on_update="" on_delete="">
               <extra foo="bar" hello="world" bar="baz" />
           </constraint>
-          <constraint name="emailuniqueindex" type="UNIQUE" fields="email" />
-          <constraint name="very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" type="UNIQUE" fields="title" />
+          <constraint name="emailuniqueindex" type="UNIQUE" fields="email" deferrable="0" />
+          <constraint name="very_long_index_name_on_title_field_which_should_be_truncated_for_various_rdbms" type="UNIQUE" fields="title" deferrable="0" />
           <constraint name="" type="FOREIGN KEY" fields="another_id"
               reference_table="Another" options="" deferrable="1" match_type=""
               expression="" on_update="" on_delete="">
@@ -81,7 +81,7 @@ Created on Fri Aug 15 15:08:18 2003
 
         <constraints>
           <constraint name="" type="PRIMARY KEY" fields="id"
-              reference_table="" options="" deferrable="1" match_type=""
+              reference_table="" options="" deferrable="0" match_type=""
               expression="" on_update="" on_delete="">
           </constraint>
         </constraints>

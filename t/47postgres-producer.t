@@ -22,6 +22,16 @@ BEGIN {
 use Test::Differences;
 use SQL::Translator;
 
+# normalised-space-is, i.e. are these the same after normalising whitespace?
+sub ns_is {
+    my ($first, $second) = (shift, shift);
+    $first =~ s/\s+/ /g;
+    $second =~ s/\s+/ /g;
+
+    # avoid prototype
+    &is( $first, $second, @_ );
+}
+
 my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
 
 {
@@ -155,32 +165,39 @@ for my $name ( 'foo', undef ) {
         type   => 'FOREIGN_KEY',
         reference_table => $table2,
         reference_fields => [qw(myfield_2)],
+        deferrable => 0,
     );
 
-    my  ($fk_constraint_def_ref, $fk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($fk_constraint);
+    for my $constraint ($fk_constraint, $fk_constraint_2) {
+        my  ($fk_constraint_def_ref, $fk_constraint_fk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($constraint);
 
-    ok(@{$fk_constraint_def_ref} == 0 && @{$fk_constraint_fk_ref} == 1,  'precheck of create_Foreign Key constraint');
+        ok(@{$fk_constraint_def_ref} == 0 && @{$fk_constraint_fk_ref} == 1,  'precheck of create_Foreign Key constraint');
 
-    if ( $name ) {
-        is($fk_constraint_fk_ref->[0], "ALTER TABLE mytable ADD CONSTRAINT $name FOREIGN KEY (myfield)
-  REFERENCES mytable2 (myfield_2) DEFERRABLE", 'Create Foreign Key Constraint works');
+        my $deferrable = $constraint->deferrable ? ' DEFERRABLE' : '';
 
-        # ToDo: may we should check if the constraint name was valid, or if next
-        #       unused_name created has choosen a different one
-        my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
-        is($alter_fk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Foreign Key constraint works');
-    }
-    else {
-        is($fk_constraint_fk_ref->[0], 'ALTER TABLE mytable ADD FOREIGN KEY (myfield)
-  REFERENCES mytable2 (myfield_2) DEFERRABLE', 'Create un-named Foreign Key Constraint works');
+        if ( $name ) {
 
-        my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($fk_constraint);
-        is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop un-named Foreign Key constraint works');
+            ns_is($fk_constraint_fk_ref->[0], "ALTER TABLE mytable ADD CONSTRAINT $name FOREIGN KEY (myfield)
+      REFERENCES mytable2 (myfield_2)$deferrable", 'Create Foreign Key Constraint works');
+
+            # ToDo: may we should check if the constraint name was valid, or if next
+            #       unused_name created has choosen a different one
+            my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($constraint);
+            is($alter_fk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Foreign Key constraint works');
+        }
+        else {
+            ns_is($fk_constraint_fk_ref->[0], "ALTER TABLE mytable ADD FOREIGN KEY (myfield)
+      REFERENCES mytable2 (myfield_2)$deferrable", 'Create un-named Foreign Key Constraint works');
+
+            my $alter_fk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($constraint);
+            is($alter_fk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_myfield_fkey', 'Alter drop un-named Foreign Key constraint works');
+        }
     }
 }
 
 # check named, and unnamed primary keys
 for my $name ( 'foo', undef ) {
+    # PK defaults to deferrable => 0
     my $pk_constraint = SQL::Translator::Schema::Constraint->new(
         table => $table,
         name   => $name,
@@ -192,23 +209,27 @@ for my $name ( 'foo', undef ) {
         name   => $name,
         fields => [qw(myfield)],
         type   => 'PRIMARY_KEY',
+        deferrable => 1,
     );
 
-    my  ($pk_constraint_def_ref, $pk_constraint_pk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($pk_constraint);
+    for my $pk ($pk_constraint, $pk_constraint_2) {
+        my  ($pk_constraint_def_ref, $pk_constraint_pk_ref ) = SQL::Translator::Producer::PostgreSQL::create_constraint($pk);
 
-    if ( $name ) {
-        is($pk_constraint_def_ref->[0], "CONSTRAINT $name PRIMARY KEY (myfield)", 'Create Primary Key Constraint works');
+        my $deferrable = $pk->deferrable ? ' DEFERRABLE' : '';
+        if ( $name ) {
+            is($pk_constraint_def_ref->[0], "CONSTRAINT $name PRIMARY KEY (myfield)$deferrable", 'Create Primary Key Constraint works');
 
-        # ToDo: may we should check if the constraint name was valid, or if next
-        #       unused_name created has choosen a different one
-        my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
-        is($alter_pk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Primary Key constraint works');
-    }
-    else {
-        is($pk_constraint_def_ref->[0], 'PRIMARY KEY (myfield)', 'Create un-named Primary Key Constraint works');
+            # ToDo: may we should check if the constraint name was valid, or if next
+            #       unused_name created has choosen a different one
+            my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk);
+            is($alter_pk_constraint, "ALTER TABLE mytable DROP CONSTRAINT $name", 'Alter drop Primary Key constraint works');
+        }
+        else {
+            is($pk_constraint_def_ref->[0], "PRIMARY KEY (myfield)$deferrable", 'Create un-named Primary Key Constraint works');
 
-        my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
-        is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_pkey', 'Alter drop un-named Foreign Key constraint works');
+            my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk);
+            is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT mytable_pkey', 'Alter drop un-named Foreign Key constraint works');
+        }
     }
 }
 

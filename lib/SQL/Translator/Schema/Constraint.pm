@@ -56,6 +56,7 @@ Object constructor.
       match_type       => 'full',        # how to match
       on_delete        => 'cascade',     # what to do on deletes
       on_update        => '',            # what to do on updates
+      deferrable       => 0,             # whether to set DEFERRABLE, if supported by the database
   );
 
 =cut
@@ -78,9 +79,10 @@ around BUILDARGS => sub {
 
 =head2 deferrable
 
-Get or set whether the constraint is deferrable.  If not defined,
-then returns "1."  The argument is evaluated by Perl for True or
-False, so the following are equivalent:
+Get or set whether the constraint is deferrable. The default is based on the
+constraint type. Foreign keys are deferrable by default, for backward
+compatibility; all other types are not. The argument is evaluated by Perl for
+True or False, so the following are equivalent:
 
   $deferrable = $field->deferrable(0);
   $deferrable = $field->deferrable('');
@@ -91,7 +93,10 @@ False, so the following are equivalent:
 has deferrable => (
     is => 'rw',
     coerce => quote_sub(q{ $_[0] ? 1 : 0 }),
-    default => quote_sub(q{ 1 }),
+    lazy => 1,
+    default => sub {
+        $_[0]->type eq FOREIGN_KEY
+    },
 );
 
 =head2 expression
