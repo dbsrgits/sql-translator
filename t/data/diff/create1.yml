@@ -214,9 +214,7 @@ schema:
           is_unique: 0
           name: value
           order: 7
-          size:
-            - 8
-            - 2
+          size: 0
       indices:
         - fields:
             - name

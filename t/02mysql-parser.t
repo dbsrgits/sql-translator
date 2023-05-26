@@ -959,4 +959,95 @@ ok ($@, 'Exception thrown on invalid version string');
     ok (my $schema = $tr->schema, 'got schema');
 }
 
+{
+    my $tr = SQL::Translator->new;
+    my $val = parse($tr,
+        q[
+            create table `test` (
+                id integer not null primary key,
+                value1 double precision,
+                value2 double precision(9,3),
+                value3 double,
+                value4 double(6,1),
+                value5 float,
+                value6 float(5, 2)
+            );
+        ]
+    );
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 1, 'Right number of tables (1)' );
+    my $table  = shift @tables;
+    is( $table->name, 'test', 'Found "test" table' );
+
+    my @fields = $table->get_fields;
+    is( scalar @fields, 7, 'Right number of fields (7)' );
+    my $f1 = shift @fields;
+    is( $f1->name, 'id', 'First field name is "id"' );
+    is( $f1->data_type, 'int', 'Type is "int"' );
+    is( $f1->size, 11, 'Size is "11"' );
+    is( $f1->is_nullable, 0, 'Field cannot be null' );
+    is( $f1->default_value, undef, 'Default value is undefined' );
+    is( $f1->is_primary_key, 1, 'Field is PK' );
+    is( $f1->is_auto_increment, 0, 'Field is not auto inc' );
+
+    my $f2 = shift @fields;
+    is( $f2->name, 'value1', 'Second field name is "value1"' );
+    is( $f2->data_type, 'double', 'Type is "double"' );
+    is( $f2->size, 0, 'Size is "0"' );
+    is( $f2->is_nullable, 1, 'Field can be null' );
+    is( $f2->default_value, undef, 'Default value is undefined' );
+    is( $f2->is_primary_key, 0, 'Field is not PK' );
+
+    my $f3 = shift @fields;
+    is( $f3->name, 'value2', 'Third field name is "value2"' );
+    is( $f3->data_type, 'double', 'Type is "double"' );
+    is( $f3->size, '9,3', 'Size is "9,3"' );
+    is( $f3->is_nullable, 1, 'Field can be null' );
+    is( $f3->default_value, undef, 'Default value is undefined' );
+    is( $f3->is_primary_key, 0, 'Field is not PK' );
+
+    my $f4 = shift @fields;
+    is( $f4->name, 'value3', 'Forth field name is "value3"' );
+    is( $f4->data_type, 'double', 'Type is "double"' );
+    is( $f4->size, 0, 'Size is "0"' );
+    is( $f4->is_nullable, 1, 'Field can be null' );
+    is( $f4->default_value, undef, 'Default value is undefined' );
+    is( $f4->is_primary_key, 0, 'Field is not PK' );
+
+    my $f5 = shift @fields;
+    is( $f5->name, 'value4', 'Fifth field name is "value4"' );
+    is( $f5->data_type, 'double', 'Type is "double"' );
+    is( $f5->size, '6,1', 'Size is "6,1"' );
+    is( $f5->is_nullable, 1, 'Field can be null' );
+    is( $f5->default_value, undef, 'Default value is undefined' );
+    is( $f5->is_primary_key, 0, 'Field is not PK' );
+
+    my $f6 = shift @fields;
+    is( $f6->name, 'value5', 'Sixth field name is "value5"' );
+    is( $f6->data_type, 'float', 'Type is "float"' );
+    is( $f6->size, 0, 'Size is "0"' );
+    is( $f6->is_nullable, 1, 'Field can be null' );
+    is( $f6->default_value, undef, 'Default value is undefined' );
+    is( $f6->is_primary_key, 0, 'Field is not PK' );
+
+    my $f7 = shift @fields;
+    is( $f7->name, 'value6', 'Seventh field name is "value6"' );
+    is( $f7->data_type, 'float', 'Type is "float"' );
+    is( $f7->size, '5,2', 'Size is "5,2"' );
+    is( $f7->is_nullable, 1, 'Field can be null' );
+    is( $f7->default_value, undef, 'Default value is undefined' );
+    is( $f7->is_primary_key, 0, 'Field is not PK' );
+
+    my @indices = $table->get_indices;
+    is( scalar @indices, 0, 'Right number of indices (0)' );
+
+    my @constraints = $table->get_constraints;
+    is( scalar @constraints, 1, 'Right number of constraints (1)' );
+    my $c = shift @constraints;
+    is( $c->type, PRIMARY_KEY, 'Constraint is a PK' );
+    is( join(',', $c->fields), 'id', 'Constraint is on "id"' );
+}
+
 done_testing;
