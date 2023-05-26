@@ -31,8 +31,6 @@ $sqlt = SQL::Translator->new(
 die "Can't find test schema $xmlfile" unless -e $xmlfile;
 
 my @want = (
-    q[SET foreign_key_checks=0],
-
     q[DROP TABLE IF EXISTS `Basic`],
     q[CREATE TABLE `Basic` (
   `id` integer(10) zerofill NOT NULL auto_increment,
@@ -74,8 +72,6 @@ my @want = (
     q[DROP TRIGGER IF EXISTS `bar_trigger_update`],
     q[CREATE TRIGGER `bar_trigger_update` before update ON `Basic`
   FOR EACH ROW BEGIN update modified2=timestamp(); END],
-
-    q[SET foreign_key_checks=1],
 );
 
 my $sql = $sqlt->translate(

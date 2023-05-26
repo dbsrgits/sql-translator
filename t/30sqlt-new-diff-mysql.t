@@ -58,8 +58,6 @@ CREATE TABLE added (
   id integer(11) NULL
 );
 
-SET foreign_key_checks=1;
-
 ALTER TABLE old_name RENAME TO new_name;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E;
@@ -99,6 +97,8 @@ ALTER TABLE deleted DROP FOREIGN KEY fk_fake;
 DROP TABLE deleted;
 
 
+SET foreign_key_checks=1;
+
 COMMIT;
 
 ## END OF DIFF
@@ -120,8 +120,6 @@ CREATE TABLE added (
   id integer(11) NULL
 );
 
-SET foreign_key_checks=1;
-
 ALTER TABLE employee DROP COLUMN job_title;
 
 ALTER TABLE old_name RENAME TO new_name,
@@ -142,6 +140,8 @@ ALTER TABLE deleted DROP FOREIGN KEY fk_fake;
 
 DROP TABLE deleted;
 
+
+SET foreign_key_checks=1;
 
 COMMIT;
 
@@ -190,8 +190,6 @@ CREATE TABLE added (
   id integer(11) NULL
 );
 
-SET foreign_key_checks=1;
-
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
                      DROP CONSTRAINT demo_constraint,
                      DROP COLUMN job_title,
@@ -213,6 +211,8 @@ ALTER TABLE person DROP CONSTRAINT UC_age_name,
 
 DROP TABLE deleted;
 
+
+SET foreign_key_checks=1;
 
 COMMIT;
 
@@ -257,12 +257,16 @@ COMMIT;
 
 BEGIN;
 
+SET foreign_key_checks=0;
+
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E_diff;
 
 ALTER TABLE employee ADD COLUMN new integer NULL,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id) ON DELETE CASCADE,
                      ADD CONSTRAINT new_constraint FOREIGN KEY (employee_id) REFERENCES patty (fake);
 
+
+SET foreign_key_checks=1;
 
 COMMIT;
 
@@ -308,6 +312,8 @@ COMMIT;
 
 BEGIN;
 
+SET foreign_key_checks=0;
+
 ALTER TABLE employee RENAME TO fnord,
                      DROP FOREIGN KEY bar_fk,
                      ADD CONSTRAINT foo_fk FOREIGN KEY (employee_id) REFERENCES foo (id);
@@ -316,6 +322,8 @@ ALTER TABLE deleted DROP FOREIGN KEY fk_fake;
 
 DROP TABLE deleted;
 
+
+SET foreign_key_checks=1;
 
 COMMIT;
 
@@ -330,6 +338,8 @@ COMMIT;
 
 BEGIN;
 
+SET foreign_key_checks=0;
+
 ALTER TABLE `employee` RENAME TO `fnord`,
                        DROP FOREIGN KEY `bar_fk`,
                        ADD CONSTRAINT `foo_fk` FOREIGN KEY (`employee_id`) REFERENCES `foo` (`id`);
@@ -338,6 +348,8 @@ ALTER TABLE `deleted` DROP FOREIGN KEY `fk_fake`;
 
 DROP TABLE `deleted`;
 
+
+SET foreign_key_checks=1;
 
 COMMIT;
 
