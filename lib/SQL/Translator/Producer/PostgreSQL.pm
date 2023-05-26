@@ -1042,7 +1042,13 @@ sub alter_create_index {
     my ($index, $options) = @_;
     my $generator = _generator($options);
     my ($idef, $constraints) = create_index($index, $options);
-    return $index->type eq NORMAL ? $idef
+
+    # Just like 90726ffd commit: don't run into output like this:
+    # ALTER TABLE users ADD ;
+    # create_index returns one of: index definition or constraint
+
+    # So define index or constraint
+    return $idef ? $idef
         : sprintf('ALTER TABLE %s ADD %s',
               $generator->quote($index->table->name),
               join(q{}, @$constraints)
