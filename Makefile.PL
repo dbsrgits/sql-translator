@@ -36,6 +36,7 @@ my %eumm_args = (
     'Sub::Quote'               => '0',
     'Try::Tiny'                => '0.04',
     'Scalar::Util'             => '0',
+    'Regexp::Common'           => '0',
   },
   realclean => {
       FILES => 't/data/roundtrip_autogen.yaml'

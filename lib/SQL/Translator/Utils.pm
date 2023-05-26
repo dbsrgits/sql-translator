@@ -7,6 +7,7 @@ use File::Spec;
 use Scalar::Util qw(blessed);
 use Try::Tiny;
 use Carp qw(carp croak);
+use Regexp::Common qw/ balanced /;
 
 our $VERSION = '1.63';
 
@@ -125,24 +126,50 @@ HEADER_COMMENT
     return $header_comment;
 }
 
-sub parse_list_arg {
-    my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
+{
+    # declare variabled shared in this scope
+    my @chars = ('a'..'z', 'A'..'Z', '_', '-', 0..9);
+    my %symbols;
 
-    #
-    # This protects stringification of references.
-    #
-    if ( @$list && ref $list->[0] ) {
-        return $list;
+    sub save_string {
+        my ($str) = @_;
+        my $sym;
+        # iterate on the off chance that our random string isn't unique
+        do {  $sym = "STRING_" . join '', map { $chars[rand(@chars)] } 0..15; }
+          while exists $symbols{$sym};
+        $symbols{$sym} = $str;
+        return $sym
     }
-    #
-    # This processes string-like arguments.
-    #
-    else {
-        return [
-            map { s/^\s+|\s+$//g; $_ }
-            map { split /,/ }
-            grep { defined && length } @$list
-        ];
+
+    sub restore_strings {
+        for my $re (keys %symbols) {
+            $_[0] =~ s/($re)/$symbols{$1}/g;
+        }
+    }
+
+    sub clear_saved_strings {
+        %symbols = ();
+    }
+
+    sub parse_list_arg {
+        my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
+        #
+        # This protects stringification of references.
+        #
+        if ( @$list && ref $list->[0] ) {
+            return $list;
+        }
+        #
+        # This processes string-like arguments.
+        #
+        else {
+          clear_saved_strings(); # start fresh each time
+          return [
+              map { restore_strings($_); s/^\s+|\s+$//g; $_ }
+              map { $_ =~ s/$RE{balanced}{-parens=>'()'}/save_string($1)/ge; split /,/ }
+              grep { defined && length } @$list
+          ];
+        }
     }
 }
 
