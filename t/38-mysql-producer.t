@@ -194,6 +194,41 @@ schema:
           type: FOREIGN_KEY
           fields: foo2
           name: fk_thing
+
+    thing4:
+      name: thing4
+      extra:
+      order: 4
+      fields:
+        id:
+          name: id
+          data_type: int
+          is_primary_key: 0
+          order: 1
+          is_foreign_key: 1
+        foo:
+          name: foo
+          data_type: int
+          order: 2
+          is_not_null: 1
+        foo2:
+          name: foo2
+          data_type: int
+          order: 3
+          is_not_null: 1
+      constraints:
+        - type: UNIQUE
+          fields:
+            - foo
+            - foo2
+          name: foo
+        - type: PRIMARY_KEY
+          fields:
+            - id
+        - reference_table: thing
+          type: FOREIGN_KEY
+          fields: foo
+          name: foo
 EOSCHEMA
 
 my @stmts = (
@@ -238,6 +273,16 @@ my @stmts = (
   PRIMARY KEY (`id`, `foo`),
   CONSTRAINT `fk_thing_2` FOREIGN KEY (`foo`) REFERENCES `some`.`thing2` (`id`, `foo`),
   CONSTRAINT `fk_thing_3` FOREIGN KEY (`foo2`) REFERENCES `some`.`thing2` (`id`, `foo`)
+) ENGINE=InnoDB",
+
+"DROP TABLE IF EXISTS `thing4`",
+"CREATE TABLE `thing4` (
+  `id` integer NOT NULL,
+  `foo` integer NULL,
+  `foo2` integer NULL,
+  UNIQUE `foo` (`foo`, `foo2`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `foo` FOREIGN KEY (`foo`) REFERENCES `thing` (`id`)
 ) ENGINE=InnoDB",
 
 "SET foreign_key_checks=1",
