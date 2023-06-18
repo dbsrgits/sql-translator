@@ -62,7 +62,7 @@ my $index = $table->add_index(name => 'myindex', fields => ['foo']);
 my ($def) = SQL::Translator::Producer::DB2::create_index($index);
 is($def, 'CREATE INDEX myindex ON mytable ( foo );', 'index created');
 
-my $index2 = $table->add_index(name => 'myindex', fields => [ { name => 'foo', size => 15 } ]);
+my $index2 = $table->add_index(name => 'myindex', fields => [ { name => 'foo', prefix_length => 15 } ]);
 my ($def2) = SQL::Translator::Producer::DB2::create_index($index);
 is($def2, 'CREATE INDEX myindex ON mytable ( foo );', 'index created');
 

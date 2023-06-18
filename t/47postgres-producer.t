@@ -649,7 +649,7 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
     }
 
     {
-        my $index = $table->add_index(name => 'myindex', fields => [ { name => 'foo', size => 20 } ]);
+        my $index = $table->add_index(name => 'myindex', fields => [ { name => 'foo', prefix_length => 20 } ]);
         my ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index);
         is($def, "CREATE INDEX myindex on foobar (foo)", 'index created');
         ($def) = SQL::Translator::Producer::PostgreSQL::create_index($index, $quote);
