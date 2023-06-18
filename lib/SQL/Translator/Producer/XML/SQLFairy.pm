@@ -143,7 +143,7 @@ To convert your old format files simply pass them through the translator :)
 use strict;
 use warnings;
 our @EXPORT_OK;
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 
 use Exporter;
 use base qw(Exporter);

@@ -1,0 +1,122 @@
+---
+schema:
+  procedures: {}
+  tables:
+    d_operator:
+      constraints:
+        - deferrable: 1
+          expression: ''
+          fields:
+            - id_operator
+          match_type: ''
+          name: ''
+          on_delete: ''
+          on_update: ''
+          options: []
+          reference_fields: []
+          reference_table: ''
+          type: PRIMARY KEY
+        - fields: foo
+          name: 'foo_unique'
+          type: UNIQUE
+        - fields: other
+          name: 'other_check'
+          type: CHECK
+          expression: other BETWEEN 1 and 99999
+      fields:
+        id_operator:
+          data_type: integer
+          default_value: ~
+          extra: {}
+          is_auto_increment: 1
+          is_nullable: 0
+          is_primary_key: 1
+          is_unique: 0
+          name: id_operator
+          order: 58
+          size:
+            - 0
+        name:
+          data_type: nvarchar2
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 0
+          name: name
+          order: 59
+          size:
+            - 10
+        foo:
+          data_type: nvarchar2
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 1
+          name: foo
+          order: 60
+          size:
+            - 10
+        other:
+          data_type: integer
+          default_value: ~
+          extra: {}
+          is_nullable: 0
+          is_primary_key: 0
+          is_unique: 1
+          name: other
+          order: 61
+          size:
+            - 5
+      name: d_operator
+      order: 11
+    supplier:
+      constraints:
+        - fields: cust_id
+          name: fk_customer
+          reference_table: customer
+          reference_fields: 
+            - customer_id
+          type: FOREIGN KEY
+      fields:
+        id:
+          data_type: integer
+          is_nullable: 0
+          is_primary_key: 1
+          size: 11
+          name: id
+          order: 62
+        cust_id:
+          data_type: integer
+          is_nullable: 1
+          is_primary_key: 0
+          size: 11
+          name: cust_id
+          order: 63
+        supplier_name: 
+          data_type: nvarchar2
+          is_nullable: 0
+          is_primary_key: 0
+          size: 256
+          name: supplier_name
+          order: 64
+      name: supplier
+    customer:
+      fields:
+        customer_id:
+          data_type: integer
+          is_nullable: 0
+          is_primary_key: 1
+          size: 11
+          name: customer_id
+          order: 65
+        customer_name:
+          data_type: nvarchar2
+          is_nullable: 0
+          is_primary_key: 0
+          size: 256
+          name: customer_name
+          order: 66
+      name: customer
+      order: 12

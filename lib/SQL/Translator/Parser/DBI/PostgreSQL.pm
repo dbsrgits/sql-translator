@@ -21,7 +21,7 @@ use Data::Dumper;
 use SQL::Translator::Schema::Constants;
 
 our ( $DEBUG, @EXPORT_OK );
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 $DEBUG   = 0 unless defined $DEBUG;
 
 my $actions = {c => 'cascade',
@@ -119,33 +119,46 @@ ORDER BY 1;
 
         $column_select->execute($table_oid);
 
+        my %column_by_attrid;
         while (my $columnhash = $column_select->fetchrow_hashref ) {
-
-            #data_type seems to not be populated; perhaps there needs to
-            #be a mapping of query output to reserved constants in sqlt?
-
+            my $type = $$columnhash{'typname'};
+            # For the case of character varying(50), atttypmod will be 54 and the (50)
+            # will be listed as part of the type.  For numeric(8,5) the atttypmod will
+            # be a meaningless large number.  To make this compatible with the
+            # rest of SQL::Translator, remove the size from the type and change the
+            # size to whatever was removed from the type.
+            my @size= ($type =~ s/\(([0-9,]+)\)$//)? (split /,/, $1) : ();
             my $col = $table->add_field(
                               name        => $$columnhash{'attname'},
-                              default_value => $$columnhash{'adsrc'},
-                              data_type   => $$columnhash{'typname'},
+                              data_type   => $type,
                               order       => $$columnhash{'attnum'},
                              ) || die $table->error;
-
-            $col->{size} = [$$columnhash{'length'}]
-                if $$columnhash{'length'}>0 && $$columnhash{'length'}<=0xFFFF;
-            $col->{is_nullable} = $$columnhash{'attnotnull'} ? 0 : 1;
+            $col->size(\@size) if @size;
+            # default values are a DDL expression.  Convert the obvious ones like '...'::text
+            # to a plain value and let the rest be scalarrefs.
+            my $default= $$columnhash{'adsrc'};
+            if (defined $default) {
+                if ($default =~ /^[0-9.]+$/) { $col->default_value($default) }
+                elsif ($default =~ /^'(.*?)'(::\Q$type\E)?$/) {
+                    my $str= $1;
+                    $str =~ s/''/'/g;
+                    $col->default_value($str);
+                }
+                else { $col->default_value(\$default) }
+            }
+            $col->is_nullable( $$columnhash{'attnotnull'} ? 0 : 1 );
             $col->comments($$columnhash{'description'}) if $$columnhash{'description'};
+            $column_by_attrid{$$columnhash{'attnum'}}= $$columnhash{'attname'};
         }
 
         $index_select->execute($table_oid);
 
-        my @column_names = $table->field_names();
         while (my $indexhash = $index_select->fetchrow_hashref ) {
               #don't deal with function indexes at the moment
             next if ($$indexhash{'indkey'} eq ''
                      or !defined($$indexhash{'indkey'}) );
 
-            my @columns = map $column_names[$_ - 1], split /\s+/, $$indexhash{'indkey'};
+            my @columns = map $column_by_attrid{$_}, split /\s+/, $$indexhash{'indkey'};
 
             my $type;
             if      ($$indexhash{'indisprimary'}) {

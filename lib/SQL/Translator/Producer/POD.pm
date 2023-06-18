@@ -22,7 +22,7 @@ interesting formats using Pod::POM or Template::Toolkit's POD plugin.
 
 use strict;
 use warnings;
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(header_comment);

@@ -35,13 +35,13 @@ use Sub::Quote qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 
 =head2 new
 
 Object constructor.
 
-  my $schema = SQL::Translator::Schema::Trigger->new;
+  my $trigger = SQL::Translator::Schema::Trigger->new;
 
 =cut
 

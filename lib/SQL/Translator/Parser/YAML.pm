@@ -2,7 +2,7 @@ package SQL::Translator::Parser::YAML;
 
 use strict;
 use warnings;
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
@@ -56,6 +56,9 @@ sub parse {
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
             $table->add_constraint( %$cdata ) or die $table->error;
         }
+
+        $table->comments( $tdata->{'comments' } )
+            if exists $tdata->{'comments'};
     }
 
     #

@@ -100,6 +100,8 @@ schema:
           order: 1
           size:
             - 0
+          extra:
+            auto_increment_type: monotonic
         weight:
           data_type: double
           default_value: ~
@@ -115,6 +117,10 @@ schema:
       name: person
       options: []
       order: 1
+      comments :
+        - table comment 1
+        - table comment 2
+        - table comment 3
     pet:
       constraints:
         - deferrable: 1

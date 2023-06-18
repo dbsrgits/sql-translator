@@ -1,8 +1,21 @@
 Changes for SQL::Translator
 
+1.63 - 2023-02-23
  * sqlt-diff: Change producer_args to sqlt_args for better self-documentation
+   NOTE - using producer_args will now throw a deprecation warning
+
+ FEATURES
+ * A lot of new functionality for the Oracle producer (thanks @hazardv)
+ * Support DB commments in the following producers: PG, JSON, YAML. Also in the sqlite parser (thanks @djerius)
  * Support INCLUDE on indices for Pg (producer + parser)
  * Postgres producer now supports materialized views via $extra->{materialized}
+
+ FIXES
+ * Postgres producer genrates correct constraint names for schema-namespaced tables
+ * Postgres DBI parser now returns scalarref SQL instead of strings for defaults (thanks @nrdvana)
+ * Postgres producer drops NOT NULL constraints more correctly (thanks @uehara-delta)
+ * binaries now have their perl set by EUMM (thanks @toddr)
+
 
 1.62 - 2020-09-14
  * Update Pg support to allow version 12 (still supporting back to 7.4)

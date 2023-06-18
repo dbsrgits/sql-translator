@@ -21,7 +21,7 @@ use SQL::Translator::Schema;
 use Data::Dumper;
 
 our ( $DEBUG, @EXPORT_OK );
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 $DEBUG   = 0 unless defined $DEBUG;
 
 no strict 'refs';

@@ -18,7 +18,7 @@ This module serializes a schema to a JSON string.
 
 use strict;
 use warnings;
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 
 use JSON::MaybeXS 'to_json';
 
@@ -61,7 +61,9 @@ sub produce {
     }, {
         allow_blessed => 1,
         allow_unknown => 1,
-        %{$translator->producer_args},
+        ( map { $_ => $translator->producer_args->{$_} }
+          grep { defined $translator->producer_args->{$_} }
+            qw[ pretty indent canonical ] ),
     });
 }
 
@@ -133,8 +135,8 @@ sub view_procedure {
         'sql'        => scalar $procedure->sql,
         'parameters' => scalar $procedure->parameters,
         'owner'      => scalar $procedure->owner,
-        'comments'   => scalar $procedure->comments,
-        keys %{$procedure->extra} ? ('extra' => { $procedure->extra } ) : (),
+        $procedure->comments      ? ('comments' => [ $procedure->comments ] ) : (),
+        keys %{$procedure->extra} ? ('extra'    => { $procedure->extra } ) : (),
     };
 }
 

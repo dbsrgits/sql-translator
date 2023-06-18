@@ -115,6 +115,17 @@ is($pk_constraint_def_ref->[0], 'CONSTRAINT foo PRIMARY KEY (myfield)', 'Create 
 my $alter_pk_constraint = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($pk_constraint);
 is($alter_pk_constraint, 'ALTER TABLE mytable DROP CONSTRAINT foo', 'Alter drop Primary Key constraint works');
 
+subtest 'Dotted tables (schema)' => sub {
+  my $dotted_table = SQL::Translator::Schema::Table->new( name => 'dotted.mytable');
+  my $dotted_pk_constraint = SQL::Translator::Schema::Constraint->new(
+      table => $dotted_table,
+      fields => [qw(myfield)],
+      type   => 'PRIMARY_KEY',
+  );
+  my $alter_dotted_pk = SQL::Translator::Producer::PostgreSQL::alter_drop_constraint($dotted_pk_constraint);
+  is($alter_dotted_pk, 'ALTER TABLE dotted.mytable DROP CONSTRAINT mytable_pkey', 'generate correct PK name for dotted tables');
+};
+
 my $table2 = SQL::Translator::Schema::Table->new( name => 'mytable2');
 
 my $field1_2 = SQL::Translator::Schema::Field->new( name => 'myfield_2',

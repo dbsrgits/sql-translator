@@ -105,7 +105,7 @@ Fields for use with PostGIS types.
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.62';
+our $VERSION = '1.63';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);
@@ -1058,6 +1058,11 @@ sub alter_drop_constraint {
     my ($c, $options) = @_;
     my $generator = _generator($options);
 
+    # NOT NULL constraint does not require a DROP CONSTRAINT statement
+    if ( $c->type eq NOT_NULL) {
+        return;
+    }
+
     # attention: Postgres  has a very special naming structure for naming
     # foreign keys and primary keys.  It names them using the name of the
     # table as prefix and fkey or pkey as suffix, concatenated by an underscore
@@ -1065,13 +1070,17 @@ sub alter_drop_constraint {
     if( $c->name ) {
         # Already has a name, just use it
         $c_name = $c->name;
-    } elsif ( $c->type eq FOREIGN_KEY ) {
-        # Doesn't have a name, and is foreign key, append '_fkey'
-        $c_name = $c->table->name . '_' . ($c->fields)[0] . '_fkey';
-    } elsif ( $c->type eq PRIMARY_KEY ) {
-        # Doesn't have a name, and is primary key, append '_pkey'
-        $c_name = $c->table->name . '_pkey';
-    }
+    } else {
+      # if the name is dotted we need the table, not schema nor database
+      my ($tablename) = reverse split /[.]/, $c->table->name;
+      if ( $c->type eq FOREIGN_KEY ) {
+          # Doesn't have a name, and is foreign key, append '_fkey'
+          $c_name = $tablename . '_' . ($c->fields)[0] . '_fkey';
+      } elsif ( $c->type eq PRIMARY_KEY ) {
+          # Doesn't have a name, and is primary key, append '_pkey'
+          $c_name = $tablename . '_pkey';
+      }
+  }
 
     return sprintf(
         'ALTER TABLE %s DROP CONSTRAINT %s',
