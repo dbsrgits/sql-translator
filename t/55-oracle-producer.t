@@ -85,8 +85,8 @@ use SQL::Translator::Producer::Oracle;
 
     is_deeply(
         $index1_def,
-        [   'CREATE INDEX myfooindex on table1 (foo)',
-            'CREATE INDEX mybarindex on table1 (bar)'
+        [   'CREATE INDEX myfooindex ON table1 (foo)',
+            'CREATE INDEX mybarindex ON table1 (bar)'
         ],
         'correct "CREATE INDEX" SQL'
     );

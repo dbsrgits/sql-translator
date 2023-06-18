@@ -677,7 +677,7 @@ sub create_index {
         $index_name ? quote($index_name, $qf): '',
         'ON',
         quote($index->table, $qt),
-        '(' . join( ', ', map { quote($_, $qf) } $index->fields ) . ")$index_options"
+        '(' . join( ', ', map { quote($_, $qf) } $index->field_names ) . ")$index_options"
     );
 }
 
