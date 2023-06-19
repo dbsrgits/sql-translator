@@ -685,7 +685,7 @@ sub create_index
           ))
         : '',
         '(' . join( ', ', map {
-            ref $_ ? $generator->quote($_->{name}) . "($_->{prefix_length})" : $generator->quote($_)
+            ref $_ && exists $_->{prefix_length} ? $generator->quote($_->{name}) . "($_->{prefix_length})" : $generator->quote($_)
         } $index->fields ) . ')'
     );
 }
