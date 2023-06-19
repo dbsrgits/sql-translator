@@ -329,7 +329,7 @@ sub create_table {
     for my $index ( $table->get_indices ) {
         my $index_name = $index->name || '';
         my $index_type = $index->type || NORMAL;
-        my @fields     = map { quote($_, $qf) } $index->field_names;
+        my @fields     = map { quote($_, $qf) } $index->fields;
         next unless @fields;
         debug("ORA: Creating $index_type index on fields (" . join(', ', @fields) . ") named $index_name");
         my @index_options;
@@ -677,7 +677,7 @@ sub create_index {
         $index_name ? quote($index_name, $qf): '',
         'ON',
         quote($index->table, $qt),
-        '(' . join( ', ', map { quote($_, $qf) } $index->field_names ) . ")$index_options"
+        '(' . join( ', ', map { quote($_, $qf) } $index->fields ) . ")$index_options"
     );
 }
 

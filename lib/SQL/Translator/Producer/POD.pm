@@ -71,7 +71,7 @@ sub produce {
             for my $index ( @indices ) {
                 $pod .= "=head4 " . $index->type . "\n\n=over 4\n\n";
                 $pod .= "=item * Fields = " .
-                    join(', ', $index->field_names_with_lengths ) . "\n\n";
+                    join(', ', $index->fields ) . "\n\n";
                 $pod .= "=back\n\n";
             }
         }

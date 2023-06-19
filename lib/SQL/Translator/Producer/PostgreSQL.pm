@@ -619,7 +619,7 @@ sub create_geometry_constraints {
             || join('_', $table_name, 'idx', ++$index_name{ $table_name });
 
         my $type = $index->type || NORMAL;
-        my @fields     =  $index->field_names;
+        my @fields     =  $index->fields;
         return unless @fields;
 
         my %index_extras;

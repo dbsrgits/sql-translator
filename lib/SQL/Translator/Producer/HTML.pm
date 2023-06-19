@@ -181,7 +181,7 @@ sub produce {
 
             for my $index ( @indices ) {
                 my $name   = $index->name || '';
-                my $fields = join( ', ', $index->field_names_with_lengths ) || '';
+                my $fields = join( ', ', $index->fields ) || '';
 
                 push @html,
                     $q->Tr({ -class => 'IndexCell' },

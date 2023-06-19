@@ -286,7 +286,7 @@ sub produce {
             push @index_defs,
                 'CREATE INDEX ' . $index->name .
                 " ON $table_name (".
-                join( ', ',$index->field_names ) . ")";
+                join( ', ', $index->fields ) . ")";
         }
 
         my $drop_statement = $add_drop_table

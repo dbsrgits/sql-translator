@@ -67,7 +67,7 @@ sub index {
   'CREATE INDEX ' .
    $_[0]->quote($_[1]->name || $_[1]->table->name . '_idx') .
    ' ON ' . $_[0]->quote($_[1]->table->name) .
-   ' (' . join( ', ', map $_[0]->quote($_), $_[1]->field_names ) . ');'
+   ' (' . join( ', ', map $_[0]->quote($_), $_[1]->fields ) . ');'
 }
 
 sub unique_constraint_single {

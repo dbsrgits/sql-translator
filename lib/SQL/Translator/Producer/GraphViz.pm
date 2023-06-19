@@ -465,7 +465,7 @@ sub produce {
                 ? $index->name . ':'
                 : ()
               ,
-              join (', ', $index->field_names_with_lengths),
+              join (', ', $index->fields),
               ($index->type eq 'UNIQUE') ? '[U]' : (),
             );
            }
