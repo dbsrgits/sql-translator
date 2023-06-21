@@ -182,7 +182,7 @@ around equals => sub {
 
     unless ($ignore_index_names) {
       unless ((!$self->name && ($other->name eq $other->fields->[0]->name)) ||
-        (!$other->name && ($self->name eq $self->fields->[0]))) {
+        (!$other->name && ($self->name eq $self->fields->[0]->name))) {
         return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
       }
     }
@@ -190,10 +190,9 @@ around equals => sub {
     return 0 unless $self->type eq $other->type;
 
     # Check fields, regardless of order
-    # TODO - fix up field comparison!!
     my $get_name = sub { return $case_insensitive ? uc(shift->name) : shift->name; };
-    my @otherFields = sort map +{ item => $_, key => $get_name->($_) }, $other->fields;
-    my @selfFields  = sort map +{ item => $_, key => $get_name->($_) }, $self->fields;
+    my @otherFields = sort { $a->{key} cmp $b->{key} } map +{ item => $_, key => $get_name->($_) }, $other->fields;
+    my @selfFields  = sort { $a->{key} cmp $b->{key} } map +{ item => $_, key => $get_name->($_) }, $self->fields;
     return 0 unless @otherFields == @selfFields;
     for my $idx (0..$#selfFields) {
       return 0 unless $selfFields[$idx]{key} eq $otherFields[$idx]{key};

@@ -280,7 +280,7 @@ require_ok( 'SQL::Translator::Schema' );
     # Check that 2 indexes are equal, if one doesn't have a name, and the
     # other has a name that is the same as the first field
     my $index8 = SQL::Translator::Schema::Index->new( fields => [qw/foo age/] );
-    ok( $index8->equals($index6), "Compare 2 indexes, one without name" );
+    ok( $index8->equals($index6, 0, 0, 1), "Compare 2 indexes, one without name" );
 
     my $indices = $person_table->get_indices;
     is( scalar @$indices, 3, 'Two indices' );
