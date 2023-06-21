@@ -54,6 +54,11 @@ around BUILDARGS => sub {
   if (@args == 1 && !ref $args[0]) {
     @args = (name => $args[0]);
   }
+  # there are some weird pathological cases where we get an object passed in rather than a
+  # hashref. We'll just clone it
+  if (ref $args[0] eq $self) {
+    return { %{$args[0]} }
+  }
   my $args = $self->$orig(@args);
   my $extra = delete $args->{extra} || {};
   my $name = delete $args->{name};
