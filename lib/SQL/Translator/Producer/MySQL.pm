@@ -674,6 +674,15 @@ sub create_index
     my ( $index, $options ) = @_;
     my $generator = _generator($options);
 
+    my @fields;
+    for my $field ($index->fields) {
+      my $name = $generator->quote($field->name);
+      if (my $len = $field->extra->{prefix_length}) {
+        $name .= "($len)";
+      }
+      push @fields, $name;
+
+    }
     return join(
         ' ',
         map { $_ || () }
@@ -684,9 +693,7 @@ sub create_index
                 $options->{max_id_length} || $DEFAULT_MAX_ID_LENGTH
           ))
         : '',
-        '(' . join( ', ', map {
-            ref $_ && exists $_->{prefix_length} ? $generator->quote($_->{name}) . "($_->{prefix_length})" : $generator->quote($_)
-        } $index->fields ) . ')'
+        '(' . join( ', ', @fields) . ')'
     );
 }
 
