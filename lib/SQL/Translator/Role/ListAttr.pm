@@ -22,7 +22,7 @@ attributes.
 
 =cut
 
-use SQL::Translator::Utils qw(parse_list_arg ex2err uniq uniq_keys);
+use SQL::Translator::Utils qw(parse_list_arg ex2err uniq);
 use Sub::Quote qw(quote_sub);
 
 use Package::Variant (
@@ -83,11 +83,8 @@ sub make_variant {
     my $may_throw = delete $arguments{may_throw};
     my $undef_if_empty = delete $arguments{undef_if_empty};
     my $append = delete $arguments{append};
-    my $uniq_keys = delete $arguments{uniq_keys};
     my $coerce = delete $arguments{uniq}
         ? sub { [ uniq @{parse_list_arg($_[0])} ] }
-        : $uniq_keys
-        ? sub { [ uniq_keys $uniq_keys, @{parse_list_arg($_[0])} ] }
         : \&parse_list_arg;
 
     has($name => (
