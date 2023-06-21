@@ -28,7 +28,7 @@ Primary and unique keys are table constraints, not indices.
 use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::IndexField;
-use SQL::Translator::Utils qw(ex2err throw parse_list_arg uniq);
+use SQL::Translator::Utils qw(ex2err throw parse_list_arg);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj enum);
 use Sub::Quote qw(quote_sub);
@@ -71,7 +71,12 @@ names and keep them in order by the first occurrence of a field name.
 
 with ListAttr fields => (
   coerce => sub {
-    [ uniq map SQL::Translator::Schema::IndexField->new($_), @{parse_list_arg($_[0])}]
+    my %seen;
+    return [
+      grep !$seen{$_->name}++,
+      map SQL::Translator::Schema::IndexField->new($_),
+      @{parse_list_arg($_[0])}
+    ]
   }
 );
 
