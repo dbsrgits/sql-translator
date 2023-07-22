@@ -14,7 +14,7 @@ Different databases allow for different options on index fields. Those are suppo
 
 =head1 METHODS
 
-=cut 
+=cut
 use Moo;
 
 extends 'SQL::Translator::Schema::Object';
