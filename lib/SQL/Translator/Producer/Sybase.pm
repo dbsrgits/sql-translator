@@ -289,18 +289,19 @@ sub produce {
                 join( ', ', $index->fields ) . ")";
         }
 
-        my $drop_statement = $add_drop_table
-            ? qq[DROP TABLE $table_name_ur] : '';
-        my $create_statement = qq[CREATE TABLE $table_name_ur (\n].
+        my @statements;
+        push @statements, qq[DROP TABLE $table_name_ur\n\n] if $add_drop_table;
+        push @statements, qq[CREATE TABLE $table_name_ur (\n].
             join( ",\n",
                 map { "  $_" } @field_defs, @constraint_defs
             ).
             "\n)"
         ;
 
-        $create_statement = join("\n\n", @comments) . "\n\n" . $create_statement;
+        # prefix the first statement with the comments
+        unshift @statements, join("\n\n", @comments) . "\n\n" . shift( @statements );
         push @output,
-            $create_statement,
+            @statements,
             @index_defs,
         ;
     }
