@@ -9,10 +9,12 @@ use Test::SQL::Translator qw(maybe_plan table_ok);
 
 maybe_plan(undef, 'SQL::Translator::Parser::DBI::PostgreSQL');
 
+my $pgsql;
 my @dsn =
   $ENV{DBICTEST_PG_DSN} ? @ENV{ map { "DBICTEST_PG_$_" } qw/DSN USER PASS/ }
 : $ENV{DBI_DSN} ? @ENV{ map { "DBI_$_" } qw/DSN USER PASS/ }
-: plan skip_all => 'Set $ENV{DBICTEST_PG_DSN}, _USER and _PASS to run this test';
+: eval { require Test::PostgreSQL and ($pgsql= Test::PostgreSQL->new()) }? ( $pgsql->dsn, '', '' )
+: plan skip_all => 'Set $ENV{DBICTEST_PG_DSN}, _USER and _PASS to run this test, or install Test::PostgreSQL';
 
 my $dbh = eval {
   DBI->connect(@dsn, {AutoCommit => 1, RaiseError=>1,PrintError => 1} );
@@ -22,6 +24,9 @@ if (my $err = ($@ || $DBI::err )) {
     chomp $err;
     plan skip_all => "No connection to test db. DBI says '$err'";
 }
+
+# Cleanly shut down Test::PostgreSQL if it is being used
+END { undef $dbh; undef $pgsql; }
 
 ok($dbh, "dbh setup correctly");
 $dbh->do('SET client_min_messages=WARNING');
