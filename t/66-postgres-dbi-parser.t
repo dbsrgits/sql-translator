@@ -36,7 +36,7 @@ my $sql = q[
     drop table if exists sqlt_test1;
     drop table if exists sqlt_products_1;
     drop type if exists example_enum;
-    
+
     create type example_enum as enum('alpha','beta');
 
     create table sqlt_test1 (
