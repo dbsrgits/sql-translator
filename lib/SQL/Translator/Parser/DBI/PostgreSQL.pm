@@ -12,6 +12,33 @@ See SQL::Translator::Parser::DBI.
 
 Uses DBI to query PostgreSQL system tables to determine schema structure.
 
+=head1 CONFIGURATION
+
+You can specify the following for L<SQL::Translator/parser_args> :
+
+=head2 deconstruct_enum_types
+
+If set to a true value, the parser will look for column types which are user-defined Enums,
+and generate a column definition like:
+
+  {
+    data_type => 'enum',
+    extra => {
+      custom_type_name => 'MyEnumType',
+      list => [ 'enum_val_1', 'enum_val_2', ... ],
+    }
+  }
+
+This makes a proper round-trip with SQL::Translator::Producer::PostgreSQL (which re-creates the
+custom enum type if C<< producer_args->{postgres_version} >= 8.003 >>) and can be translated to
+other engines.
+
+If the option is false (the default) you would just get
+
+  { data_type => 'MyEnumType' }
+
+with no provided method to translate it to other SQL engines.
+
 =cut
 
 use strict;
@@ -35,9 +62,10 @@ sub parse {
     my ( $tr, $dbh ) = @_;
 
     my $schema = $tr->schema;
+    my $deconstruct_enum_types = $tr->parser_args->{deconstruct_enum_types};
 
     my $column_select = $dbh->prepare(
-      "SELECT a.attname, format_type(t.oid, a.atttypmod) as typname, a.attnum,
+      "SELECT a.attname, a.atttypid, t.typtype, format_type(t.oid, a.atttypmod) as typname, a.attnum,
               a.atttypmod as length, a.attnotnull, a.atthasdef, pg_get_expr(ad.adbin, ad.adrelid) as adsrc,
               d.description
        FROM pg_type t, pg_attribute a
@@ -104,6 +132,17 @@ WHERE pg_catalog.pg_table_is_visible(c.oid)
 ORDER BY 1;
         /) or die "Can't prepare: $@";
 
+    my %enum_types;
+    if ($deconstruct_enum_types) {
+        my $enum_select = $dbh->prepare(
+            'SELECT enumtypid, enumlabel FROM pg_enum ORDER BY oid, enumsortorder'
+            ) or die "Can't prepare: $@";
+        $enum_select->execute();
+        while ( my $enumval = $enum_select->fetchrow_hashref ) {
+            push @{$enum_types{ $enumval->{enumtypid} }}, $enumval->{enumlabel};
+        }
+    }
+
     $table_select->execute();
 
     while ( my $tablehash = $table_select->fetchrow_hashref ) {
@@ -145,6 +184,11 @@ ORDER BY 1;
                     $col->default_value($str);
                 }
                 else { $col->default_value(\$default) }
+            }
+            if ($deconstruct_enum_types && $enum_types{$columnhash->{atttypid}}) {
+                $col->extra->{custom_type_name} = $col->data_type;
+                $col->extra->{list} = [ @{ $enum_types{$columnhash->{atttypid}} } ];
+                $col->data_type('enum');
             }
             $col->is_nullable( $$columnhash{'attnotnull'} ? 0 : 1 );
             $col->comments($$columnhash{'description'}) if $$columnhash{'description'};
