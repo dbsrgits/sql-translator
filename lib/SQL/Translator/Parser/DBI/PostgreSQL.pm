@@ -199,8 +199,8 @@ ORDER BY 1;
                                    fields =>  $fields,
                                    reference_fields => $reference_fields,
                                    reference_table => $reference_table,
-                                   on_delete  => $actions->{$on_upd},
-                                   on_update  => $actions->{$on_del},
+                                   on_update  => $actions->{$on_upd},
+                                   on_delete  => $actions->{$on_del},
                                );
         }
     }
