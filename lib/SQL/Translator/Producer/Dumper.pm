@@ -232,17 +232,13 @@ for my $table ( @tables ) {
         my @vals;
         for my $fld ( @{ $table->{'fields'} } ) {
             my $val = $rec->{ $fld };
-            if ( $table->{'types'}{ $fld } eq 'string' ) {
-                if ( defined $val ) {
+            if ( defined $val ) {
+                if ( $table->{'types'}{ $fld } eq 'string' ) {
                     $val =~ s/'/\\'/g;
                     $val = qq['$val']
                 }
-                else {
-                    $val = qq[''];
-                }
-            }
-            else {
-                $val = defined $val ? $val : $mysql_loadfile ? '\N' : 'NULL';
+            } else {
+                $val = $mysql_loadfile ? '\N' : 'NULL';
             }
             push @vals, $val;
         }
