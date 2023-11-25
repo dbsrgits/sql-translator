@@ -29,4 +29,4 @@ jobs:
       - name: Set up
         run: perl Makefile.PL
       - name: Run Tests
-        run: prove -lj4 t
+        run: prove -lj4 t xt
