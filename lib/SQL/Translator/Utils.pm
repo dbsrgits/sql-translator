@@ -7,6 +7,7 @@ use File::Spec;
 use Scalar::Util qw(blessed);
 use Try::Tiny;
 use Carp qw(carp croak);
+use List::Util qw(any);
 
 our $VERSION = '1.63';
 
@@ -131,7 +132,7 @@ sub parse_list_arg {
     #
     # This protects stringification of references.
     #
-    if ( @$list && ref $list->[0] ) {
+    if (any { ref $_ } @$list ) {
         return $list;
     }
     #

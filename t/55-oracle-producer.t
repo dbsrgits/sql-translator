@@ -69,6 +69,9 @@ use SQL::Translator::Producer::Oracle;
         type             => FOREIGN_KEY,
     );
 
+    my $index1 = $table1->add_index(name => 'myfooindex', fields => ['foo']);
+    my $index2 = $table1->add_index(name => 'mybarindex', fields => [ { name => 'bar', prefix_length => 10 } ]);
+
     my ($table1_def, $fk1_def, $trigger1_def,
         $index1_def, $constraint1_def
     ) = SQL::Translator::Producer::Oracle::create_table($table1);
@@ -78,6 +81,14 @@ use SQL::Translator::Producer::Oracle;
         [   'ALTER TABLE table1 ADD CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY (fk_col1, fk_col2) REFERENCES table2 (fk_col1, fk_col2)'
         ],
         'correct "CREATE CONSTRAINT" SQL'
+    );
+
+    is_deeply(
+        $index1_def,
+        [   'CREATE INDEX myfooindex ON table1 (foo)',
+            'CREATE INDEX mybarindex ON table1 (bar)'
+        ],
+        'correct "CREATE INDEX" SQL'
     );
 
     my $materialized_view = SQL::Translator::Schema::View->new(

@@ -173,7 +173,8 @@ sub view_index {
     return {
         'name'      => scalar $index->name,
         'type'      => scalar $index->type,
-        'fields'    => [ map { ref($_) ? $_->name : $_ } $index->fields ],
+        # If the index has extra properties, make sure these are written too
+        'fields'    => [ map { ref($_) && $_->extra && keys %{$_->extra} ? { name => $_->name, %{$_->extra} } : "$_" } $index->fields ],
         'options'   => scalar $index->options,
         keys %{$index->extra} ? ('extra' => { $index->extra } ) : (),
     };
