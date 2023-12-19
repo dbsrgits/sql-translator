@@ -9,10 +9,12 @@ use Test::SQL::Translator qw(maybe_plan table_ok);
 
 maybe_plan(undef, 'SQL::Translator::Parser::DBI::PostgreSQL');
 
+my $pgsql;
 my @dsn =
   $ENV{DBICTEST_PG_DSN} ? @ENV{ map { "DBICTEST_PG_$_" } qw/DSN USER PASS/ }
 : $ENV{DBI_DSN} ? @ENV{ map { "DBI_$_" } qw/DSN USER PASS/ }
-: plan skip_all => 'Set $ENV{DBICTEST_PG_DSN}, _USER and _PASS to run this test';
+: eval { require Test::PostgreSQL and ($pgsql= Test::PostgreSQL->new()) }? ( $pgsql->dsn, '', '' )
+: plan skip_all => 'Set $ENV{DBICTEST_PG_DSN}, _USER and _PASS to run this test, or install Test::PostgreSQL';
 
 my $dbh = eval {
   DBI->connect(@dsn, {AutoCommit => 1, RaiseError=>1,PrintError => 1} );
@@ -23,6 +25,9 @@ if (my $err = ($@ || $DBI::err )) {
     plan skip_all => "No connection to test db. DBI says '$err'";
 }
 
+# Cleanly shut down Test::PostgreSQL if it is being used
+END { undef $dbh; undef $pgsql; }
+
 ok($dbh, "dbh setup correctly");
 $dbh->do('SET client_min_messages=WARNING');
 
@@ -30,19 +35,23 @@ my $sql = q[
     drop table if exists sqlt_test2;
     drop table if exists sqlt_test1;
     drop table if exists sqlt_products_1;
+    drop type if exists example_enum;
+
+    create type example_enum as enum('alpha','beta');
 
     create table sqlt_test1 (
         f_serial serial NOT NULL primary key,
         f_varchar character varying(255),
         f_text text default 'FOO',
         f_to_drop integer,
-        f_last text
+        f_text2 text,
+        f_enum example_enum default 'alpha'
     );
 
     comment on table sqlt_test1 is 'this is a comment on the first table';
     comment on column sqlt_test1.f_text is 'this is a comment on a field of the first table';
 
-    create index sqlt_test1_f_last_idx on sqlt_test1 (f_last);
+    create index sqlt_test1_f_text2_idx on sqlt_test1 (f_text2);
 
     create table sqlt_test2 (
         f_id integer NOT NULL,
@@ -59,7 +68,7 @@ my $sql = q[
     );
 
     -- drop a column, to not have a linear id
-    -- When the table t_test1 is created, f_last get id 5 but
+    -- When the table t_test1 is created, f_text2 get id 5 but
     -- after this drop, there is only 4 columns.
     alter table sqlt_test1 drop column f_to_drop;
 ];
@@ -72,7 +81,7 @@ $dbh->do($sql);
 my $t = SQL::Translator->new(
   trace => 0,
   parser => 'DBI',
-  parser_args => { dbh => $dbh },
+  parser_args => { dbh => $dbh, deconstruct_enum_types => 1 },
 );
 $t->translate;
 my $schema = $t->schema;
@@ -88,7 +97,7 @@ is( $t1->name, 'sqlt_test1', 'Table sqlt_test1 exists' );
 is( $t1->comments, 'this is a comment on the first table', 'First table has a comment');
 
 my @t1_fields = $t1->get_fields;
-is( scalar @t1_fields, 4, '4 fields in sqlt_test1' );
+is( scalar @t1_fields, 5, '5 fields in sqlt_test1' );
 
 my $f1 = shift @t1_fields;
 is( $f1->name, 'f_serial', 'First field is "f_serial"' );
@@ -120,13 +129,19 @@ is( $f3->is_auto_increment, 0, 'Field is not auto increment' );
 is( $f3->comments, 'this is a comment on a field of the first table', 'There is a comment on the third field');
 
 my $f4 = shift @t1_fields;
-is( $f4->name, 'f_last', 'Fouth field is "f_last"' );
+is( $f4->name, 'f_text2', 'Fouth field is "f_text2"' );
 is( $f4->data_type, 'text', 'Field is a text' );
 is( $f4->is_nullable, 1, 'Field can be null' );
 is( $f4->size, 0, 'Size is 0' );
 is( $f4->default_value, undef, 'No default value' );
 is( $f4->is_primary_key, 0, 'Field is not PK' );
 is( $f4->is_auto_increment, 0, 'Field is not auto increment' );
+
+my $f5 = shift @t1_fields;
+is( $f5->name, 'f_enum', 'Fifth field is "f_enum"' );
+is( $f5->data_type, 'enum', 'Field is a decomposed enum' );
+is( $f5->default_value, 'alpha', 'Default value "alpha"' );
+is_deeply( { $f5->extra }, { custom_type_name => 'example_enum', list => [ 'alpha', 'beta' ] }, 'Field "extra" enum description' );
 
 #TODO: no 'NOT NULL' constraint not set
 

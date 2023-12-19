@@ -391,6 +391,34 @@ is_deeply(
     'Create real enum type works'
 );
 
+my $field5a = SQL::Translator::Schema::Field->new( name => 'enum_field',
+                                                   table => $table,
+                                                   data_type => 'enum',
+                                                   extra => {
+                                                      custom_type_name => 'mytable_enum_field_type',
+                                                      list => [ 'Foo', 'Bar', 'Ba\'z' ]
+                                                   },
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+my $field5b = SQL::Translator::Schema::Field->new( name => 'enum_field',
+                                                   table => $table,
+                                                   data_type => 'enum',
+                                                   extra => {
+                                                      custom_type_name => 'mytable_enum_field_type',
+                                                      list => [ 'Foo', 'Bar', 'Ba\'z', 'Other' ]
+                                                   },
+                                                   is_auto_increment => 0,
+                                                   is_nullable => 0,
+                                                   is_foreign_key => 0,
+                                                   is_unique => 0 );
+
+$alter_field= SQL::Translator::Producer::PostgreSQL::alter_field($field5a,
+                                                                 $field5b,
+                                                                 { postgres_version => 9.001 });
+is( $alter_field, q(ALTER TYPE mytable_enum_field_type ADD VALUE IF NOT EXISTS 'Other'), 'Add value to enum' );
+
 my $field6 = SQL::Translator::Schema::Field->new(
                                                   name      => 'character',
                                                   table => $table,

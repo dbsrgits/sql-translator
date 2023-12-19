@@ -493,6 +493,20 @@ sub create_view {
     return $create;
 }
 
+# Returns a enum custom type name and list of values iff the field looks like an enum.
+sub _enum_typename_and_values {
+    my $field = shift;
+    if (ref $field->extra->{list} eq 'ARRAY') { # can't do anything unless we know the list
+        if ($field->extra->{custom_type_name}) {
+            return ( $field->extra->{custom_type_name}, $field->extra->{list} );
+        } elsif ($field->data_type eq 'enum') {
+            my $name= $field->table->name . '_' . $field->name . '_type';
+            return ( $name, $field->extra->{list} );
+        }
+    }
+    return ();
+}
+
 {
 
     my %field_name_scope;
@@ -524,18 +538,17 @@ sub create_view {
         #
         my $data_type = lc $field->data_type;
         my %extra     = $field->extra;
-        my $list      = $extra{'list'} || [];
-        my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
+        my ($enum_typename, $list) = _enum_typename_and_values($field);
 
-        if ($postgres_version >= 8.003 && $data_type eq 'enum') {
-            my $type_name = $extra{'custom_type_name'} || $field->table->name . '_' . $field->name . '_type';
-            $field_def .= ' '. $type_name;
-            my $new_type_def = "DROP TYPE IF EXISTS $type_name CASCADE;\n" .
-                               "CREATE TYPE $type_name AS ENUM ($commalist)";
-            if (! exists $type_defs->{$type_name} ) {
-                $type_defs->{$type_name} = $new_type_def;
-            } elsif ( $type_defs->{$type_name} ne $new_type_def ) {
-                die "Attempted to redefine type name '$type_name' as a different type.\n";
+        if ($postgres_version >= 8.003 && $enum_typename) {
+            my $commalist = join( ', ', map { __PACKAGE__->_quote_string($_) } @$list );
+            $field_def .= ' '. $enum_typename;
+            my $new_type_def = "DROP TYPE IF EXISTS $enum_typename CASCADE;\n" .
+                               "CREATE TYPE $enum_typename AS ENUM ($commalist)";
+            if (! exists $type_defs->{$enum_typename} ) {
+                $type_defs->{$enum_typename} = $new_type_def;
+            } elsif ( $type_defs->{$enum_typename} ne $new_type_def ) {
+                die "Attempted to redefine type name '$enum_typename' as a different type.\n";
             }
         } else {
             $field_def .= ' '. convert_datatype($field);
@@ -895,6 +908,25 @@ sub alter_field
                        $to_dt,
                    )
         if($to_dt ne $from_dt);
+
+    my ($from_enum_typename, $from_list) = _enum_typename_and_values($from_field);
+    my ($to_enum_typename,   $to_list  ) = _enum_typename_and_values($to_field);
+    if ($from_enum_typename && $to_enum_typename && $from_enum_typename eq $to_enum_typename) {
+        # See if new enum values were added, and update the enum
+        my %existing_vals = map +($_ => 1), @$from_list;
+        my %desired_vals = map +($_ => 1), @$to_list;
+        my @add_vals = grep !$existing_vals{$_}, keys %desired_vals;
+        my @del_vals = grep !$desired_vals{$_}, keys %existing_vals;
+        my $pg_ver_ok= ($options->{postgres_version} || 0) >= 9.001;
+        push @out, '-- Set $sqlt->producer_args->{postgres_version} >= 9.001 to alter enums'
+            if !$pg_ver_ok && @add_vals;
+        for (@add_vals) {
+            push @out, sprintf '%sALTER TYPE %s ADD VALUE IF NOT EXISTS %s',
+                ($pg_ver_ok? '':'-- '), $to_enum_typename, $generator->quote_string($_);
+        }
+        push @out, "-- Unimplemented: delete values from enum type '$to_enum_typename': ".join(", ", @del_vals)
+            if @del_vals;
+    }
 
     my $old_default = $from_field->default_value;
     my $new_default = $to_field->default_value;
