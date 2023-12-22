@@ -53,8 +53,7 @@ my %eumm_args = (
     dynamic_config => 0,
     resources => {
       bugtracker => {
-        web    =>  'https://rt.cpan.org/NoAuth/Bugs.html?Dist=SQL-Translator',
-        mailto => 'bug-SQL-Translator@rt.cpan.org',
+        web    =>  'https://github.com/dbsrgits/sql-translator/issues',
       },
       repository => {
         type => 'git',
