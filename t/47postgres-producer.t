@@ -212,6 +212,22 @@ for my $name ( 'foo', undef ) {
     }
 }
 
+subtest 'exclude constraints' => sub {
+    my $exclude_constraint = SQL::Translator::Schema::Constraint->new(
+        table => $table,
+        name   => 'game',
+        expression => 'dates WITH &&, char with =',
+        options => {
+          using => 'gist',
+          where => 'fun IS TRUE',
+        },
+        type   => 'EXCLUDE',
+    );
+    my  ($def, undef) = SQL::Translator::Producer::PostgreSQL::create_constraint($exclude_constraint);
+    is $def->[0], 'CONSTRAINT game EXCLUDE USING gist ( dates WITH &&, char with = ) WHERE ( fun IS TRUE )', 'exclude constraint';
+
+};
+
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1,
                                                                 $field2);
 is($alter_field, qq[ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL;
