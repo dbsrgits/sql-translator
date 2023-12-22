@@ -11,8 +11,6 @@ use_ok("SQL::Translator::Utils");
 is($DEFAULT_COMMENT, '--', 'default comment');
 like(header_comment("foo"), qr/[-][-] Created by foo/, "Created by...");
 
-my $comm = header_comment("My::Producer",
-                          $DEFAULT_COMMENT,
-                          "Hi mom!");
+my $comm = header_comment("My::Producer", $DEFAULT_COMMENT, "Hi mom!");
 like($comm, qr/[-][-] Created by My::Producer/, 'Multiline header comment...');
-like($comm, qr/[-][-] Hi mom!/, '...with additional junk');
+like($comm, qr/[-][-] Hi mom!/,                 '...with additional junk');

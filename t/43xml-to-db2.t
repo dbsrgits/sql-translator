@@ -11,25 +11,24 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 BEGIN {
-    maybe_plan(1, 'SQL::Translator::Parser::XML::SQLFairy',
-              'SQL::Translator::Producer::DB2');
+  maybe_plan(1, 'SQL::Translator::Parser::XML::SQLFairy', 'SQL::Translator::Producer::DB2');
 }
 
 my $xmlfile = "$Bin/data/xml/schema.xml";
 
 my $sqlt;
 $sqlt = SQL::Translator->new(
-    no_comments => 1,
-    show_warnings  => 0,
-    add_drop_table => 1,
+  no_comments    => 1,
+  show_warnings  => 0,
+  add_drop_table => 1,
 );
 
 die "Can't find test schema $xmlfile" unless -e $xmlfile;
 
 my $sql = $sqlt->translate(
-    from     => 'XML-SQLFairy',
-    to       => 'DB2',
-    filename => $xmlfile,
+  from     => 'XML-SQLFairy',
+  to       => 'DB2',
+  filename => $xmlfile,
 ) or die $sqlt->error;
 
 eq_or_diff($sql, << "SQL");

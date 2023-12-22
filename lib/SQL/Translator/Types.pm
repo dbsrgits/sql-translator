@@ -27,7 +27,7 @@ Errors are reported using L<SQL::Translator::Utils/throw>.
 =cut
 
 use SQL::Translator::Utils qw(throw);
-use Scalar::Util qw(blessed);
+use Scalar::Util           qw(blessed);
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(schema_obj enum);
@@ -42,13 +42,14 @@ class C<< SQL::Translator::Schema::I<$type> >>.
 =cut
 
 sub schema_obj {
-    my ($class) = @_;
-    my $name = lc $class;
-    $class = 'SQL::Translator::Schema' . ($class eq 'Schema' ? '' : "::$class");
-    return sub {
-        throw("Not a $name object")
-            unless blessed($_[0]) and $_[0]->isa($class);
-    };
+  my ($class) = @_;
+  my $name = lc $class;
+  $class = 'SQL::Translator::Schema' . ($class eq 'Schema' ? '' : "::$class");
+  return sub {
+    throw("Not a $name object")
+        unless blessed($_[0])
+        and $_[0]->isa($class);
+  };
 }
 
 =head2 enum(\@strings, [$msg | \%parameters])
@@ -85,22 +86,23 @@ If true, allow any false value in addition to the specified strings.
 =cut
 
 sub enum {
-    my ($values, $args) = @_;
-    $args ||= {};
-    $args = { msg => $args } unless ref($args) eq 'HASH';
-    my $icase = !!$args->{icase};
-    my %values = map { ($icase ? lc : $_) => undef } @{$values};
-    my $msg = $args->{msg} || "Invalid value: '%s'";
-    my $extra_test =
-        $args->{allow_undef} ? sub { defined $_[0] } :
-        $args->{allow_false} ? sub { !!$_[0] } : undef;
+  my ($values, $args) = @_;
+  $args ||= {};
+  $args = { msg => $args } unless ref($args) eq 'HASH';
+  my $icase  = !!$args->{icase};
+  my %values = map { ($icase ? lc : $_) => undef } @{$values};
+  my $msg    = $args->{msg} || "Invalid value: '%s'";
+  my $extra_test
+      = $args->{allow_undef} ? sub { defined $_[0] }
+      : $args->{allow_false} ? sub { !!$_[0] }
+      :                        undef;
 
-    return sub {
-        my $val = $icase ? lc $_[0] : $_[0];
-        throw(sprintf($msg, $val))
-            if (!defined($extra_test) || $extra_test->($val))
-                && !exists $values{$val};
-    };
+  return sub {
+    my $val = $icase ? lc $_[0] : $_[0];
+    throw(sprintf($msg, $val))
+        if (!defined($extra_test) || $extra_test->($val))
+        && !exists $values{$val};
+  };
 }
 
 1;

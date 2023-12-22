@@ -19,18 +19,14 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-    maybe_plan(79,
-        'YAML',
-        'SQL::Translator::Producer::MySQL',
-        'Test::Differences',
-    )
+  maybe_plan(79, 'YAML', 'SQL::Translator::Producer::MySQL', 'Test::Differences',);
 }
 use Test::Differences;
 use SQL::Translator;
 
 # Main test.
 {
-my $yaml_in = <<EOSCHEMA;
+  my $yaml_in = <<EOSCHEMA;
 ---
 schema:
   tables:
@@ -196,11 +192,11 @@ schema:
           name: fk_thing
 EOSCHEMA
 
-my @stmts = (
-"SET foreign_key_checks=0",
+  my @stmts = (
+    "SET foreign_key_checks=0",
 
-"DROP TABLE IF EXISTS `thing`",
-"CREATE TABLE `thing` (
+    "DROP TABLE IF EXISTS `thing`",
+    "CREATE TABLE `thing` (
   `id` unsigned int NOT NULL auto_increment,
   `name` varchar(32) NULL,
   `swedish_name` varchar(32) character set swe7 NULL,
@@ -210,8 +206,8 @@ my @stmts = (
   UNIQUE `idx_unique_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET latin1 COLLATE latin1_danish_ci",
 
-"DROP TABLE IF EXISTS `some`.`thing2`",
-"CREATE TABLE `some`.`thing2` (
+    "DROP TABLE IF EXISTS `some`.`thing2`",
+    "CREATE TABLE `some`.`thing2` (
   `id` integer NOT NULL,
   `foo` integer NOT NULL,
   `foo2` integer NULL,
@@ -225,8 +221,8 @@ my @stmts = (
   CONSTRAINT `fk_thing_1` FOREIGN KEY (`foo2`) REFERENCES `thing` (`id`)
 ) ENGINE=InnoDB",
 
-"DROP TABLE IF EXISTS `some`.`thing3`",
-"CREATE TABLE `some`.`thing3` (
+    "DROP TABLE IF EXISTS `some`.`thing3`",
+    "CREATE TABLE `some`.`thing3` (
   `id` integer NOT NULL,
   `foo` integer NOT NULL,
   `foo2` integer NULL,
@@ -240,232 +236,234 @@ my @stmts = (
   CONSTRAINT `fk_thing_3` FOREIGN KEY (`foo2`) REFERENCES `some`.`thing2` (`id`, `foo`)
 ) ENGINE=InnoDB",
 
-"SET foreign_key_checks=1",
+    "SET foreign_key_checks=1",
 
-);
+  );
 
-my @stmts_no_drop = grep {$_ !~ /^DROP TABLE/} @stmts;
+  my @stmts_no_drop = grep { $_ !~ /^DROP TABLE/ } @stmts;
 
-my $mysql_out = join(";\n\n", @stmts_no_drop) . ";\n\n";
+  my $mysql_out = join(";\n\n", @stmts_no_drop) . ";\n\n";
 
+  my $sqlt;
+  $sqlt = SQL::Translator->new(
+    show_warnings => 1,
+    no_comments   => 1,
 
-    my $sqlt;
-    $sqlt = SQL::Translator->new(
-        show_warnings  => 1,
-        no_comments    => 1,
-#        debug          => 1,
-        from           => "YAML",
-        to             => "MySQL",
-        quote_table_names => 1,
-        quote_field_names => 1
-    );
+    #        debug          => 1,
+    from              => "YAML",
+    to                => "MySQL",
+    quote_table_names => 1,
+    quote_field_names => 1
+  );
 
-    my $out = $sqlt->translate(\$yaml_in)
-    or die "Translate error:".$sqlt->error;
-    ok $out ne "",                    "Produced something!";
-    eq_or_diff $out, $mysql_out,      "Scalar output looks right with quoting";
+  my $out = $sqlt->translate(\$yaml_in)
+      or die "Translate error:" . $sqlt->error;
+  ok $out ne "", "Produced something!";
+  eq_or_diff $out, $mysql_out, "Scalar output looks right with quoting";
 
-    my @out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
-    is_deeply \@out, \@stmts_no_drop, "Array output looks right with quoting";
+  my @out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:" . $sqlt->error;
+  is_deeply \@out, \@stmts_no_drop, "Array output looks right with quoting";
 
-    $sqlt->quote_identifiers(0);
+  $sqlt->quote_identifiers(0);
 
-    $out = $sqlt->translate(\$yaml_in)
-      or die "Translate error:".$sqlt->error;
+  $out = $sqlt->translate(\$yaml_in)
+      or die "Translate error:" . $sqlt->error;
 
-    @out = $sqlt->translate(\$yaml_in)
-      or die "Translate error:".$sqlt->error;
-    $mysql_out =~ s/`//g;
-    my @unquoted_stmts = map { s/`//g; $_} @stmts_no_drop;
-    eq_or_diff $out, $mysql_out,       "Output looks right without quoting";
-    is_deeply \@out, \@unquoted_stmts, "Array output looks right without quoting";
+  @out = $sqlt->translate(\$yaml_in)
+      or die "Translate error:" . $sqlt->error;
+  $mysql_out =~ s/`//g;
+  my @unquoted_stmts = map { s/`//g; $_ } @stmts_no_drop;
+  eq_or_diff $out, $mysql_out, "Output looks right without quoting";
+  is_deeply \@out, \@unquoted_stmts, "Array output looks right without quoting";
 
-    $sqlt->quote_identifiers(1);
-    $sqlt->add_drop_table(1);
+  $sqlt->quote_identifiers(1);
+  $sqlt->add_drop_table(1);
 
-    @out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
-    $out = $sqlt->translate(\$yaml_in)
-      or die "Translat eerror:".$sqlt->error;
+  @out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:" . $sqlt->error;
+  $out = $sqlt->translate(\$yaml_in)
+      or die "Translat eerror:" . $sqlt->error;
 
-    eq_or_diff $out, join(";\n\n", @stmts) . ";\n\n", "Output looks right with DROP TABLEs";
-    is_deeply \@out, \@stmts,          "Array output looks right with DROP TABLEs";
+  eq_or_diff $out, join(";\n\n", @stmts) . ";\n\n", "Output looks right with DROP TABLEs";
+  is_deeply \@out, \@stmts, "Array output looks right with DROP TABLEs";
 }
 
 ###############################################################################
 # New alter/add subs
 
 {
-my $table = SQL::Translator::Schema::Table->new( name => 'mytable');
+  my $table = SQL::Translator::Schema::Table->new(name => 'mytable');
 
-my $field1 = SQL::Translator::Schema::Field->new( name => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'VARCHAR',
-                                                  size => 10,
-                                                  default_value => undef,
-                                                  is_auto_increment => 0,
-                                                  is_nullable => 1,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
+  my $field1 = SQL::Translator::Schema::Field->new(
+    name              => 'myfield',
+    table             => $table,
+    data_type         => 'VARCHAR',
+    size              => 10,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 1,
+    is_foreign_key    => 0,
+    is_unique         => 0
+  );
 
-my $field1_sql = SQL::Translator::Producer::MySQL::create_field($field1);
+  my $field1_sql = SQL::Translator::Producer::MySQL::create_field($field1);
 
-is($field1_sql, 'myfield VARCHAR(10) NULL', 'Create field works');
+  is($field1_sql, 'myfield VARCHAR(10) NULL', 'Create field works');
 
-my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'VARCHAR',
-                                                  size      => 25,
-                                                  default_value => undef,
-                                                  is_auto_increment => 0,
-                                                  is_nullable => 0,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
+  my $field2 = SQL::Translator::Schema::Field->new(
+    name              => 'myfield',
+    table             => $table,
+    data_type         => 'VARCHAR',
+    size              => 25,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 0,
+    is_unique         => 0
+  );
 
-my $alter_field = SQL::Translator::Producer::MySQL::alter_field($field1,
-                                                                $field2);
-is($alter_field, 'ALTER TABLE mytable CHANGE COLUMN myfield myfield VARCHAR(25) NOT NULL', 'Alter field works');
+  my $alter_field = SQL::Translator::Producer::MySQL::alter_field($field1, $field2);
+  is($alter_field, 'ALTER TABLE mytable CHANGE COLUMN myfield myfield VARCHAR(25) NOT NULL', 'Alter field works');
 
-my $add_field = SQL::Translator::Producer::MySQL::add_field($field1);
+  my $add_field = SQL::Translator::Producer::MySQL::add_field($field1);
 
-is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10) NULL', 'Add field works');
+  is($add_field, 'ALTER TABLE mytable ADD COLUMN myfield VARCHAR(10) NULL', 'Add field works');
 
-my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2);
-is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
+  my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2);
+  is($drop_field, 'ALTER TABLE mytable DROP COLUMN myfield', 'Drop field works');
 
-my $field3 = SQL::Translator::Schema::Field->new( name      => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'boolean',
-                                                  is_nullable => 0,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
+  my $field3 = SQL::Translator::Schema::Field->new(
+    name           => 'myfield',
+    table          => $table,
+    data_type      => 'boolean',
+    is_nullable    => 0,
+    is_foreign_key => 0,
+    is_unique      => 0
+  );
 
-my $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 4.1 });
-is($field3_sql, 'myfield boolean NOT NULL', 'For Mysql >= 4, use boolean type');
-$field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 3.22 });
-is($field3_sql, "myfield enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
-$field3_sql = SQL::Translator::Producer::MySQL::create_field($field3,);
-is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
+  my $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 4.1 });
+  is($field3_sql, 'myfield boolean NOT NULL', 'For Mysql >= 4, use boolean type');
+  $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 3.22 });
+  is($field3_sql, "myfield enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
+  $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3,);
+  is($field3_sql, "myfield enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
 
-my $number_sizes = {
+  my $number_sizes = {
     '3, 2' => 'double',
-    12 => 'bigint',
-    1 => 'tinyint',
-    4 => 'int',
-};
-for my $size (keys %$number_sizes) {
-    my $expected = $number_sizes->{$size};
+    12     => 'bigint',
+    1      => 'tinyint',
+    4      => 'int',
+  };
+  for my $size (keys %$number_sizes) {
+    my $expected     = $number_sizes->{$size};
     my $number_field = SQL::Translator::Schema::Field->new(
-        name => "numberfield_$expected",
-        table => $table,
-        data_type => 'number',
-        size => $size,
-        is_nullable => 1,
-        is_foreign_key => 0,
-        is_unique => 0
+      name           => "numberfield_$expected",
+      table          => $table,
+      data_type      => 'number',
+      size           => $size,
+      is_nullable    => 1,
+      is_foreign_key => 0,
+      is_unique      => 0
     );
 
     is(
-        SQL::Translator::Producer::MySQL::create_field($number_field),
-        "numberfield_$expected $expected($size) NULL",
-        "Use $expected for NUMBER types of size $size"
+      SQL::Translator::Producer::MySQL::create_field($number_field),
+      "numberfield_$expected $expected($size) NULL",
+      "Use $expected for NUMBER types of size $size"
     );
-}
+  }
 
-my $varchars;
-for my $size (qw/255 256 65535 65536/) {
+  my $varchars;
+  for my $size (qw/255 256 65535 65536/) {
     $varchars->{$size} = SQL::Translator::Schema::Field->new(
-        name => "vch_$size",
-        table => $table,
-        data_type => 'varchar',
-        size => $size,
-        is_nullable => 1,
+      name        => "vch_$size",
+      table       => $table,
+      data_type   => 'varchar',
+      size        => $size,
+      is_nullable => 1,
     );
-}
+  }
 
-
-is (
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003 }),
     'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0 }),
     'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{255}),
     'vch_255 varchar(255) NULL',
     'VARCHAR(255) is not substituted with TEXT when no version specified',
-);
+  );
 
-
-is (
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003 }),
     'vch_256 varchar(256) NULL',
     'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0 }),
     'vch_256 text NULL',
     'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{256}),
     'vch_256 text NULL',
     'VARCHAR(256) is substituted with TEXT when no version specified',
-);
+  );
 
-
-is (
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003 }),
     'vch_65535 varchar(65535) NULL',
     'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0 }),
     'vch_65535 text NULL',
     'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{65535}),
     'vch_65535 text NULL',
     'VARCHAR(65535) is substituted with TEXT when no version specified',
-);
+  );
 
-
-is (
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003 }),
     'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0 }),
     'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
-);
-is (
+  );
+  is(
     SQL::Translator::Producer::MySQL::create_field($varchars->{65536}),
     'vch_65536 text NULL',
     'VARCHAR(65536) is substituted with TEXT when no version specified',
-);
+  );
 
+  {
+    my $view1 = SQL::Translator::Schema::View->new(
+      name   => 'view_foo',
+      fields => [qw/id name/],
+      sql    => 'SELECT id, name FROM thing',
+      extra  => {
+        mysql_definer   => 'CURRENT_USER',
+        mysql_algorithm => 'MERGE',
+        mysql_security  => 'DEFINER',
+      }
+    );
+    my $create_opts = { add_replace_view => 1, no_comments => 1 };
+    my $view1_sql1  = SQL::Translator::Producer::MySQL::create_view($view1, $create_opts);
 
-{
-  my $view1 = SQL::Translator::Schema::View->new( name => 'view_foo',
-                                                  fields => [qw/id name/],
-                                                  sql => 'SELECT id, name FROM thing',
-                                                  extra => {
-                                                    mysql_definer => 'CURRENT_USER',
-                                                    mysql_algorithm => 'MERGE',
-                                                    mysql_security => 'DEFINER',
-                                                  });
-  my $create_opts = { add_replace_view => 1, no_comments => 1 };
-  my $view1_sql1 = SQL::Translator::Producer::MySQL::create_view($view1, $create_opts);
-
-  my $view_sql_replace = <<'EOV';
+    my $view_sql_replace = <<'EOV';
 CREATE OR REPLACE
    ALGORITHM = MERGE
    DEFINER = CURRENT_USER
@@ -474,404 +472,418 @@ CREATE OR REPLACE
     SELECT id, name FROM thing
 EOV
 
-  is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
+    is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
 
-
-  my $view2 = SQL::Translator::Schema::View->new( name => 'view_foo',
-                                                  fields => [qw/id name/],
-                                                  sql => 'SELECT id, name FROM thing',);
-  my $create2_opts = { add_replace_view => 0, no_comments => 1 };
-  my $view1_sql2 = SQL::Translator::Producer::MySQL::create_view($view2, $create2_opts);
-  my $view_sql_noreplace = <<'EOV';
+    my $view2 = SQL::Translator::Schema::View->new(
+      name   => 'view_foo',
+      fields => [qw/id name/],
+      sql    => 'SELECT id, name FROM thing',
+    );
+    my $create2_opts       = { add_replace_view => 0, no_comments => 1 };
+    my $view1_sql2         = SQL::Translator::Producer::MySQL::create_view($view2, $create2_opts);
+    my $view_sql_noreplace = <<'EOV';
 CREATE
   VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
 EOV
 
-  is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
-
-  {
-    my %extra = $view1->extra;
-    is_deeply \%extra,
-      {
-        'mysql_algorithm' => 'MERGE',
-        'mysql_definer'   => 'CURRENT_USER',
-        'mysql_security'  => 'DEFINER'
-      },
-      'Extra attributes';
-  }
-
-  $view1->remove_extra(qw/mysql_definer mysql_security/);
-  {
-    my %extra = $view1->extra;
-    is_deeply \%extra, { 'mysql_algorithm' => 'MERGE', }, 'Extra attributes after first reset_extra call';
-  }
-
-  $view1->remove_extra();
-  {
-    my %extra = $view1->extra;
-    is_deeply \%extra, {}, 'Extra attributes completely removed';
-  }
-}
-
-{
-
-    # certain types do not support a size, see also:
-    # http://dev.mysql.com/doc/refman/5.1/de/create-table.html
-    for my $type (qw/date time timestamp datetime year/) {
-        my $field = SQL::Translator::Schema::Field->new(
-            name              => "my$type",
-            table             => $table,
-            data_type         => $type,
-            size              => 10,
-            default_value     => undef,
-            is_auto_increment => 0,
-            is_nullable       => 1,
-            is_foreign_key    => 0,
-            is_unique         => 0
-        );
-        my $sql = SQL::Translator::Producer::MySQL::create_field($field);
-        is($sql, "my$type $type NULL", "Skip length param for type $type");
-    }
-}
-
-} #non quoted test
-
-{
-    #Quoted test
-    my $table = SQL::Translator::Schema::Table->new( name => 'mydb.mytable');
-
-    my $field1 = SQL::Translator::Schema::Field->new( name => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'VARCHAR',
-                                                  size => 10,
-                                                  default_value => undef,
-                                                  is_auto_increment => 0,
-                                                  is_nullable => 1,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
-
-
-    my $field2 = SQL::Translator::Schema::Field->new( name      => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'VARCHAR',
-                                                  size      => 25,
-                                                  default_value => undef,
-                                                  is_auto_increment => 0,
-                                                  is_nullable => 0,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
-
-    my $field3 = SQL::Translator::Schema::Field->new( name      => 'myfield',
-                                                  table => $table,
-                                                  data_type => 'boolean',
-                                                  is_nullable => 0,
-                                                  is_foreign_key => 0,
-                                                  is_unique => 0 );
-
-
-    my $qt = '`';
-    my $qf = '`';
-    my $options = {
-        quote_table_names => $qt,
-        quote_field_names => $qf,
-    };
-
-
-    my $alter_field = SQL::Translator::Producer::MySQL::alter_field($field1, $field2, $options);
-    is($alter_field, 'ALTER TABLE `mydb`.`mytable` CHANGE COLUMN `myfield` `myfield` VARCHAR(25) NOT NULL', 'Alter field works');
-
-    my $add_field = SQL::Translator::Producer::MySQL::add_field($field1, $options);
-
-    is($add_field, 'ALTER TABLE `mydb`.`mytable` ADD COLUMN `myfield` VARCHAR(10) NULL', 'Add field works');
-
-    my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2, $options);
-    is($drop_field, 'ALTER TABLE `mydb`.`mytable` DROP COLUMN `myfield`', 'Drop field works');
-
-    my $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 4.1, %$options });
-is($field3_sql, '`myfield` boolean NOT NULL', 'For Mysql >= 4, use boolean type');
-$field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 3.22, %$options });
-is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
-$field3_sql = SQL::Translator::Producer::MySQL::create_field($field3,$options);
-is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
-
-    my $number_sizes = {
-        '3, 2' => 'double',
-        12 => 'bigint',
-        1 => 'tinyint',
-        4 => 'int',
-    };
-    for my $size (keys %$number_sizes) {
-        my $expected = $number_sizes->{$size};
-        my $number_field = SQL::Translator::Schema::Field->new(
-            name => "numberfield_$expected",
-            table => $table,
-            data_type => 'number',
-            size => $size,
-            is_nullable => 1,
-            is_foreign_key => 0,
-            is_unique => 0
-        );
-
-        is(
-            SQL::Translator::Producer::MySQL::create_field($number_field, $options),
-            "`numberfield_$expected` $expected($size) NULL",
-            "Use $expected for NUMBER types of size $size"
-        );
-    }
-
-    my $varchars;
-    for my $size (qw/255 256 65535 65536/) {
-        $varchars->{$size} = SQL::Translator::Schema::Field->new(
-            name => "vch_$size",
-            table => $table,
-            data_type => 'varchar',
-            size => $size,
-            is_nullable => 1,
-        );
-    }
-
-
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003, %$options }),
-        '`vch_255` varchar(255) NULL',
-        'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0, %$options }),
-        '`vch_255` varchar(255) NULL',
-        'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{255}, $options),
-        '`vch_255` varchar(255) NULL',
-        'VARCHAR(255) is not substituted with TEXT when no version specified',
-    );
-
-
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003, %$options }),
-        '`vch_256` varchar(256) NULL',
-        'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0, %$options }),
-        '`vch_256` text NULL',
-        'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{256}, $options),
-        '`vch_256` text NULL',
-        'VARCHAR(256) is substituted with TEXT when no version specified',
-    );
-
-
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003, %$options }),
-        '`vch_65535` varchar(65535) NULL',
-        'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0, %$options }),
-        '`vch_65535` text NULL',
-        'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, $options),
-        '`vch_65535` text NULL',
-        'VARCHAR(65535) is substituted with TEXT when no version specified',
-    );
-
-
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003, %$options }),
-        '`vch_65536` text NULL',
-        'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0, %$options }),
-        '`vch_65536` text NULL',
-        'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
-    );
-    is (
-        SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, $options),
-        '`vch_65536` text NULL',
-        'VARCHAR(65536) is substituted with TEXT when no version specified',
-    );
+    is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
 
     {
-      my $view1 = SQL::Translator::Schema::View->new( name => 'view_foo',
-                                                      fields => [qw/id name/],
-                                                      sql => 'SELECT `id`, `name` FROM `my`.`thing`',
-                                                      extra => {
-                                                        mysql_definer => 'CURRENT_USER',
-                                                        mysql_algorithm => 'MERGE',
-                                                        mysql_security => 'DEFINER',
-                                                      });
-      my $create_opts = { add_replace_view => 1, no_comments => 1, %$options };
-      my $view1_sql1 = SQL::Translator::Producer::MySQL::create_view($view1, $create_opts);
-
-      my $view_sql_replace = <<'EOV';
-CREATE OR REPLACE
-   ALGORITHM = MERGE
-   DEFINER = CURRENT_USER
-   SQL SECURITY DEFINER
-  VIEW `view_foo` ( `id`, `name` ) AS
-    SELECT `id`, `name` FROM `my`.`thing`
-EOV
-
-      is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
-
-
-      my $view2 = SQL::Translator::Schema::View->new( name => 'view_foo',
-                                                      fields => [qw/id name/],
-                                                      sql => 'SELECT `id`, `name` FROM `my`.`thing`',);
-      my $create2_opts = { add_replace_view => 0, no_comments => 1, %$options };
-      my $view1_sql2 = SQL::Translator::Producer::MySQL::create_view($view2, $create2_opts);
-      my $view_sql_noreplace = <<'EOV';
-CREATE
-  VIEW `view_foo` ( `id`, `name` ) AS
-    SELECT `id`, `name` FROM `my`.`thing`
-EOV
-
-      is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
-
-      {
-        my %extra = $view1->extra;
-        is_deeply \%extra,
+      my %extra = $view1->extra;
+      is_deeply \%extra,
           {
             'mysql_algorithm' => 'MERGE',
             'mysql_definer'   => 'CURRENT_USER',
             'mysql_security'  => 'DEFINER'
           },
           'Extra attributes';
-      }
-
-      $view1->remove_extra(qw/mysql_definer mysql_security/);
-      {
-        my %extra = $view1->extra;
-        is_deeply \%extra, { 'mysql_algorithm' => 'MERGE', }, 'Extra attributes after first reset_extra call';
-      }
-
-      $view1->remove_extra();
-      {
-        my %extra = $view1->extra;
-        is_deeply \%extra, {}, 'Extra attributes completely removed';
-      }
     }
+
+    $view1->remove_extra(qw/mysql_definer mysql_security/);
+    {
+      my %extra = $view1->extra;
+      is_deeply \%extra, { 'mysql_algorithm' => 'MERGE', }, 'Extra attributes after first reset_extra call';
+    }
+
+    $view1->remove_extra();
+    {
+      my %extra = $view1->extra;
+      is_deeply \%extra, {}, 'Extra attributes completely removed';
+    }
+  }
+
+  {
+
+    # certain types do not support a size, see also:
+    # http://dev.mysql.com/doc/refman/5.1/de/create-table.html
+    for my $type (qw/date time timestamp datetime year/) {
+      my $field = SQL::Translator::Schema::Field->new(
+        name              => "my$type",
+        table             => $table,
+        data_type         => $type,
+        size              => 10,
+        default_value     => undef,
+        is_auto_increment => 0,
+        is_nullable       => 1,
+        is_foreign_key    => 0,
+        is_unique         => 0
+      );
+      my $sql = SQL::Translator::Producer::MySQL::create_field($field);
+      is($sql, "my$type $type NULL", "Skip length param for type $type");
+    }
+  }
+
+}    #non quoted test
+
+{
+  #Quoted test
+  my $table = SQL::Translator::Schema::Table->new(name => 'mydb.mytable');
+
+  my $field1 = SQL::Translator::Schema::Field->new(
+    name              => 'myfield',
+    table             => $table,
+    data_type         => 'VARCHAR',
+    size              => 10,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 1,
+    is_foreign_key    => 0,
+    is_unique         => 0
+  );
+
+  my $field2 = SQL::Translator::Schema::Field->new(
+    name              => 'myfield',
+    table             => $table,
+    data_type         => 'VARCHAR',
+    size              => 25,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 0,
+    is_unique         => 0
+  );
+
+  my $field3 = SQL::Translator::Schema::Field->new(
+    name           => 'myfield',
+    table          => $table,
+    data_type      => 'boolean',
+    is_nullable    => 0,
+    is_foreign_key => 0,
+    is_unique      => 0
+  );
+
+  my $qt      = '`';
+  my $qf      = '`';
+  my $options = {
+    quote_table_names => $qt,
+    quote_field_names => $qf,
+  };
+
+  my $alter_field = SQL::Translator::Producer::MySQL::alter_field($field1, $field2, $options);
+  is(
+    $alter_field,
+    'ALTER TABLE `mydb`.`mytable` CHANGE COLUMN `myfield` `myfield` VARCHAR(25) NOT NULL',
+    'Alter field works'
+  );
+
+  my $add_field = SQL::Translator::Producer::MySQL::add_field($field1, $options);
+
+  is($add_field, 'ALTER TABLE `mydb`.`mytable` ADD COLUMN `myfield` VARCHAR(10) NULL', 'Add field works');
+
+  my $drop_field = SQL::Translator::Producer::MySQL::drop_field($field2, $options);
+  is($drop_field, 'ALTER TABLE `mydb`.`mytable` DROP COLUMN `myfield`', 'Drop field works');
+
+  my $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 4.1, %$options });
+  is($field3_sql, '`myfield` boolean NOT NULL', 'For Mysql >= 4, use boolean type');
+  $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, { mysql_version => 3.22, %$options });
+  is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'For Mysql < 4, use enum for boolean type');
+  $field3_sql = SQL::Translator::Producer::MySQL::create_field($field3, $options);
+  is($field3_sql, "`myfield` enum('0','1') NOT NULL", 'When no version specified, use enum for boolean type');
+
+  my $number_sizes = {
+    '3, 2' => 'double',
+    12     => 'bigint',
+    1      => 'tinyint',
+    4      => 'int',
+  };
+  for my $size (keys %$number_sizes) {
+    my $expected     = $number_sizes->{$size};
+    my $number_field = SQL::Translator::Schema::Field->new(
+      name           => "numberfield_$expected",
+      table          => $table,
+      data_type      => 'number',
+      size           => $size,
+      is_nullable    => 1,
+      is_foreign_key => 0,
+      is_unique      => 0
+    );
+
+    is(
+      SQL::Translator::Producer::MySQL::create_field($number_field, $options),
+      "`numberfield_$expected` $expected($size) NULL",
+      "Use $expected for NUMBER types of size $size"
+    );
+  }
+
+  my $varchars;
+  for my $size (qw/255 256 65535 65536/) {
+    $varchars->{$size} = SQL::Translator::Schema::Field->new(
+      name        => "vch_$size",
+      table       => $table,
+      data_type   => 'varchar',
+      size        => $size,
+      is_nullable => 1,
+    );
+  }
+
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.000003, %$options }),
+    '`vch_255` varchar(255) NULL',
+    'VARCHAR(255) is not substituted with TEXT for Mysql >= 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{255}, { mysql_version => 5.0, %$options }),
+    '`vch_255` varchar(255) NULL',
+    'VARCHAR(255) is not substituted with TEXT for Mysql < 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{255}, $options),
+    '`vch_255` varchar(255) NULL',
+    'VARCHAR(255) is not substituted with TEXT when no version specified',
+  );
+
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.000003, %$options }),
+    '`vch_256` varchar(256) NULL',
+    'VARCHAR(256) is not substituted with TEXT for Mysql >= 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{256}, { mysql_version => 5.0, %$options }),
+    '`vch_256` text NULL',
+    'VARCHAR(256) is substituted with TEXT for Mysql < 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{256}, $options),
+    '`vch_256` text NULL',
+    'VARCHAR(256) is substituted with TEXT when no version specified',
+  );
+
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.000003, %$options }),
+    '`vch_65535` varchar(65535) NULL',
+    'VARCHAR(65535) is not substituted with TEXT for Mysql >= 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, { mysql_version => 5.0, %$options }),
+    '`vch_65535` text NULL',
+    'VARCHAR(65535) is substituted with TEXT for Mysql < 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65535}, $options),
+    '`vch_65535` text NULL',
+    'VARCHAR(65535) is substituted with TEXT when no version specified',
+  );
+
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.000003, %$options }),
+    '`vch_65536` text NULL',
+    'VARCHAR(65536) is substituted with TEXT for Mysql >= 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, { mysql_version => 5.0, %$options }),
+    '`vch_65536` text NULL',
+    'VARCHAR(65536) is substituted with TEXT for Mysql < 5.0.3'
+  );
+  is(
+    SQL::Translator::Producer::MySQL::create_field($varchars->{65536}, $options),
+    '`vch_65536` text NULL',
+    'VARCHAR(65536) is substituted with TEXT when no version specified',
+  );
+
+  {
+    my $view1 = SQL::Translator::Schema::View->new(
+      name   => 'view_foo',
+      fields => [qw/id name/],
+      sql    => 'SELECT `id`, `name` FROM `my`.`thing`',
+      extra  => {
+        mysql_definer   => 'CURRENT_USER',
+        mysql_algorithm => 'MERGE',
+        mysql_security  => 'DEFINER',
+      }
+    );
+    my $create_opts = { add_replace_view => 1, no_comments => 1, %$options };
+    my $view1_sql1  = SQL::Translator::Producer::MySQL::create_view($view1, $create_opts);
+
+    my $view_sql_replace = <<'EOV';
+CREATE OR REPLACE
+   ALGORITHM = MERGE
+   DEFINER = CURRENT_USER
+   SQL SECURITY DEFINER
+  VIEW `view_foo` ( `id`, `name` ) AS
+    SELECT `id`, `name` FROM `my`.`thing`
+EOV
+
+    is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
+
+    my $view2 = SQL::Translator::Schema::View->new(
+      name   => 'view_foo',
+      fields => [qw/id name/],
+      sql    => 'SELECT `id`, `name` FROM `my`.`thing`',
+    );
+    my $create2_opts       = { add_replace_view => 0, no_comments => 1, %$options };
+    my $view1_sql2         = SQL::Translator::Producer::MySQL::create_view($view2, $create2_opts);
+    my $view_sql_noreplace = <<'EOV';
+CREATE
+  VIEW `view_foo` ( `id`, `name` ) AS
+    SELECT `id`, `name` FROM `my`.`thing`
+EOV
+
+    is($view1_sql2, $view_sql_noreplace, 'correct "CREATE VIEW" SQL');
 
     {
-
-        # certain types do not support a size, see also:
-        # http://dev.mysql.com/doc/refman/5.1/de/create-table.html
-        for my $type (qw/date time timestamp datetime year/) {
-            my $field = SQL::Translator::Schema::Field->new(
-                name              => "my$type",
-                table             => $table,
-                data_type         => $type,
-                size              => 10,
-                default_value     => undef,
-                is_auto_increment => 0,
-                is_nullable       => 1,
-                is_foreign_key    => 0,
-                is_unique         => 0
-            );
-            my $sql = SQL::Translator::Producer::MySQL::create_field($field, $options);
-            is($sql, "`my$type` $type NULL", "Skip length param for type $type");
-        }
+      my %extra = $view1->extra;
+      is_deeply \%extra,
+          {
+            'mysql_algorithm' => 'MERGE',
+            'mysql_definer'   => 'CURRENT_USER',
+            'mysql_security'  => 'DEFINER'
+          },
+          'Extra attributes';
     }
+
+    $view1->remove_extra(qw/mysql_definer mysql_security/);
+    {
+      my %extra = $view1->extra;
+      is_deeply \%extra, { 'mysql_algorithm' => 'MERGE', }, 'Extra attributes after first reset_extra call';
+    }
+
+    $view1->remove_extra();
+    {
+      my %extra = $view1->extra;
+      is_deeply \%extra, {}, 'Extra attributes completely removed';
+    }
+  }
+
+  {
+
+    # certain types do not support a size, see also:
+    # http://dev.mysql.com/doc/refman/5.1/de/create-table.html
+    for my $type (qw/date time timestamp datetime year/) {
+      my $field = SQL::Translator::Schema::Field->new(
+        name              => "my$type",
+        table             => $table,
+        data_type         => $type,
+        size              => 10,
+        default_value     => undef,
+        is_auto_increment => 0,
+        is_nullable       => 1,
+        is_foreign_key    => 0,
+        is_unique         => 0
+      );
+      my $sql = SQL::Translator::Producer::MySQL::create_field($field, $options);
+      is($sql, "`my$type` $type NULL", "Skip length param for type $type");
+    }
+  }
 }
 
 {
-    my $table = SQL::Translator::Schema::Table->new( name => 'foobar', fields => ['foo'] );
+  my $table = SQL::Translator::Schema::Table->new(
+    name   => 'foobar',
+    fields => ['foo']
+  );
 
-    {
-        my $index = $table->add_index(name => 'myindex', fields => ['foo']);
-        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
-        is($def, 'INDEX myindex (foo)', 'index created');
-    }
+  {
+    my $index = $table->add_index(name => 'myindex', fields => ['foo']);
+    my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+    is($def, 'INDEX myindex (foo)', 'index created');
+  }
 
-    {
-        my $index = $table->add_index(fields => ['foo']);
-        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
-        is($def, 'INDEX (foo)', 'index created');
-    }
+  {
+    my $index = $table->add_index(fields => ['foo']);
+    my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+    is($def, 'INDEX (foo)', 'index created');
+  }
 
-    {
-        my $index = $table->add_index(fields => [ { name => 'foo', prefix_length => 25 } ], type => 'unique');
-        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
-        is($def, 'UNIQUE INDEX (foo(25))', 'unique index created');
-    }
+  {
+    my $index = $table->add_index(
+      fields => [ { name => 'foo', prefix_length => 25 } ],
+      type   => 'unique'
+    );
+    my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+    is($def, 'UNIQUE INDEX (foo(25))', 'unique index created');
+  }
 
-    {
-        my $index = $table->add_index(name => 'sized', fields => [
-            'foobar',
-            { name => 'foo', prefix_length => 10 },
-            { name => 'bar', prefix_length => 15 },
-        ]);
-        my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
-        is($def, 'INDEX sized (foobar, foo(10), bar(15))', 'index created');
-    }
+  {
+    my $index = $table->add_index(
+      name   => 'sized',
+      fields => [ 'foobar', { name => 'foo', prefix_length => 10 }, { name => 'bar', prefix_length => 15 }, ]
+    );
+    my ($def) = SQL::Translator::Producer::MySQL::create_index($index);
+    is($def, 'INDEX sized (foobar, foo(10), bar(15))', 'index created');
+  }
 }
 
-{ # test for rt62250
-    my $table = SQL::Translator::Schema::Table->new(name => 'table');
-    $table->add_field(
-        SQL::Translator::Schema::Field->new( name => 'mypk',
-                                             table => $table,
-                                             data_type => 'INT',
-                                             size => 10,
-                                             default_value => undef,
-                                             is_auto_increment => 1,
-                                             is_nullable => 0,
-                                             is_foreign_key => 0,
-                                             is_unique => 1 ));
+{    # test for rt62250
+  my $table = SQL::Translator::Schema::Table->new(name => 'table');
+  $table->add_field(SQL::Translator::Schema::Field->new(
+    name              => 'mypk',
+    table             => $table,
+    data_type         => 'INT',
+    size              => 10,
+    default_value     => undef,
+    is_auto_increment => 1,
+    is_nullable       => 0,
+    is_foreign_key    => 0,
+    is_unique         => 1
+  ));
 
-    my $constraint = $table->add_constraint(fields => ['mypk'], type => 'PRIMARY_KEY');
-    my $options = {quote_table_names => '`'};
-    is(SQL::Translator::Producer::MySQL::alter_drop_constraint($constraint,$options),
-       'ALTER TABLE `table` DROP PRIMARY KEY','valid drop primary key');
+  my $constraint = $table->add_constraint(fields => ['mypk'], type => 'PRIMARY_KEY');
+  my $options    = { quote_table_names => '`' };
+  is(
+    SQL::Translator::Producer::MySQL::alter_drop_constraint($constraint, $options),
+    'ALTER TABLE `table` DROP PRIMARY KEY',
+    'valid drop primary key'
+  );
 }
 
 {
-    my $schema = SQL::Translator::Schema->new();
-    my $table = $schema->add_table( name => 'foo', fields => ['bar'] );
+  my $schema = SQL::Translator::Schema->new();
+  my $table  = $schema->add_table(name => 'foo', fields => ['bar']);
 
-    {
-        my $trigger = $schema->add_trigger(
-            name                => 'mytrigger',
-            perform_action_when => 'before',
-            database_events     => 'update',
-            on_table            => 'foo',
-            fields              => ['bar'],
-            action              => 'BEGIN baz(); END'
-        );
-        my ($def) = SQL::Translator::Producer::MySQL::create_trigger($trigger);
-        my $expected
-          = "--\n"
-          . "-- Trigger mytrigger\n"
-          . "--\n"
-          . "CREATE TRIGGER mytrigger before update ON foo\n"
-          . "  FOR EACH ROW BEGIN baz(); END";
-        is($def, $expected, 'trigger created');
-    }
+  {
+    my $trigger = $schema->add_trigger(
+      name                => 'mytrigger',
+      perform_action_when => 'before',
+      database_events     => 'update',
+      on_table            => 'foo',
+      fields              => ['bar'],
+      action              => 'BEGIN baz(); END'
+    );
+    my ($def) = SQL::Translator::Producer::MySQL::create_trigger($trigger);
+    my $expected
+        = "--\n"
+        . "-- Trigger mytrigger\n" . "--\n"
+        . "CREATE TRIGGER mytrigger before update ON foo\n"
+        . "  FOR EACH ROW BEGIN baz(); END";
+    is($def, $expected, 'trigger created');
+  }
 
-    {
-        my $trigger = $schema->add_trigger(
-            name                => 'mytrigger2',
-            perform_action_when => 'after',
-            database_events     => ['insert'],
-            on_table            => 'foo',
-            fields              => ['bar'],
-            action              => 'baz()'
-        );
-        my ($def) = SQL::Translator::Producer::MySQL::create_trigger($trigger);
-        my $expected
-          = "--\n"
-          . "-- Trigger mytrigger2\n"
-          . "--\n"
-          . "CREATE TRIGGER mytrigger2 after insert ON foo\n"
-          . "  FOR EACH ROW BEGIN baz(); END";
-        is($def, $expected, 'trigger created');
-    }
+  {
+    my $trigger = $schema->add_trigger(
+      name                => 'mytrigger2',
+      perform_action_when => 'after',
+      database_events     => ['insert'],
+      on_table            => 'foo',
+      fields              => ['bar'],
+      action              => 'baz()'
+    );
+    my ($def) = SQL::Translator::Producer::MySQL::create_trigger($trigger);
+    my $expected
+        = "--\n"
+        . "-- Trigger mytrigger2\n" . "--\n"
+        . "CREATE TRIGGER mytrigger2 after insert ON foo\n"
+        . "  FOR EACH ROW BEGIN baz(); END";
+    is($def, $expected, 'trigger created');
+  }
 }

@@ -105,13 +105,13 @@ our @EXPORT;
 our $VERSION = '1.64';
 
 use constant DRIVERS => {
-    mysql            => 'MySQL',
-    odbc             => 'SQLServer',
-    oracle           => 'Oracle',
-    pg               => 'PostgreSQL',
-    sqlite           => 'SQLite',
-    sybase           => 'Sybase',
-    db2              => 'DB2',
+  mysql  => 'MySQL',
+  odbc   => 'SQLServer',
+  oracle => 'Oracle',
+  pg     => 'PostgreSQL',
+  sqlite => 'SQLite',
+  sybase => 'Sybase',
+  db2    => 'DB2',
 };
 
 use Exporter;
@@ -125,48 +125,50 @@ use base qw(Exporter);
 # Passed a SQL::Translator instance and a string containing the data
 #
 sub parse {
-    my ( $tr, $data ) = @_;
+  my ($tr, $data) = @_;
 
-    my $args          = $tr->parser_args;
-    my $dbh           = $args->{'dbh'};
-    my $dsn           = $args->{'dsn'};
-    my $db_user       = $args->{'db_user'};
-    my $db_password   = $args->{'db_password'};
+  my $args        = $tr->parser_args;
+  my $dbh         = $args->{'dbh'};
+  my $dsn         = $args->{'dsn'};
+  my $db_user     = $args->{'db_user'};
+  my $db_password = $args->{'db_password'};
 
-    my $dbh_is_local;
-    unless ( $dbh ) {
-        die 'No DSN' unless $dsn;
-        $dbh = DBI->connect( $dsn, $db_user, $db_password,
-            {
-                FetchHashKeyName => 'NAME_lc',
-                LongReadLen      => 3000,
-                LongTruncOk      => 1,
-                RaiseError       => 1,
-            }
-        );
-        $dbh_is_local = 1;
-    }
+  my $dbh_is_local;
+  unless ($dbh) {
+    die 'No DSN' unless $dsn;
+    $dbh = DBI->connect(
+      $dsn, $db_user,
+      $db_password,
+      {
+        FetchHashKeyName => 'NAME_lc',
+        LongReadLen      => 3000,
+        LongTruncOk      => 1,
+        RaiseError       => 1,
+      }
+    );
+    $dbh_is_local = 1;
+  }
 
-    die 'No database handle' unless defined $dbh;
+  die 'No database handle' unless defined $dbh;
 
-    my $db_type = $dbh->{'Driver'}{'Name'} or die 'Cannot determine DBI type';
-    my $driver  = DRIVERS->{ lc $db_type } or die "$db_type not supported";
-    my $pkg     = "SQL::Translator::Parser::DBI::$driver";
-    my $sub     = $pkg.'::parse';
+  my $db_type = $dbh->{'Driver'}{'Name'} or die 'Cannot determine DBI type';
+  my $driver  = DRIVERS->{ lc $db_type } or die "$db_type not supported";
+  my $pkg     = "SQL::Translator::Parser::DBI::$driver";
+  my $sub     = $pkg . '::parse';
 
-    SQL::Translator::load( $pkg );
+  SQL::Translator::load($pkg);
 
-    my $s = eval {
-        no strict 'refs';
-        &{ $sub }( $tr, $dbh ) or die "No result from $pkg";
-    };
-    my $err = $@;
+  my $s = eval {
+    no strict 'refs';
+    &{$sub}($tr, $dbh) or die "No result from $pkg";
+  };
+  my $err = $@;
 
-    eval { $dbh->disconnect } if (defined $dbh and $dbh_is_local);
+  eval { $dbh->disconnect } if (defined $dbh and $dbh_is_local);
 
-    die $err if $err;
+  die $err if $err;
 
-    return $s;
+  return $s;
 }
 
 1;

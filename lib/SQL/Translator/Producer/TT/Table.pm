@@ -156,9 +156,9 @@ whitespace either side, to be recognised.
 use strict;
 use warnings;
 
-our ( $DEBUG, @EXPORT_OK );
+our ($DEBUG, @EXPORT_OK);
 our $VERSION = '1.64';
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use File::Path;
 use Template;
@@ -172,111 +172,106 @@ use SQL::Translator::Utils 'debug';
 my $Translator;
 
 sub produce {
-    $Translator = shift;
-    local $DEBUG   = $Translator->debug;
-    my $scma       = $Translator->schema;
-    my $pargs      = $Translator->producer_args;
-    my $file       = $pargs->{'tt_table'} or die "No template file given!";
-    $pargs->{on_exists} ||= "die";
+  $Translator = shift;
+  local $DEBUG = $Translator->debug;
+  my $scma  = $Translator->schema;
+  my $pargs = $Translator->producer_args;
+  my $file  = $pargs->{'tt_table'} or die "No template file given!";
+  $pargs->{on_exists} ||= "die";
 
-    debug "Processing template $file\n";
-    my $out;
-    my $tt       = Template->new(
-        DEBUG    => $DEBUG,
-        ABSOLUTE => 1, # Set so we can use from the command line sensibly
-        RELATIVE => 1, # Maybe the cmd line code should set it! Security!
-        %$pargs,        # Allow any TT opts to be passed in the producer_args
-    ) || die "Failed to initialize Template object: ".Template->error;
+  debug "Processing template $file\n";
+  my $out;
+  my $tt = Template->new(
+    DEBUG    => $DEBUG,
+    ABSOLUTE => 1,        # Set so we can use from the command line sensibly
+    RELATIVE => 1,        # Maybe the cmd line code should set it! Security!
+    %$pargs,              # Allow any TT opts to be passed in the producer_args
+  ) || die "Failed to initialize Template object: " . Template->error;
 
-   for my $tbl ( sort {$a->order <=> $b->order} $scma->get_tables ) {
-      my $outtmp;
-        $tt->process( $file, {
-            translator => $Translator,
-            schema     => $scma,
-            table      => $tbl,
-        }, \$outtmp )
-      or die "Error processing template '$file' for table '".$tbl->name
-             ."': ".$tt->error;
-        $out .= $outtmp;
+  for my $tbl (sort { $a->order <=> $b->order } $scma->get_tables) {
+    my $outtmp;
+    $tt->process(
+      $file,
+      {
+        translator => $Translator,
+        schema     => $scma,
+        table      => $tbl,
+      },
+      \$outtmp
+    ) or die "Error processing template '$file' for table '" . $tbl->name . "': " . $tt->error;
+    $out .= $outtmp;
 
-        # Write out the file...
-      write_file(  table_file($tbl), $outtmp ) if $pargs->{mk_files};
-    }
+    # Write out the file...
+    write_file(table_file($tbl), $outtmp) if $pargs->{mk_files};
+  }
 
-    return $out;
-};
+  return $out;
+}
 
 # Work out the filename for a given table.
 sub table_file {
-    my ($tbl) = shift;
-    my $pargs = $Translator->producer_args;
-    my $root  = $pargs->{mk_files_base};
-    my $ext   = $pargs->{mk_file_ext};
-    return "$root/$tbl.$ext";
+  my ($tbl) = shift;
+  my $pargs = $Translator->producer_args;
+  my $root  = $pargs->{mk_files_base};
+  my $ext   = $pargs->{mk_file_ext};
+  return "$root/$tbl.$ext";
 }
 
 # Write the src given to the file given, handling the on_exists arg.
 sub write_file {
-   my ($file, $src) = @_;
-    my $pargs = $Translator->producer_args;
-    my $root = $pargs->{mk_files_base};
+  my ($file, $src) = @_;
+  my $pargs = $Translator->producer_args;
+  my $root  = $pargs->{mk_files_base};
 
-    if ( -e $file ) {
-        if ( $pargs->{on_exists} eq "skip" ) {
-            warn "Skipping existing $file\n";
-            return 1;
-        }
-        elsif ( $pargs->{on_exists} eq "die" ) {
-            die "File $file already exists.\n";
-        }
-        elsif ( $pargs->{on_exists} eq "replace" ) {
-            warn "Replacing $file.\n";
-        }
-        elsif ( $pargs->{on_exists} eq "insert" ) {
-            warn "Inserting into $file.\n";
-            $src = insert_code($file, $src);
-        }
-        else {
-            die "Unknown on_exists action: $pargs->{on_exists}\n";
-        }
+  if (-e $file) {
+    if ($pargs->{on_exists} eq "skip") {
+      warn "Skipping existing $file\n";
+      return 1;
+    } elsif ($pargs->{on_exists} eq "die") {
+      die "File $file already exists.\n";
+    } elsif ($pargs->{on_exists} eq "replace") {
+      warn "Replacing $file.\n";
+    } elsif ($pargs->{on_exists} eq "insert") {
+      warn "Inserting into $file.\n";
+      $src = insert_code($file, $src);
+    } else {
+      die "Unknown on_exists action: $pargs->{on_exists}\n";
     }
-    else {
-        if ( my $interactive = -t STDIN && -t STDOUT ) {
-            warn "Creating $file.\n";
-        }
+  } else {
+    if (my $interactive = -t STDIN && -t STDOUT) {
+      warn "Creating $file.\n";
     }
+  }
 
-    my ($dir) = $file =~ m!^(.*)/!; # Want greedy, everything before the last /
-   if ( $dir and not -d $dir and $pargs->{mk_file_dir} ) { mkpath($dir); }
+  my ($dir) = $file =~ m!^(.*)/!;    # Want greedy, everything before the last /
+  if ($dir and not -d $dir and $pargs->{mk_file_dir}) { mkpath($dir); }
 
-    debug "Writing to $file\n";
-   open( FILE, ">$file") or die "Error opening file $file : $!\n";
-   print FILE $src;
-   close(FILE);
+  debug "Writing to $file\n";
+  open(FILE, ">$file") or die "Error opening file $file : $!\n";
+  print FILE $src;
+  close(FILE);
 }
 
 # Reads file and inserts code between the insert comments and returns the new
 # source.
 sub insert_code {
-    my ($file, $src) = @_;
-    my $pargs = $Translator->producer_args;
-    my $cstart = $pargs->{insert_comment_start} || "SQLF_INSERT_START";
-    my $cend   = $pargs->{insert_comment_end}   || "SQLF_INSERT_END";
+  my ($file, $src) = @_;
+  my $pargs  = $Translator->producer_args;
+  my $cstart = $pargs->{insert_comment_start} || "SQLF_INSERT_START";
+  my $cend   = $pargs->{insert_comment_end}   || "SQLF_INSERT_END";
 
-    # Slurp in the original file
-    open ( FILE, "<", "$file") or die "Error opening file $file : $!\n";
-    local $/ = undef;
-    my $orig = <FILE>;
-    close(FILE);
+  # Slurp in the original file
+  open(FILE, "<", "$file") or die "Error opening file $file : $!\n";
+  local $/ = undef;
+  my $orig = <FILE>;
+  close(FILE);
 
-    # Insert the new code between the insert comments
-    unless (
-        $orig =~ s/^\s*?$cstart\s*?\n.*?^\s*?$cend\s*?\n/\n$cstart\n$src\n$cend\n/ms
-    ) {
-        warn "No insert done\n";
-    }
+  # Insert the new code between the insert comments
+  unless ($orig =~ s/^\s*?$cstart\s*?\n.*?^\s*?$cend\s*?\n/\n$cstart\n$src\n$cend\n/ms) {
+    warn "No insert done\n";
+  }
 
-    return $orig;
+  return $orig;
 }
 
 1;

@@ -16,8 +16,8 @@ I<documentation volunteers needed>
 requires qw(quote_chars name_sep);
 
 has escape_char => (
-  is => 'ro',
-  lazy => 1,
+  is      => 'ro',
+  lazy    => 1,
   clearer => 1,
   default => sub { $_[0]->quote_chars->[-1] },
 );
@@ -28,7 +28,7 @@ sub quote {
   return '' unless defined $label;
   return $$label if ref($label) eq 'SCALAR';
 
-  my @quote_chars = @{$self->quote_chars};
+  my @quote_chars = @{ $self->quote_chars };
   return $label unless scalar @quote_chars;
 
   my ($l, $r);
@@ -44,15 +44,15 @@ sub quote {
   my $esc = $self->escape_char;
 
   # parts containing * are naturally unquoted
-  join $sep, map { (my $n = $_) =~ s/\Q$r/$esc$r/g; "$l$n$r" } ( $sep ? split (/\Q$sep\E/, $label ) : $label )
+  join $sep, map { (my $n = $_) =~ s/\Q$r/$esc$r/g; "$l$n$r" } ($sep ? split(/\Q$sep\E/, $label) : $label);
 }
 
 sub quote_string {
-    my ($self, $string) = @_;
+  my ($self, $string) = @_;
 
-    return $string unless defined $string;
-    $string =~ s/'/''/g;
-    return qq{'$string'};
+  return $string unless defined $string;
+  $string =~ s/'/''/g;
+  return qq{'$string'};
 }
 
 1;

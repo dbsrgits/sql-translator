@@ -4,7 +4,7 @@ use strict;
 use warnings;
 our $VERSION = '1.64';
 
-sub parse { "" }
+sub parse {""}
 
 1;
 

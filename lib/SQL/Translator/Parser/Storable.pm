@@ -33,17 +33,17 @@ use base qw(Exporter);
 our @EXPORT_OK = qw(parse);
 
 sub parse {
-    my ($translator, $data) = @_;
+  my ($translator, $data) = @_;
 
-    if (defined($data)) {
-        $translator->{'schema'} = Storable::thaw($data);
-        return 1;
-    } elsif (defined($translator->filename)) {
-        $translator->{'schema'} = Storable::retrieve($translator->filename);
-        return 1;
-    }
+  if (defined($data)) {
+    $translator->{'schema'} = Storable::thaw($data);
+    return 1;
+  } elsif (defined($translator->filename)) {
+    $translator->{'schema'} = Storable::retrieve($translator->filename);
+    return 1;
+  }
 
-    return 0;
+  return 0;
 }
 
 1;

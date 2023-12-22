@@ -13,101 +13,102 @@ use SQL::Translator::Schema::Constraint;
 use SQL::Translator::Producer::Oracle;
 
 {
-    my $table1 = SQL::Translator::Schema::Table->new( name => 'table1' );
+  my $table1 = SQL::Translator::Schema::Table->new(name => 'table1');
 
-    my $table1_field1 = $table1->add_field(
-        name              => 'fk_col1',
-        data_type         => 'NUMBER',
-        size              => 6,
-        default_value     => undef,
-        is_auto_increment => 0,
-        is_nullable       => 0,
-        is_foreign_key    => 1,
-        is_unique         => 0
-    );
+  my $table1_field1 = $table1->add_field(
+    name              => 'fk_col1',
+    data_type         => 'NUMBER',
+    size              => 6,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 1,
+    is_unique         => 0
+  );
 
-    my $table1_field2 = $table1->add_field(
-        name              => 'fk_col2',
-        data_type         => 'VARCHAR',
-        size              => 64,
-        default_value     => undef,
-        is_auto_increment => 0,
-        is_nullable       => 0,
-        is_foreign_key    => 1,
-        is_unique         => 0
-    );
+  my $table1_field2 = $table1->add_field(
+    name              => 'fk_col2',
+    data_type         => 'VARCHAR',
+    size              => 64,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 1,
+    is_unique         => 0
+  );
 
-    my $table2 = SQL::Translator::Schema::Table->new( name => 'table2' );
+  my $table2 = SQL::Translator::Schema::Table->new(name => 'table2');
 
-    my $table2_field1 = $table2->add_field(
-        name              => 'fk_col1',
-        data_type         => 'NUMBER',
-        size              => 6,
-        default_value     => undef,
-        is_auto_increment => 0,
-        is_nullable       => 0,
-        is_foreign_key    => 0,
-        is_unique         => 0
-    );
+  my $table2_field1 = $table2->add_field(
+    name              => 'fk_col1',
+    data_type         => 'NUMBER',
+    size              => 6,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 0,
+    is_unique         => 0
+  );
 
-    my $table2_field2 = $table2->add_field(
-        name              => 'fk_col2',
-        data_type         => 'VARCHAR',
-        size              => 64,
-        default_value     => undef,
-        is_auto_increment => 0,
-        is_nullable       => 0,
-        is_foreign_key    => 0,
-        is_unique         => 0
-    );
+  my $table2_field2 = $table2->add_field(
+    name              => 'fk_col2',
+    data_type         => 'VARCHAR',
+    size              => 64,
+    default_value     => undef,
+    is_auto_increment => 0,
+    is_nullable       => 0,
+    is_foreign_key    => 0,
+    is_unique         => 0
+  );
 
-    my $constraint1 = $table1->add_constraint(
-        name             => 'foo',
-        fields           => [qw/ fk_col1 fk_col2 /],
-        reference_fields => [qw/ fk_col1 fk_col2 /],
-        reference_table  => 'table2',
-        type             => FOREIGN_KEY,
-    );
+  my $constraint1 = $table1->add_constraint(
+    name             => 'foo',
+    fields           => [qw/ fk_col1 fk_col2 /],
+    reference_fields => [qw/ fk_col1 fk_col2 /],
+    reference_table  => 'table2',
+    type             => FOREIGN_KEY,
+  );
 
-    my $index1 = $table1->add_index(name => 'myfooindex', fields => ['foo']);
-    my $index2 = $table1->add_index(name => 'mybarindex', fields => [ { name => 'bar', prefix_length => 10 } ]);
+  my $index1 = $table1->add_index(name => 'myfooindex', fields => ['foo']);
+  my $index2 = $table1->add_index(
+    name   => 'mybarindex',
+    fields => [ { name => 'bar', prefix_length => 10 } ]
+  );
 
-    my ($table1_def, $fk1_def, $trigger1_def,
-        $index1_def, $constraint1_def
-    ) = SQL::Translator::Producer::Oracle::create_table($table1);
+  my ($table1_def, $fk1_def, $trigger1_def, $index1_def, $constraint1_def)
+      = SQL::Translator::Producer::Oracle::create_table($table1);
 
-    is_deeply(
-        $fk1_def,
-        [   'ALTER TABLE table1 ADD CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY (fk_col1, fk_col2) REFERENCES table2 (fk_col1, fk_col2)'
-        ],
-        'correct "CREATE CONSTRAINT" SQL'
-    );
+  is_deeply(
+    $fk1_def,
+    [
+      'ALTER TABLE table1 ADD CONSTRAINT table1_fk_col1_fk_col2_fk FOREIGN KEY (fk_col1, fk_col2) REFERENCES table2 (fk_col1, fk_col2)'
+    ],
+    'correct "CREATE CONSTRAINT" SQL'
+  );
 
-    is_deeply(
-        $index1_def,
-        [   'CREATE INDEX myfooindex ON table1 (foo)',
-            'CREATE INDEX mybarindex ON table1 (bar)'
-        ],
-        'correct "CREATE INDEX" SQL'
-    );
+  is_deeply(
+    $index1_def,
+    [ 'CREATE INDEX myfooindex ON table1 (foo)', 'CREATE INDEX mybarindex ON table1 (bar)' ],
+    'correct "CREATE INDEX" SQL'
+  );
 
-    my $materialized_view = SQL::Translator::Schema::View->new(
-        name    => 'matview',
-        sql     => 'SELECT id, name FROM table3',
-        fields  => 'id, name',
-        extra   => {
-            materialized =>
-                'REFRESH START WITH SYSDATE NEXT SYSDATE + 5/1440 FORCE WITH ROWID'
-        }
-    );
+  my $materialized_view = SQL::Translator::Schema::View->new(
+    name   => 'matview',
+    sql    => 'SELECT id, name FROM table3',
+    fields => 'id, name',
+    extra  => {
+      materialized => 'REFRESH START WITH SYSDATE NEXT SYSDATE + 5/1440 FORCE WITH ROWID'
+    }
+  );
 
-    my ($materialized_view_def) = SQL::Translator::Producer::Oracle::create_view($materialized_view);
-    is_deeply(
-        $materialized_view_def,
-        [   "CREATE MATERIALIZED VIEW matview REFRESH START WITH SYSDATE NEXT SYSDATE + 5/1440 FORCE WITH ROWID AS\nSELECT id, name FROM table3"
-        ],
-        'correct "CREATE MATERIALZED VIEW" SQL'
-    );
+  my ($materialized_view_def) = SQL::Translator::Producer::Oracle::create_view($materialized_view);
+  is_deeply(
+    $materialized_view_def,
+    [
+      "CREATE MATERIALIZED VIEW matview REFRESH START WITH SYSDATE NEXT SYSDATE + 5/1440 FORCE WITH ROWID AS\nSELECT id, name FROM table3"
+    ],
+    'correct "CREATE MATERIALZED VIEW" SQL'
+  );
 
 }
 

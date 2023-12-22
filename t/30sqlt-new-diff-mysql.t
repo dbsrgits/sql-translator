@@ -6,7 +6,7 @@ use warnings;
 use SQL::Translator;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
-use FindBin qw($Bin);
+use FindBin               qw($Bin);
 use Test::More;
 use Test::Differences;
 use Test::SQL::Translator qw(maybe_plan);
@@ -19,31 +19,33 @@ use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
 my $tr = SQL::Translator->new;
 
-my ( $source_schema, $target_schema ) = map {
-    my $t = SQL::Translator->new;
-    $t->parser( 'YAML' )
+my ($source_schema, $target_schema) = map {
+  my $t = SQL::Translator->new;
+  $t->parser('YAML')
       or die $tr->error;
-    my $out = $t->translate( catfile($Bin, qw/data diff/, $_ ) )
+  my $out = $t->translate(catfile($Bin, qw/data diff/, $_))
       or die $tr->error;
 
-    my $schema = $t->schema;
-    unless ( $schema->name ) {
-        $schema->name( $_ );
-    }
-    ($schema);
+  my $schema = $t->schema;
+  unless ($schema->name) {
+    $schema->name($_);
+  }
+  ($schema);
 } (qw( create1.yml create2.yml ));
 
 # Test for differences
 my @out = SQL::Translator::Diff::schema_diff(
-    $source_schema, 'MySQL',
-    $target_schema, 'MySQL',
-    {
-        no_batch_alters  => 1,
-        sqlt_args => { quote_identifiers => 0 }
-    }
+  $source_schema,
+  'MySQL',
+  $target_schema,
+  'MySQL',
+  {
+    no_batch_alters => 1,
+    sqlt_args       => { quote_identifiers => 0 }
+  }
 );
 
-ok( @out, 'Got a list' );
+ok(@out, 'Got a list');
 
 my $out = join('', @out);
 
@@ -103,11 +105,17 @@ COMMIT;
 
 ## END OF DIFF
 
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $target_schema, 'MySQL',
-    { ignore_index_names => 1,
-      ignore_constraint_names => 1,
-      sqlt_args => { quote_identifiers => 0 },
-    });
+$out = SQL::Translator::Diff::schema_diff(
+  $source_schema,
+  'MySQL',
+  $target_schema,
+  'MySQL',
+  {
+    ignore_index_names      => 1,
+    ignore_constraint_names => 1,
+    sqlt_args               => { quote_identifiers => 0 },
+  }
+);
 
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected", { context => 1 });
 -- Convert schema 'create1.yml' to 'create2.yml':;
@@ -147,9 +155,8 @@ COMMIT;
 
 ## END OF DIFF
 
-
 # Test for sameness
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
+$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL');
 
 eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 -- Convert schema 'create1.yml' to 'create1.yml':;
@@ -160,17 +167,17 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 
 {
   my $t = SQL::Translator->new;
-  $t->parser( 'MySQL' )
-    or die $tr->error;
-  my $out = $t->translate( catfile($Bin, qw/data mysql create.sql/ ) )
-    or die $tr->error;
+  $t->parser('MySQL')
+      or die $tr->error;
+  my $out = $t->translate(catfile($Bin, qw/data mysql create.sql/))
+      or die $tr->error;
 
-  # Lets remove the renamed table so we dont have to change the SQL or other tests
+# Lets remove the renamed table so we dont have to change the SQL or other tests
   $target_schema->drop_table('new_name');
 
   my $schema = $t->schema;
-  unless ( $schema->name ) {
-      $schema->name( 'create.sql' );
+  unless ($schema->name) {
+    $schema->name('create.sql');
   }
 
   # Now lets change the type of one of the 'integer' columns so that it
@@ -178,7 +185,8 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
   my $field = $target_schema->get_table('employee')->get_field('employee_id');
   $field->data_type('integer');
   $field->size(0);
-  $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema, 'MySQL', { sqlt_args => { quote_identifiers => 0 } } );
+  $out = SQL::Translator::Diff::schema_diff($schema, 'MySQL', $target_schema,
+    'MySQL', { sqlt_args => { quote_identifiers => 0 } });
   eq_or_diff($out, <<'## END OF DIFF', "No differences found", { context => 1 });
 -- Convert schema 'create.sql' to 'create2.yml':;
 
@@ -222,7 +230,6 @@ COMMIT;
 # Test InnoDB stupidness. Have to drop constraints before re-adding them if
 # they are just alters.
 
-
 {
   my $s1 = SQL::Translator::Schema->new;
   my $s2 = SQL::Translator::Schema->new;
@@ -233,24 +240,23 @@ COMMIT;
   my $t1 = $s1->add_table($target_schema->get_table('employee'));
   my $t2 = $s2->add_table(dclone($target_schema->get_table('employee')));
 
-
   my ($c) = grep { $_->name eq 'FK5302D47D93FE702E_diff' } $t2->get_constraints;
   $c->on_delete('CASCADE');
 
   $t2->add_constraint(
-    name => 'new_constraint',
-    type => 'FOREIGN KEY',
-    fields => ['employee_id'],
+    name             => 'new_constraint',
+    type             => 'FOREIGN KEY',
+    fields           => ['employee_id'],
     reference_fields => ['fake'],
-    reference_table => 'patty',
+    reference_table  => 'patty',
   );
 
   $t2->add_field(
-    name => 'new',
+    name      => 'new',
     data_type => 'int'
   );
 
-  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
+  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL');
 
   eq_or_diff($out, <<'## END OF DIFF', "Batch alter of constraints work for InnoDB", { context => 1 });
 -- Convert schema 'Schema 1' to 'Schema 2':;
@@ -286,23 +292,22 @@ COMMIT;
   $t2->extra(renamed_from => 'employee');
   $s2->add_table($t2);
 
-
   $t1->add_constraint(
-    name => 'bar_fk',
-    type => 'FOREIGN KEY',
-    fields => ['employee_id'],
+    name             => 'bar_fk',
+    type             => 'FOREIGN KEY',
+    fields           => ['employee_id'],
     reference_fields => ['id'],
-    reference_table => 'bar',
+    reference_table  => 'bar',
   );
   $t2->add_constraint(
-    name => 'foo_fk',
-    type => 'FOREIGN KEY',
-    fields => ['employee_id'],
+    name             => 'foo_fk',
+    type             => 'FOREIGN KEY',
+    fields           => ['employee_id'],
     reference_fields => ['id'],
-    reference_table => 'foo',
+    reference_table  => 'foo',
   );
 
-  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL' );
+  my $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL');
   eq_or_diff($out, <<'## END OF DIFF', "Alter/drop constraints works with rename table", { context => 1 });
 -- Convert schema 'Schema 3' to 'Schema 4':;
 
@@ -322,9 +327,7 @@ COMMIT;
 ## END OF DIFF
 
   # Test quoting works too.
-  $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL',
-    { sqlt_args => { quote_identifiers => 1 } }
-  );
+  $out = SQL::Translator::Diff::schema_diff($s1, 'MySQL', $s2, 'MySQL', { sqlt_args => { quote_identifiers => 1 } });
   eq_or_diff($out, <<'## END OF DIFF', "Quoting can be turned on", { context => 1 });
 -- Convert schema 'Schema 3' to 'Schema 4':;
 

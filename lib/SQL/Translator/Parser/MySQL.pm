@@ -135,11 +135,11 @@ use warnings;
 our $VERSION = '1.64';
 
 our $DEBUG;
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use Data::Dumper;
-use Storable qw(dclone);
-use DBI qw(:sql_types);
+use Storable               qw(dclone);
+use DBI                    qw(:sql_types);
 use SQL::Translator::Utils qw/parse_mysql_version ddl_parser_instance/;
 
 use base qw(Exporter);
@@ -913,276 +913,252 @@ CURRENT_TIMESTAMP :
 END_OF_GRAMMAR
 
 sub parse {
-    my ( $translator, $data ) = @_;
+  my ($translator, $data) = @_;
 
-    # Enable warnings within the Parse::RecDescent module.
-    # Make sure the parser dies when it encounters an error
-    local $::RD_ERRORS = 1 unless defined $::RD_ERRORS;
-    # Enable warnings. This will warn on unused rules &c.
-    local $::RD_WARN   = 1 unless defined $::RD_WARN;
-    # Give out hints to help fix problems.
-    local $::RD_HINT   = 1 unless defined $::RD_HINT;
-    local $::RD_TRACE  = $translator->trace ? 1 : undef;
-    local $DEBUG       = $translator->debug;
+  # Enable warnings within the Parse::RecDescent module.
+  # Make sure the parser dies when it encounters an error
+  local $::RD_ERRORS = 1 unless defined $::RD_ERRORS;
 
-    my $parser = ddl_parser_instance('MySQL');
+  # Enable warnings. This will warn on unused rules &c.
+  local $::RD_WARN = 1 unless defined $::RD_WARN;
 
-    # Preprocess for MySQL-specific and not-before-version comments
-    # from mysqldump
-    my $parser_version = parse_mysql_version(
-        $translator->parser_args->{mysql_parser_version}, 'mysql'
-    ) || DEFAULT_PARSER_VERSION;
+  # Give out hints to help fix problems.
+  local $::RD_HINT  = 1 unless defined $::RD_HINT;
+  local $::RD_TRACE = $translator->trace ? 1 : undef;
+  local $DEBUG      = $translator->debug;
 
-    while ( $data =~
-        s#/\*!(\d{5})?(.*?)\*/#($1 && $1 > $parser_version ? '' : $2)#es
-    ) {
-        # do nothing; is there a better way to write this? -- ky
+  my $parser = ddl_parser_instance('MySQL');
+
+  # Preprocess for MySQL-specific and not-before-version comments
+  # from mysqldump
+  my $parser_version = parse_mysql_version($translator->parser_args->{mysql_parser_version}, 'mysql')
+      || DEFAULT_PARSER_VERSION;
+
+  while ($data =~ s#/\*!(\d{5})?(.*?)\*/#($1 && $1 > $parser_version ? '' : $2)#es) {
+    # do nothing; is there a better way to write this? -- ky
+  }
+
+  my $result = $parser->startrule($data);
+  return $translator->error("Parse failed.") unless defined $result;
+  warn "Parse result:" . Dumper($result) if $DEBUG;
+
+  my $schema = $translator->schema;
+  $schema->name($result->{'database_name'}) if $result->{'database_name'};
+
+  my @tables
+      = sort { $result->{'tables'}{$a}{'order'} <=> $result->{'tables'}{$b}{'order'} } keys %{ $result->{'tables'} };
+
+  for my $table_name (@tables) {
+    my $tdata = $result->{tables}{$table_name};
+    my $table = $schema->add_table(name => $tdata->{'table_name'},)
+        or die $schema->error;
+
+    $table->comments($tdata->{'comments'});
+
+    my @fields = sort { $tdata->{'fields'}->{$a}->{'order'} <=> $tdata->{'fields'}->{$b}->{'order'} }
+        keys %{ $tdata->{'fields'} };
+
+    for my $fname (@fields) {
+      my $fdata = $tdata->{'fields'}{$fname};
+      my $field = $table->add_field(
+        name              => $fdata->{'name'},
+        data_type         => $fdata->{'data_type'},
+        size              => $fdata->{'size'},
+        default_value     => $fdata->{'default'},
+        is_auto_increment => $fdata->{'is_auto_inc'},
+        is_nullable       => $fdata->{'null'},
+        comments          => $fdata->{'comments'},
+      ) or die $table->error;
+
+      $table->primary_key($field->name) if $fdata->{'is_primary_key'};
+
+      for my $qual (qw[ binary unsigned zerofill list collate ], 'character set', 'on update') {
+        if (my $val = $fdata->{$qual} || $fdata->{ uc $qual }) {
+          next if ref $val eq 'ARRAY' && !@$val;
+          $field->extra($qual, $val);
+        }
+      }
+
+      if ($fdata->{'has_index'}) {
+        $table->add_index(
+          name   => '',
+          type   => 'NORMAL',
+          fields => $fdata->{'name'},
+        ) or die $table->error;
+      }
+
+      if ($fdata->{'is_unique'}) {
+        $table->add_constraint(
+          name   => '',
+          type   => 'UNIQUE',
+          fields => $fdata->{'name'},
+        ) or die $table->error;
+      }
+
+      for my $cdata (@{ $fdata->{'constraints'} }) {
+        next unless $cdata->{'type'} eq 'foreign_key';
+        $cdata->{'fields'} ||= [ $field->name ];
+        push @{ $tdata->{'constraints'} }, $cdata;
+      }
+
     }
 
-    my $result = $parser->startrule($data);
-    return $translator->error( "Parse failed." ) unless defined $result;
-    warn "Parse result:".Dumper( $result ) if $DEBUG;
-
-    my $schema = $translator->schema;
-    $schema->name($result->{'database_name'}) if $result->{'database_name'};
-
-    my @tables = sort {
-        $result->{'tables'}{ $a }{'order'}
-        <=>
-        $result->{'tables'}{ $b }{'order'}
-    } keys %{ $result->{'tables'} };
-
-    for my $table_name ( @tables ) {
-        my $tdata =  $result->{tables}{ $table_name };
-        my $table =  $schema->add_table(
-            name  => $tdata->{'table_name'},
-        ) or die $schema->error;
-
-        $table->comments( $tdata->{'comments'} );
-
-        my @fields = sort {
-            $tdata->{'fields'}->{$a}->{'order'}
-            <=>
-            $tdata->{'fields'}->{$b}->{'order'}
-        } keys %{ $tdata->{'fields'} };
-
-        for my $fname ( @fields ) {
-            my $fdata = $tdata->{'fields'}{ $fname };
-            my $field = $table->add_field(
-                name              => $fdata->{'name'},
-                data_type         => $fdata->{'data_type'},
-                size              => $fdata->{'size'},
-                default_value     => $fdata->{'default'},
-                is_auto_increment => $fdata->{'is_auto_inc'},
-                is_nullable       => $fdata->{'null'},
-                comments          => $fdata->{'comments'},
-            ) or die $table->error;
-
-            $table->primary_key( $field->name ) if $fdata->{'is_primary_key'};
-
-            for my $qual ( qw[ binary unsigned zerofill list collate ],
-                    'character set', 'on update' ) {
-                if ( my $val = $fdata->{ $qual } || $fdata->{ uc $qual } ) {
-                    next if ref $val eq 'ARRAY' && !@$val;
-                    $field->extra( $qual, $val );
-                }
-            }
-
-            if ( $fdata->{'has_index'} ) {
-                $table->add_index(
-                    name   => '',
-                    type   => 'NORMAL',
-                    fields => $fdata->{'name'},
-                ) or die $table->error;
-            }
-
-            if ( $fdata->{'is_unique'} ) {
-                $table->add_constraint(
-                    name   => '',
-                    type   => 'UNIQUE',
-                    fields => $fdata->{'name'},
-                ) or die $table->error;
-            }
-
-            for my $cdata ( @{ $fdata->{'constraints'} } ) {
-                next unless $cdata->{'type'} eq 'foreign_key';
-                $cdata->{'fields'} ||= [ $field->name ];
-                push @{ $tdata->{'constraints'} }, $cdata;
-            }
-
-        }
-
-        for my $idata ( @{ $tdata->{'indices'} || [] } ) {
-            my $index  =  $table->add_index(
-                name   => $idata->{'name'},
-                type   => uc $idata->{'type'},
-                fields => $idata->{'fields'},
-            ) or die $table->error;
-        }
-
-        if ( my @options = @{ $tdata->{'table_options'} || [] } ) {
-            my @cleaned_options;
-            my @ignore_opts = $translator->parser_args->{'ignore_opts'}
-                ? split( /,/, $translator->parser_args->{'ignore_opts'} )
-                : ();
-            if (@ignore_opts) {
-                my $ignores = { map { $_ => 1 } @ignore_opts };
-                foreach my $option (@options) {
-                    # make sure the option isn't in ignore list
-                    my ($option_key) = keys %$option;
-                    if ( !exists $ignores->{$option_key} ) {
-                        push @cleaned_options, $option;
-                    }
-                }
-            } else {
-                @cleaned_options = @options;
-            }
-            $table->options( \@cleaned_options ) or die $table->error;
-        }
-
-        for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
-            my $constraint       =  $table->add_constraint(
-                name             => $cdata->{'name'},
-                type             => $cdata->{'type'},
-                fields           => $cdata->{'fields'},
-                expression       => $cdata->{'expression'},
-                reference_table  => $cdata->{'reference_table'},
-                reference_fields => $cdata->{'reference_fields'},
-                match_type       => $cdata->{'match_type'} || '',
-                on_delete        => $cdata->{'on_delete'}
-                                 || $cdata->{'on_delete_do'},
-                on_update        => $cdata->{'on_update'}
-                                 || $cdata->{'on_update_do'},
-            ) or die $table->error;
-        }
-
-        # After the constrains and PK/idxs have been created,
-        # we normalize fields
-        normalize_field($_) for $table->get_fields;
+    for my $idata (@{ $tdata->{'indices'} || [] }) {
+      my $index = $table->add_index(
+        name   => $idata->{'name'},
+        type   => uc $idata->{'type'},
+        fields => $idata->{'fields'},
+      ) or die $table->error;
     }
 
-    my @procedures = sort {
-        $result->{procedures}->{ $a }->{'order'}
-        <=>
-        $result->{procedures}->{ $b }->{'order'}
-    } keys %{ $result->{procedures} };
+    if (my @options = @{ $tdata->{'table_options'} || [] }) {
+      my @cleaned_options;
+      my @ignore_opts
+          = $translator->parser_args->{'ignore_opts'}
+          ? split(/,/, $translator->parser_args->{'ignore_opts'})
+          : ();
+      if (@ignore_opts) {
+        my $ignores = { map { $_ => 1 } @ignore_opts };
+        foreach my $option (@options) {
 
-    for my $proc_name ( @procedures ) {
-        $schema->add_procedure(
-            name  => $proc_name,
-            owner => $result->{procedures}->{$proc_name}->{owner},
-            sql   => $result->{procedures}->{$proc_name}->{sql},
-        );
+          # make sure the option isn't in ignore list
+          my ($option_key) = keys %$option;
+          if (!exists $ignores->{$option_key}) {
+            push @cleaned_options, $option;
+          }
+        }
+      } else {
+        @cleaned_options = @options;
+      }
+      $table->options(\@cleaned_options) or die $table->error;
     }
 
-    my @views = sort {
-        $result->{views}->{ $a }->{'order'}
-        <=>
-        $result->{views}->{ $b }->{'order'}
-    } keys %{ $result->{views} };
-
-    for my $view_name ( @views ) {
-        my $view = $result->{'views'}{ $view_name };
-        my @flds = map { $_->{'alias'} || $_->{'name'} }
-                   @{ $view->{'select'}{'columns'} || [] };
-        my @from = map { $_->{'alias'} || $_->{'name'} }
-                   @{ $view->{'from'}{'tables'} || [] };
-
-        $schema->add_view(
-            name    => $view_name,
-            sql     => $view->{'sql'},
-            order   => $view->{'order'},
-            fields  => \@flds,
-            tables  => \@from,
-            options => $view->{'options'}
-        );
+    for my $cdata (@{ $tdata->{'constraints'} || [] }) {
+      my $constraint = $table->add_constraint(
+        name             => $cdata->{'name'},
+        type             => $cdata->{'type'},
+        fields           => $cdata->{'fields'},
+        expression       => $cdata->{'expression'},
+        reference_table  => $cdata->{'reference_table'},
+        reference_fields => $cdata->{'reference_fields'},
+        match_type       => $cdata->{'match_type'} || '',
+        on_delete        => $cdata->{'on_delete'}  || $cdata->{'on_delete_do'},
+        on_update        => $cdata->{'on_update'}  || $cdata->{'on_update_do'},
+      ) or die $table->error;
     }
 
-    return 1;
+    # After the constrains and PK/idxs have been created,
+    # we normalize fields
+    normalize_field($_) for $table->get_fields;
+  }
+
+  my @procedures = sort { $result->{procedures}->{$a}->{'order'} <=> $result->{procedures}->{$b}->{'order'} }
+      keys %{ $result->{procedures} };
+
+  for my $proc_name (@procedures) {
+    $schema->add_procedure(
+      name  => $proc_name,
+      owner => $result->{procedures}->{$proc_name}->{owner},
+      sql   => $result->{procedures}->{$proc_name}->{sql},
+    );
+  }
+
+  my @views
+      = sort { $result->{views}->{$a}->{'order'} <=> $result->{views}->{$b}->{'order'} } keys %{ $result->{views} };
+
+  for my $view_name (@views) {
+    my $view = $result->{'views'}{$view_name};
+    my @flds = map { $_->{'alias'} || $_->{'name'} } @{ $view->{'select'}{'columns'} || [] };
+    my @from = map { $_->{'alias'} || $_->{'name'} } @{ $view->{'from'}{'tables'}    || [] };
+
+    $schema->add_view(
+      name    => $view_name,
+      sql     => $view->{'sql'},
+      order   => $view->{'order'},
+      fields  => \@flds,
+      tables  => \@from,
+      options => $view->{'options'}
+    );
+  }
+
+  return 1;
 }
 
 # Takes a field, and returns
 sub normalize_field {
-    my ($field) = @_;
-    my ($size, $type, $list, $unsigned, $changed);
+  my ($field) = @_;
+  my ($size, $type, $list, $unsigned, $changed);
 
-    $size = $field->size;
-    $type = $field->data_type;
-    $list = $field->extra->{list} || [];
-    $unsigned = defined($field->extra->{unsigned});
+  $size     = $field->size;
+  $type     = $field->data_type;
+  $list     = $field->extra->{list} || [];
+  $unsigned = defined($field->extra->{unsigned});
 
-    if ( !ref $size && $size eq 0 ) {
-        if ( lc $type eq 'tinyint' ) {
-            $changed = $size != 4 - $unsigned;
-            $size = 4 - $unsigned;
-        }
-        elsif ( lc $type eq 'smallint' ) {
-            $changed = $size != 6 - $unsigned;
-            $size = 6 - $unsigned;
-        }
-        elsif ( lc $type eq 'mediumint' ) {
-            $changed = $size != 9 - $unsigned;
-            $size = 9 - $unsigned;
-        }
-        elsif ( $type =~ /^int(eger)?$/i ) {
-            $changed = $size != 11 - $unsigned || $type ne 'int';
-            $type = 'int';
-            $size = 11 - $unsigned;
-        }
-        elsif ( lc $type eq 'bigint' ) {
-            $changed = $size != 20;
-            $size = 20;
-        }
-        elsif ( lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/ ) {
-            my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
-            $changed     = @$old_size != 2
-                        || $old_size->[0] != 8
-                        || $old_size->[1] != 2;
-            $size        = [8,2];
-        }
+  if (!ref $size && $size eq 0) {
+    if (lc $type eq 'tinyint') {
+      $changed = $size != 4 - $unsigned;
+      $size    = 4 - $unsigned;
+    } elsif (lc $type eq 'smallint') {
+      $changed = $size != 6 - $unsigned;
+      $size    = 6 - $unsigned;
+    } elsif (lc $type eq 'mediumint') {
+      $changed = $size != 9 - $unsigned;
+      $size    = 9 - $unsigned;
+    } elsif ($type =~ /^int(eger)?$/i) {
+      $changed = $size != 11 - $unsigned || $type ne 'int';
+      $type    = 'int';
+      $size    = 11 - $unsigned;
+    } elsif (lc $type eq 'bigint') {
+      $changed = $size != 20;
+      $size    = 20;
+    } elsif (lc $type =~ /(float|double|decimal|numeric|real|fixed|dec)/) {
+      my $old_size = (ref $size || '') eq 'ARRAY' ? $size : [];
+      $changed
+          = @$old_size != 2
+          || $old_size->[0] != 8
+          || $old_size->[1] != 2;
+      $size = [ 8, 2 ];
     }
+  }
 
-    if ( $type =~ /^tiny(text|blob)$/i ) {
-        $changed = $size != 255;
-        $size = 255;
-    }
-    elsif ( $type =~ /^(blob|text)$/i ) {
-        $changed = $size != 65_535;
-        $size = 65_535;
-    }
-    elsif ( $type =~ /^medium(blob|text)$/i ) {
-        $changed = $size != 16_777_215;
-        $size = 16_777_215;
-    }
-    elsif ( $type =~ /^long(blob|text)$/i ) {
-        $changed = $size != 4_294_967_295;
-        $size = 4_294_967_295;
-    }
+  if ($type =~ /^tiny(text|blob)$/i) {
+    $changed = $size != 255;
+    $size    = 255;
+  } elsif ($type =~ /^(blob|text)$/i) {
+    $changed = $size != 65_535;
+    $size    = 65_535;
+  } elsif ($type =~ /^medium(blob|text)$/i) {
+    $changed = $size != 16_777_215;
+    $size    = 16_777_215;
+  } elsif ($type =~ /^long(blob|text)$/i) {
+    $changed = $size != 4_294_967_295;
+    $size    = 4_294_967_295;
+  }
 
-    if ( $field->data_type =~ /(set|enum)/i && !$field->size ) {
-        my %extra = $field->extra;
-        my $longest = 0;
-        for my $len ( map { length } @{ $extra{'list'} || [] } ) {
-            $longest = $len if $len > $longest;
-        }
-        $changed = 1;
-        $size = $longest if $longest;
+  if ($field->data_type =~ /(set|enum)/i && !$field->size) {
+    my %extra   = $field->extra;
+    my $longest = 0;
+    for my $len (map {length} @{ $extra{'list'} || [] }) {
+      $longest = $len if $len > $longest;
     }
+    $changed = 1;
+    $size    = $longest if $longest;
+  }
 
+  if ($changed) {
 
-    if ( $changed ) {
-        # We only want to clone the field, not *everything*
-        {
-            local $field->{table} = undef;
-            $field->parsed_field( dclone( $field ) );
-            $field->parsed_field->{table} = $field->table;
-        }
-        $field->size( $size );
-        $field->data_type( $type );
-        $field->sql_data_type( $type_mapping{ lc $type } )
-            if exists $type_mapping{ lc $type };
-        $field->extra->{list} = $list if @$list;
+    # We only want to clone the field, not *everything*
+    {
+      local $field->{table} = undef;
+      $field->parsed_field(dclone($field));
+      $field->parsed_field->{table} = $field->table;
     }
+    $field->size($size);
+    $field->data_type($type);
+    $field->sql_data_type($type_mapping{ lc $type })
+        if exists $type_mapping{ lc $type };
+    $field->extra->{list} = $list if @$list;
+  }
 }
 
 1;

@@ -7,9 +7,7 @@ use SQL::Translator;
 use FindBin '$Bin';
 
 BEGIN {
-    maybe_plan(2,
-        'SQL::Translator::Parser::SQLite',
-        'SQL::Translator::Producer::YAML');
+  maybe_plan(2, 'SQL::Translator::Parser::SQLite', 'SQL::Translator::Producer::YAML');
 }
 
 my $sqlt_version = $SQL::Translator::VERSION;
@@ -247,11 +245,11 @@ open FH, "<$file" or die "Can't read '$file': $!\n";
 local $/;
 my $data = <FH>;
 my $tr   = SQL::Translator->new(
-    parser   => 'SQLite',
-    producer => 'YAML',
-    data     => $data,
+  parser   => 'SQLite',
+  producer => 'YAML',
+  data     => $data,
 );
 
 my $out;
 lives_ok { $out = Load($tr->translate) } 'Translate SQLite to YAML';
-is_deeply( $out, $yaml, 'YAML matches expected' );
+is_deeply($out, $yaml, 'YAML matches expected');

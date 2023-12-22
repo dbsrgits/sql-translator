@@ -83,70 +83,68 @@ $VERSION = '1.64';
 # Get arguments.
 #
 my (
-    $out_file, $output_type, $db_driver, $title, $num_columns,
-    $no_lines, $font_size, $add_color, $debug, $show_fk_only,
-    $gutter, $natural_join, $join_pk_only, $skip_fields,
-    $skip_tables, $skip_tables_like, $help
+  $out_file,     $output_type, $db_driver,   $title,            $num_columns, $no_lines,
+  $font_size,    $add_color,   $debug,       $show_fk_only,     $gutter,      $natural_join,
+  $join_pk_only, $skip_fields, $skip_tables, $skip_tables_like, $help
 );
 
 GetOptions(
-    'd|db|f|from=s'      => \$db_driver,
-    'o|output:s'         => \$out_file,
-    'i|image:s'          => \$output_type,
-    't|title:s'          => \$title,
-    'c|columns:i'        => \$num_columns,
-    'n|no-lines'         => \$no_lines,
-    'font-size:s'        => \$font_size,
-    'gutter:i'           => \$gutter,
-    'color'              => \$add_color,
-    'show-fk-only'       => \$show_fk_only,
-    'natural-join'       => \$natural_join,
-    'natural-join-pk'    => \$join_pk_only,
-    's|skip:s'           => \$skip_fields,
-    'skip-tables:s'      => \$skip_tables,
-    'skip-tables-like:s' => \$skip_tables_like,
-    'debug'              => \$debug,
-    'h|help'             => \$help,
+  'd|db|f|from=s'      => \$db_driver,
+  'o|output:s'         => \$out_file,
+  'i|image:s'          => \$output_type,
+  't|title:s'          => \$title,
+  'c|columns:i'        => \$num_columns,
+  'n|no-lines'         => \$no_lines,
+  'font-size:s'        => \$font_size,
+  'gutter:i'           => \$gutter,
+  'color'              => \$add_color,
+  'show-fk-only'       => \$show_fk_only,
+  'natural-join'       => \$natural_join,
+  'natural-join-pk'    => \$join_pk_only,
+  's|skip:s'           => \$skip_fields,
+  'skip-tables:s'      => \$skip_tables,
+  'skip-tables-like:s' => \$skip_tables_like,
+  'debug'              => \$debug,
+  'h|help'             => \$help,
 ) or die pod2usage;
-my @files = @ARGV; # the create script(s) for the original db
+my @files = @ARGV;    # the create script(s) for the original db
 
 pod2usage(1) if $help;
-pod2usage( -message => "No db driver specified" ) unless $db_driver;
-pod2usage( -message => 'No input file'          ) unless @files;
+pod2usage(-message => "No db driver specified") unless $db_driver;
+pod2usage(-message => 'No input file')          unless @files;
 
-my $translator       =  SQL::Translator->new(
-    from             => $db_driver,
-    to               => 'Diagram',
-    debug            => $debug || 0,
-    producer_args    => {
-        out_file         => $out_file,
-        output_type      => $output_type,
-        gutter           => $gutter || 0,
-        title            => $title,
-        num_columns      => $num_columns,
-        no_lines         => $no_lines,
-        font_size        => $font_size,
-        add_color        => $add_color,
-        show_fk_only     => $show_fk_only,
-        natural_join     => $natural_join,
-        join_pk_only     => $join_pk_only,
-        skip_fields      => $skip_fields,
-        skip_tables      => $skip_tables,
-        skip_tables_like => $skip_tables_like,
-    },
+my $translator = SQL::Translator->new(
+  from          => $db_driver,
+  to            => 'Diagram',
+  debug         => $debug || 0,
+  producer_args => {
+    out_file         => $out_file,
+    output_type      => $output_type,
+    gutter           => $gutter || 0,
+    title            => $title,
+    num_columns      => $num_columns,
+    no_lines         => $no_lines,
+    font_size        => $font_size,
+    add_color        => $add_color,
+    show_fk_only     => $show_fk_only,
+    natural_join     => $natural_join,
+    join_pk_only     => $join_pk_only,
+    skip_fields      => $skip_fields,
+    skip_tables      => $skip_tables,
+    skip_tables_like => $skip_tables_like,
+  },
 ) or die SQL::Translator->error;
 
 binmode STDOUT unless $out_file;
 
 for my $file (@files) {
-    my $output = $translator->translate( $file ) or die
-                 "Error: " . $translator->error;
-    if ( $out_file ) {
-        print "Image written to '$out_file'.  Done.\n";
-    }
-    else {
-        print $output;
-    }
+  my $output = $translator->translate($file)
+      or die "Error: " . $translator->error;
+  if ($out_file) {
+    print "Image written to '$out_file'.  Done.\n";
+  } else {
+    print $output;
+  }
 }
 
 # -------------------------------------------------------------------

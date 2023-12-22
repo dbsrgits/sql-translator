@@ -20,7 +20,6 @@ for schema objects.
 use Moo::Role;
 use Sub::Quote qw(quote_sub);
 
-
 =head1 METHODS
 
 =head2 extra
@@ -40,25 +39,24 @@ Returns a hash or a hashref.
 
 =cut
 
-has extra => ( is => 'rwp', default => quote_sub(q{ +{} }) );
+has extra => (is => 'rwp', default => quote_sub(q{ +{} }));
 
 around extra => sub {
-    my ($orig, $self) = (shift, shift);
+  my ($orig, $self) = (shift, shift);
 
-    @_ = %{$_[0]} if ref $_[0] eq "HASH";
-    my $extra = $self->$orig;
+  @_ = %{ $_[0] } if ref $_[0] eq "HASH";
+  my $extra = $self->$orig;
 
-    if (@_==1) {
-        return $extra->{$_[0]};
+  if (@_ == 1) {
+    return $extra->{ $_[0] };
+  } elsif (@_) {
+    my %args = @_;
+    while (my ($key, $value) = each %args) {
+      $extra->{$key} = $value;
     }
-    elsif (@_) {
-        my %args = @_;
-        while ( my ( $key, $value ) = each %args ) {
-            $extra->{$key} = $value;
-        }
-    }
+  }
 
-    return wantarray ? %$extra : $extra;
+  return wantarray ? %$extra : $extra;
 };
 
 =head2 remove_extra
@@ -77,13 +75,12 @@ certain extra attributes only.
 =cut
 
 sub remove_extra {
-    my ( $self, @keys ) = @_;
-    unless (@keys) {
-        $self->_set_extra({});
-    }
-    else {
-        delete @{$self->extra}{@keys};
-    }
+  my ($self, @keys) = @_;
+  unless (@keys) {
+    $self->_set_extra({});
+  } else {
+    delete @{ $self->extra }{@keys};
+  }
 }
 
 1;

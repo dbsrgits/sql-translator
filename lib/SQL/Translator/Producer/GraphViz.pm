@@ -227,398 +227,365 @@ use strict;
 use GraphViz;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils qw(debug);
-use Scalar::Util qw/openhandle/;
+use Scalar::Util           qw/openhandle/;
 
 our $DEBUG;
 our $VERSION = '1.64';
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 sub produce {
-    my $t          = shift;
-    my $schema     = $t->schema;
-    my $args       = $t->producer_args;
-    local $DEBUG   = $t->debug;
+  my $t      = shift;
+  my $schema = $t->schema;
+  my $args   = $t->producer_args;
+  local $DEBUG = $t->debug;
 
-    # translate legacy {node|edge|graph}attrs to just {node|edge|graph}
-    for my $argtype (qw/node edge graph/) {
-        my $old_arg = $argtype . 'attrs';
+  # translate legacy {node|edge|graph}attrs to just {node|edge|graph}
+  for my $argtype (qw/node edge graph/) {
+    my $old_arg = $argtype . 'attrs';
 
-        my %arglist = (map
-          { %{ $_ || {} } }
-          ( delete $args->{$old_arg}, delete $args->{$argtype} )
-        );
+    my %arglist = (map { %{ $_ || {} } } (delete $args->{$old_arg}, delete $args->{$argtype}));
 
-        $args->{$argtype} = \%arglist if keys %arglist;
+    $args->{$argtype} = \%arglist if keys %arglist;
+  }
+
+  # explode font settings
+  for (qw/fontsize fontname/) {
+    if (defined $args->{$_}) {
+      $args->{node}{$_}  ||= $args->{$_};
+      $args->{edge}{$_}  ||= $args->{$_};
+      $args->{graph}{$_} ||= $args->{$_};
     }
+  }
 
-    # explode font settings
-    for (qw/fontsize fontname/) {
-        if (defined $args->{$_}) {
-            $args->{node}{$_} ||= $args->{$_};
-            $args->{edge}{$_} ||= $args->{$_};
-            $args->{graph}{$_} ||= $args->{$_};
-        }
-    }
+  # legacy add_color setting, trumped by bgcolor if set
+  $args->{bgcolor} ||= 'lightgoldenrodyellow' if $args->{add_color};
 
-    # legacy add_color setting, trumped by bgcolor if set
-    $args->{bgcolor} ||= 'lightgoldenrodyellow' if $args->{add_color};
+  # legacy node_shape setting, defaults to 'record', trumped by {node}{shape}
+  $args->{node}{shape} ||= ($args->{node_shape} || 'record');
 
-    # legacy node_shape setting, defaults to 'record', trumped by {node}{shape}
-    $args->{node}{shape} ||= ( $args->{node_shape} || 'record' );
+  # maintain defaults
+  $args->{layout}          ||= 'dot';
+  $args->{output_type}     ||= 'png';
+  $args->{overlap}         ||= 'false';
+  $args->{node}{style}     ||= 'filled';
+  $args->{node}{fillcolor} ||= 'white';
 
-    # maintain defaults
-    $args->{layout}          ||= 'dot';
-    $args->{output_type}     ||= 'png';
-    $args->{overlap}         ||= 'false';
-    $args->{node}{style}     ||= 'filled';
-    $args->{node}{fillcolor} ||= 'white';
+  $args->{show_fields}      = 1   if not exists $args->{show_fields};
+  $args->{show_index_names} = 1   if not exists $args->{show_index_names};
+  $args->{width}            = 8.5 if not defined $args->{width};
+  $args->{height}           = 11  if not defined $args->{height};
+  for ($args->{height}, $args->{width}) {
+    $_ = 0 unless $_ =~ /^\d+(?:.\d+)?$/;
+    $_ = 0 if $_ < 0;
+  }
 
-    $args->{show_fields}    = 1 if not exists $args->{show_fields};
-    $args->{show_index_names} = 1 if not exists $args->{show_index_names};
-    $args->{width}          = 8.5 if not defined $args->{width};
-    $args->{height}         = 11 if not defined $args->{height};
-    for ( $args->{height}, $args->{width} ) {
-        $_ = 0 unless $_ =~ /^\d+(?:.\d+)?$/;
-        $_ = 0 if $_ < 0;
-    }
+  # so split won't warn
+  $args->{$_} ||= '' for qw/skip_fields skip_tables skip_tables_like cluster/;
 
-    # so split won't warn
-    $args->{$_} ||= '' for qw/skip_fields skip_tables skip_tables_like cluster/;
+  my %skip_fields = map { s/^\s+|\s+$//g; length $_ ? ($_, 1) : () }
+      split(/,/, $args->{skip_fields});
 
-    my %skip_fields = map { s/^\s+|\s+$//g; length $_ ? ($_, 1) : () }
-                        split ( /,/, $args->{skip_fields} );
+  my %skip_tables = map { $_, 1 } (
+    ref $args->{skip_tables} eq 'ARRAY'
+    ? @{ $args->{skip_tables} }
+    : split(/\s*,\s*/, $args->{skip_tables})
+  );
 
-    my %skip_tables      = map { $_, 1 } (
-      ref $args->{skip_tables} eq 'ARRAY'
-        ? @{$args->{skip_tables}}
-        : split (/\s*,\s*/, $args->{skip_tables})
-      );
+  my @skip_tables_like = map {qr/$_/} (
+    ref $args->{skip_tables_like} eq 'ARRAY'
+    ? @{ $args->{skip_tables_like} }
+    : split(/\s*,\s*/, $args->{skip_tables_like})
+  );
 
-    my @skip_tables_like = map { qr/$_/ } (
-      ref $args->{skip_tables_like} eq 'ARRAY'
-        ? @{$args->{skip_tables_like}}
-        : split (/\s*,\s*/, $args->{skip_tables_like})
-      );
-
-    # join_pk_only/skip_fields implies natural_join
-    $args->{natural_join} = 1
+  # join_pk_only/skip_fields implies natural_join
+  $args->{natural_join} = 1
       if ($args->{join_pk_only} or scalar keys %skip_fields);
 
-    # usually we do not want direction when using natural join
-    $args->{directed} = ($args->{natural_join} ? 0 : 1)
+  # usually we do not want direction when using natural join
+  $args->{directed} = ($args->{natural_join} ? 0 : 1)
       if not exists $args->{directed};
 
-    $schema->make_natural_joins(
-        join_pk_only => $args->{join_pk_only},
-        skip_fields  => $args->{skip_fields},
-    ) if $args->{natural_join};
+  $schema->make_natural_joins(
+    join_pk_only => $args->{join_pk_only},
+    skip_fields  => $args->{skip_fields},
+  ) if $args->{natural_join};
 
-    my %cluster;
-    if ( defined $args->{'cluster'} ) {
-        my @clusters;
-        if ( ref $args->{'cluster'} eq 'ARRAY' ) {
-            @clusters = @{ $args->{'cluster'} };
-        }
-        else {
-            @clusters = split /\s*;\s*/, $args->{'cluster'};
-        }
-
-        for my $c ( @clusters ) {
-            my ( $cluster_name, @cluster_tables );
-            if ( ref $c eq 'HASH' ) {
-                $cluster_name   = $c->{'name'} || $c->{'cluster_name'};
-                @cluster_tables = @{ $c->{'tables'} || [] };
-            }
-            else {
-                my ( $name, $tables ) = split /\s*=\s*/, $c;
-                $cluster_name   = $name;
-                @cluster_tables = split /\s*,\s*/, $tables;
-            }
-
-            for my $table ( @cluster_tables ) {
-                $cluster{ $table } = $cluster_name;
-            }
-        }
+  my %cluster;
+  if (defined $args->{'cluster'}) {
+    my @clusters;
+    if (ref $args->{'cluster'} eq 'ARRAY') {
+      @clusters = @{ $args->{'cluster'} };
+    } else {
+      @clusters = split /\s*;\s*/, $args->{'cluster'};
     }
 
-    #
-    # Create a blank GraphViz object and see if we can produce the output type.
-    #
-    my $gv = GraphViz->new( %$args )
-      or die sprintf ("Can't create GraphViz object: %s\n",
-        $@ || 'reason unknown'
-      );
+    for my $c (@clusters) {
+      my ($cluster_name, @cluster_tables);
+      if (ref $c eq 'HASH') {
+        $cluster_name   = $c->{'name'} || $c->{'cluster_name'};
+        @cluster_tables = @{ $c->{'tables'} || [] };
+      } else {
+        my ($name, $tables) = split /\s*=\s*/, $c;
+        $cluster_name   = $name;
+        @cluster_tables = split /\s*,\s*/, $tables;
+      }
 
-    my $output_method = "as_$args->{output_type}";
+      for my $table (@cluster_tables) {
+        $cluster{$table} = $cluster_name;
+      }
+    }
+  }
 
-    # the generators are AUTOLOADed so can't use ->can ($output_method)
-    eval { $gv->$output_method };
-    die "Invalid output type: '$args->{output_type}'" if $@;
+  #
+  # Create a blank GraphViz object and see if we can produce the output type.
+  #
+  my $gv = GraphViz->new(%$args)
+      or die sprintf("Can't create GraphViz object: %s\n", $@ || 'reason unknown');
 
-    #
-    # Process tables definitions, create nodes
-    #
-    my %nj_registry; # for locations of fields for natural joins
-    my @fk_registry; # for locations of fields for foreign keys
+  my $output_method = "as_$args->{output_type}";
 
-    TABLE:
-    for my $table ( $schema->get_tables ) {
+  # the generators are AUTOLOADed so can't use ->can ($output_method)
+  eval { $gv->$output_method };
+  die "Invalid output type: '$args->{output_type}'" if $@;
 
-        my $table_name = $table->name;
-        if ( @skip_tables_like or keys %skip_tables ) {
-          next TABLE if $skip_tables{ $table_name };
-          for my $regex ( @skip_tables_like ) {
-            next TABLE if $table_name =~ $regex;
+  #
+  # Process tables definitions, create nodes
+  #
+  my %nj_registry;    # for locations of fields for natural joins
+  my @fk_registry;    # for locations of fields for foreign keys
+
+TABLE:
+  for my $table ($schema->get_tables) {
+
+    my $table_name = $table->name;
+    if (@skip_tables_like or keys %skip_tables) {
+      next TABLE if $skip_tables{$table_name};
+      for my $regex (@skip_tables_like) {
+        next TABLE if $table_name =~ $regex;
+      }
+    }
+
+    my @fields = $table->get_fields;
+    if ($args->{show_fk_only}) {
+      @fields = grep { $_->is_foreign_key } @fields;
+    }
+
+    my $field_str = '';
+    if ($args->{show_fields}) {
+      my @fmt_fields;
+      for my $field (@fields) {
+
+        my $field_info;
+        if ($args->{show_datatypes}) {
+
+          my $field_type = $field->data_type;
+          my $size       = $field->size;
+
+          if ( $args->{friendly_ints}
+            && $size
+            && (lc($field_type) eq 'integer')) {
+            # Automatically translate to int2, int4, int8
+            # Type (Bits)     Max. Signed/Unsigned  Length
+            # tinyint* (8)    128                   3
+            #                 255                   3
+            # smallint (16)   32767                 5
+            #                 65535                 5
+            # mediumint* (24) 8388607               7
+            #                 16777215              8
+            # int (32)        2147483647            10
+            #                 4294967295            11
+            # bigint (64)     9223372036854775807   19
+            #                 18446744073709551615  20
+            #
+            # * tinyint and mediumint are nonstandard extensions which are
+            #   only available under MySQL (to my knowledge)
+            if ($size <= 3 and $args->{friendly_ints_extended}) {
+              $field_type = 'tinyint';
+            } elsif ($size <= 5) {
+              $field_type = 'smallint';
+            } elsif ($size <= 8 and $args->{friendly_ints_extended}) {
+              $field_type = 'mediumint';
+            } elsif ($size <= 11) {
+              $field_type = 'integer';
+            } else {
+              $field_type = 'bigint';
+            }
+          }
+
+          $field_info = $field_type;
+          if ( $args->{show_sizes}
+            && $size
+            && ($field_type =~ /^ (?: NUMERIC | DECIMAL | (VAR)?CHAR2? ) $/ix)) {
+            $field_info .= '(' . $size . ')';
           }
         }
 
-        my @fields     = $table->get_fields;
-        if ( $args->{show_fk_only} ) {
-            @fields = grep { $_->is_foreign_key } @fields;
+        my $constraints;
+        if ($args->{show_constraints}) {
+          my @constraints;
+          push(@constraints, $field->is_auto_increment ? 'PA' : 'PK')
+              if $field->is_primary_key;
+          push(@constraints, 'FK') if $field->is_foreign_key;
+          push(@constraints, 'U')  if $field->is_unique;
+          push(@constraints, 'N')  if $field->is_nullable;
+
+          $constraints = join(',', @constraints);
         }
 
-        my $field_str = '';
-        if ($args->{show_fields}) {
-            my @fmt_fields;
-            for my $field (@fields) {
+        # construct the field line from all info gathered so far
+        push @fmt_fields, join(' ', '-', $field->name, $field_info || (), $constraints ? "[$constraints]" : (),);
+      }
 
-              my $field_info;
-              if ($args->{show_datatypes}) {
+      # join field lines with graphviz formatting
+      $field_str = join('\l', @fmt_fields) . '\l';
 
-                my $field_type = $field->data_type;
-                my $size = $field->size;
+    }
 
-                if ( $args->{friendly_ints} && $size && (lc ($field_type) eq 'integer') ) {
-                  # Automatically translate to int2, int4, int8
-                  # Type (Bits)     Max. Signed/Unsigned  Length
-                  # tinyint* (8)    128                   3
-                  #                 255                   3
-                  # smallint (16)   32767                 5
-                  #                 65535                 5
-                  # mediumint* (24) 8388607               7
-                  #                 16777215              8
-                  # int (32)        2147483647            10
-                  #                 4294967295            11
-                  # bigint (64)     9223372036854775807   19
-                  #                 18446744073709551615  20
-                  #
-                  # * tinyint and mediumint are nonstandard extensions which are
-                  #   only available under MySQL (to my knowledge)
-                  if ($size <= 3 and $args->{friendly_ints_extended}) {
-                    $field_type = 'tinyint';
-                  }
-                  elsif ($size <= 5) {
-                    $field_type = 'smallint';
-                  }
-                  elsif ($size <= 8 and $args->{friendly_ints_extended}) {
-                    $field_type = 'mediumint';
-                  }
-                  elsif ($size <= 11) {
-                    $field_type = 'integer';
-                  }
-                  else {
-                    $field_type = 'bigint';
-                  }
-                }
+    my $index_str = '';
+    if ($args->{show_indexes}) {
 
-                $field_info = $field_type;
-                if ($args->{show_sizes} && $size && ($field_type =~ /^ (?: NUMERIC | DECIMAL | (VAR)?CHAR2? ) $/ix ) ) {
-                  $field_info .= '(' . $size . ')';
-                }
-              }
+      my @fmt_indexes;
+      for my $index ($table->get_indices) {
+        next unless $index->is_valid;
 
-              my $constraints;
-              if ($args->{show_constraints}) {
-                my @constraints;
-                push(@constraints, $field->is_auto_increment ? 'PA' : 'PK') if $field->is_primary_key;
-                push(@constraints, 'FK') if $field->is_foreign_key;
-                push(@constraints, 'U')  if $field->is_unique;
-                push(@constraints, 'N')  if $field->is_nullable;
-
-                $constraints = join (',', @constraints);
-              }
-
-              # construct the field line from all info gathered so far
-              push @fmt_fields, join (' ',
-                '-',
-                $field->name,
-                $field_info || (),
-                $constraints ? "[$constraints]" : (),
-              );
-            }
-
-            # join field lines with graphviz formatting
-            $field_str = join ('\l', @fmt_fields) . '\l';
-
-        }
-
-        my $index_str = '';
-        if ($args->{show_indexes}) {
-
-          my @fmt_indexes;
-          for my $index ($table->get_indices) {
-            next unless $index->is_valid;
-
-            push @fmt_indexes, join (' ',
+        push @fmt_indexes,
+            join(' ',
               '*',
               $args->{show_index_names}
-                ? $index->name . ':'
-                : ()
-              ,
-              join (', ', $index->fields),
+              ? $index->name . ':'
+              : (),
+              join(', ', $index->fields),
               ($index->type eq 'UNIQUE') ? '[U]' : (),
             );
-           }
+      }
 
-          # join index lines with graphviz formatting (if any indexes at all)
-          $index_str = join ('\l', @fmt_indexes) . '\l' if @fmt_indexes;
-        }
-
-        my $name_str = $table_name . '\n';
-
-        # escape spaces
-        for ($name_str, $field_str, $index_str) {
-          $_ =~ s/ /\\ /g;
-        }
-
-        my $node_args;
-
-        # only the 'record' type supports nice formatting
-        if ($args->{node}{shape} eq 'record') {
-
-            # the necessity to supply shape => 'record' is a graphviz bug
-            $node_args = {
-              shape => 'record',
-              label => sprintf ('{%s}',
-                join ('|',
-                  $name_str,
-                  $field_str || (),
-                  $index_str || (),
-                ),
-              ),
-            };
-        }
-        else {
-            my $sep = sprintf ('%s\n',
-              '-' x ( (length $table_name) + 2)
-            );
-
-            $node_args = {
-              label => join ($sep,
-                $name_str,
-                $field_str || (),
-                $index_str || (),
-              ),
-            };
-        }
-
-        if (my $cluster_name = $cluster{$table_name} ) {
-          $node_args->{cluster} = $cluster_name;
-        }
-
-        $gv->add_node(qq["$table_name"], %$node_args);
-
-        debug("Processing table '$table_name'");
-
-        debug("Fields = ", join(', ', map { $_->name } @fields)) if $DEBUG;
-
-        for my $f ( @fields ) {
-            my $name      = $f->name or next;
-            my $is_pk     = $f->is_primary_key;
-            my $is_unique = $f->is_unique;
-
-            #
-            # Decide if we should skip this field.
-            #
-            if ( $args->{natural_join} ) {
-                next unless $is_pk || $f->is_foreign_key;
-            }
-
-            my $constraints = $f->{'constraints'};
-
-            if ( $args->{natural_join} && !$skip_fields{ $name } ) {
-                push @{ $nj_registry{ $name } }, $table_name;
-            }
-        }
-
-        unless ( $args->{natural_join} ) {
-            for my $c ( $table->get_constraints ) {
-                next unless $c->type eq FOREIGN_KEY;
-                my $fk_table = $c->reference_table or next;
-
-                for my $field_name ( $c->fields ) {
-                    for my $fk_field ( $c->reference_fields ) {
-                        next unless defined $schema->get_table( $fk_table );
-
-                        # a condition is optional if at least one fk is nullable
-                        push @fk_registry, [
-                            $table_name,
-                            $fk_table,
-                            scalar (grep { $_->is_nullable } ($c->fields))
-                        ];
-                    }
-                }
-            }
-        }
+      # join index lines with graphviz formatting (if any indexes at all)
+      $index_str = join('\l', @fmt_indexes) . '\l' if @fmt_indexes;
     }
 
-    #
-    # Process relationships, create edges
-    #
-    my (@table_bunches, %optional_constraints);
-    if ( $args->{natural_join} ) {
-        for my $field_name ( keys %nj_registry ) {
-            my @table_names = @{ $nj_registry{ $field_name } || [] } or next;
-            next if scalar @table_names == 1;
-            push @table_bunches, [ @table_names ];
-        }
-    }
-    else {
-        for my $i (0 .. $#fk_registry) {
-            my $fk = $fk_registry[$i];
-            push @table_bunches, [$fk->[0], $fk->[1]];
-            $optional_constraints{$i} = $fk->[2];
-        }
+    my $name_str = $table_name . '\n';
+
+    # escape spaces
+    for ($name_str, $field_str, $index_str) {
+      $_ =~ s/ /\\ /g;
     }
 
-    my %done;
-    for my $bi (0 .. $#table_bunches) {
-        my @tables = @{$table_bunches[$bi]};
+    my $node_args;
 
-        for my $i ( 0 .. $#tables ) {
-            my $table1 = $tables[ $i ];
-            for my $j ( 1 .. $#tables ) {
-                next if $i == $j;
-                my $table2 = $tables[ $j ];
-                next if $done{ $table1 }{ $table2 };
-                debug("Adding edge '$table2' -> '$table1'");
-                $gv->add_edge(
-                    qq["$table2"],
-                    qq["$table1"],
-                    arrowhead => $optional_constraints{$bi} ? 'empty' : 'normal',
-                );
-                $done{ $table1 }{ $table2 } = 1;
-            }
-        }
+    # only the 'record' type supports nice formatting
+    if ($args->{node}{shape} eq 'record') {
+
+      # the necessity to supply shape => 'record' is a graphviz bug
+      $node_args = {
+        shape => 'record',
+        label => sprintf('{%s}', join('|', $name_str, $field_str || (), $index_str || (),),),
+      };
+    } else {
+      my $sep = sprintf('%s\n', '-' x ((length $table_name) + 2));
+
+      $node_args = { label => join($sep, $name_str, $field_str || (), $index_str || (),), };
     }
 
-    #
-    # Print the image
-    #
-    if ( my $out = $args->{out_file} ) {
-        if (openhandle ($out)) {
-            print $out $gv->$output_method;
-        }
-        else {
-            open my $fh, '>', $out or die "Can't write '$out': $!\n";
-            binmode $fh;
-            print $fh $gv->$output_method;
-            close $fh;
-        }
+    if (my $cluster_name = $cluster{$table_name}) {
+      $node_args->{cluster} = $cluster_name;
     }
-    else {
-        return $gv->$output_method;
+
+    $gv->add_node(qq["$table_name"], %$node_args);
+
+    debug("Processing table '$table_name'");
+
+    debug("Fields = ", join(', ', map { $_->name } @fields)) if $DEBUG;
+
+    for my $f (@fields) {
+      my $name      = $f->name or next;
+      my $is_pk     = $f->is_primary_key;
+      my $is_unique = $f->is_unique;
+
+      #
+      # Decide if we should skip this field.
+      #
+      if ($args->{natural_join}) {
+        next unless $is_pk || $f->is_foreign_key;
+      }
+
+      my $constraints = $f->{'constraints'};
+
+      if ($args->{natural_join} && !$skip_fields{$name}) {
+        push @{ $nj_registry{$name} }, $table_name;
+      }
     }
+
+    unless ($args->{natural_join}) {
+      for my $c ($table->get_constraints) {
+        next unless $c->type eq FOREIGN_KEY;
+        my $fk_table = $c->reference_table or next;
+
+        for my $field_name ($c->fields) {
+          for my $fk_field ($c->reference_fields) {
+            next unless defined $schema->get_table($fk_table);
+
+            # a condition is optional if at least one fk is nullable
+            push @fk_registry, [ $table_name, $fk_table, scalar(grep { $_->is_nullable } ($c->fields)) ];
+          }
+        }
+      }
+    }
+  }
+
+  #
+  # Process relationships, create edges
+  #
+  my (@table_bunches, %optional_constraints);
+  if ($args->{natural_join}) {
+    for my $field_name (keys %nj_registry) {
+      my @table_names = @{ $nj_registry{$field_name} || [] } or next;
+      next if scalar @table_names == 1;
+      push @table_bunches, [@table_names];
+    }
+  } else {
+    for my $i (0 .. $#fk_registry) {
+      my $fk = $fk_registry[$i];
+      push @table_bunches, [ $fk->[0], $fk->[1] ];
+      $optional_constraints{$i} = $fk->[2];
+    }
+  }
+
+  my %done;
+  for my $bi (0 .. $#table_bunches) {
+    my @tables = @{ $table_bunches[$bi] };
+
+    for my $i (0 .. $#tables) {
+      my $table1 = $tables[$i];
+      for my $j (1 .. $#tables) {
+        next if $i == $j;
+        my $table2 = $tables[$j];
+        next if $done{$table1}{$table2};
+        debug("Adding edge '$table2' -> '$table1'");
+        $gv->add_edge(
+            qq["$table2"], qq["$table1"], arrowhead => $optional_constraints{$bi}
+          ? 'empty'
+          : 'normal',
+        );
+        $done{$table1}{$table2} = 1;
+      }
+    }
+  }
+
+  #
+  # Print the image
+  #
+  if (my $out = $args->{out_file}) {
+    if (openhandle($out)) {
+      print $out $gv->$output_method;
+    } else {
+      open my $fh, '>', $out or die "Can't write '$out': $!\n";
+      binmode $fh;
+      print $fh $gv->$output_method;
+      close $fh;
+    }
+  } else {
+    return $gv->$output_method;
+  }
 }
 
 1;

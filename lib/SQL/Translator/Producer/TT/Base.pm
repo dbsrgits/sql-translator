@@ -27,18 +27,18 @@ use SQL::Translator::Utils 'debug';
 # Hack to convert the produce call into an object. ALL sub-classes need todo
 # this so that the correct class gets created.
 sub produce {
-    return __PACKAGE__->new( translator => shift )->run;
-};
+  return __PACKAGE__->new(translator => shift)->run;
+}
 
 sub new {
-    my $proto = shift;
-    my $class = ref $proto || $proto;
-    my %args  = @_;
+  my $proto = shift;
+  my $class = ref $proto || $proto;
+  my %args  = @_;
 
-    my $me = bless {}, $class;
-    $me->{translator} = delete $args{translator} || die "Need a translator.";
+  my $me = bless {}, $class;
+  $me->{translator} = delete $args{translator} || die "Need a translator.";
 
-    return $me;
+  return $me;
 }
 
 sub translator { shift->{translator}; }
@@ -51,84 +51,86 @@ sub schema     { shift->{translator}->schema(@_); }
 #           or return as hashref in scalar context. Any names given that don't
 #           exist in the args are returned as undef.
 sub args {
-    my $me = shift;
+  my $me = shift;
 
-    # No args
-    unless (@_) {
-        return wantarray
-            ? %{ $me->{translator}->producer_args }
-            : $me->{translator}->producer_args
-        ;
-    }
+  # No args
+  unless (@_) {
+    return wantarray
+        ? %{ $me->{translator}->producer_args }
+        : $me->{translator}->producer_args;
+  }
 
-    # 1 arg. Return the value whatever the context.
-    return $me->{translator}->producer_args->{$_[0]} if @_ == 1;
+  # 1 arg. Return the value whatever the context.
+  return $me->{translator}->producer_args->{ $_[0] } if @_ == 1;
 
-    # More args so return values list or hash ref
-    my %args = %{ $me->{translator}->producer_args };
-    return wantarray ? @args{@_} : { map { ($_=>$args{$_}) } @_ };
+  # More args so return values list or hash ref
+  my %args = %{ $me->{translator}->producer_args };
+  return wantarray ? @args{@_} : { map { ($_ => $args{$_}) } @_ };
 }
 
 # Run the produce and return the result.
 sub run {
-    my $me = shift;
-    my $scma = $me->schema;
-    my %args = %{$me->args};
-    my $tmpl = $me->tt_schema or die "No template!";
+  my $me   = shift;
+  my $scma = $me->schema;
+  my %args = %{ $me->args };
+  my $tmpl = $me->tt_schema or die "No template!";
 
-    debug "Processing template $tmpl\n";
-    my $out;
-    my $tt = Template->new(
-        #DEBUG    => $me->translator->debug,
-        ABSOLUTE => 1,  # Set so we can use from the command line sensibly
-        RELATIVE => 1,  # Maybe the cmd line code should set it! Security!
-        $me->tt_config, # Hook for sub-classes to add config
-        %args,          # Allow any TT opts to be passed in the producer_args
-    ) || die "Failed to initialize Template object: ".Template->error;
+  debug "Processing template $tmpl\n";
+  my $out;
+  my $tt = Template->new(
 
-    $tt->process( $tmpl, {
-        $me->tt_default_vars,
-        $me->tt_vars,          # Sub-class hook for adding vars
-    }, \$out )
-    or die "Error processing template '$tmpl': ".$tt->error;
+    #DEBUG    => $me->translator->debug,
+    ABSOLUTE => 1,     # Set so we can use from the command line sensibly
+    RELATIVE => 1,     # Maybe the cmd line code should set it! Security!
+    $me->tt_config,    # Hook for sub-classes to add config
+    %args,             # Allow any TT opts to be passed in the producer_args
+  ) || die "Failed to initialize Template object: " . Template->error;
 
-    return $out;
+  $tt->process(
+    $tmpl,
+    {
+      $me->tt_default_vars,
+      $me->tt_vars,    # Sub-class hook for adding vars
+    },
+    \$out
+  ) or die "Error processing template '$tmpl': " . $tt->error;
+
+  return $out;
 }
-
 
 # Sub class hooks
 #-----------------------------------------------------------------------------
 
-sub tt_config { () };
+sub tt_config { () }
 
 sub tt_schema {
-    my $me = shift;
-    my $class = ref $me;
+  my $me    = shift;
+  my $class = ref $me;
 
-    my $file = $me->args("ttfile");
-    return $file if $file;
+  my $file = $me->args("ttfile");
+  return $file if $file;
 
-    no strict 'refs';
-    my $ref = *{"$class\:\:DATA"}{IO};
-    if ( $ref->opened ) {
-        local $/ = undef; # Slurp mode
-        return \<$ref>;
-    }
+  no strict 'refs';
+  my $ref = *{"$class\:\:DATA"}{IO};
+  if ($ref->opened) {
+    local $/ = undef;    # Slurp mode
+    return \<$ref>;
+  }
 
-    undef;
-};
+  undef;
+}
 
 sub tt_default_vars {
-    my $me = shift;
-    return (
-        translator => $me->translator,
-        schema     => $me->pre_process_schema($me->translator->schema),
-    );
+  my $me = shift;
+  return (
+    translator => $me->translator,
+    schema     => $me->pre_process_schema($me->translator->schema),
+  );
 }
 
 sub pre_process_schema { $_[1] }
 
-sub tt_vars   { () };
+sub tt_vars { () }
 
 1;
 

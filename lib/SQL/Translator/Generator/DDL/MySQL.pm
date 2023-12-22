@@ -13,10 +13,10 @@ I<documentation volunteers needed>
 
 use Moo;
 
-has quote_chars => ( is => 'ro', default => sub { +[qw(` `)] } );
+has quote_chars => (is => 'ro', default => sub { +[qw(` `)] });
 
 with 'SQL::Translator::Generator::Role::Quote';
 
-sub name_sep { q(.) }
+sub name_sep {q(.)}
 
 1;

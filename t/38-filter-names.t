@@ -12,7 +12,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use Data::Dumper;
 
 BEGIN {
-    maybe_plan(4, 'YAML', 'Test::Differences')
+  maybe_plan(4, 'YAML', 'Test::Differences');
 }
 use Test::Differences;
 use SQL::Translator;
@@ -67,26 +67,31 @@ translator:
 # Parse the test schema
 my $obj;
 $obj = SQL::Translator->new(
-    debug         => 0,
-    show_warnings => 1,
-    from          => "YAML",
-    to            => "YAML",
-    data          => $in_yaml,
-    filters => [
-        # Filter from SQL::Translator::Filter::*
-        [ 'Names', {
-            tables => 'lc',
-            fields => 'ucfirst',
-        } ],
-    ],
+  debug         => 0,
+  show_warnings => 1,
+  from          => "YAML",
+  to            => "YAML",
+  data          => $in_yaml,
+  filters       => [
 
-) or die "Failed to create translator object: ".SQL::Translator->error;
+    # Filter from SQL::Translator::Filter::*
+    [
+      'Names',
+      {
+        tables => 'lc',
+        fields => 'ucfirst',
+      }
+    ],
+  ],
+
+) or die "Failed to create translator object: " . SQL::Translator->error;
 
 my $out;
-lives_ok { $out = $obj->translate; }  "Translate ran";
-is $obj->error, ''                   ,"No errors";
-ok $out ne ""                        ,"Produced something!";
+lives_ok { $out = $obj->translate; } "Translate ran";
+is $obj->error, '', "No errors";
+ok $out ne "", "Produced something!";
+
 # Somewhat hackishly modify the yaml with a regex to avoid
 # failing randomly on every change of version.
 $out =~ s/version: .*/version: SUPPRESSED/;
-eq_or_diff $out, $ans_yaml           ,"Output looks right";
+eq_or_diff $out, $ans_yaml, "Output looks right";

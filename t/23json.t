@@ -7,11 +7,7 @@ use SQL::Translator;
 use FindBin '$Bin';
 
 BEGIN {
-    maybe_plan(
-        2,
-        'SQL::Translator::Parser::SQLite',
-        'SQL::Translator::Producer::JSON',
-    );
+  maybe_plan(2, 'SQL::Translator::Parser::SQLite', 'SQL::Translator::Producer::JSON',);
 }
 
 my $sqlt_version = $SQL::Translator::VERSION;
@@ -305,16 +301,16 @@ open my $fh, '<', $file or die "Can't read '$file': $!\n";
 local $/;
 my $data = <$fh>;
 my $tr   = SQL::Translator->new(
-    parser        => 'SQLite',
-    producer      => 'JSON',
-    producer_args => {
-        canonical                                       => 1,
-        pretty                                          => 1,
-        totally_bogus_arg_to_test_arg_filtering_to_json => 1,
-    },
-    data => $data,
+  parser        => 'SQLite',
+  producer      => 'JSON',
+  producer_args => {
+    canonical                                       => 1,
+    pretty                                          => 1,
+    totally_bogus_arg_to_test_arg_filtering_to_json => 1,
+  },
+  data => $data,
 );
 
 my $out;
-lives_ok { $out = from_json( $tr->translate ) } 'Translate SQLite to JSON';
-is_deeply( $out, $json, 'JSON matches expected' );
+lives_ok { $out = from_json($tr->translate) } 'Translate SQLite to JSON';
+is_deeply($out, $json, 'JSON matches expected');

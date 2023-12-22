@@ -48,16 +48,16 @@ require Exporter;
 our $VERSION = '1.64';
 
 our @EXPORT = qw[
-    CHECK_C
-    FOREIGN_KEY
-    FULL_TEXT
-    SPATIAL
-    NOT_NULL
-    NORMAL
-    NULL
-    PRIMARY_KEY
-    UNIQUE
-    EXCLUDE
+  CHECK_C
+  FOREIGN_KEY
+  FULL_TEXT
+  SPATIAL
+  NOT_NULL
+  NORMAL
+  NULL
+  PRIMARY_KEY
+  UNIQUE
+  EXCLUDE
 ];
 
 #

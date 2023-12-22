@@ -116,96 +116,93 @@ use SQL::Translator::Schema::Constants;
 use vars qw( $VERSION );
 $VERSION = '1.64';
 
-my ( @input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names,
-    $ignore_constraint_names, $output_db, $mysql_parser_version,
-    $ignore_view_sql, $ignore_proc_sql, $no_batch_alters, $quote
-);
+my (@input, $list, $help, $debug, $trace, $caseopt, $ignore_index_names, $ignore_constraint_names, $output_db,
+  $mysql_parser_version, $ignore_view_sql, $ignore_proc_sql, $no_batch_alters, $quote);
 
 GetOptions(
-    'l|list' => \$list,
-    'h|help' => \$help,
-    'd|debug' => \$debug,
-    't|trace' => \$trace,
-    'c|case-insensitive' => \$caseopt,
-    'ignore-index-names' => \$ignore_index_names,
-    'ignore-constraint-names' => \$ignore_constraint_names,
-    'mysql_parser_version:s' => \$mysql_parser_version,
-    'output-db:s' => \$output_db,
-    'ignore-view-sql' => \$ignore_view_sql,
-    'ignore-proc-sql' => \$ignore_proc_sql,
-    'quote:s' => \$quote,
-    'no-batch-alters' => \$no_batch_alters,
+  'l|list'                  => \$list,
+  'h|help'                  => \$help,
+  'd|debug'                 => \$debug,
+  't|trace'                 => \$trace,
+  'c|case-insensitive'      => \$caseopt,
+  'ignore-index-names'      => \$ignore_index_names,
+  'ignore-constraint-names' => \$ignore_constraint_names,
+  'mysql_parser_version:s'  => \$mysql_parser_version,
+  'output-db:s'             => \$output_db,
+  'ignore-view-sql'         => \$ignore_view_sql,
+  'ignore-proc-sql'         => \$ignore_proc_sql,
+  'quote:s'                 => \$quote,
+  'no-batch-alters'         => \$no_batch_alters,
 ) or pod2usage(2);
 
-for my $arg ( @ARGV ) {
-    if ( $arg =~ m/^([^=]+)=(.+)$/ ) {
-        push @input, { file => $1, parser => $2 };
-    }
+for my $arg (@ARGV) {
+  if ($arg =~ m/^([^=]+)=(.+)$/) {
+    push @input, { file => $1, parser => $2 };
+  }
 }
 
 my $tr            = SQL::Translator->new;
 my @parsers       = $tr->list_parsers;
 my %valid_parsers = map { $_, 1 } @parsers;
 
-
-if ( $list ) {
-    print "\nParsers:\n", map { "\t$_\n" } sort @parsers;
-    print "\n";
-    exit(0);
+if ($list) {
+  print "\nParsers:\n", map {"\t$_\n"} sort @parsers;
+  print "\n";
+  exit(0);
 }
 
-pod2usage(1) if $help || !@input;
+pod2usage(1)                                           if $help || !@input;
 pod2usage(msg => 'Please specify two schemas to diff') if scalar @input != 2;
 
-my ( $source_schema, $source_db, $target_schema, $target_db ) = map {
-    my $file   = $_->{'file'};
-    my $parser = $_->{'parser'};
+my ($source_schema, $source_db, $target_schema, $target_db) = map {
+  my $file   = $_->{'file'};
+  my $parser = $_->{'parser'};
 
-    die "Unable to read file '$file'\n" unless -r $file;
-    die "'$parser' is an invalid parser\n" unless $valid_parsers{ $parser };
+  die "Unable to read file '$file'\n"    unless -r $file;
+  die "'$parser' is an invalid parser\n" unless $valid_parsers{$parser};
 
-    my $t = SQL::Translator->new(parser_args => {
-        mysql_parser_version => $mysql_parser_version
-    });
-    $t->debug( $debug );
-    $t->trace( $trace );
-    $t->parser( $parser )            or die $tr->error;
-    my $out = $t->translate( $file ) or die $tr->error;
-    my $schema = $t->schema;
-    unless ( $schema->name ) {
-        $schema->name( $file );
-    }
+  my $t = SQL::Translator->new(parser_args => {
+    mysql_parser_version => $mysql_parser_version
+  });
+  $t->debug($debug);
+  $t->trace($trace);
+  $t->parser($parser) or die $tr->error;
+  my $out    = $t->translate($file) or die $tr->error;
+  my $schema = $t->schema;
 
-    ($schema, $parser);
+  unless ($schema->name) {
+    $schema->name($file);
+  }
+
+  ($schema, $parser);
 } @input;
 
 my $result = SQL::Translator::Diff::schema_diff(
-    $source_schema, $source_db,
-    $target_schema, $target_db,
-    {
-        caseopt                 => $caseopt || 0,
-        ignore_index_names      => $ignore_index_names || 0,
-        ignore_constraint_names => $ignore_constraint_names || 0,
-        ignore_view_sql         => $ignore_view_sql || 0,
-        ignore_proc_sql         => $ignore_proc_sql || 0,
-        output_db               => $output_db,
-        no_batch_alters         => $no_batch_alters || 0,
-        debug                   => $debug || 0,
-        trace                   => $trace || 0,
-        sqlt_args => {
-            quote_table_names   => $quote || '',
-            quote_field_names   => $quote || '',
-        },
-    }
+  $source_schema,
+  $source_db,
+  $target_schema,
+  $target_db,
+  {
+    caseopt                 => $caseopt                 || 0,
+    ignore_index_names      => $ignore_index_names      || 0,
+    ignore_constraint_names => $ignore_constraint_names || 0,
+    ignore_view_sql         => $ignore_view_sql         || 0,
+    ignore_proc_sql         => $ignore_proc_sql         || 0,
+    output_db               => $output_db,
+    no_batch_alters         => $no_batch_alters || 0,
+    debug                   => $debug           || 0,
+    trace                   => $trace           || 0,
+    sqlt_args               => {
+      quote_table_names => $quote || '',
+      quote_field_names => $quote || '',
+    },
+  }
 );
 
-if($result)
-{
-    print $result;
-}
-else
-{
-    print "No differences found.";
+if ($result) {
+  print $result;
+} else {
+  print "No differences found.";
 }
 
 # -------------------------------------------------------------------

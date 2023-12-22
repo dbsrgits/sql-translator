@@ -25,24 +25,21 @@ use DBI;
 use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
-our ( $DEBUG, @EXPORT_OK );
+our ($DEBUG, @EXPORT_OK);
 our $VERSION = '1.64';
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 sub parse {
-    my ( $tr, $dbh ) = @_;
+  my ($tr, $dbh) = @_;
 
-    my $create = join(";\n",
-        map { $_ || () }
-        @{ $dbh->selectcol_arrayref('select sql from sqlite_master') },
-    );
-    $create .= ";";
-    $tr->debug( "create =\n$create\n" );
+  my $create = join(";\n", map { $_ || () } @{ $dbh->selectcol_arrayref('select sql from sqlite_master') },);
+  $create .= ";";
+  $tr->debug("create =\n$create\n");
 
-    my $schema = $tr->schema;
+  my $schema = $tr->schema;
 
-    SQL::Translator::Parser::SQLite::parse( $tr, $create );
-    return 1;
+  SQL::Translator::Parser::SQLite::parse($tr, $create);
+  return 1;
 }
 
 1;

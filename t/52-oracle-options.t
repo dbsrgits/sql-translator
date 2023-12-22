@@ -10,22 +10,21 @@ use SQL::Translator;
 use SQL::Translator::Schema::Constants;
 
 BEGIN {
-    maybe_plan(3, 'SQL::Translator::Parser::YAML',
-                  'SQL::Translator::Producer::Oracle');
+  maybe_plan(3, 'SQL::Translator::Parser::YAML', 'SQL::Translator::Producer::Oracle');
 }
 
 my $yamlfile = "$Bin/data/oracle/schema_with_options.yaml";
 
 my $sqlt;
 $sqlt = SQL::Translator->new(
-    show_warnings  => 0,
-    add_drop_table => 0,
+  show_warnings  => 0,
+  add_drop_table => 0,
 );
 
 my $sql_string = $sqlt->translate(
-    from     => 'YAML',
-    to       => 'Oracle',
-    filename => $yamlfile,
+  from     => 'YAML',
+  to       => 'Oracle',
+  filename => $yamlfile,
 );
 
 ok($sql_string, 'Translation successfull');

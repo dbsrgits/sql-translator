@@ -8,11 +8,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use FindBin qw/$Bin/;
 
 BEGIN {
-    maybe_plan(2,
-        'YAML',
-        'SQL::Translator::Producer::SQLServer',
-        'Test::Differences',
-    )
+  maybe_plan(2, 'YAML', 'SQL::Translator::Producer::SQLServer', 'Test::Differences',);
 }
 use Test::Differences;
 use SQL::Translator;
@@ -80,33 +76,33 @@ schema:
 EOSCHEMA
 
 my @stmts = (
-"CREATE TABLE [some].[thing2] (
+  "CREATE TABLE [some].[thing2] (
   [id] int NOT NULL,
   [foo] int NOT NULL,
   [foo2] int NULL,
   [bar_set] set NULL,
   CONSTRAINT [some].[thing2_pk] PRIMARY KEY ([id], [foo])
-);\n", # New line to match generator
+);\n",    # New line to match generator
 
-"CREATE INDEX [index_1] ON [some].[thing2] ([id]);\n", # Where does the new line come from?
+  "CREATE INDEX [index_1] ON [some].[thing2] ([id]);\n",    # Where does the new line come from?
 
-"CREATE INDEX [really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaaaaaaaaaaaa] ON [some].[thing2] ([id]);",
-"ALTER TABLE [some].[thing2] ADD CONSTRAINT [fk_thing] FOREIGN KEY ([foo]) REFERENCES [thing] ();",
-"ALTER TABLE [some].[thing2] ADD CONSTRAINT [fk_thing] FOREIGN KEY ([foo2]) REFERENCES [thing] ();",
+  "CREATE INDEX [really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaaaaaaaaaaaa] ON [some].[thing2] ([id]);",
+  "ALTER TABLE [some].[thing2] ADD CONSTRAINT [fk_thing] FOREIGN KEY ([foo]) REFERENCES [thing] ();",
+  "ALTER TABLE [some].[thing2] ADD CONSTRAINT [fk_thing] FOREIGN KEY ([foo2]) REFERENCES [thing] ();",
 );
 
 my $sqlt = SQL::Translator->new(
-    show_warnings     => 1,
-    no_comments       => 1,
-    from              => "YAML",
-    to                => "SQLServer",
-    quote_table_names => 1,
-    quote_field_names => 1
+  show_warnings     => 1,
+  no_comments       => 1,
+  from              => "YAML",
+  to                => "SQLServer",
+  quote_table_names => 1,
+  quote_field_names => 1
 );
 
 my $generator = $sqlt->translate(\$yaml_in)
-    or die "Translate error:".$sqlt->error;
-ok $generator ne "",                    "Produced something!";
+    or die "Translate error:" . $sqlt->error;
+ok $generator ne "", "Produced something!";
 
 my $correct = join("\n", @stmts);
-eq_or_diff $correct, $generator,      "Scalar output looks correct";
+eq_or_diff $correct, $generator, "Scalar output looks correct";

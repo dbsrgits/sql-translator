@@ -6,263 +6,253 @@ use Digest::SHA qw( sha1_hex );
 use File::Spec;
 use Scalar::Util qw(blessed);
 use Try::Tiny;
-use Carp qw(carp croak);
+use Carp       qw(carp croak);
 use List::Util qw(any);
 
 our $VERSION = '1.64';
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(
-    debug normalize_name header_comment parse_list_arg truncate_id_uniquely
-    $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
-    ddl_parser_instance batch_alter_table_statements
-    uniq throw ex2err carp_ro
-    normalize_quote_options
+  debug normalize_name header_comment parse_list_arg truncate_id_uniquely
+  $DEFAULT_COMMENT parse_mysql_version parse_dbms_version
+  ddl_parser_instance batch_alter_table_statements
+  uniq throw ex2err carp_ro
+  normalize_quote_options
 );
 use constant COLLISION_TAG_LENGTH => 8;
 
 our $DEFAULT_COMMENT = '--';
 
 sub debug {
-    my ($pkg, $file, $line, $sub) = caller(0);
-    {
-        no strict qw(refs);
-        return unless ${"$pkg\::DEBUG"};
-    }
+  my ($pkg, $file, $line, $sub) = caller(0);
+  {
+    no strict qw(refs);
+    return unless ${"$pkg\::DEBUG"};
+  }
 
-    $sub =~ s/^$pkg\:://;
+  $sub =~ s/^$pkg\:://;
 
-    while (@_) {
-        my $x = shift;
-        chomp $x;
-        $x =~ s/\bPKG\b/$pkg/g;
-        $x =~ s/\bLINE\b/$line/g;
-        $x =~ s/\bSUB\b/$sub/g;
-        #warn '[' . $x . "]\n";
-        print STDERR '[' . $x . "]\n";
-    }
+  while (@_) {
+    my $x = shift;
+    chomp $x;
+    $x =~ s/\bPKG\b/$pkg/g;
+    $x =~ s/\bLINE\b/$line/g;
+    $x =~ s/\bSUB\b/$sub/g;
+
+    #warn '[' . $x . "]\n";
+    print STDERR '[' . $x . "]\n";
+  }
 }
 
 sub normalize_name {
-    my $name = shift or return '';
+  my $name = shift or return '';
 
-    # The name can only begin with a-zA-Z_; if there's anything
-    # else, prefix with _
-    $name =~ s/^([^a-zA-Z_])/_$1/;
+  # The name can only begin with a-zA-Z_; if there's anything
+  # else, prefix with _
+  $name =~ s/^([^a-zA-Z_])/_$1/;
 
-    # anything other than a-zA-Z0-9_ in the non-first position
-    # needs to be turned into _
-    $name =~ tr/[a-zA-Z0-9_]/_/c;
+  # anything other than a-zA-Z0-9_ in the non-first position
+  # needs to be turned into _
+  $name =~ tr/[a-zA-Z0-9_]/_/c;
 
-    # All duplicated _ need to be squashed into one.
-    $name =~ tr/_/_/s;
+  # All duplicated _ need to be squashed into one.
+  $name =~ tr/_/_/s;
 
-    # Trim a trailing _
-    $name =~ s/_$//;
+  # Trim a trailing _
+  $name =~ s/_$//;
 
-    return $name;
+  return $name;
 }
 
 sub normalize_quote_options {
-    my $config = shift;
+  my $config = shift;
 
-    my $quote;
-    if (defined $config->{quote_identifiers}) {
-      $quote = $config->{quote_identifiers};
+  my $quote;
+  if (defined $config->{quote_identifiers}) {
+    $quote = $config->{quote_identifiers};
 
-      for (qw/quote_table_names quote_field_names/) {
-        carp "Ignoring deprecated parameter '$_', since 'quote_identifiers' is supplied"
-          if defined $config->{$_}
-      }
+    for (qw/quote_table_names quote_field_names/) {
+      carp "Ignoring deprecated parameter '$_', since 'quote_identifiers' is supplied"
+          if defined $config->{$_};
     }
-    # Legacy one set the other is not
-    elsif (
-      defined $config->{'quote_table_names'}
-        xor
-      defined $config->{'quote_field_names'}
-    ) {
-      if (defined $config->{'quote_table_names'}) {
-        carp "Explicitly disabling the deprecated 'quote_table_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_field_names'"
+  }
+
+  # Legacy one set the other is not
+  elsif (defined $config->{'quote_table_names'} xor defined $config->{'quote_field_names'}) {
+    if (defined $config->{'quote_table_names'}) {
+      carp
+          "Explicitly disabling the deprecated 'quote_table_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_field_names'"
           unless $config->{'quote_table_names'};
-        $quote = $config->{'quote_table_names'} ? 1 : 0;
-      }
-      else {
-        carp "Explicitly disabling the deprecated 'quote_field_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_table_names'"
+      $quote = $config->{'quote_table_names'} ? 1 : 0;
+    } else {
+      carp
+          "Explicitly disabling the deprecated 'quote_field_names' implies disabling 'quote_identifiers' which in turn implies disabling 'quote_table_names'"
           unless $config->{'quote_field_names'};
-        $quote = $config->{'quote_field_names'} ? 1 : 0;
-      }
+      $quote = $config->{'quote_field_names'} ? 1 : 0;
     }
-    # Legacy both are set
-    elsif(defined $config->{'quote_table_names'}) {
-      croak 'Setting quote_table_names and quote_field_names to conflicting values is no longer supported'
+  }
+
+  # Legacy both are set
+  elsif (defined $config->{'quote_table_names'}) {
+    croak 'Setting quote_table_names and quote_field_names to conflicting values is no longer supported'
         if ($config->{'quote_table_names'} xor $config->{'quote_field_names'});
 
-      $quote = $config->{'quote_table_names'} ? 1 : 0;
-    }
+    $quote = $config->{'quote_table_names'} ? 1 : 0;
+  }
 
-    return $quote;
+  return $quote;
 }
 
 sub header_comment {
-    my $producer = shift || caller;
-    my $comment_char = shift;
-    my $now = scalar localtime;
+  my $producer     = shift || caller;
+  my $comment_char = shift;
+  my $now          = scalar localtime;
 
-    $comment_char = $DEFAULT_COMMENT
-        unless defined $comment_char;
+  $comment_char = $DEFAULT_COMMENT
+      unless defined $comment_char;
 
-    my $header_comment =<<"HEADER_COMMENT";
+  my $header_comment = <<"HEADER_COMMENT";
 ${comment_char}
 ${comment_char} Created by $producer
 ${comment_char} Created on $now
 ${comment_char}
 HEADER_COMMENT
 
-    # Any additional stuff passed in
-    for my $additional_comment (@_) {
-        $header_comment .= "${comment_char} ${additional_comment}\n";
-    }
+  # Any additional stuff passed in
+  for my $additional_comment (@_) {
+    $header_comment .= "${comment_char} ${additional_comment}\n";
+  }
 
-    return $header_comment;
+  return $header_comment;
 }
 
 sub parse_list_arg {
-    my $list = UNIVERSAL::isa( $_[0], 'ARRAY' ) ? shift : [ @_ ];
+  my $list = UNIVERSAL::isa($_[0], 'ARRAY') ? shift : [@_];
 
-    #
-    # This protects stringification of references.
-    #
-    if (any { ref $_ } @$list ) {
-        return $list;
-    }
-    #
-    # This processes string-like arguments.
-    #
-    else {
-        return [
-            map { s/^\s+|\s+$//g; $_ }
-            map { split /,/ }
-            grep { defined && length } @$list
-        ];
-    }
+  #
+  # This protects stringification of references.
+  #
+  if (any { ref $_ } @$list) {
+    return $list;
+  }
+  #
+  # This processes string-like arguments.
+  #
+  else {
+    return [
+      map  { s/^\s+|\s+$//g; $_ }
+      map  { split /,/ }
+      grep { defined && length } @$list
+    ];
+  }
 }
 
 sub truncate_id_uniquely {
-    my ( $desired_name, $max_symbol_length ) = @_;
+  my ($desired_name, $max_symbol_length) = @_;
 
-    return $desired_name
+  return $desired_name
       unless defined $desired_name && length $desired_name > $max_symbol_length;
 
-    my $truncated_name = substr $desired_name, 0,
-      $max_symbol_length - COLLISION_TAG_LENGTH - 1;
+  my $truncated_name = substr $desired_name, 0, $max_symbol_length - COLLISION_TAG_LENGTH - 1;
 
-    # Hex isn't the most space-efficient, but it skirts around allowed
-    # charset issues
-    my $digest = sha1_hex($desired_name);
-    my $collision_tag = substr $digest, 0, COLLISION_TAG_LENGTH;
+  # Hex isn't the most space-efficient, but it skirts around allowed
+  # charset issues
+  my $digest        = sha1_hex($desired_name);
+  my $collision_tag = substr $digest, 0, COLLISION_TAG_LENGTH;
 
-    return $truncated_name
-         . '_'
-         . $collision_tag;
+  return $truncated_name . '_' . $collision_tag;
 }
 
-
 sub parse_mysql_version {
-    my ($v, $target) = @_;
+  my ($v, $target) = @_;
 
-    return undef unless $v;
+  return undef unless $v;
 
-    $target ||= 'perl';
+  $target ||= 'perl';
 
-    my @vers;
+  my @vers;
 
-    # X.Y.Z style
-    if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
-        push @vers, $1, $2, $3;
-    }
+  # X.Y.Z style
+  if ($v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x) {
+    push @vers, $1, $2, $3;
+  }
 
-    # XYYZZ (mysql) style
-    elsif ( $v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x ) {
-        push @vers, $1, $2, $3;
-    }
+  # XYYZZ (mysql) style
+  elsif ($v =~ / ^ (\d) (\d{2}) (\d{2}) $ /x) {
+    push @vers, $1, $2, $3;
+  }
 
-    # XX.YYYZZZ (perl) style or simply X
-    elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
-        push @vers, $1, $2, $3;
-    }
-    else {
-        #how do I croak sanely here?
-        die "Unparseable MySQL version '$v'";
-    }
+  # XX.YYYZZZ (perl) style or simply X
+  elsif ($v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x) {
+    push @vers, $1, $2, $3;
+  } else {
+    #how do I croak sanely here?
+    die "Unparseable MySQL version '$v'";
+  }
 
-    if ($target eq 'perl') {
-        return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
-    }
-    elsif ($target eq 'mysql') {
-        return sprintf ('%d%02d%02d', map { $_ || 0 } (@vers) );
-    }
-    else {
-        #how do I croak sanely here?
-        die "Unknown version target '$target'";
-    }
+  if ($target eq 'perl') {
+    return sprintf('%d.%03d%03d', map { $_ || 0 } (@vers));
+  } elsif ($target eq 'mysql') {
+    return sprintf('%d%02d%02d', map { $_ || 0 } (@vers));
+  } else {
+    #how do I croak sanely here?
+    die "Unknown version target '$target'";
+  }
 }
 
 sub parse_dbms_version {
-    my ($v, $target) = @_;
+  my ($v, $target) = @_;
 
-    return undef unless $v;
+  return undef unless $v;
 
-    my @vers;
+  my @vers;
 
-    # X.Y.Z style
-    if ( $v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x ) {
-        push @vers, $1, $2, $3;
-    }
+  # X.Y.Z style
+  if ($v =~ / ^ (\d+) \. (\d{1,3}) (?: \. (\d{1,3}) )? $ /x) {
+    push @vers, $1, $2, $3;
+  }
 
-    # XX.YYYZZZ (perl) style or simply X
-    elsif ( $v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x ) {
-        push @vers, $1, $2, $3;
-    }
-    else {
-        #how do I croak sanely here?
-        die "Unparseable database server version '$v'";
-    }
+  # XX.YYYZZZ (perl) style or simply X
+  elsif ($v =~ / ^ (\d+) (?: \. (\d{3}) (\d{3}) )? $ /x) {
+    push @vers, $1, $2, $3;
+  } else {
+    #how do I croak sanely here?
+    die "Unparseable database server version '$v'";
+  }
 
-    if ($target eq 'perl') {
-        return sprintf ('%d.%03d%03d', map { $_ || 0 } (@vers) );
-    }
-    elsif ($target eq 'native') {
-        return join '.' => grep defined, @vers;
-    }
-    else {
-        #how do I croak sanely here?
-        die "Unknown version target '$target'";
-    }
+  if ($target eq 'perl') {
+    return sprintf('%d.%03d%03d', map { $_ || 0 } (@vers));
+  } elsif ($target eq 'native') {
+    return join '.' => grep defined, @vers;
+  } else {
+    #how do I croak sanely here?
+    die "Unknown version target '$target'";
+  }
 }
 
 #my ($parsers_libdir, $checkout_dir);
 sub ddl_parser_instance {
 
-    my $type = shift;
+  my $type = shift;
 
-    # it may differ from our caller, even though currently this is not the case
-    eval "require SQL::Translator::Parser::$type"
-        or die "Unable to load grammar-spec container SQL::Translator::Parser::$type:\n$@";
+  # it may differ from our caller, even though currently this is not the case
+  eval "require SQL::Translator::Parser::$type"
+      or die "Unable to load grammar-spec container SQL::Translator::Parser::$type:\n$@";
 
-    # handle DB2 in a special way, since the grammar source was lost :(
-    if ($type eq 'DB2') {
-      require SQL::Translator::Parser::DB2::Grammar;
-      return SQL::Translator::Parser::DB2::Grammar->new;
-    }
+  # handle DB2 in a special way, since the grammar source was lost :(
+  if ($type eq 'DB2') {
+    require SQL::Translator::Parser::DB2::Grammar;
+    return SQL::Translator::Parser::DB2::Grammar->new;
+  }
 
-    require Parse::RecDescent;
-    return Parse::RecDescent->new(do {
-      no strict 'refs';
-      ${"SQL::Translator::Parser::${type}::GRAMMAR"}
-        || die "No \$SQL::Translator::Parser::${type}::GRAMMAR defined, unable to instantiate PRD parser\n"
-    });
+  require Parse::RecDescent;
+  return Parse::RecDescent->new(do {
+    no strict 'refs';
+    ${"SQL::Translator::Parser::${type}::GRAMMAR"}
+        || die "No \$SQL::Translator::Parser::${type}::GRAMMAR defined, unable to instantiate PRD parser\n";
+  });
 
-# this is disabled until RT#74593 is resolved
+  # this is disabled until RT#74593 is resolved
 
 =begin sadness
 
@@ -335,94 +325,89 @@ sub ddl_parser_instance {
 # or return undef
 sub _find_co_root {
 
-    my @mod_parts = split /::/, (__PACKAGE__ . '.pm');
-    my $rel_path = join ('/', @mod_parts);  # %INC stores paths with / regardless of OS
+  my @mod_parts = split /::/, (__PACKAGE__ . '.pm');
+  my $rel_path  = join('/', @mod_parts);               # %INC stores paths with / regardless of OS
 
-    return undef unless ($INC{$rel_path});
+  return undef unless ($INC{$rel_path});
 
-    # a bit convoluted, but what we do here essentially is:
-    #  - get the file name of this particular module
-    #  - do 'cd ..' as many times as necessary to get to lib/SQL/Translator/../../..
+# a bit convoluted, but what we do here essentially is:
+#  - get the file name of this particular module
+#  - do 'cd ..' as many times as necessary to get to lib/SQL/Translator/../../..
 
-    my $root = (File::Spec::Unix->splitpath($INC{$rel_path}))[1];
-    for (1 .. @mod_parts) {
-        $root = File::Spec->catdir($root, File::Spec->updir);
-    }
+  my $root = (File::Spec::Unix->splitpath($INC{$rel_path}))[1];
+  for (1 .. @mod_parts) {
+    $root = File::Spec->catdir($root, File::Spec->updir);
+  }
 
-    return ( -f File::Spec->catfile($root, 'Makefile.PL') )
-        ? $root
-        : undef
-    ;
+  return (-f File::Spec->catfile($root, 'Makefile.PL'))
+      ? $root
+      : undef;
 }
 
 {
-    package SQL::Translator::Utils::Error;
 
-    use overload
-        '""' => sub { ${$_[0]} },
-        fallback => 1;
+  package SQL::Translator::Utils::Error;
 
-    sub new {
-        my ($class, $msg) = @_;
-        bless \$msg, $class;
-    }
+  use overload
+      '""'     => sub { ${ $_[0] } },
+      fallback => 1;
+
+  sub new {
+    my ($class, $msg) = @_;
+    bless \$msg, $class;
+  }
 }
 
 sub uniq {
-  my( %seen, $seen_undef, $numeric_preserving_copy );
-  grep { not (
-    defined $_
-      ? $seen{ $numeric_preserving_copy = $_ }++
-      : $seen_undef++
-  ) } @_;
+  my (%seen, $seen_undef, $numeric_preserving_copy);
+  grep { not(defined $_ ? $seen{ $numeric_preserving_copy = $_ }++ : $seen_undef++) } @_;
 }
 
 sub throw {
-    die SQL::Translator::Utils::Error->new($_[0]);
+  die SQL::Translator::Utils::Error->new($_[0]);
 }
 
 sub ex2err {
-    my ($orig, $self, @args) = @_;
-    return try {
-        $self->$orig(@args);
-    } catch {
-        die $_ unless blessed($_) && $_->isa("SQL::Translator::Utils::Error");
-        $self->error("$_");
-    };
+  my ($orig, $self, @args) = @_;
+  return try {
+    $self->$orig(@args);
+  } catch {
+    die $_ unless blessed($_) && $_->isa("SQL::Translator::Utils::Error");
+    $self->error("$_");
+  };
 }
 
 sub carp_ro {
-    my ($name) = @_;
-    return sub {
-        my ($orig, $self) = (shift, shift);
-        carp "'$name' is a read-only accessor" if @_;
-        return $self->$orig;
-    };
+  my ($name) = @_;
+  return sub {
+    my ($orig, $self) = (shift, shift);
+    carp "'$name' is a read-only accessor" if @_;
+    return $self->$orig;
+  };
 }
 
 sub batch_alter_table_statements {
-    my ($diff_hash, $options, @meths) = @_;
+  my ($diff_hash, $options, @meths) = @_;
 
-    @meths = qw(
-        rename_table
-        alter_drop_constraint
-        alter_drop_index
-        drop_field
-        add_field
-        alter_field
-        rename_field
-        alter_create_index
-        alter_create_constraint
-        alter_table
-    ) unless @meths;
+  @meths = qw(
+    rename_table
+    alter_drop_constraint
+    alter_drop_index
+    drop_field
+    add_field
+    alter_field
+    rename_field
+    alter_create_index
+    alter_create_constraint
+    alter_table
+  ) unless @meths;
 
-    my $package = caller;
+  my $package = caller;
 
-    return map {
-        my $meth = $package->can($_) or die "$package cant $_";
-        map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{ $diff_hash->{$_} }
-    } grep { @{$diff_hash->{$_} || []} }
-        @meths;
+  return map {
+    my $meth = $package->can($_) or die "$package cant $_";
+    map { $meth->(ref $_ eq 'ARRAY' ? @$_ : $_, $options) } @{ $diff_hash->{$_} }
+  } grep { @{ $diff_hash->{$_} || [] } } @meths;
 }
 
 1;

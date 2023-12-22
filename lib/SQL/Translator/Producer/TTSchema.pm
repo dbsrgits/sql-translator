@@ -109,9 +109,9 @@ constructor.
 use strict;
 use warnings;
 
-our ( $DEBUG, @EXPORT_OK );
+our ($DEBUG, @EXPORT_OK);
 our $VERSION = '1.64';
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use Template;
 use Data::Dumper;
@@ -122,50 +122,45 @@ use base qw(Exporter);
 use SQL::Translator::Utils 'debug';
 
 sub produce {
-    my $translator = shift;
-    local $DEBUG   = $translator->debug;
-    my $scma       = $translator->schema;
-    my $args       = $translator->producer_args;
-    my $file       = delete $args->{'ttfile'} or die "No template file!";
+  my $translator = shift;
+  local $DEBUG = $translator->debug;
+  my $scma = $translator->schema;
+  my $args = $translator->producer_args;
+  my $file = delete $args->{'ttfile'} or die "No template file!";
 
-    my $tt_vars  = delete $args->{'tt_vars'} || {};
-    if ( exists $args->{ttargs} ) {
-        warn "Use of 'ttargs' producer arg is deprecated."
-            ." Please use 'tt_vars' instead.\n";
-        %$tt_vars = { %{$args->{ttargs}}, %$tt_vars };
-    }
+  my $tt_vars = delete $args->{'tt_vars'} || {};
+  if (exists $args->{ttargs}) {
+    warn "Use of 'ttargs' producer arg is deprecated." . " Please use 'tt_vars' instead.\n";
+    %$tt_vars = { %{ $args->{ttargs} }, %$tt_vars };
+  }
 
-    my %tt_conf = exists $args->{tt_conf} ? %{$args->{tt_conf}} : ();
-    # sqlt passes the producer args for _all_ producers in, so we use this
-    # grep hack to test for the old usage.
-    debug(Dumper(\%tt_conf)) if $DEBUG;
-    if ( grep /^[A-Z_]+$/, keys %$args ) {
-        warn "Template config directly in the producer args is deprecated."
-            ." Please use 'tt_conf' instead.\n";
-        %tt_conf = ( %tt_conf, %$args );
-    }
+  my %tt_conf = exists $args->{tt_conf} ? %{ $args->{tt_conf} } : ();
 
-    debug "Processing template $file\n";
-    my $out;
-    my $tt       = Template->new(
-        DEBUG    => $DEBUG,
-        ABSOLUTE => 1, # Set so we can use from the command line sensibly
-        RELATIVE => 1, # Maybe the cmd line code should set it! Security!
-        %tt_conf,
-    );
-    debug("Template ERROR: " . Template->error. "\n") if(!$tt);
-    $tt || die "Failed to initialize Template object: ".Template->error;
+  # sqlt passes the producer args for _all_ producers in, so we use this
+  # grep hack to test for the old usage.
+  debug(Dumper(\%tt_conf)) if $DEBUG;
+  if (grep /^[A-Z_]+$/, keys %$args) {
+    warn "Template config directly in the producer args is deprecated." . " Please use 'tt_conf' instead.\n";
+    %tt_conf = (%tt_conf, %$args);
+  }
 
-    my $ttproc = $tt->process(
-        $file,
-        { schema => $scma , %$tt_vars },
-        \$out
-    );
-    debug("ERROR: ". $tt->error. "\n") if(!$ttproc);
-    $ttproc or die "Error processing template '$file': ".$tt->error;
+  debug "Processing template $file\n";
+  my $out;
+  my $tt = Template->new(
+    DEBUG    => $DEBUG,
+    ABSOLUTE => 1,        # Set so we can use from the command line sensibly
+    RELATIVE => 1,        # Maybe the cmd line code should set it! Security!
+    %tt_conf,
+  );
+  debug("Template ERROR: " . Template->error . "\n") if (!$tt);
+  $tt || die "Failed to initialize Template object: " . Template->error;
 
-    return $out;
-};
+  my $ttproc = $tt->process($file, { schema => $scma, %$tt_vars }, \$out);
+  debug("ERROR: " . $tt->error . "\n") if (!$ttproc);
+  $ttproc or die "Error processing template '$file': " . $tt->error;
+
+  return $out;
+}
 
 1;
 

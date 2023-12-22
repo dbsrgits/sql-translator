@@ -8,10 +8,7 @@ use Data::Dumper;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(1,
-        'SQL::Translator::Parser::PostgreSQL',
-        'SQL::Translator::Producer::MySQL',
-    );
+  maybe_plan(1, 'SQL::Translator::Parser::PostgreSQL', 'SQL::Translator::Producer::MySQL',);
 }
 
 my $create = q|
@@ -167,8 +164,8 @@ create table cvterm_geom (
 |;
 
 my $tr = SQL::Translator->new(
-    parser   => "PostgreSQL",
-    producer => "MySQL"
+  parser   => "PostgreSQL",
+  producer => "MySQL"
 );
 
-ok( $tr->translate(\$create), 'Translate PG2My' ) or diag($tr->error);
+ok($tr->translate(\$create), 'Translate PG2My') or diag($tr->error);

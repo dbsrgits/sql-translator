@@ -39,14 +39,13 @@ our $VERSION = '1.64';
 use SQL::Translator::Utils 'debug';
 
 sub produce {
-    my $translator     = shift;
-    my $schema         = $translator->schema;
-    my $o = '';
-    for my $table ( $schema->get_tables ) {
-        my $table_name    = $table->name or next;
-        my $n = latex($table_name);
-        $o .=
-          sprintf '
+  my $translator = shift;
+  my $schema     = $translator->schema;
+  my $o          = '';
+  for my $table ($schema->get_tables) {
+    my $table_name = $table->name or next;
+    my $n          = latex($table_name);
+    $o .= sprintf '
 \subsubsection{%s}
 %s
 \begin{table}[htb]
@@ -56,28 +55,28 @@ sub produce {
 { \small
   \begin{tabular}{l l p{8cm}}
   Column & Datatype & Description \\\\ \hline
-',
- $n, latex($table->comments), $n, $table_name;
+', $n, latex($table->comments), $n, $table_name;
 
-        foreach my $f ($table->get_fields) {
-            $o .= sprintf '%s & %s & %s \\\\', map {latex($_)} ($f->name, $f->data_type, $f->comments || '');
-            $o .= "\n";
+    foreach my $f ($table->get_fields) {
+      $o .= sprintf '%s & %s & %s \\\\', map { latex($_) } ($f->name, $f->data_type, $f->comments || '');
+      $o .= "\n";
 
-        }
-$o .= sprintf '
+    }
+    $o .= sprintf '
 \end{tabular}
 }
 \end{table}
 \clearpage
 ';
-    }
-    return $o;
+  }
+  return $o;
 }
+
 sub latex {
-    my $s = shift;
-    return '' unless defined $s;
-    $s =~ s/([\&\_\$\{\#])/\\$1/g;
-    return $s;
+  my $s = shift;
+  return '' unless defined $s;
+  $s =~ s/([\&\_\$\{\#])/\\$1/g;
+  return $s;
 }
 
 1;

@@ -3,9 +3,7 @@ use Test::More;
 use Test::SQL::Translator qw(maybe_plan);
 
 BEGIN {
-    maybe_plan(3,
-        'SQL::Translator::Parser::DBI::Sybase',
-    );
+  maybe_plan(3, 'SQL::Translator::Parser::DBI::Sybase',);
 }
 
 use_ok('SQL::Translator::Parser::DBI::Sybase');

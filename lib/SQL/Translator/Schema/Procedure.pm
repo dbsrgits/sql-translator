@@ -31,7 +31,7 @@ use Moo;
 use SQL::Translator::Utils qw(ex2err);
 use SQL::Translator::Role::ListAttr;
 use SQL::Translator::Types qw(schema_obj);
-use Sub::Quote qw(quote_sub);
+use Sub::Quote             qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
@@ -59,7 +59,7 @@ Gets and set the parameters of the stored procedure.
 
 =cut
 
-with ListAttr parameters => ( uniq => 1 );
+with ListAttr parameters => (uniq => 1);
 
 =head2 name
 
@@ -70,7 +70,7 @@ Get or set the procedure's name.
 
 =cut
 
-has name => ( is => 'rw', default => quote_sub(q{ '' }) );
+has name => (is => 'rw', default => quote_sub(q{ '' }));
 
 =head2 sql
 
@@ -81,7 +81,7 @@ Get or set the procedure's SQL.
 
 =cut
 
-has sql => ( is => 'rw', default => quote_sub(q{ '' }) );
+has sql => (is => 'rw', default => quote_sub(q{ '' }));
 
 =head2 order
 
@@ -92,8 +92,7 @@ Get or set the order of the procedure.
 
 =cut
 
-has order => ( is => 'rw' );
-
+has order => (is => 'rw');
 
 =head2 owner
 
@@ -104,7 +103,7 @@ Get or set the owner of the procedure.
 
 =cut
 
-has owner => ( is => 'rw', default => quote_sub(q{ '' }) );
+has owner => (is => 'rw', default => quote_sub(q{ '' }));
 
 =head2 comments
 
@@ -117,22 +116,22 @@ Get or set the comments on a procedure.
 =cut
 
 has comments => (
-    is => 'rw',
-    coerce => quote_sub(q{ ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] }),
-    default => quote_sub(q{ [] }),
+  is      => 'rw',
+  coerce  => quote_sub(q{ ref($_[0]) eq 'ARRAY' ? $_[0] : [$_[0]] }),
+  default => quote_sub(q{ [] }),
 );
 
 around comments => sub {
-    my $orig     = shift;
-    my $self     = shift;
-    my @comments = ref $_[0] ? @{ $_[0] } : @_;
+  my $orig     = shift;
+  my $self     = shift;
+  my @comments = ref $_[0] ? @{ $_[0] } : @_;
 
-    for my $arg ( @comments ) {
-        $arg = $arg->[0] if ref $arg;
-        push @{ $self->$orig }, $arg if defined $arg && $arg;
-    }
+  for my $arg (@comments) {
+    $arg = $arg->[0] if ref $arg;
+    push @{ $self->$orig }, $arg if defined $arg && $arg;
+  }
 
-    return wantarray ? @{ $self->$orig } : join( "\n", @{ $self->$orig } );
+  return wantarray ? @{ $self->$orig } : join("\n", @{ $self->$orig });
 };
 
 =head2 schema
@@ -144,7 +143,7 @@ Get or set the procedures's schema object.
 
 =cut
 
-has schema => ( is => 'rw', isa => schema_obj('Schema'), weak_ref => 1 );
+has schema => (is => 'rw', isa => schema_obj('Schema'), weak_ref => 1);
 
 around schema => \&ex2err;
 
@@ -157,32 +156,40 @@ Determines if this procedure is the same as another
 =cut
 
 around equals => sub {
-    my $orig = shift;
-    my $self = shift;
-    my $other = shift;
-    my $case_insensitive = shift;
-    my $ignore_sql = shift;
+  my $orig             = shift;
+  my $self             = shift;
+  my $other            = shift;
+  my $case_insensitive = shift;
+  my $ignore_sql       = shift;
 
-    return 0 unless $self->$orig($other);
-    return 0 unless $case_insensitive ? uc($self->name) eq uc($other->name) : $self->name eq $other->name;
+  return 0 unless $self->$orig($other);
+  return 0
+      unless $case_insensitive
+      ? uc($self->name) eq uc($other->name)
+      : $self->name eq $other->name;
 
-    unless ($ignore_sql) {
-        my $selfSql = $self->sql;
-        my $otherSql = $other->sql;
-        # Remove comments
-        $selfSql =~ s/--.*$//mg;
-        $otherSql =~ s/--.*$//mg;
-        # Collapse whitespace to space to avoid whitespace comparison issues
-        $selfSql =~ s/\s+/ /sg;
-        $otherSql =~ s/\s+/ /sg;
-        return 0 unless $selfSql eq $otherSql;
-    }
+  unless ($ignore_sql) {
+    my $selfSql  = $self->sql;
+    my $otherSql = $other->sql;
 
-    return 0 unless $self->_compare_objects(scalar $self->parameters, scalar $other->parameters);
+    # Remove comments
+    $selfSql  =~ s/--.*$//mg;
+    $otherSql =~ s/--.*$//mg;
+
+    # Collapse whitespace to space to avoid whitespace comparison issues
+    $selfSql  =~ s/\s+/ /sg;
+    $otherSql =~ s/\s+/ /sg;
+    return 0 unless $selfSql eq $otherSql;
+  }
+
+  return 0
+      unless $self->_compare_objects(scalar $self->parameters, scalar $other->parameters);
+
 #    return 0 unless $self->comments eq $other->comments;
 #    return 0 unless $case_insensitive ? uc($self->owner) eq uc($other->owner) : $self->owner eq $other->owner;
-    return 0 unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
-    return 1;
+  return 0
+      unless $self->_compare_objects(scalar $self->extra, scalar $other->extra);
+  return 1;
 };
 
 # Must come after all 'has' declarations

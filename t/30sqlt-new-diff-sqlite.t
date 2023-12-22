@@ -6,7 +6,7 @@ use warnings;
 use SQL::Translator;
 
 use File::Spec::Functions qw(catfile updir tmpdir);
-use FindBin qw($Bin);
+use FindBin               qw($Bin);
 use Test::More;
 use Test::Differences;
 use Test::SQL::Translator qw(maybe_plan);
@@ -15,27 +15,32 @@ plan tests => 4;
 
 use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
 
-my $tr            = SQL::Translator->new;
+my $tr = SQL::Translator->new;
 
-my ( $source_schema, $target_schema ) = map {
-    my $t = SQL::Translator->new;
-    $t->parser( 'YAML' )
+my ($source_schema, $target_schema) = map {
+  my $t = SQL::Translator->new;
+  $t->parser('YAML')
       or die $tr->error;
-    my $out = $t->translate( catfile($Bin, qw/data diff/, $_ ) )
+  my $out = $t->translate(catfile($Bin, qw/data diff/, $_))
       or die $tr->error;
 
-    my $schema = $t->schema;
-    unless ( $schema->name ) {
-        $schema->name( $_ );
-    }
-    ($schema);
+  my $schema = $t->schema;
+  unless ($schema->name) {
+    $schema->name($_);
+  }
+  ($schema);
 } (qw/create1.yml create2.yml/);
 
 # Test for differences
-my $out = SQL::Translator::Diff::schema_diff( $source_schema, 'SQLite', $target_schema, 'SQLite',
-  { no_batch_alters => 1,
+my $out = SQL::Translator::Diff::schema_diff(
+  $source_schema,
+  'SQLite',
+  $target_schema,
+  'SQLite',
+  {
+    no_batch_alters        => 1,
     ignore_missing_methods => 1,
-    output_db => 'SQLite',
+    output_db              => 'SQLite',
   }
 );
 
@@ -79,12 +84,17 @@ COMMIT;
 
 ## END OF DIFF
 
-
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'SQLite', $target_schema, 'SQLite',
-    { ignore_index_names => 1,
-      ignore_constraint_names => 1,
-      output_db => 'SQLite',
-    });
+$out = SQL::Translator::Diff::schema_diff(
+  $source_schema,
+  'SQLite',
+  $target_schema,
+  'SQLite',
+  {
+    ignore_index_names      => 1,
+    ignore_constraint_names => 1,
+    output_db               => 'SQLite',
+  }
+);
 
 eq_or_diff($out, <<'## END OF DIFF', "Diff as expected");
 -- Convert schema 'create1.yml' to 'create2.yml':;
@@ -170,7 +180,7 @@ COMMIT;
 # the main schema object
 
 # Test for sameness
-$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL' );
+$out = SQL::Translator::Diff::schema_diff($source_schema, 'MySQL', $source_schema, 'MySQL');
 
 eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- Convert schema 'create1.yml' to 'create1.yml':;

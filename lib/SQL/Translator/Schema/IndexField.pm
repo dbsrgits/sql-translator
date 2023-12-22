@@ -15,6 +15,7 @@ Different databases allow for different options on index fields. Those are suppo
 =head1 METHODS
 
 =cut
+
 use Moo;
 
 extends 'SQL::Translator::Schema::Object';
@@ -54,30 +55,28 @@ around BUILDARGS => sub {
   if (@args == 1 && !ref $args[0]) {
     @args = (name => $args[0]);
   }
-  # there are some weird pathological cases where we get an object passed in rather than a
-  # hashref. We'll just clone it
+
+# there are some weird pathological cases where we get an object passed in rather than a
+# hashref. We'll just clone it
   if (ref $args[0] eq $self) {
-    return { %{$args[0]} }
+    return { %{ $args[0] } };
   }
-  my $args = $self->$orig(@args);
+  my $args  = $self->$orig(@args);
   my $extra = delete $args->{extra} || {};
-  my $name = delete $args->{name};
+  my $name  = delete $args->{name};
   return {
-    name => $name,
-    extra => {
-      %$extra,
-      %$args
-    }
-  }
+    name  => $name,
+    extra => { %$extra, %$args }
+  };
 };
 
 has name => (
-  is => 'rw',
+  is       => 'rw',
   required => 1,
 );
 
 has extra => (
-  is => 'rw',
+  is      => 'rw',
   default => sub { {} },
 );
 

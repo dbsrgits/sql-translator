@@ -33,22 +33,23 @@ automatically arrange them horizontally or vertically.
 use strict;
 use warnings;
 
-our ( $DEBUG, @EXPORT_OK );
+our ($DEBUG, @EXPORT_OK);
 our $VERSION = '1.64';
-$DEBUG   = 0 unless defined $DEBUG;
+$DEBUG = 0 unless defined $DEBUG;
 
 use File::ShareDir qw/dist_dir/;
 
 use SQL::Translator::Utils 'debug';
 use base qw/SQL::Translator::Producer::TT::Base/;
+
 # Convert produce call into a method call on our class
-sub produce { return __PACKAGE__->new( translator => shift )->run; };
+sub produce { return __PACKAGE__->new(translator => shift)->run; }
 
 sub tt_config {
-    ( INCLUDE_PATH => File::Spec->catdir (dist_dir('SQL-Translator'), 'DiaUml') );
+  (INCLUDE_PATH => File::Spec->catdir(dist_dir('SQL-Translator'), 'DiaUml'));
 }
 
-sub tt_schema { 'schema.tt2' }
+sub tt_schema {'schema.tt2'}
 
 1;
 

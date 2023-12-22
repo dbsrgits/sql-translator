@@ -13,11 +13,7 @@ use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator;
 
 BEGIN {
-    maybe_plan(5,
-        'CGI',
-        'HTML::Parser',
-        'SQL::Translator::Parser::MySQL',
-        'SQL::Translator::Producer::HTML');
+  maybe_plan(5, 'CGI', 'HTML::Parser', 'SQL::Translator::Parser::MySQL', 'SQL::Translator::Producer::HTML');
 }
 
 my ($p, $tables, $classes);
@@ -31,35 +27,33 @@ CREATE TABLE foo (
 );
 |;
 
-my $tr = SQL::Translator->new(parser => 'MySQL', producer => 'HTML');
+my $tr     = SQL::Translator->new(parser => 'MySQL', producer => 'HTML');
 my $parsed = $tr->translate(data => $create) or die $tr->error;
 my $status;
 
-eval {
-    $status = $p->parse($parsed);
-};
+eval { $status = $p->parse($parsed); };
 if ($@) {
-    daig $@;
-    fail("Unable to parse the output!");
+  daig $@;
+  fail("Unable to parse the output!");
 }
 
 # General
 ok($parsed, "Parsed table OK");
 ok($status, "Parsed HTML OK");
 
-$p->handler(start => @{$HANDLERS{count_tables}});
+$p->handler(start => @{ $HANDLERS{count_tables} });
 $p->parse($parsed);
 
 is($tables, 3, "One table in the SQL produces 3 <table> tags");
 $tables = $classes = 0;
 
-$p->handler(start => @{$HANDLERS{count_classes}});
+$p->handler(start => @{ $HANDLERS{count_classes} });
 $p->parse($parsed);
 
 is($classes, 1, "One 'LinkTable' class");
 $tables = $classes = 0;
 
-$p->handler(start => @{$HANDLERS{sqlfairy}});
+$p->handler(start => @{ $HANDLERS{sqlfairy} });
 $p->parse($parsed);
 
 is($classes, 1, "SQLfairy plug is alive and well ");
@@ -67,34 +61,37 @@ $tables = $classes = 0;
 
 # Handler functions for the parser
 BEGIN {
-    %HANDLERS = (
-        count_tables => [
-            sub {
-                my $tagname = shift;
-                $tables++ if ($tagname eq 'table');
-            }, 'tagname',
-        ],
+  %HANDLERS = (
+    count_tables => [
+      sub {
+        my $tagname = shift;
+        $tables++ if ($tagname eq 'table');
+      },
+      'tagname',
+    ],
 
-        count_classes => [
-            sub {
-                my ($tagname, $attr) = @_;
-                if ($tagname eq 'table' &&
-                    $attr->{'class'} &&
-                    $attr->{'class'} eq 'LinkTable') {
-                    $classes++;
-                }
-            }, 'tagname,attr',
-        ],
+    count_classes => [
+      sub {
+        my ($tagname, $attr) = @_;
+        if ( $tagname eq 'table'
+          && $attr->{'class'}
+          && $attr->{'class'} eq 'LinkTable') {
+          $classes++;
+        }
+      },
+      'tagname,attr',
+    ],
 
-        sqlfairy => [
-            sub {
-                my ($tagname, $attr) = @_;
-                if ($tagname eq 'a' &&
-                    $attr->{'href'} &&
-                    $attr->{'href'} =~ /sqlfairy/i) {
-                    $classes++;
-                }
-            }, 'tagname,attr',
-        ],
-    );
+    sqlfairy => [
+      sub {
+        my ($tagname, $attr) = @_;
+        if ( $tagname eq 'a'
+          && $attr->{'href'}
+          && $attr->{'href'} =~ /sqlfairy/i) {
+          $classes++;
+        }
+      },
+      'tagname,attr',
+    ],
+  );
 }

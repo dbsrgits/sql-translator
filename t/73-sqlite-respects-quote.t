@@ -20,12 +20,11 @@ DDL
 
 my %common_args = (
   no_comments => 1,
-  from => 'SQLite',
-  to => 'SQLite');
+  from        => 'SQLite',
+  to          => 'SQLite'
+);
 
-my $unquoted = SQL::Translator
-  ->new(%common_args)
-  ->translate(\$ddl);
+my $unquoted = SQL::Translator->new(%common_args)->translate(\$ddl);
 
 eq_or_diff($unquoted, <<'DDL', 'DDL with default quoting');
 BEGIN TRANSACTION;
@@ -39,13 +38,17 @@ CREATE TABLE Foo (
 COMMIT;
 DDL
 
-dies_ok { SQL::Translator
-  ->new(%common_args, quote_table_names=>0, quote_field_names => 1)
-  ->translate(\$ddl) } 'mix and match quotes is asinine';
+dies_ok {
+  SQL::Translator->new(
+    %common_args,
+    quote_table_names => 0,
+    quote_field_names => 1
+  )->translate(\$ddl)
+}
+'mix and match quotes is asinine';
 
-my $quoteall = SQL::Translator
-  ->new(%common_args, quote_identifiers=>1)
-  ->translate(\$ddl);
+my $quoteall = SQL::Translator->new(%common_args, quote_identifiers => 1)
+    ->translate(\$ddl);
 
 eq_or_diff($quoteall, <<'DDL', 'DDL with quoting');
 BEGIN TRANSACTION;
@@ -97,5 +100,4 @@ COMMIT;
 ## END OF DIFF
 
 =cut
-
 

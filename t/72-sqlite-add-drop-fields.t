@@ -9,9 +9,7 @@ use SQL::Translator;
 use SQL::Translator::Parser::SQLite;
 use SQL::Translator::Diff;
 
-
-ok my $version1 = SQL::Translator->new(from=>'SQLite')
-  ->translate(\<<SQL);
+ok my $version1 = SQL::Translator->new(from => 'SQLite')->translate(\<<SQL);
 CREATE TABLE "Foo" (
   "foo" INTEGER PRIMARY KEY NOT NULL,
   "bar" VARCHAR(10) NOT NULL,
@@ -19,8 +17,7 @@ CREATE TABLE "Foo" (
 );
 SQL
 
-ok my $version2 = SQL::Translator->new(from=>'SQLite')
-  ->translate(\<<SQL);
+ok my $version2 = SQL::Translator->new(from => 'SQLite')->translate(\<<SQL);
 CREATE TABLE "Foo" (
   "foo" INTEGER PRIMARY KEY NOT NULL,
   "bar" VARCHAR(10) NOT NULL,

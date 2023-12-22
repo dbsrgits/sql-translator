@@ -13,7 +13,10 @@ use Test::SQL::Translator qw(maybe_plan);
 
 use Data::Dumper;
 my %opt;
-BEGIN { map { $opt{$_}=1 if s/^-// } @ARGV; }
+
+BEGIN {
+  map { $opt{$_} = 1 if s/^-// } @ARGV;
+}
 use constant DEBUG => (exists $opt{d} ? 1 : 0);
 use constant TRACE => (exists $opt{t} ? 1 : 0);
 
@@ -22,18 +25,15 @@ use FindBin qw/$Bin/;
 my $file = "$Bin/data/mysql/sqlfxml-producer-basic.sql";
 
 local $SIG{__WARN__} = sub {
-    CORE::warn(@_)
-        unless $_[0] =~ m!XML/Writer!;
+  CORE::warn(@_)
+      unless $_[0] =~ m!XML/Writer!;
 };
 
 # Testing 1,2,3,4...
 #=============================================================================
 
 BEGIN {
-    maybe_plan(14,
-        'XML::Writer',
-        'Test::Differences',
-        'SQL::Translator::Producer::XML::SQLFairy');
+  maybe_plan(14, 'XML::Writer', 'Test::Differences', 'SQL::Translator::Producer::XML::SQLFairy');
 }
 
 use Test::Differences;
@@ -43,21 +43,20 @@ use SQL::Translator::Producer::XML::SQLFairy;
 # Due to formatters being able to change style, e.g. by entries in .rc files
 # in $HOME, the layout and or indent might differ slightly. As leading white
 # is not important in XML, strip it when comparing
-sub xml_equals
-{
-    my ($got, $expect, $msg) = (@_, "XML looks right");
-    $got    =~ s/^ +//gm;
-    $expect =~ s/^ +//gm;
-    eq_or_diff $got, $expect, $msg, { context => 1 };
+sub xml_equals {
+  my ($got, $expect, $msg) = (@_, "XML looks right");
+  $got    =~ s/^ +//gm;
+  $expect =~ s/^ +//gm;
+  eq_or_diff $got, $expect, $msg, { context => 1 };
 }
 
 #
 # basic stuff
 #
 {
-my ($obj,$ans,$xml);
+  my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+  $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
@@ -103,31 +102,32 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-$obj = SQL::Translator->new(
+  $obj = SQL::Translator->new(
     debug          => DEBUG,
     trace          => TRACE,
     show_warnings  => 1,
     add_drop_table => 1,
     from           => "MySQL",
     to             => "XML-SQLFairy",
-);
-$xml = $obj->translate($file) or die $obj->error;
-ok("$xml" ne ""                             ,"Produced something!");
-print "XML:\n$xml" if DEBUG;
-# Strip sqlf header with its variable date so we diff safely
-$xml =~ s/^([^\n]*\n){7}//m;
-xml_equals $xml, $ans;
+  );
+  $xml = $obj->translate($file) or die $obj->error;
+  ok("$xml" ne "", "Produced something!");
+  print "XML:\n$xml" if DEBUG;
 
-} # end basic stuff
+  # Strip sqlf header with its variable date so we diff safely
+  $xml =~ s/^([^\n]*\n){7}//m;
+  xml_equals $xml, $ans;
+
+}    # end basic stuff
 
 #
 # View
 #
 # Thanks to Ken for the schema setup lifted from 13schema.t
 {
-my ($obj,$ans,$xml);
+  my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+  $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables></tables>
@@ -142,44 +142,45 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
-        debug          => DEBUG,
-        trace          => TRACE,
-        show_warnings  => 1,
-        add_drop_table => 1,
-        from           => "MySQL",
-        to             => "XML-SQLFairy",
-    );
-    my $s      = $obj->schema;
-    my $name   = 'foo_view';
-    my $sql    = 'select name, age from person';
-    my $fields = 'name, age';
-    my $v      = $s->add_view(
-        name   => $name,
-        sql    => $sql,
-        fields => $fields,
-        extra  => { hello => "world" },
-        schema => $s,
-    ) or die $s->error;
+  $obj = SQL::Translator->new(
+    debug          => DEBUG,
+    trace          => TRACE,
+    show_warnings  => 1,
+    add_drop_table => 1,
+    from           => "MySQL",
+    to             => "XML-SQLFairy",
+  );
+  my $s      = $obj->schema;
+  my $name   = 'foo_view';
+  my $sql    = 'select name, age from person';
+  my $fields = 'name, age';
+  my $v      = $s->add_view(
+    name   => $name,
+    sql    => $sql,
+    fields => $fields,
+    extra  => { hello => "world" },
+    schema => $s,
+  ) or die $s->error;
 
-    # As we have created a Schema we give translate a dummy string so that
-    # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (View) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
-    print "XML attrib_values=>1:\n$xml" if DEBUG;
-    # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m;
-    xml_equals $xml, $ans;
-} # end View
+  # As we have created a Schema we give translate a dummy string so that
+  # it will run the produce.
+  lives_ok { $xml = $obj->translate("FOO"); } "Translate (View) ran";
+  ok("$xml" ne "", "Produced something!");
+  print "XML attrib_values=>1:\n$xml" if DEBUG;
+
+  # Strip sqlf header with its variable date so we diff safely
+  $xml =~ s/^([^\n]*\n){7}//m;
+  xml_equals $xml, $ans;
+}    # end View
 
 #
 # Trigger
 #
 # Thanks to Ken for the schema setup lifted from 13schema.t
 {
-my ($obj,$ans,$xml);
+  my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+  $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
@@ -202,48 +203,49 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
-        debug          => DEBUG,
-        trace          => TRACE,
-        show_warnings  => 1,
-        add_drop_table => 1,
-        from           => "MySQL",
-        to             => "XML-SQLFairy",
-    );
-    my $s                   = $obj->schema;
-    my $name                = 'foo_trigger';
-    my $perform_action_when = 'after';
-    my $database_event      = 'insert';
-    my $action              = 'update modified=timestamp();';
-    my $table = $s->add_table( name => "Basic" ) or die $s->error;
-    my $t                   = $s->add_trigger(
-        name                => $name,
-        perform_action_when => $perform_action_when,
-        database_events     => [$database_event],
-        table               => $table,
-        action              => $action,
-        scope               => 'row',
-        extra               => { hello => "world" },
-    ) or die $s->error;
+  $obj = SQL::Translator->new(
+    debug          => DEBUG,
+    trace          => TRACE,
+    show_warnings  => 1,
+    add_drop_table => 1,
+    from           => "MySQL",
+    to             => "XML-SQLFairy",
+  );
+  my $s                   = $obj->schema;
+  my $name                = 'foo_trigger';
+  my $perform_action_when = 'after';
+  my $database_event      = 'insert';
+  my $action              = 'update modified=timestamp();';
+  my $table               = $s->add_table(name => "Basic") or die $s->error;
+  my $t                   = $s->add_trigger(
+    name                => $name,
+    perform_action_when => $perform_action_when,
+    database_events     => [$database_event],
+    table               => $table,
+    action              => $action,
+    scope               => 'row',
+    extra               => { hello => "world" },
+  ) or die $s->error;
 
-    # As we have created a Schema we give translate a dummy string so that
-    # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (Trigger) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
-    print "XML attrib_values=>1:\n$xml" if DEBUG;
-    # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m;
-    xml_equals $xml, $ans;
-} # end Trigger
+  # As we have created a Schema we give translate a dummy string so that
+  # it will run the produce.
+  lives_ok { $xml = $obj->translate("FOO"); } "Translate (Trigger) ran";
+  ok("$xml" ne "", "Produced something!");
+  print "XML attrib_values=>1:\n$xml" if DEBUG;
+
+  # Strip sqlf header with its variable date so we diff safely
+  $xml =~ s/^([^\n]*\n){7}//m;
+  xml_equals $xml, $ans;
+}    # end Trigger
 
 #
 # Procedure
 #
 # Thanks to Ken for the schema setup lifted from 13schema.t
 {
-my ($obj,$ans,$xml);
+  my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+  $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables></tables>
@@ -259,46 +261,47 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
-        debug          => DEBUG,
-        trace          => TRACE,
-        show_warnings  => 1,
-        add_drop_table => 1,
-        from           => "MySQL",
-        to             => "XML-SQLFairy",
-    );
-    my $s          = $obj->schema;
-    my $name       = 'foo_proc';
-    my $sql        = 'select foo from bar';
-    my $parameters = 'foo, bar';
-    my $owner      = 'Nomar';
-    my $comments   = 'Go Sox!';
-    my $p          = $s->add_procedure(
-        name       => $name,
-        sql        => $sql,
-        parameters => $parameters,
-        owner      => $owner,
-        comments   => $comments,
-        extra      => { hello => "world" },
-    ) or die $s->error;
+  $obj = SQL::Translator->new(
+    debug          => DEBUG,
+    trace          => TRACE,
+    show_warnings  => 1,
+    add_drop_table => 1,
+    from           => "MySQL",
+    to             => "XML-SQLFairy",
+  );
+  my $s          = $obj->schema;
+  my $name       = 'foo_proc';
+  my $sql        = 'select foo from bar';
+  my $parameters = 'foo, bar';
+  my $owner      = 'Nomar';
+  my $comments   = 'Go Sox!';
+  my $p          = $s->add_procedure(
+    name       => $name,
+    sql        => $sql,
+    parameters => $parameters,
+    owner      => $owner,
+    comments   => $comments,
+    extra      => { hello => "world" },
+  ) or die $s->error;
 
-    # As we have created a Schema we give translate a dummy string so that
-    # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (Procedure) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
-    print "XML attrib_values=>1:\n$xml" if DEBUG;
-    # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m;
-    xml_equals $xml, $ans;
-} # end Procedure
+  # As we have created a Schema we give translate a dummy string so that
+  # it will run the produce.
+  lives_ok { $xml = $obj->translate("FOO"); } "Translate (Procedure) ran";
+  ok("$xml" ne "", "Produced something!");
+  print "XML attrib_values=>1:\n$xml" if DEBUG;
+
+  # Strip sqlf header with its variable date so we diff safely
+  $xml =~ s/^([^\n]*\n){7}//m;
+  xml_equals $xml, $ans;
+}    # end Procedure
 
 #
 # Field.extra
 #
 {
-my ($obj,$ans,$xml);
+  my ($obj, $ans, $xml);
 
-$ans = <<EOXML;
+  $ans = <<EOXML;
 <schema name="" database="" xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
   <extra />
   <tables>
@@ -329,41 +332,41 @@ $ans = <<EOXML;
 </schema>
 EOXML
 
-    $obj = SQL::Translator->new(
-        debug          => DEBUG,
-        trace          => TRACE,
-        show_warnings  => 1,
-        add_drop_table => 1,
-        from           => "MySQL",
-        to             => "XML-SQLFairy",
-    );
-    my $s = $obj->schema;
-    my $t = $s->add_table( name => "Basic" ) or die $s->error;
-    my $f = $t->add_field(
-        name      => "foo",
-        data_type => "integer",
-        size      => "10",
-    ) or die $t->error;
-    $f->extra(ZEROFILL => "1");
+  $obj = SQL::Translator->new(
+    debug          => DEBUG,
+    trace          => TRACE,
+    show_warnings  => 1,
+    add_drop_table => 1,
+    from           => "MySQL",
+    to             => "XML-SQLFairy",
+  );
+  my $s = $obj->schema;
+  my $t = $s->add_table(name => "Basic") or die $s->error;
+  my $f = $t->add_field(
+    name      => "foo",
+    data_type => "integer",
+    size      => "10",
+  ) or die $t->error;
+  $f->extra(ZEROFILL => "1");
 
-    $t->add_field(
-        name      => "bar",
-        data_type => "numeric",
-        size      => "10,2",
-    ) or die $t->error;
-    $t->add_field(
-        name      => "baz",
-        data_type => "decimal",
-        size      => [8,3],
-    ) or die $t->error;
+  $t->add_field(
+    name      => "bar",
+    data_type => "numeric",
+    size      => "10,2",
+  ) or die $t->error;
+  $t->add_field(
+    name      => "baz",
+    data_type => "decimal",
+    size      => [ 8, 3 ],
+  ) or die $t->error;
 
+  # As we have created a Schema we give translate a dummy string so that
+  # it will run the produce.
+  lives_ok { $xml = $obj->translate("FOO"); } "Translate (Field.extra) ran";
+  ok("$xml" ne "", "Produced something!");
+  print "XML:\n$xml" if DEBUG;
 
-    # As we have created a Schema we give translate a dummy string so that
-    # it will run the produce.
-    lives_ok {$xml =$obj->translate("FOO");} "Translate (Field.extra) ran";
-    ok("$xml" ne ""                             ,"Produced something!");
-    print "XML:\n$xml" if DEBUG;
-    # Strip sqlf header with its variable date so we diff safely
-    $xml =~ s/^([^\n]*\n){7}//m;
-    xml_equals $xml, $ans;
-} # end extra
+  # Strip sqlf header with its variable date so we diff safely
+  $xml =~ s/^([^\n]*\n){7}//m;
+  xml_equals $xml, $ans;
+}    # end extra
