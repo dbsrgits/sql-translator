@@ -41,7 +41,7 @@ equality.
 use Moo 1.000003;
 
 # screw you PAUSE
-our $VERSION = '1.63';
+our $VERSION = '1.64';
 
 with qw(
   SQL::Translator::Role::Error

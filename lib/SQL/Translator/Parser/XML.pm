@@ -23,7 +23,7 @@ Ken Y. Clark E<lt>kclark@cpan.orgE<gt>.
 use strict;
 use warnings;
 our $DEBUG;
-our $VERSION = '1.63';
+our $VERSION = '1.64';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Parser::XML::SQLFairy;

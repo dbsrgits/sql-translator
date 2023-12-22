@@ -105,7 +105,7 @@ Fields for use with PostGIS types.
 use strict;
 use warnings;
 our ( $DEBUG, $WARN );
-our $VERSION = '1.63';
+our $VERSION = '1.64';
 $DEBUG = 0 unless defined $DEBUG;
 
 use base qw(SQL::Translator::Producer);

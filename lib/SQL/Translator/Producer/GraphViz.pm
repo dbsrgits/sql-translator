@@ -230,7 +230,7 @@ use SQL::Translator::Utils qw(debug);
 use Scalar::Util qw/openhandle/;
 
 our $DEBUG;
-our $VERSION = '1.63';
+our $VERSION = '1.64';
 $DEBUG   = 0 unless defined $DEBUG;
 
 sub produce {

@@ -45,7 +45,7 @@ use strict;
 use warnings;
 use base qw( Exporter );
 require Exporter;
-our $VERSION = '1.63';
+our $VERSION = '1.64';
 
 our @EXPORT = qw[
     CHECK_C

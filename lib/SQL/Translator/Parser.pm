@@ -2,7 +2,7 @@ package SQL::Translator::Parser;
 
 use strict;
 use warnings;
-our $VERSION = '1.63';
+our $VERSION = '1.64';
 
 sub parse { "" }
 
