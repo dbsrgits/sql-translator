@@ -35,8 +35,7 @@ Table:
     CHECK (expression) |
     REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL ]
       [ ON DELETE action ] [ ON UPDATE action ] }
-  [ DEFERRABLE | NOT DEFERRABLE ]
-  [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+  [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
   and table_constraint is:
 
@@ -44,12 +43,11 @@ Table:
   { UNIQUE ( column_name [, ... ] ) |
     PRIMARY KEY ( column_name [, ... ] ) |
     CHECK ( expression ) |
+    EXCLUDE [USING acc_method] (expression) [INCLUDE (column [, ...])] [WHERE (predicate)]
     FOREIGN KEY ( column_name [, ... ] )
      REFERENCES reftable [ ( refcolumn [, ... ] ) ]
-      [ MATCH FULL | MATCH PARTIAL ]
-      [ ON DELETE action ] [ ON UPDATE action ] }
-  [ DEFERRABLE | NOT DEFERRABLE ]
-  [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+      [ MATCH FULL | MATCH PARTIAL ] [ ON DELETE action ] [ ON UPDATE action ] }
+  [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
 Index :
 (http://www.postgresql.org/docs/current/sql-createindex.html)
@@ -316,6 +314,8 @@ create : CREATE WORD /[^;]+/ ';'
 using_method : /using/i WORD { $item[2] }
 
 where_predicate : /where/i /[^;]+/
+
+where_paren_predicate : /where/i '(' /[^;]+/ ')'
 
 include_covering : /include/i '(' covering_field_name(s /,/) ')'
   { $item{'covering_field_name(s)'} }
@@ -679,37 +679,38 @@ table_constraint : comment(s?) constraint_name(?) table_constraint_type deferrab
         my $fields     = $desc->{'fields'};
         my $expression = $desc->{'expression'};
         my @comments   = ( @{ $item[1] }, @{ $item[-1] } );
+        my $expr_constraint = $type eq 'check' || $type eq 'exclude';
 
         $return              =  {
             name             => $item[2][0] || '',
             supertype        => 'constraint',
             type             => $type,
-            fields           => $type ne 'check' ? $fields : [],
-            expression       => $type eq 'check' ? $expression : '',
+            fields           => $expr_constraint ? [] : $fields,
+            expression       => $expr_constraint ? $expression : '',
             deferrable       => $item{'deferrable'},
             deferred         => $item{'deferred'},
-            reference_table  => $desc->{'reference_table'},
-            reference_fields => $desc->{'reference_fields'},
-            match_type       => $desc->{'match_type'},
             on_delete        => $desc->{'on_delete'} || $desc->{'on_delete_do'},
             on_update        => $desc->{'on_update'} || $desc->{'on_update_do'},
             comments         => [ @comments ],
+            %{$desc}{qw/include using where reference_table reference_fields match_type/}
         }
     }
 
-table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
+table_constraint_type : /primary key/i '(' NAME(s /,/) ')' include_covering(?)
     {
         $return = {
             type   => 'primary_key',
             fields => $item[3],
+            include => $item{'include_convering(?)'}[0],
         }
     }
     |
-    /unique/i '(' NAME(s /,/) ')'
+    /unique/i '(' NAME(s /,/) ')' include_covering(?)
     {
         $return    =  {
             type   => 'unique',
             fields => $item[3],
+            include => $item{'include_convering(?)'}[0],
         }
     }
     |
@@ -718,6 +719,16 @@ table_constraint_type : /primary key/i '(' NAME(s /,/) ')'
         $return        =  {
             type       => 'check',
             expression => $item[3],
+        }
+    }
+    |
+    /exclude/i using_method(?) '(' /[^)]+/ ')' include_covering(?) where_paren_predicate(?) {
+        $return        = {
+            type       => 'exclude',
+            expression => $item{__PATTERN2__},
+            using      => $item{'using_method(?)'}[0],
+            include    => $item{'include_convering(?)'}[0],
+            where      => $item{'where_paren_predicate(?)'}[0],
         }
     }
     |
@@ -1119,6 +1130,10 @@ sub parse {
         }
 
         for my $cdata ( @{ $tdata->{'constraints'} || [] } ) {
+            my $options = [
+              # load this up with the extras
+              map +{%{$cdata}{$_}}, grep $cdata->{$_}, qw/include using where/
+            ];
             my $constraint       =  $table->add_constraint(
                 name             => $cdata->{'name'},
                 type             => $cdata->{'type'},
@@ -1129,6 +1144,7 @@ sub parse {
                 on_delete        => $cdata->{'on_delete'} || $cdata->{'on_delete_do'},
                 on_update        => $cdata->{'on_update'} || $cdata->{'on_update_do'},
                 expression       => $cdata->{'expression'},
+                options          => $options
             ) or die "Can't add constraint of type '" .
                 $cdata->{'type'} .  "' to table '" . $table->name .
                 "': " . $table->error;

@@ -204,6 +204,7 @@ and table_constraint is:
   { UNIQUE ( column_name [, ... ] ) |
     PRIMARY KEY ( column_name [, ... ] ) |
     CHECK ( expression ) |
+    EXCLUDE [USING acc_method] (expression) [INCLUDE (column [, ...])] [WHERE (predicate)]
     FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn [, ... ] ) ]
       [ MATCH FULL | MATCH PARTIAL ] [ ON DELETE action ] [ ON UPDATE action ] }
   [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
@@ -615,6 +616,19 @@ sub create_geometry_constraints {
     return @constraints;
 }
 
+sub _extract_extras_from_options {
+  my ($options_haver, $dispatcher) = @_;
+  for my $opt ($options_haver->options) {
+    if (ref $opt eq 'HASH') {
+      for my $key (keys %$opt) {
+        my $val = $opt->{$key};
+        next unless defined $val;
+        $dispatcher->{lc $key}->($val);
+      }
+    }
+  }
+}
+
 {
     my %index_name;
     sub create_index
@@ -636,26 +650,17 @@ sub create_geometry_constraints {
         return unless @fields;
 
         my %index_extras;
-        for my $opt ( $index->options ) {
-            if ( ref $opt eq 'HASH' ) {
-                foreach my $key (keys %$opt) {
-                    my $value = $opt->{$key};
-                    next unless defined $value;
-                    if ( uc($key) eq 'USING' ) {
-                        $index_extras{using} = "USING $value";
-                    }
-                    elsif ( uc($key) eq 'WHERE' ) {
-                        $index_extras{where} = "WHERE $value";
-                    }
-                    elsif ( uc($key) eq 'INCLUDE' ) {
-                        next unless $postgres_version >= 11;
-                        die 'Include list must be an arrayref' unless ref $value eq 'ARRAY';
-                        my $value_list = join ', ', @$value;
-                        $index_extras{include} = "INCLUDE ($value_list)"
-                    }
-                }
+        _extract_extras_from_options($index, {
+            using => sub { $index_extras{using} = "USING $_[0]" },
+            where => sub { $index_extras{where} = "WHERE $_[0]" },
+            include => sub {
+                my ($value) = @_;
+                return unless $postgres_version >= 11;
+                die 'Include list must be an arrayref' unless ref $value eq 'ARRAY';
+                my $value_list = join ', ', @$value;
+                $index_extras{include} = "INCLUDE ($value_list)"
             }
-        }
+        });
 
         my $def_start = 'CONSTRAINT ' . $generator->quote($name) . ' ';
         my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ( $generator->quote($_) ) } @fields)) . ')';
@@ -684,8 +689,21 @@ sub create_constraint
     my ($c, $options) = @_;
 
     my $generator = _generator($options);
+    my $postgres_version = $options->{postgres_version} || 0;
     my $table_name = $c->table->name;
     my (@constraint_defs, @fks);
+    my %constraint_extras;
+    _extract_extras_from_options($c, {
+        using => sub { $constraint_extras{using} = "USING $_[0]" },
+        where => sub { $constraint_extras{where} = "WHERE ( $_[0] )" },
+        include => sub {
+          my ($value) = @_;
+          return unless $postgres_version >= 11;
+          die 'Include list must be an arrayref' unless ref $value eq 'ARRAY';
+          my $value_list = join ', ', @$value;
+          $constraint_extras{include} = "INCLUDE ( $value_list )"
+        },
+      });
 
     my $name = $c->name || '';
 
@@ -693,22 +711,23 @@ sub create_constraint
 
     my @rfields = grep { defined } $c->reference_fields;
 
-    next if !@fields && $c->type ne CHECK_C;
-    my $def_start = $name ? 'CONSTRAINT ' . $generator->quote($name) . ' ' : '';
+    return if !@fields && ($c->type ne CHECK_C && $c->type ne EXCLUDE);
+    my $def_start = $name ? 'CONSTRAINT ' . $generator->quote($name) : '';
     my $field_names = '(' . join(", ", (map { $_ =~ /\(.*\)/ ? $_ : ( $generator->quote($_) ) } @fields)) . ')';
+    my $include      =  $constraint_extras{include} || '';
     if ( $c->type eq PRIMARY_KEY ) {
-        push @constraint_defs, "${def_start}PRIMARY KEY ".$field_names;
+        push @constraint_defs, join ' ', grep $_, $def_start, "PRIMARY KEY", $field_names, $include;
     }
     elsif ( $c->type eq UNIQUE ) {
-        push @constraint_defs, "${def_start}UNIQUE " .$field_names;
+        push @constraint_defs, join ' ', grep $_, $def_start, "UNIQUE", $field_names, $include;
     }
     elsif ( $c->type eq CHECK_C ) {
         my $expression = $c->expression;
-        push @constraint_defs, "${def_start}CHECK ($expression)";
+        push @constraint_defs, join ' ', grep $_, $def_start, "CHECK ($expression)";
     }
     elsif ( $c->type eq FOREIGN_KEY ) {
-        my $def .= "ALTER TABLE " . $generator->quote($table_name) . " ADD ${def_start}FOREIGN KEY $field_names"
-            . "\n  REFERENCES " . $generator->quote($c->reference_table);
+        my $def .= join ' ', grep $_, "ALTER TABLE", $generator->quote($table_name), 'ADD', $def_start, "FOREIGN KEY $field_names";
+        $def .= "\n  REFERENCES " . $generator->quote($c->reference_table);
 
         if ( @rfields ) {
             $def .= ' (' . join( ', ', map { $generator->quote($_) } @rfields ) . ')';
@@ -732,6 +751,12 @@ sub create_constraint
         }
 
         push @fks, "$def";
+    }
+    elsif( $c->type eq EXCLUDE ) {
+        my $using = $constraint_extras{using} || '';
+        my $expression =  $c->expression;
+        my $where      =  $constraint_extras{where} || '';
+        push @constraint_defs, join ' ', grep $_, $def_start, 'EXCLUDE', $using, "( $expression )", $include, $where;
     }
 
     return \@constraint_defs, \@fks;
