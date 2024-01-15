@@ -1,6 +1,7 @@
 Changes for SQL::Translator
 
 
+1.65 - 2024-01-15
   FIXES
   * support for older perls
 
