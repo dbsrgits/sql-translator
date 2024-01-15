@@ -88,7 +88,7 @@ View :
 use strict;
 use warnings;
 
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 
 our $DEBUG;
 $DEBUG = 0 unless defined $DEBUG;

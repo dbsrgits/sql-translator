@@ -9,7 +9,7 @@ use Try::Tiny;
 use Carp       qw(carp croak);
 use List::Util qw(any);
 
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(

@@ -38,7 +38,7 @@ SQL::Translator::Filter::Globals - Add global fields and indices to all tables.
 
 use strict;
 use warnings;
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 
 sub filter {
   my $schema       = shift;

@@ -24,7 +24,7 @@ use SQL::Translator::Schema::Constants;
 
 our ($DEBUG, $VERSION, @EXPORT_OK);
 
-# $VERSION = '1.64';
+# $VERSION = '1.65';
 $DEBUG = 0 unless defined $DEBUG;
 
 sub parse {

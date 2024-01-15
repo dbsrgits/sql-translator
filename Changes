@@ -1,7 +1,12 @@
 Changes for SQL::Translator
 
- FEATURES
+
+  FIXES
+  * support for older perls
+
 1.64 - 2023-12-22
+
+ FEATURES
  * support EXCLUDE constraints in Postgres (thansk @KES777)
  * Improve enums in the PostgrSQL family (thanks @nrdvana)
  * Add index length options for MySQL (thanks @abeverley)

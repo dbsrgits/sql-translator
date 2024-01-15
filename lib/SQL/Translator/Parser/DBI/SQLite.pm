@@ -26,7 +26,7 @@ use SQL::Translator::Parser::SQLite;
 use Data::Dumper;
 
 our ($DEBUG, @EXPORT_OK);
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 $DEBUG = 0 unless defined $DEBUG;
 
 sub parse {

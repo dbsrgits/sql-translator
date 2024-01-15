@@ -39,7 +39,7 @@ use Carp;
 
 extends 'SQL::Translator::Schema::Object';
 
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 
 has _order => (
   is      => 'ro',

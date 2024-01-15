@@ -3,7 +3,7 @@ package SQL::Translator::Producer::ClassDBI;
 use strict;
 use warnings;
 our $DEBUG;
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;

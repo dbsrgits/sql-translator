@@ -35,7 +35,7 @@ use Sub::Quote             qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
-our $VERSION = '1.64';
+our $VERSION = '1.65';
 
 my %VALID_INDEX_TYPE = (
   UNIQUE    => 1,
