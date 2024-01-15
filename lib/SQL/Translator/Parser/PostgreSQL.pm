@@ -1134,7 +1134,7 @@ sub parse {
       my $options = [
 
         # load this up with the extras
-        map +{ %{$cdata}{$_} }, grep $cdata->{$_},
+        map +{ %$cdata{$_} }, grep $cdata->{$_},
         qw/include using where/
       ];
       my $constraint = $table->add_constraint(
