@@ -678,9 +678,14 @@ sub alter_drop_constraint {
   my @out        = ('ALTER', 'TABLE', $table_name, 'DROP',);
   if ($c->name) {
     push @out, ('CONSTRAINT', quote($c->name, $qi));
+    if ($global_names{$c->name}) {
+      $global_names{$c->name}--; # Remove from global names so it can be used again
+    }
   } elsif ($c->type eq PRIMARY_KEY) {
     push @out, 'PRIMARY KEY';
   }
+  debug("ORA: Dropping constraint " . join(' ', @out));
+
   return join(' ', @out);
 }
 
