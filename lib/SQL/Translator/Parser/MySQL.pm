@@ -952,8 +952,37 @@ sub parse {
     my $tdata = $result->{tables}{$table_name};
     my $table = $schema->add_table(name => $tdata->{'table_name'},)
         or die $schema->error;
+    my $table_collate = undef;
 
     $table->comments($tdata->{'comments'});
+
+    if (my @options = @{ $tdata->{'table_options'} || [] }) {
+      my @cleaned_options;
+      my @ignore_opts
+          = $translator->parser_args->{'ignore_opts'}
+          ? split(/,/, $translator->parser_args->{'ignore_opts'})
+          : ();
+      if (@ignore_opts) {
+        my $ignores = { map { $_ => 1 } @ignore_opts };
+        foreach my $option (@options) {
+
+          # make sure the option isn't in ignore list
+          my ($option_key) = keys %$option;
+          if (!exists $ignores->{$option_key}) {
+            push @cleaned_options, $option;
+          }
+        }
+      } else {
+        @cleaned_options = @options;
+      }
+      foreach my $option (@cleaned_options) {
+        my ($option_key) = keys %$option;
+        if ($option_key eq 'COLLATE') {
+            $table_collate = $option->{$option_key}
+        }
+      }
+      $table->options(\@cleaned_options) or die $table->error;
+    }
 
     my @fields = sort { $tdata->{'fields'}->{$a}->{'order'} <=> $tdata->{'fields'}->{$b}->{'order'} }
         keys %{ $tdata->{'fields'} };
@@ -977,6 +1006,12 @@ sub parse {
           next if ref $val eq 'ARRAY' && !@$val;
           $field->extra($qual, $val);
         }
+      }
+
+      # Set missing column's collate to the table's collate
+      if (!defined($field->extra('collate')) &&
+          defined($table_collate)) {
+        $field->extra('collate', $table_collate);
       }
 
       if ($fdata->{'has_index'}) {
@@ -1011,27 +1046,6 @@ sub parse {
       ) or die $table->error;
     }
 
-    if (my @options = @{ $tdata->{'table_options'} || [] }) {
-      my @cleaned_options;
-      my @ignore_opts
-          = $translator->parser_args->{'ignore_opts'}
-          ? split(/,/, $translator->parser_args->{'ignore_opts'})
-          : ();
-      if (@ignore_opts) {
-        my $ignores = { map { $_ => 1 } @ignore_opts };
-        foreach my $option (@options) {
-
-          # make sure the option isn't in ignore list
-          my ($option_key) = keys %$option;
-          if (!exists $ignores->{$option_key}) {
-            push @cleaned_options, $option;
-          }
-        }
-      } else {
-        @cleaned_options = @options;
-      }
-      $table->options(\@cleaned_options) or die $table->error;
-    }
 
     for my $cdata (@{ $tdata->{'constraints'} || [] }) {
       my $constraint = $table->add_constraint(
