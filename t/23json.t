@@ -147,8 +147,8 @@ my $json = from_json(<<JSON);
             "constraints" : [
                {
                   "deferrable" : 1,
-                  "expression" : "",
-                  "fields" : [],
+                  "expression" : "age < 100",
+                  "fields" : ["age"],
                   "match_type" : "",
                   "name" : "",
                   "on_delete" : "",
