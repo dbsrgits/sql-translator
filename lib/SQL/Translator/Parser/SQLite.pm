@@ -252,8 +252,23 @@ create : comment(s?) CREATE TEMPORARY(?) TABLE table_name '(' definition(s /,/) 
         for my $def ( @{ $item[7] } ) {
             if ( $def->{'supertype'} eq 'column' ) {
                 push @{ $tables{ $table_name }{'fields'} }, $def;
+                if (my $check = $def->{check}) {
+                  my ($constraint) = grep { exists $_->{type} && $_->{type} eq 'check' } @{$def->{constraints}};
+                  push @{ $tables{ $table_name }{'constraints'} }, {
+                    comments => $def->{comments},
+                    expression => $check,
+                    fields => [ $def->{name} ],
+                    on_conflict => $constraint->{on_conflict},
+                    type => 'check',
+                  };
+                }
             }
             elsif ( $def->{'supertype'} eq 'constraint' ) {
+                if ($def->{type} eq 'check') {
+                  my $expression = $def->{expression};
+                  push @{$def->{fields}}, $_
+                    for (grep { $expression =~ m/\b\Q$_\E\b/ } map { $_->{name} } @{$tables{$table_name}{fields}});
+                }
                 push @{ $tables{ $table_name }{'constraints'} }, $def;
             }
         }
@@ -289,7 +304,7 @@ column_def: comment(s?) NAME type(?) column_constraint_def(s?)
                 $column->{'is_unique'} = 1;
             }
             elsif ( $c->{'type'} eq 'check' ) {
-                $column->{'check'} = $c->{'expression'};
+                ($column->{'check'} = $c->{'expression'}) =~ s/(^\s*|\s$)//g;
             }
             elsif ( $c->{'type'} eq 'default' ) {
                 $column->{'default'} = $c->{'value'};
@@ -344,11 +359,11 @@ column_constraint : NOT_NULL conflict_clause(?)
         }
     }
     |
-    CHECK_C '(' expr ')' conflict_clause(?)
+    CHECK_C '(' expr(s /(?^ui:(AND|OR))/) ')' conflict_clause(?) # ?^ in perl >= 5.14
     {
         $return = {
             type        => 'check',
-            expression  => $item[3],
+            expression  => join(' ', @{$item[3]}),
             on_conflict => $item[5][0],
         }
     }
@@ -416,12 +431,14 @@ table_constraint : PRIMARY_KEY parens_field_list conflict_clause(?)
         }
     }
     |
-    CHECK_C '(' expr ')' conflict_clause(?)
+    CHECK_C '(' expr(s /(?^ui:(AND|OR))/) ')' conflict_clause(?)
     {
+        # trim whitespace
+        (my $exp = join(' ', @{$item[3]})) =~ s/(^\s*|\s*$)//g;
         $return         = {
             supertype   => 'constraint',
             type        => 'check',
-            expression  => $item[3],
+            expression  => $exp,
             on_conflict => $item[5][0],
         }
     }
@@ -478,7 +495,11 @@ column_list : field_name(s /,/)
 parens_value_list : '(' VALUE(s /,/) ')'
     { $item[2] }
 
-expr : /[^)]* \( [^)]+ \) [^)]*/x # parens, balanced one deep
+function_call : /(\w* ( \( ( (?:(?>[^()]+)|(?2))* ) \) ) )/x # from perldoc perlre
+
+expr : function_call '=' literal { $return = join ' ', @item[1..3] }
+    | function_call
+    | /[^)]* \( [^)]+ \) [^)]*/x # parens, balanced one deep
     | /[^)]+/
 
 sort_order : /(ASC|DESC)/i
@@ -537,6 +558,9 @@ string :
 nonstring : /[^;\'"]+/
 
 statement_body : string | nonstring
+
+literal : /[-+]?\d*\.?\d+(?:[eE]\d+)?/
+    | string
 
 trigger_step : /(select|delete|insert|update)/i statement_body(s?) SEMICOLON
     {
@@ -718,6 +742,7 @@ sub parse {
         on_delete        => $cdata->{'on_delete'}  || $cdata->{'on_delete_do'},
         on_update        => $cdata->{'on_update'}  || $cdata->{'on_update_do'},
       ) or die $table->error;
+      $constraint->expression($cdata->{expression}) if defined $cdata->{expression} and $cdata->{expression} =~ m/\w+/;
     }
   }
 
