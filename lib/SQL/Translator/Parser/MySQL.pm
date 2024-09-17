@@ -326,12 +326,17 @@ create : CREATE PROCEDURE NAME not_delimiter "$delimiter"
 PROCEDURE : /procedure/i
     | /function/i
 
-create : CREATE or_replace(?) create_view_option(s?) /view/i NAME /as/i view_select_statement "$delimiter"
+create : CREATE or_replace(?) create_view_option(s?) /view/i NAME parens_field_list(?) /as/i view_select_statement "$delimiter"
     {
         @table_comments = ();
         my $view_name   = $item{'NAME'};
         my $select_sql  = $item{'view_select_statement'};
         my $options     = $item{'create_view_option(s?)'};
+
+        # Use the field list as column aliases, if specified
+        my @fields = @{$item{'parens_field_list(?)'}[0] || []};
+        $select_sql->{columns}->[$_]->{alias} = $fields[$_]
+            for 0..$#fields;
 
         my $sql = join(q{ },
             grep { defined and length }
@@ -339,6 +344,7 @@ create : CREATE or_replace(?) create_view_option(s?) /view/i NAME /as/i view_sel
             $item{'CREATE'},
             $item{'or_replace(?)'},
             $options,
+            'view',
             $view_name,
             'as select',
             join(', ',

@@ -495,6 +495,65 @@ BEGIN {
   is(join(',', $t2c2->reference_fields), 'id',        'To field "id"');
 }
 
+# Tests CREATE VIEW statements containing field lists and/or aliases
+{
+    my $tr   = SQL::Translator->new();
+    my $data = parse(
+        $tr,
+        q[
+            CREATE
+              VIEW view_foo (a, b) AS
+                SELECT id, name FROM thing;
+
+            CREATE
+              VIEW view_bar AS
+                SELECT id AS c, name AS d FROM thing;
+
+            CREATE
+              VIEW view_baz (e, f) AS
+                SELECT id AS g, name AS h FROM thing;
+        ]
+    ) or die $tr->error;
+
+    my $schema = $tr->schema;
+    my @views  = $schema->get_views;
+    is( scalar @views, 3, 'Right number of views (3)' );
+    my ( $view1, $view2, $view3 ) = @views;
+
+    is( $view1->name, 'view_foo', 'Found "view_foo" view' );
+    is( join( ',', $view1->fields ),
+        join( ',', qw[ a b ] ),
+        'View 1 has correct fields'
+    );
+    like(
+        $view1->sql,
+        qr/create view view_foo as select id as a, name as b\s+from\s+thing/i,
+        'View 1 has correct sql'
+    );
+
+    is( $view2->name, 'view_bar', 'Found "view_bar" view' );
+    is( join( ',', $view2->fields ),
+        join( ',', qw[ c d ] ),
+        'View 2 has correct fields'
+    );
+    like(
+        $view2->sql,
+        qr/create view view_bar as select id as c, name as d\s+from\s+thing/i,
+        'View 2 has correct sql'
+    );
+
+    is( $view3->name, 'view_baz', 'Found "view_baz" view' );
+    is( join( ',', $view3->fields ),
+        join( ',', qw[ e f ] ),
+        'View 3 has correct fields'
+    );
+    like(
+        $view3->sql,
+        qr/create view view_baz as select id as e, name as f\s+from\s+thing/i,
+        'View 3 has correct sql'
+    );
+}
+
 # cch Tests for:
 #    comments like: /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 #    char fields with character set and collate qualifiers
