@@ -132,7 +132,7 @@ More information about the MySQL comment-syntax: L<http://dev.mysql.com/doc/refm
 use strict;
 use warnings;
 
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 
 our $DEBUG;
 $DEBUG = 0 unless defined $DEBUG;

@@ -157,7 +157,7 @@ use strict;
 use warnings;
 
 our ($DEBUG, @EXPORT_OK);
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 $DEBUG = 0 unless defined $DEBUG;
 
 use File::Path;

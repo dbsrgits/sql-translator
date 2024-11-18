@@ -13,7 +13,7 @@ use strict;
 use warnings;
 
 our @EXPORT_OK;
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 
 use Template;
 use Data::Dumper;

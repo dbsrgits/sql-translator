@@ -32,7 +32,7 @@ use Sub::Quote             qw(quote_sub);
 
 extends 'SQL::Translator::Schema::Object';
 
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 
 my %VALID_CONSTRAINT_TYPE = (PRIMARY_KEY, 1, UNIQUE, 1, CHECK_C, 1, FOREIGN_KEY, 1, NOT_NULL, 1, EXCLUDE, 1,);
 

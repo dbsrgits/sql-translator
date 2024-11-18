@@ -78,7 +78,7 @@ was altered to better handle the syntax created by DDL::Oracle.
 use strict;
 use warnings;
 
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 
 our $DEBUG;
 $DEBUG = 0 unless defined $DEBUG;

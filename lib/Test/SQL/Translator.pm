@@ -15,7 +15,7 @@ use SQL::Translator::Schema::Constants;
 
 use base qw(Exporter);
 our @EXPORT_OK;
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 our @EXPORT  = qw(
   schema_ok
   table_ok

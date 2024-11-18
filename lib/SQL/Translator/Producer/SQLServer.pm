@@ -3,7 +3,7 @@ package SQL::Translator::Producer::SQLServer;
 use strict;
 use warnings;
 our ($DEBUG, $WARN);
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Schema::Constants;

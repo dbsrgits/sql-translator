@@ -20,7 +20,7 @@ This module will produce text output of the schema suitable for Sybase.
 use strict;
 use warnings;
 our ($DEBUG, $WARN);
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 $DEBUG = 1 unless defined $DEBUG;
 
 use Data::Dumper;

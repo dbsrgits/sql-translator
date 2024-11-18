@@ -25,7 +25,7 @@ use SQL::Translator::Utils qw(debug header_comment parse_dbms_version batch_alte
 use SQL::Translator::Generator::DDL::SQLite;
 
 our ($DEBUG, $WARN);
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 $DEBUG = 0 unless defined $DEBUG;
 $WARN  = 0 unless defined $WARN;
 

@@ -3,7 +3,7 @@ package SQL::Translator::Producer;
 use strict;
 use warnings;
 use Scalar::Util ();
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 
 sub produce {""}
 

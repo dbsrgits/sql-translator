@@ -25,7 +25,7 @@ Ken Youens-Clark E<lt>kclark@cpan.orgE<gt>.
 use strict;
 use warnings;
 our $DEBUG;
-our $VERSION = '1.65';
+our $VERSION = '1.66';
 $DEBUG = 1 unless defined $DEBUG;
 
 use SQL::Translator::Producer::XML::SQLFairy;
