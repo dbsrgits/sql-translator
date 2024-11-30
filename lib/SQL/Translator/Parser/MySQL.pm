@@ -353,10 +353,25 @@ create : CREATE or_replace(?) create_view_option(s?) /view/i NAME /as/i view_sel
             ' from ',
             join(', ',
                 map {
-                    sprintf('%s%s',
-                        $_->{'name'},
-                        $_->{'alias'} ? ' as ' . $_->{'alias'} : ''
-                    )
+                    $_->{'join'} ?
+                        () : 
+                        sprintf('%s%s',
+                            $_->{'name'},
+                            $_->{'alias'} ? ' as ' . $_->{'alias'} : ''
+                        )
+                }
+                @{ $select_sql->{'from'}{'tables'} || [] }
+            ),
+            join(' ',
+                map {
+                    $_->{'join'} ?
+                        sprintf('%s%s%s ON %s',
+                            $_->{'join'},
+                            $_->{'name'},
+                            $_->{'alias'} ? ' as ' . $_->{'alias'} : '',
+                            $_->{'on'}
+                        ) :
+                        ();
                 }
                 @{ $select_sql->{'from'}{'tables'} || [] }
             ),
@@ -374,6 +389,7 @@ create : CREATE or_replace(?) create_view_option(s?) /view/i NAME /as/i view_sel
         $views{ $view_name }{'sql'}     = $sql;
         $views{ $view_name }{'options'} = $options;
         $views{ $view_name }{'select'}  = $item{'view_select_statement'};
+        $views{ $view_name }{'from'}{'tables'}  = $select_sql->{'from'}{'tables'};
     }
 
 create_view_option : view_algorithm | view_sql_security | view_definer
@@ -426,10 +442,32 @@ view_table_def : not_delimiter
         my $where  = $1 if $clause =~ s/\bwhere \s+ (.*)//ixs;
         $clause    =~ s/[)]\s*$//;
 
+        my $joins = '';
+        $joins    = $1 if $clause =~ s/
+            \b((?:(?:left|right)\s+)?
+              (?:(?:inner|outer)\s+)
+              join .*)\z
+        //ixs;
+
         my @tables;
         for my $tbl ( split( /\s*,\s*/, $clause ) ) {
             my ( $name, $alias ) = split /\s+as\s+/i, $tbl;
-            push @tables, { name => $name, alias => $alias || '' };
+            push @tables, { name => $name, alias => $alias || '', join => 0 };
+        }
+
+        my @all_joins = split /
+            \b((?:(?:left|right)\s+)?
+            (?:(?:inner|outer)\s+)
+            join)
+        /ixsg, $joins;
+
+        shift @all_joins if @all_joins;
+
+        while ( @all_joins ) {
+            my $join             = shift @all_joins;
+            my ( $table, $on )   = split /\s+on\s+/i, shift @all_joins;
+            my ( $name, $alias ) = split /\s+as\s+/i, $table;
+            push @tables, { name => $name, alias => $alias || '', join => $join, on => $on };
         }
 
         $return = {
