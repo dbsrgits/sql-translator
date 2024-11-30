@@ -948,4 +948,104 @@ ok($@, 'Exception thrown on invalid version string');
   ok(my $schema = $tr->schema, 'got schema');
 }
 
+{
+    my $tr = SQL::Translator->new;
+    my $data = parse($tr,
+        q[
+            create table `example` (
+              id integer not null,
+              `subid` varchar(255),
+              `subid2` varchar(255),
+              primary key (`id`)
+            );
+
+            alter table `example`
+              add constraint subid_uniq unique key (`subid`, `subid2`);
+        ]
+    );
+
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 1, 'Right number of tables (1)' );
+    my $table  = shift @tables;
+    is( $table->name, 'example', 'Found "example" table' );
+
+    my @fields = $table->get_fields;
+    is( scalar @fields, 3, 'Right number of fields (3)' );
+    my $f1 = shift @fields;
+    is( $f1->name, 'id', 'First field name is "id"' );
+    is( $f1->data_type, 'int', 'Type is "int"' );
+    is( $f1->size, 11, 'Size is "11"' );
+    is( $f1->is_nullable, 0, 'Field cannot be null' );
+    is( $f1->default_value, undef, 'Default value is undefined' );
+    is( $f1->is_primary_key, 1, 'Field is PK' );
+    is( $f1->is_auto_increment, 0, 'Field is not auto inc' );
+
+    my $f2 = shift @fields;
+    is( $f2->name, 'subid', 'Second field name is "subid"' );
+    is( $f2->data_type, 'varchar', 'Type is "varchar"' );
+    is( $f2->size, 255, 'Size is "255"' );
+    is( $f2->is_nullable, 1, 'Field can be null' );
+    is( $f2->default_value, undef, 'Default value is undefined' );
+    is( $f2->is_primary_key, 0, 'Field is not PK' );
+
+    my $f3 = shift @fields;
+    is( $f3->name, 'subid2', 'Third field name is "subid2"' );
+    is( $f3->data_type, 'varchar', 'Type is "varchar"' );
+    is( $f3->size, 255, 'Size is "255"' );
+    is( $f3->is_nullable, 1, 'Field can be null' );
+    is( $f3->default_value, undef, 'Default value is undefined' );
+    is( $f3->is_primary_key, 0, 'Field is not PK' );
+
+    my @indices = $table->get_indices;
+    is( scalar @indices, 0, 'Right number of indices (0)' );
+
+    my @constraints = $table->get_constraints;
+    is( scalar @constraints, 2, 'Right number of constraints (2)' );
+
+    my $c1 = shift @constraints;
+    is( $c1->type, PRIMARY_KEY, 'Constraint is a PK' );
+    is( join(',', $c1->fields), 'id', 'Constraint is on "id"' );
+
+    my $c2 = shift @constraints;
+    is( $c2->type, UNIQUE, 'Constraint is UNIQUE' );
+    is( $c2->name, 'subid_uniq', 'Constraint name is "subid_uniq"' );
+    is( join(',', $c2->fields), 'subid,subid2', 'Constraint is on "subid, subid2"' );
+}
+
+
+{
+    my $tr = SQL::Translator->new;
+    my $data = parse($tr,
+        q[
+            create table `example` (
+              id integer not null,
+              `subid` varchar(255),
+              `subid2` varchar(255),
+              primary key (`id`)
+            );
+
+            alter table `example`
+              add unique index (`subid`, `subid2`);
+        ]
+    );
+
+    my $schema = $tr->schema;
+    is( $schema->is_valid, 1, 'Schema is valid' );
+    my @tables = $schema->get_tables;
+    is( scalar @tables, 1, 'Right number of tables (1)' );
+    my $table  = shift @tables;
+    is( $table->name, 'example', 'Found "example" table' );
+
+    my @constraints = $table->get_constraints;
+    is( scalar @constraints, 2, 'Right number of constraints (2)' );
+
+    my $c1 = shift @constraints;
+    my $c2 = shift @constraints;
+    is( $c2->type, UNIQUE, 'Constraint is UNIQUE' );
+    is( $c2->name, '', 'No name on unique constraint' );
+    is( join(',', $c2->fields), 'subid,subid2', 'Constraint is on "subid, subid2"' );
+}
+
 done_testing;
