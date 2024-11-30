@@ -1,4 +1,3 @@
-sudo: false
 addons:
   apt:
     packages:
@@ -6,23 +5,11 @@ addons:
       - graphviz
       - libxml2-dev
 language: perl
-perl:
-  - "blead"
-  - "dev"
-  - "5.28"
-  - "5.26"
-  - "5.24"
-  - "5.22"
-  - "5.20"
-  - "5.18"
-  - "5.16"
-  - "5.14"
-  - "5.12"
-  - "5.10"
-  - "5.8"
+cache:
+  directories:
+  - $PERLBREW_ROOT/perls/$PERLBREW_PERL*/lib/site_perl # perlbrew site-lib
 env:
   global:
-    - COVERAGE="coveralls codecov"
     - DBICTEST_PG_DSN=dbi:Pg:dbname=sqlt_test
     - DBICTEST_PG_USER=postgres
     - SPLIT_BUILD=0
@@ -30,6 +17,21 @@ matrix:
   allow_failures:
     - perl: "blead"
     - perl: "dev"
+  include:
+    - perl: "5.28" # coverage slightly slower, start first
+      env: COVERAGE="coveralls codecov"
+    - perl: "blead"
+    - perl: "dev"
+    - perl: "5.26"
+    - perl: "5.24"
+    - perl: "5.22"
+    - perl: "5.20"
+    - perl: "5.18"
+    - perl: "5.16"
+    - perl: "5.14"
+    - perl: "5.12"
+    - perl: "5.10"
+    - perl: "5.8"
 before_install:
   - eval $(curl https://travis-perl.github.io/init) --perl
   - cpan-install File::ShareDir::Install # absolute minimum for Makefile.PL
