@@ -65,11 +65,13 @@ CREATE VIEW "email_list" ( "email" ) AS
 
 DROP TRIGGER IF EXISTS "foo_trigger" ON "Basic";
 
-CREATE TRIGGER "foo_trigger" after insert ON "Basic" FOR EACH row update modified=timestamp();;
+CREATE TRIGGER "foo_trigger" after insert
+  ON "Basic" FOR EACH row update modified=timestamp();;
 
 DROP TRIGGER IF EXISTS "bar_trigger" ON "Basic";
 
-CREATE TRIGGER "bar_trigger" before insert OR update ON "Basic" FOR EACH row update modified2=timestamp();;
+CREATE TRIGGER "bar_trigger" before insert OR update
+  ON "Basic" FOR EACH row update modified2=timestamp();;
 
 DROP FUNCTION IF EXISTS "foo_proc";
 
