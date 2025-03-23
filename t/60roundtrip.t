@@ -93,7 +93,7 @@ my $plan = [
 # This data file has the right mix of table/view/procedure/trigger
 # definitions, and lists enough quirks to trip up most combos
 my $base_file = "$Bin/data/roundtrip_autogen.yaml";
-open(my $base_fh, '<', $base_file) or die "$base_file: $!";
+open(my $base_fh, '<', $base_file) or die "$base_file: $!\nHINT: Run `perl Makefile.PL` to recreate it.";
 
 my $base_t = SQL::Translator->new;
 $base_t->$_(1) for qw/add_drop_table no_comments quote_identifiers/;
