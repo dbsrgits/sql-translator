@@ -404,9 +404,15 @@ create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_ret
           } elsif($def->{cost}) {
             $sql .= 'COST ';
             $sql .= $def->{cost};
+          } elsif($def->{sql}) {
+            # XXX: Restore original value. See below.
+            $sql = delete $def->{sql};
+            last;
           }
         }
 
+        # XXX: This is weird: roundtrip.xml defines something under 'sql',
+        # but here we overwrite that value.
         push @procedures, {
           name       => $qualified_name,
           order      => ++$procedure_order,
