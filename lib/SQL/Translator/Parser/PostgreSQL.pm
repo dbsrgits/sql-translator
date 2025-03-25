@@ -390,6 +390,8 @@ create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_ret
         $sql .= $item{function_return}{type};
         }
         foreach my $def (@{$item{'function_def(s)'}}) {
+          next if !keys %$def; # Do not generate empty line if an empty definition passed
+          $sql .= "\n";
           $sql .= ' ';
           if($def->{body}) {
             $sql .= 'AS ';

@@ -920,6 +920,7 @@ sub create_procedure {
     if $procedure->extra->{returns}{type};
   }
   foreach my $def (@{$procedure->extra->{definitions}}) {
+    next if !keys %$def;   # Do not generate empty line if an empty definition passed.
     $sql .= "\n";
     $sql .= ' ';
     if($def->{body}) {
