@@ -907,28 +907,40 @@ sub create_procedure {
   $sql .= $generator->quote($procedure->name);
   $sql .= ' (';
   my @args = ();
+  my $has_out;
   foreach my $arg (@{$procedure->parameters}) {
     $arg = {name => $arg} if ref($arg) ne 'HASH';
     push @args, join(' ', map $arg->{$_},
                           grep defined($arg->{$_}),
                           qw/argmode name type/);
+    $has_out ||=  defined $arg->{out};
   }
   $sql .= join(', ', @args);
   $sql .= ')';
   $sql .= "\n";
-  $sql .= ' RETURNS ' . $procedure->extra->{returns}{type}
-    if $procedure->extra->{returns}{type};
+  if($procedure->extra->{returns}{type}) {
+    $sql .= ' RETURNS ' . $procedure->extra->{returns}{type};
   }
+  elsif(!$has_out) {
+    # https://www.postgresql.org/docs/current/sql-createfunction.html#rettype
+    # > If the function is not supposed to return a value, specify void as the return type.
+    $sql .= ' RETURNS void';
+  }
+
+  my $has_body;
+  my $language;
   foreach my $def (@{$procedure->extra->{definitions}}) {
     next if !keys %$def;   # Do not generate empty line if an empty definition passed.
     $sql .= "\n";
     $sql .= ' ';
     if($def->{body}) {
+      $has_body = 1;
       $sql .= 'AS ';
       $sql .= $def->{quote};
       $sql .= $def->{body};
       $sql .= $def->{quote};
     } elsif($def->{language}) {
+      $language = uc $def->{language};
       $sql .= 'LANGUAGE ';
       $sql .= $def->{language};
     } elsif($def->{attribute}) {
@@ -937,6 +949,15 @@ sub create_procedure {
       $sql .= 'COST ';
       $sql .= $def->{cost};
     }
+  }
+
+  # PostgreSQL allows 'RETURN expr' or 'BEGIN ATOMIC stmt; stmt; END' as sql_body
+  # only for SQL language. https://www.postgresql.org/docs/current/sql-createfunction.html#sql_body
+  my $proc_sql = $procedure->sql;
+  if(!$has_body && (!$language || $language eq 'SQL') && $proc_sql) {
+    # We can not allow 'SELECT ...' because this DDL will be not parseable later.
+    # XXX: Right now this mistake is silently ignored.
+    $sql .= $proc_sql =~ /^RETURN|^BEGIN ATOMIC/i? "\n " . $proc_sql : '';
   }
 
   push @statements, $sql;

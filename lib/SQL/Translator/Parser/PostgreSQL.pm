@@ -353,7 +353,7 @@ function_id : schema_qualification(?) NAME {
     $return = { schema_name => $item[1][0], function_name => $item[2] }
 }
 
-function_return : /RETURNS/i /(.*?)(?=AS|LANGUAGE|COST|IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/is
+function_return : /RETURNS/i /(.*?)(?=AS|LANGUAGE|COST|IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF|;|RETURN|BEGIN ATOMIC)/is
     {
       my $type = $item[2];
       $type =~ s/\s*$//g;
@@ -364,10 +364,14 @@ function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
   /(IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/i { { attribute => lc $item[1] } } |
   /COST/i DIGITS { { cost => $item[2] } } |
   /AS/i SQSTRING { { body => $item[2], quote => '\'' } } |
-  /AS/i DOLQSTRING { $item[2] }
+  /AS/i DOLQSTRING { $item[2] } |
+  /RETURN [^;]+/i { { sql => $item[1] } } |
+  /BEGIN ATOMIC .*?END/i { { sql => $item[1] } }
 
 
-create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_return function_def(s) ';'
+# XXX: roundtrip.xml has configuration which is not applicable to PostgreSQL (see 'sql' property).
+# Allow empty body until better solution will be implemented
+create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_return(?) function_def(s?) ';'
     {
         my $function_info  = $item{function_id};
         my $func_name      = $function_info->{function_name};
@@ -379,17 +383,27 @@ create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_ret
         $sql .= $qualified_name;
         $sql .= ' (';
         my @args = ();
+        my $has_out;
         foreach my $arg (@{$item{function_args}}) {
           push @args, join(' ', map $arg->{$_},
                                 grep defined($arg->{$_}),
                                 qw/argmode name type/);
+          $has_out ||=  defined $arg->{out};
         }
         $sql .= join(', ', @args);
         $sql .= ')';
-        $sql .= ' RETURNS ';
-        $sql .= $item{function_return}{type};
+        $sql .= "\n";
+
+        if($item{'function_return(?)'}[0]{type}) {
+          $sql .= ' RETURNS ' . $item{'function_return(?)'}[0]{type};
         }
-        foreach my $def (@{$item{'function_def(s)'}}) {
+        elsif(!$has_out) {
+          # https://www.postgresql.org/docs/current/sql-createfunction.html#rettype
+          # > If the function is not supposed to return a value, specify void as the return type.
+          $sql .= ' RETURNS void';
+        }
+
+        foreach my $def (@{$item{'function_def(s?)'}}) {
           next if !keys %$def; # Do not generate empty line if an empty definition passed
           $sql .= "\n";
           $sql .= ' ';
@@ -421,8 +435,8 @@ create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_ret
           sql        => $sql,
           parameters => $item{function_args},
           extra      => {
-            returns     => $item{function_return},
-            definitions => $item{'function_def(s)'}
+            returns     => $item{'function_return(?)'}[0],
+            definitions => $item{'function_def(s?)'}
           }
         };
     }

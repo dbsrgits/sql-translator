@@ -76,7 +76,7 @@ CREATE TRIGGER "bar_trigger" before insert OR update
 DROP FUNCTION IF EXISTS "foo_proc";
 
 CREATE FUNCTION "foo_proc" (foo, bar)
-;
+ RETURNS void;
 
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;
