@@ -295,11 +295,37 @@ sub produce {
   #
   # Procedures
   #
-  xml_obj_children(
-    $xml, $schema,
-    tag     => 'procedure',
-    methods => [qw/name sql parameters owner comments order extra/],
-  );
+  $xml->startTag([ $Namespace => "procedures" ]);
+  for my $proc ($schema->get_procedures) {
+    xml_obj(
+      $xml, $proc,
+      tag     => "procedure",
+      methods => [qw/name sql parameters owner comments order/],
+      end_tag => 0
+    );
+    my $extra = $proc->extra;
+    my $rets  = delete $extra->{returns};
+    my $defs  = delete $extra->{definitions};
+
+    $xml->startTag([ $Namespace => 'extra' ], map { ($_, $extra->{$_}) } sort keys %$extra);
+
+    if( $rets && %$rets ) {
+      $xml->emptyTag([ $Namespace => 'returns' ], map { ($_, $rets->{$_}) } sort keys %$rets);
+    }
+
+    if( $defs && @$defs ) {
+      $xml->startTag([ $Namespace => 'definitions' ]);
+      for my $def ( @$defs ) {
+        $xml->emptyTag([ $Namespace => 'definition' ], map { ($_, $def->{$_}) } sort keys %$def)
+      }
+      $xml->endTag([ $Namespace => 'definitions' ]);
+    }
+
+    $xml->endTag([ $Namespace => 'extra' ]);
+
+    $xml->endTag([ $Namespace => 'procedure' ]);
+  }
+  $xml->endTag([ $Namespace => 'procedures' ]);
 
   $xml->endTag([ $Namespace => 'schema' ]);
   $xml->end;
