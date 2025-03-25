@@ -356,7 +356,6 @@ function_id : schema_qualification(?) NAME {
 function_return : /RETURNS/i /(.*?)(?=AS|LANGUAGE|COST|IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/is
     {
       my $type = $item[2];
-      $type =~ s/\n//g;
       $type =~ s/\s*$//g;
       { type => $type }
     }
