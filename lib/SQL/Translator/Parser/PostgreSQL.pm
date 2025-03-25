@@ -388,8 +388,6 @@ create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_ret
         $sql .= ')';
         $sql .= ' RETURNS ';
         $sql .= $item{function_return}{type};
-        if($item{function_return}{size}) {
-          $sql .= '(' . $item{function_return}{size} . ')';
         }
         foreach my $def (@{$item{'function_def(s)'}}) {
           $sql .= ' ';

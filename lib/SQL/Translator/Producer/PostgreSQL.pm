@@ -918,8 +918,6 @@ sub create_procedure {
   $sql .= "\n";
   $sql .= ' RETURNS ' . $procedure->extra->{returns}{type}
     if $procedure->extra->{returns}{type};
-  if($procedure->extra->{returns}{size}) {
-    $sql .= '(' . $procedure->extra->{returns}{size} . ')';
   }
   foreach my $def (@{$procedure->extra->{definitions}}) {
     $sql .= "\n";
