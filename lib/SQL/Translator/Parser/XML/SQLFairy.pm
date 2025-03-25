@@ -242,6 +242,8 @@ sub parse {
       push @$defs, \%definition   if keys %definition;
     }
 
+    if(!@$defs) { delete $data{extra}{definitions} }
+
     $schema->add_procedure(%data) or die $schema->error;
   }
 
