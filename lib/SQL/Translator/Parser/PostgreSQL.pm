@@ -335,7 +335,7 @@ ARGUMENT : argmode(?) NAME(?) /((?:[^,\)])*)/
     { $return = {
         argmode => $item[1][0],
         name => $item[2][0],
-        type => $item[3]
+        type => $item[3] || undef,  # Get rid of additional space if type was not provided
       }
     }
 
