@@ -63,13 +63,20 @@ CREATE VIEW "email_list" ( "email" ) AS
     SELECT email FROM Basic WHERE (email IS NOT NULL)
 ;
 
-DROP TRIGGER IF EXISTS "foo_trigger";
+DROP TRIGGER IF EXISTS "foo_trigger" ON "Basic";
 
-CREATE TRIGGER "foo_trigger" after insert ON "Basic" FOR EACH row update modified=timestamp();;
+CREATE TRIGGER "foo_trigger" after insert
+  ON "Basic" FOR EACH row update modified=timestamp();;
 
-DROP TRIGGER IF EXISTS "bar_trigger";
+DROP TRIGGER IF EXISTS "bar_trigger" ON "Basic";
 
-CREATE TRIGGER "bar_trigger" before insert OR update ON "Basic" FOR EACH row update modified2=timestamp();;
+CREATE TRIGGER "bar_trigger" before insert OR update
+  ON "Basic" FOR EACH row update modified2=timestamp();;
+
+DROP FUNCTION IF EXISTS "foo_proc";
+
+CREATE FUNCTION "foo_proc" (foo, bar)
+ RETURNS void;
 
 ALTER TABLE "Basic" ADD FOREIGN KEY ("another_id")
   REFERENCES "Another" ("id") DEFERRABLE;

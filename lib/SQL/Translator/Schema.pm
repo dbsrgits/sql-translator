@@ -120,7 +120,7 @@ not be created.
   $table->order(++$self->_order->{table});
 
   # We know we have a name as the Table->new above errors if none given.
-  my $table_name = $table->name;
+  my $table_name = $table->qualified_name;
 
   if (defined $self->_tables->{$table_name}) {
     return $self->error(qq[Can't use table name "$table_name": table exists]);

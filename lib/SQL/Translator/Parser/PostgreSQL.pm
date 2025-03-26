@@ -101,7 +101,8 @@ our @EXPORT_OK = qw(parse);
 
 our $GRAMMAR = <<'END_OF_GRAMMAR';
 
-{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments) }
+{ my ( %tables, @views, @triggers, $table_order, $field_order, @table_comments,
+       @procedures, $trigger_order, $procedure_order ) }
 
 #
 # The "eofile" rule makes the parser fail if any "statement" rule
@@ -114,6 +115,7 @@ startrule : statement(s) eofile {
         tables => \%tables,
         views => \@views,
         triggers => \@triggers,
+        procedures => \@procedures,
     }
 }
 
@@ -192,17 +194,19 @@ update : /update/i statement_body(s?) ';'
 #
 create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' table_option(s?) ';'
     {
-        my $table_info  = $item{'table_id'};
-        my $schema_name = $table_info->{'schema_name'};
-        my $table_name  = $table_info->{'table_name'};
-        $tables{ $table_name }{'order'}       = ++$table_order;
-        $tables{ $table_name }{'schema_name'} = $schema_name;
-        $tables{ $table_name }{'table_name'}  = $table_name;
+        my $table_info     = $item{'table_id'};
+        my $schema_name    = $table_info->{'schema_name'};
+        my $table_name     = $table_info->{'table_name'};
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+        $tables{ $qualified_name }{'order'}       = ++$table_order;
+        $tables{ $qualified_name }{'schema_name'} = $schema_name;
+        $tables{ $qualified_name }{'table_name'}  = $table_name;
 
-        $tables{ $table_name }{'temporary'} = $item[2][0];
+        $tables{ $qualified_name }{'temporary'} = $item[2][0];
 
         if ( @table_comments ) {
-            $tables{ $table_name }{'comments'} = [ @table_comments ];
+            $tables{ $qualified_name }{'comments'} = [ @table_comments ];
             @table_comments = ();
         }
 
@@ -210,25 +214,25 @@ create : CREATE temporary(?) TABLE table_id '(' create_definition(s? /,/) ')' ta
         for my $definition ( @{ $item[6] } ) {
             if ( $definition->{'supertype'} eq 'field' ) {
                 my $field_name = $definition->{'name'};
-                $tables{ $table_name }{'fields'}{ $field_name } =
+                $tables{ $qualified_name }{'fields'}{ $field_name } =
                     { %$definition, order => $field_order++ };
 
                 for my $constraint ( @{ $definition->{'constraints'} || [] } ) {
                     $constraint->{'fields'} = [ $field_name ];
-                    push @{ $tables{ $table_name }{'constraints'} },
+                    push @{ $tables{ $qualified_name }{'constraints'} },
                         $constraint;
                 }
             }
             elsif ( $definition->{'supertype'} eq 'constraint' ) {
-                push @{ $tables{ $table_name }{'constraints'} }, $definition;
+                push @{ $tables{ $qualified_name }{'constraints'} }, $definition;
             }
             elsif ( $definition->{'supertype'} eq 'index' ) {
-                push @{ $tables{ $table_name }{'indices'} }, $definition;
+                push @{ $tables{ $qualified_name }{'indices'} }, $definition;
             }
         }
 
         for my $option ( @{ $item[8] } ) {
-            $tables{ $table_name }{'table_options(s?)'}{ $option->{'type'} } =
+            $tables{ $qualified_name }{'table_options(s?)'}{ $option->{'type'} } =
                 $option;
         }
 
@@ -240,7 +244,10 @@ create : CREATE unique(?) /(index|key)/i index_name /on/i table_id using_method(
         my $table_info  = $item{'table_id'};
         my $schema_name = $table_info->{'schema_name'};
         my $table_name  = $table_info->{'table_name'};
-        push @{ $tables{ $table_name }{'indices'} },
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
+        push @{ $tables{ $qualified_name }{'indices'} },
             {
                 name      => $item{'index_name'},
                 supertype => $item{'unique'}[0] ? 'constraint' : 'index',
@@ -295,14 +302,143 @@ create : CREATE /TRIGGER/i trigger_name before_or_after database_events /ON/i ta
         my $action = $item{trigger_action};
         $action =~ s/;$//;
 
+        my $table_info  = $item{'table_id'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
         push @triggers, {
             name => $item{trigger_name},
+            order => ++$trigger_order,
             perform_action_when => $item{before_or_after},
             database_events => $item{database_events},
-            on_table => $item{table_id}{table_name},
+            on_table => $qualified_name,
             scope => $item{'trigger_scope(?)'}[0],
             action => $action,
         }
+    }
+
+DOLQDELIMITER : '$' /((?:[^\$])*)/ '$' { $item[2] }
+
+DOLQSTRING : DOLQDELIMITER <skip:''> /(.*?)(?=\$$item{DOLQDELIMITER}\$)/s DOLQDELIMITER
+    {
+      {
+        quote => join('', '$', $item[1], '$'),
+        body => $item[3],
+      }
+    }
+
+argmode : /IN|OUT|INOUT|VARIADIC/i { $return = uc $1 }
+
+ARGUMENT : argmode(?) NAME(?) /((?:[^,\)])*)/
+    { $return = {
+        argmode => $item[1][0],
+        name => $item[2][0],
+        type => $item[3] || undef,  # Get rid of additional space if type was not provided
+      }
+    }
+
+function_args : '(' ARGUMENT(s? /,/)  ')'
+    {
+      my @arguments;
+      foreach my $arg ( @{ $item[2] } ) {
+        push @arguments, $arg;
+      }
+
+      $return = \@arguments;
+    }
+
+function_id : schema_qualification(?) NAME {
+    $return = { schema_name => $item[1][0], function_name => $item[2] }
+}
+
+function_return : /RETURNS/i /(.*?)(?=AS|LANGUAGE|COST|IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF|;|RETURN|BEGIN ATOMIC)/is
+    {
+      my $type = $item[2];
+      $type =~ s/\s*$//g;
+      { type => $type }
+    }
+
+function_def : /LANGUAGE/i WORD { { language => $item[2] } } |
+  /(IMMUTABLE|STABLE|VOLATILE|(NOT|)LEAKPROOF)/i { { attribute => lc $item[1] } } |
+  /COST/i DIGITS { { cost => $item[2] } } |
+  /AS/i SQSTRING { { body => $item[2], quote => '\'' } } |
+  /AS/i DOLQSTRING { $item[2] } |
+  /RETURN [^;]+/i { { sql => $item[1] } } |
+  /BEGIN ATOMIC .*?END/i { { sql => $item[1] } }
+
+
+# XXX: roundtrip.xml has configuration which is not applicable to PostgreSQL (see 'sql' property).
+# Allow empty body until better solution will be implemented
+create : CREATE or_replace(?) /FUNCTION/i function_id function_args function_return(?) function_def(s?) ';'
+    {
+        my $function_info  = $item{function_id};
+        my $func_name      = $function_info->{function_name};
+        my $schema_name    = $function_info->{schema_name};
+        my $qualified_name = $func_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
+        my $sql = 'CREATE FUNCTION ';
+        $sql .= $qualified_name;
+        $sql .= ' (';
+        my @args = ();
+        my $has_out;
+        foreach my $arg (@{$item{function_args}}) {
+          push @args, join(' ', map $arg->{$_},
+                                grep defined($arg->{$_}),
+                                qw/argmode name type/);
+          $has_out ||=  defined $arg->{out};
+        }
+        $sql .= join(', ', @args);
+        $sql .= ')';
+        $sql .= "\n";
+
+        if($item{'function_return(?)'}[0]{type}) {
+          $sql .= ' RETURNS ' . $item{'function_return(?)'}[0]{type};
+        }
+        elsif(!$has_out) {
+          # https://www.postgresql.org/docs/current/sql-createfunction.html#rettype
+          # > If the function is not supposed to return a value, specify void as the return type.
+          $sql .= ' RETURNS void';
+        }
+
+        foreach my $def (@{$item{'function_def(s?)'}}) {
+          next if !keys %$def; # Do not generate empty line if an empty definition passed
+          $sql .= "\n";
+          $sql .= ' ';
+          if($def->{body}) {
+            $sql .= 'AS ';
+            $sql .= $def->{quote};
+            $sql .= $def->{body};
+            $sql .= $def->{quote};
+          } elsif($def->{language}) {
+            $sql .= 'LANGUAGE ';
+            $sql .= $def->{language};
+          } elsif($def->{attribute}) {
+            $sql .= uc $def->{attribute};
+          } elsif($def->{cost}) {
+            $sql .= 'COST ';
+            $sql .= $def->{cost};
+          } elsif($def->{sql}) {
+            # XXX: Restore original value. See below.
+            $sql = delete $def->{sql};
+            last;
+          }
+        }
+
+        # XXX: This is weird: roundtrip.xml defines something under 'sql',
+        # but here we overwrite that value.
+        push @procedures, {
+          name       => $qualified_name,
+          order      => ++$procedure_order,
+          sql        => $sql,
+          parameters => $item{function_args},
+          extra      => {
+            returns     => $item{'function_return(?)'}[0],
+            definitions => $item{'function_def(s?)'}
+          }
+        };
     }
 
 #
@@ -515,7 +651,7 @@ view_target : '('   /select/i    / [^;]+ (?= \) ) /x    ')'    {
 
 view_target_spec :
 
-schema_qualification : NAME '.'
+schema_qualification : NAME '.' { $item[1] }
 
 schema_name : NAME
 
@@ -793,8 +929,14 @@ key_mutation : /no action/i { $return = 'no_action' }
 
 alter : alter_table table_id add_column field ';'
     {
+        my $table_info  = $item{'table_id'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
         my $field_def = $item[4];
-        $tables{ $item[2]->{'table_name'} }{'fields'}{ $field_def->{'name'} } = {
+        $tables{ $qualified_name }{'fields'}{ $field_def->{'name'} } = {
             %$field_def, order => $field_order++
         };
         1;
@@ -802,21 +944,38 @@ alter : alter_table table_id add_column field ';'
 
 alter : alter_table table_id ADD table_constraint ';'
     {
-        my $table_name = $item[2]->{'table_name'};
+        my $table_info  = $item{'table_id'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
         my $constraint = $item[4];
-        push @{ $tables{ $table_name }{'constraints'} }, $constraint;
+        push @{ $tables{ $qualified_name }{'constraints'} }, $constraint;
         1;
     }
 
 alter : alter_table table_id drop_column NAME restrict_or_cascade(?) ';'
     {
-        $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'drop'} = 1;
+        my $table_info  = $item{'table_id'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
+        $tables{ $qualified_name }{'fields'}{ $item[4] }{'drop'} = 1;
         1;
     }
 
 alter : alter_table table_id alter_column NAME alter_default_val ';'
     {
-        $tables{ $item[2]->{'table_name'} }{'fields'}{ $item[4] }{'default'} =
+        my $table_info  = $item{'table_id'};
+        my $schema_name = $table_info->{'schema_name'};
+        my $table_name  = $table_info->{'table_name'};
+        my $qualified_name = $table_name;
+        $qualified_name    = $schema_name . '.' . $qualified_name if $schema_name;
+
+        $tables{ $qualified_name }{'fields'}{ $item[4] }{'default'} =
             $item[5]->{'value'};
         1;
     }
@@ -1082,9 +1241,8 @@ sub parse {
   for my $table_name (@tables) {
     my $tdata = $result->{tables}{$table_name};
     my $table = $schema->add_table(
-
-      #schema => $tdata->{'schema_name'},
-      name => $tdata->{'table_name'},
+        schema_qualifier => $tdata->{'schema_name'},
+        name             => $tdata->{'table_name'},
     ) or die "Couldn't create table '$table_name': " . $schema->error;
 
     $table->extra(temporary => 1) if $tdata->{'temporary'};
@@ -1127,7 +1285,7 @@ sub parse {
         type    => uc $idata->{'type'},
         fields  => $idata->{'fields'},
         options => \@options
-      ) or die $table->error . ' ' . $table->name;
+      ) or die $table->error . ' ' . $table->qualified_name;
     }
 
     for my $cdata (@{ $tdata->{'constraints'} || [] }) {
@@ -1152,7 +1310,7 @@ sub parse {
           or die "Can't add constraint of type '"
           . $cdata->{'type'}
           . "' to table '"
-          . $table->name . "': "
+          . $table->qualified_name . "': "
           . $table->error;
     }
   }
@@ -1171,6 +1329,10 @@ sub parse {
 
   for my $trigger (@{ $result->{triggers} }) {
     $schema->add_trigger(%$trigger);
+  }
+
+  for my $procedure (@{ $result->{procedures} }) {
+      $schema->add_procedure( %$procedure );
   }
 
   return 1;

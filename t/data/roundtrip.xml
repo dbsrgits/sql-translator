@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 
+<!--
 Created by SQL::Translator::Producer::SqlfXML
 Created on Fri Aug 15 15:08:18 2003
 
  -->
 <schema xmlns="http://sqlfairy.sourceforge.net/sqlfairy.xml">
-    
+
   <tables>
       <table order="1" name="Basic">
         <fields>
@@ -143,6 +143,19 @@ Created on Fri Aug 15 15:08:18 2003
           <comments>Go Sox!</comments>
           <extra foo="bar" hello="world" bar="baz" />
       </procedure>
+      <procedure name="foo_return_proc" order="3" owner="Nomar" parameters="">
+          <sql>RETURN 5</sql>
+          <extra>
+            <returns type="integer"/>
+          </extra>
+      </procedure>
+      <procedure name="foo_body_proc" order="2" owner="Nomar" parameters="x">
+        <extra>
+          <definitions>
+            <definition body="select null" quote="$$"/>
+            <definition language="sql"/>
+          </definitions>
+        </extra>
+      </procedure>
   </procedures>
-
 </schema>
