@@ -206,19 +206,25 @@ index_expr: parens_name_list
       $return = "$item[2]($arg_list)";
    }
 
-create : /create/i /or replace/i /trigger/i table_name not_end m#^/$#im
+dml_event: /DELETE|INSERT|UPDATE/i {
+    $item[1]
+}
+
+create : /create/i /or replace/i /trigger/i table_name /BEFORE|AFTER|INSTEAD OF/i dml_event(s) /ON/i table_name not_end m#^/$#im
         {
           @table_comments = ();
         my $trigger_name = $item[4];
         # Hack to strip owner from trigger name
         $trigger_name =~ s#.*\.##;
         my $owner = '';
-        my $action = "$item[1] $item[2] $item[3] $item[4] $item[5]";
+        my $action = "$item[1] $item[2] $item[3] $item[4] $item[5] "
+            .(join ' ', @{$item[6]}) ." $item[7] $item[8]\n$item[9]";
 
-        $triggers{ $trigger_name }{'order'}  = ++$trigger_order;
-        $triggers{ $trigger_name }{'name'}   = $trigger_name;
-        $triggers{ $trigger_name }{'owner'}  = $owner;
-        $triggers{ $trigger_name }{'action'}    = $action;
+        $triggers{ $trigger_name }{'order'}    = ++$trigger_order;
+        $triggers{ $trigger_name }{'name'}     = $trigger_name;
+        $triggers{ $trigger_name }{'on_table'} = $item[8];
+        $triggers{ $trigger_name }{'owner'}    = $owner;
+        $triggers{ $trigger_name }{'action'}   = $action;
         }
 
 create : /create/i /or replace/i /procedure/i table_name not_end m#^/$#im
@@ -732,12 +738,13 @@ sub parse {
     );
   }
 
-  my @triggers = sort { $result->{triggers}->{$a}->{'order'} <=> $result->{triggers}->{$b}->{'order'} }
-      keys %{ $result->{triggers} };
+  my $trg = $result->{triggers};
+  my @triggers = sort { $trg->{$a}->{'order'} <=> $trg->{$b}->{'order'} } keys %$trg;
   foreach my $trigger_name (@triggers) {
     $schema->add_trigger(
-      name   => $trigger_name,
-      action => $result->{triggers}->{$trigger_name}->{action},
+      name     => $trigger_name,
+      action   => $trg->{$trigger_name}->{action},
+      on_table => $trg->{$trigger_name}->{on_table},
     );
   }
 
