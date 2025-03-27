@@ -369,9 +369,17 @@ sub diff_table_fields {
   # List of ones we've renamed from so we don't drop them
   my %renamed_source_fields;
 
+  my %downgrade_renames;
+  for my $src_table_field ($src_table->get_fields) {
+    my $new_name = $src_table_field->extra->{renamed_from};
+    $new_name   or next;
+    $downgrade_renames{$new_name} = $src_table_field;
+  }
+
   for my $tar_table_field ($tar_table->get_fields) {
     my $f_tar_name = $tar_table_field->name;
 
+    # This check is relevant when we generate 'upgrade' migration.
     if (my $old_name = $tar_table_field->extra->{renamed_from}) {
       my $src_table_field = $src_table->get_field($old_name, $self->case_insensitive);
       unless ($src_table_field) {
@@ -382,6 +390,19 @@ sub diff_table_fields {
         $renamed_source_fields{$old_name} = 1;
         next;
       }
+    }
+
+    # This check is relevant when we generate 'downgrade' migration. This is bit weird, but correct:
+    # the privious migration knows nothing about future migrations and does not have 'renamed_from'.
+    # Imagine the rename process: at the previous version field does not have rename_from P(f)
+    # At the new version field has rename_from N(f_rn). During 'upgrade' generation comparison looks
+    # like: P(f) -> N(f_rn). But for 'downgrade' generation it looks like: N(f_rn)->P(f).
+    # Where: P - Previous; N - New; f - field without 'renamed_from'; f_rn - field with 'renamed_from'
+    # Thus we should check 'renamed_from' field's property at SRC table.
+    if (my $src_field = $downgrade_renames{$f_tar_name} ) {
+      push @{ $self->table_diff_hash->{$tar_table}{fields_to_rename} }, [ $src_field, $tar_table_field ];
+      $renamed_source_fields{$src_field->name} = 1;
+      next;
     }
 
     my $src_table_field = $src_table->get_field($f_tar_name, $self->case_insensitive);
