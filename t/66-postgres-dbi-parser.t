@@ -69,6 +69,23 @@ my $sql = q[
     -- When the table t_test1 is created, f_text2 get id 5 but
     -- after this drop, there is only 4 columns.
     alter table sqlt_test1 drop column f_to_drop;
+
+    CREATE FUNCTION test_change_notify()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      IF old.f_varchar IS DISTINCT FROM new.f_varchar
+      THEN
+        PERFORM pg_notify('test_activity', new.f_serial::text);
+      END IF;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    COMMENT ON function test_change_notify IS 'Testing Comment';
+
+    CREATE TRIGGER sqlt_test1_change_notify
+    BEFORE UPDATE ON sqlt_test1
+    FOR EACH ROW EXECUTE FUNCTION test_change_notify();
+
 ];
 
 $| = 1;
@@ -206,6 +223,23 @@ is(scalar @t2_constraints, 1, "One constraint on table");
 
 my $t2_c1 = shift @t2_constraints;
 is($t2_c1->type, FOREIGN_KEY, "Constraint is a FK");
+
+my @procs = $schema->get_procedures;
+is(scalar @procs, 1, 'one user-defined procedure');
+is($procs[0]->name, 'test_change_notify', 'proc[0]->name');
+like($procs[0]->sql, # Exact SQL syntax varies per server version
+   qr/create or replace function.*?returns trigger.*IF old.f_varchar IS DISTINCT FROM new.f_varchar/si,
+   'proc[0]->sql');
+is($procs[0]->comments, 'Testing Comment', 'proc[0]->comments');
+
+my @triggers = $schema->get_triggers;
+is(scalar @triggers, 1, 'one trigger' );
+is($triggers[0]->name, 'sqlt_test1_change_notify', 'trigger[0]->name');
+is($triggers[0]->perform_action_when, 'before', 'trigger[0]->perform_action_when');
+is_deeply([ $triggers[0]->database_events ], ['update'], 'trigger[0]->database_events');
+is($triggers[0]->on_table, 'sqlt_test1', 'trigger[0]->on_table');
+is($triggers[0]->scope, 'row', 'trigger[0]->scope');
+like($triggers[0]->action, qr/test_change_notify/i, 'trigger[0]->action');
 
 $dbh->rollback;
 $dbh->disconnect;
