@@ -35,6 +35,12 @@ The version of postgres to generate DDL for. Turns on features only available in
 If your postgres_version is higher than 8.003 (I should hope it is by now), then the DDL
 generated for dropping objects in the database will contain IF EXISTS.
 
+=item ALTER COLUMN ... TYPE ... USING
+
+Postgres 8 and later require a C<< USING expression >> clause when changing the type of a column
+in a potentially lossy manner, such as from C<text> to C<numeric>.  This the default when the
+version is undefined, or when set to a number greater or equal to 8.
+
 =back
 
 =item attach_comments
@@ -910,27 +916,31 @@ sub alter_field {
   # rename later
   # BUT: drop geometry is done before the rename, cause it work's on the
   # $from_field directly
+  my $to_table_quoted= $generator->quote($to_field->table->name);
+  my $to_field_quoted= $generator->quote($to_field->name);
   push @out,
       sprintf('ALTER TABLE %s RENAME COLUMN %s TO %s',
-    map($generator->quote($_), $to_field->table->name, $from_field->name, $to_field->name,),)
+        $to_table_quoted, $generator->quote($from_field->name), $to_field_quoted)
       if ($from_field->name ne $to_field->name);
 
   push @out,
       sprintf('ALTER TABLE %s ALTER COLUMN %s SET NOT NULL',
-    map($generator->quote($_), $to_field->table->name, $to_field->name),)
+        $to_table_quoted, $to_field_quoted)
       if (!$to_field->is_nullable and $from_field->is_nullable);
 
   push @out,
       sprintf('ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL',
-    map($generator->quote($_), $to_field->table->name, $to_field->name),)
+        $to_table_quoted, $to_field_quoted)
       if (!$from_field->is_nullable and $to_field->is_nullable);
 
   my $from_dt = convert_datatype($from_field);
   my $to_dt   = convert_datatype($to_field);
-  push @out,
-      sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
-    map($generator->quote($_), $to_field->table->name, $to_field->name), $to_dt,)
-      if ($to_dt ne $from_dt);
+  push @out, ($options->{postgres_version}//8) < 8
+    ? sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
+              $to_table_quoted, $to_field_quoted, $to_dt)
+    : sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s USING (%s::%s)',
+              $to_table_quoted, $to_field_quoted, $to_dt, $to_field_quoted, $to_dt)
+    if $to_dt ne $from_dt;
 
   my ($from_enum_typename, $from_list) = _enum_typename_and_values($from_field);
   my ($to_enum_typename,   $to_list)   = _enum_typename_and_values($to_field);

@@ -83,7 +83,7 @@ ALTER TABLE "my'table" DROP CONSTRAINT "enforce_dims_myfield";
 ALTER TABLE "my'table" DROP CONSTRAINT "enforce_srid_myfield";
 ALTER TABLE "my'table" DROP CONSTRAINT "enforce_geotype_myfield";
 ALTER TABLE "my'table" ALTER COLUMN "myfield" SET NOT NULL;
-ALTER TABLE "my'table" ALTER COLUMN "myfield" TYPE character varying(25)],
+ALTER TABLE "my'table" ALTER COLUMN "myfield" TYPE character varying(25) USING ("myfield"::character varying(25))],
   'Alter field geometry to non geometry works'
 );
 
@@ -91,7 +91,7 @@ my $alter_field2 = SQL::Translator::Producer::PostgreSQL::alter_field($field2, $
 is(
   $alter_field2,
   qq[ALTER TABLE "my'table" ALTER COLUMN "myfield" DROP NOT NULL;
-ALTER TABLE "my'table" ALTER COLUMN "myfield" TYPE geometry;
+ALTER TABLE "my'table" ALTER COLUMN "myfield" TYPE geometry USING ("myfield"::geometry);
 INSERT INTO geometry_columns VALUES ('','myschema','my''table','myfield','2','-1','POINT');
 ALTER TABLE "my'table" ADD CONSTRAINT "enforce_dims_myfield" CHECK ((ST_NDims("myfield") = 2));
 ALTER TABLE "my'table" ADD CONSTRAINT "enforce_srid_myfield" CHECK ((ST_SRID("myfield") = -1));
