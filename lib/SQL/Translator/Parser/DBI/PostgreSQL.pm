@@ -134,9 +134,10 @@ ORDER BY 1;
         /
   ) or die "Can't prepare: $@";
 
+  # Select all user-defined triggers from the Postgres 'public' namespace.
   my $trigger_select = $dbh->prepare(<<SQL) or die "Can't prepare trigger query: $@";
 SELECT
-    t.tgname AS trigger_name,
+    t.tgname  AS trigger_name,
     c.relname AS table_name,
     p.proname AS function_name,
     pg_get_triggerdef(t.oid) AS trigger_definition,
@@ -145,8 +146,8 @@ SELECT
         WHEN 64 THEN 'instead of'
         ELSE 'after'
     END AS timing,
-       (CASE WHEN (t.tgtype & 4) = 0 THEN '' ELSE 'insert,' END)
-      || (CASE WHEN (t.tgtype & 8) = 0 THEN '' ELSE 'delete,' END)
+         (CASE WHEN (t.tgtype &  4) = 0 THEN '' ELSE 'insert,' END)
+      || (CASE WHEN (t.tgtype &  8) = 0 THEN '' ELSE 'delete,' END)
       || (CASE WHEN (t.tgtype & 16) = 0 THEN '' ELSE 'update,' END)
       || (CASE WHEN (t.tgtype & 32) = 0 THEN '' ELSE 'truncate,' END)
        AS events,
@@ -165,6 +166,7 @@ WHERE NOT t.tgisinternal
 ORDER BY c.relname, t.tgname;
 SQL
 
+  # Select all user-defined procedures from the Postgres 'public' namespace.
   my $procedure_select = $dbh->prepare(<<SQL) or die "Can't prepare procedure query: $@";
 SELECT
     p.proname AS procedure_name,
@@ -317,11 +319,11 @@ SQL
   $trigger_select->execute() or die "Can't execute trigger query: $@";
   while (my $trigger_hash = $trigger_select->fetchrow_hashref) {
     my $trigger_name = $trigger_hash->{trigger_name};
-    my $table_name = $trigger_hash->{table_name};
-    my $timing = $trigger_hash->{timing};
-    my $events = $trigger_hash->{events};
-    my $scope = $trigger_hash->{scope};
-    my $trigger_def = $trigger_hash->{trigger_definition};
+    my $table_name   = $trigger_hash->{table_name};
+    my $timing       = $trigger_hash->{timing};
+    my $events       = $trigger_hash->{events};
+    my $scope        = $trigger_hash->{scope};
+    my $trigger_def  = $trigger_hash->{trigger_definition};
     
     # Get the table object
     my $table = $schema->get_table($table_name);
@@ -368,11 +370,11 @@ SQL
   # Process stored procedures/functions
   $procedure_select->execute() or die "Can't execute procedure query: $@";
   while (my $proc_hash = $procedure_select->fetchrow_hashref) {
-    my $proc_name = $proc_hash->{procedure_name};
-    my $proc_sql = $proc_hash->{procedure_definition};
+    my $proc_name  = $proc_hash->{procedure_name};
+    my $proc_sql   = $proc_hash->{procedure_definition};
     my $parameters = $proc_hash->{parameters} || '';
-    my $owner = $proc_hash->{owner};
-    my $comments = $proc_hash->{comments};
+    my $owner      = $proc_hash->{owner};
+    my $comments   = $proc_hash->{comments};
     
     # Add procedure to schema
     my $procedure = $schema->add_procedure(
