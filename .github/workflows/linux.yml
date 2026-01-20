@@ -6,6 +6,7 @@ on:
     tags-ignore:
       - '*'
   pull_request:
+  workflow_dispatch:
 jobs:
   perl:
     runs-on: ubuntu-latest
@@ -17,9 +18,9 @@ jobs:
           - '5.34'
           - '5.36'
     container:
-      image: perl:${{ matrix.perl-version }}
+      image: perldocker/perl-tester:${{ matrix.perl-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: dev packages for testing
         run: apt update && apt install -y libgd-dev graphviz libxml2-dev
       - name: Install early + extra deps
