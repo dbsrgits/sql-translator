@@ -7,7 +7,7 @@ our $VERSION = '1.66';
 use SQL::Translator::Schema;
 use SQL::Translator::Utils qw(header_comment);
 use Data::Dumper;
-use YAML qw(Load);
+use YAML::Any qw(Load);
 
 sub parse {
   my ($translator, $data) = @_;

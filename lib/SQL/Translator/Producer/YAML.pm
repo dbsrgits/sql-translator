@@ -23,7 +23,7 @@ use strict;
 use warnings;
 our $VERSION = '1.66';
 
-use YAML qw(Dump);
+use YAML::Any qw(Dump);
 
 sub produce {
   my $translator = shift;

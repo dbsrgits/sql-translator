@@ -1,18 +1,67 @@
+#!/usr/bin/perl
+## no critic (BuiltinFunctions::ProhibitStringyEval)
+
 use warnings;
 use strict;
-use Test::More;
-use Test::Exception;
-use Test::SQL::Translator qw(maybe_plan);
-use SQL::Translator;
-use FindBin '$Bin';
 
-BEGIN {
-  maybe_plan(2, 'SQL::Translator::Parser::SQLite', 'SQL::Translator::Producer::YAML');
+# This test will test all YAML libraries available in the system.
+# It will read in a YAML file, parse it into a Schema object,
+# then use the same Producer to create a YAML file.
+# Then compare the start and end files.
+# It will do this with all YAML libraries available
+# and compare the end results in a matrix to verify all
+# YAML libraries produce the same YAML file.
+
+use Test::More;
+use utf8;
+use Encode;
+use English;
+use Test::SQL::Translator;
+
+my @yaml_libs = qw(
+    YAML::PP
+    YAML::XS
+    YAML
+);
+
+
+maybe_plan( undef, @yaml_libs );
+my $yaml_perl = join q{}, <DATA>;
+my $yaml_utf8 = Encode::encode('UTF-8', $yaml_perl, Encode::FB_CROAK);
+
+my %results;
+
+for my $package (@yaml_libs) {
+    my $r_val = eval "require $package; 1";
+    if(! $r_val ) {
+        diag $EVAL_ERROR;
+    }
+    my %result;
+    $result{package} = $package;
+    my $cmd = "$package" . "::Load(\$yaml_utf8)";
+    my $doc = eval "$cmd";
+    $result{doc} = $doc;
+    $cmd = "$package" . "::Dump(\$doc)";
+    my $yaml = eval "$cmd";
+    $result{yaml} = $yaml;
+    $results{$package} = \%result;
 }
 
-my $sqlt_version = $SQL::Translator::VERSION;
-use YAML::Any qw(Load);
-my $yaml = Load(<<YAML);
+my @packages = keys %results;
+for my $i (0..@packages-1) {
+    my $result1_package = $packages[$i];
+    my $result1_doc = $results{ $result1_package }->{doc};
+    my $result1_yaml = $results{ $result1_package }->{yaml};
+    my $result2_package = $packages[ $i > @packages ? 0 : $i ];
+    my $result2_doc = $results{ $result2_package }->{doc};
+    my $result2_yaml = $results{ $result2_package }->{yaml};
+    is_deeply($result1_doc, $result2_doc, "Doc loaded by $result1_package is equal to doc loaded by $result2_package");
+    is_deeply($result1_yaml, $result2_yaml, "YAML dumped by $result1_package is equal to YAML dumped by $result2_package");
+}
+
+done_testing;
+
+__DATA__
 ---
 schema:
   procedures: {}
@@ -60,7 +109,7 @@ schema:
           is_nullable: 1
           is_primary_key: 0
           is_unique: 0
-          name: description
+          name: ääkkösåt
           order: 6
           size:
             - 0
@@ -227,29 +276,3 @@ schema:
         select pr.person_id, pr.name as person_name, pt.name as pet_name
           from   person pr, pet pt
           where  person.person_id=pet.pet_id
-translator:
-  add_drop_table: 0
-  filename: ~
-  no_comments: 0
-  parser_args: {}
-  parser_type: SQL::Translator::Parser::SQLite
-  producer_args: {}
-  producer_type: SQL::Translator::Producer::YAML
-  show_warnings: 0
-  trace: 0
-  version: $sqlt_version
-YAML
-
-my $file = "$Bin/data/sqlite/create.sql";
-open FH, "<$file" or die "Can't read '$file': $!\n";
-local $/;
-my $data = <FH>;
-my $tr   = SQL::Translator->new(
-  parser   => 'SQLite',
-  producer => 'YAML',
-  data     => $data,
-);
-
-my $out;
-lives_ok { $out = Load($tr->translate) } 'Translate SQLite to YAML';
-is_deeply($out, $yaml, 'YAML matches expected');

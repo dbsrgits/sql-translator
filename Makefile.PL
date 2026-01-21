@@ -18,12 +18,13 @@ my %eumm_args = (
   },
   TEST_REQUIRES => {
     'JSON::MaybeXS'     => '1.003003',
-    'YAML'              => '0.66',
+    'YAML::Any'         => '0.66',
     'XML::Writer'       => '0.500',
     'Test::More'        => '0.88',
     'Test::Differences' => '0',
     'Test::Exception'   => '0.42',
     'Text::ParseWords'  => '0',
+    'Encode'            => '0',
   },
   PREREQ_PM => {
     'Digest::SHA'       => '0',
@@ -81,6 +82,7 @@ my %eumm_args = (
           'Spreadsheet::ParseExcel' => '0.41',
           'Text::RecordParser'      => '0.02',
           'XML::LibXML'             => '1.69',
+          'YAML::XS'                => '0.66',
         },
       },
       develop => {
