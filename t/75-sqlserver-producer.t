@@ -105,4 +105,4 @@ my $generator = $sqlt->translate(\$yaml_in)
 ok $generator ne "", "Produced something!";
 
 my $correct = join("\n", @stmts);
-eq_or_diff $correct, $generator, "Scalar output looks correct";
+eq_or_diff $generator, $correct, "Scalar output looks correct";

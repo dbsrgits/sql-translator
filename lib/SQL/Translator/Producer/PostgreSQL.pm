@@ -219,6 +219,53 @@ and table_constraint is:
       [ USING acc_method ] ( func_name( column [, ... ]) [ ops_name ] )
       [ WHERE predicate ]
 
+=head1 Create Schema Syntax
+
+  CREATE SCHEMA schema_name [ AUTHORIZATION role_specification ] [ schema_element [ ... ] ]
+  CREATE SCHEMA IF NOT EXISTS schema_name [ AUTHORIZATION role_specification ]
+
+=head1 Create Trigger Syntax
+
+  CREATE [ CONSTRAINT ] TRIGGER name { BEFORE | AFTER | INSTEAD OF } { event [ OR ... ] }
+      ON table_name
+      [ FROM referenced_table_name ]
+      [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ]
+      [ FOR [ EACH ] { ROW | STATEMENT } ]
+      [ WHEN ( condition ) ]
+      EXECUTE PROCEDURE function_name ( arguments )
+
+  where event can be one of:
+
+      INSERT
+      UPDATE [ OF column_name [, ... ] ]
+      DELETE
+      TRUNCATE
+
+  DROP TRIGGER [ IF EXISTS ] name ON table_name [ CASCADE | RESTRICT ]
+
+=head1 Create Function Syntax
+
+  CREATE [ OR REPLACE ] FUNCTION
+      name ( [ [ argmode ] [ argname ] argtype [ { DEFAULT | = } default_expr ] [, ...] ] )
+      [ RETURNS rettype
+        | RETURNS TABLE ( column_name column_type [, ...] ) ]
+    { LANGUAGE lang_name
+      | TRANSFORM { FOR TYPE type_name } [, ... ]
+      | WINDOW
+      | IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
+      | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
+      | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+      | COST execution_cost
+      | ROWS result_rows
+      | SET configuration_parameter { TO value | = value | FROM CURRENT }
+      | AS 'definition'
+      | AS 'obj_file', 'link_symbol'
+    } ...
+      [ WITH ( attribute [, ...] ) ]
+
+  DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype [, ...] ] )
+    [ CASCADE | RESTRICT ]
+
 =cut
 
 sub produce {
@@ -277,6 +324,18 @@ sub produce {
             add_drop_trigger => $add_drop_table,
             generator        => $generator,
             no_comments      => $no_comments,
+          }
+        );
+  }
+
+  for my $procedure ($schema->get_procedures) {
+    push @table_defs,
+        create_procedure(
+          $procedure,
+          {
+            add_drop_procedure => $add_drop_table,
+            generator          => $generator,
+            no_comments        => $no_comments,
           }
         );
   }
@@ -364,10 +423,20 @@ sub create_table {
   my $type_defs        = $options->{type_defs}        || {};
   my $attach_comments  = $options->{attach_comments};
 
-  my $table_name    = $table->name or next;
+  my $table_name    = $table->qualified_name or next;
   my $table_name_qt = $generator->quote($table_name);
 
   my (@comments, @field_defs, @index_defs, @constraint_defs, @fks);
+
+  if ( my $schema_name = $table->schema_qualifier and $table->schema ) {
+    if ( not defined $table->schema->extra->{schema_qualifiers}->{$schema_name} ) {
+      push @comments, "--\n-- Schema: $schema_name\n--\n" unless $no_comments;
+
+      push @comments, "CREATE SCHEMA IF NOT EXISTS " .
+          $generator->quote($schema_name) . ";\n";
+    }
+    $table->schema->extra->{schema_qualifiers}->{$schema_name}{$table->qualified_name} = 1;
+  }
 
   push @comments, "--\n-- Table: $table_name\n--\n" unless $no_comments;
 
@@ -521,7 +590,7 @@ sub _enum_typename_and_values {
     if ($field->extra->{custom_type_name}) {
       return ($field->extra->{custom_type_name}, $field->extra->{list});
     } elsif ($field->data_type eq 'enum') {
-      my $name = $field->table->name . '_' . $field->name . '_type';
+      my $name = $field->table->qualified_name . '_' . $field->name . '_type';
       return ($name, $field->extra->{list});
     }
   }
@@ -536,7 +605,7 @@ sub _enum_typename_and_values {
     my ($field, $options) = @_;
 
     my $generator        = _generator($options);
-    my $table_name       = $field->table->name;
+    my $table_name       = $field->table->qualified_name;
     my $constraint_defs  = $options->{constraint_defs}  || [];
     my $postgres_version = $options->{postgres_version} || 0;
     my $type_defs        = $options->{type_defs}        || {};
@@ -660,7 +729,7 @@ sub _extract_extras_from_options {
     my ($index, $options) = @_;
 
     my $generator        = _generator($options);
-    my $table_name       = $index->table->name;
+    my $table_name       = $index->table->qualified_name;
     my $postgres_version = $options->{postgres_version} || 0;
 
     my ($index_def, @constraint_defs);
@@ -714,7 +783,7 @@ sub create_constraint {
 
   my $generator        = _generator($options);
   my $postgres_version = $options->{postgres_version} || 0;
-  my $table_name       = $c->table->name;
+  my $table_name       = $c->table->qualified_name;
   my (@constraint_defs, @fks);
   my %constraint_extras;
   _extract_extras_from_options(
@@ -793,23 +862,116 @@ sub create_trigger {
 
   my @statements;
 
-  push @statements, sprintf('DROP TRIGGER IF EXISTS %s', $generator->quote($trigger->name))
-      if $options->{add_drop_trigger};
+  push @statements, sprintf( 'DROP TRIGGER IF EXISTS %s ON %s',
+      $generator->quote($trigger->name),
+      $generator->quote($trigger->table->qualified_name) )
+    if $options->{add_drop_trigger};
 
   my $scope = $trigger->scope || '';
   $scope = " FOR EACH $scope" if $scope;
 
   push @statements,
       sprintf(
-        'CREATE TRIGGER %s %s %s ON %s%s %s',
+        "CREATE TRIGGER %s %s %s\n  ON %s%s %s",
         $generator->quote($trigger->name),
         $trigger->perform_action_when,
         join(' OR ', @{ $trigger->database_events }),
-        $generator->quote($trigger->on_table),
+        $generator->quote($trigger->table->qualified_name),
         $scope, $trigger->action,
       );
 
   return @statements;
+}
+
+sub drop_trigger {
+    my ($trigger, $options) = @_;
+    my $generator = _generator($options);
+
+    my $out = sprintf( 'DROP TRIGGER %s ON %s',
+        $generator->quote($trigger->name),
+        $generator->quote($trigger->table->qualified_name) );
+
+    return $out;
+}
+
+sub create_procedure {
+  my ($procedure,$options) = @_;
+  my $generator = _generator($options);
+
+  my @statements;
+
+  push @statements, sprintf( 'DROP FUNCTION IF EXISTS %s', $generator->quote($procedure->name) )
+    if $options->{add_drop_procedure};
+
+  my $sql = 'CREATE FUNCTION ';
+  $sql .= $generator->quote($procedure->name);
+  $sql .= ' (';
+  my @args = ();
+  my $has_out;
+  foreach my $arg (@{$procedure->parameters}) {
+    $arg = {name => $arg} if ref($arg) ne 'HASH';
+    push @args, join(' ', map $arg->{$_},
+                          grep defined($arg->{$_}),
+                          qw/argmode name type/);
+    $has_out ||=  defined $arg->{out};
+  }
+  $sql .= join(', ', @args);
+  $sql .= ')';
+  $sql .= "\n";
+  if($procedure->extra->{returns}{type}) {
+    $sql .= ' RETURNS ' . $procedure->extra->{returns}{type};
+  }
+  elsif(!$has_out) {
+    # https://www.postgresql.org/docs/current/sql-createfunction.html#rettype
+    # > If the function is not supposed to return a value, specify void as the return type.
+    $sql .= ' RETURNS void';
+  }
+
+  my $has_body;
+  my $language;
+  foreach my $def (@{$procedure->extra->{definitions}}) {
+    next if !keys %$def;   # Do not generate empty line if an empty definition passed.
+    $sql .= "\n";
+    $sql .= ' ';
+    if($def->{body}) {
+      $has_body = 1;
+      $sql .= 'AS ';
+      $sql .= $def->{quote};
+      $sql .= $def->{body};
+      $sql .= $def->{quote};
+    } elsif($def->{language}) {
+      $language = uc $def->{language};
+      $sql .= 'LANGUAGE ';
+      $sql .= $def->{language};
+    } elsif($def->{attribute}) {
+      $sql .= uc $def->{attribute};
+    } elsif($def->{cost}) {
+      $sql .= 'COST ';
+      $sql .= $def->{cost};
+    }
+  }
+
+  # PostgreSQL allows 'RETURN expr' or 'BEGIN ATOMIC stmt; stmt; END' as sql_body
+  # only for SQL language. https://www.postgresql.org/docs/current/sql-createfunction.html#sql_body
+  my $proc_sql = $procedure->sql;
+  if(!$has_body && (!$language || $language eq 'SQL') && $proc_sql) {
+    # We can not allow 'SELECT ...' because this DDL will be not parseable later.
+    # XXX: Right now this mistake is silently ignored.
+    $sql .= $proc_sql =~ /^RETURN|^BEGIN ATOMIC/i? "\n " . $proc_sql : '';
+  }
+
+  push @statements, $sql;
+
+  return @statements;
+}
+
+sub drop_procedure {
+    my ($procedure, $options) = @_;
+    my $generator = _generator($options);
+
+    my $out = "DROP FUNCTION " . $generator->quote($procedure->name);
+
+    return $out;
 }
 
 sub convert_datatype {
@@ -896,7 +1058,7 @@ sub alter_field {
   my ($from_field, $to_field, $options) = @_;
 
   die "Can't alter field in another table"
-      if ($from_field->table->name ne $to_field->table->name);
+      if ($from_field->table->qualified_name ne $to_field->table->qualified_name);
 
   my $generator = _generator($options);
   my @out;
@@ -912,24 +1074,24 @@ sub alter_field {
   # $from_field directly
   push @out,
       sprintf('ALTER TABLE %s RENAME COLUMN %s TO %s',
-    map($generator->quote($_), $to_field->table->name, $from_field->name, $to_field->name,),)
+    map($generator->quote($_), $to_field->table->qualified_name, $from_field->name, $to_field->name,),)
       if ($from_field->name ne $to_field->name);
 
   push @out,
       sprintf('ALTER TABLE %s ALTER COLUMN %s SET NOT NULL',
-    map($generator->quote($_), $to_field->table->name, $to_field->name),)
+    map($generator->quote($_), $to_field->table->qualified_name, $to_field->name),)
       if (!$to_field->is_nullable and $from_field->is_nullable);
 
   push @out,
       sprintf('ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL',
-    map($generator->quote($_), $to_field->table->name, $to_field->name),)
+    map($generator->quote($_), $to_field->table->qualified_name, $to_field->name),)
       if (!$from_field->is_nullable and $to_field->is_nullable);
 
   my $from_dt = convert_datatype($from_field);
   my $to_dt   = convert_datatype($to_field);
   push @out,
       sprintf('ALTER TABLE %s ALTER COLUMN %s TYPE %s',
-    map($generator->quote($_), $to_field->table->name, $to_field->name), $to_dt,)
+    map($generator->quote($_), $to_field->table->qualified_name, $to_field->name), $to_dt,)
       if ($to_dt ne $from_dt);
 
   my ($from_enum_typename, $from_list) = _enum_typename_and_values($from_field);
@@ -970,7 +1132,7 @@ sub alter_field {
   push @out,
       sprintf(
         'ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s',
-        map($generator->quote($_), $to_field->table->name, $to_field->name,),
+        map($generator->quote($_), $to_field->table->qualified_name, $to_field->name,),
         $default_value,
       )
       if (defined $new_default
@@ -981,7 +1143,7 @@ sub alter_field {
 
   push @out,
       sprintf('ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT',
-    map($generator->quote($_), $to_field->table->name, $to_field->name,),)
+    map($generator->quote($_), $to_field->table->qualified_name, $to_field->name,),)
       if (!defined $new_default && defined $old_default);
 
   # add geometry column and constraints
@@ -998,13 +1160,13 @@ sub add_field {
 
   my $out = sprintf(
     'ALTER TABLE %s ADD COLUMN %s',
-    _generator($options)->quote($new_field->table->name),
+    _generator($options)->quote($new_field->table->qualified_name),
     create_field($new_field, $options)
   );
   $out .= ";\n" . add_geometry_column($new_field, $options) . ";\n" . add_geometry_constraints($new_field, $options)
       if is_geometry($new_field);
-  return $out;
 
+  return $out;
 }
 
 sub drop_field {
@@ -1014,11 +1176,12 @@ sub drop_field {
 
   my $out = sprintf(
     'ALTER TABLE %s DROP COLUMN %s',
-    $generator->quote($old_field->table->name),
+    $generator->quote($old_field->table->qualified_name),
     $generator->quote($old_field->name)
   );
   $out .= ";\n" . drop_geometry_column($old_field, $options)
       if is_geometry($old_field);
+
   return $out;
 }
 
@@ -1030,7 +1193,7 @@ sub add_geometry_column {
     map(__PACKAGE__->_quote_string($_),
       '',
       $field->table->schema->name,
-      $options->{table} ? $options->{table} : $field->table->name,
+      $options->{table} ? $options->{table} : $field->table->qualified_name,
       $field->name,
       $field->extra->{dimensions},
       $field->extra->{srid},
@@ -1044,7 +1207,7 @@ sub drop_geometry_column {
 
   return
       sprintf("DELETE FROM geometry_columns WHERE f_table_schema = %s AND f_table_name = %s AND f_geometry_column = %s",
-        map(__PACKAGE__->_quote_string($_), $field->table->schema->name, $field->table->name, $field->name,),);
+        map(__PACKAGE__->_quote_string($_), $field->table->schema->name, $field->table->qualified_name, $field->name));
 }
 
 sub add_geometry_constraints {
@@ -1063,7 +1226,7 @@ sub drop_geometry_constraints {
 sub alter_table {
   my ($to_table, $options) = @_;
   my $generator = _generator($options);
-  my $out       = sprintf('ALTER TABLE %s %s', $generator->quote($to_table->name), $options->{alter_table_action});
+  my $out       = sprintf('ALTER TABLE %s %s', $generator->quote($to_table->qualified_name), $options->{alter_table_action});
   $out .= ";\n" . $options->{geometry_changes}
       if $options->{geometry_changes};
   return $out;
@@ -1090,7 +1253,7 @@ sub alter_create_index {
   my ($idef, $constraints) = create_index($index, $options);
   return $index->type eq NORMAL
       ? $idef
-      : sprintf('ALTER TABLE %s ADD %s', $generator->quote($index->table->name), join(q{}, @$constraints));
+      : sprintf('ALTER TABLE %s ADD %s', $generator->quote($index->table->qualified_name), join(q{}, @$constraints));
 }
 
 sub alter_drop_index {
@@ -1117,7 +1280,7 @@ sub alter_drop_constraint {
     $c_name = $c->name;
   } else {
     # if the name is dotted we need the table, not schema nor database
-    my ($tablename) = reverse split /[.]/, $c->table->name;
+    my ($tablename) = reverse split /[.]/, $c->table->qualified_name;
     if ($c->type eq FOREIGN_KEY) {
 
       # Doesn't have a name, and is foreign key, append '_fkey'
@@ -1129,7 +1292,7 @@ sub alter_drop_constraint {
     }
   }
 
-  return sprintf('ALTER TABLE %s DROP CONSTRAINT %s', map { $generator->quote($_) } $c->table->name, $c_name,);
+  return sprintf('ALTER TABLE %s DROP CONSTRAINT %s', map { $generator->quote($_) } $c->table->qualified_name, $c_name,);
 }
 
 sub alter_create_constraint {
@@ -1144,7 +1307,7 @@ sub alter_create_constraint {
   return unless (@{$defs} || @{$fks});
   return $index->type eq FOREIGN_KEY
       ? join(q{}, @{$fks})
-      : join(' ', 'ALTER TABLE', $generator->quote($index->table->name), 'ADD', join(q{}, @{$defs}, @{$fks}));
+      : join(' ', 'ALTER TABLE', $generator->quote($index->table->qualified_name), 'ADD', join(q{}, @{$defs}, @{$fks}));
 }
 
 sub drop_table {

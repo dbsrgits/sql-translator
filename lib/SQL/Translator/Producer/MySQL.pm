@@ -457,7 +457,7 @@ sub create_table {
   my ($table, $options) = @_;
   my $generator = _generator($options);
 
-  my $table_name = $generator->quote($table->name);
+  my $table_name = $generator->quote($table->qualified_name);
   debug("PKG: Looking at table '$table_name'\n");
 
   #
@@ -679,7 +679,7 @@ sub _quote_string {
 sub alter_create_index {
   my ($index, $options) = @_;
 
-  my $table_name = _generator($options)->quote($index->table->name);
+  my $table_name = _generator($options)->quote($index->table->qualified_name);
   return join(' ', 'ALTER TABLE', $table_name, 'ADD', create_index(@_));
 }
 
@@ -707,7 +707,7 @@ sub create_index {
 sub alter_drop_index {
   my ($index, $options) = @_;
 
-  my $table_name = _generator($options)->quote($index->table->name);
+  my $table_name = _generator($options)->quote($index->table->qualified_name);
 
   return join(' ', 'ALTER TABLE', $table_name, 'DROP', 'INDEX', $index->name || $index->fields);
 
@@ -717,7 +717,7 @@ sub alter_drop_constraint {
   my ($c, $options) = @_;
 
   my $generator  = _generator($options);
-  my $table_name = $generator->quote($c->table->name);
+  my $table_name = $generator->quote($c->table->qualified_name);
 
   my @out = ('ALTER', 'TABLE', $table_name, 'DROP');
   if ($c->type eq PRIMARY_KEY) {
@@ -731,7 +731,7 @@ sub alter_drop_constraint {
 sub alter_create_constraint {
   my ($index, $options) = @_;
 
-  my $table_name = _generator($options)->quote($index->table->name);
+  my $table_name = _generator($options)->quote($index->table->qualified_name);
   return join(' ', 'ALTER TABLE', $table_name, 'ADD', create_constraint(@_));
 }
 
@@ -788,7 +788,7 @@ sub create_constraint {
     if (@rfields) {
       $def .= ' (' . join(', ', map { $generator->quote($_) } @rfields) . ')';
     } else {
-      warn "FK constraint on " . $table->name . '.' . join('', @fields) . " has no reference fields\n"
+      warn "FK constraint on " . $table->qualified_name . '.' . join('', @fields) . " has no reference fields\n"
           if $options->{show_warnings};
     }
 
@@ -821,7 +821,7 @@ sub alter_table {
   my ($to_table, $options) = @_;
 
   my $table_options = generate_table_options($to_table, $options) || '';
-  my $table_name    = _generator($options)->quote($to_table->name);
+  my $table_name    = _generator($options)->quote($to_table->qualified_name);
   my $out           = sprintf('ALTER TABLE %s%s', $table_name, $table_options);
 
   return $out;
@@ -833,7 +833,7 @@ sub alter_field {
   my ($from_field, $to_field, $options) = @_;
 
   my $generator  = _generator($options);
-  my $table_name = $generator->quote($to_field->table->name);
+  my $table_name = $generator->quote($to_field->table->qualified_name);
 
   my $out = sprintf(
     'ALTER TABLE %s CHANGE COLUMN %s %s',
@@ -848,7 +848,7 @@ sub alter_field {
 sub add_field {
   my ($new_field, $options) = @_;
 
-  my $table_name = _generator($options)->quote($new_field->table->name);
+  my $table_name = _generator($options)->quote($new_field->table->qualified_name);
 
   my $out = sprintf('ALTER TABLE %s ADD COLUMN %s', $table_name, create_field($new_field, $options));
 
@@ -860,7 +860,7 @@ sub drop_field {
   my ($old_field, $options) = @_;
 
   my $generator  = _generator($options);
-  my $table_name = $generator->quote($old_field->table->name);
+  my $table_name = $generator->quote($old_field->table->qualified_name);
 
   my $out = sprintf('ALTER TABLE %s DROP COLUMN %s', $table_name, $generator->quote($old_field->name));
 
@@ -905,7 +905,7 @@ sub batch_alter_table {
 
   # rename_table makes things a bit more complex
   my $renamed_from = "";
-  $renamed_from = $generator->quote($diff_hash->{rename_table}[0][0]->name)
+  $renamed_from = $generator->quote($diff_hash->{rename_table}[0][0]->qualified_name)
       if $diff_hash->{rename_table} && @{ $diff_hash->{rename_table} };
 
   return unless @stmts;
@@ -915,7 +915,7 @@ sub batch_alter_table {
 
   # Now strip off the 'ALTER TABLE xyz' of all but the first one
 
-  my $table_name = $generator->quote($table->name);
+  my $table_name = $generator->quote($table->qualified_name);
 
   my $re
       = $renamed_from

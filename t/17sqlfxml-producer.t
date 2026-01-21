@@ -255,7 +255,7 @@ EOXML
     <procedure name="foo_proc" parameters="foo,bar" owner="Nomar" order="1">
       <sql>select foo from bar</sql>
       <comments>Go Sox!</comments>
-      <extra hello="world" />
+      <extra hello="world"></extra>
     </procedure>
   </procedures>
 </schema>

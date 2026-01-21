@@ -824,4 +824,24 @@ require_ok('SQL::Translator::Schema');
   ok(!$t4->can_link($t1, $t2)->[0], 'Self-link table can\'t link other');
 }
 
+
+#
+# Support for schema qualifiers
+#
+
+{
+  my $s = SQL::Translator::Schema->new;
+  my $t1 = $s->add_table( name => 'sec.person' );
+
+  is( $t1->name, 'person', 'sec.person name is person');
+  is( $t1->schema_qualifier, 'sec', 'sec.person schema qualifier is sec');
+  is( $t1->qualified_name, 'sec.person', 'sec.person qualified name is ok');
+
+  $t1->name('pri.person');
+
+  is( $t1->schema_qualifier, 'pri', 'sec.person schema qualifier changed to pri');
+  is( $t1->name, 'person', 'pri.person name is person');
+  is( $t1->qualified_name, 'pri.person', 'pri.person qualified name is ok');
+}
+
 done_testing;

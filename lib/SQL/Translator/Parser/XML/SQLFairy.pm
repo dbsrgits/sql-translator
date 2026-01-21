@@ -222,8 +222,28 @@ sub parse {
   # Procedures
   #
   @nodes = $xp->findnodes('/sqlf:schema/sqlf:procedure|/sqlf:schema/sqlf:procedures/sqlf:procedure');
-  foreach (@nodes) {
-    my %data = get_tagfields($xp, $_, "sqlf:", qw/name sql parameters owner comments order extra/);
+  foreach my $procn (@nodes) {
+    my %data = get_tagfields($xp, $procn, "sqlf:", qw/name sql parameters owner comments order extra/);
+
+    my @subnodes = $xp->findnodes('sqlf:extra/sqlf:returns', $procn);
+    foreach my $retn (@subnodes) {
+      foreach ($retn->getAttributes) {
+        $data{extra}{returns}{ $_->getName } = $_->getData;
+      }
+    }
+
+    my $defs = $data{extra}{definitions} = [];
+    @subnodes =  $xp->findnodes('sqlf:extra/sqlf:definitions/sqlf:definition', $procn);
+    foreach my $defn (@subnodes) {
+      my %definition;
+      foreach ($defn->getAttributes) {
+        $definition{ $_->getName } = $_->getData;
+      }
+      push @$defs, \%definition   if keys %definition;
+    }
+
+    if(!@$defs) { delete $data{extra}{definitions} }
+
     $schema->add_procedure(%data) or die $schema->error;
   }
 

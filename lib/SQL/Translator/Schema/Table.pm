@@ -40,8 +40,8 @@ our $VERSION = '1.66';
 # accidentally set it to undef. We also have to tweak bool so the object is
 # still true when it doesn't have a name (which shouldn't happen!).
 use overload
-    '""'     => sub { shift->name },
-    'bool'   => sub { $_[0]->name || $_[0] },
+    '""'     => sub { shift->qualified_name },
+    'bool'   => sub { $_[0]->qualified_name || $_[0] },
     fallback => 1,
     ;
 
@@ -55,6 +55,20 @@ Object constructor.
       schema => $schema,
       name   => 'foo',
   );
+
+=cut
+
+around BUILDARGS => sub {
+    my ($orig, $self, @args) = @_;
+    my $args = $self->$orig(@args);
+
+    if ( defined $args->{name} and $args->{name} =~ /^(.*?)\.(.*)$/ ) {
+        $args->{schema_qualifier} = $1;
+        $args->{name} = $2;
+    }
+
+    return $args;
+};
 
 =head2 add_constraint
 
@@ -673,16 +687,45 @@ has name => (
 around name => sub {
   my $orig = shift;
   my $self = shift;
+  my @args = @_;
 
   if (my ($arg) = @_) {
+    if ( $arg =~ /^(.*?)\.(.*)$/ ) {
+        $self->schema_qualifier($1);
+        $arg = $2;
+        @args = ($arg);
+    }
+
+    $arg = join('.', $self->schema_qualifier, $arg) if ( $self->schema_qualifier );
     if (my $schema = $self->schema) {
       return $self->error(qq[Can't use table name "$arg": table exists])
           if $schema->get_table($arg);
     }
   }
 
-  return ex2err($orig, $self, @_);
+  return ex2err($orig, $self, @args);
 };
+
+=head2 schema_qualifier
+
+Get or set table's schema qualifier (database schema name).
+
+=cut
+
+has schema_qualifier => ( is => 'rw' );
+
+=head2 qualified_name
+
+Get qualified name, with optional schema qualifier
+
+=cut
+
+sub qualified_name {
+    my $self = shift;
+    my @components = ($self->name);
+    unshift @components, $self->schema_qualifier if $self->schema_qualifier;
+    return join('.', @components);
+}
 
 =head2 schema
 

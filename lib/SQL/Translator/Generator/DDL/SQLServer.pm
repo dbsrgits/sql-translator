@@ -53,15 +53,15 @@ sub field_autoinc { ($_[1]->is_auto_increment ? 'IDENTITY' : ()) }
 
 sub primary_key_constraint {
   'CONSTRAINT '
-      . $_[0]->quote($_[1]->name || $_[1]->table->name . '_pk')
+      . $_[0]->quote($_[1]->name || $_[1]->table->qualified_name . '_pk')
       . ' PRIMARY KEY ('
       . join(', ', map $_[0]->quote($_), $_[1]->fields) . ')';
 }
 
 sub index {
   'CREATE INDEX '
-      . $_[0]->quote($_[1]->name || $_[1]->table->name . '_idx') . ' ON '
-      . $_[0]->quote($_[1]->table->name) . ' ('
+      . $_[0]->quote($_[1]->name || $_[1]->table->qualified_name . '_idx') . ' ON '
+      . $_[0]->quote($_[1]->table->qualified_name) . ' ('
       . join(', ', map $_[0]->quote($_), $_[1]->fields) . ');';
 }
 
@@ -76,7 +76,7 @@ sub unique_constraint_single {
 
 sub unique_constraint_name {
   my ($self, $constraint) = @_;
-  $self->quote($constraint->name || $constraint->table->name . '_uc');
+  $self->quote($constraint->name || $constraint->table->qualified_name . '_uc');
 }
 
 sub unique_constraint_multiple {
@@ -84,7 +84,7 @@ sub unique_constraint_multiple {
 
   'CREATE UNIQUE NONCLUSTERED INDEX '
       . $self->unique_constraint_name($constraint) . ' ON '
-      . $self->quote($constraint->table->name) . ' ('
+      . $self->quote($constraint->table->qualified_name) . ' ('
       . join(', ', map $self->quote($_), $constraint->fields) . ')'
       . ' WHERE '
       . join(' AND ', map $self->quote($_->name) . ' IS NOT NULL', grep { $_->is_nullable } $constraint->fields) . ';';
@@ -103,9 +103,9 @@ sub foreign_key_constraint {
   }
 
   'ALTER TABLE '
-      . $self->quote($constraint->table->name)
+      . $self->quote($constraint->table->qualified_name)
       . ' ADD CONSTRAINT '
-      . $self->quote($constraint->name || $constraint->table->name . '_fk')
+      . $self->quote($constraint->name || $constraint->table->qualified_name . '_fk')
       . ' FOREIGN KEY' . ' ('
       . join(', ', map $self->quote($_), $constraint->fields)
       . ') REFERENCES '
@@ -163,7 +163,7 @@ sub table {
   join("\n", $self->table_comments($table), '')
       . join("\n\n",
           'CREATE TABLE '
-        . $self->quote($table->name) . " (\n"
+        . $self->quote($table->qualified_name) . " (\n"
         . join(",\n", map {"  $_"} $self->fields($table), $self->constraints($table),) . "\n);",
         $self->unique_constraints_multiple($table), $self->indices($table),);
 }
@@ -182,14 +182,14 @@ sub unique_constraints_multiple {
 
 sub drop_table {
   my ($self, $table) = @_;
-  my $name   = $table->name;
+  my $name   = $table->qualified_name;
   my $q_name = $self->quote($name);
   "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U')" . " DROP TABLE $q_name;";
 }
 
 sub remove_table_constraints {
   my ($self, $table) = @_;
-  my $name   = $table->name;
+  my $name   = $table->qualified_name;
   my $q_name = $self->quote($name);
   "IF EXISTS (SELECT name FROM sysobjects WHERE name = '$name' AND type = 'U')"
       . " ALTER TABLE $q_name NOCHECK CONSTRAINT all;";
@@ -228,7 +228,7 @@ sub schema {
 
   $self->header_comments
       . $self->drop_tables($schema)
-      . join("\n\n", map $self->table($_), grep { $_->name } $schema->get_tables) . "\n"
+      . join("\n\n", map $self->table($_), grep { $_->qualified_name } $schema->get_tables) . "\n"
       . join "\n", $self->foreign_key_constraints($schema);
 }
 

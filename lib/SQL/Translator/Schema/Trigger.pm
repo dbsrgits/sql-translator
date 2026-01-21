@@ -193,7 +193,7 @@ Gets or set the table name on which the trigger works, as a string.
         if !$table;
     $self->table($table);
   }
-  return $self->table->name;
+  return $self->table->qualified_name;
 }
 
 =head2 action

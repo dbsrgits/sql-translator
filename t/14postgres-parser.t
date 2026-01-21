@@ -121,6 +121,24 @@ baz $foo$,
 
     create materialized view if not exists baa (black, sheep) as select foo black, bar sheep from baz;
 
+    -- Triggers
+    CREATE TRIGGER test_trigger before update OR insert ON t_test1
+      FOR EACH ROW EXECUTE PROCEDURE test_trigger_proc();
+
+    -- Functions
+    CREATE FUNCTION test_func1(arg1 character varying)
+      RETURNS character varying
+      AS 'my ($arg1) = @_; return "Hello: " . ($arg1 // "unnamed");'
+      LANGUAGE plperl;
+
+    CREATE FUNCTION test_func2 () RETURNS int AS $$function body$$;
+
+    create table secschema.t_test1 (
+        f_serial serial NOT NULL primary key
+    );
+
+    alter table secschema.t_test1 add f_fk2s integer;
+
     commit;
 };
 
@@ -131,7 +149,7 @@ my $schema = $t->schema;
 
 isa_ok($schema, 'SQL::Translator::Schema', 'Schema object');
 my @tables = $schema->get_tables;
-is(scalar @tables, 5, 'Five tables');
+is(scalar @tables, 6, 'Six tables');
 
 my $t1 = shift @tables;
 is($t1->name, 't_test1', 'Table t_test1 exists');
@@ -409,6 +427,8 @@ is($schema->get_table('products_2')->extra('temporary'),            1,  "Table i
 is($schema->get_table('products_3')->extra('temporary'),            1,  "Table is TEMPORARY");
 
 # test trigger
+my @triggers = $schema->get_triggers;
+ok( @triggers == 1, 'one trigger defined');
 my $trigger = $schema->get_trigger('test_trigger');
 is($trigger->on_table, 'products_1', "Trigger is on correct table");
 is_deeply(scalar $trigger->database_events, [qw(insert update delete)], "Correct events for trigger");
@@ -448,5 +468,43 @@ is_deeply(
   [ { using => 'hash' }, { where => "f_bigint = '1' AND f_tz IS NULL" }, { include => ['f_bool'] } ],
   'Index is using hash method and has predicate right and include INCLUDE'
 );
+
+# Procedures
+my @procedures = $schema->get_procedures;
+#use Data::Dumper;
+#print STDERR Dumper(\@procedures);
+ok( @procedures == 2, 'two procedures parsed' );
+
+my $p1 = shift @procedures;
+is ($p1->name, 'test_func1', 'First procedure is "test_func1"');
+
+my $p2 = shift @procedures;
+is ($p2->name, 'test_func2', 'Second procedure is "test_func2"');
+
+# Qualified with schema
+my $t1s = pop @tables;
+
+is( $t1s->name, 't_test1', 'Table t_test1 from secschema schema exists' );
+is( $t1s->schema_qualifier, 'secschema', 'Table t_test1 has correct schema: secschema' );
+is( $t1s->qualified_name, 'secschema.t_test1', 'Table t_test1 from secschema schema has correct qualified name' );
+
+my @t1s_fields = $t1s->get_fields;
+is( scalar @t1s_fields, 2, '2 fields secschema.in t_test1' );
+
+my $t1s_f1 = shift @t1s_fields;
+is( $t1s_f1->name, 'f_serial', 'First field is "f_serial"' );
+is( $t1s_f1->data_type, 'integer', 'Field is an integer' );
+is( $t1s_f1->is_nullable, 0, 'Field cannot be null' );
+is( $t1s_f1->size, 11, 'Size is "11"' );
+is( $t1s_f1->default_value, undef, 'Default value is undefined' );
+is( $t1s_f1->is_primary_key, 1, 'Field is PK' );
+
+my $t1s_f2 = shift @t1s_fields;
+is( $t1s_f2->name, 'f_fk2s', 'Second field is "f_fk2s"' );
+is( $t1s_f2->data_type, 'integer', 'Field is an integer' );
+is( $t1s_f2->is_nullable, 1, 'Field can be null' );
+is( $t1s_f2->size, 10, 'Size is "10"' );
+is( $t1s_f2->default_value, undef, 'Default value is undefined' );
+is( $t1s_f2->is_primary_key, 0, 'Field is not PK' );
 
 done_testing;
