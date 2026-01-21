@@ -723,7 +723,7 @@ sub alter_drop_constraint {
   if ($c->type eq PRIMARY_KEY) {
     push @out, $c->type;
   } else {
-    push @out, ($c->type eq FOREIGN_KEY ? $c->type : "CONSTRAINT"), $generator->quote($c->name);
+    push @out, ($c->type eq UNIQUE ? "INDEX" : $c->type), $generator->quote($c->name);
   }
   return join(' ', @out);
 }

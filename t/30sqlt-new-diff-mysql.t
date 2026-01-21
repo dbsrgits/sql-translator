@@ -66,7 +66,7 @@ ALTER TABLE old_name RENAME TO new_name;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E;
 
-ALTER TABLE person DROP CONSTRAINT UC_age_name;
+ALTER TABLE person DROP INDEX UC_age_name;
 
 ALTER TABLE person DROP INDEX u_name;
 
@@ -135,7 +135,7 @@ ALTER TABLE employee DROP COLUMN job_title;
 ALTER TABLE old_name RENAME TO new_name,
                      ADD COLUMN new_field integer NULL;
 
-ALTER TABLE person DROP CONSTRAINT UC_age_name,
+ALTER TABLE person DROP INDEX UC_age_name,
                    ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1,
                    CHANGE COLUMN person_id person_id integer(11) NOT NULL auto_increment,
                    CHANGE COLUMN name name varchar(20) NOT NULL,
@@ -201,11 +201,11 @@ CREATE TABLE added (
 SET foreign_key_checks=1;
 
 ALTER TABLE employee DROP FOREIGN KEY FK5302D47D93FE702E,
-                     DROP CONSTRAINT demo_constraint,
+                     DROP CHECK demo_constraint,
                      DROP COLUMN job_title,
                      ADD CONSTRAINT FK5302D47D93FE702E_diff FOREIGN KEY (employee_id) REFERENCES person (person_id);
 
-ALTER TABLE person DROP CONSTRAINT UC_age_name,
+ALTER TABLE person DROP INDEX UC_age_name,
                    DROP INDEX u_name,
                    ADD COLUMN is_rock_star tinyint(4) NULL DEFAULT 1,
                    ADD COLUMN value double(8, 2) NULL DEFAULT 0.00,
