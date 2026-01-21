@@ -93,6 +93,7 @@ To translate a schema:
   PostgreSQL Producer Options:
 
     --postgres-version   PostgreSQL server version
+    --attach-comments    Use PostgreSQL 'COMMENT' statement instead of '--'
 
   Diagram Producer Options:
 
@@ -198,6 +199,7 @@ my $producer_dsn;            # db_user "
 my $add_truncate;
 my $mysql_parser_version;    # MySQL parser arg for /*! comments
 my $postgres_version;        # PostgreSQL version
+my $attach_comments;         # Use PostGreSQL COMMENT statement
 my $mysql_version;           # MySQL version
 
 GetOptions(
@@ -243,6 +245,7 @@ GetOptions(
   'version'                             => \$show_version,
   'mysql-parser-version=i'              => \$mysql_parser_version,
   'postgres-version=f'                  => \$postgres_version,
+  'attach-comments'                     => \$attach_comments,
   'mysql-version=f'                     => \$mysql_version,
 ) or pod2usage(2);
 
@@ -313,6 +316,7 @@ my $translator = SQL::Translator->new(
     indent           => $indent,
     newlines         => $newlines,
     postgres_version => $postgres_version,
+    attach_comments  => $attach_comments,
     mysql_version    => $mysql_version,
     package_name     => $package_name,
   },
