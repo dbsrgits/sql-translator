@@ -246,6 +246,13 @@ GetOptions(
   'mysql-version=f'                     => \$mysql_version,
 ) or pod2usage(2);
 
+pod2usage(1) if $help;
+
+if ($show_version) {
+  print "SQL::Translator v", $SQL::Translator::VERSION, "\n";
+  exit(0);
+}
+
 if ($use_same_auth) {
   $producer_dsn         = $dsn;
   $producer_db_user     = $db_user;
@@ -264,13 +271,6 @@ unless (@files) {
   } else {
     @files = ('-');
   }
-}
-
-pod2usage(1) if $help;
-
-if ($show_version) {
-  print "SQL::Translator v", $SQL::Translator::VERSION, "\n";
-  exit(0);
 }
 
 my $translator = SQL::Translator->new(
