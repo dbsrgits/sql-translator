@@ -19,6 +19,20 @@ sub parse {
   my $schema = $translator->schema;
 
   #
+  # Sequences
+  #
+  my @sequences = map { $data->{'sequences'}{ $_->[1] } }
+      sort { $a->[0] <=> $b->[0] }
+      map  { [ $data->{'sequences'}{$_}{'order'} || 0, $_ ] }
+      keys %{ $data->{'sequences'} };
+
+  for my $sequence (@sequences) {
+    # my $sequence = $schema->add_sequence(map { $tdata->{$_} ? ($_ => $tdata->{$_}) : () } (qw/name extra options/))
+    my $seq = $schema->add_sequence($sequence)
+        or die $schema->error;
+  }
+
+  #
   # Tables
   #
   my @tables = map { $data->{'tables'}{ $_->[1] } }

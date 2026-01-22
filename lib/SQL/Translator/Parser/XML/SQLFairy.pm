@@ -227,6 +227,20 @@ sub parse {
     $schema->add_procedure(%data) or die $schema->error;
   }
 
+  #
+  # Sequences
+  #
+  @nodes = $xp->findnodes('/sqlf:schema/sqlf:sequence|/sqlf:schema/sqlf:sequences/sqlf:sequence');
+  for my $node (
+    sort {
+      ("" . $xp->findvalue('sqlf:order|@order', $a) || 0) <=> ("" . $xp->findvalue('sqlf:order|@order', $b) || 0)
+    } @nodes
+  ) {
+    my %data = get_tagfields($xp, $node, "sqlf:", qw/name order increment start maxvalue minvalue cycle cache extra comments/);
+    debug "Adding sequence:" . $data{'name'};
+    my $sequence = $schema->add_sequence(%data) or die $schema->error;
+  }
+
   return 1;
 }
 

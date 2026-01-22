@@ -1,6 +1,24 @@
 ---
 schema:
   procedures: {}
+  sequences:
+    IdentificationNumber:
+      name: IdentificationNumber
+      increment: 2
+      order: 2
+    AddedSequence:
+      name: AddedSequence
+      minvalue: 3
+      maxvalue: 256
+      order: 1
+      owner: person.person_id
+      comments:
+        - First line of comments.
+        - Second line of comments.
+    renamed_sequence:
+      name: new_name_for_sequence
+      extra:
+        renamed_from: old_name_for_sequence
   tables:
     added:
       constraints: []

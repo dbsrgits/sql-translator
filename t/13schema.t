@@ -722,6 +722,70 @@ require_ok('SQL::Translator::Schema');
 }
 
 #
+# Sequence
+#
+{
+  my $s          = SQL::Translator::Schema->new(name => 'SequenceTest');
+  my $name       = 'foo_seq';
+  my $order      = 1,
+  my $increment  = '1';
+  my $minvalue   = '2';
+  my $maxvalue   = '5';
+  my $start      = '3';
+  my $cache      = '1';
+  my $cycle      = 0;
+  my $extra      = { owner_table=>"organizations", owner_field=>"client_nr", };
+  my $comments   = 'Sequence for numbers!';
+  my $seq = $s->add_sequence(
+      name      => $name,
+      order     => $order,
+      increment => $increment,
+      minvalue  => $minvalue,
+      maxvalue  => $maxvalue,
+      start     => $start,
+      cache     => $cache,
+      cycle     => $cycle,
+      extra     => $extra,
+      comments  => $comments,
+  ) or die $s->error;
+
+  isa_ok($seq,         'SQL::Translator::Schema::Sequence', 'Sequence');
+  isa_ok($seq->schema, 'SQL::Translator::Schema',            'Schema');
+  is($seq->schema->name,          'SequenceTest', qq[Schema name is "'SequenceTest'"]);
+  is($seq->name,                   $name,      qq[Name is "$name"]);
+  is($seq->order,                  $order,      qq[Name is "$order"]);
+  is($seq->increment,              $increment,      qq[Name is "$increment"]);
+  is($seq->minvalue,               $minvalue,      qq[Name is "$minvalue"]);
+  is($seq->maxvalue,               $maxvalue,      qq[Name is "$maxvalue"]);
+  is($seq->start,                  $start,      qq[Name is "$start"]);
+  is($seq->cache,                  $cache,      qq[Name is "$cache"]);
+  is($seq->cycle,                  $cycle,      qq[Name is "$cycle"]);
+  is($seq->extra,                  $extra,      qq[Name is "$extra"]);
+  is($seq->comments,               $comments,  qq[Comments = "$comments"]);
+
+  my @seqs = $s->get_sequences;
+  is(scalar @seqs, 1, 'Number of sequences is 1');
+
+  my $seq1 = $s->get_sequence($name);
+  isa_ok($seq1, 'SQL::Translator::Schema::Sequence', 'Sequence');
+  is($seq1->name, $name, qq[Name is "$name"]);
+
+  #
+  # $schema-> drop_schema
+  #
+  my $dropped_seq = $s->drop_sequence($seq->name);
+  isa_ok($dropped_seq, 'SQL::Translator::Schema::Sequence', 'Dropped sequence "foo_seq"');
+  $s->add_sequence($seq);
+  my $dropped_seq2 = $s->drop_sequence($seq);
+  isa_ok($dropped_seq2, 'SQL::Translator::Schema::Sequence', 'Dropped sequence "foo_seq" by object');
+  is($dropped_seq2->name, $seq->name, 'Dropped correct sequence "foo_seq"');
+  my $dropped_seq3 = $s->drop_sequence($seq->name);
+  like($s->error, qr/doesn't exist/, qq[Can't drop non-existant sequence "foo_seq"]);
+
+  $s->add_sequence($seq);
+}
+
+#
 # Test field order
 #
 {

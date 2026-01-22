@@ -86,6 +86,7 @@ is_deeply(
   {
     schema => {
       procedures => {},
+      sequences => {},
       tables     => {
         Person => {
           constraints => [ {

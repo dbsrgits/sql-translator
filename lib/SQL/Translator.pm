@@ -61,7 +61,7 @@ has $_ => (
   is      => 'rw',
   default => quote_sub(q{ 0 }),
   coerce  => quote_sub(q{ $_[0] ? 1 : 0 }),
-) foreach qw(add_drop_table no_comments show_warnings trace validate);
+) foreach qw(add_drop_sequence add_drop_table no_comments show_warnings trace validate);
 
 # quote_identifiers is on by default, use a 0-but-true as indicator
 # so we can allow individual producers to change the default
@@ -701,6 +701,8 @@ SQL::Translator - manipulate structured data definitions (SQL and more)
       no_comments         => 0,
       # Print name mutations, conflicts
       show_warnings       => 0,
+      # Add "drop sequence" statements
+      add_drop_sequence   => 1,
       # Add "drop table" statements
       add_drop_table      => 1,
       # to quote or not to quote, thats the question
@@ -786,6 +788,10 @@ debug
 
 =item *
 
+add_drop_sequence
+
+=item *
+
 add_drop_table
 
 =item *
@@ -819,6 +825,11 @@ instance methods.  Internally, they are; no (non-syntactical)
 advantage is gained by passing options to the constructor.
 
 =head1 METHODS
+
+=head2 add_drop_sequence
+
+Toogles whether of not to add "DROP SEQUENCE" statements just before the
+create definitions.
 
 =head2 add_drop_table
 

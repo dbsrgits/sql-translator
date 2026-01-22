@@ -1,5 +1,7 @@
+#!/perl
 use warnings;
 use strict;
+use English '-no_match_vars';
 use Test::More;
 use Test::Exception;
 use Test::SQL::Translator qw(maybe_plan);
@@ -12,10 +14,11 @@ BEGIN {
 
 my $sqlt_version = $SQL::Translator::VERSION;
 use YAML qw(Load);
-my $yaml = Load(<<YAML);
+my $yaml = Load(<<"YAML");
 ---
 schema:
   procedures: {}
+  sequences: {}
   tables:
     person:
       constraints:
@@ -241,9 +244,10 @@ translator:
 YAML
 
 my $file = "$Bin/data/sqlite/create.sql";
-open FH, "<$file" or die "Can't read '$file': $!\n";
-local $/;
-my $data = <FH>;
+open my $fh, '<', $file or die "Can't read '$file': $OS_ERROR\n";
+local $INPUT_RECORD_SEPARATOR = undef;
+my $data = <$fh>;
+close $fh or die "Can't close '$file': $OS_ERROR\n";
 my $tr   = SQL::Translator->new(
   parser   => 'SQLite',
   producer => 'YAML',

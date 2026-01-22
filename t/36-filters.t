@@ -69,6 +69,7 @@ my $sqlt_version = $SQL::Translator::VERSION;
 my $ans_yaml     = qq{---
 schema:
   procedures: {}
+  sequences: {}
   tables:
     GdayWorld:
       constraints: []

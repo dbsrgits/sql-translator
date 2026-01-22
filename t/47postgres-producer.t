@@ -22,6 +22,104 @@ use SQL::Translator;
 my $PRODUCER = \&SQL::Translator::Producer::PostgreSQL::create_field;
 
 {
+  my $sequence       =  SQL::Translator::Schema::Sequence->new(
+    name             => 'master',      # name of the sequence
+    temporary        => 0,
+    increment        => 1,             # increment
+    minvalue         => 1,
+    maxvalue         => 5,
+    start            => 1,             # sequence start point
+    cycle            => 1,
+    cache            => 3,
+    comments         => [ "multi\nline", 'single line' ],
+    extra            => { abbr => 'mst' }, # extra hash
+  );
+  is($sequence->name, 'master', 'Correct name');
+  my ($create, $fks)
+      = SQL::Translator::Producer::PostgreSQL::create_sequence($sequence,
+        { quote_identifiers => 1, attach_comments => 1, }, );
+  my $expected = <<'EOESQL';
+--
+-- Sequence: master
+--
+CREATE SEQUENCE "master" INCREMENT BY 1 MINVALUE 1 MAXVALUE 5 START WITH 1 CACHE 3 CYCLE OWNED BY NONE;
+
+COMMENT on SEQUENCE "master" IS 'multi
+line
+single line'
+EOESQL
+
+  $expected =~ s/\n\z//msx;
+  is($create, $expected, 'SQL written right');
+}
+
+{
+  my $sequence       =  SQL::Translator::Schema::Sequence->new(
+    name             => 'service',      # name of the sequence
+  );
+  is($sequence->name, 'service', 'Correct name');
+  my ($create, $fks)
+      = SQL::Translator::Producer::PostgreSQL::create_sequence($sequence,
+        { quote_identifiers => 1, , attach_comments => 0 });
+  my $expected = <<'EOESQL';
+--
+-- Sequence: service
+--
+CREATE SEQUENCE "service" NO MINVALUE NO MAXVALUE NO CYCLE OWNED BY NONE
+EOESQL
+
+  $expected =~ s/\n\z//msx;
+  is($create, $expected, 'SQL written right');
+}
+
+{
+  my $sequence       =  SQL::Translator::Schema::Sequence->new(
+    name             => 'foo.bar',
+    temporary        => 1,
+    data_type        => SQL::Translator::Schema::DataType->new( type => 'integer', size => 5 ),
+    increment        => 2,
+    owner            => 'foo.baz.qux',
+    order            => 0,                    # Not used in Pg sequences.
+    comments         => [ 'Sequence tied to column qux in table foo.baz' ],
+  );
+  is($sequence->name, 'foo.bar', 'Correct name');
+  my ($create, $fks)
+      = SQL::Translator::Producer::PostgreSQL::create_sequence($sequence,
+        { attach_comments => 1, }, );
+  my $expected = <<'EOESQL';
+--
+-- Sequence: foo.bar
+--
+CREATE TEMPORARY SEQUENCE foo.bar AS smallint INCREMENT BY 2 NO MINVALUE NO MAXVALUE NO CYCLE OWNED BY foo.baz.qux;
+
+COMMENT on SEQUENCE foo.bar IS 'Sequence tied to column qux in table foo.baz'
+EOESQL
+
+  $expected =~ s/\n\z//msx;
+  is($create, $expected, 'SQL written right');
+}
+
+{
+  my $sequence       =  SQL::Translator::Schema::Sequence->new(
+    name             => 'foo_db.bar_schema.baz_sequence',
+  );
+  is($sequence->name, 'foo_db.bar_schema.baz_sequence', 'Correct name');
+  my ($create, $fks)
+      = SQL::Translator::Producer::PostgreSQL::create_sequence($sequence,
+        { attach_comments => 1, add_drop_sequence => 1, }, );
+  my $expected = <<'EOESQL';
+--
+-- Sequence: foo_db.bar_schema.baz_sequence
+--
+DROP SEQUENCE foo_db.bar_schema.baz_sequence CASCADE;
+CREATE SEQUENCE foo_db.bar_schema.baz_sequence NO MINVALUE NO MAXVALUE NO CYCLE OWNED BY NONE
+EOESQL
+
+  $expected =~ s/\n\z//msx;
+  is($create, $expected, 'SQL written right');
+}
+
+{
   my $table = SQL::Translator::Schema::Table->new(
     name     => 'foo.bar',
     comments => [ "multi\nline", 'single line' ]
@@ -700,9 +798,10 @@ my $view1 = SQL::Translator::Schema::View->new(
 my $create_opts = { add_replace_view => 1, no_comments => 1 };
 my $view1_sql1  = SQL::Translator::Producer::PostgreSQL::create_view($view1, $create_opts);
 
-my $view_sql_replace = "CREATE VIEW view_foo ( id, name ) AS
+my $view_sql_replace = <<'EOESQL';
+CREATE VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-";
+EOESQL
 is($view1_sql1, $view_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL');
 
 my $view2 = SQL::Translator::Schema::View->new(
@@ -719,6 +818,7 @@ my $view2_sql1   = SQL::Translator::Producer::PostgreSQL::create_view($view2, $c
 my $view2_sql_replace = "CREATE TEMPORARY VIEW view_foo2 AS
     SELECT id, name FROM thing
  WITH CASCADED CHECK OPTION";
+
 is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
 
 {
@@ -838,20 +938,22 @@ is($view2_sql1, $view2_sql_replace, 'correct "CREATE OR REPLACE VIEW" SQL 2');
 my $drop_view_opts1        = { add_drop_view => 1, no_comments => 1, postgres_version => 8.001 };
 my $drop_view_8_1_produced = SQL::Translator::Producer::PostgreSQL::create_view($view1, $drop_view_opts1);
 
-my $drop_view_8_1_expected = "DROP VIEW view_foo;
+my $drop_view_8_1_expected = <<'EOESQL';
+DROP VIEW view_foo;
 CREATE VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-";
+EOESQL
 
 is($drop_view_8_1_produced, $drop_view_8_1_expected, "My DROP VIEW statement for 8.1 is correct");
 
 my $drop_view_opts2        = { add_drop_view => 1, no_comments => 1, postgres_version => 9.001 };
 my $drop_view_9_1_produced = SQL::Translator::Producer::PostgreSQL::create_view($view1, $drop_view_opts2);
 
-my $drop_view_9_1_expected = "DROP VIEW IF EXISTS view_foo;
+my $drop_view_9_1_expected = <<'EOESQL';
+DROP VIEW IF EXISTS view_foo;
 CREATE VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-";
+EOESQL
 
 is($drop_view_9_1_produced, $drop_view_9_1_expected, "My DROP VIEW statement for 9.1 is correct");
 
@@ -866,9 +968,10 @@ my $mat_view = SQL::Translator::Schema::View->new(
 
 my $mat_view_sql = SQL::Translator::Producer::PostgreSQL::create_view($mat_view, { no_comments => 1 });
 
-my $mat_view_sql_expected = "CREATE MATERIALIZED VIEW view_foo ( id, name ) AS
+my $mat_view_sql_expected = <<'EOESQL';
+CREATE MATERIALIZED VIEW view_foo ( id, name ) AS
     SELECT id, name FROM thing
-";
+EOESQL
 
 is($mat_view_sql, $mat_view_sql_expected, 'correct "MATERIALIZED VIEW" SQL');
 done_testing;

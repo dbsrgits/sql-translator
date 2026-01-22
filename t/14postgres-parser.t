@@ -13,7 +13,20 @@ BEGIN {
 }
 
 my $t   = SQL::Translator->new(trace => 0);
+
+    # CREATE SEQUENCE "master" INCREMENT BY 1 MINVALUE 1 MAXVALUE 5 START WITH 1 CACHE 3 CYCLE OWNED BY NONE;
+    # CREATE SEQUENCE service;
+    # COMMENT on SEQUENCE service IS 'Sequence
+    # has comment on two lines';
+    # CREATE TEMPORARY SEQUENCE foo.bar INCREMENT BY 2 NO MINVALUE NO MAXVALUE NO CYCLE OWNED BY foo.baz.qux;
+    #
+    # COMMENT on SEQUENCE foo.bar IS 'Sequence tied to column qux in table foo.baz';
+
 my $sql = q{
+    --CREATE TEMPORARY SEQUENCE master CYCLE OWNED BY NONE;
+    CREATE SEQUENCE master;
+    CREATE TEMPORARY SEQUENCE service INCREMENT BY 2 MINVALUE 2 CACHE 10;
+
     -- comment on t_test1
     create table t_test1 (
         -- this is the primary key
@@ -130,6 +143,25 @@ my $data   = parse($t, $sql);
 my $schema = $t->schema;
 
 isa_ok($schema, 'SQL::Translator::Schema', 'Schema object');
+
+# Sequences
+#
+my @sequences = $schema->get_sequences;
+my ($s1, $s2, $s3) = @sequences;
+
+is_deeply(
+    { name => $s1->name, },
+    { name => 'master', },
+    's1 has correct values',
+);
+is_deeply(
+    { name => $s2->name, temporary => $s2->temporary, increment => $s2->increment, minvalue => $s2->minvalue, cache => 10, },
+    { name => 'service', temporary => 1,              increment => 2,              minvalue => 2,             cache => 10, },
+    's1 has correct values',
+);
+
+# Tables
+#
 my @tables = $schema->get_tables;
 is(scalar @tables, 5, 'Five tables');
 

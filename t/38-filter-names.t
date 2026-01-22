@@ -19,18 +19,61 @@ use SQL::Translator;
 
 my $in_yaml = qq{---
 schema:
+  sequences:
+    IdentificationNumber:
+      name: IdentificationNumber
+      increment: 2
+      order: 2
+    BillingNumber:
+      name: BillingNumber
+      minvalue: 3
+      maxvalue: 256
+      order: 1
+      owner: person.identification_number
   tables:
     Person:
       name: Person
       fields:
+        identification_number:
+          data_type: integer
+          name: identification_number
+          order: 1
         first_name:
           data_type: foovar
           name: first_name
+          order: 2
 };
 
 my $ans_yaml = qq{---
 schema:
   procedures: {}
+  sequences:
+    BillingNumber:
+      cache: 0
+      cycle: 0
+      guarantee_order: 0
+      increment: 0
+      keep: 0
+      maxvalue: 256
+      minvalue: 3
+      name: BillingNumber
+      order: 1
+      owner: person.identification_number
+      start: 0
+      temporary: 0
+    IdentificationNumber:
+      cache: 0
+      cycle: 0
+      guarantee_order: 0
+      increment: 2
+      keep: 0
+      maxvalue: 0
+      minvalue: 0
+      name: IdentificationNumber
+      order: 2
+      owner: NONE
+      start: 0
+      temporary: 0
   tables:
     person:
       constraints: []
@@ -42,6 +85,16 @@ schema:
           is_primary_key: 0
           is_unique: 0
           name: First_name
+          order: 2
+          size:
+            - 0
+        Identification_number:
+          data_type: integer
+          default_value: ~
+          is_nullable: 1
+          is_primary_key: 0
+          is_unique: 0
+          name: Identification_number
           order: 1
           size:
             - 0

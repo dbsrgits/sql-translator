@@ -29,6 +29,7 @@ returns the database structure.
 use Moo;
 use SQL::Translator::Schema::Constants;
 use SQL::Translator::Schema::Procedure;
+use SQL::Translator::Schema::Sequence;
 use SQL::Translator::Schema::Table;
 use SQL::Translator::Schema::Trigger;
 use SQL::Translator::Schema::View;
@@ -49,6 +50,7 @@ has _order => (
     view
     trigger
     proc
+    sequence
   /} }
   ),
 );
@@ -83,6 +85,90 @@ Returns a Graph::Directed object with the table names for nodes.
 
   return $g;
 }
+
+
+has _sequences => (is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }));
+
+sub add_sequence {
+
+=pod
+
+=head2 add_sequence
+
+Add a sequence object. Returns the new L<SQL::Translator::Schema::Sequence> object.
+The "name" parameter is required. If you try to create a sequence with the
+same name as an existing sequence, you will get an error and the sequence will
+not be created.
+
+  my $s1 = $schema->add_sequence( name => 'foo' ) or die $schema->error;
+  my $s2 = SQL::Translator::Schema::Sequence->new( name => 'bar' );
+  $s2    = $schema->add_sequence( $s2 ) or die $schema->error;
+
+=cut
+
+  my $self  = shift;
+  my $class = 'SQL::Translator::Schema::Sequence';
+  my $sequence;
+
+  if (UNIVERSAL::isa($_[0], $class)) {
+    $sequence = shift;
+    $sequence->schema($self);
+  } else {
+    my %args = ref $_[0] eq 'HASH' ? %{ $_[0] } : @_;
+    $args{'schema'} = $self;
+    $sequence = $class->new(\%args)
+        or return $self->error($class->error);
+  }
+
+  $sequence->order(++$self->_order->{sequence});
+
+  # We know we have a name as the Sequence->new above errors if none given.
+  my $sequence_name = $sequence->name;
+
+  if (defined $self->_sequences->{$sequence_name}) {
+    return $self->error(qq[Can't use sequence name "$sequence_name": sequence exists]);
+  } else {
+    $self->_sequences->{$sequence_name} = $sequence;
+  }
+
+  return $sequence;
+}
+
+sub drop_sequence {
+
+=pod
+
+=head2 drop_sequence
+
+Remove a sequence from the schema. Returns the sequence object if the sequence was found
+and removed, an error otherwise. The single parameter can be either a sequence
+name or an L<SQL::Translator::Schema::Sequence> object.
+
+  $schema->drop_sequence('mysequence');
+  $schema->drop_sequence('mysequence', cascade => 1);
+
+=cut
+
+  my $self           = shift;
+  my $sequence_class = 'SQL::Translator::Schema::Sequence';
+  my $sequence_name;
+
+  if (UNIVERSAL::isa($_[0], $sequence_class)) {
+    $sequence_name = shift->name;
+  } else {
+    $sequence_name = shift;
+  }
+  my %args    = @_;
+
+  if (!exists $self->_sequences->{$sequence_name}) {
+    return $self->error(qq[Can't drop sequence: "$sequence_name" doesn't exist]);
+  }
+
+  my $sequence = delete $self->_sequences->{$sequence_name};
+
+  return $sequence;
+}
+
 
 has _tables => (is => 'ro', init_arg => undef, default => quote_sub(q{ +{} }));
 
@@ -484,6 +570,57 @@ Returns all the procedures as an array or array reference.
     return wantarray ? @procedures : \@procedures;
   } else {
     $self->error('No procedures');
+    return;
+  }
+}
+
+sub get_sequence {
+
+=pod
+
+=head2 get_sequence
+
+Returns a sequence by the name provided.
+
+  my $sequence = $schema->get_sequence('foo');
+
+=cut
+
+  my $self             = shift;
+  my $sequence_name    = shift or return $self->error('No sequence name');
+  my $case_insensitive = shift;
+  if ($case_insensitive) {
+    $sequence_name = uc($sequence_name);
+    foreach my $sequence (keys %{ $self->_sequences }) {
+      return $self->_sequences->{$sequence} if $sequence_name eq uc($sequence);
+    }
+    return $self->error(qq[Sequence "$sequence_name" does not exist]);
+  }
+  return $self->error(qq[Sequence "$sequence_name" does not exist])
+      unless exists $self->_sequences->{$sequence_name};
+  return $self->_sequences->{$sequence_name};
+}
+
+sub get_sequences {
+
+=pod
+
+=head2 get_sequences
+
+Returns all the sequences as an array or array reference.
+
+  my @sequences = $schema->get_sequences;
+  my $sequences = $schema->get_sequences;
+
+=cut
+
+  my $self      = shift;
+  my @seqs = map { $_ } values %{ $self->_sequences };
+  my @sequences = sort { $a->order <=> $b->order } @seqs;
+  if (@sequences) {
+    return wantarray ? @sequences : \@sequences;
+  } else {
+    $self->error('No sequences');
     return;
   }
 }

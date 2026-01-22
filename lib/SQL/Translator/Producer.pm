@@ -81,6 +81,8 @@ by the parser.  It is expected to return a string.
 
 =item produce
 
+=item create_sequence($sequence)
+
 =item create_table($table)
 
 =item create_field($field)

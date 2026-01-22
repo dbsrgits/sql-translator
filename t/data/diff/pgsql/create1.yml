@@ -1,6 +1,20 @@
 ---
 schema:
   procedures: {}
+  sequences:
+    IdentificationNumber:
+      name: IdentificationNumber
+      increment: 2
+      order: 2
+    to_be_renamed_sequence:
+      name: old_name_for_sequence
+      order: 3
+    deleted_sequence:
+      name: deleted
+      minvalue: 3
+      maxvalue: 256
+      order: 1
+      owner: person.person_id
   tables:
     deleted:
       constraints:

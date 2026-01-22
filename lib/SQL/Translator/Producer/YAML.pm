@@ -31,6 +31,7 @@ sub produce {
 
   return Dump({
     schema => {
+      sequences  => { map { ($_->name => view_sequence($_)) } $schema->get_sequences, },
       tables     => { map { ($_->name => view_table($_)) } $schema->get_tables, },
       views      => { map { ($_->name => view_view($_)) } $schema->get_views, },
       triggers   => { map { ($_->name => view_trigger($_)) } $schema->get_triggers, },
@@ -50,6 +51,27 @@ sub produce {
     },
     keys %{ $schema->extra } ? ('extra' => { $schema->extra }) : (),
   });
+}
+
+sub view_sequence {
+  my $sequence = shift;
+
+  return {
+    'name'    => $sequence->name,
+    'order'   => $sequence->order,
+    $sequence->comments ? ('comments' => [ $sequence->comments ]) : (),
+    'temporary'       => scalar $sequence->temporary,
+    'cycle'       => scalar $sequence->cycle,
+    'increment'       => $sequence->increment,
+    'minvalue'       => $sequence->minvalue,
+    'maxvalue'       => $sequence->maxvalue,
+    'start'       => $sequence->start,
+    'cache'       => $sequence->cache,
+    'owner'       => $sequence->owner,
+    'guarantee_order'       => scalar $sequence->guarantee_order,
+    'keep'       => scalar $sequence->keep,
+    keys %{ $sequence->extra } ? ('extra' => { $sequence->extra }) : (),
+  };
 }
 
 sub view_table {

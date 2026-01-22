@@ -116,6 +116,7 @@ use SQL::Translator::Generator::DDL::PostgreSQL;
 use Data::Dumper;
 
 use constant MAX_ID_LENGTH => 62;
+use constant PG_V_DROP_IF_EXISTS => 8.1;
 
 {
   my ($quoting_generator, $nonquoting_generator);
@@ -180,6 +181,15 @@ my %truncated;
 
 =pod
 
+=head1 PostgreSQL Create Sequence Syntax
+
+  CREATE [ { TEMPORARY | TEMP } | UNLOGGED ] SEQUENCE [ IF NOT EXISTS ] name
+    [ AS data_type ]
+    [ INCREMENT [ BY ] increment ]
+    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]
+    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]
+    [ OWNED BY { table_name.column_name | NONE } ]
+
 =head1 PostgreSQL Create Table Syntax
 
   CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (
@@ -225,16 +235,37 @@ sub produce {
   my $translator = shift;
   local $DEBUG = $translator->debug;
   local $WARN  = $translator->show_warnings;
-  my $no_comments      = $translator->no_comments;
-  my $add_drop_table   = $translator->add_drop_table;
-  my $schema           = $translator->schema;
-  my $pargs            = $translator->producer_args;
-  my $postgres_version = parse_dbms_version($pargs->{postgres_version}, 'perl');
+
+  my $no_comments       = $translator->no_comments;
+  my $add_drop_sequence = $translator->add_drop_sequence;
+  my $add_drop_table    = $translator->add_drop_table;
+  my $schema            = $translator->schema;
+  my $pargs             = $translator->producer_args;
+  my $postgres_version  = parse_dbms_version($pargs->{postgres_version}, 'perl');
 
   my $generator = _generator({ quote_identifiers => $translator->quote_identifiers });
 
   my @output;
   push @output, header_comment unless ($no_comments);
+
+  my (@sequence_defs, @sequence_fks);
+  for my $sequence ($schema->get_sequences) {
+
+    my ($sequence_def, $sequence_fks) = create_sequence(
+      $sequence,
+      {
+        generator         => $generator,
+        no_comments       => $no_comments,
+        postgres_version  => $postgres_version,
+        add_drop_sequence => $add_drop_sequence,
+        attach_comments   => $pargs->{attach_comments}
+      }
+    );
+    # warn '$sequence_def:' . Dumper($sequence_def);
+
+    push @sequence_defs, $sequence_def;
+    push @sequence_fks,  @{$sequence_fks};
+  }
 
   my (@table_defs, @fks);
   my %type_defs;
@@ -282,11 +313,12 @@ sub produce {
   }
 
   push @output, map {"$_;\n\n"} values %type_defs;
+  push @output, map {"$_;\n\n"} @sequence_defs;
   push @output, map {"$_;\n\n"} @table_defs;
   if (@fks) {
     push @output, "--\n-- Foreign Key Definitions\n--\n\n"
         unless $no_comments;
-    push @output, map {"$_;\n\n"} @fks;
+    push @output, map {"$_;\n\n"} @sequence_fks, @fks;
   }
 
   if ($WARN) {
@@ -352,6 +384,66 @@ sub is_geometry {
 sub is_geography {
   my $field = shift;
   return 1 if $field->data_type eq 'geography';
+}
+
+sub create_sequence {
+  my ($sequence, $options) = @_;
+
+  my $generator        = _generator($options);
+  my $no_comments      = $options->{no_comments}      || 0;
+  my $add_if_not_exists= $options->{add_if_not_exists}|| 0;
+  my $add_drop_sequence= $options->{add_drop_sequence}|| 0;
+  my $postgres_version = $options->{postgres_version} || 0;
+  my $type_defs        = $options->{type_defs}        || {};
+  my $attach_comments  = $options->{attach_comments};
+
+  my $sequence_name    = $sequence->name or next;
+  my $sequence_name_qt = $generator->quote($sequence_name);
+
+  my (@comments, @field_defs, @index_defs, @constraint_defs, @fks);
+
+  push @comments, "--\n-- Sequence: $sequence_name\n--\n" unless $no_comments;
+
+  my @comment_statements;
+  if (my $comments = $sequence->comments) {
+    if ($attach_comments) {
+      my $comment_ddl = "COMMENT on SEQUENCE $sequence_name_qt IS '$comments'";
+      push @comment_statements, $comment_ddl;
+    } elsif (!$no_comments) {
+      $comments =~ s/^/-- /gmsx;
+      push @comments, "-- Comments:\n$comments\n--\n";
+    }
+  }
+  my $create_statement = join "\n", @comments;
+
+  if ($add_drop_sequence) {
+    if ($postgres_version >= PG_V_DROP_IF_EXISTS) {
+      $create_statement .= "DROP SEQUENCE IF EXISTS $sequence_name_qt CASCADE";
+    } else {
+      $create_statement .= "DROP SEQUENCE $sequence_name_qt CASCADE";
+    }
+    $create_statement .= qq{;\n};
+  }
+
+  my $temporary = $sequence->temporary ? 'TEMPORARY ' : q{};
+  my $if_not_exists = $add_if_not_exists ? 'IF NOT EXISTS ' : q{};
+  $create_statement .= "CREATE ${temporary}SEQUENCE ${if_not_exists}${sequence_name_qt}";
+  $create_statement .= ' AS ' . convert_datatype_simple($sequence->data_type) if $sequence->data_type;
+  $create_statement .= ' INCREMENT BY '.$sequence->increment if $sequence->increment;
+  $create_statement .= $sequence->minvalue ? ' MINVALUE '.$sequence->minvalue : ' NO MINVALUE';
+  $create_statement .= $sequence->maxvalue ? ' MAXVALUE '.$sequence->maxvalue : ' NO MAXVALUE';
+  $create_statement .= $sequence->start ? ' START WITH '.$sequence->start : q{};
+  $create_statement .= $sequence->cache ? ' CACHE '.$sequence->cache : q{};
+  $create_statement .= $sequence->cycle ? ' CYCLE' : ' NO CYCLE';
+  $create_statement .= ' OWNED BY ' . ($sequence->owner ? $sequence->owner : 'NONE');
+
+  if (@comment_statements) {
+    $create_statement .= qq{;};
+    $create_statement .= qq{\n\n};
+    $create_statement .= join qq{;\n}, @comment_statements;
+  }
+
+  return $create_statement, \@fks;
 }
 
 sub create_table {
@@ -812,6 +904,29 @@ sub create_trigger {
   return @statements;
 }
 
+sub convert_datatype_simple {
+  my ($field) = @_;
+
+  my @size      = $field->size;
+  my $data_type = lc $field->type;
+
+  if ($data_type eq 'integer') {
+    if (defined $size[0] && $size[0] > 0) {
+      if ($size[0] > 10) {
+        $data_type = 'bigint';
+      } elsif ($size[0] <= 5) {
+        $data_type = 'smallint';
+      } else {
+        $data_type = 'integer';
+      }
+    } else {
+      $data_type = 'integer';
+    }
+  }
+
+  return $data_type;
+}
+
 sub convert_datatype {
   my ($field) = @_;
 
@@ -1145,6 +1260,14 @@ sub alter_create_constraint {
   return $index->type eq FOREIGN_KEY
       ? join(q{}, @{$fks})
       : join(' ', 'ALTER TABLE', $generator->quote($index->table->name), 'ADD', join(q{}, @{$defs}, @{$fks}));
+}
+
+sub drop_sequence {
+  my ($sequence, $options) = @_;
+  my $generator = _generator($options);
+  my $out       = "DROP SEQUENCE " . $generator->quote($sequence) . " CASCADE";
+
+  return $out;
 }
 
 sub drop_table {
