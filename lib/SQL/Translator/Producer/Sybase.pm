@@ -263,12 +263,14 @@ sub produce {
       push @index_defs, 'CREATE INDEX ' . $index->name . " ON $table_name (" . join(', ', $index->fields) . ")";
     }
 
-    my $drop_statement = $add_drop_table ? qq[DROP TABLE $table_name_ur] : '';
     my $create_statement
         = qq[CREATE TABLE $table_name_ur (\n] . join(",\n", map {"  $_"} @field_defs, @constraint_defs) . "\n)";
 
-    $create_statement = join("\n\n", @comments) . "\n\n" . $create_statement;
-    push @output, $create_statement, @index_defs,;
+    push @output,
+      join("\n\n", @comments) . "\n\n",
+      $add_drop_table ? qq[DROP TABLE $table_name_ur] : (),
+      $create_statement,
+      @index_defs;
   }
 
   foreach my $view ($schema->get_views) {
