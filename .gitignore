@@ -21,3 +21,4 @@ share/PrecompiledParsers/Parse/RecDescent/DDL/SQLT/*.pm
 .#*
 *#
 .tidyall.d/*
+t/00*
