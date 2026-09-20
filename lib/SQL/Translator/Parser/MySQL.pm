@@ -17,7 +17,7 @@ SQL::Translator::Parser::MySQL - parser for MySQL
 The grammar is influenced heavily by Tim Bunce's "mysql2ora" grammar.
 
 Here's the word from the MySQL site
-(http://www.mysql.com/doc/en/CREATE_TABLE.html):
+(https://dev.mysql.com/doc/refman/en/create-table.html):
 
   CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name [(create_definition,...)]
   [table_options] [select_statement]
@@ -27,7 +27,7 @@ Here's the word from the MySQL site
   CREATE [TEMPORARY] TABLE [IF NOT EXISTS] tbl_name LIKE old_table_name;
 
   create_definition:
-    col_name type [NOT NULL | NULL] [DEFAULT default_value] [AUTO_INCREMENT]
+    col_name type [GENERATED ALWAYS] AS (expr) [NOT NULL | NULL] [DEFAULT default_value] [AUTO_INCREMENT]
               [PRIMARY KEY] [reference_definition]
     or    PRIMARY KEY (index_col_name,...)
     or    KEY [index_name] (index_col_name,...)
@@ -478,7 +478,7 @@ field_comment : /^\s*(?:#|-{2}).*\n/
 
 blank : /\s*/
 
-field : field_comment(s?) field_name data_type field_qualifier(s?) reference_definition(?) on_update(?) field_comment(s?)
+field : field_comment(s?) field_name data_type field_generated(s?) field_qualifier(s?) reference_definition(?) on_update(?) field_comment(s?)
     {
         my %qualifiers  = map { %$_ } @{ $item{'field_qualifier(s?)'} || [] };
         if ( my @type_quals = @{ $item{'data_type'}{'qualifiers'} || [] } ) {
@@ -497,6 +497,7 @@ field : field_comment(s?) field_name data_type field_qualifier(s?) reference_def
             data_type   => $item{'data_type'}{'type'},
             size        => $item{'data_type'}{'size'},
             list        => $item{'data_type'}{'list'},
+            generated   => $item{'field_generated(s?)'}[0],
             null        => $null,
             constraints => $item{'reference_definition(?)'},
             comments    => [ @comments ],
@@ -504,6 +505,14 @@ field : field_comment(s?) field_name data_type field_qualifier(s?) reference_def
         }
     }
     | <error>
+
+field_generated : generated_always(s?) /as/i '(' expr ')' generated_type(s?)
+    {
+        $return = {
+             expr => $item{'expr'},
+             type => $item{'generated_type(s?)'}[0] || 'VIRTUAL',
+        }
+    }
 
 field_qualifier : not_null
     {
@@ -708,7 +717,12 @@ constraint : primary_key_def
     | check_def
     | <error>
 
-expr : /[^)]* \( [^)]+ \) [^)]*/x # parens, balanced one deep
+generated_always : /generated/i /always/i
+
+generated_type : /stored/i
+    | /virtual/i
+
+expr : /( [^()]* \( (?: (?> [^()]+ ) | (?1) )* \) ) [^)]*/x  # parens, recursive balanced
     | /[^)]+/
 
 check_def : check_def_begin '(' expr ')'
@@ -972,7 +986,7 @@ sub parse {
 
       $table->primary_key($field->name) if $fdata->{'is_primary_key'};
 
-      for my $qual (qw[ binary unsigned zerofill list collate ], 'character set', 'on update') {
+      for my $qual (qw[ binary unsigned zerofill list collate generated ], 'character set', 'on update') {
         if (my $val = $fdata->{$qual} || $fdata->{ uc $qual }) {
           next if ref $val eq 'ARRAY' && !@$val;
           $field->extra($qual, $val);

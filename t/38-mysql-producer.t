@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 #=============================================================================
 
 BEGIN {
-  maybe_plan(79, 'YAML', 'SQL::Translator::Producer::MySQL', 'Test::Differences',);
+  maybe_plan(81, 'YAML', 'SQL::Translator::Producer::MySQL', 'Test::Differences',);
 }
 use Test::Differences;
 use SQL::Translator;
@@ -168,6 +168,26 @@ schema:
               - foo
               - bar
               - ba'z
+        g1:
+          name: g1
+          data_type: int
+          size: 11
+          order: 5
+          is_not_null: 0
+          extra:
+            generated:
+              expr: if((1 + 1 = 2),1,NULL)
+              type: STORED
+        g2:
+          name: g2
+          data_type: int
+          size: 11
+          order: 6
+          is_not_null: 0
+          extra:
+            generated:
+              expr: 1 + 1
+              type: VIRTUAL
       indices:
         - type: NORMAL
           fields:
@@ -227,6 +247,8 @@ EOSCHEMA
   `foo` integer NOT NULL,
   `foo2` integer NULL,
   `bar_set` set('foo', 'bar', 'ba''z') NULL,
+  `g1` integer(11) GENERATED ALWAYS AS (if((1 + 1 = 2),1,NULL)) STORED NULL,
+  `g2` integer(11) GENERATED ALWAYS AS (1 + 1) VIRTUAL NULL,
   INDEX `index_1` (`id`),
   INDEX `really_long_name_bigger_than_64_chars_aaaaaaaaaaaaaaaaa_aed44c47` (`id`),
   INDEX (`foo`),
@@ -845,6 +867,35 @@ EOV
     'ALTER TABLE `table` DROP PRIMARY KEY',
     'valid drop primary key'
   );
+}
+
+{
+  my $table = SQL::Translator::Schema::Table->new(name => 'table');
+  my $options    = { quote_table_names => '`' };
+
+  for my $type (qw/STORED VIRTUAL/) {
+    my $field = SQL::Translator::Schema::Field->new(
+      name           => 'myfield',
+      table          => $table,
+      data_type      => 'int',
+      size           => 11,
+      extra          => {
+        generated    => {
+          expr => 'if((1 + 1 = 2),1,NULL)',
+          type => $type
+        }
+      },
+      is_nullable    => 1,
+      is_foreign_key => 0,
+      is_unique      => 0
+    );
+
+    is(
+      SQL::Translator::Producer::MySQL::create_field($field, $options),
+      "`myfield` integer(11) GENERATED ALWAYS AS (if((1 + 1 = 2),1,NULL)) $type NULL",
+      'valid generated field'
+    );
+  }
 }
 
 {

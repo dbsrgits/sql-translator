@@ -568,6 +568,7 @@ sub create_field {
   my $data_type = $field->data_type;
   my @size      = $field->size;
   my %extra     = $field->extra;
+  my $generated = $extra{'generated'} || {};
   my $list      = $extra{'list'} || [];
   my $commalist = join(', ', map { __PACKAGE__->_quote_string($_) } @$list);
   my $charset   = $extra{'mysql_charset'};
@@ -623,6 +624,8 @@ sub create_field {
   } elsif (defined $size[0] && $size[0] > 0 && !grep lc($data_type) eq $_, @no_length_attr) {
     $field_def .= '(' . join(', ', @size) . ')';
   }
+
+  $field_def .= " GENERATED ALWAYS AS (" . $generated->{expr} . ") " . $generated->{type} if %$generated;
 
   # char sets
   $field_def .= " CHARACTER SET $charset" if $charset;

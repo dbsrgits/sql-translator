@@ -87,6 +87,9 @@ BEGIN {
               foo_enabled bit(1) default b'0',
               bar_enabled bit(1) default b"1",
               long_foo_enabled bit(10) default b'1010101',
+              g1 int(11) AS (if((1 + 1 = 2),1,NULL)),
+              g2 int(11) AS (if((1 + 1 = 2),1,(1 + 1))) STORED,
+              g3 int(11) GENERATED ALWAYS AS (1 + 1) VIRTUAL,
               KEY (i1),
               UNIQUE (date, i1) USING BTREE,
               KEY date_idx (date),
@@ -103,7 +106,7 @@ BEGIN {
   is($table->name, 'check', 'Found "check" table');
 
   my @fields = $table->get_fields;
-  is(scalar @fields, 13, 'Right number of fields (13)');
+  is(scalar @fields, 16, 'Right number of fields (16)');
   my $f1 = shift @fields;
   is($f1->name,              'check_id', 'First field name is "check_id"');
   is($f1->data_type,         'int',      'Type is "int"');
@@ -217,6 +220,39 @@ BEGIN {
   is($f13->is_nullable,    1,                  'Field can be null');
   is($f13->default_value,  '1010101',          'Default value is 1010101');
   is($f13->is_primary_key, 0,                  'Field is not PK');
+
+  my $f14 = shift @fields;
+  is($f14->name,           'g1',  'Fifth field name is "g1"');
+  is($f14->data_type,      'int', 'Type is "int"');
+  is($f14->size,           11,    'Size is "11"');
+  is($f14->is_nullable,    1,     'Field can be null');
+  is($f14->default_value,  undef, 'Default value is undefined');
+  is($f14->is_primary_key, 0,     'Field is not PK');
+  my %f14extra = $f14->extra;
+  is($f14extra{'generated'}->{expr}, "if((1 + 1 = 2),1,NULL)", 'Generated expr is "if((1 + 1 = 2),1,NULL)"');
+  is($f14extra{'generated'}->{type}, 'VIRTUAL', 'Generated type is "VIRTUAL"');
+
+  my $f15 = shift @fields;
+  is($f15->name,           'g2',  'Fifth field name is "g2"');
+  is($f15->data_type,      'int', 'Type is "int"');
+  is($f15->size,           11,    'Size is "11"');
+  is($f15->is_nullable,    1,     'Field can be null');
+  is($f15->default_value,  undef, 'Default value is undefined');
+  is($f15->is_primary_key, 0,     'Field is not PK');
+  my %f15extra = $f15->extra;
+  is($f15extra{'generated'}->{expr}, 'if((1 + 1 = 2),1,(1 + 1))', 'Generated expr is "if((1 + 1 = 2),1,(1 + 1))"');
+  is($f15extra{'generated'}->{type}, 'STORED', 'Generated type is "STORED"');
+
+  my $f16 = shift @fields;
+  is($f16->name,           'g3',  'Fifth field name is "g3"');
+  is($f16->data_type,      'int', 'Type is "int"');
+  is($f16->size,           11,    'Size is "11"');
+  is($f16->is_nullable,    1,     'Field can be null');
+  is($f16->default_value,  undef, 'Default value is undefined');
+  is($f16->is_primary_key, 0,     'Field is not PK');
+  my %f16extra = $f16->extra;
+  is($f16extra{'generated'}->{expr}, '1 + 1', 'Generated expr is "1 + 1"');
+  is($f16extra{'generated'}->{type}, 'VIRTUAL', 'Generated type is "VIRTUAL"');
 
   my @indices = $table->get_indices;
   is(scalar @indices, 3, 'Right number of indices (3)');
