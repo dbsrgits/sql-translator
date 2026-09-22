@@ -1188,9 +1188,9 @@ sub batch_alter_table {
   # now add everything else
   push @sql, batch_alter_table_statements(
     $diff_hash, $options, qw(
+      rename_field
       add_field
       alter_field
-      rename_field
       alter_create_index
       alter_create_constraint
       alter_table

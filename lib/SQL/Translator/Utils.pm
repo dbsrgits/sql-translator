@@ -394,9 +394,9 @@ sub batch_alter_table_statements {
     alter_drop_constraint
     alter_drop_index
     drop_field
+    rename_field
     add_field
     alter_field
-    rename_field
     alter_create_index
     alter_create_constraint
     alter_table

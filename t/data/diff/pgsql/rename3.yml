@@ -1,0 +1,56 @@
+---
+schema:
+  procedures: {}
+  tables:
+    testr:
+      constraints: []
+      fields:
+        x:
+          data_type: int
+          name: x
+          extra:
+            renamed_from: y
+          order: 3
+      indices: []
+      name: testr
+      options: []
+      order: 3
+  triggers: {}
+  views: {}
+translator:
+  add_drop_table: 0
+  filename: t/data/pgsql/create.sql
+  no_comments: 0
+  parser_args:
+    db_password: ~
+    db_user: ~
+    dsn: ~
+    field_separator: ~
+    mysql_parser_version: ~
+    record_separator: ~
+    scan_fields: 1
+    trim_fields: 1
+  parser_type: SQL::Translator::Parser::PostgreSQL
+  producer_args:
+    add_prefix: ~
+    add_truncate: ~
+    db_password: ~
+    db_user: ~
+    dsn: ~
+    imap_file: ~
+    imap_url: ~
+    indent: ~
+    newlines: ~
+    package_name: ~
+    prefix: ~
+    pretty: ~
+    skip: ~
+    skiplike: ~
+    title: ~
+    tt_conf: {}
+    tt_vars: {}
+    ttfile: ~
+  producer_type: SQL::Translator::Producer::YAML
+  show_warnings: 0
+  trace: 0
+  version: 0.0899_01

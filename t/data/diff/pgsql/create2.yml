@@ -92,8 +92,26 @@ schema:
         other:
           data_type: int
           name: new_field
+          order: 3
+        fake_rename:
+          data_type: int
+          name: fake_rename
+          extra:
+            renamed_from: not_exists
           order: 2
       order: 4
+    fake_rename:
+      name: fake_rename
+      extra:
+        renamed_from: not_exists
+      fields:
+        fake_rename:
+          data_type: int
+          name: fake_rename
+          extra:
+            renamed_from: not_exists
+          order: 2
+      order: 7
     person:
       constraints:
         - deferrable: 1

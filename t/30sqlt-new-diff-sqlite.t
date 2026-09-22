@@ -63,13 +63,13 @@ DROP INDEX u_name;
 
 -- SQL::Translator::Producer::SQLite cant drop_field;
 
+-- SQL::Translator::Producer::SQLite cant rename_field;
+
 ALTER TABLE new_name ADD COLUMN new_field int;
 
 ALTER TABLE person ADD COLUMN is_rock_star tinyint(4) DEFAULT 1;
 
 -- SQL::Translator::Producer::SQLite cant alter_field;
-
--- SQL::Translator::Producer::SQLite cant rename_field;
 
 CREATE UNIQUE INDEX unique_name ON person (name);
 

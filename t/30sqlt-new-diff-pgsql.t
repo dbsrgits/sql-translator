@@ -13,25 +13,32 @@ use Test::SQL::Translator qw(maybe_plan);
 use SQL::Translator::Schema::Constants;
 use Storable 'dclone';
 
-plan tests => 4;
+plan tests => 6;
+
+my @warns;
+local $SIG{__WARN__} = sub {
+  push @warns, $_[0] =~ s/\s+$//r;
+};
+
+sub load {
+  return map {
+    my $t = SQL::Translator->new;
+    $t->parser('YAML')
+        or die $t->error;
+    my $out = $t->translate(catfile($Bin, qw/data diff pgsql/, $_))
+        or die $t->error;
+
+    my $schema = $t->schema;
+    unless ($schema->name) {
+      $schema->name($_);
+    }
+    ($schema);
+  } @_;
+}
+
 
 use_ok('SQL::Translator::Diff') or die "Cannot continue\n";
-
-my $tr = SQL::Translator->new;
-
-my ($source_schema, $target_schema) = map {
-  my $t = SQL::Translator->new;
-  $t->parser('YAML')
-      or die $tr->error;
-  my $out = $t->translate(catfile($Bin, qw/data diff pgsql/, $_))
-      or die $tr->error;
-
-  my $schema = $t->schema;
-  unless ($schema->name) {
-    $schema->name($_);
-  }
-  ($schema);
-} (qw( create1.yml create2.yml ));
+my ($source_schema, $target_schema) = load( 'create1.yml', 'create2.yml' );
 
 # Test for differences
 my $out = SQL::Translator::Diff::schema_diff(
@@ -55,6 +62,10 @@ CREATE TABLE "added" (
   "id" bigint
 );
 
+CREATE TABLE "fake_rename" (
+  "fake_rename" integer
+);
+
 ALTER TABLE "employee" DROP CONSTRAINT "FK5302D47D93FE702E";
 
 ALTER TABLE "employee" DROP COLUMN "job_title";
@@ -64,11 +75,15 @@ ALTER TABLE "employee" ADD CONSTRAINT "FK5302D47D93FE702E_diff" FOREIGN KEY ("em
 
 ALTER TABLE "old_name" RENAME TO "new_name";
 
+ALTER TABLE "new_name" ADD COLUMN "fake_rename" integer;
+
 ALTER TABLE "new_name" ADD COLUMN "new_field" integer;
 
 ALTER TABLE "person" DROP CONSTRAINT "UC_age_name";
 
 DROP INDEX "u_name";
+
+ALTER TABLE "person" RENAME COLUMN "description" TO "physical_description";
 
 ALTER TABLE "person" ADD COLUMN "is_rock_star" smallint DEFAULT 1;
 
@@ -85,8 +100,6 @@ ALTER TABLE "person" ALTER COLUMN "iq" TYPE bigint;
 ALTER TABLE "person" ALTER COLUMN "nickname" SET NOT NULL;
 
 ALTER TABLE "person" ALTER COLUMN "nickname" TYPE character varying(24);
-
-ALTER TABLE "person" RENAME COLUMN "description" TO "physical_description";
 
 ALTER TABLE "person" ADD CONSTRAINT "unique_name" UNIQUE ("name");
 
@@ -124,13 +137,21 @@ CREATE TABLE added (
   id bigint
 );
 
+CREATE TABLE fake_rename (
+  fake_rename integer
+);
+
 ALTER TABLE employee DROP COLUMN job_title;
 
 ALTER TABLE old_name RENAME TO new_name;
 
+ALTER TABLE new_name ADD COLUMN fake_rename integer;
+
 ALTER TABLE new_name ADD COLUMN new_field integer;
 
 ALTER TABLE person DROP CONSTRAINT UC_age_name;
+
+ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 
@@ -147,8 +168,6 @@ ALTER TABLE person ALTER COLUMN iq TYPE bigint;
 ALTER TABLE person ALTER COLUMN nickname SET NOT NULL;
 
 ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
-
-ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
 
@@ -170,3 +189,8 @@ eq_or_diff($out, <<'## END OF DIFF', "No differences found");
 -- No differences found;
 
 ## END OF DIFF
+
+is shift @warns, q!SQL::Translator::Diff::schema_diff(): Renamed column can't find old column "old_name.not_exists" for renamed column!,
+  'Warning: old column not found';
+is shift @warns, q!SQL::Translator::Diff::schema_diff(): Renamed table can't find old table "not_exists" for renamed table!,
+  'Warning: old table not found';
