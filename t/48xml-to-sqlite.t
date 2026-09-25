@@ -66,7 +66,7 @@ CREATE TABLE "Another" (
 
 DROP VIEW IF EXISTS "email_list";
 
-CREATE VIEW "email_list" AS
+CREATE VIEW "email_list" ( "email" ) AS
     SELECT email FROM Basic WHERE (email IS NOT NULL);
 
 DROP TRIGGER IF EXISTS "foo_trigger";
@@ -118,7 +118,7 @@ eq_or_diff(
   "num" numeric(10,2)
 )>,
     q<DROP VIEW IF EXISTS "email_list">,
-    q<CREATE VIEW "email_list" AS
+    q<CREATE VIEW "email_list" ( "email" ) AS
     SELECT email FROM Basic WHERE (email IS NOT NULL)>,
     q<DROP TRIGGER IF EXISTS "foo_trigger">,
     q<CREATE TRIGGER "foo_trigger" after insert on "Basic" BEGIN update modified=timestamp(); END>,

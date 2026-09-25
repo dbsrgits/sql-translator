@@ -158,6 +158,11 @@ sub create_view {
       if exists($extra->{if_not_exists}) && $extra->{if_not_exists};
   $create_view .= " ${view_name}";
 
+  if (my @fields = $view->fields) {
+    my $field_list = join ', ', map { _generator->quote($_) } @fields;
+    $create_view .= " ( ${field_list} )";
+  }
+
   if (my $sql = $view->sql) {
     $create_view .= " AS\n    ${sql}";
   }

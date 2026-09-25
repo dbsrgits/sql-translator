@@ -470,7 +470,7 @@ conflict_clause : /on conflict/i conflict_algorigthm
 
 conflict_algorigthm : /(rollback|abort|fail|ignore|replace)/i
 
-parens_field_list : '(' column_list ')'
+parens_field_list  : '(' column_list ')'
     { $item[2] }
 
 column_list : field_name(s /,/)
@@ -556,11 +556,12 @@ trigger_name : qualified_name
 #
 # Create View
 #
-create : CREATE TEMPORARY(?) VIEW view_name AS select_statement
+create : CREATE TEMPORARY(?) VIEW view_name parens_field_list(?) AS select_statement
     {
         push @views, {
             name         => $item[4]->{'name'},
-            sql          => $item[6],
+            fields       => $item[5][0],
+            sql          => $item[7],
             is_temporary => $item[2][0] ? 1 : 0,
         }
     }
@@ -724,6 +725,7 @@ sub parse {
   for my $def (@{ $result->{'views'} || [] }) {
     my $view = $schema->add_view(
       name => $def->{'name'},
+      fields => $def->{'fields'},
       sql  => $def->{'sql'},
     );
   }
