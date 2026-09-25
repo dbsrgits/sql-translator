@@ -210,6 +210,17 @@ has is_auto_increment => (
   lazy    => 1,
 );
 
+=head2 is_case_insensitive
+
+Get or set the field's C<is_case_insensitive> attribute.
+
+Although databases generally handle case-sensitivity as part of their
+collation, there are some database-specific case-insensitive options that this
+attribute controls. In particular, SQLite has the COLLATE NOCASE field option
+and PostgreSQL has the citext extension.
+
+=cut
+
 sub _build_is_auto_increment {
   my ($self) = @_;
 
@@ -223,6 +234,12 @@ sub _build_is_auto_increment {
   }
   return 0;
 }
+
+has is_case_insensitive => (
+  is      => 'rw',
+  coerce  => quote_sub(q{ $_[0] ? 1 : 0 }),
+  default => 0,
+);
 
 =head2 is_foreign_key
 

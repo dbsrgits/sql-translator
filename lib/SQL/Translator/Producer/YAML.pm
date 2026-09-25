@@ -107,9 +107,10 @@ sub view_field {
     'is_nullable'    => scalar $field->is_nullable,
     'is_primary_key' => scalar $field->is_primary_key,
     'is_unique'      => scalar $field->is_unique,
-    $field->is_auto_increment ? ('is_auto_increment' => 1)                    : (),
-    $field->comments          ? ('comments'          => [ $field->comments ]) : (),
-    keys %{ $field->extra }   ? ('extra'             => { $field->extra })    : (),
+    $field->is_auto_increment   ? ('is_auto_increment'   => 1)                    : (),
+    $field->is_case_insensitive ? ('is_case_insensitive' => 1)                    : (),
+    $field->comments            ? ('comments'            => [ $field->comments ]) : (),
+    keys %{ $field->extra }     ? ('extra'               => { $field->extra })    : (),
   };
 }
 

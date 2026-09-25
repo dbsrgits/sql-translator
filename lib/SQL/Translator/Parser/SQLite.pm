@@ -54,6 +54,7 @@ column-constraint ::=
     UNIQUE [ conflict-clause ] |
     CHECK ( expr ) [ conflict-clause ] |
     DEFAULT value
+    COLLATE value
 
 constraint ::=
     PRIMARY KEY ( name [, name]* ) [ conflict-clause ]|
@@ -264,17 +265,18 @@ definition : constraint_def | column_def
 column_def: comment(s?) NAME type(?) column_constraint_def(s?)
     {
         my $column = {
-            supertype      => 'column',
-            name           => $item[2],
-            data_type      => $item[3][0]->{'type'},
-            size           => $item[3][0]->{'size'},
-            is_nullable    => 1,
-            is_primary_key => 0,
-            is_unique      => 0,
-            check          => '',
-            default        => undef,
-            constraints    => $item[4],
-            comments       => $item[1],
+            supertype           => 'column',
+            name                => $item[2],
+            data_type           => $item[3][0]->{'type'},
+            size                => $item[3][0]->{'size'},
+            is_nullable         => 1,
+            is_primary_key      => 0,
+            is_case_insensitive => 0,
+            is_unique           => 0,
+            check               => '',
+            default             => undef,
+            constraints         => $item[4],
+            comments            => $item[1],
         };
 
 
@@ -284,6 +286,9 @@ column_def: comment(s?) NAME type(?) column_constraint_def(s?)
             }
             elsif ( $c->{'type'} eq 'primary_key' ) {
                 $column->{'is_primary_key'} = 1;
+            }
+            elsif ( $c->{'type'} eq 'collate' && lc $c->{'value'} eq 'nocase' ) {
+                $column->{'is_case_insensitive'} = 1;
             }
             elsif ( $c->{'type'} eq 'unique' ) {
                 $column->{'is_unique'} = 1;
@@ -357,6 +362,14 @@ column_constraint : NOT_NULL conflict_clause(?)
     {
         $return   = {
             type  => 'default',
+            value => $item[2],
+        }
+    }
+    |
+    COLLATE collate_def
+    {
+        $return   = {
+            type  => 'collate',
             value => $item[2],
         }
     }
@@ -455,6 +468,8 @@ cascade_update_def : /on\s+update\s+(set null|set default|cascade|restrict|no ac
     { $return = $1}
 
 table_name : qualified_name
+
+collate_def : /(BINARY|NOCASE|RTRIM)/i
 
 qualified_name : NAME
     { $return = { name => $item[1] } }
@@ -597,6 +612,8 @@ CHECK_C : /check/i
 
 DEFAULT : /default/i
 
+COLLATE : /collate/i
+
 TRIGGER : /trigger/i
 
 VIEW : /view/i
@@ -686,8 +703,9 @@ sub parse {
           ? (extra => { auto_increment_type => 'monotonic' })
           : ()
         ),
-        is_nullable => $fdata->{'is_nullable'},
-        comments    => $fdata->{'comments'},
+        is_nullable         => $fdata->{'is_nullable'},
+        comments            => $fdata->{'comments'},
+        is_case_insensitive => $fdata->{'is_case_insensitive'},
       ) or die $table->error;
 
       $table->primary_key($field->name) if $fdata->{'is_primary_key'};

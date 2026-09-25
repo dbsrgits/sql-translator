@@ -113,6 +113,7 @@ use SQL::Translator::Schema::Constants;
 use SQL::Translator::Utils
     qw(debug header_comment parse_dbms_version batch_alter_table_statements normalize_quote_options);
 use SQL::Translator::Generator::DDL::PostgreSQL;
+use Carp qw(carp);
 use Data::Dumper;
 
 use constant MAX_ID_LENGTH => 62;
@@ -880,6 +881,17 @@ sub convert_datatype {
   }
   if ($array) {
     $data_type .= '[]';
+  }
+
+  # Case-insensitive flag set? Convert but only if suitable
+  if ($field->is_case_insensitive)
+  {
+    # Text
+    if ($data_type eq 'text') {
+      $data_type = 'citext';
+    } else {
+      carp "Only text fields can be used with is_case_insensitive option";
+    }
   }
 
   #

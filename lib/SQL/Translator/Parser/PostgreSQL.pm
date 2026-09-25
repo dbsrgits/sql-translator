@@ -408,16 +408,17 @@ field : field_comment(s?) field_name data_type field_meta(s?) field_comment(s?)
         my @comments = ( @{ $item[1] }, @{ $item[5] } );
 
         $return = {
-            supertype         => 'field',
-            name              => $item{'field_name'},
-            data_type         => $item{'data_type'}{'type'},
-            size              => $item{'data_type'}{'size'},
-            is_nullable       => $is_nullable,
-            default           => $default->{'value'},
-            constraints       => [ @constraints ],
-            comments          => [ @comments ],
-            is_primary_key    => $is_pk || 0,
-            is_auto_increment => $item{'data_type'}{'is_auto_increment'},
+            supertype           => 'field',
+            name                => $item{'field_name'},
+            data_type           => $item{'data_type'}{'type'},
+            size                => $item{'data_type'}{'size'},
+            is_nullable         => $is_nullable,
+            default             => $default->{'value'},
+            constraints         => [ @constraints ],
+            comments            => [ @comments ],
+            is_primary_key      => $is_pk || 0,
+            is_auto_increment   => $item{'data_type'}{'is_auto_increment'},
+            is_case_insensitive => $item{'data_type'}{'is_case_insensitive'},
         }
     }
     | <error>
@@ -650,6 +651,15 @@ pg_data_type :
             $return = {
                 type => 'text',
                 size => 64_000,
+            };
+        }
+    |
+    /citext/i
+        {
+            $return = {
+                type                => 'text',
+                size                => 64_000,
+                is_case_insensitive => 1,
             };
         }
     |
@@ -1098,13 +1108,14 @@ sub parse {
       my $fdata = $tdata->{'fields'}{$fname};
       next if $fdata->{'drop'};
       my $field = $table->add_field(
-        name              => $fdata->{'name'},
-        data_type         => $fdata->{'data_type'},
-        size              => $fdata->{'size'},
-        default_value     => $fdata->{'default'},
-        is_auto_increment => $fdata->{'is_auto_increment'},
-        is_nullable       => $fdata->{'is_nullable'},
-        comments          => $fdata->{'comments'},
+        name                => $fdata->{'name'},
+        data_type           => $fdata->{'data_type'},
+        size                => $fdata->{'size'},
+        default_value       => $fdata->{'default'},
+        is_auto_increment   => $fdata->{'is_auto_increment'},
+        is_case_insensitive => $fdata->{'is_case_insensitive'},
+        is_nullable         => $fdata->{'is_nullable'},
+        comments            => $fdata->{'comments'},
       ) or die $table->error;
 
       $table->primary_key($field->name) if $fdata->{'is_primary_key'};

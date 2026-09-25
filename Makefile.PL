@@ -23,6 +23,7 @@ my %eumm_args = (
     'Test::More'        => '0.88',
     'Test::Differences' => '0',
     'Test::Exception'   => '0.42',
+    'Test::Warn'        => '0',
     'Text::ParseWords'  => '0',
   },
   PREREQ_PM => {

@@ -91,6 +91,16 @@ sub field_autoinc {
   );
 }
 
+sub field_case_insensitive {
+  my ($self, $field) = @_;
+
+  return (
+    $field->is_case_insensitive
+    ? 'COLLATE NOCASE'
+    : ''
+  );
+}
+
 sub field {
   my ($self, $field) = @_;
 
@@ -101,6 +111,7 @@ sub field {
         : ($self->field_type($field))
       ),
       ($self->field_autoinc($field) || ()), $self->field_nullable($field),
+      ($self->field_case_insensitive($field) || ()),
       $self->field_default(
         $field,
         {
