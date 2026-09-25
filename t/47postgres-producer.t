@@ -264,7 +264,7 @@ subtest 'exclude constraints' => sub {
 my $alter_field = SQL::Translator::Producer::PostgreSQL::alter_field($field1, $field2);
 is(
   $alter_field, qq[ALTER TABLE mytable ALTER COLUMN myfield SET NOT NULL;
-ALTER TABLE mytable ALTER COLUMN myfield TYPE character varying(25)],
+ALTER TABLE mytable ALTER COLUMN myfield TYPE character varying(25) USING (myfield::character varying(25))],
   'Alter field works'
 );
 
@@ -296,7 +296,7 @@ my $alter_field_complex = SQL::Translator::Producer::PostgreSQL::alter_field($fi
 is(
   $alter_field_complex,
   q{ALTER TABLE mytable RENAME COLUMN my_complex_field TO my_altered_field;
-ALTER TABLE mytable ALTER COLUMN my_altered_field TYPE character varying(60);
+ALTER TABLE mytable ALTER COLUMN my_altered_field TYPE character varying(60) USING (my_altered_field::character varying(60));
 ALTER TABLE mytable ALTER COLUMN my_altered_field SET DEFAULT 'whatever'},
   'Complex Alter field works'
 );

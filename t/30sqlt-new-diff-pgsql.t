@@ -87,7 +87,7 @@ ALTER TABLE "person" RENAME COLUMN "description" TO "physical_description";
 
 ALTER TABLE "person" ADD COLUMN "is_rock_star" smallint DEFAULT 1;
 
-ALTER TABLE "person" ALTER COLUMN "person_id" TYPE serial;
+ALTER TABLE "person" ALTER COLUMN "person_id" TYPE serial USING ("person_id"::serial);
 
 ALTER TABLE "person" ALTER COLUMN "name" SET NOT NULL;
 
@@ -95,11 +95,11 @@ ALTER TABLE "person" ALTER COLUMN "age" SET DEFAULT 18;
 
 ALTER TABLE "person" ALTER COLUMN "weight" DROP NOT NULL;
 
-ALTER TABLE "person" ALTER COLUMN "iq" TYPE bigint;
+ALTER TABLE "person" ALTER COLUMN "iq" TYPE bigint USING ("iq"::bigint);
 
 ALTER TABLE "person" ALTER COLUMN "nickname" SET NOT NULL;
 
-ALTER TABLE "person" ALTER COLUMN "nickname" TYPE character varying(24);
+ALTER TABLE "person" ALTER COLUMN "nickname" TYPE character varying(24) USING ("nickname"::character varying(24));
 
 ALTER TABLE "person" ADD CONSTRAINT "unique_name" UNIQUE ("name");
 
@@ -155,7 +155,7 @@ ALTER TABLE person RENAME COLUMN description TO physical_description;
 
 ALTER TABLE person ADD COLUMN is_rock_star smallint DEFAULT 1;
 
-ALTER TABLE person ALTER COLUMN person_id TYPE serial;
+ALTER TABLE person ALTER COLUMN person_id TYPE serial USING (person_id::serial);
 
 ALTER TABLE person ALTER COLUMN name SET NOT NULL;
 
@@ -163,11 +163,11 @@ ALTER TABLE person ALTER COLUMN age SET DEFAULT 18;
 
 ALTER TABLE person ALTER COLUMN weight DROP NOT NULL;
 
-ALTER TABLE person ALTER COLUMN iq TYPE bigint;
+ALTER TABLE person ALTER COLUMN iq TYPE bigint USING (iq::bigint);
 
 ALTER TABLE person ALTER COLUMN nickname SET NOT NULL;
 
-ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24);
+ALTER TABLE person ALTER COLUMN nickname TYPE character varying(24) USING (nickname::character varying(24));
 
 ALTER TABLE person ADD CONSTRAINT UC_person_id UNIQUE (person_id);
 
