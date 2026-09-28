@@ -134,6 +134,63 @@ ORDER BY 1;
         /
   ) or die "Can't prepare: $@";
 
+  # Select all user-defined triggers from the Postgres 'public' namespace.
+  my $trigger_select = $dbh->prepare(<<SQL) or die "Can't prepare trigger query: $@";
+SELECT
+    t.tgname  AS trigger_name,
+    c.relname AS table_name,
+    p.proname AS function_name,
+    pg_get_triggerdef(t.oid) AS trigger_definition,
+    CASE t.tgtype & 66
+        WHEN 2 THEN 'before'
+        WHEN 64 THEN 'instead of'
+        ELSE 'after'
+    END AS timing,
+         (CASE WHEN (t.tgtype &  4) = 0 THEN '' ELSE 'insert,' END)
+      || (CASE WHEN (t.tgtype &  8) = 0 THEN '' ELSE 'delete,' END)
+      || (CASE WHEN (t.tgtype & 16) = 0 THEN '' ELSE 'update,' END)
+      || (CASE WHEN (t.tgtype & 32) = 0 THEN '' ELSE 'truncate,' END)
+       AS events,
+    CASE t.tgtype & 1
+        WHEN 1 THEN 'row'
+        ELSE 'statement'
+    END AS scope,
+    t.tgattr AS update_columns,
+    pg_get_expr(t.tgqual, t.tgrelid) AS condition
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+JOIN pg_proc p ON t.tgfoid = p.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE NOT t.tgisinternal
+  AND n.nspname = 'public'
+ORDER BY c.relname, t.tgname;
+SQL
+
+  # Select all user-defined procedures from the Postgres 'public' namespace.
+  my $procedure_select = $dbh->prepare(<<SQL) or die "Can't prepare procedure query: $@";
+SELECT
+    p.proname AS procedure_name,
+    pg_get_functiondef(p.oid) AS procedure_definition,
+    pg_catalog.pg_get_function_arguments(p.oid) AS parameters,
+    pg_catalog.pg_get_function_result(p.oid) AS return_type,
+    r.rolname AS owner,
+    d.description AS comments,
+    CASE p.prokind
+        WHEN 'f' THEN 'function'
+        WHEN 'p' THEN 'procedure'
+        WHEN 'a' THEN 'aggregate'
+        WHEN 'w' THEN 'window'
+        ELSE 'unknown'
+    END AS procedure_type
+FROM pg_proc p
+JOIN pg_namespace n ON p.pronamespace = n.oid
+LEFT JOIN pg_roles r ON p.proowner = r.oid
+LEFT JOIN pg_description d ON p.oid = d.objoid AND d.objsubid = 0
+WHERE n.nspname = 'public'
+  AND p.prokind IN ('f', 'p')  -- functions and procedures only
+ORDER BY p.proname;
+SQL
+
   my %enum_types;
   if ($deconstruct_enum_types) {
     my $enum_select = $dbh->prepare('SELECT enumtypid, enumlabel FROM pg_enum ORDER BY oid, enumsortorder')
@@ -256,6 +313,77 @@ ORDER BY 1;
         on_delete        => $actions->{$on_del},
       );
     }
+  }
+
+  # Process triggers
+  $trigger_select->execute() or die "Can't execute trigger query: $@";
+  while (my $trigger_hash = $trigger_select->fetchrow_hashref) {
+    my $trigger_name = $trigger_hash->{trigger_name};
+    my $table_name   = $trigger_hash->{table_name};
+    my $timing       = $trigger_hash->{timing};
+    my $events       = $trigger_hash->{events};
+    my $scope        = $trigger_hash->{scope};
+    my $trigger_def  = $trigger_hash->{trigger_definition};
+    
+    # Get the table object
+    my $table = $schema->get_table($table_name);
+    next unless $table;
+    
+    # Parse events into an array
+    my @database_events = split /,/, $events;
+    
+    # Handle update column specifications
+    my @fields = ();
+    if ($events =~ /update/ && $trigger_hash->{update_columns}) {
+      # Parse update column list if present
+      my $update_cols = $trigger_hash->{update_columns};
+      if ($update_cols && $update_cols ne '') {
+        @fields = split /\s+/, $update_cols;
+      }
+    }
+    
+    # Extract just the EXECUTE FUNCTION/PROCEDURE part from the trigger definition
+    my $action = '';
+    if ($trigger_def =~ /\bEXECUTE\s+(FUNCTION|PROCEDURE)\s+(.+)$/i) {
+      $action = "EXECUTE $1 $2";
+    }
+    # Fallback: capture everything from 'EXECUTE' onward
+    elsif ($trigger_def =~ /\b(EXECUTE\b.*)$/i) {
+      $action = $1;
+    }
+    else {
+      die "Could not parse trigger action from '$trigger_def'";
+    }
+
+    # Add trigger to schema
+    my $trigger = $schema->add_trigger(
+      name                => $trigger_name,
+      perform_action_when => $timing,
+      database_events     => \@database_events,
+      on_table            => $table_name,
+      action              => $action,
+      scope               => $scope,
+      (@fields ? (fields => \@fields) : ()),
+    ) || die $schema->error;
+  }
+
+  # Process stored procedures/functions
+  $procedure_select->execute() or die "Can't execute procedure query: $@";
+  while (my $proc_hash = $procedure_select->fetchrow_hashref) {
+    my $proc_name  = $proc_hash->{procedure_name};
+    my $proc_sql   = $proc_hash->{procedure_definition};
+    my $parameters = $proc_hash->{parameters} || '';
+    my $owner      = $proc_hash->{owner};
+    my $comments   = $proc_hash->{comments};
+    
+    # Add procedure to schema
+    my $procedure = $schema->add_procedure(
+      name       => $proc_name,
+      sql        => $proc_sql,
+      parameters => $parameters,
+      ($owner ? (owner => $owner) : ()),
+      ($comments ? (comments => $comments) : ()),
+    ) || die $schema->error;
   }
 
   return 1;
